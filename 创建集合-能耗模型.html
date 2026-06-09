@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>创建集合 — 能耗模型</title>
+  <link rel="stylesheet" href="annotation-styles.css">
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-dark: #17358A;
+      --primary-light: #EEF4FF;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --danger: #DC2626;
+      --success: #16A34A;
+      --warning: #D97706;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { text-decoration: none; color: inherit; }
+    button { border: none; background: none; font: inherit; cursor: pointer; }
+
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main { flex: 1; min-width: 0; overflow-y: auto; background: var(--bg-body); }
+
+    /* ── 页面顶部 header ── */
+    .page-header {
+      background: var(--bg-card);
+      padding: 0 24px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-shrink: 0;
+      height: 52px;
+    }
+
+    .page-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      transition: color var(--transition);
+    }
+    .back-link:hover { color: var(--primary); cursor: pointer; }
+    .back-link svg { flex-shrink: 0; }
+
+    .page-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    /* ── 主体内容区 ── */
+    .content-body { padding: 20px 24px 40px; }
+
+    /* ── 卡片 ── */
+    .section-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .section-body { padding: 24px; }
+
+    /* ── 表单布局 ── */
+    .form-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0;
+      margin-bottom: 18px;
+    }
+    .form-row:last-child { margin-bottom: 0; }
+
+    .form-label {
+      width: 120px;
+      flex-shrink: 0;
+      padding-top: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .form-label .req {
+      color: var(--danger);
+      margin-right: 2px;
+    }
+
+    .form-value { flex: 1; min-width: 0; }
+
+    .field-control,
+    .field-select {
+      width: 100%;
+      max-width: 480px;
+      padding: 7px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      color: var(--text-primary);
+      background: #fff;
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    .field-control:focus,
+    .field-select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+    }
+    .field-control.is-error { border-color: var(--danger); }
+    .field-error {
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--danger);
+    }
+    .field-readonly {
+      max-width: 480px;
+      padding: 7px 12px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      background: #F8FAFC;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+    }
+
+    /* select 箭头 */
+    .select-wrap {
+      position: relative;
+      max-width: 480px;
+    }
+    .select-wrap .field-select { padding-right: 32px; }
+    .select-wrap::after {
+      content: '';
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 5px solid transparent;
+      border-top-color: var(--text-hint);
+      pointer-events: none;
+    }
+
+    /* ── 动态配置区 ── */
+    .mapping-section {
+      margin-top: 24px;
+      border-top: 1px solid var(--border-light);
+      padding-top: 20px;
+    }
+    .mapping-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 14px;
+    }
+
+    .mapping-row {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 14px;
+    }
+    .mapping-row:last-child { margin-bottom: 0; }
+
+    .mapping-label {
+      width: 120px;
+      flex-shrink: 0;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .mapping-label .req { color: var(--danger); margin-right: 2px; }
+
+    .mapping-options {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .map-opt {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all var(--transition);
+      user-select: none;
+      color: var(--text-secondary);
+      background: #fff;
+    }
+    .map-opt:hover { border-color: var(--primary); color: var(--primary); }
+    .map-opt.active {
+      border-color: var(--success);
+      color: var(--success);
+      background: #F0FDF4;
+    }
+    .map-opt .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      flex-shrink: 0;
+    }
+
+    /* ── Toggle 开关 ── */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .toggle-switch {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute;
+    }
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      border-radius: 20px;
+      background: var(--border);
+      transition: background var(--transition);
+    }
+    .toggle-thumb {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,.15);
+      transition: transform var(--transition);
+    }
+    .toggle-switch input:checked ~ .toggle-track { background: var(--primary); }
+    .toggle-switch input:checked ~ .toggle-thumb { transform: translateX(16px); }
+    .toggle-switch:hover .toggle-track { opacity: .85; }
+
+    .toggle-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      user-select: none;
+      cursor: pointer;
+      transition: color var(--transition);
+    }
+    .toggle-label.is-on { color: var(--primary); font-weight: 500; }
+
+    .mapping-divider {
+      border: none;
+      border-top: 1px dashed var(--border-light);
+      margin: 14px 0;
+    }
+
+    /* ── 按钮 ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 34px;
+      padding: 0 16px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--transition);
+      border: 1px solid transparent;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-ghost {
+      background: transparent;
+      border-color: var(--border);
+      color: var(--text-secondary);
+    }
+    .btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <div id="app-header"></div>
+  <div class="body-wrap">
+
+    <div id="app-sidebar"></div>
+
+    <div class="main">
+
+      <!-- 批注版本筛选栏 -->
+      <div class="anno-filter-bar" id="annoFilterBar">
+        <span class="anno-filter-label">批注版本：</span>
+        <div class="anno-filter-tags" id="annoFilterTags"></div>
+      </div>
+
+      <!-- v1.8 版本头 -->
+      <div class="anno anno-version-header" data-version="v1.8">
+        <span class="anno-tag">版本信息</span>
+        <div class="anno-body">
+          <p><b>当前版本：</b>v1.8</p>
+          <p><b>更新日期：</b>2026-04-08</p>
+          <p><b>变更概述：</b>设备关联关系配置区新增「含二次泵」可选开关，用于标识该集合所属系统是否存在二次泵回路；其余字段与交互与 v1.0 一致。</p>
+        </div>
+      </div>
+
+      <!-- v2.0 版本头 -->
+      <div class="anno anno-version-header" data-version="v2.0">
+        <span class="anno-tag">版本信息</span>
+        <div class="anno-body">
+          <p><b>当前版本：</b>v2.0</p>
+          <p><b>更新日期：</b>2026-04-29</p>
+          <p><b>变更概述：</b>集合类型选「水冷冷水系统」后新增「系统类型」子选项（水冷冷水系统 / 风冷冷水系统）；选择风冷冷水系统时，设备关联关系配置区隐藏主机-冷却泵与冷塔-冷却泵两行配置（风冷无冷却水侧设备），保留主机-冷冻泵映射及含二次泵开关。</p>
+          <p><b>本页说明：</b>能耗模型集合创建页；<b>标准入口为能效视图</b>工具栏「创建集合」（侧栏不挂此项）。用户填写基础信息并依次确定集合类型与系统类型后，系统动态展示对应的设备关联关系配置区；保存后集合进入模型管理列表（列表页待原型）。</p>
+        </div>
+      </div>
+
+      <!-- 页面顶部 header -->
+      <div class="page-header">
+        <div class="page-header-left">
+          <a class="back-link" onclick="history.back()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </a>
+          <span class="page-title">创建集合</span>
+        </div>
+        <button class="btn btn-primary" id="btnSave" type="button">保存</button>
+      </div>
+
+      <!-- 正文 -->
+      <div class="content-body">
+        <!-- 基础信息表单字段说明 -->
+        <div class="anno anno-field" data-version="v2.0">
+          <span class="anno-tag">字段说明</span>
+          <span class="anno-version">v2.0</span>
+          <span class="anno-source">产品推断</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>创建集合 — 基础信息表单（v2.0 新增字段）</p>
+            <table class="anno-table">
+              <thead>
+                <tr><th>字段</th><th>类型</th><th>必填</th><th>展示条件</th><th>默认值</th><th>备注</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>系统类型</td><td>单选（pill）</td><td>是</td>
+                  <td>集合类型 = 水冷冷水系统时出现</td>
+                  <td>水冷冷水系统</td>
+                  <td>选项：水冷冷水系统 / 风冷冷水系统；控制下方设备关联关系中冷却水侧配置行的可见性</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 集合类型动态展示交互说明 -->
+        <div class="anno anno-ux" data-version="v2.0">
+          <span class="anno-tag">交互说明</span>
+          <span class="anno-version">v2.0</span>
+          <span class="anno-source">产品推断</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>系统类型选择 → 设备关联关系配置区联动（v2.0 新增）</p>
+            <ul>
+              <li><b>系统类型 = 水冷冷水系统（默认）：</b>展示全部映射行，含主机-冷冻泵、主机-冷却泵、冷塔-冷却泵</li>
+              <li><b>系统类型 = 风冷冷水系统：</b>隐藏主机-冷却泵、冷塔-冷却泵两行；保留主机-冷冻泵及含二次泵开关</li>
+              <li><b>切换系统类型：</b>隐藏行的已选值不清空，切回水冷时原选择恢复</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-body">
+
+            <!-- 名称 -->
+            <div class="form-row">
+              <div class="form-label"><span class="req">*</span>名称</div>
+              <div class="form-value">
+                <input id="fieldName" class="field-control is-error" type="text" placeholder="请输入集合名称">
+                <div class="field-error" id="nameError">必填项</div>
+              </div>
+            </div>
+
+            <!-- 描述 -->
+            <div class="form-row">
+              <div class="form-label">描述</div>
+              <div class="form-value">
+                <input id="fieldDesc" class="field-control" type="text" placeholder="请输入描述（选填）">
+              </div>
+            </div>
+
+            <!-- 集合类型 -->
+            <div class="form-row">
+              <div class="form-label"><span class="req">*</span>集合类型</div>
+              <div class="form-value">
+                <div class="select-wrap">
+                  <select id="fieldType" class="field-select">
+                    <option value="">请选择集合类型</option>
+                    <option value="chilled-water" selected>水冷冷水系统</option>
+                    <option value="air-cooling">风冷系统</option>
+                    <option value="natural-cooling">自然冷却系统</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- 系统类型（集合类型为水冷冷水系统时展示） -->
+            <div class="form-row" id="rowSystemType">
+              <div class="form-label"><span class="req">*</span>系统类型</div>
+              <div class="form-value">
+                <div class="mapping-options">
+                  <span class="map-opt active" id="sysTypeWaterCooled" data-sys="water-cooled">
+                    <span class="dot"></span>水冷冷水系统
+                  </span>
+                  <span class="map-opt" id="sysTypeAirCooled" data-sys="air-cooled">
+                    风冷冷水系统
+                  </span>
+                </div>
+                <div style="margin-top:6px;font-size:12px;color:var(--text-hint);">水冷含冷却塔与冷却泵；风冷无冷却水侧设备</div>
+              </div>
+            </div>
+
+            <!-- 制冷单元数量（动态显示，集合类型有值时展示） -->            <div class="form-row" id="rowCoolingCount">
+              <div class="form-label">制冷单元数量</div>
+              <div class="form-value">
+                <div class="field-readonly">1</div>
+              </div>
+            </div>
+
+            <!-- 水冷冷水系统 专属映射配置区 -->
+            <div class="mapping-section" id="mappingSection">
+
+              <!-- 设备关联关系字段说明 -->
+              <div class="anno anno-field" data-version="v2.0">
+                <span class="anno-tag">字段说明</span>
+                <span class="anno-version">v2.0</span>
+                <span class="anno-source">产品推断</span>
+                <div class="anno-body">
+                  <p><b>关联模块：</b>设备关联关系配置 — 展示条件变更（v2.0）</p>
+                  <table class="anno-table">
+                    <thead>
+                      <tr><th>字段</th><th>展示条件（v2.0 变更）</th><th>说明</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>主机-冷却泵</td>
+                        <td>系统类型 = 水冷冷水系统时展示；风冷冷水系统时隐藏</td>
+                        <td>风冷冷水系统无冷却泵，不创建对应设备组合</td>
+                      </tr>
+                      <tr>
+                        <td>冷塔-冷却泵</td>
+                        <td>系统类型 = 水冷冷水系统时展示；风冷冷水系统时隐藏</td>
+                        <td>风冷冷水系统无冷却塔，不创建对应设备组合</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- v1.8 新增：含二次泵配置说明 -->
+              <div class="anno anno-data" data-version="v1.8">
+                <span class="anno-tag">产品说明</span>
+                <span class="anno-version">v1.8</span>
+                <span class="anno-source">需求文档</span>
+                <div class="anno-body">
+                  <p><b>关联模块：</b>设备关联关系配置 — 含二次泵（v1.8 新增）</p>
+                  <ul>
+                    <li><b>作用：</b>并非所有水冷冷水系统都有二次泵回路；此开关用于标识当前集合所属系统的实际拓扑，影响后续建模与寻优策略的生效范围</li>
+                    <li><b>关闭（默认）：</b>系统视为无二次泵，标签显示「无二次泵」；建模时不包含二次泵相关设备节点</li>
+                    <li><b>开启：</b>系统标识含二次泵，标签变为蓝色「含二次泵」；建模时纳入二次泵设备并参与能耗计算</li>
+                    <li><b>仅在「水冷冷水系统」集合类型下展示：</b>风冷/自然冷却类型不存在二次泵拓扑，无需配置</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="mapping-title">设备关联关系配置</div>
+
+              <!-- 主机-冷冻泵 -->
+              <div class="mapping-row">
+                <div class="mapping-label"><span class="req">*</span>主机-冷冻泵</div>
+                <div class="mapping-options" data-group="chiller-chw">
+                  <span class="map-opt active" data-val="many">
+                    <span class="dot"></span>多对多
+                  </span>
+                  <span class="map-opt" data-val="one">一对一</span>
+                </div>
+              </div>
+
+              <!-- 主机-冷却泵 -->
+              <div class="mapping-row" id="rowChillerCdw">
+                <div class="mapping-label"><span class="req">*</span>主机-冷却泵</div>
+                <div class="mapping-options" data-group="chiller-cdw">
+                  <span class="map-opt active" data-val="many">
+                    <span class="dot"></span>多对多
+                  </span>
+                  <span class="map-opt" data-val="one">一对一</span>
+                </div>
+              </div>
+
+              <!-- 冷塔-冷却泵 -->
+              <div class="mapping-row" id="rowTowerCdw">
+                <div class="mapping-label"><span class="req">*</span>冷塔-冷却泵</div>
+                <div class="mapping-options" data-group="tower-cdw">
+                  <span class="map-opt active" data-val="many">
+                    <span class="dot"></span>多对多
+                  </span>
+                  <span class="map-opt" data-val="one">一对一</span>
+                </div>
+              </div>
+
+              <hr class="mapping-divider" id="mappingDivider">
+
+              <!-- 二次泵（可选）-->
+              <div class="mapping-row" id="rowSecondaryPump">
+                <div class="mapping-label">含二次泵</div>
+                <div class="toggle-row">
+                  <label class="toggle-switch" title="开启表示该系统含二次泵">
+                    <input type="checkbox" id="toggleSecondaryPump">
+                    <span class="toggle-track"></span>
+                    <span class="toggle-thumb"></span>
+                  </label>
+                  <span class="toggle-label" id="secondaryPumpLabel">无二次泵</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+
+    const typeSelect    = document.getElementById('fieldType');
+    const mappingSection = document.getElementById('mappingSection');
+    const rowCoolingCount = document.getElementById('rowCoolingCount');
+    const rowSystemType = document.getElementById('rowSystemType');
+    const fieldName     = document.getElementById('fieldName');
+    const nameError     = document.getElementById('nameError');
+
+    // 当前系统类型：water-cooled（默认）或 air-cooled
+    let currentSysType = 'water-cooled';
+
+    function updateCoolingWaterRows() {
+      const showCooling = currentSysType === 'water-cooled';
+      document.getElementById('rowChillerCdw').style.display = showCooling ? '' : 'none';
+      document.getElementById('rowTowerCdw').style.display = showCooling ? '' : 'none';
+      // 含二次泵与分隔线始终保留，不受系统类型影响
+    }
+
+    function updateDynamic() {
+      const val = typeSelect.value;
+      const isChilledWater = val === 'chilled-water';
+
+      rowSystemType.style.display = isChilledWater ? '' : 'none';
+      mappingSection.style.display = isChilledWater ? '' : 'none';
+      rowCoolingCount.style.display = val ? '' : 'none';
+
+      if (isChilledWater) updateCoolingWaterRows();
+    }
+
+    typeSelect.addEventListener('change', updateDynamic);
+
+    // 系统类型切换
+    document.querySelectorAll('#rowSystemType .map-opt').forEach(function (opt) {
+      opt.addEventListener('click', function () {
+        document.querySelectorAll('#rowSystemType .map-opt').forEach(function (o) {
+          o.classList.remove('active');
+          const dot = o.querySelector('.dot');
+          if (dot) dot.remove();
+        });
+        opt.classList.add('active');
+        if (!opt.querySelector('.dot')) {
+          const dot = document.createElement('span');
+          dot.className = 'dot';
+          opt.prepend(dot);
+        }
+        currentSysType = opt.dataset.sys;
+        updateCoolingWaterRows();
+      });
+    });
+
+    updateDynamic();
+
+    // 映射选项切换（仅作用于设备关联关系区）
+    document.querySelectorAll('#mappingSection .mapping-options').forEach(function (group) {
+      group.querySelectorAll('.map-opt').forEach(function (opt) {
+        opt.addEventListener('click', function () {
+          group.querySelectorAll('.map-opt').forEach(function (o) {
+            o.classList.remove('active');
+            const dot = o.querySelector('.dot');
+            if (dot) dot.remove();
+          });
+          opt.classList.add('active');
+          if (!opt.querySelector('.dot')) {
+            const dot = document.createElement('span');
+            dot.className = 'dot';
+            opt.prepend(dot);
+          }
+        });
+      });
+    });
+
+    // 二次泵 toggle
+    const toggleSecondaryPump = document.getElementById('toggleSecondaryPump');
+    const secondaryPumpLabel  = document.getElementById('secondaryPumpLabel');
+    toggleSecondaryPump.addEventListener('change', function () {
+      const on = toggleSecondaryPump.checked;
+      secondaryPumpLabel.textContent = on ? '含二次泵' : '无二次泵';
+      secondaryPumpLabel.classList.toggle('is-on', on);
+    });
+
+    // 名称校验
+    fieldName.addEventListener('input', function () {
+      if (fieldName.value.trim()) {
+        fieldName.classList.remove('is-error');
+        nameError.style.display = 'none';
+      }
+    });
+
+    // 保存
+    document.getElementById('btnSave').addEventListener('click', function () {
+      let valid = true;
+      if (!fieldName.value.trim()) {
+        fieldName.classList.add('is-error');
+        nameError.style.display = '';
+        fieldName.focus();
+        valid = false;
+      }
+      if (!typeSelect.value) {
+        valid = false;
+        typeSelect.style.borderColor = 'var(--danger)';
+      }
+      if (valid) {
+        alert('示意：校验通过，保存成功（演示未真实落库）');
+      }
+    });
+  })();
+</script>
+
+<button class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+
+<script>
+function initAnnoVersionFilter() {
+  var bar = document.getElementById('annoFilterBar');
+  var tags = document.getElementById('annoFilterTags');
+  if (!document.body.classList.contains('annotation-mode')) return;
+  var annos = document.querySelectorAll('.anno[data-version]');
+  var versions = [];
+  annos.forEach(function(a) {
+    var v = a.getAttribute('data-version');
+    if (v && versions.indexOf(v) === -1) versions.push(v);
+  });
+  versions.sort(function(a, b) {
+    var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+    var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+    for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+      if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+    }
+    return 0;
+  });
+  tags.innerHTML = '';
+  var allBtn = document.createElement('span');
+  allBtn.className = 'anno-filter-tag active';
+  allBtn.textContent = '全部';
+  allBtn.onclick = function() { filterAnno('all', versions[0]); setActive(this); };
+  tags.appendChild(allBtn);
+  versions.forEach(function(v) {
+    var btn = document.createElement('span');
+    btn.className = 'anno-filter-tag';
+    btn.textContent = v;
+    btn.onclick = function() { filterAnno(v, versions[0]); setActive(this); };
+    tags.appendChild(btn);
+  });
+  if (versions.length > 0) filterAnno('all', versions[0]);
+}
+function filterAnno(version, latest) {
+  document.querySelectorAll('.anno[data-version]').forEach(function(a) {
+    var v = a.getAttribute('data-version');
+    if (version === 'all') {
+      a.style.display = '';
+      a.style.opacity = (v === latest) ? '1' : '0.6';
+    } else {
+      a.style.display = (v === version) ? '' : 'none';
+      a.style.opacity = '1';
+    }
+  });
+}
+function setActive(el) {
+  el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function(t) { t.classList.remove('active'); });
+  el.classList.add('active');
+}
+</script>
+
+<script src="components/nav.js" data-active-nav="基础配置"></script>
+</body>
+</html>

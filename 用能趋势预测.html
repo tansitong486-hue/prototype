@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>用能趋势预测</title>
+  <style>
+    :root {
+      --primary: #00C853;
+      --primary-dark: #00A846;
+      --primary-tint: #E8F8EE;
+      --text-primary: #262626;
+      --text-secondary: #595959;
+      --text-hint: #8C8C8C;
+      --border: #E8E8E8;
+      --border-light: #F0F0F0;
+      --bg-body: #F0F2F5;
+      --bg-card: #FFFFFF;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.04);
+      --shadow-card: 0 2px 8px rgba(0,0,0,.06);
+      --transition: .18s ease;
+      --chart-actual: #1890FF;
+      --chart-predict: #FA8C16;
+      --chart-band: rgba(250,140,22,.12);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+    button { border: none; background: none; font: inherit; cursor: pointer; }
+
+    /* ── 整体布局 ── */
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main { flex: 1; min-width: 0; overflow-y: auto; background: var(--bg-body); }
+    .page-shell { padding: 14px 18px 28px; }
+
+    /* ── 左右两栏容器 ── */
+    .cmp-page {
+      display: flex;
+      gap: 0;
+      align-items: stretch;
+      min-height: calc(100vh - 120px);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      background: var(--bg-card);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    /* ── 左侧筛选栏 ── */
+    .cmp-sider {
+      width: 268px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border-light);
+      background: #FAFAFA;
+      display: flex;
+      flex-direction: column;
+      min-height: 520px;
+    }
+    .cmp-sider-inner {
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+      min-height: 0;
+    }
+    .cmp-field { display: flex; flex-direction: column; gap: 6px; }
+    .cmp-field > label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .cmp-select {
+      height: 32px;
+      padding: 0 28px 0 10px;
+      font-size: 13px;
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238C8C8C' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 8px center;
+      appearance: none;
+      width: 100%;
+    }
+    .cmp-select:focus-visible {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(0,200,83,.12);
+    }
+
+    /* ── 节点树 ── */
+    .cmp-tree-wrap {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      margin: 0 -4px;
+      padding: 0 4px 8px;
+    }
+    .cmp-tree { list-style: none; font-size: 13px; }
+    .cmp-tree ul {
+      list-style: none;
+      margin: 2px 0 0 4px;
+      padding: 0 0 0 12px;
+      border-left: 1px solid var(--border-light);
+    }
+    .cmp-tree li { margin: 2px 0; }
+    .cmp-tree-node {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      text-align: left;
+      padding: 7px 8px;
+      border-radius: var(--radius);
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-primary);
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .cmp-tree-node:hover:not(.is-disabled) { background: #fff; }
+    .cmp-tree-node.is-leaf:hover:not(.is-disabled) { background: #F6FFED; }
+    .cmp-tree-node.is-selected {
+      background: var(--primary-tint);
+      border-color: rgba(0,200,83,.35);
+      font-weight: 600;
+      color: #006E2D;
+    }
+    .cmp-tree-node.is-disabled {
+      opacity: 0.42;
+      cursor: not-allowed;
+      color: var(--text-hint);
+    }
+    .cmp-tree-caret {
+      width: 0; height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 5px solid var(--text-hint);
+      flex-shrink: 0;
+      transition: transform var(--transition);
+    }
+    .cmp-tree-caret.open { transform: rotate(0deg); }
+    .cmp-tree-caret.closed { transform: rotate(-90deg); }
+    .cmp-tree-children[hidden] { display: none !important; }
+    .cmp-tree-label { flex: 1; min-width: 0; }
+    .cmp-tree-node .node-tag {
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: var(--border-light);
+      color: var(--text-hint);
+      flex-shrink: 0;
+    }
+
+    /* ── 主内容区 ── */
+    .cmp-content {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+    }
+    .cmp-content-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 16px 20px 14px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .cmp-title-row {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .cmp-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .cmp-unit {
+      font-size: 13px;
+      color: var(--text-hint);
+    }
+    .cmp-node-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      background: var(--border-light);
+      border-radius: 4px;
+      padding: 2px 8px;
+    }
+
+    /* ── 工具栏（粒度+日期） ── */
+    .cmp-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .cmp-seg {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .cmp-seg button {
+      padding: 5px 14px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      border-right: 1px solid var(--border-light);
+      transition: background var(--transition), color var(--transition);
+    }
+    .cmp-seg button:last-child { border-right: none; }
+    .cmp-seg button:hover { color: var(--text-primary); background: #FAFAFA; }
+    .cmp-seg button.active { color: #fff; background: var(--primary); font-weight: 600; }
+    .cmp-date-input {
+      height: 32px;
+      padding: 0 10px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--text-primary);
+    }
+    .cmp-date-input:focus-visible {
+      outline: none;
+      border-color: var(--primary);
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 32px;
+      padding: 0 16px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 600;
+      transition: background var(--transition);
+    }
+    .btn-primary { color: #fff; background: var(--primary); }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-ghost {
+      color: var(--text-secondary);
+      background: #FAFAFA;
+      border: 1px solid var(--border-light);
+    }
+    .btn-ghost:hover { color: var(--primary-dark); border-color: rgba(0,200,83,.35); }
+
+    /* ── KPI 卡片 ── */
+    .kpi-row {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .kpi-card {
+      flex: 1;
+      padding: 14px 20px;
+      border-right: 1px solid var(--border-light);
+    }
+    .kpi-card:last-child { border-right: none; }
+    .kpi-label {
+      font-size: 12px;
+      color: var(--text-hint);
+      margin-bottom: 6px;
+    }
+    .kpi-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      font-variant-numeric: tabular-nums;
+    }
+    .kpi-value .kpi-unit { font-size: 12px; font-weight: 400; color: var(--text-hint); margin-left: 3px; }
+    .kpi-delta {
+      margin-top: 4px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .kpi-delta.up { color: #FF4D4F; }
+    .kpi-delta.down { color: #00A846; }
+    .kpi-delta-icon { font-size: 10px; }
+
+    /* ── 图表区 ── */
+    .cmp-panel {
+      flex: 1;
+      min-height: 380px;
+      padding: 16px 20px 20px;
+    }
+    .cmp-chart-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .cmp-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      justify-content: center;
+      margin-top: 14px;
+    }
+    .cmp-legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .legend-line {
+      width: 24px;
+      height: 2px;
+      border-radius: 1px;
+      flex-shrink: 0;
+    }
+    .legend-line.dashed {
+      background: repeating-linear-gradient(
+        to right,
+        var(--chart-predict) 0,
+        var(--chart-predict) 5px,
+        transparent 5px,
+        transparent 9px
+      );
+    }
+    .legend-band {
+      width: 24px;
+      height: 10px;
+      border-radius: 2px;
+      background: rgba(250,140,22,.25);
+      border: 1px solid rgba(250,140,22,.4);
+      flex-shrink: 0;
+    }
+
+    /* ── 提示面板（无数据时） ── */
+    .cmp-empty {
+      text-align: center;
+      padding: 80px 24px;
+      color: var(--text-hint);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* ── 批注按钮 ── */
+    .anno-toggle {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 200;
+      height: 36px;
+      padding: 0 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      background: var(--primary);
+      box-shadow: 0 4px 14px rgba(0,200,83,.35);
+    }
+    .anno-toggle:hover { background: var(--primary-dark); }
+
+    @media (max-width: 960px) {
+      .cmp-page { flex-direction: column; }
+      .cmp-sider {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border-light);
+        min-height: auto;
+      }
+      .cmp-tree-wrap { max-height: 220px; }
+      .kpi-row { flex-wrap: wrap; }
+      .kpi-card { min-width: 150px; }
+    }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+        <div class="anno-filter-bar" id="annoFilterBar">
+          <span class="anno-filter-label">批注版本：</span>
+          <div class="anno-filter-tags" id="annoFilterTags"></div>
+        </div>
+        <div class="page-shell">
+
+          <!-- 批注：版本信息 -->
+          <div class="anno anno-version-header" data-version="v1.0">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v1.0</p>
+              <p><b>说明：</b>由古典「用能趋势预测」迁移；左栏单选节点 + 能源类型 + 视图选择；主区折线图展示历史实际用能与 AI 预测趋势（含置信区间带）及 KPI 摘要。</p>
+            </div>
+          </div>
+
+          <!-- 批注：数据与交互 -->
+          <div class="anno anno-data" data-version="v1.0">
+            <span class="anno-tag">数据与交互</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source" data-type="引用自古典原型">引用自古典原型</span>
+            <div class="anno-body">
+              <p><b>能源类型：</b>根据系统已配置的能源动态展示，默认选定「电」（必选）。</p>
+              <p><b>视图选择：</b>可在能效视图、空间视图之间切换节点树；默认选定能效视图。</p>
+              <p><b>节点树：</b>单选；默认选中根节点下第一个子节点；实例 ID 不显示；未启用能耗计量的节点置灰不可选。</p>
+              <p><b>时间粒度：</b>日 / 周 / 月 / 年，默认「日」。</p>
+              <p><b>日期：</b>默认今日；切换粒度时自动对齐为对应粒度当前周期起始值。</p>
+              <p><b>图表：</b>蓝色实线 = 历史实际值；橙色虚线 = AI 预测值；橙色浅填充 = 预测置信区间（上下界）。预测段用竖虚线与历史段分隔。</p>
+            </div>
+          </div>
+
+          <div class="cmp-page">
+            <!-- ── 左侧筛选栏 ── -->
+            <aside class="cmp-sider" aria-label="筛选与节点选择">
+              <div class="cmp-sider-inner">
+                <div class="cmp-field">
+                  <label for="trendEnergy">能源类型</label>
+                  <select class="cmp-select" id="trendEnergy" aria-label="能源类型">
+                    <option value="elec" selected>电</option>
+                    <option value="water">水</option>
+                    <option value="gas">天然气</option>
+                  </select>
+                </div>
+
+                <div class="cmp-field">
+                  <label for="trendView">视图选择</label>
+                  <select class="cmp-select" id="trendView" aria-label="视图选择">
+                    <option value="eff" selected>能效视图</option>
+                    <option value="space">空间视图</option>
+                  </select>
+                </div>
+
+                <div class="cmp-field" style="flex:1;min-height:0;display:flex;flex-direction:column;">
+                  <label>节点</label>
+                  <div class="cmp-tree-wrap">
+                    <ul class="cmp-tree" id="trendTree" role="tree" aria-label="节点树">
+                      <!-- 华东园区 -->
+                      <li role="treeitem" aria-expanded="true">
+                        <button type="button" class="cmp-tree-node" data-branch>
+                          <span class="cmp-tree-caret open" aria-hidden="true"></span>
+                          <span class="cmp-tree-label">华东园区</span>
+                        </button>
+                        <ul class="cmp-tree-children" role="group">
+                          <li role="treeitem" aria-expanded="true">
+                            <button type="button" class="cmp-tree-node" data-branch>
+                              <span class="cmp-tree-caret open" aria-hidden="true"></span>
+                              <span class="cmp-tree-label">互盟数据中心</span>
+                            </button>
+                            <ul class="cmp-tree-children" role="group">
+                              <li role="treeitem">
+                                <button type="button" class="cmp-tree-node is-leaf is-selected" data-node="b1" aria-selected="true">
+                                  <span class="cmp-tree-label">1 号楼</span>
+                                </button>
+                              </li>
+                              <li role="treeitem">
+                                <button type="button" class="cmp-tree-node is-leaf" data-node="b2" aria-selected="false">
+                                  <span class="cmp-tree-label">2 号楼</span>
+                                </button>
+                              </li>
+                              <li role="treeitem">
+                                <button type="button" class="cmp-tree-node is-leaf" data-node="b3" aria-selected="false">
+                                  <span class="cmp-tree-label">3 号楼</span>
+                                </button>
+                              </li>
+                              <li role="treeitem" aria-disabled="true">
+                                <span class="cmp-tree-node is-leaf is-disabled" title="未启用能耗计量，不可选">
+                                  <span class="cmp-tree-label">4 号楼</span>
+                                  <span class="node-tag">未启用</span>
+                                </span>
+                              </li>
+                            </ul>
+                          </li>
+                        </ul>
+                      </li>
+                      <!-- 华北园区 -->
+                      <li role="treeitem" aria-expanded="true">
+                        <button type="button" class="cmp-tree-node" data-branch>
+                          <span class="cmp-tree-caret open" aria-hidden="true"></span>
+                          <span class="cmp-tree-label">华北园区</span>
+                        </button>
+                        <ul class="cmp-tree-children" role="group">
+                          <li role="treeitem">
+                            <button type="button" class="cmp-tree-node is-leaf" data-node="hb1" aria-selected="false">
+                              <span class="cmp-tree-label">华北 1 号楼</span>
+                            </button>
+                          </li>
+                        </ul>
+                      </li>
+                      <!-- 华南园区 -->
+                      <li role="treeitem" aria-expanded="true">
+                        <button type="button" class="cmp-tree-node" data-branch>
+                          <span class="cmp-tree-caret open" aria-hidden="true"></span>
+                          <span class="cmp-tree-label">华南园区</span>
+                        </button>
+                        <ul class="cmp-tree-children" role="group">
+                          <li role="treeitem">
+                            <button type="button" class="cmp-tree-node is-leaf" data-node="hn1" aria-selected="false">
+                              <span class="cmp-tree-label">华南 1 号楼</span>
+                            </button>
+                          </li>
+                        </ul>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </aside>
+
+            <!-- ── 主内容区 ── -->
+            <div class="cmp-content">
+              <header class="cmp-content-head">
+                <div style="flex:1;">
+                  <div class="cmp-title-row">
+                    <h1 class="cmp-title">用能趋势预测</h1>
+                    <span class="cmp-node-label" id="trendNodeLabel">1 号楼</span>
+                    <span class="cmp-unit">单位：kWh</span>
+                  </div>
+                  <div class="cmp-toolbar">
+                    <div class="cmp-seg" role="tablist" aria-label="时间粒度">
+                      <button type="button" class="active" role="tab" aria-selected="true" data-gran="day">日</button>
+                      <button type="button" role="tab" aria-selected="false" data-gran="week">周</button>
+                      <button type="button" role="tab" aria-selected="false" data-gran="month">月</button>
+                      <button type="button" role="tab" aria-selected="false" data-gran="year">年</button>
+                    </div>
+                    <input type="date" class="cmp-date-input" id="trendDate" aria-label="查询日期">
+                    <button type="button" class="btn btn-primary" id="trendQuery">查询</button>
+                    <button type="button" class="btn btn-ghost" id="trendExport">导出</button>
+                  </div>
+                </div>
+              </header>
+
+              <!-- KPI 摘要 -->
+              <div class="kpi-row" id="trendKpiRow">
+                <div class="kpi-card">
+                  <div class="kpi-label">今日预测总量</div>
+                  <div class="kpi-value">12,480<span class="kpi-unit">kWh</span></div>
+                  <div class="kpi-delta up">
+                    <span class="kpi-delta-icon">↑</span>3.2% 较昨日
+                  </div>
+                </div>
+                <div class="kpi-card">
+                  <div class="kpi-label">预测峰值</div>
+                  <div class="kpi-value">756<span class="kpi-unit">kWh/h</span></div>
+                  <div class="kpi-delta" style="color:var(--text-hint);">预计 14:00 出现</div>
+                </div>
+                <div class="kpi-card">
+                  <div class="kpi-label">预测谷值</div>
+                  <div class="kpi-value">182<span class="kpi-unit">kWh/h</span></div>
+                  <div class="kpi-delta" style="color:var(--text-hint);">预计 04:00 出现</div>
+                </div>
+                <div class="kpi-card">
+                  <div class="kpi-label">模型置信度</div>
+                  <div class="kpi-value">94.3<span class="kpi-unit">%</span></div>
+                  <div class="kpi-delta down">
+                    <span class="kpi-delta-icon">↑</span>+1.1% 较上周
+                  </div>
+                </div>
+              </div>
+
+              <!-- 图表面板 -->
+              <div class="cmp-panel">
+                <svg class="cmp-chart-svg" id="trendChartSvg" viewBox="0 0 820 360" xmlns="http://www.w3.org/2000/svg" aria-label="用能趋势预测折线图"></svg>
+                <div class="cmp-legend">
+                  <div class="cmp-legend-item">
+                    <span class="legend-line" style="background:var(--chart-actual);"></span>
+                    历史实际用能
+                  </div>
+                  <div class="cmp-legend-item">
+                    <span class="legend-line dashed"></span>
+                    AI 预测趋势
+                  </div>
+                  <div class="cmp-legend-item">
+                    <span class="legend-band"></span>
+                    预测置信区间
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div><!-- /.cmp-page -->
+
+        </div><!-- /.page-shell -->
+      </main>
+    </div>
+  </div>
+
+  <button type="button" class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="用能趋势预测"></script>
+  <script>
+  (function () {
+    'use strict'
+
+    /* ── 示意数据 ── */
+    const TODAY = new Date()
+    const iso = function (d) { return d.toISOString().slice(0, 10) }
+
+    // 每小时示意点（0–23），历史14点 + 预测10点（14–23）
+    const HOURS = Array.from({ length: 24 }, function (_, i) { return i })
+
+    const DEMO_ACTUAL = [
+      218, 195, 186, 182, 190, 225, 310, 478,
+      610, 688, 712, 738, 745, 750, null, null,
+      null, null, null, null, null, null, null, null
+    ]
+
+    const DEMO_PREDICT = [
+      null, null, null, null, null, null, null, null,
+      null, null, null, null, null, 748, 751, 748,
+      740, 720, 698, 660, 580, 450, 340, 248
+    ]
+
+    const DEMO_UPPER = DEMO_PREDICT.map(function (v) { return v != null ? v * 1.06 : null })
+    const DEMO_LOWER = DEMO_PREDICT.map(function (v) { return v != null ? v * 0.94 : null })
+
+    const SPLIT_IDX = 13 // 预测从第14个点开始
+
+    /* ── 绘图 ── */
+    const W = 820, H = 360
+    const padL = 58, padR = 30, padT = 28, padB = 44
+    const innerW = W - padL - padR
+    const innerH = H - padT - padB
+
+    function allNonNull(arr) {
+      return arr.filter(function (v) { return v != null })
+    }
+
+    function drawChart() {
+      const svg = document.getElementById('trendChartSvg')
+      const maxVal = Math.max.apply(null, allNonNull(DEMO_ACTUAL.concat(DEMO_UPPER))) * 1.08
+      const minVal = 0
+
+      function xOf(i) { return padL + (i / (HOURS.length - 1)) * innerW }
+      function yOf(v) { return padT + innerH - ((v - minVal) / (maxVal - minVal)) * innerH }
+
+      let html = ''
+
+      /* 背景格线 */
+      const gridCount = 5
+      for (let g = 0; g <= gridCount; g++) {
+        const y = padT + (innerH * g / gridCount)
+        const val = Math.round(maxVal * (1 - g / gridCount))
+        html += '<line x1="' + padL + '" y1="' + y + '" x2="' + (W - padR) + '" y2="' + y + '" stroke="#F0F0F0" stroke-width="1"/>'
+        html += '<text x="' + (padL - 6) + '" y="' + (y + 4) + '" text-anchor="end" font-size="10" fill="#BFBFBF">' + val + '</text>'
+      }
+
+      /* 预测分隔竖线 */
+      const splitX = xOf(SPLIT_IDX)
+      html += '<line x1="' + splitX + '" y1="' + padT + '" x2="' + splitX + '" y2="' + (padT + innerH) + '" stroke="#FA8C16" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.6"/>'
+      html += '<text x="' + (splitX + 5) + '" y="' + (padT + 14) + '" font-size="10" fill="#FA8C16" opacity="0.8">预测起点</text>'
+
+      /* 置信区间面 */
+      const bandPts = []
+      const upperPts = []
+      const lowerPts = []
+      HOURS.forEach(function (_, i) {
+        if (DEMO_UPPER[i] != null) { upperPts.push([xOf(i), yOf(DEMO_UPPER[i])]) }
+        if (DEMO_LOWER[i] != null) { lowerPts.push([xOf(i), yOf(DEMO_LOWER[i])]) }
+      })
+      if (upperPts.length > 0) {
+        const forward = upperPts.map(function (p) { return p[0] + ',' + p[1] }).join(' ')
+        const backward = lowerPts.slice().reverse().map(function (p) { return p[0] + ',' + p[1] }).join(' ')
+        html += '<polygon points="' + forward + ' ' + backward + '" fill="rgba(250,140,22,.15)" stroke="none"/>'
+      }
+
+      /* 历史实际折线 */
+      const actualPts = []
+      HOURS.forEach(function (_, i) {
+        if (DEMO_ACTUAL[i] != null) actualPts.push(xOf(i) + ',' + yOf(DEMO_ACTUAL[i]))
+      })
+      if (actualPts.length > 1) {
+        html += '<polyline points="' + actualPts.join(' ') + '" fill="none" stroke="' + getComputedStyle(document.documentElement).getPropertyValue('--chart-actual').trim() + '" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>'
+      }
+
+      /* 预测折线（虚线） */
+      const predictPts = []
+      // 从历史最后一点接到预测第一点
+      if (DEMO_ACTUAL[SPLIT_IDX] != null) {
+        predictPts.push(xOf(SPLIT_IDX) + ',' + yOf(DEMO_ACTUAL[SPLIT_IDX]))
+      }
+      HOURS.forEach(function (_, i) {
+        if (DEMO_PREDICT[i] != null) predictPts.push(xOf(i) + ',' + yOf(DEMO_PREDICT[i]))
+      })
+      if (predictPts.length > 1) {
+        html += '<polyline points="' + predictPts.join(' ') + '" fill="none" stroke="#FA8C16" stroke-width="2.2" stroke-dasharray="6 4" stroke-linejoin="round" stroke-linecap="round"/>'
+      }
+
+      /* 数据点（历史） */
+      HOURS.forEach(function (i) {
+        const v = DEMO_ACTUAL[i]
+        if (v == null) return
+        html += '<circle cx="' + xOf(i) + '" cy="' + yOf(v) + '" r="3" fill="#1890FF" stroke="#fff" stroke-width="1.5"/>'
+      })
+
+      /* X 轴标签 */
+      const xLabels = [0, 3, 6, 9, 12, 15, 18, 21, 23]
+      xLabels.forEach(function (i) {
+        html += '<text x="' + xOf(i) + '" y="' + (padT + innerH + 18) + '" text-anchor="middle" font-size="10" fill="#BFBFBF">' + (i < 10 ? '0' + i : i) + ':00</text>'
+      })
+
+      /* X 轴线 */
+      html += '<line x1="' + padL + '" y1="' + (padT + innerH) + '" x2="' + (W - padR) + '" y2="' + (padT + innerH) + '" stroke="#E8E8E8" stroke-width="1"/>'
+
+      /* 水印 */
+      html += '<text x="' + (W / 2) + '" y="' + (padT + 12) + '" text-anchor="middle" font-size="10" fill="#BFBFBF">示意数据 · 1号楼 · ' + iso(TODAY) + '</text>'
+
+      svg.innerHTML = html
+    }
+
+    /* ── 节点树交互（单选） ── */
+    const tree = document.getElementById('trendTree')
+    const nodeLabel = document.getElementById('trendNodeLabel')
+
+    tree.addEventListener('click', function (e) {
+      const btn = e.target.closest('button.cmp-tree-node')
+      if (!btn) return
+
+      if (btn.hasAttribute('data-branch')) {
+        // 折叠/展开
+        const ul = btn.nextElementSibling
+        if (ul && ul.classList.contains('cmp-tree-children')) {
+          const isHidden = ul.hidden
+          ul.hidden = !isHidden
+          const caret = btn.querySelector('.cmp-tree-caret')
+          if (caret) {
+            caret.classList.toggle('open', isHidden)
+            caret.classList.toggle('closed', !isHidden)
+          }
+        }
+        return
+      }
+
+      if (btn.classList.contains('is-disabled')) return
+
+      // 单选叶节点
+      tree.querySelectorAll('button.is-leaf').forEach(function (b) {
+        b.classList.remove('is-selected')
+        b.setAttribute('aria-selected', 'false')
+      })
+      btn.classList.add('is-selected')
+      btn.setAttribute('aria-selected', 'true')
+      nodeLabel.textContent = btn.querySelector('.cmp-tree-label').textContent.trim()
+      drawChart()
+    })
+
+    /* ── 时间粒度切换 ── */
+    const granBtns = document.querySelectorAll('[data-gran]')
+    granBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        granBtns.forEach(function (b) { b.classList.remove('active'); b.setAttribute('aria-selected', 'false') })
+        btn.classList.add('active')
+        btn.setAttribute('aria-selected', 'true')
+      })
+    })
+
+    /* ── 默认日期 ── */
+    document.getElementById('trendDate').value = iso(TODAY)
+
+    /* ── 查询按钮 ── */
+    document.getElementById('trendQuery').addEventListener('click', function () { drawChart() })
+
+    /* ── 初始渲染 ── */
+    drawChart()
+  })()
+  </script>
+</body>
+</html>

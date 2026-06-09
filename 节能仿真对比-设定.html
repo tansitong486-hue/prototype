@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>节能仿真对比 · 仿真设定</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-light: #EEF4FF;
+      --primary-dark: #17358A;
+      --success: #16A34A;
+      --success-light: #F0FDF4;
+      --warning: #D97706;
+      --danger: #DC2626;
+      --danger-light: #FEF2F2;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15,23,42,.04);
+      --shadow-card: 0 2px 8px rgba(15,23,42,.06);
+      --transition: .2s cubic-bezier(.4,0,.2,1);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size:14px; color:var(--text-primary); background:var(--bg-body);
+      -webkit-font-smoothing:antialiased;
+    }
+    a { text-decoration:none; color:inherit; }
+    button { border:none; background:none; font:inherit; cursor:pointer; }
+    ::-webkit-scrollbar { width:6px; height:6px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:rgba(0,0,0,.12); border-radius:3px; }
+    ::-webkit-scrollbar-thumb:hover { background:rgba(0,0,0,.2); }
+
+    /* ── Shell ────────────────────────────────────── */
+    html { height:100%; }
+    html body { height:100%; overflow:hidden; }
+    .layout { height:100%; display:flex; flex-direction:column; overflow:hidden; }
+    .body-wrap { flex:1 1 0; display:flex; min-height:0; overflow:hidden; }
+    .main { flex:1 1 0; min-width:0; min-height:0; overflow-y:auto; background:var(--bg-body); display:flex; flex-direction:column; }
+
+    /* ── Page sub-header ─────────────────────────── */
+    .page-sub-header {
+      background:var(--bg-card);
+      border-bottom:1px solid var(--border-light);
+      padding:0 24px;
+      display:flex; align-items:stretch; min-height:48px; flex-shrink:0;
+      box-shadow:var(--shadow-sm);
+    }
+    .page-sub-left { display:flex; align-items:center; gap:10px; }
+    .page-title { font-size:14px; font-weight:600; color:var(--text-primary); }
+    .page-sub-divider { width:1px; height:16px; background:var(--border); }
+    .page-sub-right { display:flex; align-items:stretch; margin-left:auto; }
+
+    /* Station tabs */
+    .station-tab { display:flex; align-items:center; gap:2px; }
+    .station-tab-item {
+      display:flex; align-items:center; padding:0 16px;
+      font-size:13px; font-weight:500; color:var(--text-secondary);
+      cursor:pointer; border-bottom:2px solid transparent;
+      transition:color var(--transition), border-color var(--transition);
+      margin-bottom:-1px; height:100%;
+    }
+    .station-tab-item:hover { color:var(--primary); }
+    .station-tab-item.active { color:var(--primary); font-weight:600; border-bottom-color:var(--primary); }
+
+    /* ── Step bar ─────────────────────────────────── */
+    .step-bar-wrap {
+      padding:20px 24px 0;
+      display:flex; justify-content:center;
+    }
+    .step-bar { display:flex; align-items:center; }
+    .step-item { display:flex; align-items:center; gap:9px; }
+    .step-circle {
+      width:26px; height:26px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:12px; font-weight:700;
+      border:2px solid var(--border); color:var(--text-hint); background:#fff;
+      flex-shrink:0; transition:all .3s;
+    }
+    .step-label { font-size:13px; font-weight:500; color:var(--text-hint); white-space:nowrap; }
+    .step-item.active .step-circle { background:var(--primary); border-color:var(--primary); color:#fff; box-shadow:0 0 0 3px rgba(30,64,175,.15); }
+    .step-item.active .step-label { color:var(--primary); font-weight:600; }
+    .step-item.done .step-circle { background:var(--success); border-color:var(--success); color:#fff; }
+    .step-item.done .step-label { color:var(--success); }
+    .step-connector { flex:0 0 72px; height:2px; background:var(--border); margin:0 8px; border-radius:1px; }
+    .step-connector.done { background:var(--success); }
+
+    /* ── Content ──────────────────────────────────── */
+    .content-wrap { padding:16px 24px 72px; flex:1; }
+
+    .two-col {
+      display:grid;
+      grid-template-columns:minmax(0,1fr) minmax(0,1.45fr);
+      gap:16px; align-items:start;
+    }
+
+    /* ── Card ─────────────────────────────────────── */
+    .card {
+      background:var(--bg-card); border:1px solid var(--border-light);
+      border-radius:var(--radius-lg); box-shadow:var(--shadow-card);
+    }
+    .card-head {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:13px 16px 12px;
+      border-bottom:1px solid var(--border-light);
+      gap:10px;
+    }
+    .card-title {
+      font-size:13px; font-weight:700; color:var(--text-primary);
+      display:flex; align-items:center; gap:7px;
+    }
+    .card-title::before {
+      content:''; width:3px; height:14px;
+      background:var(--primary); border-radius:2px; flex-shrink:0;
+    }
+    .card-body-pad { padding:16px; }
+
+    /* ── 环境工况 table ──────────────────────────── */
+    .cond-table-wrap { overflow-x:auto; }
+    .cond-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .cond-table th {
+      background:#F8FAFC; padding:9px 14px;
+      text-align:left; font-size:11.5px; font-weight:600; color:var(--text-secondary);
+      border-bottom:1px solid var(--border); white-space:nowrap;
+    }
+    .cond-table th:first-child { border-radius:0; }
+    .cond-table td { padding:9px 14px; border-bottom:1px solid var(--border-light); vertical-align:middle; }
+    .cond-table tr:last-child td { border-bottom:none; }
+    .cond-table .row-label { font-weight:500; color:var(--text-secondary); white-space:nowrap; font-size:12.5px; }
+
+    .inp {
+      display:inline-flex; align-items:center; gap:4px;
+      border:1px solid var(--border); border-radius:6px;
+      padding:5px 9px; background:#fff; transition:border-color .2s, box-shadow .2s;
+      font-size:13px;
+    }
+    .inp:focus-within { border-color:var(--primary); box-shadow:0 0 0 2px rgba(30,64,175,.1); }
+    .inp input {
+      border:none; outline:none; background:none; font:inherit;
+      color:var(--text-primary); width:60px; text-align:center;
+    }
+
+    .link-del {
+      color:var(--danger); font-size:12px; cursor:pointer;
+      padding:3px 6px; border-radius:4px; transition:background .15s;
+    }
+    .link-del:hover { background:var(--danger-light); }
+
+    .cond-footer { padding:12px 16px; border-top:1px solid var(--border-light); display:flex; gap:8px; flex-wrap:wrap; }
+
+    /* ── 控制参数 table ──────────────────────────── */
+    .ctrl-table { width:100%; border-collapse:collapse; font-size:12.5px; }
+    .ctrl-table th {
+      background:#F8FAFC; padding:9px 14px;
+      font-size:11.5px; font-weight:600; color:var(--text-secondary);
+      border-bottom:1px solid var(--border); white-space:nowrap;
+    }
+    .ctrl-table th.center { text-align:center; }
+    .ctrl-table td { padding:8px 14px; border-bottom:1px solid var(--border-light); vertical-align:middle; }
+    .ctrl-table tr:last-child td { border-bottom:none; }
+    .dev-cat { font-weight:600; color:var(--text-primary); font-size:12.5px; white-space:nowrap; }
+    .dev-cat-cell { background:#FAFBFC; }
+    .dev-param { color:var(--text-secondary); font-size:12px; }
+    .cell-c { text-align:center; }
+
+    .strategy-header-normal {
+      background:#F8FAFC; text-align:center;
+    }
+    .strategy-header-saving {
+      background:var(--primary-light); color:var(--primary); text-align:center;
+    }
+
+    .chip {
+      display:inline-flex; align-items:center; gap:4px;
+      padding:3px 9px; border-radius:5px; font-size:11.5px; font-weight:500;
+      background:var(--primary-light); color:var(--primary); cursor:pointer;
+      transition:background .15s;
+    }
+    .chip:hover { background:#d8e9ff; }
+
+    /* ── Bottom form (仿真模型 / 安全边界) ────────── */
+    .form-block { padding:14px 16px; display:flex; flex-direction:column; gap:11px; }
+    .form-row { display:flex; align-items:center; gap:10px; }
+    .form-label {
+      font-size:12.5px; font-weight:600; color:var(--text-primary);
+      min-width:72px; display:flex; align-items:center; gap:3px;
+      white-space:nowrap;
+    }
+    .req { color:var(--danger); }
+    .select-wrap {
+      flex:1; position:relative;
+    }
+    .select-fake {
+      display:flex; align-items:center; justify-content:space-between;
+      border:1px solid var(--border); border-radius:6px; padding:7px 11px;
+      background:#fff; cursor:pointer; font-size:13px; color:var(--text-hint);
+      transition:border-color .2s, box-shadow .2s;
+    }
+    .select-fake:hover { border-color:var(--primary); }
+    .select-fake .arrow { font-size:10px; color:var(--text-hint); }
+
+    /* ── Buttons ──────────────────────────────────── */
+    .btn {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:7px 14px; border-radius:7px; border:1px solid var(--border);
+      font-size:12.5px; font-weight:500; background:#fff;
+      cursor:pointer; transition:all .2s; color:var(--text-secondary);
+      white-space:nowrap;
+    }
+    .btn:hover { border-color:#B8C6D8; color:var(--primary); background:#F6FAFF; }
+    .btn svg { width:13px; height:13px; flex-shrink:0; }
+    .btn-primary {
+      background:var(--primary); color:#fff; border-color:var(--primary);
+      font-size:13px; padding:9px 28px; font-weight:600;
+    }
+    .btn-primary:hover { background:var(--primary-dark); border-color:var(--primary-dark); }
+
+    /* ── Action bar ───────────────────────────────── */
+    .action-bar {
+      position:sticky; bottom:0; z-index:10;
+      background:var(--bg-card); border-top:1px solid var(--border-light);
+      padding:12px 24px; display:flex; justify-content:flex-end;
+      box-shadow:0 -3px 10px rgba(15,23,42,.05);
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <div id="app-header"></div>
+  <div class="body-wrap">
+    <div id="app-sidebar"></div>
+    <div class="main">
+
+      <!-- Sub-header -->
+      <div class="page-sub-header">
+        <div class="page-sub-left">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" style="flex-shrink:0">
+            <path d="M12 2v20M17 5l-5 5-5-5M17 19l-5-5-5 5M2 12h20M5 7l5 5-5 5M19 7l-5 5 5 5"/>
+          </svg>
+          <span class="page-title">冷站仿真对比</span>
+          <div class="page-sub-divider"></div>
+          <span style="font-size:12px;color:var(--text-hint);">选择仿真参数，运行节能策略 vs 常规策略预测对比</span>
+        </div>
+        <div class="page-sub-right">
+          <div class="station-tab">
+            <div class="station-tab-item active" onclick="switchStation(this)">1号冷站</div>
+            <div class="station-tab-item" onclick="switchStation(this)">2号冷站</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step bar -->
+      <div class="step-bar-wrap">
+        <div class="step-bar">
+          <div class="step-item active">
+            <div class="step-circle">1</div>
+            <span class="step-label">仿真设定</span>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step-item">
+            <div class="step-circle">2</div>
+            <span class="step-label">仿真对比</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main content -->
+      <div class="content-wrap">
+        <div class="two-col">
+
+          <!-- ─ 环境工况 ─ -->
+          <div class="card">
+            <div class="card-head">
+              <span class="card-title">环境工况</span>
+              <div style="display:flex;gap:8px;">
+                <button class="btn" onclick="loadForecast()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  未来24小时预测
+                </button>
+                <button class="btn btn-primary" style="padding:7px 12px;font-size:12px;" onclick="addCondition()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  添加工况
+                </button>
+              </div>
+            </div>
+
+            <div class="cond-table-wrap">
+              <table class="cond-table" id="condTable">
+                <thead>
+                  <tr>
+                    <th style="min-width:130px;">参数</th>
+                    <th style="text-align:center;min-width:90px;">工况1</th>
+                    <th style="text-align:center;min-width:90px;">工况2</th>
+                    <th style="min-width:50px;">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="row-label">室外湿球温度（℃）</td>
+                    <td class="cell-c"><div class="inp"><input type="text" value="21.2"></div></td>
+                    <td class="cell-c"><div class="inp"><input type="text" value="24.5"></div></td>
+                    <td><span class="link-del" onclick="removeRow(this)">删除</span></td>
+                  </tr>
+                  <tr>
+                    <td class="row-label">制冷负荷（KW）</td>
+                    <td class="cell-c"><div class="inp"><input type="text" value="2134"></div></td>
+                    <td class="cell-c"><div class="inp"><input type="text" value="2580"></div></td>
+                    <td><span class="link-del" onclick="removeRow(this)">删除</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="cond-footer">
+              <span style="font-size:11.5px;color:var(--text-hint);display:flex;align-items:center;gap:4px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                最多支持 5 个工况并行仿真
+              </span>
+            </div>
+          </div>
+
+          <!-- ─ 右列 ─ -->
+          <div style="display:flex;flex-direction:column;gap:16px;">
+
+            <!-- 控制参数 -->
+            <div class="card">
+              <div class="card-head">
+                <span class="card-title">控制参数设定</span>
+                <div style="display:flex;gap:6px;align-items:center;">
+                  <span style="font-size:11.5px;color:var(--text-secondary);background:#F1F5F9;padding:3px 8px;border-radius:4px;font-weight:500;">常规策略</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                  <span style="font-size:11.5px;color:var(--primary);background:var(--primary-light);padding:3px 8px;border-radius:4px;font-weight:600;">AI节能策略</span>
+                </div>
+              </div>
+              <div style="overflow-x:auto;">
+                <table class="ctrl-table">
+                  <thead>
+                    <tr>
+                      <th style="min-width:70px;">设备类型</th>
+                      <th style="min-width:150px;">控制参数</th>
+                      <th class="center strategy-header-normal" style="min-width:130px;">常规策略</th>
+                      <th class="center strategy-header-saving" style="min-width:130px;">节能策略</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- 冷水主机 -->
+                    <tr>
+                      <td class="dev-cat dev-cat-cell" rowspan="2">冷水主机</td>
+                      <td class="dev-param">开机设备</td>
+                      <td class="cell-c"><span class="chip">主机1、主机2 ▾</span></td>
+                      <td class="cell-c"><span class="chip" style="background:#E0EAFF;color:#1D4ED8;">主机1、主机2 ▾</span></td>
+                    </tr>
+                    <tr>
+                      <td class="dev-param">冷冻出水温度（℃）</td>
+                      <td class="cell-c"><div class="inp"><input type="text" value="11.5"></div></td>
+                      <td class="cell-c"><div class="inp" style="border-color:var(--primary);"><input type="text" value="11.5"></div></td>
+                    </tr>
+                    <!-- 板换 -->
+                    <tr>
+                      <td class="dev-cat dev-cat-cell">板换</td>
+                      <td colspan="3" style="color:var(--text-hint);font-size:12px;font-style:italic;">— 无独立控制参数 —</td>
+                    </tr>
+                    <!-- 冷冻泵 -->
+                    <tr>
+                      <td class="dev-cat dev-cat-cell" rowspan="2">冷冻泵</td>
+                      <td class="dev-param">开机设备</td>
+                      <td class="cell-c"><span class="chip">冷冻泵1 ▾</span></td>
+                      <td class="cell-c"><span class="chip" style="background:#E0EAFF;color:#1D4ED8;">冷冻泵1 ▾</span></td>
+                    </tr>
+                    <tr>
+                      <td class="dev-param">频率设定（HZ）</td>
+                      <td class="cell-c"><div class="inp"><input type="text" value="11.5"></div></td>
+                      <td class="cell-c"><div class="inp" style="border-color:var(--primary);"><input type="text" value="11.5"></div></td>
+                    </tr>
+                    <!-- 冷却泵 -->
+                    <tr>
+                      <td class="dev-cat dev-cat-cell" rowspan="2">冷却泵</td>
+                      <td class="dev-param">开机设备</td>
+                      <td class="cell-c"><span class="chip">冷却泵1 ▾</span></td>
+                      <td class="cell-c"><span class="chip" style="background:#E0EAFF;color:#1D4ED8;">冷却泵1 ▾</span></td>
+                    </tr>
+                    <tr>
+                      <td class="dev-param">频率设定（HZ）</td>
+                      <td class="cell-c"><div class="inp"><input type="text" value="11.5"></div></td>
+                      <td class="cell-c"><div class="inp" style="border-color:var(--primary);"><input type="text" value="11.5"></div></td>
+                    </tr>
+                    <!-- 冷却塔 -->
+                    <tr>
+                      <td class="dev-cat dev-cat-cell" rowspan="3">冷却塔</td>
+                      <td class="dev-param">开机设备</td>
+                      <td class="cell-c"><span class="chip">冷冻塔1 ▾</span></td>
+                      <td class="cell-c"><span class="chip" style="background:#E0EAFF;color:#1D4ED8;">冷冻塔1 ▾</span></td>
+                    </tr>
+                    <tr>
+                      <td class="dev-param">频率设定（HZ）</td>
+                      <td class="cell-c"><div class="inp"><input type="text" value="11.5"></div></td>
+                      <td class="cell-c"><div class="inp" style="border-color:var(--primary);"><input type="text" value="11.5"></div></td>
+                    </tr>
+                    <tr>
+                      <td class="dev-param">风机设定</td>
+                      <td class="cell-c"><div class="inp"><input type="text" value="4" style="width:36px;"></div></td>
+                      <td class="cell-c"><div class="inp" style="border-color:var(--primary);"><input type="text" value="4" style="width:36px;"></div></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 仿真模型 + 安全边界 -->
+            <div class="card">
+              <div class="card-head">
+                <span class="card-title">仿真配置</span>
+              </div>
+              <div class="form-block">
+                <div class="form-row">
+                  <label class="form-label"><span class="req">*</span> 仿真模型</label>
+                  <div class="select-wrap">
+                    <div class="select-fake">
+                      <span>请选择仿真模型</span>
+                      <span class="arrow">▾</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <label class="form-label"><span class="req">*</span> 安全边界</label>
+                  <div class="select-wrap">
+                    <div class="select-fake">
+                      <span>请选择安全边界规则</span>
+                      <span class="arrow">▾</span>
+                    </div>
+                  </div>
+                </div>
+                <div style="padding-top:4px;font-size:11.5px;color:var(--text-hint);display:flex;align-items:center;gap:4px;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  仿真模型与安全边界需在「AI寻优配置」中预先创建后方可选择
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /右列 -->
+        </div><!-- /two-col -->
+      </div><!-- /content-wrap -->
+
+      <!-- Bottom action bar -->
+      <div class="action-bar">
+        <button class="btn btn-primary" onclick="goCompare()">
+          开始仿真对比
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+
+    </div><!-- /main -->
+  </div><!-- /body-wrap -->
+</div><!-- /layout -->
+
+<script>
+  const switchStation = el => {
+    el.closest('.station-tab').querySelectorAll('.station-tab-item').forEach(t => t.classList.remove('active'))
+    el.classList.add('active')
+  }
+
+  const EXTRA_PARAMS = ['室内温度（℃）', '供回水压差（kPa）', '系统负荷率（%）']
+  let extraIdx = 0
+
+  const addCondition = () => {
+    const tbody = document.querySelector('#condTable tbody')
+    if (tbody.rows.length >= 5) {
+      return alert('最多支持 5 个工况参数')
+    }
+    const label = EXTRA_PARAMS[extraIdx++ % EXTRA_PARAMS.length]
+    const tr = document.createElement('tr')
+    tr.innerHTML = `
+      <td class="row-label">${label}</td>
+      <td class="cell-c"><div class="inp"><input type="text" placeholder="—"></div></td>
+      <td class="cell-c"><div class="inp"><input type="text" placeholder="—"></div></td>
+      <td><span class="link-del" onclick="removeRow(this)">删除</span></td>
+    `
+    tbody.appendChild(tr)
+  }
+
+  const removeRow = el => {
+    const tbody = document.querySelector('#condTable tbody')
+    if (tbody.rows.length <= 1) return
+    el.closest('tr').remove()
+  }
+
+  const loadForecast = () => {
+    document.querySelectorAll('#condTable input').forEach(inp => {
+      if (!inp.value || inp.value === '—') inp.value = (Math.random() * 10 + 18).toFixed(1)
+    })
+  }
+
+  const goCompare = () => {
+    window.location.href = '节能仿真对比-对比.html'
+  }
+</script>
+
+<script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="冷站仿真对比"></script>
+</body>
+</html>

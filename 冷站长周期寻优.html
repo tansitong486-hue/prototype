@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>冷站长周期寻优</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-light: #EEF4FF;
+      --primary-dark: #17358A;
+      --success: #16A34A;
+      --success-light: #F0FDF4;
+      --warning: #D97706;
+      --warning-light: #FFF7ED;
+      --danger: #DC2626;
+      --danger-light: #FEF2F2;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --sidebar-bg: #071B2E;
+      --header-bg: #071B2E;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15,23,42,.04);
+      --shadow-card: 0 1px 3px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.04);
+      --shadow-hover: 0 6px 18px rgba(15,23,42,.08);
+      --transition: .22s cubic-bezier(.4,0,.2,1);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size:14px; color:var(--text-primary); background:var(--bg-body);
+      -webkit-font-smoothing:antialiased;
+    }
+    a { text-decoration:none; color:inherit; }
+    ::-webkit-scrollbar { width:6px; height:6px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:rgba(0,0,0,.12); border-radius:3px; }
+    ::-webkit-scrollbar-thumb:hover { background:rgba(0,0,0,.2); }
+
+    .layout { display:flex; flex-direction:column; min-height:100vh; }
+    .body-wrap { display:flex; flex:1; overflow:hidden; }
+    .main { flex:1; display:flex; flex-direction:column; overflow-y:auto; background:var(--bg-body); }
+
+    .page-header {
+      background:var(--bg-card); padding:0 20px;
+      border-bottom:1px solid var(--border-light);
+      display:flex; align-items:stretch; flex-shrink:0;
+      min-height:52px;
+    }
+    .page-header-left {
+      display:flex; align-items:center; gap:12px; padding:10px 0;
+    }
+    .page-header-nav {
+      display:flex; align-items:stretch; margin-left:auto;
+    }
+    .page-nav-item {
+      display:flex; align-items:center; padding:0 20px;
+      font-size:14px; font-weight:500; color:var(--text-primary);
+      cursor:pointer; position:relative; transition:color .2s, border-color .2s;
+      border-bottom:3px solid transparent; margin-bottom:-1px;
+    }
+    .page-nav-item:hover { color:var(--primary); }
+    .page-nav-item.active {
+      color:var(--primary); font-weight:600;
+      border-bottom-color:var(--primary);
+    }
+    .selector {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 14px; border:1px solid #E2E8F0;
+      border-radius:999px; cursor:pointer; font-size:13px;
+      background:#fff; transition:all .2s; font-weight:500;
+      color:var(--text-primary);
+    }
+    .selector:hover { border-color:var(--primary); color:var(--primary); }
+    .selector .arrow-down { font-size:10px; color:var(--text-hint); }
+
+    .page-sub { padding:10px 20px 0; font-size:12px; color:var(--text-hint); }
+    .intro-card {
+      margin:12px 20px; padding:14px 16px; background:var(--bg-card);
+      border:1px solid var(--border-light); border-radius:var(--radius-lg);
+      box-shadow:var(--shadow-sm); font-size:12.5px; line-height:1.75; color:var(--text-secondary);
+    }
+
+    .subsystem-label {
+      margin:12px 20px 0; font-size:13px; font-weight:700; color:var(--text-primary);
+    }
+    .status-banner {
+      margin:6px 20px 12px; padding:14px 16px; background:var(--bg-card);
+      border:1px solid var(--border-light); border-radius:var(--radius-lg);
+      box-shadow:var(--shadow-sm);
+      display:flex; align-items:center; gap:24px; flex-wrap:wrap;
+    }
+    .status-banner .meta { display:flex; flex-direction:column; gap:4px; }
+    .status-banner .meta .k { font-size:11px; color:var(--text-hint); }
+    .status-banner .meta .v { font-size:13px; font-weight:600; }
+    .badge-idle {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600;
+      background:#F1F5F9; color:var(--text-secondary);
+    }
+    .badge-run {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600;
+      background:var(--success-light); color:var(--success);
+    }
+    .badge-run i { width:6px; height:6px; border-radius:50%; background:var(--success); animation:pulse 1.2s ease infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.45} }
+    .badge-link {
+      font-size:12px; color:var(--primary); cursor:pointer; text-decoration:underline dotted;
+    }
+    .status-actions { display:flex; gap:8px; margin-left:auto; flex-wrap:wrap; }
+
+    .btn {
+      display:inline-flex; align-items:center; gap:6px; padding:6px 14px;
+      border-radius:7px; border:1px solid var(--border); cursor:pointer;
+      font-size:12px; font-weight:500; background:#fff; transition:all .2s;
+    }
+    .btn:hover { border-color:#B8C6D8; color:var(--primary); background:#F8FBFF; }
+    .btn-primary { background:var(--primary); color:#fff; border-color:transparent; }
+    .btn-primary:hover { background:var(--primary-dark); color:#fff; }
+    .btn-danger-outline { color:var(--danger); border-color:#FECACA; background:#FFF7F7; }
+    .btn-danger-outline:hover { background:#FEE2E2; color:var(--danger); }
+
+    .chart-card {
+      margin:12px 20px; padding:16px; background:var(--bg-card);
+      border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm);
+    }
+    .chart-card h4 { font-size:13px; font-weight:600; margin-bottom:12px; }
+    .chart-grid {
+      display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; margin-bottom:12px;
+    }
+    .chart-card.chart-card-compact { margin:0; }
+    .chart-legend-inline {
+      display:flex; gap:20px; font-size:11px; color:var(--text-secondary); margin-bottom:8px; flex-wrap:wrap;
+    }
+    .chart-legend-inline span { display:flex; align-items:center; gap:6px; }
+    .lg-dot { width:10px; height:10px; border-radius:2px; }
+    .lg-line { width:18px; height:0; border-top:2px solid currentColor; }
+    .lg-line-dashed { border-top-style:dashed; }
+    .chart-canvas-h { height:220px; position:relative; }
+    .chart-canvas-h canvas { width:100%!important; height:100%!important; }
+    .chart-card-compact .chart-canvas-h { height:190px; }
+    @media (max-width:960px) {
+      .chart-grid { grid-template-columns:1fr; }
+    }
+
+    .section-block {
+      margin:12px 20px 0;
+    }
+    .section-block-title {
+      font-size:13px; font-weight:700; color:var(--text-primary); margin-bottom:10px;
+    }
+    .filter-bar {
+      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+      padding:10px 12px; background:var(--bg-card);
+      border:1px solid var(--border-light); border-radius:var(--radius-lg);
+      font-size:12px; color:var(--text-secondary);
+      margin-bottom:12px;
+    }
+    .filter-bar label { font-weight:600; white-space:nowrap; }
+    .filter-bar input[type="date"] {
+      padding:5px 10px; border:1px solid var(--border); border-radius:7px; font-size:12px;
+    }
+    .btn-refresh {
+      margin-left:auto; display:inline-flex; align-items:center; gap:5px;
+      padding:5px 12px; border:1px solid var(--border); border-radius:7px;
+      font-size:12px; cursor:pointer; background:#fff; color:var(--text-secondary);
+      transition:all .2s;
+    }
+    .btn-refresh:hover { color:var(--primary); border-color:var(--primary); }
+
+    .data-table-wrap {
+      margin:12px 20px; background:var(--bg-card); border-radius:var(--radius-lg);
+      border:1px solid var(--border); overflow-x:auto; box-shadow:var(--shadow-sm);
+    }
+    .data-table { width:100%; border-collapse:collapse; min-width:1400px; }
+    .data-table th {
+      background:#F8FAFC; padding:9px 10px; text-align:left; font-size:11px;
+      font-weight:600; color:var(--text-secondary); border-bottom:1px solid var(--border);
+      white-space:nowrap; vertical-align:middle;
+    }
+    .data-table td {
+      padding:8px 10px; font-size:11.5px; border-bottom:1px solid var(--border-light);
+      vertical-align:middle; line-height:1.5; white-space:nowrap;
+    }
+    .data-table tr:hover td { background:#FAFCFF; }
+    .cell-muted { color:var(--text-hint); font-size:11px; }
+    .td-category {
+      font-size:12px; font-weight:700; color:var(--text-primary);
+      background:#F8FAFC; text-align:center; border-right:1px solid var(--border);
+    }
+    .td-param {
+      font-size:11.5px; color:var(--text-secondary); background:#FAFCFF;
+      border-right:1px solid var(--border-light); white-space:nowrap; min-width:100px;
+    }
+
+    /* ── 规则配置弹窗 ── */
+    .modal-mask {
+      position:fixed; inset:0; z-index:1000;
+      background:rgba(10,20,40,.45); display:flex;
+      align-items:center; justify-content:center;
+      opacity:0; pointer-events:none; transition:opacity .2s;
+    }
+    .modal-mask.show { opacity:1; pointer-events:auto; }
+    .modal-box {
+      background:#fff; border-radius:10px;
+      box-shadow:0 8px 40px rgba(15,23,42,.18);
+      width:680px; max-width:calc(100vw - 32px);
+      max-height:calc(100vh - 60px);
+      display:flex; flex-direction:column;
+      transform:translateY(10px) scale(.98); transition:transform .2s;
+      overflow:hidden;
+    }
+    .modal-mask.show .modal-box { transform:translateY(0) scale(1); }
+    .modal-head {
+      display:flex; align-items:center; gap:10px;
+      padding:14px 20px 0; flex-shrink:0;
+    }
+    .modal-title { font-size:15px; font-weight:700; flex:1; }
+    .modal-close { font-size:22px; line-height:1; color:var(--text-hint); cursor:pointer; }
+    .modal-close:hover { color:var(--text-primary); }
+    .modal-tabs {
+      display:flex; border-bottom:1px solid var(--border-light);
+      margin:0 20px; flex-shrink:0; margin-top:10px;
+    }
+    .modal-tab-item {
+      padding:8px 16px; font-size:13px; font-weight:500;
+      color:var(--text-secondary); cursor:pointer;
+      border-bottom:2px solid transparent; margin-bottom:-1px; transition:all .15s;
+    }
+    .modal-tab-item:hover { color:var(--primary); }
+    .modal-tab-item.active { color:var(--primary); border-bottom-color:var(--primary); }
+    .modal-body { padding:16px 20px 4px; flex:1; overflow-y:auto; font-size:12.5px; }
+    .modal-pane { display:none; }
+    .modal-pane.active { display:block; }
+    .modal-foot {
+      display:flex; align-items:center; justify-content:flex-end; gap:10px;
+      padding:12px 20px; flex-shrink:0; border-top:1px solid var(--border-light);
+    }
+    .btn-fill { background:var(--primary); color:#fff; border-color:transparent; }
+    .btn-fill:hover { background:var(--primary-dark); color:#fff; }
+
+    /* ── 表单通用 ── */
+    .form-group { margin-bottom:14px; }
+    .form-label { font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:5px; }
+    .required { color:var(--danger); margin-right:2px; }
+    .form-control {
+      width:100%; padding:5px 10px; border:1px solid var(--border); border-radius:5px;
+      font-size:12.5px; outline:none; color:var(--text-primary); background:#fff;
+      transition:border-color .15s;
+    }
+    .form-control:focus { border-color:var(--primary); }
+    .form-row { display:flex; align-items:center; gap:8px; }
+    .form-suffix { font-size:12px; color:var(--text-secondary); white-space:nowrap; }
+    .form-section {
+      font-size:11.5px; font-weight:700; color:var(--text-secondary);
+      padding:6px 0 6px; margin-bottom:8px;
+      border-bottom:1px solid var(--border-light);
+      letter-spacing:.04em; text-transform:uppercase;
+    }
+
+    /* ── 开关 ── */
+    .toggle-switch { position:relative; display:inline-block; width:32px; height:18px; flex-shrink:0; }
+    .toggle-switch input { opacity:0; width:0; height:0; }
+    .toggle-slider {
+      position:absolute; cursor:pointer; inset:0;
+      background:#CBD5E1; border-radius:18px; transition:.2s;
+    }
+    .toggle-slider::before {
+      content:''; position:absolute; width:12px; height:12px;
+      left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s;
+    }
+    .toggle-switch input:checked + .toggle-slider { background:var(--primary); }
+    .toggle-switch input:checked + .toggle-slider::before { transform:translateX(14px); }
+
+    /* ── 设备数量规则表 ── */
+    .qty-rule-wrap { border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+    .qty-rule-table { width:100%; border-collapse:collapse; }
+    .qty-rule-table th {
+      background:#F8FAFC; padding:6px 10px; text-align:left;
+      font-size:11px; font-weight:600; color:var(--text-secondary);
+      border-bottom:1px solid var(--border); white-space:nowrap;
+    }
+    .qty-rule-table td {
+      padding:7px 10px; font-size:12px;
+      border-bottom:1px solid var(--border-light); vertical-align:middle;
+    }
+    .qty-rule-table tr:last-child td { border-bottom:none; }
+    .qty-rule-table tbody tr:hover td { background:#FAFCFF; }
+    .rule-device { font-weight:600; font-size:11.5px; color:var(--text-secondary); margin-right:4px; }
+    .rule-param { font-size:11.5px; color:var(--text-primary); }
+    .qty-radio-label {
+      display:inline-flex; align-items:center; gap:5px;
+      cursor:pointer; font-size:11.5px; white-space:nowrap; user-select:none;
+    }
+    .qty-radio-label input[type="radio"] { accent-color:var(--success); width:13px; height:13px; flex-shrink:0; }
+    .qty-radio-text { color:var(--text-secondary); }
+    .qty-radio-text.active { color:var(--success); font-weight:500; }
+    .dot-green { width:7px; height:7px; border-radius:50%; background:#52C41A; flex-shrink:0; }
+
+    /* ── 寻优目标偏好滑块（v1.8 新增） ── */
+    .pref-slider-group { margin-bottom:20px; }
+    .pref-slider-end-labels {
+      display:flex; justify-content:space-between; align-items:center;
+      font-size:11px; color:var(--text-secondary); margin-bottom:6px; font-weight:500;
+    }
+    .pref-slider-ticks {
+      display:flex; justify-content:space-between;
+      font-size:10px; color:var(--text-hint); margin:0 0 4px;
+      font-variant-numeric:tabular-nums;
+    }
+    .pref-slider-default-cap { font-size:10px; color:var(--text-hint); text-align:center; margin:-2px 0 6px; }
+    input.range-pref { width:100%; height:6px; margin:0; cursor:pointer; accent-color:var(--primary); }
+    .pref-slider-meta {
+      display:flex; justify-content:space-between; align-items:center;
+      font-size:11px; margin-top:6px; color:var(--text-secondary);
+    }
+    .pref-slider-meta .pref-val { font-weight:700; color:var(--primary); font-variant-numeric:tabular-nums; }
+    .pref-slider-group.is-na .range-pref { opacity:.45; pointer-events:none; cursor:not-allowed; }
+    .pref-slider-group.is-na .pref-na-tag { font-size:10px; font-weight:600; color:var(--warning); margin-left:6px; }
+    .smart-recommend-btn {
+      display:inline-flex; align-items:center; gap:5px;
+      padding:3px 10px; border-radius:5px; cursor:pointer;
+      font-size:11px; font-weight:600; border:1px solid #7C3AED;
+      color:#7C3AED; background:#F5F3FF; transition:all .2s;
+      margin-left:auto; white-space:nowrap; line-height:1.6;
+    }
+    .smart-recommend-btn:hover { background:#EDE9FE; border-color:#6D28D9; color:#6D28D9; }
+    .smart-recommend-btn:active { transform:scale(.96); }
+    .smart-recommend-btn svg { width:13px; height:13px; fill:currentColor; flex-shrink:0; }
+    .smart-recommend-btn.loading { pointer-events:none; opacity:.7; }
+    @keyframes sparkle { 0%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.1)} 100%{opacity:1;transform:scale(1)} }
+    .smart-recommend-btn.loading svg { animation:sparkle .6s ease infinite; }
+    .pref-section-header { display:flex; align-items:center; gap:8px; }
+    .pref-recommend-toast {
+      font-size:10.5px; color:#7C3AED; font-weight:500;
+      opacity:0; transition:opacity .3s; margin-left:8px; white-space:nowrap;
+    }
+    .pref-recommend-toast.show { opacity:1; }
+
+    /* ── 模拟量规则表 ── */
+    .analog-rule-wrap { border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+    .analog-rule-table { width:100%; border-collapse:collapse; }
+    .analog-rule-table th {
+      background:#F8FAFC; padding:6px 10px; text-align:left;
+      font-size:11px; font-weight:600; color:var(--text-secondary);
+      border-bottom:1px solid var(--border); white-space:nowrap;
+    }
+    .analog-rule-table td {
+      padding:6px 10px; font-size:12px;
+      border-bottom:1px solid var(--border-light); vertical-align:middle;
+    }
+    .analog-rule-table tr:last-child td { border-bottom:none; }
+    .analog-rule-table tbody tr:hover td { background:#FAFCFF; }
+    .rule-num { width:72px !important; padding:3px 6px; text-align:center; }
+
+    /* ── 投入/投出列表 ── */
+    .io-list { display:flex; flex-direction:column; gap:2px; margin-bottom:14px; }
+    .io-item {
+      display:flex; align-items:center; gap:10px; padding:6px 10px;
+      border:1px solid var(--border-light); border-radius:5px; background:#fff;
+    }
+    .io-name { flex:1; font-size:12px; color:var(--text-primary); }
+    .io-status {
+      font-size:10.5px; font-weight:600; padding:1px 7px;
+      border-radius:8px; line-height:1.6; flex-shrink:0;
+    }
+    .io-status.in { background:#F6FFED; color:#52C41A; }
+    .io-status.out { background:#FFF1F0; color:#FF4D4F; }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+</head>
+<body>
+<div class="layout">
+  <div id="app-header"></div>
+  <div class="body-wrap">
+    <div id="app-sidebar"></div>
+    <div class="main">
+
+      <div class="anno anno-version-header" data-version="v2.0">
+        <span class="anno-tag">版本信息</span>
+        <div class="anno-body">
+          <p><b>当前版本：</b>v2.0</p>
+          <p><b>更新日期：</b>2026-05-08</p>
+          <p><b>主要变化（v2.0）：</b>适配风冷冷水系统：规则配置中的设备数量寻优规则、模拟量寻优规则、投入/投出配置均隐藏冷却侧设备及参数（板换 / 冷却水泵 / 冷却塔 / 冷却水温度等）；环境变量与寻优明细展示「室外干球温度」，不再沿用水冷冷水系统的「室外湿球温度」展示口径。</p>
+          <p><b>主要变化（v1.8）：</b>规则配置弹窗对齐「冷站全局寻优」最新版本——寻优规划配置 Tab 包含：天气预报城市、预测步长（每小时 / 每 2 / 4 / 6 小时，默认每 2 小时）、仿真模型、安全边界、寻优器（L-SHADE / SLSQP，切换后参数联动）、种群初始化数量、种群最终数量、最大迭代数；设备数量寻优规则表（水冷冷水机组 / 板式换热器 / 冷冻水泵 / 冷却水泵 / 冷却塔）；模拟量寻优规则表（步长 + 默认值）；新增「寻优目标偏好」三个滑块（安全余量偏好 λ₁、设备切换容忍度 λ₂、参数平稳偏好 λ₃），长周期寻优涉及设备启停时序规划，λ₂ 本页<b>可用</b>（柔性寻优页置灰）；λ₃ 长周期各时段独立求解不涉及时序平稳性，本页<b>置灰不可用</b>（柔性寻优页可调）；投入/投出配置 Tab 与全局寻优保持一致。</p>
+          <p><b>历史版本（v1.0）：</b>由古典 Axure「冷站长周期寻优」迁移至 AI 原型；含环境变量预测图、系统能效趋势图、寻优明细结构化表；规则配置为简单文字占位弹窗。</p>
+        </div>
+      </div>
+
+      <div class="page-header">
+        <div class="page-header-left">
+          <a href="index.html" style="display:inline-flex; align-items:center; gap:4px; font-size:14px; color:var(--text-primary); cursor:pointer; text-decoration:none; margin-right:4px;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-primary)'">
+            <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            返回
+          </a>
+          <div class="selector">前海园区 <span class="arrow-down">▾</span></div>
+          <div class="selector">1号冷站 <span class="arrow-down">▾</span></div>
+        </div>
+        <div class="page-header-nav">
+          <div class="page-nav-item" onclick="window.location.assign(encodeURI('冷站柔性调优.html'))">冷站柔性调优</div>
+          <div class="page-nav-item" onclick="window.location.assign(encodeURI('冷站全局寻优.html'))">冷站全局寻优</div>
+          <div class="page-nav-item active">冷站长周期寻优</div>
+        </div>
+      </div>
+
+      <div class="anno anno-req" data-version="v1.0">
+        <span class="anno-tag">需求说明</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>页顶说明区</p>
+          <p>产品一句话与古典稿一致：基于未来 24 小时天气/负荷预测，提前规划系统控制策略以提升能效。</p>
+        </div>
+      </div>
+
+      <div class="intro-card">
+        基于未来 24 小时天气/负荷预测，提前规划系统的控制策略，进一步提升系统能效水平。
+      </div>
+
+      <div class="anno anno-ux" data-version="v1.0">
+        <span class="anno-tag">交互说明</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>寻优状态卡</p>
+          <p>「开始寻优」点击后触发寻优任务，状态变为"寻优中"，按钮切换为「停止寻优」（需二次确认）；「规则配置」打开弹窗占位，完整表单项可与算法/边界配置对齐后迭代。「测试安全边界」为可点击链接，跳转安全边界配置页。</p>
+        </div>
+      </div>
+
+      <div class="subsystem-label">风冷冷水系统</div>
+      <div class="status-banner">
+        <div class="meta">
+          <span class="k">寻优状态</span>
+          <span class="v"><span class="badge-idle">未寻优</span></span>
+        </div>
+        <div class="meta">
+          <span class="k">最新寻优时间</span>
+          <span class="v">2026-01-29 23:00:00</span>
+        </div>
+        <div class="meta">
+          <span class="k">当前安全边界</span>
+          <span class="v"><span class="badge-link">测试安全边界</span></span>
+        </div>
+        <div class="status-actions">
+          <button type="button" class="btn btn-primary" onclick="alert('开始寻优已触发')">
+            <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3l14 9-14 9V3z"/></svg>
+            开始寻优
+          </button>
+          <button type="button" class="btn" onclick="openRuleModal()">规则配置</button>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-block-title">寻优记录</div>
+        <div class="filter-bar">
+          <input type="date" value="2026-01-28">
+          <span style="color:var(--text-hint);">～</span>
+          <input type="date" value="2026-01-29">
+          <span style="font-size:18px; color:var(--text-hint); cursor:pointer;" title="选择日期范围">📅</span>
+          <button class="btn-refresh" onclick="this.style.transform='rotate(360deg)'; this.style.transition='transform .5s';">
+            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            刷新
+          </button>
+        </div>
+
+        <div class="anno anno-ux" data-version="v1.0">
+          <span class="anno-tag">交互说明</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>环境变量预测图</p>
+            <p>拆分为「冷量」和「室外干球温度」两张图，每张图仅展示单一指标的实际值与预测值；X 轴为时间戳，Y 轴为该指标数值。</p>
+          </div>
+        </div>
+
+        <div class="anno anno-ux" data-version="v1.0">
+          <span class="anno-tag">交互说明</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>系统能效寻优图</p>
+            <p>拆分为「制冷能效 COP」和「总电功率」两张图，每张图仅展示单一指标的实际值与预测值，便于对比预测偏差。</p>
+          </div>
+        </div>
+
+        <div class="chart-grid">
+          <div class="chart-card chart-card-compact">
+            <h4>冷量（kW）</h4>
+            <div class="chart-legend-inline">
+              <span style="color:#0EA5E9;"><i class="lg-line"></i>实际值</span>
+              <span style="color:#7DD3FC;"><i class="lg-line lg-line-dashed"></i>预测值</span>
+            </div>
+            <div class="chart-canvas-h"><canvas id="coolingLoadChart"></canvas></div>
+          </div>
+          <div class="chart-card chart-card-compact">
+            <h4>室外干球温度（℃）</h4>
+            <div class="chart-legend-inline">
+              <span style="color:#06B6D4;"><i class="lg-line"></i>实际值</span>
+              <span style="color:#67E8F9;"><i class="lg-line lg-line-dashed"></i>预测值</span>
+            </div>
+            <div class="chart-canvas-h"><canvas id="outdoorTempChart"></canvas></div>
+          </div>
+          <div class="chart-card chart-card-compact">
+            <h4>制冷能效 COP</h4>
+            <div class="chart-legend-inline">
+              <span style="color:#6366F1;"><i class="lg-line"></i>实际值</span>
+              <span style="color:#A5B4FC;"><i class="lg-line lg-line-dashed"></i>预测值</span>
+            </div>
+            <div class="chart-canvas-h"><canvas id="copMetricChart"></canvas></div>
+          </div>
+          <div class="chart-card chart-card-compact">
+            <h4>总电功率（kW）</h4>
+            <div class="chart-legend-inline">
+              <span style="color:#22C55E;"><i class="lg-line"></i>实际值</span>
+              <span style="color:#86EFAC;"><i class="lg-line lg-line-dashed"></i>预测值</span>
+            </div>
+            <div class="chart-canvas-h"><canvas id="totalPowerChart"></canvas></div>
+          </div>
+        </div>
+
+        <div class="anno anno-field" data-version="v1.0">
+          <span class="anno-tag">字段说明</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>寻优明细表</p>
+            <p>表格行方向为参数维度（分类 + 参数名称），列方向为逐小时时间戳。风冷冷水系统分类包含：实时制冷量、室外干球温度、制冷系统能效 COP、总功率；可调设备保留风冷冷水机组与冷冻水泵，冷却水泵、冷却塔、板换等冷却侧设备不展示。数据由后端「最新寻优记录」接口驱动，此处为静态占位数据。</p>
+          </div>
+        </div>
+
+        <div class="section-block-title" style="margin-top:4px;">寻优明细</div>
+        <div class="data-table-wrap" style="margin:0;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="min-width:90px;">分类</th>
+                <th style="min-width:110px;">参数名称</th>
+                <th>2026-01-28 00:00:00</th>
+                <th>2026-01-28 01:00:00</th>
+                <th>2026-01-28 02:00:00</th>
+                <th>2026-01-28 03:00:00</th>
+                <th>2026-01-28 04:00:00</th>
+                <th>2026-01-28 05:00:00</th>
+                <th>2026-01-28 06:00:00</th>
+              </tr>
+            </thead>
+            <tbody id="detailBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── 规则配置弹窗 ── -->
+<div class="modal-mask" id="modalRuleConfig">
+  <div class="modal-box" style="max-width:700px;">
+    <div class="modal-head">
+      <span class="modal-title">冷站长周期寻优规则配置</span>
+      <span class="modal-close" onclick="closeRuleModal()">&times;</span>
+    </div>
+    <div class="modal-tabs">
+      <div class="modal-tab-item active" data-mtab="planConfig" onclick="switchModalTab(this)">寻优规划配置</div>
+      <div class="modal-tab-item" data-mtab="ioConfig" onclick="switchModalTab(this)">投入/投出配置</div>
+    </div>
+
+    <!-- Tab 1：寻优规划配置 -->
+    <div class="modal-body modal-pane active" id="mpane-planConfig">
+
+      <div class="form-group">
+        <div class="form-label"><span class="required">*</span> 天气预报城市</div>
+        <input type="text" class="form-control" id="longWeatherCity" value="深圳" placeholder="请输入城市名称" autocomplete="off">
+      </div>
+
+      <div class="form-group">
+        <div class="form-label"><span class="required">*</span> 预测步长</div>
+        <select class="form-control" id="longPredStep">
+          <option value="">请选择</option>
+          <option value="1">每小时预测 1 次</option>
+          <option value="2" selected>每 2 小时预测 1 次</option>
+          <option value="4">每 4 小时预测 1 次</option>
+          <option value="6">每 6 小时预测 1 次</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <div class="form-label"><span class="required">*</span> 仿真模型</div>
+        <select class="form-control">
+          <option value="">请选择</option>
+          <option>仿真模型</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <div class="form-label"><span class="required">*</span> 安全边界</div>
+        <select class="form-control">
+          <option value="">请选择</option>
+          <option>测试安全边界</option>
+          <option>保守模式1</option>
+          <option>标准模式</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <div class="form-label"><span class="required">*</span> 寻优器</div>
+        <select class="form-control" id="longOptimizer" onchange="onLongOptimizerChange(this.value)">
+          <option value="">请选择</option>
+          <option value="lshade" selected>L-SHADE 优化器</option>
+          <option value="slsqp">SLSQP 梯度优化器</option>
+        </select>
+      </div>
+
+      <!-- L-SHADE 专属参数 -->
+      <div id="longParams-lshade">
+        <div class="form-group">
+          <div class="form-label"><span class="required">*</span> 种群初始化数量</div>
+          <input type="number" class="form-control" value="50.0" step="1" min="1">
+        </div>
+        <div class="form-group">
+          <div class="form-label"><span class="required">*</span> 种群最终数量</div>
+          <input type="number" class="form-control" value="10.0" step="1" min="1">
+        </div>
+        <div class="form-group">
+          <div class="form-label"><span class="required">*</span> 最大迭代数</div>
+          <input type="number" class="form-control" value="50.0" step="1" min="1">
+        </div>
+      </div>
+
+      <!-- SLSQP 专属参数 -->
+      <div id="longParams-slsqp" style="display:none;">
+        <div class="form-group">
+          <div class="form-label"><span class="required">*</span> 最大迭代数</div>
+          <input type="number" class="form-control" value="200.0" step="1" min="1">
+        </div>
+        <div class="form-group">
+          <div class="form-label"><span class="required">*</span> 收敛精度（小数位数）</div>
+          <input type="number" class="form-control" value="1.0" step="1" min="0">
+        </div>
+      </div>
+
+      <!-- 设备数量寻优规则 -->
+      <div class="form-section">设备数量寻优规则</div>
+      <div class="form-group">
+        <div class="qty-rule-wrap">
+          <table class="qty-rule-table">
+            <thead>
+              <tr>
+                <th style="width:180px;">规则名称</th>
+                <th style="width:70px;">启用开关</th>
+                <th>默认开机设备</th>
+                <th>指定设备<span class="required">*</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="rule-device">风冷冷水机组</span><span class="rule-param" style="color:var(--text-secondary);">运行状态</span></td>
+                <td><label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label></td>
+                <td><label class="qty-radio-label"><input type="radio" name="lDevRule0" value="follow" checked> <span class="dot-green"></span><span class="qty-radio-text active">跟随实际开机设备</span></label></td>
+                <td><label class="qty-radio-label"><input type="radio" name="lDevRule0" value="specify"> <span class="qty-radio-text">指定开机设备</span></label></td>
+              </tr>
+              <tr>
+                <td><span class="rule-device">冷冻水泵</span><span class="rule-param" style="color:var(--text-secondary);">运行状态</span></td>
+                <td><label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label></td>
+                <td><label class="qty-radio-label"><input type="radio" name="lDevRule1" value="follow" checked> <span class="dot-green"></span><span class="qty-radio-text active">跟随实际开机设备</span></label></td>
+                <td><label class="qty-radio-label"><input type="radio" name="lDevRule1" value="specify"> <span class="qty-radio-text">指定开机设备</span></label></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 模拟量寻优规则 -->
+      <div class="form-section">模拟量寻优规则</div>
+      <div class="form-group">
+        <div class="analog-rule-wrap">
+          <table class="analog-rule-table">
+            <thead>
+              <tr>
+                <th>规则名称</th>
+                <th style="width:70px;">启用开关</th>
+                <th style="width:88px;">寻优步长<span class="required">*</span></th>
+                <th style="width:88px;">默认值<span class="required">*</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="rule-device">风冷冷水机组</span><span class="rule-param">冷冻水出水温度</span></td>
+                <td><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></td>
+                <td><input type="number" class="form-control rule-num" value="1"></td>
+                <td><input type="number" class="form-control rule-num" value="16"></td>
+              </tr>
+              <tr>
+                <td><span class="rule-device">冷冻水泵</span><span class="rule-param">频率反馈</span></td>
+                <td><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></td>
+                <td><input type="number" class="form-control rule-num" value="1"></td>
+                <td><input type="number" class="form-control rule-num" value="30"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 寻优目标偏好（v1.8 新增） -->
+      <div class="form-section pref-section-header" style="margin-top:4px;">
+        <span>寻优目标偏好</span>
+        <button type="button" class="smart-recommend-btn" id="lSmartRecommendBtn" onclick="smartRecommendLong(this)">
+          <svg viewBox="0 0 24 24"><path d="M9 21c0 .5.4 1 1 1h4c.6 0 1-.5 1-1v-1H9v1zm3-19C8.1 2 5 5.1 5 9c0 2.4 1.2 4.5 3 5.7V17c0 .5.4 1 1 1h6c.6 0 1-.5 1-1v-2.3c1.8-1.3 3-3.4 3-5.7 0-3.9-3.1-7-7-7zm2.9 11.1l-.9.6V16h-4v-2.3l-.9-.6C7.8 12.2 7 10.6 7 9c0-2.8 2.2-5 5-5s5 2.2 5 5c0 1.6-.8 3.2-2.1 4.1z"/></svg>
+          智能推荐
+        </button>
+        <span class="pref-recommend-toast" id="lSmartToast"></span>
+      </div>
+      <p style="font-size:11.5px;color:var(--text-secondary);line-height:1.5;margin:-6px 0 14px;">
+        在省电基础上，用三个滑块调节偏好强度；值为 0 时退化为仅最小功率模式。
+      </p>
+
+      <div class="anno anno-req" data-version="v1.8" style="margin-bottom:16px;">
+        <span class="anno-tag">需求说明</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>冷站长周期寻优规则配置 —「寻优目标偏好」（v1.8 新增）</p>
+          <p>多目标加权寻优配置，对应目标函数 J = P_norm + λ₁·C_safety + λ₂·C_switch + λ₃·C_swing。</p>
+          <ul>
+            <li><b>安全余量偏好（λ₁）：</b>0.00～0.50，默认 0.10；越大寻优结果越远离安全硬边界。</li>
+            <li><b>设备切换容忍度（λ₂）：</b>0.00～0.50，默认 0.15；长周期寻优涉及设备启停时序规划，本页<b>可用</b>（柔性寻优页置灰）。</li>
+            <li><b>参数平稳偏好（λ₃）：</b>0.00～0.30，默认 0.05；长周期各时段独立求解，不涉及时序平稳性，本页<b>置灰不可用</b>，默认 0（柔性寻优页可调）。</li>
+          </ul>
+          <p>三项权重均为 0 时行为与原单目标最小功率等价（向下兼容）。</p>
+        </div>
+      </div>
+
+      <div class="form-group pref-slider-group">
+        <div class="form-label">安全余量偏好（λ₁）</div>
+        <div class="pref-slider-end-labels"><span>够用就行</span><span>留足余量</span></div>
+        <div class="pref-slider-ticks"><span>0.00</span><span>0.10</span><span>0.30</span><span>0.50</span></div>
+        <div class="pref-slider-default-cap">（刻度默认参考点：0.10）</div>
+        <input type="range" class="range-pref" id="lPrefL1" min="0" max="0.5" step="0.01" value="0.10" aria-label="安全余量偏好">
+        <div class="pref-slider-meta"><span>当前值</span><span class="pref-val" id="lPrefL1Val">0.10</span></div>
+      </div>
+
+      <div class="form-group pref-slider-group">
+        <div class="form-label">设备切换容忍度（λ₂）</div>
+        <div class="pref-slider-end-labels"><span>随意切换</span><span>尽量别动</span></div>
+        <div class="pref-slider-ticks"><span>0.00</span><span>0.15</span><span>0.30</span><span>0.50</span></div>
+        <div class="pref-slider-default-cap">（刻度默认参考点：0.15，长周期寻优涉及设备启停时序，本项可调）</div>
+        <input type="range" class="range-pref" id="lPrefL2" min="0" max="0.5" step="0.01" value="0.15" aria-label="设备切换容忍度">
+        <div class="pref-slider-meta"><span>当前值</span><span class="pref-val" id="lPrefL2Val">0.15</span></div>
+      </div>
+
+      <div class="form-group pref-slider-group is-na" id="lPrefL3Wrap">
+        <div class="form-label">参数平稳偏好（λ₃）<span class="pref-na-tag">本页策略不适用</span></div>
+        <div class="pref-slider-end-labels"><span>可以跳</span><span>越平越好</span></div>
+        <div class="pref-slider-ticks"><span>0.00</span><span>0.05</span><span>0.15</span><span>0.30</span></div>
+        <div class="pref-slider-default-cap">长周期寻优各时段独立求解，不涉及时序平稳性；柔性寻优中可调</div>
+        <input type="range" class="range-pref" id="lPrefL3" min="0" max="0.3" step="0.01" value="0" disabled aria-label="参数平稳偏好">
+        <div class="pref-slider-meta"><span>当前值</span><span class="pref-val" id="lPrefL3Val">0.00</span></div>
+      </div>
+
+    </div><!-- /mpane-planConfig -->
+
+    <!-- Tab 2：投入/投出配置 -->
+    <div class="modal-body modal-pane" id="mpane-ioConfig" style="padding-top:14px;">
+
+      <div class="form-section">冷冻水系统测点</div>
+      <div class="io-list">
+        <div class="io-item">
+          <span class="io-name">1号冷站—冷冻水总管供水温度</span>
+          <label class="toggle-switch"><input type="checkbox" checked onchange="this.closest('.io-item').querySelector('.io-status').className='io-status '+(this.checked?'in':'out');this.closest('.io-item').querySelector('.io-status').textContent=this.checked?'投入':'投出';"><span class="toggle-slider"></span></label>
+          <span class="io-status in">投入</span>
+        </div>
+        <div class="io-item">
+          <span class="io-name">1号冷站—冷冻水总管回水温度</span>
+          <label class="toggle-switch"><input type="checkbox" checked onchange="this.closest('.io-item').querySelector('.io-status').className='io-status '+(this.checked?'in':'out');this.closest('.io-item').querySelector('.io-status').textContent=this.checked?'投入':'投出';"><span class="toggle-slider"></span></label>
+          <span class="io-status in">投入</span>
+        </div>
+        <div class="io-item">
+          <span class="io-name">1号冷站—分集水器压差</span>
+          <label class="toggle-switch"><input type="checkbox" checked onchange="this.closest('.io-item').querySelector('.io-status').className='io-status '+(this.checked?'in':'out');this.closest('.io-item').querySelector('.io-status').textContent=this.checked?'投入':'投出';"><span class="toggle-slider"></span></label>
+          <span class="io-status in">投入</span>
+        </div>
+        <div class="io-item">
+          <span class="io-name">1号冷站—末端最不利供回水压差</span>
+          <label class="toggle-switch"><input type="checkbox" onchange="this.closest('.io-item').querySelector('.io-status').className='io-status '+(this.checked?'in':'out');this.closest('.io-item').querySelector('.io-status').textContent=this.checked?'投入':'投出';"><span class="toggle-slider"></span></label>
+          <span class="io-status out">投出</span>
+        </div>
+      </div>
+
+      <div class="form-section">室外环境</div>
+      <div class="io-list">
+        <div class="io-item">
+          <span class="io-name">1号冷站—室外干球温度</span>
+          <label class="toggle-switch"><input type="checkbox" checked onchange="this.closest('.io-item').querySelector('.io-status').className='io-status '+(this.checked?'in':'out');this.closest('.io-item').querySelector('.io-status').textContent=this.checked?'投入':'投出';"><span class="toggle-slider"></span></label>
+          <span class="io-status in">投入</span>
+        </div>
+      </div>
+
+      <div class="form-section">主要可调设备</div>
+      <div class="io-list">
+        <div class="io-item">
+          <span class="io-name">1#风冷冷水机组</span>
+          <label class="toggle-switch"><input type="checkbox" checked onchange="this.closest('.io-item').querySelector('.io-status').className='io-status '+(this.checked?'in':'out');this.closest('.io-item').querySelector('.io-status').textContent=this.checked?'投入':'投出';"><span class="toggle-slider"></span></label>
+          <span class="io-status in">投入</span>
+        </div>
+        <div class="io-item">
+          <span class="io-name">2#风冷冷水机组</span>
+          <label class="toggle-switch"><input type="checkbox" onchange="this.closest('.io-item').querySelector('.io-status').className='io-status '+(this.checked?'in':'out');this.closest('.io-item').querySelector('.io-status').textContent=this.checked?'投入':'投出';"><span class="toggle-slider"></span></label>
+          <span class="io-status out">投出</span>
+        </div>
+        <div class="io-item">
+          <span class="io-name">冷冻泵组</span>
+          <label class="toggle-switch"><input type="checkbox" checked onchange="this.closest('.io-item').querySelector('.io-status').className='io-status '+(this.checked?'in':'out');this.closest('.io-item').querySelector('.io-status').textContent=this.checked?'投入':'投出';"><span class="toggle-slider"></span></label>
+          <span class="io-status in">投入</span>
+        </div>
+      </div>
+
+    </div><!-- /mpane-ioConfig -->
+
+    <div class="modal-foot">
+      <button class="btn" onclick="closeRuleModal()">取 消</button>
+      <button class="btn btn-fill" onclick="closeRuleModal()">保 存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var axisColor = '#64748B';
+  var TIMES = ['01:00','03:00','05:00','07:00','09:00','11:00','13:00','15:00','17:00','19:00','21:00','23:00'];
+
+  function setupCanvas(id) {
+    var canvas = document.getElementById(id);
+    if (!canvas) return null;
+    var ctx = canvas.getContext('2d');
+    var wrap = canvas.parentElement;
+    var dpr = window.devicePixelRatio || 1;
+    var w = wrap.clientWidth, h = wrap.clientHeight;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+    ctx.scale(dpr, dpr);
+    return { canvas: canvas, ctx: ctx, w: w, h: h };
+  }
+
+  function drawLine(ctx, data, minV, maxV, pad, chartW, chartH, color, dash) {
+    var n = data.length;
+    ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.setLineDash(dash || []);
+    data.forEach(function(v, i) {
+      var x = pad.l + (i / (n - 1)) * chartW;
+      var y = pad.t + chartH - ((v - minV) / (maxV - minV)) * chartH;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  function drawGridAndAxis(ctx, w, h, pad, chartW, chartH, leftVals, rightVals) {
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = '#E2E8F0'; ctx.lineWidth = 1;
+    for (var g = 0; g <= 4; g++) {
+      var y = pad.t + (g / 4) * chartH;
+      ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + chartW, y); ctx.stroke();
+    }
+    ctx.fillStyle = axisColor; ctx.font = '10px system-ui,sans-serif';
+    ctx.textAlign = 'right';
+    leftVals.forEach(function(v, i) { ctx.fillText(v, pad.l - 6, pad.t + (i / 4) * chartH + 4); });
+    if (rightVals && rightVals.length) {
+      ctx.textAlign = 'left';
+      rightVals.forEach(function(v, i) { ctx.fillText(v, pad.l + chartW + 6, pad.t + (i / 4) * chartH + 4); });
+    }
+  }
+
+  function drawMetricChart(config) {
+    var o = setupCanvas(config.id);
+    if (!o) return;
+    var ctx = o.ctx, w = o.w, h = o.h;
+    var pad = { l: 54, r: 16, t: 14, b: 28 };
+    var chartW = w - pad.l - pad.r, chartH = h - pad.t - pad.b;
+    var leftVals = [config.max,config.max-(config.max-config.min)/4,config.max-(config.max-config.min)/2,config.max-(config.max-config.min)/4*3,config.min].map(config.format);
+    drawGridAndAxis(ctx, w, h, pad, chartW, chartH, leftVals, null);
+    drawLine(ctx, config.actual, config.min, config.max, pad, chartW, chartH, config.actualColor);
+    drawLine(ctx, config.predicted, config.min, config.max, pad, chartW, chartH, config.predictedColor, [5, 4]);
+    ctx.textAlign = 'center'; ctx.fillStyle = axisColor; ctx.font = '10px system-ui,sans-serif';
+    TIMES.forEach(function(t, i) {
+      var x = pad.l + (i * 2 / (config.actual.length - 1)) * chartW;
+      ctx.fillText('01-28 ' + t, x, h - 8);
+    });
+  }
+
+  var chartSeries = [
+    {
+      id: 'coolingLoadChart', min: 3860, max: 4060, actualColor: '#0EA5E9', predictedColor: '#7DD3FC',
+      actual: [3960,3887,3948,3932,3898,3947,3971,3988,3960,3921,3940,3962,3999,4010,3985,3955,3930,3910,3895,3920,3945,3960,3940,3890],
+      predicted: [3952,3905,3938,3924,3912,3940,3964,3976,3972,3934,3936,3958,3988,4002,3990,3968,3942,3922,3908,3916,3938,3956,3948,3908],
+      format: function(v){return Math.round(v);}
+    },
+    {
+      id: 'outdoorTempChart', min: 12, max: 22, actualColor: '#06B6D4', predictedColor: '#67E8F9',
+      // 风冷场景展示室外干球温度，区别于水冷系统的室外湿球温度。
+      actual: [18.06,17.22,16.62,15.32,14.27,14.51,15.76,17.00,18.20,19.00,20.00,20.20,20.40,20.00,19.60,19.20,18.80,18.40,18.00,17.60,17.30,17.00,16.80,16.60],
+      predicted: [17.90,17.35,16.80,15.60,14.60,14.70,15.60,16.80,18.00,18.90,19.80,20.10,20.30,20.10,19.70,19.30,18.90,18.50,18.10,17.75,17.45,17.20,16.95,16.75],
+      format: function(v){return v.toFixed(1);}
+    },
+    {
+      id: 'copMetricChart', min: 0, max: 14, actualColor: '#6366F1', predictedColor: '#A5B4FC',
+      actual: [11.43,4.31,4.16,6.48,5.39,8.48,5.52,6.20,7.10,6.80,5.90,6.10,5.75,5.80,6.30,7.00,6.50,5.90,6.20,6.80,7.20,6.90,6.40,5.80],
+      predicted: [10.80,4.60,4.45,6.10,5.70,8.10,5.80,6.35,6.90,6.65,6.05,6.20,5.90,5.95,6.25,6.85,6.60,6.10,6.35,6.70,7.00,6.80,6.55,6.05],
+      format: function(v){return v.toFixed(1);}
+    },
+    {
+      id: 'totalPowerChart', min: 0, max: 1200, actualColor: '#22C55E', predictedColor: '#86EFAC',
+      actual: [346,924,948,607,724,809,883,780,710,650,840,780,860,820,740,680,730,820,760,700,660,720,780,840],
+      predicted: [380,900,930,640,710,790,860,800,735,670,820,790,845,810,755,700,725,800,770,715,680,710,760,820],
+      format: function(v){return Math.round(v);}
+    }
+  ];
+
+  function redraw() {
+    chartSeries.forEach(function(config) {
+      drawMetricChart(config);
+    });
+  }
+
+  // 寻优明细表 - 行为参数，列为时间戳
+  var tableData = [
+    { category: '风冷冷水系统', rowspan: 4, param: '实时制冷量', vals: ['3960.13 kW','3887.05 kW','3947.91 kW','3932.21 kW','3898.09 kW','3946.73 kW','3971.36 kW'] },
+    { category: null, param: '室外干球温度', vals: ['18.06','17.22','16.62','15.32','14.27','14.51','15.76'] },
+    { category: null, param: '制冷系统能效(COP)', vals: ['11.43','4.31','4.16','6.48','5.39','8.48','5.52'] },
+    { category: null, param: '总功率', vals: ['346.37 kW','924.01 kW','947.91 kW','606.79 kW','723.65 kW','809.20 kW','882.74 kW'] },
+    { category: '风冷冷水机组', rowspan: 1, param: '开机设备', vals: [
+      '一号风冷冷水机组、二号风冷冷水机组',
+      '一号风冷冷水机组',
+      '一号风冷冷水机组、二号风冷冷水机组',
+      '二号风冷冷水机组',
+      '一号风冷冷水机组、二号风冷冷水机组',
+      '一号风冷冷水机组、二号风冷冷水机组',
+      '一号风冷冷水机组'
+    ]},
+    { category: '冷冻水泵', rowspan: 2, param: '开机设备', vals: ['二号冷冻水泵','二号冷冻水泵','三号冷冻水泵','一号冷冻水泵','四号冷冻水泵','三号冷冻水泵','一号冷冻水泵'] },
+    { category: null, param: '频率反馈', vals: ['0.00','0.00','0.00','36.00','39.00','33.00','35.00'] }
+  ];
+
+  var tbody = document.getElementById('detailBody');
+  var html = '';
+  tableData.forEach(function(row) {
+    html += '<tr>';
+    if (row.category !== null) {
+      html += '<td class="td-category" rowspan="' + row.rowspan + '">' + row.category + '</td>';
+    }
+    html += '<td class="td-param">' + row.param + '</td>';
+    row.vals.forEach(function(v) { html += '<td>' + v + '</td>'; });
+    html += '</tr>';
+  });
+  tbody.innerHTML = html;
+
+  window.addEventListener('resize', redraw);
+  redraw();
+})();
+</script>
+
+<script>
+(function () {
+  window.openRuleModal = function () {
+    document.getElementById('modalRuleConfig').classList.add('show');
+  };
+  window.closeRuleModal = function () {
+    document.getElementById('modalRuleConfig').classList.remove('show');
+  };
+  window.switchModalTab = function (el) {
+    var tabId = el.getAttribute('data-mtab');
+    el.closest('.modal-tabs').querySelectorAll('.modal-tab-item').forEach(function (t) { t.classList.remove('active'); });
+    el.classList.add('active');
+    var box = el.closest('.modal-box');
+    box.querySelectorAll('.modal-pane').forEach(function (p) { p.classList.remove('active'); });
+    var pane = box.querySelector('#mpane-' + tabId);
+    if (pane) pane.classList.add('active');
+  };
+  document.getElementById('modalRuleConfig').addEventListener('click', function (e) {
+    if (e.target === this) closeRuleModal();
+  });
+
+  window.onLongOptimizerChange = function (val) {
+    var lshade = document.getElementById('longParams-lshade');
+    var slsqp  = document.getElementById('longParams-slsqp');
+    if (!lshade || !slsqp) return;
+    lshade.style.display = val === 'slsqp' ? 'none' : '';
+    slsqp.style.display  = val === 'slsqp' ? '' : 'none';
+  };
+
+  /* 寻优目标偏好滑块实时联动 */
+  [
+    { id: 'lPrefL1', valId: 'lPrefL1Val' },
+    { id: 'lPrefL2', valId: 'lPrefL2Val' },
+  ].forEach(function (s) {
+    var el = document.getElementById(s.id);
+    var vEl = document.getElementById(s.valId);
+    if (!el || !vEl) return;
+    el.addEventListener('input', function () {
+      vEl.textContent = parseFloat(this.value).toFixed(2);
+    });
+  });
+
+  /* 智能推荐：基于历史数据自动设定偏好权重 */
+  window.smartRecommendLong = function (btn) {
+    btn.classList.add('loading');
+    setTimeout(function () {
+      var recommended = { lPrefL1: 0.18, lPrefL2: 0.22 };
+      Object.keys(recommended).forEach(function (id) {
+        var slider = document.getElementById(id);
+        var valEl = document.getElementById(id + 'Val');
+        if (!slider || !valEl) return;
+        slider.value = recommended[id];
+        valEl.textContent = recommended[id].toFixed(2);
+      });
+      btn.classList.remove('loading');
+      var toast = document.getElementById('lSmartToast');
+      toast.textContent = '✓ 已基于近 30 天历史数据自动推荐';
+      toast.classList.add('show');
+      setTimeout(function () { toast.classList.remove('show'); }, 3000);
+    }, 800);
+  };
+
+  /* 单选按钮切换时同步文字颜色 */
+  document.querySelectorAll('#modalRuleConfig .qty-rule-table input[type="radio"]').forEach(function (radio) {
+    radio.addEventListener('change', function () {
+      var name = this.getAttribute('name');
+      document.querySelectorAll('[name="' + name + '"]').forEach(function (r) {
+        var txt = r.closest('.qty-radio-label').querySelector('.qty-radio-text');
+        if (txt) txt.classList.toggle('active', r.checked && r.value === 'follow');
+      });
+    });
+  });
+})();
+</script>
+
+<button class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+<div class="anno-filter-bar" id="annoFilterBar">
+  <span class="anno-filter-label">批注版本：</span>
+  <div class="anno-filter-tags" id="annoFilterTags"></div>
+</div>
+<script>
+function initAnnoVersionFilter() {
+  var tags = document.getElementById('annoFilterTags');
+  if (!document.body.classList.contains('annotation-mode')) return;
+  var annos = document.querySelectorAll('.anno[data-version]');
+  var versions = [];
+  annos.forEach(function(a) {
+    var v = a.getAttribute('data-version');
+    if (v && versions.indexOf(v) === -1) versions.push(v);
+  });
+  tags.innerHTML = '';
+  var allBtn = document.createElement('span');
+  allBtn.className = 'anno-filter-tag';
+  allBtn.textContent = '全部';
+  allBtn.onclick = function() { filterAnno('all'); setActive(this); };
+  tags.appendChild(allBtn);
+  versions.forEach(function(v, i) {
+    var btn = document.createElement('span');
+    btn.className = 'anno-filter-tag' + (i === 0 ? ' active' : '');
+    btn.textContent = v;
+    btn.onclick = function() { filterAnno(v); setActive(this); };
+    tags.appendChild(btn);
+  });
+}
+function filterAnno(version) {
+  document.querySelectorAll('.anno[data-version]').forEach(function(a) {
+    var v = a.getAttribute('data-version');
+    if (version === 'all') { a.style.display = ''; a.style.opacity = '1'; }
+    else { a.style.display = (v === version) ? '' : 'none'; a.style.opacity = '1'; }
+  });
+}
+function setActive(el) {
+  el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function(t) { t.classList.remove('active'); });
+  el.classList.add('active');
+}
+</script>
+<script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="冷站长周期寻优"></script>
+</body>
+</html>

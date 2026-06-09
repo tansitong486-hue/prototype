@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>冷站全局寻优</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-light: #EEF4FF;
+      --primary-dark: #17358A;
+      --success: #16A34A;
+      --success-light: #F0FDF4;
+      --warning: #D97706;
+      --danger: #DC2626;
+      --orange: #EA580C;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --radius: 6px;
+      --radius-lg: 10px;
+      --shadow-sm: 0 1px 2px rgba(15,23,42,.04);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size:13px; color:var(--text-primary); background:var(--bg-body);
+      -webkit-font-smoothing:antialiased;
+    }
+    a { text-decoration:none; color:inherit; }
+    ::-webkit-scrollbar { width:5px; height:5px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:rgba(0,0,0,.12); border-radius:3px; }
+
+    .layout { display:flex; flex-direction:column; min-height:100vh; }
+    .body-wrap { display:flex; flex:1; overflow:hidden; }
+    .main { flex:1; display:flex; flex-direction:column; overflow-y:auto; background:var(--bg-body); }
+
+    /* ── 顶部导航栏：返回 + 园区 / 冷站选择器 ── */
+    .context-bar {
+      display:flex; align-items:center; gap:12px;
+      padding:10px 16px; flex-shrink:0;
+      background:var(--bg-card);
+      border-bottom:1px solid var(--border-light);
+    }
+    .context-bar-back {
+      display:inline-flex; align-items:center; gap:6px;
+      font-size:14px; font-weight:500; color:var(--text-primary);
+      cursor:pointer; transition:color .2s;
+    }
+    .context-bar-back:hover { color:var(--primary); }
+    .context-bar-back svg {
+      width:16px; height:16px; flex-shrink:0;
+      stroke:currentColor; fill:none;
+    }
+    .selector-pill {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 14px;
+      border:1px solid #E2E8F0; border-radius:999px;
+      font-size:13px; font-weight:500; color:var(--text-primary);
+      background:#fff; cursor:pointer;
+      transition:border-color .2s, color .2s;
+    }
+    .selector-pill:hover { border-color:var(--primary); color:var(--primary); }
+    .sel-arr { font-size:10px; color:var(--text-hint); line-height:1; }
+    .selector-pill:hover .sel-arr { color:var(--primary); }
+
+    /* ── 三策略卡片条（与冷站柔性调优一致） ── */
+    .module-strip {
+      display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;
+      padding:12px 16px; flex-shrink:0;
+    }
+    .module-card {
+      background:var(--bg-card); border-radius:var(--radius-lg);
+      box-shadow:var(--shadow-sm); overflow:hidden;
+      border:1px solid var(--border-light); transition:all .2s;
+    }
+    .module-card:hover { box-shadow:0 1px 3px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.04); border-color:var(--border); }
+    .module-card-header {
+      padding:8px 14px; display:flex; align-items:center; gap:8px;
+      font-size:12.5px; font-weight:600; color:var(--text-primary);
+      border-bottom:1px solid var(--border-light); background:#FBFCFE;
+    }
+    .module-card-header .module-icon { display:flex; align-items:center; }
+    .module-card-header .module-icon svg { width:14px; height:14px; }
+    .module-card-body { padding:12px 14px 10px; }
+    .module-status-row { display:flex; flex-wrap:wrap; gap:2px 14px; margin-bottom:10px; }
+    .status-item { display:flex; flex-direction:column; gap:3px; }
+    .status-item .label { font-size:10.5px; color:var(--text-hint); line-height:1.1; }
+    .status-item .value { font-size:12.5px; font-weight:600; line-height:1.2; }
+    .status-item .value.blue { color:var(--primary); }
+    .status-item .value.green { color:var(--success); }
+    .module-actions { display:flex; gap:6px; flex-wrap:nowrap; }
+    .module-actions .btn { padding:4px 10px; font-size:12px; gap:4px; }
+    .module-card-header.opt { color:var(--primary); }
+    .module-card-header.opt .module-icon svg { fill:var(--primary); }
+    .module-card-header.deliver { color:#722ED1; }
+    .module-card-header.deliver .module-icon svg { fill:#722ED1; }
+    .module-card-header.safety { color:var(--success); }
+    .module-card-header.safety .module-icon svg { fill:var(--success); }
+    .module-status-badge {
+      margin-left:auto; font-size:10.5px; font-weight:600; padding:1px 8px;
+      border-radius:10px; line-height:1.6;
+    }
+    .module-status-badge.active { background:#F6FFED; color:#52C41A; }
+    .module-status-badge.inactive { background:#FFF1F0; color:#FF4D4F; }
+    .btn-danger { color:var(--danger); border-color:#FECACA; background:#FFF7F7; }
+    .btn-danger:hover { background:#FFF1F1; color:var(--danger); border-color:#FCA5A5; }
+
+    /* ── Buttons ── */
+    .btn {
+      display:inline-flex; align-items:center; gap:5px; padding:5px 12px;
+      border-radius:5px; border:1px solid var(--border); cursor:pointer;
+      font-size:12px; font-weight:500; background:#fff; transition:all .15s; flex-shrink:0;
+    }
+    .btn:hover { border-color:var(--primary); color:var(--primary); }
+    .btn-fill { background:var(--primary); color:#fff; border-color:transparent; }
+    .btn-fill:hover { background:var(--primary-dark); color:#fff; border-color:transparent; }
+    .btn-orange { background:var(--orange); color:#fff; border-color:transparent; }
+    .btn-orange:hover { background:#C2410C; color:#fff; border-color:transparent; }
+    .btn-pill-action { border-radius:8px; font-weight:600; padding:6px 16px; }
+    .btn svg { width:12px; height:12px; fill:currentColor; }
+
+    /* ── 寻优记录栏 ── */
+    .record-bar {
+      display:flex; align-items:center; gap:8px; padding:8px 16px;
+      background:var(--bg-card); border-bottom:1px solid var(--border-light); flex-shrink:0;
+      margin-top:10px; border-top:1px solid var(--border-light);
+    }
+    .record-title { font-size:13px; font-weight:600; flex-shrink:0; }
+    .rb-label { font-size:12px; color:var(--text-secondary); flex-shrink:0; margin-left:8px; }
+    .time-input {
+      padding:3px 8px; border:1px solid var(--border); border-radius:4px;
+      font-size:12px; outline:none; color:var(--text-primary); background:#fff;
+    }
+    .time-input:focus { border-color:var(--primary); }
+    .nav-btn {
+      width:22px; height:22px; border:1px solid var(--border); border-radius:4px;
+      display:inline-flex; align-items:center; justify-content:center;
+      cursor:pointer; font-size:9px; color:var(--text-secondary); background:#fff;
+      transition:all .15s; flex-shrink:0;
+    }
+    .nav-btn:hover { border-color:var(--primary); color:var(--primary); }
+    .rb-spacer { flex:1; }
+
+    /* ── 正文 ── */
+    .content { padding:10px 16px 16px; }
+
+    /* ── 节能潜力 + 能效预测 双列 ── */
+    .insight-row { display:grid; grid-template-columns:360px 1fr; gap:10px; margin-bottom:10px; }
+    @media (max-width:900px) { .insight-row { grid-template-columns:1fr; } }
+    .panel {
+      background:var(--bg-card); border:1px solid var(--border-light);
+      border-radius:var(--radius-lg); padding:12px 14px; box-shadow:var(--shadow-sm);
+    }
+    .panel-title { font-size:12.5px; font-weight:700; margin-bottom:10px; }
+
+    /* 仪表盘 */
+    .gauge-layout { display:flex; align-items:center; gap:14px; }
+    .gauge-box { flex-shrink:0; }
+    .gauge-metrics { flex:1; display:flex; flex-direction:column; gap:10px; }
+    .gm-row { display:flex; align-items:center; gap:8px; }
+    .gm-icon { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; color:#fff; }
+    .gm-icon.power { background:var(--success); }
+    .gm-icon.cop { background:var(--primary); }
+    .gm-body { flex:1; display:flex; flex-direction:column; gap:2px; }
+    .gm-label-row { font-size:10px; color:var(--text-hint); display:flex; gap:10px; }
+    .gm-val-row { display:flex; align-items:baseline; gap:10px; }
+    .gm-kv { font-size:16px; font-weight:700; }
+    .gm-kv.opt { color:var(--primary); }
+    .gm-delta { font-size:13px; font-weight:600; }
+    .gm-delta.down { color:var(--success); }
+    .gm-delta.up { color:var(--orange); }
+
+    /* 能效预测图 */
+    .chart-head { display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:6px; margin-bottom:6px; }
+    .chart-legend { display:flex; gap:8px; font-size:11px; color:var(--text-secondary); flex-wrap:wrap; align-items:center; }
+    .chart-legend label { display:flex; align-items:center; gap:3px; cursor:pointer; user-select:none; }
+    .chart-legend label input[type=checkbox] { width:12px; height:12px; accent-color:var(--primary); }
+    .lg-sq { width:9px; height:9px; border-radius:2px; flex-shrink:0; }
+    .chart-y-hint { font-size:10px; color:var(--text-hint); display:flex; justify-content:space-between; padding:0 2px; margin-bottom:2px; }
+    .chart-canvas-h { height:182px; position:relative; }
+    .chart-canvas-h canvas { width:100%!important; height:100%!important; }
+
+    /* ── Section 标题 ── */
+    .section-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; margin-top:6px; }
+    .section-title { font-size:13px; font-weight:700; display:flex; align-items:center; gap:5px; cursor:pointer; }
+    .collapse-arrow { font-size:10px; color:var(--text-hint); }
+
+    /* ── 表格 ── */
+    .data-wrap {
+      background:var(--bg-card); border-radius:var(--radius-lg);
+      border:1px solid var(--border); overflow-x:auto; box-shadow:var(--shadow-sm);
+      margin-bottom:10px;
+    }
+    .data-table { width:100%; border-collapse:collapse; }
+    .data-table th {
+      background:#F8FAFC; padding:7px 12px; text-align:left; font-size:11px;
+      font-weight:600; color:var(--text-secondary); border-bottom:1px solid var(--border); white-space:nowrap;
+    }
+    .data-table td { padding:7px 12px; font-size:12px; border-bottom:1px solid var(--border-light); vertical-align:middle; }
+    .data-table tr:last-child td { border-bottom:none; }
+    .data-table tbody tr:hover td { background:#FAFCFF; }
+    .device-cell { font-weight:600; color:var(--text-secondary); background:#F8FAFC!important; font-size:11.5px; white-space:nowrap; width:86px; }
+    .opt-cell { color:var(--primary); font-weight:500; }
+
+    /* ── 寻优明细卡 ── */
+    .detail-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); overflow:hidden; }
+    .detail-card-head {
+      display:flex; align-items:center; gap:6px; padding:8px 14px;
+      border-bottom:1px solid var(--border-light); cursor:pointer; user-select:none;
+    }
+    .detail-card-head:hover { background:#FAFCFF; }
+    .detail-arrow { font-size:10px; color:var(--text-hint); transition:transform .2s; }
+    .detail-arrow.open { transform:rotate(0deg); }
+    .detail-arrow.closed { transform:rotate(-90deg); }
+
+    .var-toolbar {
+      display:flex; align-items:center; gap:8px; padding:7px 14px;
+      border-bottom:1px solid var(--border-light); flex-wrap:wrap;
+    }
+    .var-toolbar-label { font-size:12px; color:var(--text-secondary); font-weight:500; flex-shrink:0; }
+    .var-tabs { display:flex; gap:4px; flex-wrap:wrap; }
+    .var-tab {
+      display:inline-flex; align-items:center; gap:3px; padding:2px 8px;
+      border-radius:999px; border:1px solid var(--border); cursor:pointer;
+      font-size:11px; font-weight:500; background:#fff; color:var(--text-secondary); transition:all .15s;
+    }
+    .var-tab.active { border-color:var(--primary); color:var(--primary); background:var(--primary-light); }
+    .var-tab:hover { border-color:var(--primary); }
+    .vdot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+    .toolbar-right { display:flex; align-items:center; gap:8px; margin-left:auto; flex-wrap:wrap; }
+    .chk-label { display:flex; align-items:center; gap:4px; font-size:11px; color:var(--text-secondary); cursor:pointer; white-space:nowrap; }
+    .chk-label input { accent-color:var(--primary); }
+    .search-box {
+      padding:3px 8px 3px 28px; border:1px solid var(--border); border-radius:5px;
+      font-size:12px; outline:none; width:190px; background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2394A3B8'%3E%3Cpath fill-rule='evenodd' d='M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z' clip-rule='evenodd'/%3E%3C/svg%3E") 8px center / 13px no-repeat;
+      transition:border-color .15s;
+    }
+    .search-box:focus { border-color:var(--primary); }
+    .search-box::placeholder { color:var(--text-hint); }
+    .link-btn { font-size:11.5px; color:var(--primary); cursor:pointer; white-space:nowrap; }
+    .link-btn:hover { text-decoration:underline; }
+    .chg-down { color:var(--success); font-weight:500; }
+    .chg-up { color:var(--orange); font-weight:500; }
+    .chg-zero { color:var(--text-hint); }
+    .var-name { font-weight:500; }
+
+    /* ── 规则配置弹窗 ── */
+    .modal-mask {
+      position:fixed; inset:0; z-index:1000;
+      background:rgba(10,20,40,.45); display:flex;
+      align-items:center; justify-content:center;
+      opacity:0; pointer-events:none;
+      transition:opacity .2s;
+    }
+    .modal-mask.show { opacity:1; pointer-events:auto; }
+    .modal-box {
+      background:#fff; border-radius:10px;
+      box-shadow:0 8px 40px rgba(15,23,42,.18);
+      width:680px; max-width:calc(100vw - 32px);
+      max-height:calc(100vh - 60px);
+      display:flex; flex-direction:column;
+      transform:translateY(10px) scale(.98);
+      transition:transform .2s;
+      overflow:hidden;
+    }
+    .modal-mask.show .modal-box { transform:translateY(0) scale(1); }
+    .modal-head {
+      display:flex; align-items:center; gap:10px;
+      padding:14px 20px 0; flex-shrink:0;
+    }
+    .modal-title { font-size:15px; font-weight:700; flex:1; }
+    .modal-close { font-size:22px; line-height:1; color:var(--text-hint); cursor:pointer; }
+    .modal-close:hover { color:var(--text-primary); }
+    .modal-tabs {
+      display:flex; border-bottom:1px solid var(--border-light);
+      margin:0 20px; flex-shrink:0; margin-top:10px;
+    }
+    .modal-tab-item {
+      padding:8px 16px; font-size:13px; font-weight:500;
+      color:var(--text-secondary); cursor:pointer;
+      border-bottom:2px solid transparent; margin-bottom:-1px; transition:all .15s;
+    }
+    .modal-tab-item:hover { color:var(--primary); }
+    .modal-tab-item.active { color:var(--primary); border-bottom-color:var(--primary); }
+    .modal-body {
+      padding:16px 20px 4px; flex:1; overflow-y:auto; font-size:12.5px;
+    }
+    .modal-pane { display:none; }
+    .modal-pane.active { display:block; }
+    .modal-foot {
+      display:flex; align-items:center; justify-content:flex-end; gap:10px;
+      padding:12px 20px; flex-shrink:0;
+      border-top:1px solid var(--border-light);
+    }
+
+    /* ── 表单通用 ── */
+    .form-group { margin-bottom:14px; }
+    .form-label { font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:5px; }
+    .required { color:var(--danger); margin-right:2px; }
+    .form-control {
+      width:100%; padding:5px 10px; border:1px solid var(--border); border-radius:5px;
+      font-size:12.5px; outline:none; color:var(--text-primary); background:#fff;
+      transition:border-color .15s;
+    }
+    .form-control:focus { border-color:var(--primary); }
+    .form-row { display:flex; align-items:center; gap:8px; }
+    .form-suffix { font-size:12px; color:var(--text-secondary); white-space:nowrap; }
+    .form-section {
+      font-size:11.5px; font-weight:700; color:var(--text-secondary);
+      padding:6px 0 6px; margin-bottom:8px;
+      border-bottom:1px solid var(--border-light);
+      letter-spacing:.04em; text-transform:uppercase;
+    }
+
+    /* ── 开关 ── */
+    .toggle-switch { position:relative; display:inline-block; width:32px; height:18px; flex-shrink:0; }
+    .toggle-switch input { opacity:0; width:0; height:0; }
+    .toggle-slider {
+      position:absolute; cursor:pointer; inset:0;
+      background:#CBD5E1; border-radius:18px; transition:.2s;
+    }
+    .toggle-slider::before {
+      content:''; position:absolute; width:12px; height:12px;
+      left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s;
+    }
+    .toggle-switch input:checked + .toggle-slider { background:var(--primary); }
+    .toggle-switch input:checked + .toggle-slider::before { transform:translateX(14px); }
+
+    /* ── 设备数量规则表 ── */
+    .qty-rule-wrap { border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+    .qty-rule-table { width:100%; border-collapse:collapse; }
+    .qty-rule-table th {
+      background:#F8FAFC; padding:6px 10px; text-align:left;
+      font-size:11px; font-weight:600; color:var(--text-secondary);
+      border-bottom:1px solid var(--border); white-space:nowrap;
+    }
+    .qty-rule-table td {
+      padding:7px 10px; font-size:12px;
+      border-bottom:1px solid var(--border-light); vertical-align:middle;
+    }
+    .qty-rule-table tr:last-child td { border-bottom:none; }
+    .qty-rule-table tbody tr:hover td { background:#FAFCFF; }
+    .rule-device { font-weight:600; font-size:11.5px; color:var(--text-secondary); margin-right:4px; }
+    .rule-param { font-size:11.5px; color:var(--text-primary); }
+    .default-dev-opt {
+      display:inline-flex; align-items:center; gap:5px;
+      font-size:11.5px; font-weight:500;
+    }
+    .default-dev-opt .dot-green {
+      width:7px; height:7px; border-radius:50%; background:#52C41A; flex-shrink:0;
+    }
+    .default-dev-opt.active { color:var(--success); }
+    .qty-radio-label {
+      display:inline-flex; align-items:center; gap:5px;
+      cursor:pointer; font-size:11.5px; white-space:nowrap; user-select:none;
+    }
+    .qty-radio-label input[type="radio"] { accent-color:var(--success); width:13px; height:13px; flex-shrink:0; }
+    .qty-radio-text { color:var(--text-secondary); }
+    .qty-radio-text.active { color:var(--success); font-weight:500; }
+
+    /* ── 智能推荐按钮 ── */
+    .smart-recommend-btn {
+      display:inline-flex; align-items:center; gap:5px;
+      padding:3px 10px; border-radius:5px; cursor:pointer;
+      font-size:11px; font-weight:600; border:1px solid #7C3AED;
+      color:#7C3AED; background:#F5F3FF; transition:all .2s;
+      margin-left:auto; white-space:nowrap; line-height:1.6;
+    }
+    .smart-recommend-btn:hover { background:#EDE9FE; border-color:#6D28D9; color:#6D28D9; }
+    .smart-recommend-btn:active { transform:scale(.96); }
+    .smart-recommend-btn svg { width:13px; height:13px; fill:currentColor; flex-shrink:0; }
+    .smart-recommend-btn.loading { pointer-events:none; opacity:.7; }
+    @keyframes sparkle { 0%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.1)} 100%{opacity:1;transform:scale(1)} }
+    .smart-recommend-btn.loading svg { animation:sparkle .6s ease infinite; }
+    .pref-section-header {
+      display:flex; align-items:center; gap:8px;
+    }
+    .pref-recommend-toast {
+      font-size:10.5px; color:#7C3AED; font-weight:500;
+      opacity:0; transition:opacity .3s; margin-left:8px; white-space:nowrap;
+    }
+    .pref-recommend-toast.show { opacity:1; }
+
+    /* ── 寻优目标偏好滑块（v1.8，与柔性调优同款） ── */
+    .pref-slider-group { margin-bottom:20px; }
+    .pref-slider-end-labels {
+      display:flex; justify-content:space-between; align-items:center;
+      font-size:11px; color:var(--text-secondary); margin-bottom:6px; font-weight:500;
+    }
+    .pref-slider-ticks {
+      display:flex; justify-content:space-between;
+      font-size:10px; color:var(--text-hint); margin:0 0 4px;
+      font-variant-numeric:tabular-nums;
+    }
+    .pref-slider-default-cap {
+      font-size:10px; color:var(--text-hint); text-align:center; margin:-2px 0 6px;
+    }
+    input.range-pref {
+      width:100%; height:6px; margin:0; cursor:pointer;
+      accent-color:var(--primary);
+    }
+    .pref-slider-meta {
+      display:flex; justify-content:space-between; align-items:center;
+      font-size:11px; margin-top:6px; color:var(--text-secondary);
+    }
+    .pref-slider-meta .pref-val { font-weight:700; color:var(--primary); font-variant-numeric:tabular-nums; }
+    .pref-slider-group.is-na .range-pref { opacity:.45; pointer-events:none; cursor:not-allowed; }
+    .pref-slider-group.is-na .pref-na-tag { font-size:10px; font-weight:600; color:var(--warning); margin-left:6px; }
+
+    /* ── 模拟量规则表（全局寻优版：步长 + 默认值） ── */
+    .analog-rule-wrap { border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+    .analog-rule-table { width:100%; border-collapse:collapse; }
+    .analog-rule-table th {
+      background:#F8FAFC; padding:6px 10px; text-align:left;
+      font-size:11px; font-weight:600; color:var(--text-secondary);
+      border-bottom:1px solid var(--border); white-space:nowrap;
+    }
+    .analog-rule-table td {
+      padding:6px 10px; font-size:12px;
+      border-bottom:1px solid var(--border-light); vertical-align:middle;
+    }
+    .analog-rule-table tr:last-child td { border-bottom:none; }
+    .analog-rule-table tbody tr:hover td { background:#FAFCFF; }
+    .rule-num { width:72px !important; padding:3px 6px; text-align:center; }
+
+    /* ── 投入/投出列表 ── */
+    .io-list { display:flex; flex-direction:column; gap:2px; margin-bottom:14px; }
+    .io-item {
+      display:flex; align-items:center; gap:10px; padding:6px 10px;
+      border:1px solid var(--border-light); border-radius:5px; background:#fff;
+    }
+    .io-name { flex:1; font-size:12px; color:var(--text-primary); }
+    .io-status {
+      font-size:10.5px; font-weight:600; padding:1px 7px;
+      border-radius:8px; line-height:1.6; flex-shrink:0;
+    }
+    .io-status.in { background:#F6FFED; color:#52C41A; }
+    .io-status.out { background:#FFF1F0; color:#FF4D4F; }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+</head>
+<body>
+<div class="layout">
+  <div id="app-header"></div>
+  <div class="body-wrap">
+    <div id="app-sidebar"></div>
+    <div class="main">
+
+      <div class="anno-filter-bar" id="annoFilterBar">
+        <span class="anno-filter-label">批注版本：</span>
+        <div class="anno-filter-tags" id="annoFilterTags"></div>
+      </div>
+
+      <div class="anno anno-version-header" data-version="v2.0">
+        <span class="anno-tag">版本信息</span>
+        <div class="anno-body">
+          <p><b>当前版本：</b>v2.0</p>
+          <p><b>更新日期：</b>2026-05-08</p>
+          <p><b>主要变化（v2.0）：</b>适配风冷冷水系统：控制策略前后对比、寻优明细、能效预测与规则配置均隐藏冷却水泵、冷却塔、板换等冷却侧设备及参数；主机口径切换为风冷冷水机组；室外特征参数展示为室外干球温度。</p>
+          <p><b>主要变化（v1.8）：</b>新增「寻优目标偏好」三个滑块——安全余量偏好（λ₁）、设备切换容忍度（λ₂）、参数平稳偏好（λ₃）。全局寻优涉及设备启停，λ₂ 本页<b>可用</b>（柔性寻优页置灰不可用）。λ₃ 全局寻优为单时刻快照式求解不涉及时序平稳性，本页<b>置灰不可用</b>（柔性寻优页可调）。</p>
+          <p><b>历史版本（v1.3）：</b>顶部返回+园区/冷站选择器；三策略卡片条；能效预测图 checkbox 图例；寻优明细变量着色与箭头。规则配置弹窗含：寻优周期、仿真模型、安全边界、寻优器（L-SHADE / SLSQP 联动参数）、设备数量寻优规则（开机设备跟随/指定）、模拟量寻优规则（步长 + 默认值）、投入/投出配置。</p>
+        </div>
+      </div>
+
+      <!-- 顶部：返回 + 园区 / 冷站 -->
+      <div class="context-bar">
+        <a class="context-bar-back" href="index.html">
+          <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+          返回
+        </a>
+        <div class="selector-pill" role="button" tabindex="0" aria-haspopup="listbox" aria-label="选择园区">前海园区<span class="sel-arr">▾</span></div>
+        <div class="selector-pill" role="button" tabindex="0" aria-haspopup="listbox" aria-label="选择冷站">1号冷站<span class="sel-arr">▾</span></div>
+      </div>
+
+      <!-- ── 三策略卡片（与冷站柔性调优一致） ── -->
+      <div class="module-strip">
+
+        <div class="module-card" id="modOpt">
+          <div class="module-card-header opt">
+            <span class="module-icon"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54A.48.48 0 0013.93 2h-3.86a.48.48 0 00-.48.41l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96a.49.49 0 00-.59.22L2.71 8.87a.48.48 0 00.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.26.41.48.41h3.86c.22 0 .43-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg></span>
+            寻优策略
+            <span class="module-status-badge active" id="optBadge">已启用</span>
+          </div>
+          <div class="module-card-body">
+            <div class="module-status-row">
+              <div class="status-item">
+                <span class="label">寻优周期</span>
+                <span class="value">24小时/次</span>
+              </div>
+              <div class="status-item">
+                <span class="label">最新寻优时间</span>
+                <span class="value">2025-12-25 08:57</span>
+              </div>
+            </div>
+            <div class="module-actions">
+              <button class="btn btn-danger" id="btnOptToggle" onclick="this.textContent=this.textContent.trim()==='停用'?'启用':'停用';var b=document.getElementById('optBadge');b.textContent=b.textContent==='已启用'?'已停用':'已启用';b.className='module-status-badge '+(b.textContent==='已启用'?'active':'inactive');">停用</button>
+              <button class="btn" onclick="openRuleModal()">规则配置</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="module-card" id="modDeliver">
+          <div class="module-card-header deliver">
+            <span class="module-icon"><svg viewBox="0 0 24 24"><path d="M3 4l9 8-9 8V4z"/><path d="M14 4l9 8-9 8V4z"/></svg></span>
+            智控下发策略
+          </div>
+          <div class="module-card-body">
+            <div class="module-status-row">
+              <div class="status-item">
+                <span class="label">当前下发策略</span>
+                <span class="value blue">手动工单推送</span>
+              </div>
+              <div class="status-item">
+                <span class="label">下发模式</span>
+                <span class="value">手动下发</span>
+              </div>
+            </div>
+            <div class="module-actions">
+              <button class="btn btn-fill">手动下发</button>
+              <button class="btn">工单下发</button>
+              <button class="btn">切换策略</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="module-card">
+          <div class="module-card-header safety">
+            <span class="module-icon"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg></span>
+            安全策略
+          </div>
+          <div class="module-card-body">
+            <div class="module-status-row">
+              <div class="status-item">
+                <span class="label">安全回退策略</span>
+                <span class="value blue">保险策略1</span>
+              </div>
+              <div class="status-item">
+                <span class="label">今日安全诊断</span>
+                <span class="value green">正常</span>
+              </div>
+            </div>
+            <div class="module-actions">
+              <button class="btn">一键回退</button>
+              <button class="btn">切换策略</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── 寻优记录导航栏 ── -->
+      <div class="record-bar">
+        <div class="record-title">寻优记录</div>
+        <span class="rb-label">时间</span>
+        <input class="time-input" type="date" value="2025-12-25" style="width:126px;">
+        <span class="nav-btn" title="上一条">◀</span>
+        <input class="time-input" type="time" value="08:57" step="1" style="width:90px;">
+        <span class="nav-btn" title="下一条">▶</span>
+        <div class="rb-spacer"></div>
+        <button class="btn" id="btnRefresh">
+          <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+          刷新
+        </button>
+      </div>
+
+      <div class="anno anno-ux" data-version="v1.3">
+        <span class="anno-tag">交互说明</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>寻优记录导航</p>
+          <p>日期+时间选择器组合。◀ ▶ 按寻优记录时间顺序翻页（上一条/下一条）。「刷新」重载当前时间点数据，切换后下方所有模块同步更新。</p>
+        </div>
+      </div>
+
+      <!-- ── 正文 ── -->
+      <div class="content">
+
+        <!-- 节能潜力 + 能效预测 -->
+        <div class="insight-row">
+
+          <!-- ─ 节能潜力（左） ─ -->
+          <div class="panel">
+            <div class="panel-title">节能潜力</div>
+            <div class="gauge-layout">
+              <div class="gauge-box"><canvas id="gaugeCanvas"></canvas></div>
+              <div class="gauge-metrics">
+                <div class="gm-row">
+                  <div class="gm-icon power">⚡</div>
+                  <div class="gm-body">
+                    <div class="gm-label-row"><span>实际值</span><span>AI寻优预测</span></div>
+                    <div class="gm-val-row">
+                      <span class="gm-kv">435.85</span>
+                      <span class="gm-kv opt">400.67</span>
+                      <span class="gm-delta down">−35.18</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="gm-row">
+                  <div class="gm-icon cop" style="font-size:9px;font-weight:700;">COP</div>
+                  <div class="gm-body">
+                    <div class="gm-label-row"><span>实际值</span><span>寻优预测</span></div>
+                    <div class="gm-val-row">
+                      <span class="gm-kv">8.93</span>
+                      <span class="gm-kv opt">9.63</span>
+                      <span class="gm-delta up">+0.70</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ─ 能效预测（右） ─ -->
+          <div class="panel">
+            <div class="chart-head">
+              <div class="panel-title" style="margin-bottom:0;">能效预测（KW/RT）</div>
+              <div class="chart-legend" id="chartLegend">
+                <label><input type="checkbox" checked data-key="actual"><i class="lg-sq" style="background:#1890FF;"></i>实际能效</label>
+                <label><input type="checkbox" checked data-key="predict"><i class="lg-sq" style="background:#F59A23;"></i>寻优预测能效</label>
+                <label><input type="checkbox" checked data-key="rate"><span style="display:inline-block;width:14px;border-top:2px dashed #8B5CF6;margin-right:2px;"></span>预测节能率</label>
+              </div>
+            </div>
+            <div class="chart-y-hint">
+              <span>← 能效（KW/RT）</span>
+              <span>节能率（%）→</span>
+            </div>
+            <div class="chart-canvas-h"><canvas id="efficChart"></canvas></div>
+          </div>
+        </div>
+
+        <!-- ── 控制策略前后对比 ── -->
+        <div class="section-row">
+          <div class="section-title" onclick="toggleSection('strategy')">
+            <span class="collapse-arrow" id="strategyArrow">▼</span>
+            控制策略前后对比
+          </div>
+          <button type="button" class="btn btn-orange btn-pill-action">仿真对比</button>
+        </div>
+
+        <div class="anno anno-req" data-version="v1.3">
+          <span class="anno-tag">需求说明</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>控制策略前后对比</p>
+            <p>4 列结构与真实系统一致：设备分类 / 控制参数 / 寻优前 / 寻优后。「仿真对比」跳转仿真/对比分析页，对照寻优前后工况（原型占位）。</p>
+          </div>
+        </div>
+
+        <div id="strategyWrap">
+          <div class="data-wrap">
+            <table class="data-table" style="min-width:540px;">
+              <thead>
+                <tr><th style="width:86px;">设备分类</th><th>控制参数</th><th>寻优前</th><th>寻优后</th></tr>
+              </thead>
+              <tbody id="strategyBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ── 寻优明细 ── -->
+        <div class="detail-card">
+          <div class="detail-card-head" onclick="toggleDetail()">
+            <span class="collapse-arrow" id="detailArrow">▼</span>
+            <span style="font-size:13px;font-weight:700;">寻优明细</span>
+          </div>
+
+          <div id="detailBody">
+
+            <div class="anno anno-req" data-version="v1.3">
+              <span class="anno-tag">需求说明</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>寻优明细</p>
+                <p>按变量分类 Tab 筛选；「仅展示大机对设备」勾选后只展示主机系统变量；支持关键字搜索；「历史数据」跳转该变量历史趋势页。变量名着色与分类一致。</p>
+              </div>
+            </div>
+
+            <div class="var-toolbar">
+              <span class="var-toolbar-label">变量分类：</span>
+              <div class="var-tabs" id="varTabs">
+                <div class="var-tab active" data-type="all">全部</div>
+                <div class="var-tab" data-type="ctrl-opt"><span class="vdot" style="background:#F59A23;"></span>被控变量/寻优</div>
+                <div class="var-tab" data-type="disturb"><span class="vdot" style="background:#52C41A;"></span>扰动变量</div>
+                <div class="var-tab" data-type="ctrl"><span class="vdot" style="background:#1890FF;"></span>被控变量</div>
+                <div class="var-tab" data-type="unit"><span class="vdot" style="background:#8B5CF6;"></span>机组变量</div>
+                <div class="var-tab" data-type="state"><span class="vdot" style="background:#94A3B8;"></span>状态变量</div>
+              </div>
+              <div class="toolbar-right">
+                <label class="chk-label"><input type="checkbox" id="bigOnly"> 仅展示大机对设备</label>
+                <input class="search-box" type="text" id="varSearch" placeholder="请输入参数名称或关键字搜索">
+              </div>
+            </div>
+
+            <div style="overflow-x:auto;">
+              <table class="data-table" style="min-width:660px;">
+                <thead>
+                  <tr>
+                    <th>对象名称</th>
+                    <th>变量名称</th>
+                    <th>实际值</th>
+                    <th>AI 寻优值</th>
+                    <th>寻优变化</th>
+                    <th style="width:64px;">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="detailTbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /.content -->
+    </div><!-- /.main -->
+  </div>
+</div>
+
+<script>
+(function () {
+
+  /* ═══ 控制策略表 ═══ */
+  var strategy = [
+    { device:'冷冻水泵', rowspan:2, rows:[
+      { param:'开机设备', before:'一号冷冻水泵、四号冷冻水泵', after:'二号冷冻水泵、三号冷冻水泵' },
+      { param:'频率设定', before:'30.00、29.80', after:'28.00、30.00' },
+    ]},
+    { device:'风冷冷水机组', rowspan:2, rows:[
+      { param:'开机设备',               before:'一号风冷冷水机组、二号风冷冷水机组', after:'一号风冷冷水机组、二号风冷冷水机组' },
+      { param:'冷冻水出水温度（℃）',    before:'16.00、16.00',                    after:'16.01、16.00' },
+    ]},
+  ];
+  var sHtml = '';
+  strategy.forEach(function (g) {
+    g.rows.forEach(function (r, i) {
+      sHtml += '<tr>';
+      if (i === 0) sHtml += '<td class="device-cell" rowspan="' + g.rowspan + '">' + g.device + '</td>';
+      sHtml += '<td style="color:var(--text-secondary);">' + r.param + '</td>';
+      sHtml += '<td>' + r.before + '</td>';
+      var isChanged = r.before !== r.after && r.after !== '—';
+      sHtml += '<td' + (isChanged ? ' class="opt-cell"' : '') + '>' + r.after + '</td>';
+      sHtml += '</tr>';
+    });
+  });
+  document.getElementById('strategyBody').innerHTML = sHtml;
+
+  /* ═══ 寻优明细 ═══ */
+  var typeColors = {
+    'ctrl-opt': '#F59A23',
+    'disturb':  '#52C41A',
+    'ctrl':     '#1890FF',
+    'unit':     '#8B5CF6',
+    'state':    '#94A3B8'
+  };
+
+  var detailData = [
+    { obj:'风冷冷水系统', name:'冷冻泵运行台数量',       type:'ctrl-opt', isBig:false, actual:2.00,    opt:2.00,   chg:0.00   },
+    { obj:'',             name:'冷冻水供回水温差',         type:'ctrl-opt', isBig:false, actual:6.75,    opt:6.71,   chg:-0.04  },
+    { obj:'',             name:'冷冻水管管段压差供回压差', type:'ctrl-opt', isBig:false, actual:0.80,    opt:0.80,   chg:+0.10  },
+    { obj:'',             name:'冷冻水管道蓄冷水温度',     type:'ctrl-opt', isBig:false, actual:16.45,   opt:16.00,  chg:-0.45  },
+    { obj:'',             name:'冷冻水管道回水温度',       type:'ctrl-opt', isBig:false, actual:22.60,   opt:22.11,  chg:-0.49  },
+    { obj:'风冷冷水系统', name:'冷冻水系统流量',           type:'ctrl',     isBig:false, actual:543.81,  opt:543.10, chg:-1.71  },
+    { obj:'',             name:'冷冻水管道消耗能量',       type:'ctrl-opt', isBig:false, actual:0.00,    opt:0.00,   chg:0.00   },
+    { obj:'风冷冷水系统', name:'系统能效（COP）',         type:'ctrl',     isBig:true,  actual:8.93,    opt:9.63,   chg:+0.70  },
+    { obj:'',             name:'系统总供冷量',             type:'disturb',  isBig:true,  actual:336.26,  opt:326.26, chg:-10.00 },
+    { obj:'',             name:'系统总电功率',             type:'ctrl',     isBig:true,  actual:435.85,  opt:400.67, chg:-35.18 },
+    { obj:'',             name:'室外干球温度',             type:'disturb',  isBig:true,  actual:15.34,   opt:15.34,  chg:0.00   },
+    { obj:'',             name:'冷冻水总管供水温度（℃）', type:'ctrl-opt', isBig:true,  actual:15.34,   opt:15.10,  chg:-0.24  },
+    { obj:'',             name:'冷冻水总管回水温度（℃）', type:'ctrl-opt', isBig:true,  actual:22.60,   opt:22.11,  chg:-0.49  },
+  ];
+
+  var activeType = 'all';
+
+  function renderDetail(rows) {
+    document.getElementById('detailTbody').innerHTML = rows.map(function (r) {
+      var c = r.chg;
+      var arrow = '', cls = 'chg-zero';
+      if (c < 0)      { arrow = '↓'; cls = 'chg-down'; }
+      else if (c > 0)  { arrow = '↑'; cls = 'chg-up';   }
+      var cStr = Math.abs(c).toFixed(2);
+      var nameColor = typeColors[r.type] || 'inherit';
+      return '<tr>' +
+        '<td style="color:var(--text-secondary);">' + r.obj + '</td>' +
+        '<td class="var-name" style="color:' + nameColor + ';">' + r.name + '</td>' +
+        '<td>' + r.actual.toFixed(2) + '</td>' +
+        '<td class="opt-cell">' + r.opt.toFixed(2) + '</td>' +
+        '<td class="' + cls + '">' + arrow + ' ' + cStr + '</td>' +
+        '<td><span class="link-btn">历史数据</span></td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  function applyFilter() {
+    var kw = document.getElementById('varSearch').value.trim().toLowerCase();
+    var bigOnly = document.getElementById('bigOnly').checked;
+    var rows = detailData.filter(function (r) {
+      if (activeType !== 'all' && r.type !== activeType) return false;
+      if (bigOnly && !r.isBig) return false;
+      if (kw && r.name.toLowerCase().indexOf(kw) < 0 && r.obj.toLowerCase().indexOf(kw) < 0) return false;
+      return true;
+    });
+    renderDetail(rows);
+  }
+
+  renderDetail(detailData);
+
+  document.getElementById('varTabs').addEventListener('click', function (e) {
+    var tab = e.target.closest('.var-tab');
+    if (!tab) return;
+    document.querySelectorAll('.var-tab').forEach(function (t) { t.classList.remove('active'); });
+    tab.classList.add('active');
+    activeType = tab.dataset.type;
+    applyFilter();
+  });
+  document.getElementById('varSearch').addEventListener('input', applyFilter);
+  document.getElementById('bigOnly').addEventListener('change', applyFilter);
+
+  /* ═══ 折叠/展开 ═══ */
+  window.toggleDetail = function () {
+    var body = document.getElementById('detailBody');
+    var arrow = document.getElementById('detailArrow');
+    var vis = body.style.display !== 'none';
+    body.style.display = vis ? 'none' : '';
+    arrow.textContent = vis ? '▶' : '▼';
+  };
+  window.toggleSection = function (id) {
+    var wrap = document.getElementById(id + 'Wrap');
+    var arrow = document.getElementById(id + 'Arrow');
+    if (!wrap) return;
+    var vis = wrap.style.display !== 'none';
+    wrap.style.display = vis ? 'none' : '';
+    arrow.textContent = vis ? '▶' : '▼';
+  };
+
+  /* ═══ 环形仪表盘 ═══ */
+  (function drawGauge() {
+    var canvas = document.getElementById('gaugeCanvas');
+    var size = 136, dpr = window.devicePixelRatio || 1;
+    canvas.width = size * dpr; canvas.height = size * dpr;
+    canvas.style.width = size + 'px'; canvas.style.height = size + 'px';
+    var ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    var cx = size / 2, cy = size / 2 + 4, r = 52;
+    var pct = 8.07, maxPct = 20;
+    var start = Math.PI * 0.75, sweep = Math.PI * 1.5;
+
+    ctx.beginPath(); ctx.arc(cx, cy, r, start, start + sweep);
+    ctx.strokeStyle = '#E2EBF4'; ctx.lineWidth = 10; ctx.lineCap = 'round'; ctx.stroke();
+
+    for (var i = 0; i <= 10; i++) {
+      var a = start + sweep * i / 10;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * (r - 14), cy + Math.sin(a) * (r - 14));
+      ctx.lineTo(cx + Math.cos(a) * (r - 8),  cy + Math.sin(a) * (r - 8));
+      ctx.strokeStyle = '#C8D6E4'; ctx.lineWidth = 1.2; ctx.lineCap = 'butt'; ctx.stroke();
+    }
+
+    var fillEnd = start + sweep * Math.min(pct / maxPct, 1);
+    var grad = ctx.createLinearGradient(
+      cx + Math.cos(start) * r, cy + Math.sin(start) * r,
+      cx + Math.cos(fillEnd) * r, cy + Math.sin(fillEnd) * r
+    );
+    grad.addColorStop(0, '#36CFF5'); grad.addColorStop(1, '#1E40AF');
+    ctx.beginPath(); ctx.arc(cx, cy, r, start, fillEnd);
+    ctx.strokeStyle = grad; ctx.lineWidth = 10; ctx.lineCap = 'round'; ctx.stroke();
+
+    /* needle */
+    var na = start + sweep * (pct / maxPct);
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(na) * (r - 18), cy + Math.sin(na) * (r - 18));
+    ctx.strokeStyle = '#334155'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#334155'; ctx.fill();
+
+    ctx.fillStyle = '#0F172A'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = 'bold 19px -apple-system,"PingFang SC",sans-serif';
+    ctx.fillText(pct.toFixed(2) + ' %', cx, cy + 22);
+    ctx.fillStyle = '#64748B'; ctx.font = '10px -apple-system,"PingFang SC",sans-serif';
+    ctx.fillText('节电量下降率', cx, cy + 36);
+  })();
+
+  /* ═══ 分组柱状图 ═══ */
+  var chartFlags = { actual:true, predict:true, rate:true };
+
+  function drawEfficChart() {
+    var canvas = document.getElementById('efficChart');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var wrap = canvas.parentElement;
+    var dpr = window.devicePixelRatio || 1;
+    var w = wrap.clientWidth, h = wrap.clientHeight;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+    ctx.scale(dpr, dpr);
+
+    var groups = [
+      { label:'风冷主机', actual:0.28, predict:0.25, rate:-7.5 },
+      { label:'冷冻水泵', actual:0.042, predict:0.038, rate:-9.5 },
+    ];
+
+    var pad = { l:44, r:44, t:10, b:32 };
+    var cw = w - pad.l - pad.r, ch = h - pad.t - pad.b;
+    var efMax = 0.35, rMin = -40, rMax = 40;
+
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+
+    ctx.strokeStyle = '#EEF2F6'; ctx.lineWidth = 1;
+    for (var i = 0; i <= 5; i++) {
+      var y = pad.t + (i / 5) * ch;
+      ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + cw, y); ctx.stroke();
+    }
+
+    ctx.font = '10px system-ui,sans-serif';
+    ctx.fillStyle = '#64748B'; ctx.textAlign = 'right';
+    for (var yi = 0; yi <= 5; yi++) {
+      var val = efMax - (yi / 5) * efMax;
+      ctx.fillText(val.toFixed(2), pad.l - 5, pad.t + (yi / 5) * ch + 4);
+    }
+    ctx.textAlign = 'left';
+    for (var ri = 0; ri <= 5; ri++) {
+      var rv = rMax - (ri / 5) * (rMax - rMin);
+      ctx.fillText(rv.toFixed(0) + '%', pad.l + cw + 5, pad.t + (ri / 5) * ch + 4);
+    }
+
+    var gW = cw / groups.length;
+    var barW = Math.min(gW * 0.24, 20);
+
+    function efY(v) { return pad.t + ch - (v / efMax) * ch; }
+    function ratY(v) { return pad.t + ch - ((v - rMin) / (rMax - rMin)) * ch; }
+
+    groups.forEach(function (g, gi) {
+      var gcx = pad.l + gW * (gi + 0.5);
+
+      if (chartFlags.actual) {
+        ctx.fillStyle = '#1890FF';
+        ctx.fillRect(gcx - barW - 2, efY(g.actual), barW, efY(0) - efY(g.actual));
+      }
+      if (chartFlags.predict) {
+        ctx.fillStyle = '#F59A23';
+        ctx.fillRect(gcx + 2, efY(g.predict), barW, efY(0) - efY(g.predict));
+      }
+
+      ctx.fillStyle = '#475569'; ctx.font = '10px system-ui,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(g.label, gcx, h - 10);
+    });
+
+    if (chartFlags.rate) {
+      ctx.beginPath(); ctx.strokeStyle = '#8B5CF6'; ctx.lineWidth = 1.8; ctx.setLineDash([5, 3]);
+      groups.forEach(function (g, gi) {
+        var x = pad.l + gW * (gi + 0.5);
+        if (gi === 0) ctx.moveTo(x, ratY(g.rate)); else ctx.lineTo(x, ratY(g.rate));
+      });
+      ctx.stroke(); ctx.setLineDash([]);
+
+      groups.forEach(function (g, gi) {
+        var x = pad.l + gW * (gi + 0.5);
+        ctx.beginPath(); ctx.arc(x, ratY(g.rate), 3, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff'; ctx.fill();
+        ctx.strokeStyle = '#8B5CF6'; ctx.lineWidth = 2; ctx.stroke();
+      });
+    }
+  }
+
+  document.getElementById('chartLegend').addEventListener('change', function (e) {
+    if (e.target.type === 'checkbox') {
+      chartFlags[e.target.dataset.key] = e.target.checked;
+      drawEfficChart();
+    }
+  });
+  window.addEventListener('resize', drawEfficChart);
+  drawEfficChart();
+
+  document.getElementById('btnRefresh').addEventListener('click', function () {
+    var svg = this.querySelector('svg');
+    svg.style.transition = 'transform .5s ease';
+    svg.style.transform = 'rotate(360deg)';
+    setTimeout(function () { svg.style.transition = ''; svg.style.transform = ''; }, 500);
+  });
+
+})();
+</script>
+
+<!-- ── 规则配置弹窗 ── -->
+<div class="modal-mask" id="modalRuleConfig">
+  <div class="modal-box" style="max-width:700px;">
+    <div class="modal-head">
+      <span class="modal-title">冷站全局寻优规则配置</span>
+      <span class="modal-close" onclick="closeRuleModal()">&times;</span>
+    </div>
+    <div class="modal-tabs">
+      <div class="modal-tab-item active" data-mtab="planConfig" onclick="switchModalTab(this)">寻优规划配置</div>
+      <div class="modal-tab-item" data-mtab="ioConfig" onclick="switchModalTab(this)">投入/投出配置</div>
+    </div>
+
+    <!-- Tab 1：寻优规划配置 -->
+    <div class="modal-body modal-pane active" id="mpane-planConfig">
+
+      <div class="form-group">
+        <div class="form-label"><span class="required">*</span> 寻优周期</div>
+        <div class="form-row">
+          <input type="number" class="form-control" value="12">
+          <span class="form-suffix">小时</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="form-label"><span class="required">*</span> 仿真模型</div>
+        <select class="form-control">
+          <option value="">请选择</option>
+          <option>仿真模型</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <div class="form-label"><span class="required">*</span> 安全边界</div>
+        <select class="form-control">
+          <option value="">请选择</option>
+          <option>测试安全边界</option>
+          <option>保守模式1</option>
+          <option>标准模式</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <div class="form-label"><span class="required">*</span> 寻优器</div>
+        <select class="form-control" id="globalOptimizer" onchange="onGlobalOptimizerChange(this.value)">
+          <option value="">请选择</option>
+          <option value="lshade" selected>L-SHADE 优化器</option>
+          <option value="slsqp">SLSQP 梯度优化器</option>
+        </select>
+      </div>
+
+      <!-- L-SHADE 专属参数 -->
+      <div id="globalParams-lshade">
+        <div class="form-group">
+          <div class="form-label"><span class="required">*</span> 种群初始化数量</div>
+          <input type="number" class="form-control" value="50.0" step="1" min="1">
+        </div>
+        <div class="form-group">
+          <div class="form-label"><span class="required">*</span> 种群最终数量</div>
+          <input type="number" class="form-control" value="10.0" step="1" min="1">
+        </div>
+        <div class="form-group">
+          <div class="form-label"><span class="required">*</span> 最大迭代数</div>
+          <input type="number" class="form-control" value="50.0" step="1" min="1">
+        </div>
+      </div>
+
+      <!-- SLSQP 专属参数 -->
+      <div id="globalParams-slsqp" style="display:none;">
+        <div class="form-group">
+          <div class="form-label"><span class="required">*</span> 最大迭代数</div>
+          <input type="number" class="form-control" value="200.0" step="1" min="1">
+        </div>
+        <div class="form-group">
+          <div class="form-label"><span class="required">*</span> 收敛精度（小数位数）</div>
+          <input type="number" class="form-control" value="1.0" step="1" min="0">
+        </div>
+      </div>
+
+      <!-- 设备数量寻优规则 -->
+      <div class="form-section">设备数量寻优规则</div>
+      <div class="form-group">
+        <div class="qty-rule-wrap">
+          <table class="qty-rule-table">
+            <thead>
+              <tr>
+                <th style="width:180px;">规则名称</th>
+                <th style="width:70px;">启用开关</th>
+                <th>默认开机设备</th>
+                <th>指定设备<span class="required">*</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="rule-device">风冷冷水机组</span><span class="rule-param" style="color:var(--text-secondary);">运行状态</span></td>
+                <td><label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label></td>
+                <td><label class="qty-radio-label"><input type="radio" name="devRule0" value="follow" checked> <span class="dot-green"></span><span class="qty-radio-text active">跟随实际开机设备</span></label></td>
+                <td><label class="qty-radio-label"><input type="radio" name="devRule0" value="specify"> <span class="qty-radio-text">指定开机设备</span></label></td>
+              </tr>
+              <tr>
+                <td><span class="rule-device">冷冻水泵</span><span class="rule-param" style="color:var(--text-secondary);">运行状态</span></td>
+                <td><label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label></td>
+                <td><label class="qty-radio-label"><input type="radio" name="devRule1" value="follow" checked> <span class="dot-green"></span><span class="qty-radio-text active">跟随实际开机设备</span></label></td>
+                <td><label class="qty-radio-label"><input type="radio" name="devRule1" value="specify"> <span class="qty-radio-text">指定开机设备</span></label></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 模拟量寻优规则 -->
+      <div class="form-section">模拟量寻优规则</div>
+      <div class="form-group">
+        <div class="analog-rule-wrap">
+          <table class="analog-rule-table">
+            <thead>
+              <tr>
+                <th>规则名称</th>
+                <th style="width:70px;">启用开关</th>
+                <th style="width:88px;">寻优步长<span class="required">*</span></th>
+                <th style="width:88px;">默认值<span class="required">*</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="rule-device">风冷冷水机组</span><span class="rule-param">冷冻水出水温度</span></td>
+                <td><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></td>
+                <td><input type="number" class="form-control rule-num" value="1"></td>
+                <td><input type="number" class="form-control rule-num" value="16"></td>
+              </tr>
+              <tr>
+                <td><span class="rule-device">冷冻水泵</span><span class="rule-param">频率反馈</span></td>
+                <td><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></td>
+                <td><input type="number" class="form-control rule-num" value="1"></td>
+                <td><input type="number" class="form-control rule-num" value="30"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 寻优目标偏好（v1.8 新增） -->
+      <div class="form-section pref-section-header" style="margin-top:4px;">
+        <span>寻优目标偏好</span>
+        <button type="button" class="smart-recommend-btn" id="gSmartRecommendBtn" onclick="smartRecommendGlobal(this)">
+          <svg viewBox="0 0 24 24"><path d="M9 21c0 .5.4 1 1 1h4c.6 0 1-.5 1-1v-1H9v1zm3-19C8.1 2 5 5.1 5 9c0 2.4 1.2 4.5 3 5.7V17c0 .5.4 1 1 1h6c.6 0 1-.5 1-1v-2.3c1.8-1.3 3-3.4 3-5.7 0-3.9-3.1-7-7-7zm2.9 11.1l-.9.6V16h-4v-2.3l-.9-.6C7.8 12.2 7 10.6 7 9c0-2.8 2.2-5 5-5s5 2.2 5 5c0 1.6-.8 3.2-2.1 4.1z"/></svg>
+          智能推荐
+        </button>
+        <span class="pref-recommend-toast" id="gSmartToast"></span>
+      </div>
+      <p style="font-size:11.5px;color:var(--text-secondary);line-height:1.5;margin:-6px 0 14px;">
+        在省电基础上，用三个滑块调节偏好强度；值为 0 时退化为仅最小功率模式。
+      </p>
+
+      <div class="anno anno-req" data-version="v1.8" style="margin-bottom:16px;">
+        <span class="anno-tag">需求说明</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>冷站全局寻优规则配置 —「寻优目标偏好」（v1.8 新增）</p>
+          <p>多目标加权寻优配置，对应目标函数 J = P_norm + λ₁·C_safety + λ₂·C_switch + λ₃·C_swing。</p>
+          <ul>
+            <li><b>安全余量偏好（λ₁）：</b>0.00～0.50，默认 0.10；越大寻优结果越远离安全硬边界。</li>
+            <li><b>设备切换容忍度（λ₂）：</b>0.00～0.50，默认 0.15；全局寻优涉及设备启停，本页<b>可用</b>（柔性寻优页置灰）。</li>
+            <li><b>参数平稳偏好（λ₃）：</b>0.00～0.30，默认 0.05；全局寻优为单时刻快照式求解，不涉及时序平稳性，本页<b>置灰不可用</b>，默认 0（柔性寻优页可调）。</li>
+          </ul>
+          <p>三项权重均为 0 时行为与原单目标最小功率等价（向下兼容）。</p>
+        </div>
+      </div>
+
+      <div class="form-group pref-slider-group">
+        <div class="form-label">安全余量偏好（λ₁）</div>
+        <div class="pref-slider-end-labels"><span>够用就行</span><span>留足余量</span></div>
+        <div class="pref-slider-ticks"><span>0.00</span><span>0.10</span><span>0.30</span><span>0.50</span></div>
+        <div class="pref-slider-default-cap">（刻度默认参考点：0.10）</div>
+        <input type="range" class="range-pref" id="gPrefL1" min="0" max="0.5" step="0.01" value="0.10" aria-label="安全余量偏好">
+        <div class="pref-slider-meta"><span>当前值</span><span class="pref-val" id="gPrefL1Val">0.10</span></div>
+      </div>
+
+      <div class="form-group pref-slider-group">
+        <div class="form-label">设备切换容忍度（λ₂）</div>
+        <div class="pref-slider-end-labels"><span>随意切换</span><span>尽量别动</span></div>
+        <div class="pref-slider-ticks"><span>0.00</span><span>0.15</span><span>0.30</span><span>0.50</span></div>
+        <div class="pref-slider-default-cap">（刻度默认参考点：0.15，全局寻优涉及设备启停，本项可调）</div>
+        <input type="range" class="range-pref" id="gPrefL2" min="0" max="0.5" step="0.01" value="0.15" aria-label="设备切换容忍度">
+        <div class="pref-slider-meta"><span>当前值</span><span class="pref-val" id="gPrefL2Val">0.15</span></div>
+      </div>
+
+      <div class="form-group pref-slider-group is-na" id="gPrefL3Wrap">
+        <div class="form-label">参数平稳偏好（λ₃）<span class="pref-na-tag">本页策略不适用</span></div>
+        <div class="pref-slider-end-labels"><span>可以跳</span><span>越平越好</span></div>
+        <div class="pref-slider-ticks"><span>0.00</span><span>0.05</span><span>0.15</span><span>0.30</span></div>
+        <div class="pref-slider-default-cap">全局寻优为单时刻快照式求解，不涉及时序平稳性；长周期/柔性寻优中可调</div>
+        <input type="range" class="range-pref" id="gPrefL3" min="0" max="0.3" step="0.01" value="0" disabled aria-label="参数平稳偏好">
+        <div class="pref-slider-meta"><span>当前值</span><span class="pref-val" id="gPrefL3Val">0.00</span></div>
+      </div>
+
+    </div><!-- /mpane-planConfig -->
+
+    <!-- Tab 2：投入/投出配置 -->
+    <div class="modal-body modal-pane" id="mpane-ioConfig" style="padding-top:14px;">
+
+      <div class="form-section">冷冻水系统测点</div>
+      <div class="io-list">
+        <div class="io-item">
+          <span class="io-name">1号冷站—冷冻水总管供水温度</span>
+          <label class="toggle-switch"><input type="checkbox" checked onchange="this.closest('.io-item').querySelector('.io-status').className='io-status '+(this.checked?'in':'out');this.closest('.io-item').querySelector('.io-status').textContent=this.checked?'投入':'投出';"><span class="toggle-slider"></span></label>
+          <span class="io-status in">投入</span>
+        </div>
+        <div class="io-item">
+          <span class="io-name">1号冷站—冷冻水总管回水温度</span>
+          <label class="toggle-switch"><input type="checkbox" checked onchange="this.closest('.io-item').querySelector('.io-status').className='io-status '+(this.checked?'in':'out');this.closest('.io-item').querySelector('.io-status').textContent=this.checked?'投入':'投出';"><span class="toggle-slider"></span></label>
+          <span class="io-status in">投入</span>
+        </div>
+        <div class="io-item">
+          <span class="io-name">1号冷站—分集水器压差</span>
+          <label class="toggle-switch"><input type="checkbox" checked onchange="this.closest('.io-item').querySelector('.io-status').className='io-status '+(this.checked?'in':'out');this.closest('.io-item').querySelector('.io-status').textContent=this.checked?'投入':'投出';"><span class="toggle-slider"></span></label>
+          <span class="io-status in">投入</span>
+        </div>
+        <div class="io-item">
+          <span class="io-name">1号冷站—末端最不利供回水压差</span>
+          <label class="toggle-switch"><input type="checkbox" onchange="this.closest('.io-item').querySelector('.io-status').className='io-status '+(this.checked?'in':'out');this.closest('.io-item').querySelector('.io-status').textContent=this.checked?'投入':'投出';"><span class="toggle-slider"></span></label>
+          <span class="io-status out">投出</span>
+        </div>
+      </div>
+
+      <div class="form-section">室外环境</div>
+      <div class="io-list">
+        <div class="io-item">
+          <span class="io-name">1号冷站—室外干球温度</span>
+          <label class="toggle-switch"><input type="checkbox" checked onchange="this.closest('.io-item').querySelector('.io-status').className='io-status '+(this.checked?'in':'out');this.closest('.io-item').querySelector('.io-status').textContent=this.checked?'投入':'投出';"><span class="toggle-slider"></span></label>
+          <span class="io-status in">投入</span>
+        </div>
+      </div>
+
+      <div class="form-section">主要可调设备</div>
+      <div class="io-list">
+        <div class="io-item">
+          <span class="io-name">1#风冷冷水机组</span>
+          <label class="toggle-switch"><input type="checkbox" checked onchange="this.closest('.io-item').querySelector('.io-status').className='io-status '+(this.checked?'in':'out');this.closest('.io-item').querySelector('.io-status').textContent=this.checked?'投入':'投出';"><span class="toggle-slider"></span></label>
+          <span class="io-status in">投入</span>
+        </div>
+        <div class="io-item">
+          <span class="io-name">2#风冷冷水机组</span>
+          <label class="toggle-switch"><input type="checkbox" onchange="this.closest('.io-item').querySelector('.io-status').className='io-status '+(this.checked?'in':'out');this.closest('.io-item').querySelector('.io-status').textContent=this.checked?'投入':'投出';"><span class="toggle-slider"></span></label>
+          <span class="io-status out">投出</span>
+        </div>
+        <div class="io-item">
+          <span class="io-name">冷冻泵组</span>
+          <label class="toggle-switch"><input type="checkbox" checked onchange="this.closest('.io-item').querySelector('.io-status').className='io-status '+(this.checked?'in':'out');this.closest('.io-item').querySelector('.io-status').textContent=this.checked?'投入':'投出';"><span class="toggle-slider"></span></label>
+          <span class="io-status in">投入</span>
+        </div>
+      </div>
+
+    </div><!-- /mpane-ioConfig -->
+
+    <div class="modal-foot">
+      <button class="btn" onclick="closeRuleModal()">取 消</button>
+      <button class="btn btn-fill" onclick="closeRuleModal()">保 存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  window.openRuleModal = function () {
+    document.getElementById('modalRuleConfig').classList.add('show');
+  };
+  window.closeRuleModal = function () {
+    document.getElementById('modalRuleConfig').classList.remove('show');
+  };
+  window.switchModalTab = function (el) {
+    var tabId = el.getAttribute('data-mtab');
+    document.querySelectorAll('.modal-tab-item').forEach(function (t) { t.classList.remove('active'); });
+    el.classList.add('active');
+    document.querySelectorAll('.modal-pane').forEach(function (p) { p.classList.remove('active'); });
+    var pane = document.getElementById('mpane-' + tabId);
+    if (pane) pane.classList.add('active');
+  };
+  document.getElementById('modalRuleConfig').addEventListener('click', function (e) {
+    if (e.target === this) closeRuleModal();
+  });
+
+  window.onGlobalOptimizerChange = function (val) {
+    var lshade = document.getElementById('globalParams-lshade');
+    var slsqp  = document.getElementById('globalParams-slsqp');
+    if (!lshade || !slsqp) return;
+    lshade.style.display = val === 'slsqp' ? 'none' : '';
+    slsqp.style.display  = val === 'slsqp' ? '' : 'none';
+  };
+
+  /* 寻优目标偏好滑块实时联动 */
+  (function () {
+    var sliders = [
+      { id: 'gPrefL1', valId: 'gPrefL1Val' },
+      { id: 'gPrefL2', valId: 'gPrefL2Val' },
+    ];
+    sliders.forEach(function (s) {
+      var el = document.getElementById(s.id);
+      var vEl = document.getElementById(s.valId);
+      if (!el || !vEl) return;
+      el.addEventListener('input', function () {
+        vEl.textContent = parseFloat(this.value).toFixed(2);
+      });
+    });
+  })();
+
+  /* 智能推荐：基于历史数据自动设定偏好权重 */
+  window.smartRecommendGlobal = function (btn) {
+    btn.classList.add('loading');
+    btn.querySelector('svg').style.animation = 'sparkle .6s ease infinite';
+    setTimeout(function () {
+      var recommended = { gPrefL1: 0.18, gPrefL2: 0.22 };
+      Object.keys(recommended).forEach(function (id) {
+        var slider = document.getElementById(id);
+        var valEl = document.getElementById(id + 'Val');
+        if (!slider || !valEl) return;
+        slider.value = recommended[id];
+        valEl.textContent = recommended[id].toFixed(2);
+      });
+      btn.classList.remove('loading');
+      btn.querySelector('svg').style.animation = '';
+      var toast = document.getElementById('gSmartToast');
+      toast.textContent = '✓ 已基于近 30 天历史数据自动推荐';
+      toast.classList.add('show');
+      setTimeout(function () { toast.classList.remove('show'); }, 3000);
+    }, 800);
+  };
+
+  /* 单选按钮切换时同步文字颜色 */
+  document.querySelectorAll('.qty-rule-table input[type="radio"]').forEach(function (radio) {
+    radio.addEventListener('change', function () {
+      var name = this.getAttribute('name');
+      document.querySelectorAll('[name="' + name + '"]').forEach(function (r) {
+        var txt = r.closest('.qty-radio-label').querySelector('.qty-radio-text');
+        txt.classList.toggle('active', r.checked && r.value === 'follow');
+      });
+    });
+  });
+})();
+</script>
+
+<button class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+<script>
+function initAnnoVersionFilter() {
+  if (!document.body.classList.contains('annotation-mode')) return;
+  var tags = document.getElementById('annoFilterTags');
+  var annos = document.querySelectorAll('.anno[data-version]');
+  var vers = [];
+  annos.forEach(function (a) { var v = a.getAttribute('data-version'); if (v && vers.indexOf(v) < 0) vers.push(v); });
+  tags.innerHTML = '';
+  var all = document.createElement('span');
+  all.className = 'anno-filter-tag active'; all.textContent = '全部';
+  all.onclick = function () { filterAnno('all'); setActive(this); };
+  tags.appendChild(all);
+  vers.forEach(function (v) {
+    var b = document.createElement('span'); b.className = 'anno-filter-tag'; b.textContent = v;
+    b.onclick = function () { filterAnno(v); setActive(this); }; tags.appendChild(b);
+  });
+}
+function filterAnno(ver) {
+  document.querySelectorAll('.anno[data-version]').forEach(function (a) {
+    a.style.display = ver === 'all' || a.getAttribute('data-version') === ver ? '' : 'none';
+  });
+}
+function setActive(el) {
+  el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function (t) { t.classList.remove('active'); });
+  el.classList.add('active');
+}
+</script>
+<script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="冷站全局寻优"></script>
+</body>
+</html>

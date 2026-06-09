@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>安全边界 - 编辑</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-dark: #17358A;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --sidebar-bg: #071B2E;
+      --header-bg: #071B2E;
+      --danger: #DC2626;
+      --success: #16A34A;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { text-decoration: none; color: inherit; }
+    button { border: none; background: none; font: inherit; }
+
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main { flex: 1; min-width: 0; overflow-y: auto; background: var(--bg-body); }
+
+    .breadcrumb {
+      padding: 10px 24px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-light);
+    }
+    .breadcrumb a { color: var(--text-secondary); }
+    .breadcrumb a:hover { color: var(--primary); }
+    .breadcrumb .sep { margin: 0 6px; color: var(--text-hint); }
+    .breadcrumb .current { color: var(--text-primary); }
+
+    .content-body { padding: 16px 24px 24px; max-width: 960px; }
+
+    .page-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      cursor: pointer;
+      color: var(--text-primary);
+    }
+    .page-back:hover { color: var(--primary); }
+    .page-back .arrow { font-size: 20px; font-weight: 400; }
+
+    .section-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .section-head {
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+    .section-head-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .section-bar {
+      width: 3px;
+      height: 16px;
+      border-radius: 2px;
+      background: var(--text-primary);
+    }
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .collapse-icon {
+      font-size: 10px;
+      color: var(--text-hint);
+      transition: transform var(--transition);
+    }
+    .section-card.collapsed .collapse-icon { transform: rotate(180deg); }
+    .section-card.collapsed .section-body { display: none; }
+
+    .section-body { padding: 18px; }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .form-group:last-child { margin-bottom: 0; }
+
+    .field-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .field-label .required { color: var(--danger); margin-left: 2px; }
+
+    .field-control {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      background: #fff;
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+      width: 100%;
+    }
+    .field-control:focus-visible {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.12);
+    }
+    .field-control[disabled] {
+      background: #F8FAFC;
+      color: var(--text-hint);
+      cursor: not-allowed;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+    .char-count {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      color: var(--text-hint);
+    }
+    .input-wrap .field-control { padding-right: 60px; }
+
+    .field-select {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      background: #fff;
+      outline: none;
+      width: 100%;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%2394A3B8' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 32px;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .field-select:focus-visible {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.12);
+    }
+    .field-select[disabled] {
+      background-color: #F8FAFC;
+      color: var(--text-hint);
+      cursor: not-allowed;
+    }
+
+    .radio-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 24px;
+      padding: 4px 0;
+    }
+    .radio-group label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .radio-group input[type="radio"] {
+      accent-color: var(--success);
+      width: 16px;
+      height: 16px;
+    }
+    .radio-group input[type="radio"][disabled] { cursor: not-allowed; }
+    .radio-group label:has(input[disabled]) { cursor: not-allowed; color: var(--text-hint); }
+
+    .range-row {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .range-row:last-child { margin-bottom: 0; }
+    .range-item {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+    .range-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      min-width: 100px;
+    }
+    .range-inputs {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      flex: 1;
+    }
+    .range-input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      background: #fff;
+      outline: none;
+      text-align: left;
+      min-width: 0;
+    }
+    .range-input:focus-visible {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.12);
+    }
+    .range-sep {
+      padding: 0 12px;
+      font-size: 13px;
+      color: var(--text-hint);
+    }
+
+    .pump-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0;
+      margin-bottom: 12px;
+    }
+    .pump-row:last-child { margin-bottom: 0; }
+    .pump-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      min-width: 100px;
+      padding-top: 4px;
+    }
+    .pump-label .required { color: var(--danger); margin-left: 2px; }
+
+    .table-wrap { overflow-x: auto; }
+    .data-table {
+      width: 100%;
+      min-width: 860px;
+      border-collapse: collapse;
+    }
+    .data-table thead th {
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .data-table tbody td {
+      padding: 10px 12px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+    .data-table tbody tr:hover { background: #FAFCFF; }
+
+    .table-input {
+      width: 90px;
+      padding: 6px 8px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12px;
+      outline: none;
+    }
+    .table-input:focus-visible {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.1);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 36px;
+      padding: 0 20px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .btn-primary {
+      color: #fff;
+      background: var(--primary);
+    }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-ghost {
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      background: #fff;
+    }
+    .btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
+
+    .action-bar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 16px 0 8px;
+    }
+
+    .hidden { display: none !important; }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      min-width: 180px;
+      max-width: 320px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.92);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.6;
+      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.28);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: all .25s ease;
+      z-index: 260;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 900px) {
+      .content-body { padding: 12px 16px; }
+      .range-item { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .range-label { min-width: auto; }
+    }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+        <div class="breadcrumb">
+          <a href="安全边界-列表.html">安全边界</a>
+          <span class="sep">/</span>
+          <span class="current">编辑安全边界</span>
+        </div>
+
+        <div class="content-body">
+          <div class="anno anno-version-header" data-version="v2.0">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v2.0</p>
+              <p><b>更新日期：</b>2026-04-29</p>
+              <p><b>变更概述：</b>与创建页对齐 v2.0 动态显隐逻辑：页面回填数据后，根据安全边界对象所属系统是否含冷却侧设备（冷却塔 / 冷却泵），自动隐藏或展示对应配置行；编辑模式下类型和对象字段仍置灰不可更改，但设备行显隐在初始加载时一次性确定。</p>
+              <p><b>历史：</b>v1.8（2026-04-13）—— 按真实系统 UI 重构编辑安全边界页面；取消步骤式布局，改为可折叠卡片分区；新增面包屑导航和返回箭头；类型选项更正为"末端水冷机房"；变量边界表格统一为 7 列（含软边界）。</p>
+              <p><b>本页说明：</b>编辑已有安全边界的表单页，从列表页"编辑"操作进入。安全边界类型和对象在编辑模式下不可更改（置灰），其余字段可修改。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-ux" data-version="v1.8">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v1.8</span>
+            <span class="anno-source" data-type="AI 生成">AI 生成</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>整页框架</p>
+              <ul>
+                <li><b>入口：</b>列表页点击行操作"编辑"跳转至本页，回填该策略数据。</li>
+                <li><b>面包屑：</b>显示"安全边界 / 编辑安全边界"，点击"安全边界"返回列表。</li>
+                <li><b>返回箭头：</b>标题左侧"←"点击返回列表页。</li>
+                <li><b>折叠交互：</b>每个配置卡片标题栏可点击折叠/展开，默认全部展开。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="page-back" onclick="goList()">
+            <span class="arrow">←</span>
+            <span>编辑安全边界</span>
+          </div>
+
+          <!-- 基础信息 -->
+          <section class="section-card" id="sectionBasic">
+            <div class="section-head" onclick="toggleSection('sectionBasic')">
+              <div class="section-head-left">
+                <span class="section-bar"></span>
+                <span class="section-title">基础信息</span>
+              </div>
+              <span class="collapse-icon">▲</span>
+            </div>
+            <div class="section-body">
+              <div class="form-group">
+                <label class="field-label">安全边界名称<span class="required">*</span></label>
+                <div class="input-wrap">
+                  <input type="text" class="field-control" id="boundaryName" value="创建安全边界0327" maxlength="99" oninput="updateCharCount()">
+                  <span class="char-count" id="charCount">10 / 99</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="field-label">安全边界类型<span class="required">*</span></label>
+                <div class="radio-group">
+                  <label><input type="radio" name="boundaryType" value="water" checked disabled>水冷冷水系统</label>
+                  <label><input type="radio" name="boundaryType" value="terminal" disabled>末端水冷机房</label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="field-label">安全边界对象<span class="required">*</span></label>
+                <select class="field-select" disabled>
+                  <option selected>水冷冷水系统</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="anno anno-field" data-version="v1.8">
+              <span class="anno-tag">字段说明</span>
+              <span class="anno-version">v1.8</span>
+              <span class="anno-source" data-type="AI 生成">AI 生成</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>基础信息（编辑模式）</p>
+                <table class="anno-table">
+                  <thead>
+                    <tr><th>字段</th><th>类型</th><th>必填</th><th>规则</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>安全边界名称</td><td>String</td><td>是</td><td>最大 99 字符，回填已有名称，右侧显示字符计数</td></tr>
+                    <tr><td>安全边界类型</td><td>Radio</td><td>是</td><td>编辑模式下置灰不可切换，保持创建时选定的类型</td></tr>
+                    <tr><td>安全边界对象</td><td>Select</td><td>是</td><td>编辑模式下置灰不可更改，显示创建时选定的对象</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="anno anno-ux" data-version="v1.8">
+              <span class="anno-tag">交互说明</span>
+              <span class="anno-version">v1.8</span>
+              <span class="anno-source" data-type="AI 生成">AI 生成</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>基础信息 — 编辑限制</p>
+                <ul>
+                  <li><b>不可修改字段：</b>"安全边界类型"和"安全边界对象"在编辑模式下禁用（disabled），防止修改后导致下方配置区数据不一致。</li>
+                  <li><b>名称可改：</b>"安全边界名称"可编辑，保存时重新校验唯一性。</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <!-- 设备数量边界配置 - 水冷冷水系统 -->
+          <section class="section-card" id="sectionDeviceWater" data-system="water">
+            <div class="section-head" onclick="toggleSection('sectionDeviceWater')">
+              <div class="section-head-left">
+                <span class="section-bar"></span>
+                <span class="section-title">设备数量边界配置</span>
+              </div>
+              <span class="collapse-icon">▲</span>
+            </div>
+            <div class="section-body">
+              <div class="range-row">
+                <div class="range-item">
+                  <span class="range-label">制冷单元数量</span>
+                  <div class="range-inputs">
+                    <input type="number" class="range-input" value="1" min="0">
+                    <span class="range-sep">一</span>
+                    <input type="number" class="range-input" value="4" min="0">
+                  </div>
+                </div>
+                <div class="range-item">
+                  <span class="range-label">冷却塔数量</span>
+                  <div class="range-inputs">
+                    <input type="number" class="range-input" value="1" min="0">
+                    <span class="range-sep">一</span>
+                    <input type="number" class="range-input" value="4" min="0">
+                  </div>
+                </div>
+                <div class="range-item">
+                  <span class="range-label">二次泵数量</span>
+                  <div class="range-inputs">
+                    <input type="number" class="range-input" value="1" min="0">
+                    <span class="range-sep">一</span>
+                    <input type="number" class="range-input" value="50" min="0">
+                  </div>
+                </div>
+              </div>
+              <div class="pump-row">
+                <span class="pump-label">冷冻泵数量<span class="required">*</span></span>
+                <div class="radio-group">
+                  <label><input type="radio" name="freezePump" value="equal" checked>X = 制冷单元数量</label>
+                  <label><input type="radio" name="freezePump" value="range">制冷单元数量≤ X ≤ 制冷单元数量+1</label>
+                </div>
+              </div>
+              <div class="pump-row">
+                <span class="pump-label">冷却泵数量<span class="required">*</span></span>
+                <div class="radio-group">
+                  <label><input type="radio" name="coolPump" value="equal" checked>X = 制冷单元数量</label>
+                  <label><input type="radio" name="coolPump" value="range">制冷单元数量≤ X ≤ 制冷单元数量+1</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="anno anno-field" data-version="v1.8">
+              <span class="anno-tag">字段说明</span>
+              <span class="anno-version">v1.8</span>
+              <span class="anno-source" data-type="AI 生成">AI 生成</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>设备数量边界配置（水冷冷水系统 — 编辑回填）</p>
+                <table class="anno-table">
+                  <thead>
+                    <tr><th>字段</th><th>类型</th><th>规则</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>制冷单元数量</td><td>Number（区间）</td><td>回填已保存的下限/上限值，可修改</td></tr>
+                    <tr><td>冷却塔数量</td><td>Number（区间）</td><td>回填已保存的下限/上限值，可修改</td></tr>
+                    <tr><td>二次泵数量</td><td>Number（区间）</td><td>回填已保存的下限/上限值，可修改</td></tr>
+                    <tr><td>冷冻泵数量</td><td>Radio</td><td>回填已保存的选项，可修改</td></tr>
+                    <tr><td>冷却泵数量</td><td>Radio</td><td>回填已保存的选项，可修改</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="anno anno-data" data-version="v1.8">
+              <span class="anno-tag">数据逻辑</span>
+              <span class="anno-version">v1.8</span>
+              <span class="anno-source" data-type="基于文档推断">基于文档推断</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>设备数量边界配置（水冷冷水系统）</p>
+                <ul>
+                  <li><b>区间校验：</b>下限 ≤ 上限，否则保存时校验不通过。</li>
+                  <li><b>泵数量逻辑：</b>冷冻泵/冷却泵的数量与制冷单元数量存在关联约束，由单选项决定。</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <!-- 设备数量边界配置 - 末端水冷机房 -->
+          <section class="section-card hidden" id="sectionDeviceTerminal" data-system="terminal">
+            <div class="section-head" onclick="toggleSection('sectionDeviceTerminal')">
+              <div class="section-head-left">
+                <span class="section-bar"></span>
+                <span class="section-title">设备数量边界配置</span>
+              </div>
+              <span class="collapse-icon">▲</span>
+            </div>
+            <div class="section-body">
+              <div class="range-row">
+                <div class="range-item">
+                  <span class="range-label">空调开启数量</span>
+                  <div class="range-inputs">
+                    <input type="number" class="range-input" value="1" min="0">
+                    <span class="range-sep">一</span>
+                    <input type="number" class="range-input" value="2" min="0">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="anno anno-field" data-version="v1.8">
+              <span class="anno-tag">字段说明</span>
+              <span class="anno-version">v1.8</span>
+              <span class="anno-source" data-type="AI 生成">AI 生成</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>设备数量边界配置（末端水冷机房 — 编辑回填）</p>
+                <table class="anno-table">
+                  <thead>
+                    <tr><th>字段</th><th>类型</th><th>规则</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>空调开启数量</td><td>Number（区间）</td><td>回填已保存的下限/上限值，可修改</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <!-- 模拟控制变量边界配置 -->
+          <section class="section-card" id="sectionControlWater" data-system="water">
+            <div class="section-head" onclick="toggleSection('sectionControlWater')">
+              <div class="section-head-left">
+                <span class="section-bar"></span>
+                <span class="section-title">模拟控制变量边界配置</span>
+              </div>
+              <span class="collapse-icon">▲</span>
+            </div>
+            <div class="section-body">
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>对象</th>
+                      <th>变量名称</th>
+                      <th>单位</th>
+                      <th>硬边界下限</th>
+                      <th>软边界下限</th>
+                      <th>软边界上限</th>
+                      <th>硬边界上限</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>一号冷却塔</td>
+                      <td>频率反馈</td>
+                      <td></td>
+                      <td>1</td>
+                      <td><input class="table-input" value=""></td>
+                      <td><input class="table-input" value=""></td>
+                      <td>50</td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      <td>风机开机数</td>
+                      <td></td>
+                      <td>1</td>
+                      <td><input class="table-input" value=""></td>
+                      <td><input class="table-input" value=""></td>
+                      <td>1</td>
+                    </tr>
+                    <tr>
+                      <td>一号冷却泵</td>
+                      <td>频率反馈</td>
+                      <td></td>
+                      <td>1</td>
+                      <td><input class="table-input" value=""></td>
+                      <td><input class="table-input" value=""></td>
+                      <td>50</td>
+                    </tr>
+                    <tr>
+                      <td>一号冷水机组</td>
+                      <td>冷冻水出水温度</td>
+                      <td>℃</td>
+                      <td>1</td>
+                      <td><input class="table-input" value=""></td>
+                      <td><input class="table-input" value=""></td>
+                      <td>100</td>
+                    </tr>
+                    <tr>
+                      <td>二号冷冻水泵</td>
+                      <td>频率反馈</td>
+                      <td></td>
+                      <td>1</td>
+                      <td><input class="table-input" value=""></td>
+                      <td><input class="table-input" value=""></td>
+                      <td>50</td>
+                    </tr>
+                    <tr>
+                      <td>二号冷却塔</td>
+                      <td>频率反馈</td>
+                      <td></td>
+                      <td>1</td>
+                      <td><input class="table-input" value=""></td>
+                      <td><input class="table-input" value=""></td>
+                      <td>50</td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      <td>风机开机数</td>
+                      <td></td>
+                      <td>1</td>
+                      <td><input class="table-input" value=""></td>
+                      <td><input class="table-input" value=""></td>
+                      <td>1</td>
+                    </tr>
+                    <tr>
+                      <td>二号冷却泵</td>
+                      <td>频率反馈</td>
+                      <td></td>
+                      <td>1</td>
+                      <td><input class="table-input" value=""></td>
+                      <td><input class="table-input" value=""></td>
+                      <td>50</td>
+                    </tr>
+                    <tr>
+                      <td>二号冷水机组</td>
+                      <td>冷冻水出水温度</td>
+                      <td>℃</td>
+                      <td>1</td>
+                      <td><input class="table-input" value=""></td>
+                      <td><input class="table-input" value=""></td>
+                      <td>100</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <div class="anno anno-field" data-version="v1.8">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v1.8</span>
+            <span class="anno-source" data-type="AI 生成">AI 生成</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>模拟控制变量边界配置（水冷冷水系统 — 编辑回填）</p>
+              <table class="anno-table">
+                <thead>
+                  <tr><th>列名</th><th>类型</th><th>说明</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>对象</td><td>String</td><td>设备名称，同一设备下多行变量时仅首行显示</td></tr>
+                  <tr><td>变量名称</td><td>String</td><td>控制变量标识，只读</td></tr>
+                  <tr><td>单位</td><td>String</td><td>变量单位，只读</td></tr>
+                  <tr><td>硬边界下限</td><td>Number</td><td>只读；物理/安全极限下界</td></tr>
+                  <tr><td>软边界下限</td><td>Number</td><td>可编辑；回填已保存值</td></tr>
+                  <tr><td>软边界上限</td><td>Number</td><td>可编辑；回填已保存值</td></tr>
+                  <tr><td>硬边界上限</td><td>Number</td><td>只读；物理/安全极限上界</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="anno anno-data" data-version="v1.8">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v1.8</span>
+            <span class="anno-source" data-type="基于文档推断">基于文档推断</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>模拟控制变量边界配置（编辑模式）</p>
+              <ul>
+                <li><b>数据回填：</b>进入编辑页时，软边界列回填已保存的值。</li>
+                <li><b>约束关系：</b>硬边界下限 ≤ 软边界下限 ≤ 软边界上限 ≤ 硬边界上限。</li>
+                <li><b>行列只读：</b>对象、变量名称、单位、硬边界列均不可编辑。</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- 模拟控制变量边界配置 - 末端 -->
+          <section class="section-card hidden" id="sectionControlTerminal" data-system="terminal">
+            <div class="section-head" onclick="toggleSection('sectionControlTerminal')">
+              <div class="section-head-left">
+                <span class="section-bar"></span>
+                <span class="section-title">模拟控制变量边界配置</span>
+              </div>
+              <span class="collapse-icon">▲</span>
+            </div>
+            <div class="section-body">
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>对象</th>
+                      <th>变量名称</th>
+                      <th>单位</th>
+                      <th>硬边界下限</th>
+                      <th>软边界下限</th>
+                      <th>软边界上限</th>
+                      <th>硬边界上限</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>精密空调#1</td>
+                      <td>回风温度设定</td>
+                      <td></td>
+                      <td>25</td>
+                      <td><input class="table-input" value=""></td>
+                      <td><input class="table-input" value=""></td>
+                      <td>35</td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      <td>送风温度设定</td>
+                      <td></td>
+                      <td>18</td>
+                      <td><input class="table-input" value=""></td>
+                      <td><input class="table-input" value=""></td>
+                      <td>27</td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      <td>【风机1】风机转速上限设定</td>
+                      <td></td>
+                      <td>10</td>
+                      <td><input class="table-input" value=""></td>
+                      <td><input class="table-input" value=""></td>
+                      <td>100</td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      <td>【风机1】风机转速下限设定</td>
+                      <td></td>
+                      <td>10</td>
+                      <td><input class="table-input" value=""></td>
+                      <td><input class="table-input" value=""></td>
+                      <td>100</td>
+                    </tr>
+                    <tr>
+                      <td>精密空调#2</td>
+                      <td>回风温度设定</td>
+                      <td></td>
+                      <td>25</td>
+                      <td><input class="table-input" value=""></td>
+                      <td><input class="table-input" value=""></td>
+                      <td>35</td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      <td>送风温度设定</td>
+                      <td></td>
+                      <td>18</td>
+                      <td><input class="table-input" value=""></td>
+                      <td><input class="table-input" value=""></td>
+                      <td>27</td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      <td>【风机1】风机转速上限设定</td>
+                      <td></td>
+                      <td>10</td>
+                      <td><input class="table-input" value=""></td>
+                      <td><input class="table-input" value=""></td>
+                      <td>100</td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      <td>【风机1】风机转速下限设定</td>
+                      <td></td>
+                      <td>10</td>
+                      <td><input class="table-input" value=""></td>
+                      <td><input class="table-input" value=""></td>
+                      <td>100</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <div class="anno anno-ux" data-version="v1.8">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v1.8</span>
+            <span class="anno-source" data-type="AI 生成">AI 生成</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>模拟控制变量边界配置（末端水冷机房）</p>
+              <ul>
+                <li><b>表格结构：</b>与水冷类型相同的 7 列结构，展示精密空调相关变量（回风温度设定、送风温度设定、风机转速上/下限设定等）。</li>
+                <li><b>编辑回填：</b>软边界列回填已保存值，可修改。</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- 被控变量边界配置 -->
+          <section class="section-card" id="sectionOutputWater" data-system="water">
+            <div class="section-head" onclick="toggleSection('sectionOutputWater')">
+              <div class="section-head-left">
+                <span class="section-bar"></span>
+                <span class="section-title">被控变量边界配置</span>
+              </div>
+              <span class="collapse-icon">▲</span>
+            </div>
+            <div class="section-body">
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>对象</th>
+                      <th>变量名称</th>
+                      <th>单位</th>
+                      <th>硬边界下限</th>
+                      <th>软边界下限</th>
+                      <th>软边界上限</th>
+                      <th>硬边界上限</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>一号冷冻水泵</td>
+                      <td>有功功率</td>
+                      <td>kW</td>
+                      <td></td>
+                      <td><input class="table-input" value=""></td>
+                      <td><input class="table-input" value=""></td>
+                      <td>250</td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      <td>流量</td>
+                      <td></td>
+                      <td>1</td>
+                      <td><input class="table-input" value=""></td>
+                      <td><input class="table-input" value=""></td>
+                      <td>5000</td>
+                    </tr>
+                    <tr>
+                      <td>一号冷却塔</td>
+                      <td>冷却塔逼近度</td>
+                      <td>℃</td>
+                      <td></td>
+                      <td><input class="table-input" value=""></td>
+                      <td><input class="table-input" value=""></td>
+                      <td>3000</td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      <td>有功功率</td>
+                      <td>kW</td>
+                      <td></td>
+                      <td><input class="table-input" value=""></td>
+                      <td><input class="table-input" value=""></td>
+                      <td>2500</td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      <td>冷却水流量</td>
+                      <td>m³</td>
+                      <td>1</td>
+                      <td><input class="table-input" value=""></td>
+                      <td><input class="table-input" value=""></td>
+                      <td>3000</td>
+                    </tr>
+                    <tr>
+                      <td>一号冷水机组</td>
+                      <td>有功功率</td>
+                      <td>kW</td>
+                      <td></td>
+                      <td><input class="table-input" value=""></td>
+                      <td><input class="table-input" value=""></td>
+                      <td>3000</td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      <td>冷冻冷却水温差</td>
+                      <td>℃</td>
+                      <td>1</td>
+                      <td><input class="table-input" value=""></td>
+                      <td><input class="table-input" value=""></td>
+                      <td></td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      <td>冷水主机负载率</td>
+                      <td>%</td>
+                      <td>1</td>
+                      <td><input class="table-input" value=""></td>
+                      <td><input class="table-input" value=""></td>
+                      <td>3000</td>
+                    </tr>
+                    <tr>
+                      <td>水冷冷水系统</td>
+                      <td>冷冻水总管供回水压差</td>
+                      <td>bar</td>
+                      <td></td>
+                      <td><input class="table-input" value=""></td>
+                      <td><input class="table-input" value=""></td>
+                      <td>2</td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      <td>冷冻水总管供水温度</td>
+                      <td>℃</td>
+                      <td></td>
+                      <td><input class="table-input" value=""></td>
+                      <td><input class="table-input" value=""></td>
+                      <td>25</td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      <td>冷冻水总管回水温度</td>
+                      <td>℃</td>
+                      <td></td>
+                      <td><input class="table-input" value="25.00"></td>
+                      <td><input class="table-input" value=""></td>
+                      <td>50</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <div class="anno anno-field" data-version="v1.8">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v1.8</span>
+            <span class="anno-source" data-type="AI 生成">AI 生成</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>被控变量边界配置（水冷冷水系统 — 编辑回填）</p>
+              <table class="anno-table">
+                <thead>
+                  <tr><th>列名</th><th>类型</th><th>说明</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>对象</td><td>String</td><td>设备或系统名称（冷冻水泵、冷却塔、冷水机组、水冷冷水系统等）</td></tr>
+                  <tr><td>变量名称</td><td>String</td><td>被控变量标识（有功功率、流量、逼近度、负载率、温度、压差等），只读</td></tr>
+                  <tr><td>单位</td><td>String</td><td>变量单位（kW、℃、%、bar、m³ 等），只读</td></tr>
+                  <tr><td>硬边界下限</td><td>Number</td><td>只读；物理安全极限下界</td></tr>
+                  <tr><td>软边界下限</td><td>Number</td><td>可编辑；回填已保存值</td></tr>
+                  <tr><td>软边界上限</td><td>Number</td><td>可编辑；回填已保存值</td></tr>
+                  <tr><td>硬边界上限</td><td>Number</td><td>只读；物理安全极限上界</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 被控变量边界配置 - 末端 -->
+          <section class="section-card hidden" id="sectionOutputTerminal" data-system="terminal">
+            <div class="section-head" onclick="toggleSection('sectionOutputTerminal')">
+              <div class="section-head-left">
+                <span class="section-bar"></span>
+                <span class="section-title">被控变量边界配置</span>
+              </div>
+              <span class="collapse-icon">▲</span>
+            </div>
+            <div class="section-body">
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>对象</th>
+                      <th>变量名称</th>
+                      <th>单位</th>
+                      <th>硬边界下限</th>
+                      <th>软边界下限</th>
+                      <th>软边界上限</th>
+                      <th>硬边界上限</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+              <div style="padding:40px 0;text-align:center;color:var(--text-hint);font-size:13px;">暂无数据</div>
+            </div>
+          </section>
+
+          <div class="anno anno-ux" data-version="v1.8">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v1.8</span>
+            <span class="anno-source" data-type="AI 生成">AI 生成</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>被控变量边界配置（末端水冷机房）</p>
+              <ul>
+                <li><b>展示规则：</b>当安全边界类型为"末端水冷机房"时，被控变量区域显示"暂无数据"空态。</li>
+                <li><b>原因：</b>末端水冷机房场景下当前版本不涉及被控变量配置。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="anno anno-state" data-version="v1.8">
+            <span class="anno-tag">状态说明</span>
+            <span class="anno-version">v1.8</span>
+            <span class="anno-source" data-type="AI 生成">AI 生成</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>整页状态</p>
+              <ul>
+                <li><b>初始态：</b>进入页面时所有字段回填已保存数据；类型和对象置灰不可切换；仅展示对应类型的配置区。</li>
+                <li><b>保存成功：</b>toast 提示后跳回列表页。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="anno anno-edge" data-version="v1.8">
+            <span class="anno-tag">边界与异常</span>
+            <span class="anno-version">v1.8</span>
+            <span class="anno-source" data-type="AI 生成">AI 生成</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>表单提交与校验</p>
+              <ul>
+                <li><b>必填校验：</b>安全边界名称不可为空。</li>
+                <li><b>名称重复：</b>修改后的名称若与其他策略重复，后端返回错误时前端展示提示。</li>
+                <li><b>边界值校验：</b>软边界值需满足硬边界下限 ≤ 软边界下限 ≤ 软边界上限 ≤ 硬边界上限，不满足时标红提示。</li>
+                <li><b>设备区间校验：</b>数量区间下限 ≤ 上限。</li>
+                <li><b>并发冲突：</b>若该策略已被其他用户修改/删除，保存时应提示数据已变化并刷新。</li>
+                <li><b>取消操作：</b>点击"取消"直接返回列表页，已修改内容不保存（无二次确认）。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="action-bar">
+            <button class="btn btn-ghost" id="cancelBtn">取消</button>
+            <button class="btn btn-primary" id="saveBtn">保存</button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function () {
+      var toast = document.getElementById('toast');
+      var toastTimer = null;
+
+      function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 1800);
+      }
+
+      window.goList = function () {
+        window.location.assign(encodeURI('安全边界-列表.html'));
+      };
+
+      window.toggleSection = function (id) {
+        document.getElementById(id).classList.toggle('collapsed');
+      };
+
+      window.updateCharCount = function () {
+        var input = document.getElementById('boundaryName');
+        document.getElementById('charCount').textContent = input.value.length + ' / 99';
+      };
+
+      function setSystem(value) {
+        document.querySelectorAll('[data-system]').forEach(function (el) {
+          if (el.getAttribute('data-system') === value) {
+            el.classList.remove('hidden');
+          } else {
+            el.classList.add('hidden');
+          }
+        });
+      }
+
+      setSystem(document.querySelector('input[name="boundaryType"]:checked').value);
+
+      document.getElementById('saveBtn').addEventListener('click', function () { showToast('已保存（示意）'); });
+      document.getElementById('cancelBtn').addEventListener('click', goList);
+    })();
+  </script>
+  <button class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+
+  <div class="anno-filter-bar" id="annoFilterBar">
+    <span class="anno-filter-label">批注版本：</span>
+    <div class="anno-filter-tags" id="annoFilterTags"></div>
+  </div>
+
+  <script>
+  function initAnnoVersionFilter() {
+    var bar = document.getElementById('annoFilterBar');
+    var tags = document.getElementById('annoFilterTags');
+    if (!document.body.classList.contains('annotation-mode')) return;
+    var annos = document.querySelectorAll('.anno[data-version]');
+    var versions = [];
+    annos.forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (v && versions.indexOf(v) === -1) versions.push(v);
+    });
+    versions.sort(function(a, b) {
+      var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+      var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+      for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+        if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+      }
+      return 0;
+    });
+    tags.innerHTML = '';
+    var allBtn = document.createElement('span');
+    allBtn.className = 'anno-filter-tag';
+    allBtn.textContent = '全部';
+    allBtn.onclick = function() { filterAnno('all', versions[0]); setActive(this); };
+    tags.appendChild(allBtn);
+    versions.forEach(function(v, i) {
+      var btn = document.createElement('span');
+      btn.className = 'anno-filter-tag' + (i === 0 ? ' active' : '');
+      btn.textContent = v;
+      btn.onclick = function() { filterAnno(v, versions[0]); setActive(this); };
+      tags.appendChild(btn);
+    });
+    if (versions.length > 0) filterAnno(versions[0], versions[0]);
+  }
+  function filterAnno(version, latest) {
+    document.querySelectorAll('.anno[data-version]').forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (version === 'all') {
+        a.style.display = '';
+        a.style.opacity = (v === latest) ? '1' : '0.6';
+      } else {
+        a.style.display = (v === version) ? '' : 'none';
+        a.style.opacity = '1';
+      }
+    });
+  }
+  function setActive(el) {
+    el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function(t) { t.classList.remove('active'); });
+    el.classList.add('active');
+  }
+  </script>
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="安全边界"></script>
+</body>
+</html>

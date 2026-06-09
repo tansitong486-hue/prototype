@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>计费方案配置</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-dark: #17358A;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --danger: #DC2626;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button { border: none; background: none; font: inherit; }
+
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main {
+      flex: 1;
+      min-width: 0;
+      overflow-y: auto;
+      background: var(--bg-body);
+    }
+
+    .page-shell { padding: 18px 20px 24px; }
+
+    .breadcrumb-bar {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .subtabs {
+      display: flex;
+      gap: 0;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border-light);
+      margin-bottom: 16px;
+    }
+
+    .subtab {
+      padding: 10px 20px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      background: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: color var(--transition), border-color var(--transition);
+    }
+
+    .subtab:hover { color: var(--primary); }
+    .subtab.active {
+      color: var(--primary);
+      font-weight: 600;
+      border-bottom-color: var(--primary);
+    }
+
+    .page-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .page-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px 10px;
+    }
+
+    .page-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.4;
+    }
+
+    .page-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 0 18px 16px;
+    }
+
+    .toolbar-filters {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-right: auto;
+    }
+
+    .input-text {
+      height: 34px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      color: var(--text-primary);
+      min-width: 200px;
+      transition: border-color var(--transition);
+    }
+
+    .input-text:focus-visible {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.12);
+    }
+
+    .input-text::placeholder { color: var(--text-hint); }
+
+    .select-native {
+      height: 34px;
+      padding: 0 32px 0 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      color: var(--text-secondary);
+      background: #fff;
+      cursor: pointer;
+      min-width: 160px;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+    }
+
+    .select-native:focus-visible {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 34px;
+      padding: 0 14px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .btn-primary {
+      color: #fff;
+      background: var(--primary);
+    }
+
+    .btn-primary:hover { background: var(--primary-dark); }
+
+    .btn-default {
+      background: #fff;
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+    }
+
+    .btn-default:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .table-wrap { overflow-x: auto; }
+
+    .data-table {
+      width: 100%;
+      min-width: 960px;
+      border-collapse: collapse;
+    }
+
+    .data-table thead th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 14px 16px;
+      font-size: 13px;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover { background: #FBFCFE; }
+
+    .num-cell { font-variant-numeric: tabular-nums; }
+
+    .actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .action-link {
+      font-size: 13px;
+      cursor: pointer;
+      color: #1890FF;
+      transition: opacity var(--transition);
+      border-radius: 4px;
+      padding: 2px 0;
+    }
+
+    .action-link:hover { opacity: 0.72; }
+    .action-link.danger { color: var(--danger); }
+    .action-link:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    .page-foot {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px;
+      flex-wrap: wrap;
+    }
+
+    .pagination-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+    }
+
+    .pagination-total { font-size: 12px; color: var(--text-secondary); }
+
+    .pagination {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .page-item,
+    .page-arrow {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .page-item:hover,
+    .page-arrow:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .page-item.active {
+      color: #fff;
+      border-color: var(--primary);
+      background: var(--primary);
+    }
+
+    .page-size {
+      display: inline-flex;
+      align-items: center;
+      height: 32px;
+      padding: 0 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-left: 4px;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100000;
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .modal-backdrop.show { display: flex; }
+    body.modal-open { overflow: hidden; }
+
+    .modal {
+      position: relative;
+      z-index: 1;
+      background: #fff;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18), var(--shadow-card);
+      max-width: 720px;
+      width: 100%;
+      max-height: min(90vh, 720px);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-head {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .modal-title { font-size: 16px; font-weight: 700; }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      color: var(--text-hint);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .modal-close:hover { background: #F1F5F9; color: var(--text-primary); }
+
+    .modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+
+    .modal-foot {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .modal-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .modal-toolbar .input-text { min-width: 220px; flex: 1; }
+
+    .modal .data-table { min-width: 100%; }
+    .modal .data-table tbody tr.disabled-row { background: #F8FAFC; }
+    .modal .data-table tbody tr.disabled-row td { color: var(--text-hint); }
+
+    .check-cell { text-align: center; width: 72px; }
+    .check-cell input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+    .check-cell input[type="checkbox"]:disabled { cursor: not-allowed; }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      min-width: 180px;
+      max-width: 360px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.92);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.6;
+      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.28);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: all .25s ease;
+      z-index: 100050;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+        <div class="anno-filter-bar" id="annoFilterBar">
+          <span class="anno-filter-label">批注版本：</span>
+          <div class="anno-filter-tags" id="annoFilterTags"></div>
+        </div>
+        <div class="page-shell">
+          <div class="anno anno-version-header" data-version="v1.0">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v1.0</p>
+              <p><b>更新日期：</b>2026-03-26</p>
+              <p><b>变更概述：</b>由古典 Axure「计费方案配置」迁移为 AI 单页原型。</p>
+              <p><b>本页说明：</b>与「能源配置」同属能源计费配置模块；列表展示方案与能源类型、应用测点数与创建时间；支持按方案名称与物模型筛选；操作含编辑、应用（测点选择弹窗）、删除（有应用测点时禁止）。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-ux" data-version="v1.0">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source" data-type="引用自古典原型">引用自古典原型</span>
+            <div class="anno-body">
+              <ul>
+                <li><b>编辑：</b>跳转「新增-编辑能源计费方案.html」，携带查询参数 mode=edit、name、type。</li>
+                <li><b>新增：</b>跳转同页新增态（无查询参数）。</li>
+                <li><b>应用：</b>打开应用范围弹窗，勾选需绑定的累积量测点；已被其他方案占用的测点置灰不可选。</li>
+                <li><b>删除：</b>若方案下仍有应用测点则不允许删除并提示；否则二次确认后删除。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="anno anno-data" data-version="v1.0">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source" data-type="引用自古典原型">引用自古典原型</span>
+            <div class="anno-body">
+              <ul>
+                <li>弹窗内测点列表按当前能源已配置的<strong>标准累积量测点</strong>动态展示；非标准累计量测点不在列表中出现。</li>
+                <li>列表支持按测点名称模糊搜索。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="breadcrumb-bar" aria-label="面包屑">能源计费配置</div>
+          <div class="subtabs" role="tablist" aria-label="能源计费子页">
+            <a href="计费方案配置.html" class="subtab active" role="tab" aria-selected="true">计费方案配置</a>
+            <a href="能源配置.html" class="subtab" role="tab" aria-selected="false">能源配置</a>
+          </div>
+
+          <section class="page-card" aria-labelledby="pageTitle">
+            <div class="page-head">
+              <h1 class="page-title" id="pageTitle">计费方案</h1>
+            </div>
+
+            <div class="page-toolbar">
+              <div class="toolbar-filters">
+                <label class="visually-hidden" for="filterName">方案名称</label>
+                <input type="search" class="input-text" id="filterName" placeholder="请输入名称" autocomplete="off" aria-label="方案名称，支持模糊搜索">
+                <label class="visually-hidden" for="filterModel">物模型</label>
+                <select class="select-native" id="filterModel" aria-label="物模型筛选">
+                  <option value="">请选择物模型</option>
+                  <option value="ac">交流电表</option>
+                  <option value="dc">直流电表</option>
+                </select>
+              </div>
+              <button type="button" class="btn btn-primary" id="btnAdd">新增</button>
+            </div>
+
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>能源</th>
+                    <th>方案名称</th>
+                    <th>应用测点数</th>
+                    <th>创建时间</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr data-row-id="1" data-apps="12">
+                    <td>电</td>
+                    <td>市电单一电价方案</td>
+                    <td class="num-cell">12</td>
+                    <td class="num-cell">2023-10-12 12:23:34</td>
+                    <td>
+                      <div class="actions">
+                        <span class="action-link" tabindex="0" role="button" data-act="edit">编辑</span>
+                        <span class="action-link" tabindex="0" role="button" data-act="apply" data-scheme="市电单一电价方案">应用</span>
+                        <span class="action-link danger" tabindex="0" role="button" data-act="del">删除</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr data-row-id="2" data-apps="32">
+                    <td>水</td>
+                    <td>柴油发电方案</td>
+                    <td class="num-cell">32</td>
+                    <td class="num-cell">2023-10-11 12:23:34</td>
+                    <td>
+                      <div class="actions">
+                        <span class="action-link" tabindex="0" role="button" data-act="edit">编辑</span>
+                        <span class="action-link" tabindex="0" role="button" data-act="apply" data-scheme="柴油发电方案">应用</span>
+                        <span class="action-link danger" tabindex="0" role="button" data-act="del">删除</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr data-row-id="3" data-apps="12">
+                    <td>冷量</td>
+                    <td>冷量单价方案</td>
+                    <td class="num-cell">12</td>
+                    <td class="num-cell">2023-10-12 12:23:34</td>
+                    <td>
+                      <div class="actions">
+                        <span class="action-link" tabindex="0" role="button" data-act="edit">编辑</span>
+                        <span class="action-link" tabindex="0" role="button" data-act="apply" data-scheme="冷量单价方案">应用</span>
+                        <span class="action-link danger" tabindex="0" role="button" data-act="del">删除</span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="page-foot">
+              <div class="pagination-wrap">
+                <div class="pagination-total">共 3 条记录 第 1 / 1 页</div>
+                <div class="pagination" role="navigation" aria-label="分页">
+                  <button type="button" class="page-arrow" aria-label="上一页">‹</button>
+                  <button type="button" class="page-item active" aria-current="page">1</button>
+                  <button type="button" class="page-arrow" aria-label="下一页">›</button>
+                  <span class="page-size">10 条/页</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modalApply" aria-hidden="true">
+    <div class="modal" role="dialog" aria-labelledby="applyModalTitle" aria-modal="true">
+      <div class="modal-head">
+        <div class="modal-title" id="applyModalTitle">应用测点</div>
+        <button type="button" class="modal-close" id="applyModalClose" aria-label="关闭">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-toolbar">
+          <input type="search" class="input-text" id="modalPointSearch" placeholder="支持名称模糊搜索" aria-label="测点名称搜索">
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>物模型</th>
+                <th>名称</th>
+                <th class="check-cell">选择</th>
+              </tr>
+            </thead>
+            <tbody id="applyPointBody">
+              <tr data-name="1号电表">
+                <td>交流电表</td>
+                <td>1号电表</td>
+                <td class="check-cell"><input type="checkbox" aria-label="选择 1号电表"></td>
+              </tr>
+              <tr class="disabled-row" data-name="1级电表" title="该测点已被其他计费方案应用">
+                <td>交流电表</td>
+                <td>1级电表</td>
+                <td class="check-cell"><input type="checkbox" disabled aria-label="1级电表 不可选"></td>
+              </tr>
+              <tr data-name="2号电表">
+                <td>直流电表</td>
+                <td>2号电表</td>
+                <td class="check-cell"><input type="checkbox" aria-label="选择 2号电表"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-default" id="applyModalCancel">取消</button>
+        <button type="button" class="btn btn-primary" id="applyModalOk">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <style>
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+
+  <script>
+    (function () {
+      const toast = document.getElementById('toast');
+      let toastTimer = null;
+      const modal = document.getElementById('modalApply');
+      const applyTitle = document.getElementById('applyModalTitle');
+      const pointBody = document.getElementById('applyPointBody');
+      const searchInput = document.getElementById('modalPointSearch');
+
+      const showToast = (message) => {
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+      };
+
+      const openApplyModal = (schemeName) => {
+        applyTitle.textContent = '应用测点 — ' + schemeName;
+        searchInput.value = '';
+        pointBody.querySelectorAll('tr').forEach((tr) => { tr.style.display = ''; });
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+        document.getElementById('applyModalClose').focus();
+      };
+
+      const closeApplyModal = () => {
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+      };
+
+      document.getElementById('applyModalClose').addEventListener('click', closeApplyModal);
+      document.getElementById('applyModalCancel').addEventListener('click', closeApplyModal);
+      document.getElementById('applyModalOk').addEventListener('click', () => {
+        closeApplyModal();
+        showToast('示意：保存应用测点并刷新列表');
+      });
+
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeApplyModal();
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('show')) closeApplyModal();
+      });
+
+      searchInput.addEventListener('input', () => {
+        const q = searchInput.value.trim().toLowerCase();
+        pointBody.querySelectorAll('tr').forEach((tr) => {
+          const name = (tr.getAttribute('data-name') || '').toLowerCase();
+          tr.style.display = !q || name.includes(q) ? '' : 'none';
+        });
+      });
+
+      document.getElementById('btnAdd').addEventListener('click', () => {
+        window.location.href = '新增-编辑能源计费方案.html';
+      });
+
+      document.getElementById('filterName').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') showToast('示意：按名称筛选列表');
+      });
+
+      document.querySelectorAll('.action-link[data-act="edit"]').forEach((el) => {
+        const go = () => {
+          const row = el.closest('tr');
+          const energy = row && row.querySelector('td:nth-child(1)') ? row.querySelector('td:nth-child(1)').textContent.trim() : '';
+          const name = row && row.querySelector('td:nth-child(2)') ? row.querySelector('td:nth-child(2)').textContent.trim() : '';
+          const q = new URLSearchParams({ mode: 'edit', name, type: energy });
+          window.location.href = '新增-编辑能源计费方案.html?' + q.toString();
+        };
+        el.addEventListener('click', go);
+        el.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            go();
+          }
+        });
+      });
+
+      document.querySelectorAll('.action-link[data-act="apply"]').forEach((el) => {
+        const go = () => openApplyModal(el.getAttribute('data-scheme') || '计费方案');
+        el.addEventListener('click', go);
+        el.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            go();
+          }
+        });
+      });
+
+      document.querySelectorAll('.action-link[data-act="del"]').forEach((el) => {
+        const row = el.closest('tr');
+        const go = () => {
+          const apps = parseInt(row.getAttribute('data-apps') || '0', 10);
+          if (apps > 0) {
+            showToast('当前方案下仍有应用测点，无法删除');
+            return;
+          }
+          if (window.confirm('确认删除该计费方案？')) showToast('示意：校验通过后删除');
+        };
+        el.addEventListener('click', go);
+        el.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            go();
+          }
+        });
+      });
+
+      document.querySelectorAll('.page-item, .page-arrow').forEach((item) => {
+        item.addEventListener('click', () => showToast('分页为静态示意'));
+      });
+    })();
+  </script>
+
+  <button type="button" class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+
+  <script>
+    function initAnnoVersionFilter() {
+      var bar = document.getElementById('annoFilterBar');
+      var tags = document.getElementById('annoFilterTags');
+      if (!document.body.classList.contains('annotation-mode')) return;
+      var annos = document.querySelectorAll('.anno[data-version]');
+      var versions = [];
+      annos.forEach(function (a) {
+        var v = a.getAttribute('data-version');
+        if (v && versions.indexOf(v) === -1) versions.push(v);
+      });
+      versions.sort(function (a, b) {
+        var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+        var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+        for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+          if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+        }
+        return 0;
+      });
+      tags.innerHTML = '';
+      var allBtn = document.createElement('span');
+      allBtn.className = 'anno-filter-tag';
+      allBtn.textContent = '全部';
+      allBtn.onclick = function () { filterAnno('all', versions[0]); setActive(this); };
+      tags.appendChild(allBtn);
+      versions.forEach(function (v, i) {
+        var btn = document.createElement('span');
+        btn.className = 'anno-filter-tag' + (i === 0 ? ' active' : '');
+        btn.textContent = v;
+        btn.onclick = function () { filterAnno(v, versions[0]); setActive(this); };
+        tags.appendChild(btn);
+      });
+      if (versions.length > 0) filterAnno(versions[0], versions[0]);
+    }
+    function filterAnno(version, latest) {
+      document.querySelectorAll('.anno[data-version]').forEach(function (a) {
+        var v = a.getAttribute('data-version');
+        if (version === 'all') {
+          a.style.display = '';
+          a.style.opacity = (v === latest) ? '1' : '0.6';
+        } else {
+          a.style.display = (v === version) ? '' : 'none';
+          a.style.opacity = '1';
+        }
+      });
+    }
+    function setActive(el) {
+      el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function (t) { t.classList.remove('active'); });
+      el.classList.add('active');
+    }
+  </script>
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="能源计费配置"></script>
+</body>
+</html>

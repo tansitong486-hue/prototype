@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>用能对比分析</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-light: #EEF4FF;
+      --primary-dark: #17358A;
+      --primary-tint: #EEF4FF;
+      --primary-soft: #F5F8FF;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --radius: 8px;
+      --radius-lg: 14px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, .04);
+      --shadow-card: 0 1px 3px rgba(15, 23, 42, .06), 0 8px 24px rgba(15, 23, 42, .04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+      --focus-ring: rgba(30, 64, 175, .22);
+      --chart-c1: #1E40AF;
+      --chart-c2: #16A34A;
+      --chart-c3: #EA580C;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(15, 23, 42, .12); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(15, 23, 42, .2); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background:
+        radial-gradient(circle at top left, rgba(30, 64, 175, .07), transparent 30%),
+        linear-gradient(180deg, #F8FAFC 0%, var(--bg-body) 20%, var(--bg-body) 100%);
+      -webkit-font-smoothing: antialiased;
+    }
+    button { border: none; background: none; font: inherit; cursor: pointer; }
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main { flex: 1; min-width: 0; overflow-y: auto; background: transparent; }
+    .page-shell { padding: 14px 18px 28px; }
+
+    .cmp-page {
+      display: flex;
+      gap: 0;
+      align-items: stretch;
+      min-height: calc(100vh - 120px);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      background: var(--bg-card);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .cmp-sider {
+      width: 280px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border-light);
+      background: #FAFAFA;
+      display: flex;
+      flex-direction: column;
+      min-height: 520px;
+    }
+    .cmp-sider-inner {
+      padding: 14px 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+      min-height: 0;
+    }
+    .cmp-field { display: flex; flex-direction: column; gap: 6px; }
+    .cmp-field > label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .cmp-input, .cmp-select {
+      height: 32px;
+      padding: 0 10px;
+      font-size: 13px;
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      width: 100%;
+    }
+    .cmp-select {
+      padding-right: 28px;
+      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238C8C8C' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 8px center;
+      appearance: none;
+    }
+    .cmp-input:focus-visible, .cmp-select:focus-visible {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--focus-ring);
+    }
+
+    .cmp-hint {
+      font-size: 12px;
+      color: var(--text-hint);
+      line-height: 1.45;
+    }
+
+    .cmp-tree-wrap {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      margin: 0 -4px;
+      padding: 0 4px 8px;
+    }
+    .cmp-tree { list-style: none; font-size: 13px; }
+    .cmp-tree ul {
+      list-style: none;
+      margin: 2px 0 0 4px;
+      padding: 0 0 0 12px;
+      border-left: 1px solid var(--border-light);
+    }
+    .cmp-tree li { margin: 2px 0; }
+    .cmp-tree li[data-tree-match="0"] { display: none; }
+    .cmp-tree-node {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      text-align: left;
+      padding: 7px 8px;
+      border-radius: var(--radius);
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-primary);
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .cmp-tree-node:hover:not(.is-disabled) { background: #fff; }
+    .cmp-tree-node.is-leaf.cmp-selected {
+      background: var(--primary-tint);
+      border-color: rgba(30, 64, 175, 0.35);
+    }
+    .cmp-tree-node.is-disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      color: var(--text-hint);
+    }
+    .cmp-tree-caret {
+      width: 0; height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 5px solid var(--text-hint);
+      flex-shrink: 0;
+      transition: transform var(--transition);
+    }
+    .cmp-tree-caret.open { transform: rotate(180deg); }
+    .cmp-tree-children[hidden] { display: none !important; }
+    .cmp-tree-node input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      accent-color: var(--primary);
+      flex-shrink: 0;
+    }
+    .cmp-tree-label { flex: 1; min-width: 0; }
+
+    .cmp-content {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+    }
+    .cmp-content-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .cmp-title-row {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .cmp-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .cmp-unit {
+      font-size: 13px;
+      color: var(--text-hint);
+      font-weight: 500;
+    }
+    .cmp-head-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+    }
+    .cmp-seg {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .cmp-seg button {
+      padding: 6px 16px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      border-right: 1px solid var(--border-light);
+      transition: background var(--transition), color var(--transition);
+    }
+    .cmp-seg button:last-child { border-right: none; }
+    .cmp-seg button:hover { color: var(--text-primary); background: #FAFAFA; }
+    .cmp-seg button.active { color: #fff; background: var(--primary); font-weight: 600; }
+
+    .cmp-ranges-block {
+      width: 100%;
+      max-width: 520px;
+    }
+    .cmp-ranges-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .cmp-range-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .cmp-range-row .cmp-input { width: auto; min-width: 132px; height: 32px; }
+    .cmp-range-sep { font-size: 13px; color: var(--text-hint); }
+    .cmp-range-remove {
+      font-size: 12px;
+      color: #FF4D4F;
+      padding: 4px 8px;
+      border-radius: var(--radius);
+    }
+    .cmp-range-remove:hover { background: #FFF1F0; }
+    .cmp-range-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 32px;
+      padding: 0 14px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 600;
+      transition: background var(--transition);
+    }
+    .btn-primary { color: #fff; background: var(--primary); }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-ghost {
+      color: var(--text-secondary);
+      background: #FAFAFA;
+      border: 1px solid var(--border-light);
+    }
+    .btn-ghost:hover { color: var(--primary-dark); border-color: rgba(30, 64, 175, .35); }
+
+    .cmp-panel {
+      flex: 1;
+      min-height: 420px;
+      padding: 16px 20px 24px;
+      background: linear-gradient(180deg, var(--primary-soft) 0%, #fff 28%);
+    }
+    .cmp-panel[hidden] { display: none !important; }
+    .cmp-chart-svg {
+      width: 100%;
+      max-width: 960px;
+      height: auto;
+      min-height: 360px;
+      display: block;
+      margin: 0 auto;
+    }
+    .cmp-empty {
+      text-align: center;
+      padding: 80px 24px;
+      color: var(--text-hint);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .cmp-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: center;
+      margin-top: 12px;
+    }
+    .cmp-legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .cmp-legend-swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      background: #fff;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .data-table th,
+    .data-table td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .data-table th {
+      background: #FAFAFA;
+      font-weight: 600;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+    .data-table tbody tr:last-child td { border-bottom: none; }
+    .data-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+    .anno-toggle {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 200;
+      height: 36px;
+      padding: 0 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      background: var(--primary);
+      box-shadow: 0 4px 14px rgba(30, 64, 175, .35);
+    }
+    .anno-toggle:hover { background: var(--primary-dark); }
+    .anno-toggle:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+    @media (max-width: 960px) {
+      .cmp-page { flex-direction: column; }
+      .cmp-sider {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border-light);
+        min-height: auto;
+      }
+      .cmp-tree-wrap { max-height: 260px; }
+      .cmp-head-right { align-items: flex-start; }
+    }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+        <div class="anno-filter-bar" id="annoFilterBar">
+          <span class="anno-filter-label">批注版本：</span>
+          <div class="anno-filter-tags" id="annoFilterTags"></div>
+        </div>
+        <div class="page-shell">
+          <div class="anno anno-version-header" data-version="v1.0">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v1.0</p>
+              <p><b>说明：</b>由古典「用能对比分析」迁移；主区仅柱状图 + 表格切换（无折线图）；左栏多选节点与多时间段与古典表格示意一致。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-data" data-version="v1.0">
+            <span class="anno-tag">数据与交互</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source" data-type="引用自古典原型">引用自古典原型</span>
+            <div class="anno-body">
+              <p><b>对比项：</b>按勾选节点动态展示，最多同时 5 个；界面不展示实例 ID。</p>
+              <p><b>时间段：</b>最多 3 组日期范围对比；列头为各段起止日期文案。</p>
+              <p><b>电量：</b>按节点、时间段、能源类型汇总能耗明细（示意数据与古典表一致：1 号楼 522/1036 kWh 等）。</p>
+              <p><b>默认：</b>进入页默认柱状图；树节点默认未勾选；能源类型默认「电」；视图默认「能效视图」。未启用计量节点置灰不可选。</p>
+            </div>
+          </div>
+
+          <div class="cmp-page">
+            <aside class="cmp-sider" aria-label="筛选与对比节点">
+              <div class="cmp-sider-inner">
+                <div class="cmp-field">
+                  <label for="cmpEnergy">能源类型</label>
+                  <select class="cmp-select" id="cmpEnergy" aria-label="能源类型">
+                    <option value="elec" selected>电</option>
+                  </select>
+                </div>
+                <div class="cmp-field">
+                  <label for="cmpView">视图选择</label>
+                  <select class="cmp-select" id="cmpView" aria-label="视图选择">
+                    <option value="eff" selected>能效视图</option>
+                    <option value="space">空间视图</option>
+                  </select>
+                </div>
+                <div class="cmp-field">
+                  <label for="cmpSearch">搜索</label>
+                  <input class="cmp-input" type="search" id="cmpSearch" placeholder="请输入关键字" autocomplete="off" aria-label="筛选节点关键字">
+                </div>
+                <p class="cmp-hint" id="cmpSelectHint">已选 <strong id="cmpCount">0</strong> / 5 个节点</p>
+                <div class="cmp-tree-wrap">
+                  <ul class="cmp-tree" id="cmpTreeRoot">
+                    <li data-tree-label="华东园区 互盟 数据中心">
+                      <button type="button" class="cmp-tree-node" data-branch="park-east">
+                        <span class="cmp-tree-caret open" aria-hidden="true"></span>
+                        <span class="cmp-tree-label">华东园区</span>
+                      </button>
+                      <ul class="cmp-tree-children">
+                        <li data-tree-label="互盟数据中心 华东">
+                          <button type="button" class="cmp-tree-node" data-branch="humeng">
+                            <span class="cmp-tree-caret open" aria-hidden="true"></span>
+                            <span class="cmp-tree-label">互盟数据中心</span>
+                          </button>
+                          <ul class="cmp-tree-children">
+                            <li data-tree-label="1号楼">
+                              <label class="cmp-tree-node is-leaf">
+                                <input type="checkbox" name="cmpNode" value="b1" data-label="1号楼" aria-label="勾选 1 号楼 参与对比">
+                                <span class="cmp-tree-label">1 号楼</span>
+                              </label>
+                            </li>
+                            <li data-tree-label="2号楼">
+                              <label class="cmp-tree-node is-leaf">
+                                <input type="checkbox" name="cmpNode" value="b2" data-label="2号楼" aria-label="勾选 2 号楼 参与对比">
+                                <span class="cmp-tree-label">2 号楼</span>
+                              </label>
+                            </li>
+                            <li data-tree-label="3号楼">
+                              <label class="cmp-tree-node is-leaf">
+                                <input type="checkbox" name="cmpNode" value="b3" data-label="3号楼" aria-label="勾选 3 号楼 参与对比">
+                                <span class="cmp-tree-label">3 号楼</span>
+                              </label>
+                            </li>
+                          </ul>
+                        </li>
+                      </ul>
+                    </li>
+                    <li data-tree-label="华北 华北1号楼">
+                      <button type="button" class="cmp-tree-node" data-branch="park-north">
+                        <span class="cmp-tree-caret open" aria-hidden="true"></span>
+                        <span class="cmp-tree-label">华北园区</span>
+                      </button>
+                      <ul class="cmp-tree-children">
+                        <li data-tree-label="华北1号楼">
+                          <label class="cmp-tree-node is-leaf">
+                            <input type="checkbox" name="cmpNode" value="hb1" data-label="华北1号楼" aria-label="勾选 华北1号楼 参与对比">
+                            <span class="cmp-tree-label">华北 1 号楼</span>
+                          </label>
+                        </li>
+                      </ul>
+                    </li>
+                    <li data-tree-label="华南 华南1号楼">
+                      <button type="button" class="cmp-tree-node" data-branch="park-south">
+                        <span class="cmp-tree-caret open" aria-hidden="true"></span>
+                        <span class="cmp-tree-label">华南园区</span>
+                      </button>
+                      <ul class="cmp-tree-children">
+                        <li data-tree-label="华南1号楼">
+                          <label class="cmp-tree-node is-leaf">
+                            <input type="checkbox" name="cmpNode" value="hn1" data-label="华南1号楼" aria-label="勾选 华南1号楼 参与对比">
+                            <span class="cmp-tree-label">华南 1 号楼</span>
+                          </label>
+                        </li>
+                      </ul>
+                    </li>
+                    <li data-tree-label="未启用计量">
+                      <span class="cmp-tree-node is-disabled" title="未启用能耗计量，不可选">测试楼栋（未启用计量）</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </aside>
+
+            <div class="cmp-content">
+              <header class="cmp-content-head">
+                <div>
+                  <div class="cmp-title-row">
+                    <h1 class="cmp-title">用能对比分析</h1>
+                    <span class="cmp-unit">单位：kWh</span>
+                  </div>
+                  <div class="cmp-ranges-block" style="margin-top:14px;">
+                    <div class="cmp-ranges-label">对比时间段（最多 3 组）</div>
+                    <div id="cmpRanges"></div>
+                    <div class="cmp-range-actions">
+                      <button type="button" class="btn btn-ghost" id="cmpAddRange">添加时间段</button>
+                      <button type="button" class="btn btn-primary" id="cmpQuery">查询</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="cmp-head-right">
+                  <div class="cmp-seg" role="tablist" aria-label="展示方式">
+                    <button type="button" class="active" role="tab" aria-selected="true" id="cmpTabChart">柱状图</button>
+                    <button type="button" role="tab" aria-selected="false" id="cmpTabTable">表格</button>
+                  </div>
+                </div>
+              </header>
+
+              <div class="cmp-panel" id="cmpPanelChart" role="tabpanel">
+                <div id="cmpChartMount"></div>
+              </div>
+              <div class="cmp-panel" id="cmpPanelTable" hidden role="tabpanel">
+                <div style="overflow-x:auto;">
+                  <table class="data-table" id="cmpDataTable" aria-label="用能对比数据表">
+                    <thead id="cmpTableHead"></thead>
+                    <tbody id="cmpTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <button type="button" class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+
+  <script>
+  (function () {
+    const MAX_NODES = 5
+    const MAX_RANGES = 3
+
+    const DEMO_DATA = {
+      b1: [522, 1036],
+      b2: [1566, 3031],
+      b3: [329, 593],
+      hb1: [1528, 4176],
+      hn1: [337, 525]
+    }
+
+    const rangesEl = document.getElementById('cmpRanges')
+    const countEl = document.getElementById('cmpCount')
+    const chartMount = document.getElementById('cmpChartMount')
+    const tableHead = document.getElementById('cmpTableHead')
+    const tableBody = document.getElementById('cmpTableBody')
+    const panelChart = document.getElementById('cmpPanelChart')
+    const panelTable = document.getElementById('cmpPanelTable')
+    const tabChart = document.getElementById('cmpTabChart')
+    const tabTable = document.getElementById('cmpTabTable')
+
+    function formatRangeLabel(start, end) {
+      const a = start.replace(/-/g, '/')
+      const b = end.replace(/-/g, '/')
+      return a + '-' + b
+    }
+
+    function addRangeRow(startVal, endVal) {
+      const row = document.createElement('div')
+      row.className = 'cmp-range-row'
+      row.innerHTML =
+        '<input class="cmp-input" type="date" aria-label="时间段开始" value="' + startVal + '">' +
+        '<span class="cmp-range-sep">至</span>' +
+        '<input class="cmp-input" type="date" aria-label="时间段结束" value="' + endVal + '">' +
+        '<button type="button" class="cmp-range-remove" aria-label="移除此时间段">移除</button>'
+      const rm = row.querySelector('.cmp-range-remove')
+      rm.addEventListener('click', function () {
+        if (rangesEl.children.length <= 1) return
+        row.remove()
+      })
+      rangesEl.appendChild(row)
+    }
+
+    addRangeRow('2025-09-01', '2025-09-30')
+    addRangeRow('2025-10-01', '2025-10-31')
+
+    document.getElementById('cmpAddRange').addEventListener('click', function () {
+      if (rangesEl.children.length >= MAX_RANGES) {
+        window.alert('最多支持 ' + MAX_RANGES + ' 个时间段对比')
+        return
+      }
+      const d = new Date()
+      const iso = d.toISOString().slice(0, 10)
+      addRangeRow(iso, iso)
+    })
+
+    const treeRoot = document.getElementById('cmpTreeRoot')
+    treeRoot.addEventListener('click', function (e) {
+      const t = e.target
+      if (t.closest('label.cmp-tree-node')) return
+      const caret = t.closest('.cmp-tree-caret')
+      const btn = t.closest('button.cmp-tree-node')
+      if (caret && btn) {
+        e.stopPropagation()
+        const ul = btn.nextElementSibling
+        if (ul && ul.classList.contains('cmp-tree-children')) {
+          ul.hidden = !ul.hidden
+          caret.classList.toggle('open', !ul.hidden)
+        }
+        return
+      }
+      if (btn) {
+        const ul = btn.nextElementSibling
+        if (ul && ul.classList.contains('cmp-tree-children')) {
+          ul.hidden = !ul.hidden
+          const c = btn.querySelector('.cmp-tree-caret')
+          if (c) c.classList.toggle('open', !ul.hidden)
+        }
+      }
+    })
+
+    treeRoot.querySelectorAll('input[name="cmpNode"]').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        if (treeRoot.querySelectorAll('input[name="cmpNode"]:checked').length > MAX_NODES) {
+          cb.checked = false
+          window.alert('最多同时对比 ' + MAX_NODES + ' 个节点')
+        }
+        countEl.textContent = String(treeRoot.querySelectorAll('input[name="cmpNode"]:checked').length)
+        syncLeafHighlight()
+        renderAll()
+      })
+    })
+
+    function syncLeafHighlight() {
+      treeRoot.querySelectorAll('label.cmp-tree-node.is-leaf').forEach(function (lab) {
+        const inp = lab.querySelector('input[type="checkbox"]')
+        lab.classList.toggle('cmp-selected', inp && inp.checked)
+      })
+    }
+
+    function getRanges() {
+      const rows = rangesEl.querySelectorAll('.cmp-range-row')
+      const out = []
+      rows.forEach(function (row) {
+        const ins = row.querySelectorAll('input[type="date"]')
+        if (ins.length >= 2) out.push({ start: ins[0].value, end: ins[1].value })
+      })
+      return out
+    }
+
+    function getSelectedNodes() {
+      const list = []
+      treeRoot.querySelectorAll('input[name="cmpNode"]:checked').forEach(function (inp) {
+        list.push({ id: inp.value, label: inp.getAttribute('data-label') || inp.value })
+      })
+      return list
+    }
+
+    function renderTable() {
+      const nodes = getSelectedNodes()
+      const ranges = getRanges()
+      const thead = document.createElement('tr')
+      thead.innerHTML = '<th>对比节点</th>' + ranges.map(function (r) {
+        return '<th class="num">' + formatRangeLabel(r.start, r.end) + '</th>'
+      }).join('')
+      tableHead.innerHTML = ''
+      tableHead.appendChild(thead)
+      tableBody.innerHTML = ''
+      if (nodes.length === 0) {
+        const tr = document.createElement('tr')
+        tr.innerHTML = '<td colspan="' + (ranges.length + 1) + '" style="text-align:center;color:var(--text-hint);padding:28px;">请勾选左侧节点后查询</td>'
+        tableBody.appendChild(tr)
+        return
+      }
+      nodes.forEach(function (node) {
+        const row = document.createElement('tr')
+        const series = DEMO_DATA[node.id]
+        const cells = ranges.map(function (_, i) {
+          const v = series && series[i] != null ? series[i] : '—'
+          return '<td class="num">' + v + '</td>'
+        }).join('')
+        row.innerHTML = '<td>' + node.label + '</td>' + cells
+        tableBody.appendChild(row)
+      })
+    }
+
+    function renderChart() {
+      const nodes = getSelectedNodes()
+      const ranges = getRanges()
+      if (nodes.length === 0) {
+        chartMount.innerHTML = '<div class="cmp-empty">请勾选左侧节点（最多 ' + MAX_NODES + ' 个）进行用能对比<br>时间段列将随上方日期范围生成</div>'
+        return
+      }
+
+      const W = 720
+      const H = 380
+      const padL = 56
+      const padR = 24
+      const padT = 36
+      const padB = 56
+      const innerW = W - padL - padR
+      const innerH = H - padT - padB
+
+      let maxV = 1
+      nodes.forEach(function (n) {
+        const s = DEMO_DATA[n.id]
+        if (!s) return
+        ranges.forEach(function (_, i) {
+          if (s[i] != null) maxV = Math.max(maxV, s[i])
+        })
+      })
+      maxV *= 1.08
+
+      const groupW = innerW / nodes.length
+      const barSlot = groupW * 0.72
+      const barW = barSlot / Math.max(ranges.length, 1)
+      const gap = (groupW - barSlot) / 2
+
+      let svg = '<svg class="cmp-chart-svg" viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" aria-label="用能对比柱状图">'
+      svg += '<text x="' + (W / 2) + '" y="22" text-anchor="middle" font-size="11" fill="#BFBFBF">示意数据 · 按节点与时间段汇总电量</text>'
+
+      for (var g = 0; g <= 4; g++) {
+        var y = padT + (innerH * g / 4)
+        var val = Math.round(maxV * (1 - g / 4))
+        svg += '<line x1="' + padL + '" y1="' + y + '" x2="' + (W - padR) + '" y2="' + y + '" stroke="#F0F0F0" stroke-width="1"/>'
+        svg += '<text x="' + (padL - 8) + '" y="' + (y + 4) + '" text-anchor="end" font-size="11" fill="#8C8C8C">' + val + '</text>'
+      }
+
+      nodes.forEach(function (node, ni) {
+        var gx = padL + ni * groupW + gap
+        var series = DEMO_DATA[node.id] || []
+        ranges.forEach(function (_, ri) {
+          var v = series[ri]
+          if (v == null) return
+          var h = (v / maxV) * innerH
+          var x = gx + ri * barW + barW * 0.08
+          var y = padT + innerH - h
+          var fill = ri === 0 ? '#1E40AF' : (ri === 1 ? '#16A34A' : '#EA580C')
+          svg += '<rect x="' + x + '" y="' + y + '" width="' + (barW * 0.84) + '" height="' + h + '" rx="3" fill="' + fill + '" opacity="0.9"/>'
+          svg += '<text x="' + (x + barW * 0.42) + '" y="' + (y - 4) + '" text-anchor="middle" font-size="10" fill="#595959">' + v + '</text>'
+        })
+        var cx = padL + ni * groupW + groupW / 2
+        var label = node.label.length > 6 ? node.label.slice(0, 5) + '…' : node.label
+        svg += '<text x="' + cx + '" y="' + (H - 22) + '" text-anchor="middle" font-size="12" fill="#262626" font-weight="600">' + label + '</text>'
+      })
+
+      svg += '</svg>'
+
+      var leg = '<div class="cmp-legend">'
+      ranges.forEach(function (r, i) {
+        var fill = i === 0 ? '#1E40AF' : (i === 1 ? '#16A34A' : '#EA580C')
+        leg += '<span class="cmp-legend-item"><span class="cmp-legend-swatch" style="background:' + fill + '"></span>' + formatRangeLabel(r.start, r.end) + '</span>'
+      })
+      leg += '</div>'
+
+      chartMount.innerHTML = svg + leg
+    }
+
+    function renderAll() {
+      renderChart()
+      renderTable()
+    }
+
+    document.getElementById('cmpQuery').addEventListener('click', renderAll)
+
+    tabChart.addEventListener('click', function () {
+      tabChart.classList.add('active')
+      tabTable.classList.remove('active')
+      tabChart.setAttribute('aria-selected', 'true')
+      tabTable.setAttribute('aria-selected', 'false')
+      panelChart.hidden = false
+      panelTable.hidden = true
+    })
+    tabTable.addEventListener('click', function () {
+      tabTable.classList.add('active')
+      tabChart.classList.remove('active')
+      tabTable.setAttribute('aria-selected', 'true')
+      tabChart.setAttribute('aria-selected', 'false')
+      panelChart.hidden = true
+      panelTable.hidden = false
+      renderTable()
+    })
+
+    const search = document.getElementById('cmpSearch')
+    function setMatch(li, show) {
+      li.setAttribute('data-tree-match', show ? '1' : '0')
+    }
+    function walkShowAncestors(li) {
+      var p = li.parentElement
+      while (p && p !== treeRoot) {
+        if (p.tagName === 'LI' && p.hasAttribute('data-tree-label')) setMatch(p, true)
+        p = p.parentElement
+      }
+    }
+    search.addEventListener('input', function () {
+      var q = (search.value || '').trim().toLowerCase()
+      var items = treeRoot.querySelectorAll('li[data-tree-label]')
+      if (!q) {
+        items.forEach(function (li) { setMatch(li, true) })
+        return
+      }
+      items.forEach(function (li) { setMatch(li, false) })
+      items.forEach(function (li) {
+        var lab = (li.getAttribute('data-tree-label') || '').toLowerCase()
+        if (lab.indexOf(q) !== -1) {
+          setMatch(li, true)
+          walkShowAncestors(li)
+        }
+      })
+    })
+
+    syncLeafHighlight()
+    renderAll()
+  })()
+
+  function initAnnoVersionFilter() {
+    var tags = document.getElementById('annoFilterTags')
+    if (!document.body.classList.contains('annotation-mode')) return
+    var annos = document.querySelectorAll('.anno[data-version]')
+    var versions = []
+    annos.forEach(function (a) {
+      var v = a.getAttribute('data-version')
+      if (v && versions.indexOf(v) === -1) versions.push(v)
+    })
+    versions.sort(function (a, b) {
+      var na = a.replace(/[^0-9.]/g, '').split('.').map(Number)
+      var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number)
+      for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+        if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0)
+      }
+      return 0
+    })
+    tags.innerHTML = ''
+    var allBtn = document.createElement('span')
+    allBtn.className = 'anno-filter-tag'
+    allBtn.textContent = '全部'
+    allBtn.onclick = function () { filterAnno('all', versions[0]); setActiveAnnoTag(this) }
+    tags.appendChild(allBtn)
+    versions.forEach(function (v, i) {
+      var btn = document.createElement('span')
+      btn.className = 'anno-filter-tag' + (i === 0 ? ' active' : '')
+      btn.textContent = v
+      btn.onclick = function () { filterAnno(v, versions[0]); setActiveAnnoTag(this) }
+      tags.appendChild(btn)
+    })
+    if (versions.length > 0) filterAnno(versions[0], versions[0])
+  }
+  function filterAnno(version, latest) {
+    document.querySelectorAll('.anno[data-version]').forEach(function (a) {
+      var v = a.getAttribute('data-version')
+      if (version === 'all') {
+        a.style.display = ''
+        a.style.opacity = (v === latest) ? '1' : '0.6'
+      } else {
+        a.style.display = (v === version) ? '' : 'none'
+        a.style.opacity = '1'
+      }
+    })
+  }
+  function setActiveAnnoTag(el) {
+    el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function (t) { t.classList.remove('active') })
+    el.classList.add('active')
+  }
+  </script>
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="用能对比分析"></script>
+  <style>
+    :root { --nav-primary: #1E40AF; --nav-primary-dark: #17358A; --nav-primary-tint: #EEF4FF; }
+    .sidebar-item.active:hover { background: rgba(30,64,175,.12) !important; color: var(--nav-primary-dark) !important; }
+    .sidebar-item.active .sidebar-item-ver { color: var(--nav-primary) !important; background: rgba(30,64,175,.14) !important; }
+    .sidebar.sidebar--collapsed .sidebar-group-children .sidebar-item.active::before { box-shadow: 0 0 0 3px rgba(30,64,175,.24) !important; }
+  </style>
+</body>
+</html>

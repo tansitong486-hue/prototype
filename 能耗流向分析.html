@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>能耗流向分析</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-light: #EEF4FF;
+      --primary-dark: #17358A;
+      --primary-tint: #EEF4FF;
+      --primary-soft: #F5F8FF;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --radius: 8px;
+      --radius-lg: 14px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, .04);
+      --shadow-card: 0 1px 3px rgba(15, 23, 42, .06), 0 8px 24px rgba(15, 23, 42, .04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+      --focus-ring: rgba(30, 64, 175, .22);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(15, 23, 42, .12); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(15, 23, 42, .2); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background:
+        radial-gradient(circle at top left, rgba(30, 64, 175, .07), transparent 32%),
+        linear-gradient(180deg, #F8FAFC 0%, var(--bg-body) 22%, var(--bg-body) 100%);
+      -webkit-font-smoothing: antialiased;
+    }
+    button { border: none; background: none; font: inherit; cursor: pointer; }
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main { flex: 1; min-width: 0; overflow-y: auto; background: transparent; }
+    .page-shell { padding: 14px 18px 28px; }
+
+    /* ── 与「用能对比分析」相同的左右分栏骨架 ── */
+    .cmp-page {
+      display: flex;
+      gap: 0;
+      align-items: stretch;
+      min-height: calc(100vh - 120px);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      background: var(--bg-card);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+    .cmp-sider {
+      width: 280px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border-light);
+      background: #FAFAFA;
+      display: flex;
+      flex-direction: column;
+      min-height: 520px;
+    }
+    .cmp-sider-inner {
+      padding: 14px 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+      min-height: 0;
+    }
+    .cmp-field { display: flex; flex-direction: column; gap: 6px; }
+    .cmp-field > label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .cmp-input, .cmp-select {
+      height: 32px;
+      padding: 0 10px;
+      font-size: 13px;
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      width: 100%;
+    }
+    .cmp-select {
+      padding-right: 28px;
+      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238C8C8C' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 8px center;
+      appearance: none;
+    }
+    .cmp-input:focus-visible, .cmp-select:focus-visible {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--focus-ring);
+    }
+    .cmp-tree-wrap {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      margin: 0 -4px;
+      padding: 0 4px 8px;
+    }
+    .cmp-tree { list-style: none; font-size: 13px; }
+    .cmp-tree ul {
+      list-style: none;
+      margin: 2px 0 0 4px;
+      padding: 0 0 0 12px;
+      border-left: 1px solid var(--border-light);
+    }
+    .cmp-tree li { margin: 2px 0; }
+    .cmp-tree li[data-tree-match="0"] { display: none; }
+    .cmp-tree-node {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      text-align: left;
+      padding: 7px 8px;
+      border-radius: var(--radius);
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-primary);
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .cmp-tree-node:hover:not(.is-disabled):not(:disabled) { background: #fff; }
+    .cmp-tree-node.is-leaf.cmp-selected {
+      background: var(--primary-tint);
+      border-color: rgba(30, 64, 175, 0.35);
+    }
+    .cmp-tree-node.active {
+      background: var(--primary-tint);
+      border-color: rgba(30, 64, 175, 0.35);
+      font-weight: 600;
+      color: var(--primary-dark);
+    }
+    .cmp-tree-node.is-disabled,
+    .cmp-tree-node:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      color: var(--text-hint);
+    }
+    .cmp-tree-caret {
+      width: 0;
+      height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 5px solid var(--text-hint);
+      flex-shrink: 0;
+      transition: transform var(--transition);
+    }
+    .cmp-tree-caret.open { transform: rotate(180deg); }
+    .cmp-tree-children[hidden] { display: none !important; }
+    .cmp-tree-label { flex: 1; min-width: 0; }
+
+    .cmp-content {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+    }
+    .cmp-content-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .cmp-title-row {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .cmp-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .cmp-unit {
+      font-size: 13px;
+      color: var(--text-hint);
+      font-weight: 500;
+    }
+    .cmp-ranges-block { width: 100%; max-width: 560px; }
+    .cmp-ranges-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .cmp-range-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .cmp-range-row .cmp-input { width: auto; min-width: 132px; height: 32px; }
+    .cmp-range-sep { font-size: 13px; color: var(--text-hint); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 32px;
+      padding: 0 14px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 600;
+      transition: background var(--transition);
+    }
+    .btn-primary { color: #fff; background: var(--primary); }
+    .btn-primary:hover { background: var(--primary-dark); }
+
+    /* 本页：下钻路径 */
+    .ef-drill-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      padding: 10px 20px 12px;
+      border-bottom: 1px solid var(--border-light);
+      background: #fff;
+    }
+    .ef-bc { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+    .ef-bc button {
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: #FAFAFA;
+      border: 1px solid var(--border);
+      transition: border-color var(--transition), color var(--transition), background var(--transition);
+    }
+    .ef-bc button:not(:disabled):hover {
+      border-color: rgba(30, 64, 175, 0.35);
+      color: var(--primary-dark);
+      background: var(--primary-tint);
+    }
+    .ef-bc button:disabled {
+      color: var(--primary-dark);
+      font-weight: 600;
+      cursor: default;
+      background: var(--primary-tint);
+      border-color: rgba(30, 64, 175, 0.28);
+    }
+    .ef-bc-sep { color: var(--text-hint); font-size: 11px; padding: 0 2px; }
+    .ef-drill-tip {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.45;
+      max-width: 380px;
+    }
+
+    .cmp-panel {
+      flex: 1;
+      min-height: 420px;
+      padding: 16px 20px 24px;
+      background: linear-gradient(180deg, var(--primary-soft) 0%, #fff 28%);
+    }
+    .flow-sankey-caption {
+      font-size: 12px;
+      color: var(--text-hint);
+      line-height: 1.5;
+      margin-bottom: 14px;
+      max-width: 720px;
+    }
+    #efSankeySvg {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+
+    .anno-toggle {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 200;
+      height: 36px;
+      padding: 0 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      background: var(--primary);
+      box-shadow: 0 4px 14px rgba(30, 64, 175, 0.35);
+    }
+    .anno-toggle:hover { background: var(--primary-dark); }
+    .anno-toggle:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+    @media (max-width: 960px) {
+      .cmp-page { flex-direction: column; }
+      .cmp-sider {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border-light);
+        min-height: auto;
+      }
+      .cmp-tree-wrap { max-height: 260px; }
+      .ef-drill-tip { max-width: none; }
+    }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+</head>
+<body>
+<div class="layout">
+  <div id="app-header"></div>
+  <div class="body-wrap">
+    <div id="app-sidebar"></div>
+    <main class="main">
+      <div class="anno-filter-bar" id="annoFilterBar">
+        <span class="anno-filter-label">批注版本：</span>
+        <div class="anno-filter-tags" id="annoFilterTags"></div>
+      </div>
+      <div class="page-shell">
+        <div class="anno anno-version-header" data-version="v1.0">
+          <span class="anno-tag">版本信息</span>
+          <div class="anno-body">
+            <p><b>当前版本：</b>v1.0</p>
+            <p><b>说明：</b>三段桑基：源→一级分项→二级末端；点击一级图例卡下钻（最多 2 层）；面包屑返回；末端项过密时标签自动缩小。</p>
+          </div>
+        </div>
+        <div class="anno anno-data" data-version="v1.0">
+          <span class="anno-tag">数据逻辑</span>
+          <span class="anno-version">v1.0</span>
+          <span class="anno-source" data-type="引用自古典原型">引用自古典原型</span>
+          <div class="anno-body">
+            <p>带宽 ∝ 电量；占比 = 当前节点 / 父节点电量；默认今日；未启用计量节点置灰；下钻后左柱为父节点总量。</p>
+          </div>
+        </div>
+
+        <div class="cmp-page">
+          <aside class="cmp-sider" aria-label="筛选与节点树">
+            <div class="cmp-sider-inner">
+              <div class="cmp-field">
+                <label for="efEnergy">能源类型</label>
+                <select class="cmp-select" id="efEnergy" aria-label="能源类型">
+                  <option selected>电</option>
+                </select>
+              </div>
+              <div class="cmp-field">
+                <label for="efView">视图选择</label>
+                <select class="cmp-select" id="efView" aria-label="视图选择">
+                  <option selected>能效视图</option>
+                  <option>空间视图</option>
+                </select>
+              </div>
+              <div class="cmp-field">
+                <label for="efSearch">搜索</label>
+                <input class="cmp-input" type="search" id="efSearch" placeholder="请输入关键字" autocomplete="off" aria-label="筛选节点关键字">
+              </div>
+              <div class="cmp-tree-wrap">
+                <ul class="cmp-tree" id="efTree">
+                  <li data-tree-label="上级金桥数据中心园区">
+                    <button type="button" class="cmp-tree-node" data-node="jq">
+                      <span class="cmp-tree-caret open" aria-hidden="true"></span>
+                      <span class="cmp-tree-label">上级金桥数据中心园区</span>
+                    </button>
+                    <ul class="cmp-tree-children">
+                      <li data-tree-label="在建南湾园区">
+                        <button type="button" class="cmp-tree-node" data-node="nb"><span class="cmp-tree-label">在建南湾园区</span></button>
+                      </li>
+                      <li data-tree-label="互盟数据中心">
+                        <button type="button" class="cmp-tree-node active" data-node="humeng" aria-current="true">
+                          <span class="cmp-tree-caret open" aria-hidden="true"></span>
+                          <span class="cmp-tree-label">互盟数据中心</span>
+                        </button>
+                        <ul class="cmp-tree-children">
+                          <li data-tree-label="共济数据中心园区">
+                            <button type="button" class="cmp-tree-node" data-node="gj"><span class="cmp-tree-label">共济数据中心园区</span></button>
+                          </li>
+                          <li data-tree-label="招银行全国联网">
+                            <button type="button" class="cmp-tree-node" data-node="zb"><span class="cmp-tree-label">招银行全国联网</span></button>
+                          </li>
+                          <li data-tree-label="未启用机区">
+                            <button type="button" class="cmp-tree-node is-disabled" disabled title="未启用计量"><span class="cmp-tree-label">未启用机区</span></button>
+                          </li>
+                          <li data-tree-label="深圳">
+                            <button type="button" class="cmp-tree-node" data-node="sz"><span class="cmp-tree-label">深圳</span></button>
+                          </li>
+                          <li data-tree-label="火山云长三角算力中心">
+                            <button type="button" class="cmp-tree-node" data-node="hs"><span class="cmp-tree-label">火山云长三角算力中心</span></button>
+                          </li>
+                          <li data-tree-label="百度文心一言广州智算中心">
+                            <button type="button" class="cmp-tree-node" data-node="bd"><span class="cmp-tree-label">百度文心一言广州智算中心</span></button>
+                          </li>
+                          <li data-tree-label="长沙湖南数据中心">
+                            <button type="button" class="cmp-tree-node" data-node="cs"><span class="cmp-tree-label">长沙湖南数据中心</span></button>
+                          </li>
+                        </ul>
+                      </li>
+                    </ul>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </aside>
+
+          <div class="cmp-content">
+            <header class="cmp-content-head">
+              <div>
+                <div class="cmp-title-row">
+                  <h1 class="cmp-title">能耗流向分析</h1>
+                  <span class="cmp-unit">单位：kWh</span>
+                </div>
+                <div class="cmp-ranges-block" style="margin-top:14px;">
+                  <div class="cmp-ranges-label">统计时间</div>
+                  <div class="cmp-range-row">
+                    <input class="cmp-input" type="date" id="efDateStart" aria-label="开始日期">
+                    <span class="cmp-range-sep">至</span>
+                    <input class="cmp-input" type="date" id="efDateEnd" aria-label="结束日期">
+                    <button type="button" class="btn btn-primary" id="efQuery">查询</button>
+                  </div>
+                </div>
+              </div>
+            </header>
+
+            <div class="ef-drill-bar">
+              <nav class="ef-bc" id="efBc" aria-label="下钻路径"></nav>
+              <span class="ef-drill-tip" id="efTip"></span>
+            </div>
+
+            <div class="cmp-panel">
+              <p class="flow-sankey-caption">流向示意：柱高与色带宽度与电量成正比；点击一级分项旁的图例卡可下钻，可通过上方路径返回。</p>
+              <svg id="efSankeySvg" xmlns="http://www.w3.org/2000/svg" aria-label="电能桑基图"></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<button type="button" class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode');initAnnoFilter();">批注</button>
+
+<script>
+(function () {
+  'use strict'
+
+  /* ── 数据树 ── */
+  var DATA = {
+    id: 'root', label: '互盟数据中心', total: 80448,
+    color: '#1E40AF', barColor: '#1E40AF',
+    children: [
+      {
+        id: 'hvac', label: '暖通空调系统(新)', value: 11447.81,
+        color: '#0EA5E9', color2: '#67E8F9', barColor: '#0EA5E9',
+        children: [
+          { id: 'hv1', label: '冷水主机系统', value: 5000, color: '#0369A1', color2: '#38BDF8', children: [] },
+          { id: 'hv2', label: '末端水冷系统', value: 3840, color: '#0EA5E9', color2: '#7DD3FC', children: [] },
+          { id: 'hv3', label: '冷却塔与泵组', value: 2607.81, color: '#22D3EE', color2: '#A5F3FC', children: [] }
+        ]
+      },
+      {
+        id: 'it', label: 'IT系统', value: 62302.81,
+        color: '#7C3AED', color2: '#C4B5FD', barColor: '#7C3AED',
+        children: (function () {
+          var rooms = [
+            { id: 'r101', label: '101机房', value: 4823 },
+            { id: 'r102', label: '102机房', value: 2411 },
+            { id: 'r201', label: '201机房', value: 2020 },
+            { id: 'r202', label: '202机房', value: 2360 },
+            { id: 'r203', label: '203机房', value: 1813 },
+            { id: 'r204', label: '204机房', value: 1031 },
+            { id: 'r205', label: '205机房', value: 4764 },
+            { id: 'r301', label: '301机房（2F）', value: 739 },
+            { id: 'r302', label: '301机房', value: 9352 },
+            { id: 'r303', label: '302机房', value: 5744 },
+            { id: 'r304', label: '303机房', value: 1816 },
+            { id: 'r305', label: '304机房', value: 2958 },
+            { id: 'r306', label: '305机房', value: 168 },
+            { id: 'r401', label: '3F邻近机二', value: 581 },
+            { id: 'r402', label: '401机房', value: 5499 },
+            { id: 'r403', label: '402机房', value: 569 },
+            { id: 'r404', label: '403机房', value: 5470 },
+            { id: 'r405', label: '404机房', value: 7733 },
+            { id: 'r406', label: '4F临近机一', value: 546 }
+          ]
+          return rooms.map(function (r) {
+            return { id: r.id, label: r.label, value: r.value, color: '#9333EA', color2: '#C084FC', children: [] }
+          })
+        }())
+      },
+      {
+        id: 'pwr', label: '电力系统', value: 6697.38,
+        color: '#EC4899', color2: '#F9A8D4', barColor: '#DB2777',
+        children: [
+          { id: 'p1', label: 'UPS设备', value: 6397.59, color: '#DB2777', color2: '#F472B6', children: [] },
+          { id: 'p2', label: '国网供电绩效', value: 299.79, color: '#F472B6', color2: '#FBCFE8', children: [] }
+        ]
+      },
+      {
+        id: 'oth', label: '其他系统', value: 0,
+        color: '#94A3B8', color2: '#CBD5E1', barColor: '#94A3B8',
+        children: []
+      }
+    ]
+  }
+
+  var path = [DATA]
+
+  /* ── 工具 ── */
+  function esc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+  }
+  function fmt(v) { return v.toFixed(2) }
+  function pct(v, total) { return total > 0 ? ((v / total) * 100).toFixed(2) : '0.00' }
+  function canDrill(node) { return !!(node.children && node.children.length && path.length < 3) }
+
+  /* ── 面包屑 ── */
+  function renderBc() {
+    var nav = document.getElementById('efBc')
+    var tip = document.getElementById('efTip')
+    if (!nav) return
+    nav.innerHTML = ''
+    path.forEach(function (node, i) {
+      if (i > 0) {
+        var sep = document.createElement('span')
+        sep.className = 'ef-bc-sep'; sep.textContent = '›'; sep.setAttribute('aria-hidden', 'true')
+        nav.appendChild(sep)
+      }
+      var btn = document.createElement('button')
+      btn.textContent = node.label; btn.disabled = (i === path.length - 1)
+      if (!btn.disabled) {
+        btn.addEventListener('click', function () { path = path.slice(0, i + 1); renderSankey() })
+      }
+      nav.appendChild(btn)
+    })
+    var cur = path[path.length - 1]
+    var hasMore = (cur.children || []).some(canDrill)
+    if (path.length === 1) {
+      tip.textContent = '三段桑基：源 → 分项 → 末端 · 点击分项图例可下钻'
+    } else if (path.length >= 3) {
+      tip.textContent = '已达最大深度（2层），点面包屑返回'
+    } else if (hasMore) {
+      tip.textContent = '点击右侧色柱或图例可继续下钻'
+    } else {
+      tip.textContent = '叶节点，点面包屑返回'
+    }
+  }
+
+  /* ── 桑基渲染核心 ── */
+  function renderSankey() {
+    var svg = document.getElementById('efSankeySvg')
+    if (!svg) return
+
+    if (path.length === 1 && path[0] === DATA) {
+      drawRoot(svg)
+    } else {
+      drawDrill(svg)
+    }
+    renderBc()
+  }
+
+  /* ══ 根视图：三段桑基（源 → L1 → L2，标签内嵌） ══ */
+  function drawRoot(svg) {
+    var total = DATA.total
+    var L1 = DATA.children
+    /* 布局坐标 */
+    var xSrc = 60, wSrc = 30
+    var xL1  = 160, wL1 = 30
+    var xL2  = 440, wL2 = 24
+    var xLbl = xL2 + wL2 + 12   /* L2 右侧标签起始 */
+    var H = 500, padT = 60, padB = 40
+    var VB_W = 860, VB_H = padT + H + padB
+
+    svg.setAttribute('viewBox', '0 0 ' + VB_W + ' ' + VB_H)
+    svg.setAttribute('preserveAspectRatio', 'xMinYMid meet')
+
+    var defs = [], body = [], gid = 0
+    /* 背景渐变 */
+    defs.push('<linearGradient id="bgR" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox"><stop offset="0" stop-color="#EEF4FF"/><stop offset="0.45" stop-color="#FFFFFF"/><stop offset="1" stop-color="#F8FAFC"/></linearGradient>')
+    defs.push('<filter id="nsh" x="-60%" y="-10%" width="220%" height="130%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0f172a" flood-opacity="0.08"/></filter>')
+    body.push('<rect width="' + VB_W + '" height="' + VB_H + '" fill="url(#bgR)"/>')
+
+    /* ── L1 分项坐标 ── */
+    var yy = padT
+    var L1items = L1.map(function (ch) {
+      var h = ch.value <= 0 ? 3 : Math.max((ch.value / total) * H, 3)
+      var yT = yy, yB = yT + h; yy = yB
+      return { ch: ch, yT: yT, yB: yB }
+    })
+
+    /* ── L2 末端坐标 ── */
+    var L2all = []
+    L1items.forEach(function (it) {
+      var kids = it.ch.children || []
+      if (!kids.length) return
+      var band = it.yB - it.yT
+      var ky = it.yT
+      kids.forEach(function (lf) {
+        var lh = it.ch.value > 0 ? Math.max((lf.value / it.ch.value) * band, 1.2) : 2
+        L2all.push({ lf: lf, parent: it.ch, yT: ky, yB: ky + lh })
+        ky += lh
+      })
+    })
+
+    /* ── 源→L1 曲带 ── */
+    L1items.forEach(function (it) {
+      if (it.yB - it.yT < 1) return
+      var id = 'gr' + gid++
+      defs.push('<linearGradient id="' + id + '" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="' + it.ch.color + '" stop-opacity="0.88"/><stop offset="100%" stop-color="' + (it.ch.color2 || it.ch.color) + '" stop-opacity="0.62"/></linearGradient>')
+      body.push(bezierBand(xSrc + wSrc, xL1, it.yT, it.yB, it.yT, it.yB, 'url(#' + id + ')'))
+    })
+
+    /* ── L1→L2 曲带 ── */
+    L2all.forEach(function (it) {
+      if (it.yB - it.yT < 0.5) return
+      var id = 'gr' + gid++
+      defs.push('<linearGradient id="' + id + '" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="' + it.parent.color + '" stop-opacity="0.78"/><stop offset="100%" stop-color="' + (it.parent.color2 || it.parent.color) + '" stop-opacity="0.5"/></linearGradient>')
+      body.push(bezierBand(xL1 + wL1, xL2, it.yT, it.yB, it.yT, it.yB, 'url(#' + id + ')'))
+    })
+
+    /* ── 源柱 ── */
+    body.push(rect(xSrc, padT, wSrc, H, 8, DATA.barColor, '#nsh'))
+    body.push(svgText(xSrc + wSrc / 2, padT - 18, DATA.label, 10.5, '#475569', '600', 'middle'))
+    body.push(svgText(xSrc + wSrc / 2, padT - 6, fmt(total) + ' kWh', 10, '#0F172A', '700', 'middle'))
+
+    /* ── L1 柱 + 内嵌标签 ── */
+    L1items.forEach(function (it, i) {
+      var h = Math.max(it.yB - it.yT, 2)
+      body.push(rect(xL1, it.yT, wL1, h, 6, it.ch.color, '#nsh'))
+      /* L1 名称标签（在 L1 柱左侧色带内，若带够宽则显示文字） */
+      var drill = canDrill(it.ch)
+      var mid = (it.yT + it.yB) / 2
+      /* 名称浮签：置于源→L1 ribbon 中间 */
+      var lx = xSrc + wSrc + (xL1 - xSrc - wSrc) / 2
+      var pc = pct(it.ch.value, total)
+      if (h >= 18) {
+        body.push(svgText(lx, mid + 4.5, it.ch.label, 9.5, it.ch.color, '700', 'middle'))
+      }
+    })
+
+    /* ── L2 柱 ── */
+    L2all.forEach(function (it) {
+      var h = Math.max(it.yB - it.yT, 1.2)
+      body.push(rect(xL2, it.yT, wL2, h, 3, it.parent.color, null))
+    })
+
+    /* ── L2 右侧标签 ── */
+    var maxLblW = VB_W - xLbl - 4
+    L2all.forEach(function (it) {
+      var h = it.yB - it.yT
+      var mid = (it.yT + it.yB) / 2
+      /* 根据带高决定字号 */
+      var fs = h >= 16 ? 10 : (h >= 10 ? 8.5 : (h >= 6 ? 7.5 : 0))
+      if (fs === 0) return
+      var pc = it.parent.value > 0 ? pct(it.lf.value, it.parent.value) : '0.00'
+      var lab = it.lf.label + '  ' + fmt(it.lf.value) + ' kWh（' + pc + '%）'
+      body.push(svgText(xLbl, mid + fs * 0.38, lab, fs, '#334155', '400', 'start'))
+    })
+
+    /* ── L1 右侧摘要标签（L2 区右边，与各分项水平中线对齐） ── */
+    /* 只给「其他系统」（无 L2 子项）加标签 */
+    L1items.forEach(function (it, i) {
+      var kids = it.ch.children || []
+      if (kids.length > 0) return          /* 有 L2 子项，已由 L2 标签表达 */
+      var drill = canDrill(it.ch)
+      var mid = (it.yT + it.yB) / 2
+      var pc = pct(it.ch.value, total)
+      body.push(
+        '<g class="sk-legend" data-i="' + i + '" data-drill="0" style="cursor:default">' +
+        svgText(xLbl, mid + 4.5, it.ch.label + '  ' + fmt(it.ch.value) + ' kWh（' + pc + '%）', 10, '#94A3B8', '500', 'start') +
+        '</g>'
+      )
+    })
+
+    /* ── L1 图例卡（在 L1 柱右侧到 L2 柱左侧之间的中段） ── */
+    var cardX = xL1 + wL1 + 6
+    var cardW = xL2 - cardX - 10
+    /* 每个 L1 item 画一个可点击标签条 */
+    L1items.forEach(function (it, i) {
+      var drill = canDrill(it.ch)
+      var h = it.yB - it.yT
+      var mid = (it.yT + it.yB) / 2
+      var pc = pct(it.ch.value, total)
+      var cardH = Math.max(h, 34)
+      var cardT = it.yT
+      body.push(
+        '<g class="sk-legend" data-i="' + i + '" data-drill="' + (drill ? 1 : 0) + '" style="cursor:' + (drill ? 'pointer' : 'default') + '">' +
+        '<rect class="sk-bg" x="' + cardX + '" y="' + cardT + '" width="' + cardW + '" height="' + cardH +
+        '" rx="8" fill="rgba(255,255,255,0.88)" stroke="' + it.ch.color + '" stroke-width="0.8" stroke-opacity="0.5"/>' +
+        svgText(cardX + cardW / 2, cardT + cardH / 2 - 3, it.ch.label + (drill ? ' ›' : ''), 9.5, it.ch.color, '700', 'middle') +
+        (cardH >= 26 ? svgText(cardX + cardW / 2, cardT + cardH / 2 + 11, fmt(it.ch.value) + ' kWh · ' + pc + '%', 8.5, '#64748B', '400', 'middle') : '') +
+        '</g>'
+      )
+    })
+
+    svg.innerHTML = '<defs>' + defs.join('') + '</defs>' + body.join('')
+
+    /* 事件：L1 卡片点击下钻 */
+    svg.querySelectorAll('.sk-legend[data-drill="1"]').forEach(function (g) {
+      g.addEventListener('click', function () {
+        path.push(L1[parseInt(g.getAttribute('data-i'), 10)]); renderSankey()
+      })
+      var bg = g.querySelector('.sk-bg')
+      if (!bg) return
+      g.addEventListener('mouseenter', function () { bg.setAttribute('fill', '#EEF4FF'); bg.setAttribute('stroke-opacity', '1') })
+      g.addEventListener('mouseleave', function () { bg.setAttribute('fill', 'rgba(255,255,255,0.88)'); bg.setAttribute('stroke-opacity', '0.5') })
+    })
+  }
+
+  /* ══ 下钻视图：两段桑基 ══ */
+  function drawDrill(svg) {
+    var cur = path[path.length - 1]
+    var kids = cur.children || []
+    var total = cur.total != null ? cur.total : cur.value
+    var PAD = { top: 56, bot: 40, left: 56 }
+    var H = 460
+    var xLBar = PAD.left, wLBar = 36
+    var xR = 460, wRBar = 30
+    var legX = xR + wRBar + 18
+    var VB_W = 920, VB_H = PAD.top + H + PAD.bot
+
+    svg.setAttribute('viewBox', '0 0 ' + VB_W + ' ' + VB_H)
+    svg.setAttribute('preserveAspectRatio', 'xMinYMid meet')
+
+    var defs = [], body = [], gid = 0
+    defs.push('<linearGradient id="bgG2" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox"><stop offset="0" stop-color="#EEF4FF"/><stop offset="0.45" stop-color="#FFFFFF"/><stop offset="1" stop-color="#F8FAFC"/></linearGradient>')
+    defs.push('<filter id="nsh2" x="-30%" y="-5%" width="160%" height="115%"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#0f172a" flood-opacity="0.06"/></filter>')
+    body.push('<rect width="' + VB_W + '" height="' + VB_H + '" fill="url(#bgG2)"/>')
+
+    if (!kids.length) {
+      body.push(svgText(VB_W / 2, VB_H / 2, '无下级分项', 14, '#64748B', '500', 'middle'))
+      svg.innerHTML = '<defs>' + defs.join('') + '</defs>' + body.join('')
+      return
+    }
+
+    var yy = PAD.top
+    var items = kids.map(function (ch) {
+      var h = Math.max((ch.value / total) * H, 4)
+      var yT = yy; var yB = yT + h; yy = yB
+      return { ch: ch, yT: yT, yB: yB }
+    })
+
+    items.forEach(function (it) {
+      var id = 'g' + gid++
+      defs.push(
+        '<linearGradient id="' + id + '" x1="0" y1="0" x2="1" y2="0">' +
+        '<stop offset="0%" stop-color="' + it.ch.color + '" stop-opacity="0.85"/>' +
+        '<stop offset="100%" stop-color="' + (it.ch.color2 || it.ch.color) + '" stop-opacity="0.6"/></linearGradient>'
+      )
+      body.push(bezierBand(xLBar + wLBar, xR, it.yT, it.yB, it.yT, it.yB, 'url(#' + id + ')'))
+    })
+
+    body.push(rect(xLBar, PAD.top, wLBar, H, 9, cur.barColor || cur.color || '#1677FF', '#nsh2'))
+    body.push(svgText(xLBar + wLBar / 2, PAD.top - 14, cur.label, 11, '#475569', '600', 'middle'))
+    body.push(svgText(xLBar + wLBar / 2, PAD.top + H + 24, fmt(total) + ' kWh', 12.5, '#0F172A', '700', 'middle'))
+
+    items.forEach(function (it) {
+      var h = Math.max(it.yB - it.yT, 2)
+      body.push(rect(xR, it.yT, wRBar, h, 6, it.ch.color, '#nsh2'))
+    })
+
+    var legW = VB_W - legX - 8
+    var legSlot = H / items.length
+    items.forEach(function (it, i) {
+      var mid = (it.yT + it.yB) / 2
+      var lh = Math.max(it.yB - it.yT, 34)
+      var lyT = it.yT, lyB = lyT + lh
+      var lyMid = (lyT + lyB) / 2
+      var drill = canDrill(it.ch)
+      var pc = pct(it.ch.value, total)
+
+      body.push(
+        '<path d="M ' + (xR + wRBar + 6) + ' ' + mid +
+        ' C ' + (xR + wRBar + 28) + ' ' + mid + ', ' + (legX - 8) + ' ' + lyMid + ', ' + (legX - 2) + ' ' + lyMid +
+        '" fill="none" stroke="#CBD5E1" stroke-width="1" stroke-linecap="round"/>'
+      )
+      body.push(
+        '<g class="sk-legend" data-i="' + i + '" data-drill="' + (drill ? 1 : 0) + '" style="cursor:' + (drill ? 'pointer' : 'default') + '">' +
+        '<rect class="sk-bg" x="' + legX + '" y="' + lyT + '" width="' + legW + '" height="' + lh +
+        '" rx="10" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>' +
+        '<rect x="' + (legX + 6) + '" y="' + (lyT + 7) + '" width="4" height="' + Math.max(lh - 14, 8) + '" rx="2" fill="' + it.ch.color + '"/>' +
+        svgText(legX + 18, lyT + 21, it.ch.label + (drill ? '  ›' : ''), 12.5, '#0F172A', '600', 'start') +
+        svgText(legX + 18, lyT + 36, fmt(it.ch.value) + ' kWh（' + pc + '%）', 11.5, '#64748B', '400', 'start') +
+        '</g>'
+      )
+    })
+
+    svg.innerHTML = '<defs>' + defs.join('') + '</defs>' + body.join('')
+
+    svg.querySelectorAll('.sk-legend[data-drill="1"]').forEach(function (g) {
+      g.addEventListener('click', function () {
+        path.push(kids[parseInt(g.getAttribute('data-i'), 10)]); renderSankey()
+      })
+      var bg = g.querySelector('.sk-bg')
+      g.addEventListener('mouseenter', function () { bg.setAttribute('fill', '#EEF4FF'); bg.setAttribute('stroke', 'rgba(30,64,175,.45)') })
+      g.addEventListener('mouseleave', function () { bg.setAttribute('fill', '#FFFFFF'); bg.setAttribute('stroke', '#E2E8F0') })
+    })
+  }
+
+  /* ── SVG 工具函数 ── */
+  function bezierBand(x0, x1, yT0, yB0, yT1, yB1, fill) {
+    var mx = (x0 + x1) / 2
+    return (
+      '<path fill="' + fill + '" fill-opacity="0.92" stroke="#FFFFFF" stroke-width="0.8" stroke-opacity="0.45" d="' +
+      'M ' + x0 + ' ' + yT0 +
+      ' C ' + mx + ' ' + yT0 + ', ' + mx + ' ' + yT1 + ', ' + x1 + ' ' + yT1 +
+      ' L ' + x1 + ' ' + yB1 +
+      ' C ' + mx + ' ' + yB1 + ', ' + mx + ' ' + yB0 + ', ' + x0 + ' ' + yB0 +
+      ' Z"/>'
+    )
+  }
+  function rect(x, y, w, h, rx, fill, filter) {
+    return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h +
+      '" rx="' + rx + '" fill="' + fill + '"' + (filter ? ' filter="url(' + filter + ')"' : '') + '/>'
+  }
+  function svgText(x, y, text, fs, fill, fw, anchor) {
+    return '<text x="' + x + '" y="' + y + '" font-size="' + fs + '" fill="' + fill +
+      '" font-weight="' + fw + '" text-anchor="' + anchor + '">' + esc(text) + '</text>'
+  }
+
+  /* ── 树交互 ── */
+  var treeRoot = document.getElementById('efTree')
+  treeRoot && treeRoot.addEventListener('click', function (e) {
+    var caret = e.target.closest('.cmp-tree-caret')
+    if (caret && caret.parentElement.classList.contains('cmp-tree-node')) {
+      e.stopPropagation()
+      var ul = caret.parentElement.nextElementSibling
+      if (ul && ul.classList.contains('cmp-tree-children')) {
+        ul.hidden = !ul.hidden; caret.classList.toggle('open', !ul.hidden)
+      }
+      return
+    }
+    var node = e.target.closest('.cmp-tree-node')
+    if (!node || node.disabled || node.classList.contains('is-disabled')) return
+    treeRoot.querySelectorAll('.cmp-tree-node').forEach(function (n) { n.classList.remove('active'); n.removeAttribute('aria-current') })
+    node.classList.add('active'); node.setAttribute('aria-current', 'true')
+    path = [DATA]; renderSankey()
+  })
+
+  /* ── 搜索 ── */
+  var searchEl = document.getElementById('efSearch')
+  searchEl && searchEl.addEventListener('input', function () {
+    var q = (this.value || '').trim().toLowerCase()
+    var lis = treeRoot.querySelectorAll('li[data-tree-label]')
+    lis.forEach(function (li) { li.setAttribute('data-tree-match', '1') })
+    if (!q) return
+    lis.forEach(function (li) { li.setAttribute('data-tree-match', '0') })
+    lis.forEach(function (li) {
+      if ((li.getAttribute('data-tree-label') || '').toLowerCase().includes(q)) {
+        li.setAttribute('data-tree-match', '1')
+        var p = li.parentElement
+        while (p && p !== treeRoot) { if (p.tagName === 'LI' && p.hasAttribute('data-tree-label')) p.setAttribute('data-tree-match', '1'); p = p.parentElement }
+      }
+    })
+  })
+
+  /* ── 查询 ── */
+  var start = document.getElementById('efDateStart')
+  var end = document.getElementById('efDateEnd')
+  var d = new Date(), iso = d.toISOString().slice(0, 10)
+  if (start) start.value = iso; if (end) end.value = iso
+  var q = document.getElementById('efQuery')
+  q && q.addEventListener('click', function () { path = [DATA]; renderSankey() })
+
+  /* ── 初始渲染 ── */
+  renderSankey()
+
+  /* ── 批注筛选 ── */
+  window.initAnnoFilter = function () {
+    var tags = document.getElementById('annoFilterTags')
+    if (!document.body.classList.contains('annotation-mode') || !tags) return
+    var annos = document.querySelectorAll('.anno[data-version]')
+    var versions = []
+    annos.forEach(function (a) { var v = a.getAttribute('data-version'); if (v && !versions.includes(v)) versions.push(v) })
+    tags.innerHTML = ''
+    versions.forEach(function (v, i) {
+      var btn = document.createElement('span')
+      btn.className = 'anno-filter-tag' + (i === 0 ? ' active' : '')
+      btn.textContent = v
+      btn.onclick = function () {
+        document.querySelectorAll('.anno[data-version]').forEach(function (a) {
+          a.style.display = (a.getAttribute('data-version') === v) ? '' : 'none'
+        })
+        tags.querySelectorAll('.anno-filter-tag').forEach(function (t) { t.classList.remove('active') })
+        btn.classList.add('active')
+      }
+      tags.appendChild(btn)
+    })
+  }
+}())
+</script>
+<script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="能耗流向分析"></script>
+<style>
+  :root { --nav-primary: #1E40AF; --nav-primary-dark: #17358A; --nav-primary-tint: #EEF4FF; }
+  .sidebar-item.active:hover { background: rgba(30,64,175,.12) !important; color: var(--nav-primary-dark) !important; }
+  .sidebar-item.active .sidebar-item-ver { color: var(--nav-primary) !important; background: rgba(30,64,175,.14) !important; }
+  .sidebar.sidebar--collapsed .sidebar-group-children .sidebar-item.active::before { box-shadow: 0 0 0 3px rgba(30,64,175,.24) !important; }
+</style>
+</body>
+</html>

@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>用能定额考核</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-dark: #17358A;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --sidebar-bg: #071B2E;
+      --header-bg: #071B2E;
+      --danger: #DC2626;
+      --blue-link: #1890FF;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button { border: none; background: none; font: inherit; cursor: pointer; }
+
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+
+    .main {
+      flex: 1;
+      min-width: 0;
+      overflow-y: auto;
+      background: var(--bg-body);
+    }
+
+    .page-shell { padding: 18px 20px 32px; }
+
+    /* ── Notice bar ──────────────────────────────────────── */
+    .notice-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 14px;
+      background: #EFF6FF;
+      border: 1px solid #BFDBFE;
+      border-radius: var(--radius);
+      margin-bottom: 14px;
+      font-size: 13px;
+      color: #1D4ED8;
+      line-height: 1.5;
+    }
+
+    .notice-bar svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      fill: #3B82F6;
+    }
+
+    /* ── Page card ───────────────────────────────────────── */
+    .page-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .page-head {
+      display: flex;
+      align-items: center;
+      padding: 16px 18px 12px;
+    }
+
+    .page-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    /* ── Filter bar ──────────────────────────────────────── */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      padding: 0 18px 14px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .filter-select,
+    .filter-month {
+      height: 32px;
+      padding: 0 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--text-primary);
+      background: #fff;
+      cursor: pointer;
+      outline: none;
+      transition: border-color var(--transition);
+      appearance: auto;
+    }
+
+    .filter-select:focus,
+    .filter-month:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.12);
+    }
+
+    .filter-check {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-secondary);
+      user-select: none;
+    }
+
+    .filter-check input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    /* ── Summary row ─────────────────────────────────────── */
+    .summary-row {
+      padding: 9px 18px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .summary-row .highlight {
+      color: var(--blue-link);
+      font-weight: 600;
+    }
+
+    /* ── Data table ──────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; }
+
+    .data-table {
+      width: 100%;
+      min-width: 1040px;
+      border-collapse: collapse;
+    }
+
+    .data-table thead th {
+      padding: 11px 14px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:last-child td { border-bottom: none; }
+
+    .data-table tbody tr:hover { background: #FBFCFE; }
+
+    .data-table tbody tr.row-hidden { display: none; }
+
+    /* Object name link */
+    .obj-link {
+      color: var(--blue-link);
+      cursor: pointer;
+      font-weight: 500;
+      transition: opacity var(--transition);
+    }
+
+    .obj-link:hover { opacity: 0.75; text-decoration: underline; }
+
+    /* Usage rate */
+    .usage-rate { font-weight: 600; }
+    .usage-rate.over { color: var(--danger); }
+
+    /* Chart column */
+    .chart-cell { width: 290px; min-width: 260px; }
+
+    canvas.mini-chart { display: block; }
+
+    /* ── Page foot ───────────────────────────────────────── */
+    .page-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 18px;
+    }
+
+    .page-note {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+    }
+
+    .pagination-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .pagination-total {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .pagination {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .page-item,
+    .page-arrow {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .page-item:hover,
+    .page-arrow:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .page-item.active {
+      color: #fff;
+      border-color: var(--primary);
+      background: var(--primary);
+    }
+
+    /* ── Toast ───────────────────────────────────────────── */
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      min-width: 180px;
+      max-width: 320px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.92);
+      color: #fff;
+      font-size: 13px;
+      line-height: 1.6;
+      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.28);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: all .25s ease;
+      z-index: 260;
+    }
+
+    .toast.show { opacity: 1; transform: translateY(0); }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+        <div class="page-shell">
+
+          <!-- T+1 提示条 -->
+          <div class="notice-bar">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-2.75a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0V6A.75.75 0 0 1 8 5.25zm0 6.5a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5z"/>
+            </svg>
+            系统每日 T+1 模式更新用能定额考核结果
+          </div>
+
+          <section class="page-card">
+            <!-- 标题 -->
+            <div class="page-head">
+              <div class="page-title">用能定额考核</div>
+            </div>
+
+            <!-- 筛选栏 -->
+            <div class="filter-bar">
+              <div class="filter-group">
+                <span class="filter-label">能源类型：</span>
+                <select class="filter-select" id="energyType">
+                  <option value="electricity" selected>电</option>
+                  <option value="water">水</option>
+                  <option value="gas">气</option>
+                </select>
+              </div>
+              <div class="filter-group">
+                <span class="filter-label">考核月份：</span>
+                <input class="filter-month" type="month" id="examMonth" value="2025-05">
+              </div>
+              <div class="filter-group">
+                <span class="filter-label">对象类型：</span>
+                <select class="filter-select" id="objTypeFilter">
+                  <option value="all" selected>全部</option>
+                  <option value="数据中心">数据中心</option>
+                  <option value="机房">机房</option>
+                </select>
+              </div>
+              <label class="filter-check">
+                <input type="checkbox" id="overOnly">
+                仅查看超标对象
+              </label>
+            </div>
+
+            <!-- 汇总信息 -->
+            <div class="summary-row">
+              共考核 <span class="highlight">22</span> 个对象，其中
+              <span class="highlight">1</span> 个对象用能超标
+            </div>
+
+            <!-- 数据表格 -->
+            <div class="table-wrap">
+              <table class="data-table" id="mainTable">
+                <thead>
+                  <tr>
+                    <th>对象名称</th>
+                    <th>对象类型</th>
+                    <th>测点名称</th>
+                    <th>额度 (kWh)</th>
+                    <th>用量 (kWh)</th>
+                    <th>使用率</th>
+                    <th class="chart-cell">能耗趋势</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr data-objtype="数据中心" data-over="true">
+                    <td><span class="obj-link" data-name="数据中心1">数据中心1</span></td>
+                    <td>数据中心</td>
+                    <td>累计电量</td>
+                    <td>3000.00</td>
+                    <td>3600.00</td>
+                    <td><span class="usage-rate over">125.21%</span></td>
+                    <td class="chart-cell">
+                      <canvas class="mini-chart" id="chart0" width="272" height="88"></canvas>
+                    </td>
+                  </tr>
+                  <tr data-objtype="数据中心" data-over="false">
+                    <td><span class="obj-link" data-name="数据中心2">数据中心2</span></td>
+                    <td>数据中心</td>
+                    <td>累计电量</td>
+                    <td>3000.00</td>
+                    <td>2800.00</td>
+                    <td><span class="usage-rate">89.12%</span></td>
+                    <td class="chart-cell">
+                      <canvas class="mini-chart" id="chart1" width="272" height="88"></canvas>
+                    </td>
+                  </tr>
+                  <tr data-objtype="机房" data-over="false">
+                    <td><span class="obj-link" data-name="机房4">机房4</span></td>
+                    <td>机房</td>
+                    <td>累计电量</td>
+                    <td>3000.00</td>
+                    <td>2500.00</td>
+                    <td><span class="usage-rate">85.52%</span></td>
+                    <td class="chart-cell">
+                      <canvas class="mini-chart" id="chart2" width="272" height="88"></canvas>
+                    </td>
+                  </tr>
+                  <tr data-objtype="机房" data-over="false">
+                    <td><span class="obj-link" data-name="机房5">机房5</span></td>
+                    <td>机房</td>
+                    <td>累计电量</td>
+                    <td>3000.00</td>
+                    <td>2400.00</td>
+                    <td><span class="usage-rate">82.14%</span></td>
+                    <td class="chart-cell">
+                      <canvas class="mini-chart" id="chart3" width="272" height="88"></canvas>
+                    </td>
+                  </tr>
+                  <tr data-objtype="机房" data-over="false">
+                    <td><span class="obj-link" data-name="机房6">机房6</span></td>
+                    <td>机房</td>
+                    <td>累计电量</td>
+                    <td>3000.00</td>
+                    <td>2200.00</td>
+                    <td><span class="usage-rate">74.21%</span></td>
+                    <td class="chart-cell">
+                      <canvas class="mini-chart" id="chart4" width="272" height="88"></canvas>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 分页 -->
+            <div class="page-foot">
+              <div class="page-note">
+                排序：同对象类型聚合，使用率倒序 &nbsp;·&nbsp; 分页：10 条 / 页
+              </div>
+              <div class="pagination-wrap">
+                <div class="pagination-total">总共 22 个项目</div>
+                <div class="pagination">
+                  <span class="page-arrow" aria-label="上一页">‹</span>
+                  <span class="page-item active">1</span>
+                  <span class="page-item">2</span>
+                  <span class="page-item">3</span>
+                  <span class="page-arrow" aria-label="下一页">›</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      /* ── Toast ──────────────────────────────────────────── */
+      const toastEl = document.getElementById('toast');
+      let toastTimer = null;
+
+      function showToast(msg) {
+        toastEl.textContent = msg;
+        toastEl.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () {
+          toastEl.classList.remove('show');
+        }, 2200);
+      }
+
+      /* ── Object name click → 跳转总览看板 ──────────────── */
+      document.querySelectorAll('.obj-link').forEach(function (el) {
+        el.addEventListener('click', function () {
+          showToast('跳转至总览看板（对象：' + el.dataset.name + '）');
+        });
+      });
+
+      /* ── Filter helper ──────────────────────────────────── */
+      function applyFilters() {
+        const overOnly = document.getElementById('overOnly').checked;
+        const objType = document.getElementById('objTypeFilter').value;
+
+        document.querySelectorAll('#mainTable tbody tr').forEach(function (tr) {
+          const matchOver = !overOnly || tr.dataset.over === 'true';
+          const matchType = objType === 'all' || tr.dataset.objtype === objType;
+          tr.classList.toggle('row-hidden', !(matchOver && matchType));
+        });
+      }
+
+      document.getElementById('overOnly').addEventListener('change', applyFilters);
+      document.getElementById('objTypeFilter').addEventListener('change', applyFilters);
+
+      /* ── Pagination (static demo) ───────────────────────── */
+      document.querySelectorAll('.page-item, .page-arrow').forEach(function (el) {
+        el.addEventListener('click', function () {
+          showToast('分页为静态示意');
+        });
+      });
+
+      /* ── Mini charts ────────────────────────────────────── */
+      // 考核月份：2025-05（31 天），统计截至 26 日（昨日）
+      const DAYS = 26;
+      const MONTH_DAYS = 31;
+      const QUOTA = 3000 / MONTH_DAYS;   // 每日额度 ≈ 96.77 kWh
+
+      const labels = Array.from({ length: DAYS }, function (_, i) {
+        return String(i + 1);
+      });
+
+      // 各对象每日用量（固定模拟值，与月汇总匹配）
+      const SERIES = [
+        // 数据中心1 总量 3600，avg ≈ 138.5
+        [131, 142, 136, 148, 140, 138, 146, 137, 141, 144, 139, 146,
+          138, 141, 136, 143, 145, 138, 142, 140, 143, 137, 141, 139, 142, 141],
+        // 数据中心2 总量 2800，avg ≈ 107.7
+        [103, 109, 106, 113, 109, 107, 111, 105, 109, 107, 112, 107,
+          104, 110, 108, 107, 111, 108, 106, 109, 107, 109, 107, 110, 105, 108],
+        // 机房4 总量 2500，avg ≈ 96.2
+        [92, 97, 94, 100, 97, 95, 98, 93, 97, 95, 100, 96, 93,
+          99, 96, 95, 97, 94, 97, 98, 95, 97, 94, 97, 95, 98],
+        // 机房5 总量 2400，avg ≈ 92.3
+        [89, 93, 91, 96, 92, 91, 94, 90, 93, 91, 96, 92, 89,
+          95, 92, 91, 93, 91, 92, 94, 91, 93, 91, 93, 90, 93],
+        // 机房6 总量 2200，avg ≈ 84.6
+        [81, 85, 83, 88, 84, 83, 86, 82, 85, 83, 88, 84, 81,
+          87, 84, 83, 85, 83, 84, 86, 82, 85, 83, 85, 82, 87],
+      ];
+
+      const quotaLine = Array(DAYS).fill(+QUOTA.toFixed(2));
+
+      SERIES.forEach(function (data, idx) {
+        const canvas = document.getElementById('chart' + idx);
+        if (!canvas) return;
+
+        // 按是否超每日定额决定柱色
+        const barColors = data.map(function (v) {
+          return v > QUOTA ? 'rgba(239,68,68,0.75)' : 'rgba(59,130,246,0.65)';
+        });
+
+        new Chart(canvas, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: '用量(kWh)',
+                data: data,
+                backgroundColor: barColors,
+                borderWidth: 0,
+                borderRadius: 1,
+                barPercentage: 0.72,
+                categoryPercentage: 0.85,
+                order: 2,
+              },
+              {
+                label: '每日定额',
+                data: quotaLine,
+                type: 'line',
+                borderColor: '#F59E0B',
+                borderWidth: 1.5,
+                borderDash: [4, 3],
+                pointRadius: 0,
+                fill: false,
+                tension: 0,
+                order: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: false,
+            animation: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function (ctx) {
+                    return ctx.dataset.label + ': ' + ctx.parsed.y + ' kWh';
+                  },
+                },
+              },
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                border: { display: false },
+                ticks: {
+                  color: '#94A3B8',
+                  font: { size: 9 },
+                  maxTicksLimit: 9,
+                  maxRotation: 0,
+                },
+              },
+              y: {
+                display: false,
+                grid: { display: false },
+              },
+            },
+          },
+        });
+      });
+    })();
+  </script>
+
+  <button class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+
+  <script>
+    function initAnnoVersionFilter() {}
+  </script>
+
+  <script src="components/nav.js"
+    data-active-nav="运营管理"
+    data-active-sidebar="用能定额考核">
+  </script>
+</body>
+</html>

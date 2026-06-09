@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新增 / 编辑能源计费方案</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-dark: #17358A;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --danger: #DC2626;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { text-decoration: none; color: inherit; }
+    button { border: none; background: none; font: inherit; }
+
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main { flex: 1; min-width: 0; overflow-y: auto; background: var(--bg-body); }
+
+    .page-header {
+      background: var(--bg-card);
+      padding: 0 20px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    .page-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      transition: color var(--transition);
+    }
+
+    .back-link:hover { color: var(--primary); }
+
+    .page-title {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .page-subtitle {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .header-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .content-body { padding: 12px 20px 24px; }
+
+    .section-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .section-head {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-light);
+      background: #FBFCFE;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .section-body { padding: 18px; }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px 24px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .field-label .required { color: #EA580C; }
+
+    .field-control,
+    .field-select {
+      width: 100%;
+      max-width: 400px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      background: #fff;
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .field-control:disabled,
+    .field-select:disabled {
+      background: #F1F5F9;
+      color: var(--text-secondary);
+      cursor: not-allowed;
+    }
+
+    .field-control:focus-visible,
+    .field-select:focus-visible {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.12);
+    }
+
+    .field-hint {
+      font-size: 12px;
+      color: var(--text-hint);
+      line-height: 1.5;
+    }
+
+    body:not(.annotation-mode) .field-hint.field-hint-annoonly {
+      display: none !important;
+    }
+
+    .section-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      padding: 0 18px 12px;
+    }
+
+    .table-wrap { overflow-x: auto; }
+
+    .data-table {
+      width: 100%;
+      min-width: 920px;
+      border-collapse: collapse;
+    }
+
+    .data-table thead th {
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 10px 12px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: top;
+    }
+
+    .data-table tbody tr:hover { background: #FAFCFF; }
+
+    .cell-multiline {
+      white-space: normal;
+      line-height: 1.55;
+      max-width: 360px;
+    }
+
+    .cell-prices {
+      font-variant-numeric: tabular-nums;
+      line-height: 1.6;
+      white-space: normal;
+    }
+
+    .actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .action-link {
+      font-size: 13px;
+      cursor: pointer;
+      color: #1890FF;
+      transition: opacity var(--transition);
+    }
+
+    .action-link:hover { opacity: 0.72; }
+    .action-link.danger { color: var(--danger); }
+    .action-link.muted {
+      color: var(--text-hint);
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 34px;
+      padding: 0 14px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .btn-primary {
+      color: #fff;
+      background: var(--primary);
+    }
+
+    .btn-primary:hover { background: var(--primary-dark); }
+
+    .btn-ghost {
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      background: #fff;
+    }
+
+    .btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
+
+    .action-bar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 8px 20px 20px;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100000;
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .modal-backdrop.show { display: flex; }
+    body.modal-open { overflow: hidden; }
+
+    .modal {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18), var(--shadow-card);
+      max-width: 640px;
+      width: 100%;
+      max-height: min(90vh, 720px);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-head {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .modal-title { font-size: 16px; font-weight: 700; }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      color: var(--text-hint);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .modal-close:hover { background: #F1F5F9; color: var(--text-primary); }
+
+    .modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+
+    .modal-foot {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .radio-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px 20px;
+      margin-bottom: 16px;
+    }
+
+    .radio-opt {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .rule-panel { display: none; margin-top: 8px; }
+    .rule-panel.active { display: block; }
+
+    .price-grid {
+      display: grid;
+      grid-template-columns: 140px 1fr auto;
+      align-items: center;
+      gap: 10px 12px;
+      margin-bottom: 12px;
+    }
+
+    .price-grid label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+
+    .price-grid .unit-suffix {
+      font-size: 13px;
+      color: var(--text-secondary);
+      min-width: 72px;
+    }
+
+    .template-note {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      padding: 10px 12px;
+      background: #F8FAFC;
+      border-radius: var(--radius);
+      margin-bottom: 14px;
+    }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      min-width: 180px;
+      max-width: 360px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.92);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.6;
+      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.28);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: all .25s ease;
+      z-index: 100050;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 900px) {
+      .form-row { grid-template-columns: 1fr; }
+      .page-header { flex-direction: column; align-items: flex-start; }
+      .header-actions { width: 100%; justify-content: flex-start; }
+      .price-grid { grid-template-columns: 1fr; }
+      .price-grid .unit-suffix { min-width: 0; }
+    }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+        <div class="anno-filter-bar" id="annoFilterBar">
+          <span class="anno-filter-label">批注版本：</span>
+          <div class="anno-filter-tags" id="annoFilterTags"></div>
+        </div>
+
+        <div class="page-header">
+          <div class="page-header-left">
+            <a class="back-link" href="计费方案配置.html" id="backLink">← 返回</a>
+            <div>
+              <div class="page-title" id="pageTitle">新增计费方案</div>
+              <div class="page-subtitle" id="pageSubtitle">能效管理 / 能源计费配置 / 计费方案配置</div>
+            </div>
+          </div>
+          <div class="header-actions">
+            <button type="button" class="btn btn-ghost" id="cancelTop">取消</button>
+            <button type="button" class="btn btn-primary" id="saveTop">保存</button>
+          </div>
+        </div>
+
+        <div class="anno anno-version-header" data-version="v1.0">
+          <span class="anno-tag">版本信息</span>
+          <div class="anno-body">
+            <p><b>当前版本：</b>v1.0</p>
+            <p><b>更新日期：</b>2026-03-26</p>
+            <p><b>变更概述：</b>由古典「新增_编辑能源计费方案」迁移；与「计费方案配置」列表衔接。</p>
+            <p><b>本页说明：</b>维护方案名称与能源类型，以及方案下多条「价格方案」明细（计费规则、时段、价格、生效区间）；明细的新增 / 编辑走弹窗示意。</p>
+          </div>
+        </div>
+
+        <div class="anno anno-ux" data-version="v1.0">
+          <span class="anno-tag">交互说明</span>
+          <span class="anno-version">v1.0</span>
+          <span class="anno-source" data-type="引用自古典原型">引用自古典原型</span>
+          <div class="anno-body">
+            <ul>
+              <li><b>方案明细列表：</b>按生效时间倒序；不分页。</li>
+              <li><b>行内编辑：</b>打开与「新增计费方案」相同的配置弹窗（古典：编辑电度电价弹窗）。</li>
+              <li><b>行内删除：</b>生效日期为今天及以前的明细不可删；未来生效日期的明细可二次确认后删除。</li>
+              <li><b>弹窗确定：</b>峰平谷 / 尖峰平谷类需满足 24 小时时段完整覆盖等校验（实装约束，本页以批注说明）。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="anno anno-field" data-version="v1.0">
+          <span class="anno-tag">字段说明</span>
+          <span class="anno-version">v1.0</span>
+          <span class="anno-source" data-type="引用自古典原型">引用自古典原型</span>
+          <div class="anno-body">
+            <ul>
+              <li><b>生效日期：</b>必选；历史版本已占用日期不可再选。</li>
+              <li><b>时段：</b>起始 / 结束以 30 分钟为刻度；同规则内时段不重叠；多时段拼接需覆盖全天（提交校验）。</li>
+              <li><b>价格单位：</b>「元/能源单位」随所选能源类型的单位动态展示；金额必填，保留 2 位小数。</li>
+              <li><b>编辑态：</b>能源类型不可改（置灰）。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="content-body">
+          <section class="section-card">
+            <div class="section-head">
+              <span class="section-title">基础信息</span>
+            </div>
+            <div class="section-body">
+              <div class="form-row">
+                <div class="field">
+                  <label class="field-label" for="schemeName"><span class="required">*</span>方案名称</label>
+                  <input type="text" class="field-control" id="schemeName" maxlength="99" placeholder="请输入方案名称" autocomplete="off">
+                  <span class="field-hint field-hint-annoonly">必填；与列表展示一致。</span>
+                </div>
+                <div class="field">
+                  <label class="field-label" for="energyType"><span class="required">*</span>能源类型</label>
+                  <select class="field-select" id="energyType">
+                    <option value="">请选择</option>
+                    <option value="电">电</option>
+                    <option value="水">水</option>
+                    <option value="冷量">冷量</option>
+                  </select>
+                  <span class="field-hint field-hint-annoonly">编辑态锁定；决定明细中价格后缀与测点取数类型（见需求文档）。</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="section-card">
+            <div class="section-head">
+              <span class="section-title">方案明细（价格方案）</span>
+            </div>
+            <div class="section-toolbar">
+              <button type="button" class="btn btn-primary" id="btnAddDetail">+ 新增</button>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table" aria-label="方案明细">
+                <thead>
+                  <tr>
+                    <th>计费规则</th>
+                    <th>时段</th>
+                    <th>价格</th>
+                    <th>生效时间</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="detailTableBody">
+                  <tr data-row="1" data-effective="2018-01-12" data-future="0">
+                    <td>峰平谷电价</td>
+                    <td class="cell-multiline">峰期：（08:00-12:00）（14:00-17:00）（19:00-21:00）<br>平期：（12:00-14:00）（17:00-19:00）（21:00-00:00）<br>谷期：（00:00-08:00）</td>
+                    <td class="cell-prices">1.03 元/千瓦时<br>0.64 元/千瓦时<br>0.34 元/千瓦时</td>
+                    <td class="cell-multiline">2018-01-12 至 —</td>
+                    <td>
+                      <div class="actions">
+                        <span class="action-link" tabindex="0" role="button" data-edit-row="1">编辑</span>
+                        <span class="action-link danger muted" title="生效日期已不晚于今天，不可删除">删除</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr data-row="2" data-effective="2015-01-12" data-future="0">
+                    <td>统一单价</td>
+                    <td class="cell-multiline">全天：00:00-23:59</td>
+                    <td class="cell-prices">0.81 元/千瓦时</td>
+                    <td class="cell-multiline">2015-01-12 至 2018-01-12</td>
+                    <td>
+                      <div class="actions">
+                        <span class="action-link" tabindex="0" role="button" data-edit-row="2">编辑</span>
+                        <span class="action-link danger muted" title="生效日期已不晚于今天，不可删除">删除</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr data-row="3" data-effective="2030-01-01" data-future="1">
+                    <td>峰平谷电价</td>
+                    <td class="cell-multiline">（待发布）与模板一致</td>
+                    <td class="cell-prices">—</td>
+                    <td class="cell-multiline">2030-01-01 至 —</td>
+                    <td>
+                      <div class="actions">
+                        <span class="action-link" tabindex="0" role="button" data-edit-row="3">编辑</span>
+                        <span class="action-link danger" tabindex="0" role="button" data-del-row="3">删除</span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <div class="action-bar">
+          <button type="button" class="btn btn-ghost" id="cancelBottom">取消</button>
+          <button type="button" class="btn btn-primary" id="saveBottom">保存</button>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modalDetail" aria-hidden="true">
+    <div class="modal" role="dialog" aria-labelledby="detailModalTitle" aria-modal="true">
+      <div class="modal-head">
+        <div class="modal-title" id="detailModalTitle">新增计费方案</div>
+        <button type="button" class="modal-close" id="detailModalClose" aria-label="关闭">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="field" style="margin-bottom: 14px;">
+          <span class="field-label"><span class="required">*</span>计费规则</span>
+          <div class="radio-row" role="radiogroup" aria-label="计费规则">
+            <label class="radio-opt"><input type="radio" name="ruleType" value="fpg" checked> 峰平谷计价</label>
+            <label class="radio-opt"><input type="radio" name="ruleType" value="jfpg"> 尖峰平谷计价</label>
+            <label class="radio-opt"><input type="radio" name="ruleType" value="unified"> 统一单价</label>
+          </div>
+        </div>
+
+        <div id="panelUnified" class="rule-panel">
+          <div class="field" style="margin-bottom: 14px;">
+            <label class="field-label" for="priceUnified"><span class="required">*</span>单价</label>
+            <div class="price-grid" style="grid-template-columns: 1fr auto;">
+              <input type="text" class="field-control" id="priceUnified" placeholder="请输入价格" inputmode="decimal" style="max-width: 200px;">
+              <span class="unit-suffix" id="unitUnified">元/千瓦时</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="panelFpg" class="rule-panel active">
+          <p class="template-note">时段由所选模板预置（示意）；以下为各时段单价。</p>
+          <div class="price-grid">
+            <label for="priceFeng">峰期价格</label>
+            <input type="text" class="field-control" id="priceFeng" placeholder="请输入价格" inputmode="decimal">
+            <span class="unit-suffix unit-dynamic">元/千瓦时</span>
+          </div>
+          <div class="price-grid">
+            <label for="pricePing">平期价格</label>
+            <input type="text" class="field-control" id="pricePing" placeholder="请输入价格" inputmode="decimal">
+            <span class="unit-suffix unit-dynamic">元/千瓦时</span>
+          </div>
+          <div class="price-grid">
+            <label for="priceGu">谷期价格</label>
+            <input type="text" class="field-control" id="priceGu" placeholder="请输入价格" inputmode="decimal">
+            <span class="unit-suffix unit-dynamic">元/千瓦时</span>
+          </div>
+        </div>
+
+        <div id="panelJfpg" class="rule-panel">
+          <p class="template-note">尖峰平谷模板含尖 / 峰 / 平 / 谷四段（示意）。</p>
+          <div class="price-grid">
+            <label for="priceJian">尖峰价格</label>
+            <input type="text" class="field-control" id="priceJian" placeholder="请输入价格" inputmode="decimal">
+            <span class="unit-suffix unit-dynamic">元/千瓦时</span>
+          </div>
+          <div class="price-grid">
+            <label for="priceFeng2">峰期价格</label>
+            <input type="text" class="field-control" id="priceFeng2" placeholder="请输入价格" inputmode="decimal">
+            <span class="unit-suffix unit-dynamic">元/千瓦时</span>
+          </div>
+          <div class="price-grid">
+            <label for="pricePing2">平期价格</label>
+            <input type="text" class="field-control" id="pricePing2" placeholder="请输入价格" inputmode="decimal">
+            <span class="unit-suffix unit-dynamic">元/千瓦时</span>
+          </div>
+          <div class="price-grid">
+            <label for="priceGu2">谷期价格</label>
+            <input type="text" class="field-control" id="priceGu2" placeholder="请输入价格" inputmode="decimal">
+            <span class="unit-suffix unit-dynamic">元/千瓦时</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="effectiveDate"><span class="required">*</span>生效日期</label>
+          <input type="date" class="field-control" id="effectiveDate" style="max-width: 220px;">
+          <span class="field-hint field-hint-annoonly">不可早于已有明细已锁定的历史区间；通常限定为每月 1 日（见 PRD）。</span>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" id="detailModalCancel">取 消</button>
+        <button type="button" class="btn btn-primary" id="detailModalOk">确 定</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (function () {
+      const toast = document.getElementById('toast');
+      let toastTimer = null;
+      const showToast = (message) => {
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+      };
+
+      const params = new URLSearchParams(window.location.search);
+      const isEdit = params.get('mode') === 'edit';
+      const presetName = params.get('name');
+      const presetType = params.get('type');
+
+      const pageTitle = document.getElementById('pageTitle');
+      const schemeName = document.getElementById('schemeName');
+      const energyType = document.getElementById('energyType');
+
+      if (isEdit) {
+        pageTitle.textContent = '编辑计费方案';
+        schemeName.value = presetName ? decodeURIComponent(presetName) : '市电单一电价方案';
+        energyType.value = presetType ? decodeURIComponent(presetType) : '电';
+        energyType.disabled = true;
+      }
+
+      const unitByEnergy = {
+        电: '元/千瓦时',
+        水: '元/m³',
+        冷量: '元/千瓦时'
+      };
+
+      const syncUnits = () => {
+        const u = unitByEnergy[energyType.value] || '元/千瓦时';
+        document.getElementById('unitUnified').textContent = u;
+        document.querySelectorAll('.unit-dynamic').forEach((el) => { el.textContent = u; });
+      };
+
+      energyType.addEventListener('change', syncUnits);
+      syncUnits();
+
+      const modal = document.getElementById('modalDetail');
+      const detailTitle = document.getElementById('detailModalTitle');
+
+      const openDetailModal = (mode) => {
+        detailTitle.textContent = mode === 'edit' ? '编辑计费方案' : '新增计费方案';
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+        document.getElementById('detailModalClose').focus();
+      };
+
+      const closeDetailModal = () => {
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+      };
+
+      document.getElementById('btnAddDetail').addEventListener('click', () => openDetailModal('add'));
+
+      document.querySelectorAll('[data-edit-row]').forEach((el) => {
+        el.addEventListener('click', () => openDetailModal('edit'));
+        el.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            openDetailModal('edit');
+          }
+        });
+      });
+
+      document.querySelectorAll('[data-del-row]').forEach((el) => {
+        const handleDel = () => {
+          const tr = el.closest('tr');
+          if (tr.getAttribute('data-future') !== '1') {
+            showToast('生效日期不晚于今天，无法删除');
+            return;
+          }
+          if (window.confirm('确认删除该条方案明细？')) {
+            tr.remove();
+            showToast('示意：已删除（演示）');
+          }
+        };
+        el.addEventListener('click', handleDel);
+        el.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleDel();
+          }
+        });
+      });
+
+      document.getElementById('detailModalClose').addEventListener('click', closeDetailModal);
+      document.getElementById('detailModalCancel').addEventListener('click', closeDetailModal);
+      modal.addEventListener('click', (e) => { if (e.target === modal) closeDetailModal(); });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('show')) closeDetailModal();
+      });
+
+      document.getElementById('detailModalOk').addEventListener('click', () => {
+        const dateEl = document.getElementById('effectiveDate');
+        if (!dateEl.value) {
+          showToast('请选择生效日期');
+          dateEl.focus();
+          return;
+        }
+        closeDetailModal();
+        showToast('示意：校验通过后保存明细（含 24h 覆盖等实装规则）');
+      });
+
+      const panels = {
+        unified: document.getElementById('panelUnified'),
+        fpg: document.getElementById('panelFpg'),
+        jfpg: document.getElementById('panelJfpg')
+      };
+
+      document.querySelectorAll('input[name="ruleType"]').forEach((radio) => {
+        radio.addEventListener('change', () => {
+          const v = radio.value;
+          panels.unified.classList.toggle('active', v === 'unified');
+          panels.fpg.classList.toggle('active', v === 'fpg');
+          panels.jfpg.classList.toggle('active', v === 'jfpg');
+        });
+      });
+
+      const goList = () => { window.location.href = '计费方案配置.html'; };
+
+      const trySavePage = () => {
+        if (!schemeName.value.trim()) {
+          showToast('请填写方案名称');
+          schemeName.focus();
+          return;
+        }
+        if (!energyType.value) {
+          showToast('请选择能源类型');
+          return;
+        }
+        showToast('示意：保存方案并返回列表（演示未落库）');
+      };
+
+      document.getElementById('saveTop').addEventListener('click', trySavePage);
+      document.getElementById('saveBottom').addEventListener('click', trySavePage);
+      document.getElementById('cancelTop').addEventListener('click', goList);
+      document.getElementById('cancelBottom').addEventListener('click', goList);
+    })();
+  </script>
+
+  <button type="button" class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+
+  <script>
+    function initAnnoVersionFilter() {
+      var tags = document.getElementById('annoFilterTags');
+      if (!document.body.classList.contains('annotation-mode')) return;
+      var annos = document.querySelectorAll('.anno[data-version]');
+      var versions = [];
+      annos.forEach(function (a) {
+        var v = a.getAttribute('data-version');
+        if (v && versions.indexOf(v) === -1) versions.push(v);
+      });
+      versions.sort(function (a, b) {
+        var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+        var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+        for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+          if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+        }
+        return 0;
+      });
+      tags.innerHTML = '';
+      var allBtn = document.createElement('span');
+      allBtn.className = 'anno-filter-tag';
+      allBtn.textContent = '全部';
+      allBtn.onclick = function () { filterAnno('all', versions[0]); setActive(this); };
+      tags.appendChild(allBtn);
+      versions.forEach(function (v, i) {
+        var btn = document.createElement('span');
+        btn.className = 'anno-filter-tag' + (i === 0 ? ' active' : '');
+        btn.textContent = v;
+        btn.onclick = function () { filterAnno(v, versions[0]); setActive(this); };
+        tags.appendChild(btn);
+      });
+      if (versions.length > 0) filterAnno(versions[0], versions[0]);
+    }
+    function filterAnno(version, latest) {
+      document.querySelectorAll('.anno[data-version]').forEach(function (a) {
+        var v = a.getAttribute('data-version');
+        if (version === 'all') {
+          a.style.display = '';
+          a.style.opacity = (v === latest) ? '1' : '0.6';
+        } else {
+          a.style.display = (v === version) ? '' : 'none';
+          a.style.opacity = '1';
+        }
+      });
+    }
+    function setActive(el) {
+      el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function (t) { t.classList.remove('active'); });
+      el.classList.add('active');
+    }
+  </script>
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="能源计费配置"></script>
+</body>
+</html>

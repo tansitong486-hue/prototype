@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>创建仿真模型</title>
+  <style>
+    :root {
+      --primary: #007AFF;
+      --primary-dark: #0066D6;
+      --primary-hover: #409BFF;
+      --primary-soft: #E6F2FF;
+      --text-primary: #001833;
+      --text-secondary: #405266;
+      --text-hint: #B3BAC2;
+      --border: #D9DDE1;
+      --border-light: #F3F4F5;
+      --bg-body: #F2F3F5;
+      --bg-card: #FFFFFF;
+      --danger: #F12000;
+      --danger-soft: #FEE9E6;
+      --success: #52C412;
+      --success-soft: #EEF9E8;
+      --warning: #FAAD14;
+      --warning-soft: #FEF7E8;
+      --radius: 6px;
+      --radius-lg: 8px;
+      --shadow-sm: 0 1px 2px rgba(31, 37, 77, 0.08);
+      --shadow-card: 0 2px 8px rgba(31, 37, 77, 0.08);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { text-decoration: none; color: inherit; }
+    button { border: none; background: none; font: inherit; cursor: pointer; }
+
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main { flex: 1; min-width: 0; overflow-y: auto; background: var(--bg-body); }
+
+    .page-header {
+      background: var(--bg-card);
+      padding: 0 20px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+    }
+
+    .page-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      transition: color var(--transition);
+    }
+
+    .back-link:hover { color: var(--primary); }
+
+    .page-title {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .page-subtitle {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .content-body { padding: 12px 20px 24px; }
+
+    .section-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .section-head {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-light);
+      background: #FFFFFF;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-head.with-actions { justify-content: space-between; }
+
+    .section-head-main {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .section-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .step-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .section-body { padding: 18px; }
+
+    .note-block {
+      background: var(--bg-body);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+    .note-block-sub {
+      margin-top: -8px;
+      margin-bottom: 14px;
+      color: var(--text-hint);
+      border-style: solid;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px 24px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .field-label .required { color: var(--danger); }
+
+    .field-control,
+    .field-select {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      background: #fff;
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .field-control:focus-visible,
+    .field-select:focus-visible {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.14);
+    }
+
+    .field-select.tight {
+      min-width: 120px;
+      max-width: 180px;
+    }
+
+    .table-wrap { overflow-x: auto; }
+    .data-table {
+      width: 100%;
+      min-width: 1320px;
+      border-collapse: collapse;
+    }
+
+    .predict-table { min-width: 1500px; }
+
+    .data-table .cell-num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    .data-table thead th {
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+      background: #FFFFFF;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .data-table tbody td {
+      padding: 10px 12px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+    }
+    .data-table tbody tr:hover { background: #F8FBFF; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 32px;
+      padding: 0 16px;
+      border-radius: 100px;
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .btn-primary {
+      color: #fff;
+      background: var(--primary);
+    }
+
+    .btn-primary:hover { background: var(--primary-hover); }
+
+    .btn-primary:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    .btn-ghost {
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      background: #fff;
+    }
+
+    .btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
+
+    .predict-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: #FFFFFF;
+      color: var(--text-secondary);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .predict-summary.partial {
+      border-color: #FAD88A;
+      background: var(--warning-soft);
+      color: #8A5A00;
+    }
+
+    .predict-summary.success {
+      border-color: #BDEAA8;
+      background: var(--success-soft);
+      color: #2A6E0F;
+    }
+
+    .predict-summary.running {
+      border-color: #8DC4FF;
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    .predict-summary.failed {
+      border-color: #F99B8D;
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .summary-main {
+      font-weight: 600;
+      color: inherit;
+    }
+
+    .summary-counts {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .count-chip {
+      display: inline-flex;
+      align-items: center;
+      height: 24px;
+      padding: 0 8px;
+      border-radius: 100px;
+      background: rgba(255,255,255,.75);
+      color: inherit;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .predict-tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 64px;
+      height: 24px;
+      padding: 0 8px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .predict-tag.idle {
+      color: var(--text-hint);
+      background: var(--border-light);
+    }
+
+    .predict-tag.running {
+      color: var(--primary);
+      background: var(--primary-soft);
+    }
+
+    .predict-tag.success {
+      color: #2A6E0F;
+      background: var(--success-soft);
+    }
+
+    .predict-tag.fail {
+      color: var(--danger);
+      background: var(--danger-soft);
+    }
+
+    .failure-text {
+      color: var(--danger);
+      line-height: 1.5;
+      min-width: 180px;
+    }
+
+    .cell-muted { color: var(--text-hint); }
+
+    .btn:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px var(--bg-card), 0 0 0 4px var(--primary);
+    }
+
+    .action-bar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 0 8px;
+      flex-wrap: wrap;
+    }
+
+    .module-checks {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px 24px;
+    }
+
+    .module-checks label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .module-checks > .mod-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .mod-sub-options {
+      display: none;
+      margin: 8px 0 0 28px;
+      padding: 10px 14px;
+      background: #F8FAFC;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+    }
+
+    .mod-sub-options.open { display: block; }
+
+    .mod-sub-options .sub-title {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .mod-sub-options .sub-radios {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .mod-sub-options .sub-radios label {
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      min-width: 180px;
+      max-width: 320px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.92);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.6;
+      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.28);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: all .25s ease;
+      z-index: 260;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 900px) {
+      .page-header { flex-direction: column; align-items: flex-start; }
+      .form-row { grid-template-columns: 1fr; }
+      .section-head.with-actions { align-items: flex-start; flex-direction: column; }
+      .predict-summary { align-items: flex-start; flex-direction: column; }
+      .summary-counts { justify-content: flex-start; }
+    }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+        <div class="anno-filter-bar" id="annoFilterBar">
+          <span class="anno-filter-label">批注版本：</span>
+          <div class="anno-filter-tags" id="annoFilterTags"></div>
+        </div>
+        <header class="page-header">
+          <div class="page-header-left">
+            <a class="back-link" href="系统仿真建模.html">← 返回</a>
+            <div>
+              <h1 class="page-title" id="pageTitle">创建仿真模型</h1>
+              <p class="page-subtitle" id="pageSubtitle">能效管理 / 系统仿真建模 / 新建</p>
+            </div>
+          </div>
+        </header>
+
+        <div class="content-body">
+          <div class="anno anno-version-header" data-version="v2.2">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v2.2</p>
+              <p><b>更新日期：</b>2026-06-09</p>
+              <p><b>变更概述：</b>在 <b>v1.8</b> 基础上，<b>v2.2</b> 对"预测对象与预测参数"区块做以下调整：① "模型选择规则"新增「多工况泛化优先」（基于 Max-bin RMSE，即各工况区间中最差 RMSE 最低的模型），并将其设为所有行的默认选中项；② 所有自动策略叠加「实时偏差健康检查」——选出模型后若实时偏差 &gt; 15%，仿真结果页标注告警但不阻断；③ 点击「预测」后按模型逐行回显结果，部分模型失败时不阻断成功模型展示，失败原因仅在下方表格行内展示。</p>
+              <p><b>本页说明：</b>查看本次变更请筛选 <code>v2.2</code>。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-version-header" data-version="v1.8">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v1.8</p>
+              <p><b>更新日期：</b>2026-04-14</p>
+              <p><b>变更概述：</b>在 <b>v1.7</b> 基础上，<b>v1.8</b> 为可选仿真模块中的"最不利末端压差求解"新增二级模式选择——勾选后展开子面板，用户须在"冷冻泵最不利压差求解"与"二次泵最不利压差求解"中二选一；其余模块与页面结构延续 v1.7。</p>
+              <p><b>本页说明：</b>当前批注支持按版本筛选查看；查看本次变更请筛选 <code>v1.8</code>，查看完整历史基线请切换到 <code>v1.0</code>。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-version-header" data-version="v1.7">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v1.7</p>
+              <p><b>更新日期：</b>2026-03-24</p>
+              <p><b>变更概述：</b>在历史 <b>v1.0</b> 基线批注之上，<b>v1.7</b> 将可选仿真模块中的文案由”最不利末端冷通道温度求解”调整为”最不利末端空调送风温度求解”，其余页面结构与演示数据延续 v1.0。</p>
+              <p><b>本页说明：</b>当前批注支持按版本筛选查看；查看完整历史基线请切换到 <code>v1.0</code>，查看本次变更请筛选 <code>v1.7</code>。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-version-header" data-version="v1.0">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v1.0</p>
+              <p><b>更新日期：</b>2026-03-24</p>
+              <p><b>变更概述：</b>本页先按历史 <b>v1.0</b> 内容补齐批注，用于和古典原型逐项对照；当前批注范围覆盖基础信息、可选仿真模块、预测对象与预测参数、预测模型选择、底部操作栏。</p>
+              <p><b>本页说明：</b>页面用于创建系统仿真模型，当前交互与字段取值以古典 <code>创建仿真模型</code> 为基线整理；后续若继续演进版本，应保留本页 <code>data-version="v1.0"</code> 历史批注并新增后续版本批注块。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-req" data-version="v1.0">
+            <span class="anno-tag">需求说明</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source">引用自古典原型</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>整页</p>
+              <p>页面级验收以古典原型为准：区块顺序应为 <b>基础信息 → 可选仿真模块 → 预测对象与预测参数 → 预测模型选择 → 底部操作栏</b>；核心信息包括仿真模型名称、类型、对象、预测对象矩阵、仿真预测最大偏差值配置及保存/校验入口。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-ux" data-version="v1.0">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source">引用自古典原型 + AI 生成</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>整页</p>
+              <ul>
+                <li>默认展示原型内容；点击右下角“批注”按钮后，显示本页所有 <code>.anno</code> 批注与顶部版本筛选栏。</li>
+                <li>顶部返回入口回到 `系统仿真建模.html`；底部“取消”也返回列表。</li>
+                <li>当地址参数包含 <code>?mode=edit</code> 时，标题与面包屑切换为“编辑仿真模型 / 能效管理 / 系统仿真建模 / 编辑”。</li>
+                <li>底部“仿真校验”跳转 `仿真校验.html`；“保存”为当前页示意反馈，实装时需先做字段校验和保存逻辑。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="anno anno-field" data-version="v1.0">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source">引用自古典原型</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>基础信息</p>
+              <table class="anno-table">
+                <thead><tr><th>字段</th><th>规则</th></tr></thead>
+                <tbody>
+                  <tr><td>仿真模型名称</td><td>必填，文本输入，默认空值，提示“请输入”。</td></tr>
+                  <tr><td>仿真模型类型</td><td>必选，当前仅支持“水冷冷水系统”。</td></tr>
+                  <tr><td>仿真模型对象</td><td>必选，下拉选择对应实例；当前页以“1号集成冷站”为演示选中项。</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <section class="section-card">
+            <div class="section-head">
+              <span class="step-num">1</span>
+              <span class="section-title">基础信息</span>
+            </div>
+            <div class="section-body">
+              <div class="form-row">
+                <div class="field">
+                  <label class="field-label" for="simName"><span class="required">*</span>仿真模型名称：</label>
+                  <input id="simName" class="field-control" type="text" placeholder="请输入" autocomplete="off">
+                </div>
+                <div class="field">
+                  <label class="field-label" for="simType"><span class="required">*</span>仿真模型类型：</label>
+                  <select id="simType" class="field-select" aria-label="仿真模型类型">
+                    <option value="water" selected>水冷冷水系统</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label class="field-label" for="simObj"><span class="required">*</span>仿真模型对象：</label>
+                  <select id="simObj" class="field-select">
+                    <option value="">请选择</option>
+                    <option selected>1号集成冷站</option>
+                    <option>2号集成冷站</option>
+                    <option>3号集成冷站</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="anno anno-field" data-version="v1.8">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v1.8</span>
+            <span class="anno-source">AI 生成</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>可选仿真模块 — 最不利末端压差求解</p>
+              <p><b>v1.8 变更：</b>"最不利末端压差求解"由原先的单一勾选改为勾选后展开二级子面板，提供两种压差求解方式供单选：</p>
+              <ul>
+                <li><b>冷冻泵最不利压差求解</b> — 以冷冻泵回路为计算对象</li>
+                <li><b>二次泵最不利压差求解</b> — 以二次泵回路为计算对象</li>
+              </ul>
+              <table class="anno-table">
+                <thead><tr><th>交互节点</th><th>规则</th></tr></thead>
+                <tbody>
+                  <tr><td>父级 checkbox</td><td>勾选后展开子面板，取消勾选则收起并清空已选模式。</td></tr>
+                  <tr><td>子级 radio</td><td>两种模式互斥单选；父级勾选后必须选择其一方可保存。</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="anno anno-field" data-version="v1.7">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v1.7</span>
+            <span class="anno-source">AI 生成</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>可选仿真模块</p>
+              <p><b>v1.7 变更：</b>为使业务语义更明确，模块文案由”最不利末端冷通道温度求解”统一调整为”最不利末端空调送风温度求解”；该变更仅涉及展示命名，不改变当前原型中的多选规则与默认态。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-field" data-version="v1.0">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source">引用自古典原型</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>可选仿真模块</p>
+              <p>本区为多选、非必选，默认均不勾选；用于补充仿真求解能力，包括：最不利末端压差求解、最不利末端冷通道温度求解、蓄冷罐放冷时长求解。</p>
+            </div>
+          </div>
+
+          <section class="section-card">
+            <div class="section-head">
+              <span class="step-num">2</span>
+              <span class="section-title">可选仿真模块</span>
+            </div>
+            <div class="section-body">
+              <div class="module-checks">
+                <div class="mod-group">
+                  <label><input type="checkbox" name="mod" id="modPressure"> 最不利末端压差求解</label>
+                  <div class="mod-sub-options" id="pressureSubOptions">
+                    <div class="sub-title">请选择压差求解方式：</div>
+                    <div class="sub-radios">
+                      <label><input type="radio" name="pressureType" value="chilled_pump"> 冷冻泵最不利压差求解</label>
+                      <label><input type="radio" name="pressureType" value="secondary_pump"> 二次泵最不利压差求解</label>
+                    </div>
+                  </div>
+                </div>
+                <label><input type="checkbox" name="mod"> 最不利末端空调送风温度求解</label>
+                <label><input type="checkbox" name="mod"> 蓄冷罐放冷时长求解</label>
+              </div>
+            </div>
+          </section>
+
+          <div class="anno anno-field" data-version="v2.2">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.2</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>预测对象与预测参数 — 模型选择规则</p>
+              <p><b>v2.2 变更：</b>"模型选择规则"下拉新增第 4 个选项「多工况泛化优先」，<b>并将其设为所有行的默认选中项</b>（新建仿真模型时即默认此规则）。完整选项列表及含义如下：</p>
+              <table class="anno-table">
+                <thead><tr><th>选项</th><th>含义</th><th>选择依据</th><th>模型名称列行为</th></tr></thead>
+                <tbody>
+                  <tr><td>训练时间优先</td><td>选最近一次训练完成的模型</td><td>训练完成时间</td><td>自动填入，可手动覆盖</td></tr>
+                  <tr><td>RMSE 优先</td><td>选训练评估全局 RMSE 最低的模型</td><td>全局 RMSE</td><td>自动填入，可手动覆盖</td></tr>
+                  <tr><td><b>多工况泛化优先（默认）</b></td><td>选 Max-bin RMSE 最低的模型，即在最薄弱工况区间表现最好的模型</td><td>Max-bin RMSE</td><td>自动填入，可手动覆盖</td></tr>
+                  <tr><td>自定义</td><td>用户手动从候选模型中指定</td><td>—</td><td>下拉可选</td></tr>
+                </tbody>
+              </table>
+              <p><b>Max-bin RMSE 说明：</b>模型训练评估时，将验证集按工况维度（负荷段、运行台数、运行模式）自动分区，计算每个区间的 RMSE，取样本充足区间（≥ 20 条）中最大的 RMSE 值。该指标反映模型在最薄弱工况下的预测能力，相比全局 RMSE 更适合寻优场景——寻优需探索多种不同工况，木桶效应决定了最差区间才是瓶颈。</p>
+              <p><b>实时偏差健康检查（叠加机制）：</b>所有自动策略（训练时间优先 / RMSE 优先 / 多工况泛化优先）选出模型后，运行时用当前实时数据做一次偏差校验：偏差 ≤ 15% 正常使用；偏差 &gt; 15% 不阻断仿真，但在仿真结果页对该预测对象标注 ⚠️ 告警「实时偏差较大（XX%），建议关注模型时效性」。实时数据不可用时跳过检查。</p>
+              <p><b>评估时机：</b></p>
+              <ul>
+                <li><b>单次仿真</b> — 仿真启动时评估一次，选定后整轮仿真不再重选。</li>
+                <li><b>寻优场景</b> — 寻优启动时整体评估一次，该轮寻优内所有仿真迭代共用此次评估结果。</li>
+              </ul>
+              <p><b>交互联动：</b>选中前三种自动策略时，模型名称列自动填入对应最优模型名称，用户可手动覆盖；选中「自定义」时恢复为空白下拉供手动选择。当前演示数据中所有行均默认选中「多工况泛化优先」。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-ux" data-version="v2.2">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v2.2</span>
+            <span class="anno-source">产品评审调整</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>预测对象与预测参数 — 预测按钮、预测结果汇总、逐行状态</p>
+              <ul>
+                <li><b>预测按钮：</b>点击后进入批量预测中态，按钮置灰防重复触发；每个预测对象独立执行，不再使用“全部成功才回显”的一票否决交互。</li>
+                <li><b>部分成功：</b>只要存在成功模型，成功行立即展示最新预测值和预测偏差；失败行展示「预测失败」状态与具体失败原因，不清空成功行。</li>
+                <li><b>失败原因：</b>不在顶部汇总区重复展开；仅在下方预测结果列表的「失败原因」列展示，示例包括模型服务超时、实时输入缺失、未选择模型。用户可针对单行问题调整模型或补齐输入后重新预测。</li>
+                <li><b>顶部汇总：</b>只展示整体状态和数量：总计 / 成功 / 失败；全部成功为绿色，部分成功为黄色，全部失败才展示红色失败态。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="anno anno-data" data-version="v1.0">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source">引用自古典原型</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>预测对象与预测参数</p>
+              <p>根据所选仿真模型对象，动态展示对应节点下所有预测对象及预测参数。表中展示模型选择规则、最新实际值、最新预测值、预测偏差、模型名称以及硬边界上下限；当前页以古典原型中的 8 条代表性数据做静态演示。</p>
+            </div>
+          </div>
+
+          <section class="section-card">
+            <div class="section-head with-actions">
+              <div class="section-head-main">
+                <span class="step-num">3</span>
+                <span class="section-title">预测对象与预测参数</span>
+              </div>
+              <div class="section-actions">
+                <button type="button" class="btn btn-primary" id="btnPredict">预测</button>
+              </div>
+            </div>
+            <div class="section-body">
+              <div class="predict-summary partial" id="predictSummary" aria-live="polite">
+                <div class="summary-main" id="predictSummaryMain">部分成功：5 个模型已回显，3 个模型预测失败</div>
+                <div class="summary-counts">
+                  <span class="count-chip">总计 <b id="cntPredictTotal">8</b></span>
+                  <span class="count-chip">成功 <b id="cntPredictSuccess">5</b></span>
+                  <span class="count-chip">失败 <b id="cntPredictFail">3</b></span>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table class="data-table predict-table">
+                  <thead>
+                    <tr>
+                      <th>预测对象</th>
+                      <th>预测参数</th>
+                      <th>模型选择规则</th>
+                      <th>模型名称</th>
+                      <th>最新实际值</th>
+                      <th>最新预测值</th>
+                      <th>预测偏差</th>
+                      <th>预测状态</th>
+                      <th>失败原因</th>
+                    </tr>
+                  </thead>
+                  <tbody id="predictTableBody">
+                    <tr data-predict-result="success" data-predict-value="122.87m³/h" data-predict-delta="0.36m³/h">
+                      <td>冷冻泵1</td>
+                      <td>流量</td>
+                      <td>
+                        <select class="field-select tight rule-select" aria-label="冷冻泵1-规则">
+                          <option>训练时间优先</option>
+                          <option>RMSE优先</option>
+                          <option selected>多工况泛化优先</option>
+                          <option>自定义</option>
+                        </select>
+                      </td>
+                      <td>
+                        <select class="field-select tight model-select" aria-label="冷冻泵1-模型">
+                          <option value="">请选择</option>
+                          <option selected>冷冻泵流量泛化模型 V3</option>
+                          <option>美的E3005型号--AI模型</option>
+                        </select>
+                      </td>
+                      <td class="cell-num">123.23m³/h</td>
+                      <td class="cell-num predict-value">122.87m³/h</td>
+                      <td class="cell-num predict-delta">0.36m³/h</td>
+                      <td><span class="predict-tag success">预测成功</span></td>
+                      <td class="failure-text cell-muted">—</td>
+                    </tr>
+                    <tr data-predict-result="fail" data-predict-value="" data-predict-delta="" data-failure="模型服务超时，30s 内未返回预测结果">
+                      <td>冷水主机1</td>
+                      <td>功率</td>
+                      <td>
+                        <select class="field-select tight rule-select" aria-label="冷水主机1-规则">
+                          <option>训练时间优先</option>
+                          <option>RMSE优先</option>
+                          <option selected>多工况泛化优先</option>
+                          <option>自定义</option>
+                        </select>
+                      </td>
+                      <td>
+                        <select class="field-select tight model-select" aria-label="冷水主机1-模型">
+                          <option value="">请选择</option>
+                          <option selected>主机功率泛化模型 V2</option>
+                          <option>美的E3005功率模型（AI）</option>
+                        </select>
+                      </td>
+                      <td class="cell-num">9.45kW</td>
+                      <td class="cell-num predict-value cell-muted">—</td>
+                      <td class="cell-num predict-delta cell-muted">—</td>
+                      <td><span class="predict-tag fail">预测失败</span></td>
+                      <td class="failure-text">模型服务超时，30s 内未返回预测结果</td>
+                    </tr>
+                    <tr data-predict-result="success" data-predict-value="2.91℃" data-predict-delta="0.06℃">
+                      <td>板换1</td>
+                      <td>换热温差</td>
+                      <td>
+                        <select class="field-select tight rule-select" aria-label="板换1-规则">
+                          <option>训练时间优先</option>
+                          <option>RMSE优先</option>
+                          <option selected>多工况泛化优先</option>
+                          <option>自定义</option>
+                        </select>
+                      </td>
+                      <td>
+                        <select class="field-select tight model-select" aria-label="板换1-模型">
+                          <option value="">请选择</option>
+                          <option selected>板换温差预测模型 V1</option>
+                          <option>美的E3005型号--AI模型</option>
+                        </select>
+                      </td>
+                      <td class="cell-num">2.85℃</td>
+                      <td class="cell-num predict-value">2.91℃</td>
+                      <td class="cell-num predict-delta">0.06℃</td>
+                      <td><span class="predict-tag success">预测成功</span></td>
+                      <td class="failure-text cell-muted">—</td>
+                    </tr>
+                    <tr data-predict-result="success" data-predict-value="123.05m³/h" data-predict-delta="0.18m³/h">
+                      <td>冷却泵1</td>
+                      <td>流量</td>
+                      <td>
+                        <select class="field-select tight rule-select" aria-label="冷却泵1-规则">
+                          <option>训练时间优先</option>
+                          <option>RMSE优先</option>
+                          <option selected>多工况泛化优先</option>
+                          <option>自定义</option>
+                        </select>
+                      </td>
+                      <td>
+                        <select class="field-select tight model-select" aria-label="冷却泵1-模型">
+                          <option value="">请选择</option>
+                          <option selected>冷却泵流量泛化模型 V3</option>
+                          <option>美的E3005型号--AI模型</option>
+                        </select>
+                      </td>
+                      <td class="cell-num">123.23m³/h</td>
+                      <td class="cell-num predict-value">123.05m³/h</td>
+                      <td class="cell-num predict-delta">0.18m³/h</td>
+                      <td><span class="predict-tag success">预测成功</span></td>
+                      <td class="failure-text cell-muted">—</td>
+                    </tr>
+                    <tr data-predict-result="success" data-predict-value="3.08℃" data-predict-delta="0.04℃">
+                      <td>冷却塔1</td>
+                      <td>逼近度</td>
+                      <td>
+                        <select class="field-select tight rule-select" aria-label="冷却塔1-规则">
+                          <option>训练时间优先</option>
+                          <option>RMSE优先</option>
+                          <option selected>多工况泛化优先</option>
+                          <option>自定义</option>
+                        </select>
+                      </td>
+                      <td>
+                        <select class="field-select tight model-select" aria-label="冷却塔1-模型">
+                          <option value="">请选择</option>
+                          <option selected>冷却塔逼近度模型 V4</option>
+                          <option>美的E3005型号--AI模型</option>
+                        </select>
+                      </td>
+                      <td class="cell-num">3.12℃</td>
+                      <td class="cell-num predict-value">3.08℃</td>
+                      <td class="cell-num predict-delta">0.04℃</td>
+                      <td><span class="predict-tag success">预测成功</span></td>
+                      <td class="failure-text cell-muted">—</td>
+                    </tr>
+                    <tr data-predict-result="fail" data-predict-value="" data-predict-delta="" data-failure="实时输入缺失：冷冻侧供回水压差未取到最新值">
+                      <td>制冷单元1</td>
+                      <td>冷冻侧压差</td>
+                      <td>
+                        <select class="field-select tight rule-select" aria-label="制冷单元1-规则">
+                          <option>训练时间优先</option>
+                          <option>RMSE优先</option>
+                          <option selected>多工况泛化优先</option>
+                          <option>自定义</option>
+                        </select>
+                      </td>
+                      <td>
+                        <select class="field-select tight model-select" aria-label="制冷单元1-模型">
+                          <option value="">请选择</option>
+                          <option selected>制冷单元压差模型 V2</option>
+                          <option>美的E3005型号--AI模型</option>
+                        </select>
+                      </td>
+                      <td class="cell-num">123.21kPa</td>
+                      <td class="cell-num predict-value cell-muted">—</td>
+                      <td class="cell-num predict-delta cell-muted">—</td>
+                      <td><span class="predict-tag fail">预测失败</span></td>
+                      <td class="failure-text">实时输入缺失：冷冻侧供回水压差未取到最新值</td>
+                    </tr>
+                    <tr data-predict-result="success" data-predict-value="123.54kPa" data-predict-delta="0.33kPa">
+                      <td>冷却塔组1</td>
+                      <td>冷却侧压差</td>
+                      <td>
+                        <select class="field-select tight rule-select" aria-label="冷却塔组1-规则">
+                          <option>训练时间优先</option>
+                          <option>RMSE优先</option>
+                          <option selected>多工况泛化优先</option>
+                          <option>自定义</option>
+                        </select>
+                      </td>
+                      <td>
+                        <select class="field-select tight model-select" aria-label="冷却塔组1-模型">
+                          <option value="">请选择</option>
+                          <option selected>冷却侧压差泛化模型 V2</option>
+                          <option>美的E3005型号--AI模型</option>
+                        </select>
+                      </td>
+                      <td class="cell-num">123.21kPa</td>
+                      <td class="cell-num predict-value">123.54kPa</td>
+                      <td class="cell-num predict-delta">0.33kPa</td>
+                      <td><span class="predict-tag success">预测成功</span></td>
+                      <td class="failure-text cell-muted">—</td>
+                    </tr>
+                    <tr data-predict-result="fail" data-predict-value="" data-predict-delta="" data-failure="未选择模型，请先在模型名称列选择可用模型">
+                      <td>水冷冷水系统</td>
+                      <td>冷冻水主管压差</td>
+                      <td>
+                        <select class="field-select tight rule-select" aria-label="水冷冷水系统-规则">
+                          <option>训练时间优先</option>
+                          <option>RMSE优先</option>
+                          <option selected>多工况泛化优先</option>
+                          <option>自定义</option>
+                        </select>
+                      </td>
+                      <td>
+                        <select class="field-select tight model-select" aria-label="水冷冷水系统-模型">
+                          <option value="" selected>请选择</option>
+                          <option>系统主管压差模型 V1</option>
+                          <option>美的E3005型号--AI模型</option>
+                        </select>
+                      </td>
+                      <td class="cell-num">0.82bar</td>
+                      <td class="cell-num predict-value cell-muted">—</td>
+                      <td class="cell-num predict-delta cell-muted">—</td>
+                      <td><span class="predict-tag fail">预测失败</span></td>
+                      <td class="failure-text">未选择模型，请先在模型名称列选择可用模型</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <div class="anno anno-field" data-version="v1.0">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source">引用自古典原型</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>仿真安全边界配置</p>
+              <p>通过设定各输出变量的硬边界上下限和预测偏差阈值，控制仿真流程安全边界；当仿真运行中参数超出硬边界或预测偏差超过阈值，将自动终止仿真流程。</p>
+              <table class="anno-table">
+                <thead><tr><th>字段</th><th>规则</th></tr></thead>
+                <tbody>
+                  <tr><td>硬边界下限</td><td>数值型，非必填，允许为空；填写后仿真值低于此值时触发终止。</td></tr>
+                  <tr><td>硬边界上限</td><td>数值型，非必填，允许为空；填写后仿真值高于此值时触发终止。</td></tr>
+                  <tr><td>预测偏差</td><td>数值型，非必填，允许为空；填写后当 |预测值 − 实际值| 超过此阈值时触发终止。</td></tr>
+                </tbody>
+              </table>
+              <p>列表需覆盖选定仿真模型对象下所有输出变量。</p>
+            </div>
+          </div>
+
+          <section class="section-card">
+            <div class="section-head">
+              <span class="step-num">4</span>
+              <span class="section-title">仿真安全边界配置</span>
+            </div>
+            <div class="section-body">
+              <p class="note-block">
+                通过设定各参数预测偏差最大值，来确保仿真模型安全可靠。当预测偏差超过了边界，将自动终止仿真模型流程。
+              </p>
+              <p class="note-block note-block-sub">
+                下方动态展示选定的水冷冷水系统下，仿真模型中所有的输出参数。
+              </p>
+              <div class="table-wrap">
+                <table class="data-table" style="min-width: 720px;">
+                  <thead>
+                    <tr>
+                      <th>对象</th>
+                      <th>变量名称</th>
+                      <th>硬边界下限</th>
+                      <th>硬边界上限</th>
+                      <th>预测偏差</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>蓄冷罐组</td>
+                      <td>蓄冷罐组/可放冷时长/min</td>
+                      <td><input class="field-control" type="text" value="15.00" style="max-width:140px"></td>
+                      <td></td>
+                      <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
+                    </tr>
+                    <tr>
+                      <td rowspan="8">风冷冷水系统_测试</td>
+                      <td>风冷冷水系统_测试/冷冻水总管供回水压差/bar</td>
+                      <td></td>
+                      <td><input class="field-control" type="text" value="2.50" style="max-width:140px"></td>
+                      <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
+                    </tr>
+                    <tr>
+                      <td>风冷冷水系统_测试/最不利压差/bar</td>
+                      <td><input class="field-control" type="text" value="0.60" style="max-width:140px"></td>
+                      <td></td>
+                      <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
+                    </tr>
+                    <tr>
+                      <td>风冷冷水系统_测试/冷冻水总管供水温度/℃</td>
+                      <td></td>
+                      <td><input class="field-control" type="text" value="12.00" style="max-width:140px"></td>
+                      <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
+                    </tr>
+                    <tr>
+                      <td>风冷冷水系统_测试/冷冻水总管回水温度/℃</td>
+                      <td></td>
+                      <td><input class="field-control" type="text" value="18.00" style="max-width:140px"></td>
+                      <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
+                    </tr>
+                    <tr>
+                      <td>风冷冷水系统_测试/冷冻水供回水温差/℃</td>
+                      <td></td>
+                      <td><input class="field-control" type="text" value="8.00" style="max-width:140px"></td>
+                      <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
+                    </tr>
+                    <tr>
+                      <td>风冷冷水系统_测试/室外干球温度/℃</td>
+                      <td><input class="field-control" type="text" value="5.00" style="max-width:140px"></td>
+                      <td><input class="field-control" type="text" value="45.00" style="max-width:140px"></td>
+                      <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
+                    </tr>
+                    <tr>
+                      <td>二次泵(风)1/频率反馈</td>
+                      <td><input class="field-control" type="text" value="15.00" style="max-width:140px"></td>
+                      <td><input class="field-control" type="text" value="50.00" style="max-width:140px"></td>
+                      <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
+                    </tr>
+                    <tr>
+                      <td>二次泵(风)1/有功功率/kW</td>
+                      <td><input class="field-control" type="text" value="0.00" style="max-width:140px"></td>
+                      <td><input class="field-control" type="text" value="25.00" style="max-width:140px"></td>
+                      <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
+                    </tr>
+                    <tr>
+                      <td rowspan="4">二次泵(风)1</td>
+                      <td>二次泵(风)1/流量</td>
+                      <td><input class="field-control" type="text" value="40.00" style="max-width:140px"></td>
+                      <td><input class="field-control" type="text" value="450.00" style="max-width:140px"></td>
+                      <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
+                    </tr>
+                    <tr>
+                      <td>二次泵(风)2/频率反馈</td>
+                      <td><input class="field-control" type="text" value="15.00" style="max-width:140px"></td>
+                      <td><input class="field-control" type="text" value="50.00" style="max-width:140px"></td>
+                      <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
+                    </tr>
+                    <tr>
+                      <td>二次泵(风)2/有功功率/kW</td>
+                      <td><input class="field-control" type="text" value="0.00" style="max-width:140px"></td>
+                      <td><input class="field-control" type="text" value="25.00" style="max-width:140px"></td>
+                      <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
+                    </tr>
+                    <tr>
+                      <td>二次泵(风)2/流量</td>
+                      <td><input class="field-control" type="text" value="40.00" style="max-width:140px"></td>
+                      <td><input class="field-control" type="text" value="450.00" style="max-width:140px"></td>
+                      <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
+                    </tr>
+                    <tr>
+                      <td rowspan="2">冷冻水泵(风)1</td>
+                      <td>冷冻水泵(风)1/频率反馈</td>
+                      <td><input class="field-control" type="text" value="15.00" style="max-width:140px"></td>
+                      <td><input class="field-control" type="text" value="50.00" style="max-width:140px"></td>
+                      <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
+                    </tr>
+                    <tr>
+                      <td>冷冻水泵(风)1/有功功率/kW</td>
+                      <td><input class="field-control" type="text" value="0.00" style="max-width:140px"></td>
+                      <td><input class="field-control" type="text" value="30.00" style="max-width:140px"></td>
+                      <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <div class="anno anno-ux" data-version="v1.0">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source">AI 生成</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>底部操作栏</p>
+              <ul>
+                <li>“取消”放弃当前编辑并返回列表页。</li>
+                <li>“仿真校验”作为保存后的后续动作入口，当前原型直接跳转至 `仿真校验.html`。</li>
+                <li>“保存”为主操作按钮，当前原型以 toast 提示“已保存（示意）”。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="action-bar">
+            <button type="button" class="btn btn-ghost" id="cancelBottom">取消</button>
+            <button type="button" class="btn btn-ghost" id="btnSimVerify">仿真校验</button>
+            <button type="button" class="btn btn-primary" id="saveBottom">保存</button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (function () {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('mode') === 'edit') {
+        const t = document.getElementById('pageTitle')
+        const s = document.getElementById('pageSubtitle')
+        if (t) t.textContent = '编辑仿真模型'
+        if (s) s.textContent = '能效管理 / 系统仿真建模 / 编辑'
+      }
+
+      const toast = document.getElementById('toast')
+      let toastTimer = null
+      const showToast = function (message) {
+        toast.textContent = message
+        toast.classList.add('show')
+        clearTimeout(toastTimer)
+        toastTimer = setTimeout(function () {
+          toast.classList.remove('show')
+        }, 2000)
+      }
+
+      const goList = function () {
+        window.location.assign('系统仿真建模.html')
+      }
+
+      document.getElementById('cancelBottom').addEventListener('click', goList)
+
+      document.getElementById('saveBottom').addEventListener('click', function () {
+        showToast('已保存（示意）')
+      })
+
+      document.getElementById('btnSimVerify').addEventListener('click', function () {
+        window.location.assign('仿真校验.html')
+      })
+
+      document.querySelectorAll('.rule-select').forEach(function (sel) {
+        sel.addEventListener('change', function () {
+          var row = this.closest('tr')
+          var modelSelect = row.querySelector('.model-select')
+          if (!modelSelect) return
+          if (this.value === '自定义') {
+            modelSelect.selectedIndex = 0
+          } else {
+            var opts = Array.prototype.slice.call(modelSelect.options)
+            var firstModelIndex = opts.findIndex(function (opt) { return opt.value !== '' })
+            modelSelect.selectedIndex = firstModelIndex > -1 ? firstModelIndex : 0
+          }
+          modelSelect.dispatchEvent(new Event('change'))
+        })
+      })
+
+      const predictRows = Array.prototype.slice.call(document.querySelectorAll('#predictTableBody tr'))
+      const btnPredict = document.getElementById('btnPredict')
+      const predictSummary = document.getElementById('predictSummary')
+      const predictSummaryMain = document.getElementById('predictSummaryMain')
+      const cntPredictTotal = document.getElementById('cntPredictTotal')
+      const cntPredictSuccess = document.getElementById('cntPredictSuccess')
+      const cntPredictFail = document.getElementById('cntPredictFail')
+
+      const setCellMuted = function (cell, muted) {
+        if (!cell) return
+        cell.classList.toggle('cell-muted', muted)
+      }
+
+      const setPredictTag = function (row, state) {
+        var statusCell = row.querySelectorAll('td')[7]
+        if (!statusCell) return
+        var textMap = { running: '预测中', success: '预测成功', fail: '预测失败', idle: '未预测' }
+        statusCell.innerHTML = '<span class="predict-tag ' + state + '">' + textMap[state] + '</span>'
+      }
+
+      const setSummary = function (state, successCount, failCount) {
+        var total = predictRows.length
+        predictSummary.className = 'predict-summary ' + state
+        cntPredictTotal.textContent = total
+        cntPredictSuccess.textContent = successCount
+        cntPredictFail.textContent = failCount
+        if (state === 'running') {
+          predictSummaryMain.textContent = '预测中：正在按模型逐行获取预测结果'
+        } else if (state === 'success') {
+          predictSummaryMain.textContent = '预测完成：' + successCount + ' 个模型全部回显'
+        } else if (state === 'partial') {
+          predictSummaryMain.textContent = '部分成功：' + successCount + ' 个模型已回显，' + failCount + ' 个模型预测失败'
+        } else {
+          predictSummaryMain.textContent = '预测失败：本次没有模型成功回显'
+        }
+      }
+
+      const renderPredictionResults = function () {
+        var successCount = 0
+        var failCount = 0
+        predictRows.forEach(function (row) {
+          var valueCell = row.querySelector('.predict-value')
+          var deltaCell = row.querySelector('.predict-delta')
+          var failureCell = row.querySelector('.failure-text')
+          if (row.dataset.predictResult === 'success') {
+            successCount++
+            valueCell.textContent = row.dataset.predictValue || '—'
+            deltaCell.textContent = row.dataset.predictDelta || '—'
+            failureCell.textContent = '—'
+            setCellMuted(valueCell, false)
+            setCellMuted(deltaCell, false)
+            setCellMuted(failureCell, true)
+            setPredictTag(row, 'success')
+          } else {
+            failCount++
+            valueCell.textContent = '—'
+            deltaCell.textContent = '—'
+            failureCell.textContent = row.dataset.failure || '预测失败，请检查模型配置'
+            setCellMuted(valueCell, true)
+            setCellMuted(deltaCell, true)
+            setCellMuted(failureCell, false)
+            setPredictTag(row, 'fail')
+          }
+        })
+        setSummary(failCount === 0 ? 'success' : (successCount > 0 ? 'partial' : 'failed'), successCount, failCount)
+      }
+
+      const setPredictionRunning = function () {
+        predictRows.forEach(function (row) {
+          var valueCell = row.querySelector('.predict-value')
+          var deltaCell = row.querySelector('.predict-delta')
+          var failureCell = row.querySelector('.failure-text')
+          valueCell.textContent = '预测中'
+          deltaCell.textContent = '预测中'
+          failureCell.textContent = '正在调用模型预测'
+          setCellMuted(valueCell, true)
+          setCellMuted(deltaCell, true)
+          setCellMuted(failureCell, true)
+          setPredictTag(row, 'running')
+        })
+        setSummary('running', 0, 0)
+      }
+
+      document.querySelectorAll('.model-select').forEach(function (sel) {
+        sel.addEventListener('change', function () {
+          var row = this.closest('tr')
+          if (!row || !(row.dataset.failure || '').includes('未选择模型')) return
+          if (this.value) {
+            row.dataset.predictResult = 'success'
+            row.dataset.predictValue = '0.84bar'
+            row.dataset.predictDelta = '0.02bar'
+            row.dataset.failure = ''
+          } else {
+            row.dataset.predictResult = 'fail'
+            row.dataset.predictValue = ''
+            row.dataset.predictDelta = ''
+            row.dataset.failure = '未选择模型，请先在模型名称列选择可用模型'
+          }
+          renderPredictionResults()
+        })
+      })
+
+      btnPredict.addEventListener('click', function () {
+        btnPredict.disabled = true
+        btnPredict.textContent = '预测中'
+        setPredictionRunning()
+        setTimeout(function () {
+          renderPredictionResults()
+          btnPredict.disabled = false
+          btnPredict.textContent = '重新预测'
+          showToast('预测完成：成功结果已回显，失败原因已列出')
+        }, 1200)
+      })
+
+      renderPredictionResults()
+
+      var modPressure = document.getElementById('modPressure')
+      var pressureSub = document.getElementById('pressureSubOptions')
+      modPressure.addEventListener('change', function () {
+        if (this.checked) {
+          pressureSub.classList.add('open')
+        } else {
+          pressureSub.classList.remove('open')
+          var radios = pressureSub.querySelectorAll('input[type="radio"]')
+          radios.forEach(function (r) { r.checked = false })
+        }
+      })
+    })()
+  </script>
+  <button type="button" class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+  <script>
+    function initAnnoVersionFilter() {
+      var tags = document.getElementById('annoFilterTags')
+      if (!document.body.classList.contains('annotation-mode')) return
+      var annos = document.querySelectorAll('.anno[data-version]')
+      var versions = []
+      annos.forEach(function (a) {
+        var v = a.getAttribute('data-version')
+        if (v && versions.indexOf(v) === -1) versions.push(v)
+      })
+      versions.sort(function (a, b) {
+        var na = a.replace(/[^0-9.]/g, '').split('.').map(Number)
+        var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number)
+        for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+          if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0)
+        }
+        return 0
+      })
+      tags.innerHTML = ''
+      var allBtn = document.createElement('span')
+      allBtn.className = 'anno-filter-tag'
+      allBtn.textContent = '全部'
+      allBtn.onclick = function () { filterAnno('all', versions[0]); setActive(this) }
+      tags.appendChild(allBtn)
+      versions.forEach(function (v) {
+        var btn = document.createElement('span')
+        btn.className = 'anno-filter-tag'
+        btn.textContent = v
+        btn.onclick = function () { filterAnno(v, versions[0]); setActive(this) }
+        tags.appendChild(btn)
+      })
+      if (versions.length > 0) {
+        filterAnno('all', versions[0])
+        allBtn.classList.add('active')
+      }
+    }
+    function filterAnno(version, latest) {
+      document.querySelectorAll('.anno[data-version]').forEach(function (a) {
+        var v = a.getAttribute('data-version')
+        if (version === 'all') {
+          a.style.display = ''
+          a.style.opacity = (v === latest) ? '1' : '0.6'
+        } else {
+          a.style.display = (v === version) ? '' : 'none'
+          a.style.opacity = '1'
+        }
+      })
+    }
+    function setActive(el) {
+      el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function (t) { t.classList.remove('active') })
+      el.classList.add('active')
+    }
+  </script>
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="系统仿真建模"></script>
+</body>
+</html>

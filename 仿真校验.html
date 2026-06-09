@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>仿真验证</title>
+  <link rel="stylesheet" href="annotation-styles.css">
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --text-primary: #262626;
+      --text-secondary: #595959;
+      --text-hint: #8C8C8C;
+      --border: #D9D9D9;
+      --border-light: #F0F0F0;
+      --bg-body: #F5F5F5;
+      --bg-card: #FFFFFF;
+      --tip-bg: #FFFBE6;
+      --tip-border: #FFE58F;
+      --error-bg: #FFF2F0;
+      --error-border: #FFCCC7;
+      --error-text: #CF1322;
+      --green-btn: #52C41A;
+      --radius: 6px;
+      --radius-lg: 8px;
+      --transition: .2s ease;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { text-decoration: none; color: inherit; }
+    button { border: none; background: none; font: inherit; cursor: pointer; }
+
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main {
+      flex: 1;
+      min-width: 0;
+      overflow-y: auto;
+      background: var(--bg-body);
+    }
+
+    .content-wrap {
+      padding: 16px 20px 24px;
+      max-width: 100%;
+    }
+
+    /* 面包屑：系统仿真建模 / 仿真验证 */
+    .breadcrumb {
+      font-size: 13px;
+      color: var(--text-hint);
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .breadcrumb a {
+      color: var(--text-secondary);
+      transition: color var(--transition);
+    }
+
+    .breadcrumb a:hover { color: var(--primary); }
+
+    .breadcrumb-sep {
+      margin: 0 8px;
+      color: var(--text-hint);
+    }
+
+    .breadcrumb-current {
+      color: var(--text-primary);
+    }
+
+    /* 页标题：← 仿真验证 */
+    .page-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .back-ico {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      color: var(--text-secondary);
+      border-radius: var(--radius);
+      transition: background var(--transition), color var(--transition);
+    }
+
+    .back-ico:hover {
+      background: rgba(0, 0, 0, 0.04);
+      color: var(--primary);
+    }
+
+    .page-heading {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    /* 黄色提示 */
+    .banner-tip {
+      display: flex;
+      gap: 12px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      background: var(--tip-bg);
+      border: 1px solid var(--tip-border);
+      border-radius: var(--radius-lg);
+      align-items: flex-start;
+    }
+
+    .banner-tip-ico {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      margin-top: 2px;
+      color: #1890FF;
+    }
+
+    .banner-tip-body { min-width: 0; }
+
+    .banner-tip-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .banner-tip-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .banner-tip-text p + p { margin-top: 8px; }
+
+    /* 红色失败条 + 右侧重新校验 */
+    .banner-error {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      background: var(--error-bg);
+      border: 1px solid var(--error-border);
+      border-radius: var(--radius-lg);
+      flex-wrap: wrap;
+    }
+
+    .banner-msg-left {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .banner-error-ico {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      color: var(--error-text);
+      margin-top: 2px;
+    }
+
+    .banner-error-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--error-text);
+      margin-bottom: 4px;
+    }
+
+    .banner-error-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .btn-revalidate {
+      flex-shrink: 0;
+      height: 32px;
+      padding: 0 16px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--green-btn);
+      background: #fff;
+      border: 1px solid var(--green-btn);
+      border-radius: var(--radius);
+      transition: opacity var(--transition), box-shadow var(--transition);
+    }
+
+    .btn-revalidate:hover {
+      opacity: 0.88;
+    }
+
+    .btn-revalidate:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(82, 196, 26, 0.35);
+    }
+
+    /* 白卡片：筛选 + 表格 */
+    .data-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .filter-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .filter-select {
+      min-width: 200px;
+      height: 32px;
+      padding: 0 11px;
+      font-size: 14px;
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      outline: none;
+    }
+
+    .filter-select:focus-visible {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.15);
+    }
+
+    .search-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 200px;
+      max-width: 320px;
+      height: 32px;
+      padding: 0 11px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+    }
+
+    .search-wrap:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.15);
+    }
+
+    .search-wrap svg {
+      flex-shrink: 0;
+      width: 14px;
+      height: 14px;
+      color: var(--text-hint);
+    }
+
+    .search-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 14px;
+      min-width: 0;
+    }
+
+    .search-input::placeholder {
+      color: var(--text-hint);
+    }
+
+    .table-scroll {
+      overflow-x: auto;
+    }
+
+    .data-table {
+      width: 100%;
+      min-width: 960px;
+      border-collapse: collapse;
+    }
+
+    .data-table thead th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #FAFAFA;
+      border-bottom: 1px solid var(--border-light);
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 12px 16px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+    }
+
+    .empty-wrap {
+      text-align: center;
+      padding: 56px 24px 64px;
+    }
+
+    .empty-illu {
+      width: 120px;
+      height: 100px;
+      margin: 0 auto 16px;
+      opacity: 0.45;
+    }
+
+    .empty-text {
+      font-size: 14px;
+      color: var(--text-hint);
+    }
+
+    .tbody-data tr:hover { background: #FAFAFA; }
+
+    .col-object {
+      vertical-align: top;
+      white-space: normal;
+      line-height: 1.5;
+      max-width: 160px;
+    }
+
+    .dev-up { color: #52C41A; font-weight: 600; }
+    .dev-down { color: #CF1322; font-weight: 600; }
+    .dev-none { color: var(--text-secondary); }
+
+    .pred-ok { color: #52C41A; font-weight: 600; }
+    .pred-bad { color: #CF1322; font-weight: 600; }
+
+    tr.row-hidden { display: none; }
+
+    /* 有明细时的成功条（与失败条互斥展示） */
+    .banner-success {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      background: #F6FFED;
+      border: 1px solid #B7EB8F;
+      border-radius: var(--radius-lg);
+      flex-wrap: wrap;
+    }
+
+    .banner-success-ico {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      color: #52C41A;
+      margin-top: 2px;
+    }
+
+    .banner-success-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #389E0D;
+      margin-bottom: 4px;
+    }
+
+    .banner-success-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      background: rgba(0, 0, 0, 0.78);
+      color: #fff;
+      font-size: 13px;
+      opacity: 0;
+      transform: translateY(8px);
+      pointer-events: none;
+      transition: all .22s ease;
+      z-index: 300;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 768px) {
+      .banner-error { align-items: flex-start; }
+      .btn-revalidate { width: 100%; }
+    }
+
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+        <div class="anno-filter-bar" id="annoFilterBar">
+          <span class="anno-filter-label">批注版本：</span>
+          <div class="anno-filter-tags" id="annoFilterTags"></div>
+        </div>
+        <div class="content-wrap">
+          <nav class="breadcrumb" aria-label="面包屑">
+            <a href="系统仿真建模.html">系统仿真建模</a>
+            <span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">仿真验证</span>
+          </nav>
+
+          <div class="page-title-row">
+            <a href="系统仿真建模.html" class="back-ico" aria-label="返回系统仿真建模">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M15 18l-6-6 6-6"/>
+              </svg>
+            </a>
+            <h1 class="page-heading">仿真验证</h1>
+          </div>
+
+          <div class="banner-tip" role="region" aria-label="提示">
+            <svg class="banner-tip-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+            </svg>
+            <div class="banner-tip-body">
+              <div class="banner-tip-title">提示</div>
+              <div class="banner-tip-text">
+                <p>1、通过 AI + 机理模型的技术手段，构建数字世界中一模一样的制冷系统仿真模型，实时输出当前真实运行策略，模拟制冷系统的物理过程。</p>
+                <p>2、通过实际值和预测值进行对比，可观察制冷系统仿真模型的精准度，两者偏差越小说明模型越精准。</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="banner-success" role="status">
+            <div class="banner-msg-left">
+              <svg class="banner-success-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+              <div>
+                <div class="banner-success-title">仿真校验完成</div>
+                <div class="banner-success-desc">已输出各对象指标对比明细（以下为演示数据，便于评审版式与字段）</div>
+              </div>
+            </div>
+            <button type="button" class="btn-revalidate" id="btnRevalidate">重新校验</button>
+          </div>
+
+          <section class="data-card" aria-label="校验数据">
+            <div class="filter-row">
+              <select class="filter-select" id="filterSelect" aria-label="筛选">
+                <option value="">全部对象</option>
+                <option value="金华制冷系统">金华制冷系统</option>
+                <option value="1号集成冷站">1号集成冷站（含子模块）</option>
+              </select>
+              <label class="search-wrap">
+                <svg viewBox="0 0 16 16" aria-hidden="true">
+                  <path fill="currentColor" d="M6.5 1a5.5 5.5 0 1 0 3.38 9.85l3.28 3.27a.75.75 0 1 0 1.06-1.06l-3.27-3.28A5.5 5.5 0 0 0 6.5 1zm0 1.5a4 4 0 1 1 0 8 4 4 0 0 1 0-8z"/>
+                </svg>
+                <input class="search-input" type="search" id="metricSearch" placeholder="指标名称" aria-label="按指标名称搜索">
+              </label>
+            </div>
+
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>对象</th>
+                    <th>指标名称</th>
+                    <th>当前实际值</th>
+                    <th>模拟预测值</th>
+                    <th>预测偏差</th>
+                    <th>预测结果</th>
+                  </tr>
+                </thead>
+                <tbody id="tableBody" class="tbody-data">
+                  <tr id="emptyRow" class="row-hidden">
+                    <td class="empty-wrap" colspan="6">
+                      <div class="empty-illu" aria-hidden="true">
+                        <svg viewBox="0 0 120 100" width="120" height="100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <ellipse cx="60" cy="88" rx="40" ry="6" fill="#E8E8E8"/>
+                          <path d="M35 78 L50 35 L70 35 L85 78 Z" fill="#F5F5F5" stroke="#D9D9D9" stroke-width="1.5"/>
+                          <rect x="48" y="22" width="24" height="18" rx="2" fill="#FAFAFA" stroke="#D9D9D9" stroke-width="1.5"/>
+                          <circle cx="60" cy="55" r="8" fill="#E8E8E8"/>
+                        </svg>
+                      </div>
+                      <div class="empty-text">暂无数据</div>
+                    </td>
+                  </tr>
+                  <tr class="data-row" data-object="金华制冷系统" data-metric="系统能效（COP）">
+                    <td class="col-object">金华制冷系统</td>
+                    <td>系统能效（COP）</td>
+                    <td>4.25</td>
+                    <td>4.25</td>
+                    <td><span class="dev-none">无变化</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row" data-object="金华制冷系统" data-metric="系统总电功率">
+                    <td class="col-object">金华制冷系统</td>
+                    <td>系统总电功率</td>
+                    <td>79.12 kW</td>
+                    <td>79.12 kW</td>
+                    <td><span class="dev-none">无变化</span></td>
+                    <td><span class="pred-bad">未达标（超过偏差值3）</span></td>
+                  </tr>
+                  <tr class="data-row" data-object="金华制冷系统" data-metric="冷冻水总管供水温度（℃）">
+                    <td class="col-object">金华制冷系统</td>
+                    <td>冷冻水总管供水温度（℃）</td>
+                    <td>12.34℃</td>
+                    <td>12.34℃</td>
+                    <td><span class="dev-none">无变化</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row" data-object="金华制冷系统" data-metric="冷冻水总管回水温度（℃）">
+                    <td class="col-object">金华制冷系统</td>
+                    <td>冷冻水总管回水温度（℃）</td>
+                    <td>19.34℃</td>
+                    <td>29.34℃</td>
+                    <td><span class="dev-up">+10.00</span></td>
+                    <td><span class="pred-bad">未达标（超出上限值25）</span></td>
+                  </tr>
+                  <tr class="data-row" data-object="1号集成冷站" data-metric="系统能效（COP）">
+                    <td class="col-object">1号集成冷站</td>
+                    <td>系统能效（COP）</td>
+                    <td>4.25</td>
+                    <td>5.23</td>
+                    <td><span class="dev-up">+0.33</span></td>
+                    <td><span class="pred-bad">未达标（超出下限值25）</span></td>
+                  </tr>
+                  <tr class="data-row" data-object="1号集成冷站" data-metric="总供冷量（KW）">
+                    <td class="col-object">1号集成冷站</td>
+                    <td>总供冷量（KW）</td>
+                    <td>1266.07 kW</td>
+                    <td>1279.12 kW</td>
+                    <td><span class="dev-down">-13.05 kW</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row" data-object="1号集成冷站" data-metric="系统总电功率（KW）">
+                    <td class="col-object">1号集成冷站</td>
+                    <td>系统总电功率（KW）</td>
+                    <td>79.12 kW</td>
+                    <td>79.12 kW</td>
+                    <td><span class="dev-none">无变化</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row" data-object="1号集成冷站-冷冻泵模块" data-metric="冷冻水流量（m³/h）">
+                    <td class="col-object">1号集成冷站<br>冷冻泵模块</td>
+                    <td>冷冻水流量（m³/h）</td>
+                    <td>123.23 m³/h</td>
+                    <td>123.23 m³/h</td>
+                    <td><span class="dev-none">无变化</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row" data-object="1号集成冷站-冷冻泵模块" data-metric="冷冻水总管供水温度（℃）">
+                    <td class="col-object">1号集成冷站<br>冷冻泵模块</td>
+                    <td>冷冻水总管供水温度（℃）</td>
+                    <td>11.45℃</td>
+                    <td>11.45℃</td>
+                    <td><span class="dev-none">无变化</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row" data-object="1号集成冷站-冷冻泵模块" data-metric="冷冻泵模块总功率（KW）">
+                    <td class="col-object">1号集成冷站<br>冷冻泵模块</td>
+                    <td>冷冻泵模块总功率（KW）</td>
+                    <td>9.45 kW</td>
+                    <td>9.45 kW</td>
+                    <td><span class="dev-none">无变化</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row" data-object="1号集成冷站-1号主机" data-metric="冷水主机功率（KW）">
+                    <td class="col-object">1号集成冷站<br>1#主机</td>
+                    <td>冷水主机功率（KW）</td>
+                    <td>79.12 kW</td>
+                    <td>79.12 kW</td>
+                    <td><span class="dev-none">无变化</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row" data-object="1号集成冷站-1号主机" data-metric="冷冻水流量（m³/h）">
+                    <td class="col-object">1号集成冷站<br>1#主机</td>
+                    <td>冷冻水流量（m³/h）</td>
+                    <td>123.23 m³/h</td>
+                    <td>123.23 m³/h</td>
+                    <td><span class="dev-none">无变化</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (function () {
+      const G = function (id) { return document.getElementById(id) }
+
+      // ── toast ──
+      const toast = G('toast')
+      let toastTimer = null
+      const showToast = function (msg) {
+        toast.textContent = msg
+        toast.classList.add('show')
+        clearTimeout(toastTimer)
+        toastTimer = setTimeout(function () { toast.classList.remove('show') }, 2200)
+      }
+
+      G('btnRevalidate').addEventListener('click', function () {
+        G('filterSelect').value = ''
+        G('metricSearch').value = ''
+        document.querySelectorAll('tr.data-row').forEach(function (r) { r.classList.remove('row-hidden') })
+        G('emptyRow').classList.add('row-hidden')
+        showToast('已重新校验（示意，列表已重置为全部明细）')
+      })
+
+      // ── 筛选 / 搜索 ──
+      const objectMatches = function (objAttr, filterVal) {
+        if (!filterVal) return true
+        if (filterVal === '金华制冷系统') return objAttr === '金华制冷系统'
+        if (filterVal === '1号集成冷站') {
+          return objAttr === '1号集成冷站' || objAttr.indexOf('1号集成冷站-') === 0
+        }
+        return true
+      }
+
+      const applyFilters = function () {
+        const filterVal = G('filterSelect').value
+        const q = (G('metricSearch').value || '').trim().toLowerCase()
+        let visible = 0
+        document.querySelectorAll('tr.data-row').forEach(function (row) {
+          const obj = row.getAttribute('data-object') || ''
+          const metric = (row.getAttribute('data-metric') || '').toLowerCase()
+          const show = objectMatches(obj, filterVal) && (!q || metric.indexOf(q) !== -1)
+          row.classList.toggle('row-hidden', !show)
+          if (show) visible += 1
+        })
+        G('emptyRow').classList.toggle('row-hidden', visible > 0)
+      }
+
+      G('filterSelect').addEventListener('change', applyFilters)
+      G('metricSearch').addEventListener('input', applyFilters)
+
+      applyFilters()
+    })()
+  </script>
+  <button class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+
+  <script>
+  function initAnnoVersionFilter() {
+    var tags = document.getElementById('annoFilterTags');
+    if (!document.body.classList.contains('annotation-mode')) return;
+    var annos = document.querySelectorAll('.anno[data-version]');
+    var versions = [];
+    annos.forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (v && versions.indexOf(v) === -1) versions.push(v);
+    });
+    versions.sort(function(a, b) {
+      var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+      var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+      for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+        if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+      }
+      return 0;
+    });
+    tags.innerHTML = '';
+    var allBtn = document.createElement('span');
+    allBtn.className = 'anno-filter-tag active';
+    allBtn.textContent = '全部';
+    allBtn.onclick = function() { filterAnno('all', versions[0]); setActive(this); };
+    tags.appendChild(allBtn);
+    versions.forEach(function(v) {
+      var btn = document.createElement('span');
+      btn.className = 'anno-filter-tag';
+      btn.textContent = v;
+      btn.onclick = function() { filterAnno(v, versions[0]); setActive(this); };
+      tags.appendChild(btn);
+    });
+    if (versions.length > 0) filterAnno('all', versions[0]);
+  }
+  function filterAnno(version, latest) {
+    document.querySelectorAll('.anno[data-version]').forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (version === 'all') {
+        a.style.display = '';
+        a.style.opacity = (v === latest) ? '1' : '0.6';
+      } else {
+        a.style.display = (v === version) ? '' : 'none';
+        a.style.opacity = '1';
+      }
+    });
+  }
+  function setActive(el) {
+    el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function(t) { t.classList.remove('active'); });
+    el.classList.add('active');
+  }
+  </script>
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="系统仿真建模"></script>
+</body>
+</html>

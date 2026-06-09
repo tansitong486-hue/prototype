@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>节能分析</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-dark: #17358A;
+      --primary-light: #DBEAFE;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --sidebar-bg: #071B2E;
+      --header-bg: #071B2E;
+      --danger: #DC2626;
+      --success: #16A34A;
+      --warning-bg: #FFFBE6;
+      --warning-border: #FFE58F;
+      --warning-text: #D46B08;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button {
+      border: none;
+      background: none;
+      font: inherit;
+    }
+
+    .layout {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .body-wrap {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .main {
+      flex: 1;
+      min-width: 0;
+      overflow-y: auto;
+      background: var(--bg-body);
+    }
+
+    .page-shell {
+      padding: 18px 24px 24px;
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    /* System Tabs */
+    .system-tabs {
+      display: flex;
+      gap: 32px;
+      border-bottom: 1px solid var(--border-light);
+      margin-bottom: 16px;
+    }
+    .system-tab {
+      padding-bottom: 12px;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all var(--transition);
+    }
+    .system-tab:hover {
+      color: var(--text-primary);
+    }
+    .system-tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    /* Toolbar */
+    .page-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    
+    .toolbar-left, .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .segment-tabs {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .segment-tab {
+      padding: 5px 16px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      background: #fff;
+      transition: all var(--transition);
+    }
+    .segment-tab:not(:last-child) {
+      border-right: 1px solid var(--border);
+    }
+    .segment-tab.active {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    .date-input {
+      height: 32px;
+      padding: 0 12px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text-primary);
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+    }
+    .date-input:focus {
+      border-color: var(--primary);
+    }
+
+    .btn {
+      height: 32px;
+      padding: 0 16px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--transition);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-default {
+      background: #fff;
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+    }
+    .btn-default:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* Alert Banner */
+    .alert-banner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: var(--warning-bg);
+      border: 1px solid var(--warning-border);
+      border-radius: 4px;
+      color: var(--warning-text);
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+    .alert-banner svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+
+    /* Layout Grids */
+    .top-row {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .top-row > div,
+    .top-row > section.proto-module {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .section-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .section-card.no-margin {
+      margin-bottom: 0;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .section-head.no-border {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Metrics */
+    .metrics-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 40px 32px;
+    }
+    .metric-item {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .metric-title {
+      font-size: 14px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .metric-value {
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+    .metric-value .unit {
+      font-size: 14px;
+      font-weight: normal;
+      margin-left: 4px;
+      color: var(--text-primary);
+    }
+
+    /* Chart Tabs */
+    .chart-tabs {
+      display: flex;
+      gap: 32px;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .chart-tab {
+      padding: 14px 0;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all var(--transition);
+    }
+    .chart-tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .chart-container {
+      width: 100%;
+    }
+    #compareChart {
+      height: 220px;
+      padding: 16px;
+    }
+    #trendChart {
+      height: 320px;
+      padding: 16px 20px;
+    }
+
+    /* Table */
+    .table-wrap {
+      overflow-x: auto;
+    }
+    .data-table {
+      width: 100%;
+      min-width: 1200px;
+      border-collapse: collapse;
+    }
+    .data-table thead th {
+      padding: 14px 20px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .data-table tbody td {
+      padding: 14px 20px;
+      font-size: 13px;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-light);
+      white-space: nowrap;
+    }
+    .data-table tbody tr:hover {
+      background: #FBFCFE;
+    }
+
+    .text-success { color: var(--success); }
+    .text-danger { color: var(--danger); }
+    .text-hint { color: var(--text-hint); }
+
+    .action-link {
+      font-size: 13px;
+      color: var(--primary);
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .action-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Modal / Dialog */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--transition);
+    }
+    .modal-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-content {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      width: 900px;
+      max-width: 95vw;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      transform: translateY(20px) scale(0.98);
+      transition: all var(--transition);
+    }
+    .modal-overlay.show .modal-content {
+      transform: translateY(0) scale(1);
+    }
+    .modal-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .modal-close {
+      cursor: pointer;
+      color: var(--text-hint);
+      transition: color var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-close:hover {
+      color: var(--text-primary);
+    }
+    .modal-body {
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    /* Switch Component */
+    .switch-wrap {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .switch-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-top: 2px;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 22px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    .switch input:checked + .slider {
+      background-color: #1890FF;
+    }
+    .switch input:checked + .slider:before {
+      transform: translateX(22px);
+    }
+    .switch-text {
+      position: absolute;
+      color: white;
+      font-size: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      left: 8px;
+      opacity: 0;
+      transition: .4s;
+    }
+    .switch input:checked ~ .switch-text {
+      opacity: 1;
+    }
+    .switch-desc {
+      font-size: 12px;
+      color: #FF4D4F;
+      margin-top: 2px;
+    }
+    .switch-desc span {
+      color: var(--text-hint);
+      display: block;
+      margin-top: 4px;
+    }
+
+    .form-group-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+    }
+
+    /* Modal Table */
+    .edit-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+    }
+    .edit-table th {
+      background: #FAFAFA;
+      padding: 12px 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-light);
+    }
+    .edit-table td {
+      padding: 12px 8px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .edit-table th .required {
+      color: #FF4D4F;
+      margin-right: 4px;
+    }
+    .edit-input {
+      width: 100%;
+      height: 32px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 13px;
+      outline: none;
+      transition: all 0.3s;
+      text-align: center;
+    }
+    .edit-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.12);
+    }
+    .edit-input::placeholder {
+      color: #BFBFBF;
+    }
+    
+    .btn-primary {
+      background: #1890FF;
+      color: #fff;
+      border: 1px solid #1890FF;
+    }
+    .btn-primary:hover {
+      background: #40A9FF;
+      border-color: #40A9FF;
+      color: #fff;
+    }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+        <div class="page-shell">
+          <div class="anno anno-version-header" data-version="v1.0">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v1.0</p>
+              <p><b>更新日期：</b>2026-03-21</p>
+              <p><b>变更概述：</b>v1.0 首版：为「节能分析」AI 单页原型补充标准化批注；图表与表格规则、规则配置弹窗字段对齐古典 Axure「节能分析-月」说明块。</p>
+              <p><b>本页说明：</b>在选定暖通系统与时间粒度下，展示节能指标卡片、设备能效对比、节能趋势/能效趋势切换图与每日明细表；支持「规则配置」维护各月对比基准，支持导出每日明细。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-req" data-version="v1.0">
+            <span class="anno-tag">需求说明</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source">引用自古典原型</span>
+            <div class="anno-body">
+              <p><b>页面级验收要点：</b>系统 Tab 与年月粒度、月份选择与当前页数据范围一致；三张图与古典规则一致（对比图为柱体双系列、趋势图 X 轴按日、节能/能效两套 Y 轴与线型规则）；每日明细列含义与着色规则可核对；规则配置弹窗必填项校验与保存后回写主界面逻辑可追溯。</p>
+            </div>
+          </div>
+
+          <section class="proto-module" data-module="system-toolbar">
+            <div class="anno anno-ux" data-version="v1.0">
+              <span class="anno-tag">交互说明</span>
+              <span class="anno-version">v1.0</span>
+              <span class="anno-source">引用自古典原型</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>系统切换 + 工具栏</p>
+                <ul>
+                  <li><b>系统 Tab：</b>切换当前分析的暖通空调系统（如 G11 / G12）；切换后下方指标、图表、明细均应对应该系统数据（原型为示意）。</li>
+                  <li><b>年 / 月：</b>切换统计粒度；与「月」配套使用月份选择器（<code>type="month"</code>）。</li>
+                  <li><b>规则配置：</b>打开「规则配置」弹窗，维护各月对比基准与目标值。</li>
+                </ul>
+              </div>
+            </div>
+            <div class="anno anno-data" data-version="v1.0">
+              <span class="anno-tag">数据逻辑</span>
+              <span class="anno-version">v1.0</span>
+              <span class="anno-source">基于文档推断</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>系统切换 + 工具栏</p>
+                <ul>
+                  <li><b>数据范围：</b>当前选中的系统 + 当前粒度下的时间窗（如某月）决定页内所有 KPI、图表与表格数据源。</li>
+                  <li><b>刷新：</b>切换系统、粒度或月份后，应重新拉取或重算页内数据（原型未接接口，仅交互占位）。</li>
+                </ul>
+              </div>
+            </div>
+          <div class="system-tabs">
+            <div class="system-tab active">G11暖通空调系统</div>
+            <div class="system-tab">G12暖通空调系统</div>
+          </div>
+
+          <div class="page-toolbar">
+            <div class="toolbar-left">
+              <div class="segment-tabs">
+                <div class="segment-tab">年</div>
+                <div class="segment-tab active">月</div>
+              </div>
+              <input type="month" class="date-input" value="2024-01">
+            </div>
+            <div class="toolbar-right">
+              <button class="btn btn-default" id="openConfigBtn">规则配置</button>
+            </div>
+          </div>
+          </section>
+
+          <div class="top-row">
+            <section class="proto-module" data-module="saving-metrics">
+            <div class="anno anno-field" data-version="v1.0">
+              <span class="anno-tag">字段说明</span>
+              <span class="anno-version">v1.0</span>
+              <span class="anno-source">引用自古典原型</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>节能指标</p>
+                <ul>
+                  <li><b>节能率：</b>当前统计周期内综合节能率（%）。</li>
+                  <li><b>节省电量 (kWh)：</b>周期内累计节电量；展示单位可与产品约定（如「万」为数量级缩写）。</li>
+                  <li><b>基准/实际 CLF：</b>空调系统冷负荷因子（或同类 KPI）的基准值与实际值对比展示。</li>
+                </ul>
+              </div>
+            </div>
+            <div class="anno anno-data" data-version="v1.0">
+              <span class="anno-tag">数据逻辑</span>
+              <span class="anno-version">v1.0</span>
+              <span class="anno-source">基于文档推断</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>节能指标</p>
+                <ul>
+                  <li><b>汇总口径：</b>与下方趋势图、每日明细同一套计算口径，随系统与时间窗变化。</li>
+                </ul>
+              </div>
+            </div>
+            <!-- 节能指标 -->
+            <div class="section-card no-margin">
+              <div class="section-head">
+                <div class="section-title">节能指标</div>
+              </div>
+              <div class="metrics-container">
+                <div class="metric-item">
+                  <div class="metric-title">节能率</div>
+                  <div class="metric-value">14.2<span class="unit">%</span></div>
+                </div>
+                <div class="metric-item">
+                  <div class="metric-title">节省电量 (kWh)</div>
+                  <div class="metric-value">98.23<span class="unit">万</span></div>
+                </div>
+                <div class="metric-item">
+                  <div class="metric-title">基准/实际CLF</div>
+                  <div class="metric-value">0.365/0.189</div>
+                </div>
+              </div>
+            </div>
+            </section>
+
+            <section class="proto-module" data-module="device-compare">
+            <div class="anno anno-data" data-version="v1.0">
+              <span class="anno-tag">数据逻辑</span>
+              <span class="anno-version">v1.0</span>
+              <span class="anno-source">引用自古典原型</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>设备能效对比</p>
+                <ul>
+                  <li><b>图表类型：</b>柱体对比图，双系列「基准能效」「实际能效」。</li>
+                  <li><b>对比对象：</b>与界面类目一致（如空调系统、主机、冷冻系、冷却泵、冷却塔、末端空调等，以产品定义为准）。</li>
+                  <li><b>Y 轴：</b>能效（CLF）；起始点支持动态缩放以突出对比（古典说明）。</li>
+                </ul>
+              </div>
+            </div>
+            <!-- 设备能效对比 -->
+            <div class="section-card no-margin">
+              <div class="section-head">
+                <div class="section-title">设备能效对比</div>
+              </div>
+              <div class="section-body">
+                <div id="compareChart" class="chart-container"></div>
+              </div>
+            </div>
+            </section>
+          </div>
+
+          <!-- 趋势图表 -->
+          <section class="proto-module" data-module="trend-chart">
+            <div class="anno anno-ux" data-version="v1.0">
+              <span class="anno-tag">交互说明</span>
+              <span class="anno-version">v1.0</span>
+              <span class="anno-source">引用自古典原型</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>趋势图 Tab</p>
+                <ul>
+                  <li><b>节能趋势 / 能效趋势：</b>切换同一图表容器的两套 ECharts 配置；切换时保留当前时间范围与系统上下文。</li>
+                </ul>
+              </div>
+            </div>
+            <div class="anno anno-data" data-version="v1.0">
+              <span class="anno-tag">数据逻辑</span>
+              <span class="anno-version">v1.0</span>
+              <span class="anno-source">引用自古典原型</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>趋势图</p>
+                <ul>
+                  <li><b>节能趋势：</b>折线展示节能率，Y 轴起始点动态变化；柱体展示节电量，单位 kWh，Y 轴从 0 起；X 轴按天展示（古典「节能趋势图规则」，柱体语义以节电量为准）。</li>
+                  <li><b>能效趋势：</b>折线分别展示基准、实际、目标空调系统 CLF，数值保留 3 位小数；基准与目标为虚线，实际为实线；Y 轴起始点动态变化；X 轴按天展示（古典「能效趋势图规则」）。</li>
+                </ul>
+              </div>
+            </div>
+          <div class="section-card">
+            <div class="section-head no-border">
+              <div class="chart-tabs">
+                <div class="chart-tab active" data-type="saving">节能趋势</div>
+                <div class="chart-tab" data-type="efficiency">能效趋势</div>
+              </div>
+            </div>
+            <div class="section-body" style="padding: 0;">
+              <div id="trendChart" class="chart-container"></div>
+            </div>
+          </div>
+          </section>
+
+          <!-- 每日明细 -->
+          <section class="proto-module" data-module="daily-detail">
+            <div class="anno anno-field" data-version="v1.0">
+              <span class="anno-tag">字段说明</span>
+              <span class="anno-version">v1.0</span>
+              <span class="anno-source">引用自古典原型</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>每日明细表</p>
+                <table class="anno-table">
+                  <thead><tr><th>列</th><th>说明</th></tr></thead>
+                  <tbody>
+                    <tr><td>日期</td><td>自然日。</td></tr>
+                    <tr><td>实际/目标 节能率(%)</td><td>当日实际节能率与目标节能率对比。</td></tr>
+                    <tr><td>节省电量(kWh)</td><td>当日节电量。</td></tr>
+                    <tr><td>基准/实际/目标 空调系统CLF</td><td>三项并列展示，便于与目标线对照。</td></tr>
+                    <tr><td>基准/实际 空调系统电量(kWh)</td><td>基准与实际用电量对比。</td></tr>
+                    <tr><td>实际 IT电量(kWh)</td><td>当日 IT 侧用电量（用于上下文或分摊口径时以产品定义为准）。</td></tr>
+                    <tr><td>基准/实际 末端空调CLF</td><td>末端空调 CLF 基准与实际值。</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="anno anno-ux" data-version="v1.0">
+              <span class="anno-tag">交互说明</span>
+              <span class="anno-version">v1.0</span>
+              <span class="anno-source">AI 生成</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>每日明细</p>
+                <ul>
+                  <li><b>导出：</b>导出当前筛选条件下的每日明细（格式与字段以产品约定为准；原型为 <code>alert</code> 占位）。</li>
+                </ul>
+              </div>
+            </div>
+            <div class="anno anno-state" data-version="v1.0">
+              <span class="anno-tag">状态说明</span>
+              <span class="anno-version">v1.0</span>
+              <span class="anno-source">基于文档推断</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>每日明细表内数值着色</p>
+                <ul>
+                  <li><b>优于目标/正常：</b>可用绿色强调（如节能率、CLF 优于目标）。</li>
+                  <li><b>劣于目标/告警：</b>可用红色强调，便于快速扫视异常日。</li>
+                </ul>
+              </div>
+            </div>
+          <div class="section-card">
+            <div class="section-head">
+              <div class="section-title">每日明细</div>
+              <a class="action-link" id="exportBtn">导出</a>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>日期</th>
+                    <th>实际/目标 节能率(%)</th>
+                    <th>节省电量(kWh)</th>
+                    <th>基准/实际/目标 空调系统CLF</th>
+                    <th>基准/实际 空调系统电量(kWh)</th>
+                    <th>实际 IT电量(kWh)</th>
+                    <th>基准/实际 末端空调CLF</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>2024年01月01日</td>
+                    <td><span class="text-success">14.23</span><span class="text-hint">/10</span></td>
+                    <td>2312</td>
+                    <td>1.3/<span class="text-danger">1.23</span>/1.2</td>
+                    <td>2312/1878</td>
+                    <td>1878.14</td>
+                    <td>1.3/<span class="text-danger">1.23</span></td>
+                  </tr>
+                  <tr>
+                    <td>2024年01月02日</td>
+                    <td><span class="text-danger">8.5</span><span class="text-hint">/10</span></td>
+                    <td>1500</td>
+                    <td>1.3/<span class="text-danger">1.28</span>/1.2</td>
+                    <td>2400/2196</td>
+                    <td>1850.00</td>
+                    <td>1.3/<span class="text-danger">1.25</span></td>
+                  </tr>
+                  <tr>
+                    <td>2024年01月03日</td>
+                    <td><span class="text-success">12.1</span><span class="text-hint">/10</span></td>
+                    <td>1800</td>
+                    <td>1.3/<span class="text-success">1.18</span>/1.2</td>
+                    <td>2350/2065</td>
+                    <td>1860.50</td>
+                    <td>1.3/<span class="text-success">1.19</span></td>
+                  </tr>
+                  <tr>
+                    <td>2024年01月04日</td>
+                    <td><span class="text-success">15.4</span><span class="text-hint">/10</span></td>
+                    <td>2500</td>
+                    <td>1.3/<span class="text-success">1.15</span>/1.2</td>
+                    <td>2300/1945</td>
+                    <td>1880.20</td>
+                    <td>1.3/<span class="text-success">1.15</span></td>
+                  </tr>
+                  <tr>
+                    <td>2024年01月05日</td>
+                    <td><span class="text-success">18.2</span><span class="text-hint">/10</span></td>
+                    <td>2800</td>
+                    <td>1.3/<span class="text-success">1.10</span>/1.2</td>
+                    <td>2280/1865</td>
+                    <td>1890.10</td>
+                    <td>1.3/<span class="text-success">1.12</span></td>
+                  </tr>
+                  <tr>
+                    <td>2024年01月06日</td>
+                    <td><span class="text-success">21.5</span><span class="text-hint">/10</span></td>
+                    <td>3100</td>
+                    <td>1.3/<span class="text-success">1.05</span>/1.2</td>
+                    <td>2250/1766</td>
+                    <td>1875.50</td>
+                    <td>1.3/<span class="text-success">1.08</span></td>
+                  </tr>
+                  <tr>
+                    <td>2024年01月07日</td>
+                    <td><span class="text-success">25.0</span><span class="text-hint">/10</span></td>
+                    <td>3500</td>
+                    <td>1.3/<span class="text-success">1.00</span>/1.2</td>
+                    <td>2200/1650</td>
+                    <td>1865.80</td>
+                    <td>1.3/<span class="text-success">1.05</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          </section>
+
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- 规则配置弹窗 -->
+  <div class="modal-overlay" id="configModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">规则配置</div>
+        <div class="modal-close" id="closeModalBtn">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="anno anno-field" data-version="v1.0">
+          <span class="anno-tag">字段说明</span>
+          <span class="anno-version">v1.0</span>
+          <span class="anno-source">引用自古典原型</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>规则配置弹窗；入口：工具栏「规则配置」</p>
+            <ul>
+              <li><b>月份：</b>1–12 月逐行配置。</li>
+              <li><b>节能率目标值(%)：</b>必填；数字或产品约定格式。</li>
+              <li><b>空调系统 CLF 目标值 / 基准值：</b>必填。</li>
+              <li><b>末端空调 CLF 基准值、冷水主机/冷冻泵/冷却泵 CLF 基准值：</b>选填或按产品规则；用于对比与报表口径。</li>
+              <li><b>详细列定义：</b>古典原型曾引用在线表格维护字段字典，落地时以产品最新配置表为准。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="anno anno-ux" data-version="v1.0">
+          <span class="anno-tag">交互说明</span>
+          <span class="anno-version">v1.0</span>
+          <span class="anno-source">AI 生成</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>规则配置弹窗</p>
+            <ul>
+              <li><b>取消 / 关闭：</b>关闭弹窗，未保存修改丢弃或按产品规则提示。</li>
+              <li><b>保存：</b>校验通过后持久化；成功后关闭并刷新主界面相关指标/图表（原型为 <code>alert</code> 占位）。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="anno anno-edge" data-version="v1.0">
+          <span class="anno-tag">边界与异常</span>
+          <span class="anno-version">v1.0</span>
+          <span class="anno-source">基于文档推断</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>规则配置弹窗</p>
+            <ul>
+              <li><b>必填为空：</b>保存时高亮或 Toast 提示，不提交。</li>
+              <li><b>数值越界：</b>按产品规则限制 CLF、百分比取值范围并提示。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="form-group-title">每月对比基准</div>
+        <table class="edit-table">
+          <thead>
+            <tr>
+              <th width="80">月份</th>
+              <th><span class="required">*</span>节能率<br>目标值 (%)</th>
+              <th><span class="required">*</span>空调系统CLF<br>目标值</th>
+              <th><span class="required">*</span>空调系统CLF<br>基准值</th>
+              <th>末端空调CLF<br>基准值</th>
+              <th>冷水主机CLF<br>基准值</th>
+              <th>冷冻泵CLF<br>基准值</th>
+              <th>冷却泵CLF<br>基准值</th>
+            </tr>
+          </thead>
+          <tbody id="configTableBody">
+            <!-- JS 渲染 1-12月 -->
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-default" id="cancelModalBtn">取消</button>
+        <button class="btn btn-primary" id="saveModalBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="节能分析"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. 初始化 ECharts
+      const trendChart = echarts.init(document.getElementById('trendChart'));
+      const compareChart = echarts.init(document.getElementById('compareChart'));
+
+      window.addEventListener('resize', () => {
+        trendChart.resize();
+        compareChart.resize();
+      });
+
+      // 2. 设备能效对比图数据
+      const compareOption = {
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+        legend: { 
+          data: ['基准能效', '实际能效'], 
+          bottom: 0,
+          icon: 'circle',
+          itemWidth: 8,
+          textStyle: { color: '#475569' }
+        },
+        grid: { left: '3%', right: '4%', bottom: '15%', top: '15%', containLabel: true },
+        xAxis: [
+          { 
+            type: 'category', 
+            data: ['空调系统', '主机', '冷冻系', '冷却泵', '冷却塔', '末端空调'], 
+            axisTick: { show: false },
+            axisLine: { lineStyle: { color: '#EAF0F6' } },
+            axisLabel: { color: '#475569' }
+          }
+        ],
+        yAxis: [
+          { 
+            type: 'value', 
+            name: '能效 (CLF)', 
+            nameTextStyle: { color: '#94A3B8', padding: [0, 0, 0, 20] },
+            splitLine: { lineStyle: { type: 'solid', color: '#EAF0F6' } },
+            axisLabel: { color: '#94A3B8' }
+          }
+        ],
+        series: [
+          {
+            name: '基准能效',
+            type: 'bar',
+            barGap: '10%',
+            barWidth: 16,
+            itemStyle: { color: '#40A9FF' }, // 浅蓝色
+            data: [65, 65, 52, 53, 48, 65]
+          },
+          {
+            name: '实际能效',
+            type: 'bar',
+            barWidth: 16,
+            itemStyle: { color: '#73D13D' }, // 浅绿色
+            data: [60, 52, 47, 54, 50, 60]
+          }
+        ]
+      };
+
+      // 3. 节能趋势图数据 (双 Y 轴: 柱状图-节能量, 折线图-节能率)
+      const trendXAxis = ['01-01', '01-02', '01-03', '01-04', '01-05', '01-06', '01-07'];
+      const savingOption = {
+        tooltip: { 
+          trigger: 'axis',
+          axisPointer: { type: 'cross' }
+        },
+        legend: { data: ['节能量', '节能率'], bottom: 0 },
+        grid: { left: '3%', right: '3%', bottom: '8%', top: '10%', containLabel: true },
+        xAxis: [
+          { 
+            type: 'category', 
+            data: trendXAxis, 
+            axisTick: { show: false },
+            axisLine: { lineStyle: { color: '#EAF0F6' } },
+            axisLabel: { color: '#475569', margin: 16 }
+          }
+        ],
+        yAxis: [
+          { 
+            type: 'value', 
+            name: '节能量(kWh)',
+            nameTextStyle: { color: '#94A3B8' },
+            min: 0,
+            splitLine: { lineStyle: { type: 'solid', color: '#EAF0F6' } },
+            axisLabel: { color: '#94A3B8' }
+          },
+          {
+            type: 'value',
+            name: '节能率(%)',
+            nameTextStyle: { color: '#94A3B8' },
+            scale: true, // 动态起始点
+            splitLine: { show: false },
+            axisLabel: { color: '#94A3B8' }
+          }
+        ],
+        series: [
+          {
+            name: '节能量',
+            type: 'bar',
+            yAxisIndex: 0,
+            barWidth: 40,
+            itemStyle: { color: '#40A9FF' },
+            data: [2300, 1500, 1800, 2500, 2800, 3100, 3500]
+          },
+          {
+            name: '节能率',
+            type: 'line',
+            yAxisIndex: 1,
+            smooth: false,
+            symbol: 'circle',
+            symbolSize: 6,
+            itemStyle: { color: '#1E40AF' },
+            lineStyle: { color: '#1E40AF', width: 2 },
+            data: [14.23, 8.5, 12.1, 15.4, 18.2, 21.5, 25.0]
+          }
+        ]
+      };
+
+      // 4. 能效趋势图数据
+      const efficiencyOption = {
+        tooltip: { 
+          trigger: 'axis',
+          valueFormatter: (value) => value ? value.toFixed(3) : '-'
+        },
+        legend: { data: ['基准空调系统CLF', '实际空调系统CLF', '目标空调系统CLF'], bottom: 0 },
+        grid: { left: '3%', right: '4%', bottom: '8%', top: '10%', containLabel: true },
+        xAxis: [
+          { 
+            type: 'category', 
+            data: trendXAxis,
+            axisTick: { show: false },
+            axisLine: { lineStyle: { color: '#EAF0F6' } },
+            axisLabel: { color: '#475569', margin: 16 }
+          }
+        ],
+        yAxis: { 
+          type: 'value',
+          name: 'CLF',
+          nameTextStyle: { color: '#94A3B8' },
+          scale: true, // 动态起始点
+          splitLine: { lineStyle: { type: 'solid', color: '#EAF0F6' } },
+          axisLabel: { color: '#94A3B8' }
+        },
+        series: [
+          {
+            name: '基准空调系统CLF',
+            type: 'line',
+            symbol: 'none',
+            itemStyle: { color: '#94A3B8' },
+            lineStyle: { type: 'dashed', width: 2 },
+            data: [1.300, 1.300, 1.300, 1.300, 1.300, 1.300, 1.300]
+          },
+          {
+            name: '实际空调系统CLF',
+            type: 'line',
+            symbol: 'circle',
+            symbolSize: 6,
+            itemStyle: { color: '#16A34A' }, // 绿色实线
+            lineStyle: { type: 'solid', width: 2 },
+            data: [1.230, 1.280, 1.180, 1.150, 1.100, 1.050, 1.000]
+          },
+          {
+            name: '目标空调系统CLF',
+            type: 'line',
+            symbol: 'none',
+            itemStyle: { color: '#F59E0B' }, // 橙色虚线
+            lineStyle: { type: 'dashed', width: 2 },
+            data: [1.200, 1.200, 1.200, 1.200, 1.200, 1.200, 1.200]
+          }
+        ]
+      };
+
+      // 渲染图表
+      compareChart.setOption(compareOption);
+      trendChart.setOption(savingOption);
+
+      // 事件绑定
+      document.querySelectorAll('.system-tab').forEach(tab => {
+        tab.addEventListener('click', (e) => {
+          document.querySelectorAll('.system-tab').forEach(t => t.classList.remove('active'));
+          e.target.classList.add('active');
+        });
+      });
+
+      document.querySelectorAll('.segment-tab').forEach(tab => {
+        tab.addEventListener('click', (e) => {
+          document.querySelectorAll('.segment-tab').forEach(t => t.classList.remove('active'));
+          e.target.classList.add('active');
+        });
+      });
+
+      document.querySelectorAll('.chart-tab').forEach(tab => {
+        tab.addEventListener('click', (e) => {
+          document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+          e.target.classList.add('active');
+          const type = e.target.getAttribute('data-type');
+          trendChart.setOption(type === 'saving' ? savingOption : efficiencyOption, true);
+        });
+      });
+
+      // 导出按钮事件
+      document.getElementById('exportBtn').addEventListener('click', () => {
+        alert('开始导出每日明细数据...');
+      });
+
+      // 规则配置弹窗逻辑
+      const configModal = document.getElementById('configModal');
+      const openModalBtn = document.getElementById('openConfigBtn');
+      const closeModalBtn = document.getElementById('closeModalBtn');
+      const cancelModalBtn = document.getElementById('cancelModalBtn');
+      const saveModalBtn = document.getElementById('saveModalBtn');
+      const configTableBody = document.getElementById('configTableBody');
+
+      // 渲染1-12月表格行
+      let tableHtml = '';
+      for (let i = 1; i <= 12; i++) {
+        tableHtml += `
+          <tr>
+            <td>${i}月</td>
+            <td><input type="text" class="edit-input" placeholder="请输入"></td>
+            <td><input type="text" class="edit-input" placeholder="请输入"></td>
+            <td><input type="text" class="edit-input" placeholder="请输入"></td>
+            <td><input type="text" class="edit-input" placeholder="请输入"></td>
+            <td><input type="text" class="edit-input" placeholder="请输入"></td>
+            <td><input type="text" class="edit-input" placeholder="请输入"></td>
+            <td><input type="text" class="edit-input" placeholder="请输入"></td>
+          </tr>
+        `;
+      }
+      configTableBody.innerHTML = tableHtml;
+
+      const openModal = () => configModal.classList.add('show');
+      const closeModal = () => configModal.classList.remove('show');
+
+      openModalBtn.addEventListener('click', openModal);
+      closeModalBtn.addEventListener('click', closeModal);
+      cancelModalBtn.addEventListener('click', closeModal);
+      saveModalBtn.addEventListener('click', () => {
+        alert('保存成功！');
+        closeModal();
+      });
+
+      // 点击外部关闭弹窗
+      configModal.addEventListener('click', (e) => {
+        if (e.target === configModal) closeModal();
+      });
+    });
+  </script>
+  <button type="button" class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+  <div class="anno-filter-bar" id="annoFilterBar">
+    <span class="anno-filter-label">批注版本：</span>
+    <div class="anno-filter-tags" id="annoFilterTags"></div>
+  </div>
+  <script>
+    function initAnnoVersionFilter() {
+      var bar = document.getElementById('annoFilterBar');
+      var tags = document.getElementById('annoFilterTags');
+      if (!document.body.classList.contains('annotation-mode')) return;
+      var annos = document.querySelectorAll('.anno[data-version]');
+      var versions = [];
+      annos.forEach(function (a) {
+        var v = a.getAttribute('data-version');
+        if (v && versions.indexOf(v) === -1) versions.push(v);
+      });
+      versions.sort(function (a, b) {
+        var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+        var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+        for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+          if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+        }
+        return 0;
+      });
+      tags.innerHTML = '';
+      var allBtn = document.createElement('span');
+      allBtn.className = 'anno-filter-tag';
+      allBtn.textContent = '全部';
+      allBtn.onclick = function () { filterAnno('all', versions[0]); setActive(this); };
+      tags.appendChild(allBtn);
+      versions.forEach(function (v, i) {
+        var btn = document.createElement('span');
+        btn.className = 'anno-filter-tag' + (i === 0 ? ' active' : '');
+        btn.textContent = v;
+        btn.onclick = function () { filterAnno(v, versions[0]); setActive(this); };
+        tags.appendChild(btn);
+      });
+      if (versions.length > 0) filterAnno(versions[0], versions[0]);
+    }
+    function filterAnno(version, latest) {
+      document.querySelectorAll('.anno[data-version]').forEach(function (a) {
+        var v = a.getAttribute('data-version');
+        if (version === 'all') {
+          a.style.display = '';
+          a.style.opacity = (v === latest) ? '1' : '0.6';
+        } else {
+          a.style.display = (v === version) ? '' : 'none';
+          a.style.opacity = '1';
+        }
+      });
+    }
+    function setActive(el) {
+      el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function (t) { t.classList.remove('active'); });
+      el.classList.add('active');
+    }
+  </script>
+</body>
+</html>

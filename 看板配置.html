@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>看板配置</title>
+  <style>
+    /* 与「总览看板.html」对齐的设计令牌与组件观感 */
+    :root {
+      --primary: #00C853;
+      --primary-dark: #00A846;
+      --primary-tint: #E8F8EE;
+      --text-primary: #262626;
+      --text-secondary: #595959;
+      --text-hint: #8C8C8C;
+      --border: #E8E8E8;
+      --border-light: #F0F0F0;
+      --bg-body: #F0F2F5;
+      --bg-card: #FFFFFF;
+      --radius: 8px;
+      --radius-lg: 14px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+      --shadow-card: 0 10px 30px rgba(15, 23, 42, 0.06), 0 2px 10px rgba(15, 23, 42, 0.04);
+      --transition: 0.2s ease;
+      --tab-active: #1890FF;
+      --tab-active-dark: #096DD9;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background:
+        radial-gradient(circle at top left, rgba(0, 200, 83, 0.06), transparent 26%),
+        linear-gradient(180deg, #F7FAF8 0%, var(--bg-body) 18%, var(--bg-body) 100%);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, a.btn-like { font: inherit; cursor: pointer; }
+
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: transparent;
+    }
+
+    .config-page {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      padding: 0 18px 20px;
+      max-width: 1520px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .config-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 16px 4px 14px;
+      flex-shrink: 0;
+    }
+
+    .config-topbar h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .config-topbar h1::before {
+      content: "";
+      width: 4px;
+      height: 18px;
+      border-radius: 2px;
+      background: var(--primary);
+      flex-shrink: 0;
+    }
+
+    .config-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 32px;
+      padding: 0 14px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: #fff;
+      border: 1px solid var(--border);
+      text-decoration: none;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+
+    .btn-ghost:hover {
+      color: var(--primary-dark);
+      border-color: rgba(0, 200, 83, 0.45);
+      background: var(--primary-tint);
+    }
+
+    .btn-save {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 32px;
+      padding: 0 18px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
+      border: none;
+      box-shadow: 0 4px 14px rgba(0, 200, 83, 0.2);
+      transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
+    }
+
+    .btn-save:hover {
+      background: var(--primary-dark);
+      box-shadow: 0 6px 18px rgba(0, 200, 83, 0.24);
+    }
+
+    .btn-ghost:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgba(0, 200, 83, 0.35);
+    }
+
+    .btn-save:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--primary);
+    }
+
+    .config-workspace {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .config-side {
+      width: 268px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 0;
+    }
+
+    @media (max-width: 960px) {
+      .config-workspace { flex-direction: column; }
+      .config-side { width: 100%; max-height: 280px; }
+    }
+
+    .side-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(232, 238, 243, 0.95);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .side-card--tree { flex: 1; }
+
+    .side-card-h {
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border-light);
+      color: var(--text-primary);
+    }
+
+    .tree-scroll {
+      padding: 8px 10px 12px;
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .tree-node {
+      padding: 6px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      color: var(--text-secondary);
+    }
+
+    .tree-node:hover { background: #F5F5F5; }
+
+    .tree-node.active {
+      color: var(--primary-dark);
+      font-weight: 600;
+      background: var(--primary-tint);
+    }
+
+    .tree-children {
+      padding-left: 18px;
+      margin-top: 2px;
+    }
+
+    .widget-list {
+      padding: 8px 12px 12px;
+      overflow-y: auto;
+      max-height: 280px;
+    }
+
+    .widget-check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 6px;
+      font-size: 13px;
+      color: var(--text-primary);
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .widget-check:hover { background: #FAFAFA; }
+
+    .widget-check input {
+      width: 14px;
+      height: 14px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .config-canvas {
+      flex: 1;
+      min-width: 0;
+      background: var(--bg-card);
+      border: 1px solid rgba(232, 238, 243, 0.95);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .canvas-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--border-light);
+      flex-shrink: 0;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.86) 0%, rgba(248, 251, 249, 0.92) 100%);
+    }
+
+    .canvas-tabs {
+      display: flex;
+      gap: 0;
+      align-items: stretch;
+    }
+
+    .canvas-tab {
+      padding: 12px 18px 13px;
+      font-size: 14px;
+      color: var(--text-primary);
+      border: none;
+      background: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      cursor: pointer;
+      transition: color var(--transition), border-color var(--transition);
+    }
+
+    .canvas-tab:hover { color: var(--tab-active); }
+
+    .canvas-tab.active {
+      color: var(--tab-active);
+      font-weight: 600;
+      border-bottom-color: var(--tab-active);
+    }
+
+    .canvas-tab:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+      border-radius: 4px;
+    }
+
+    .canvas-scroll {
+      flex: 1;
+      overflow: auto;
+      padding: 16px;
+    }
+
+    .canvas-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 12px;
+      align-content: start;
+    }
+
+    .cw-8 { grid-column: span 8; }
+    .cw-4 { grid-column: span 4; }
+    .cw-6 { grid-column: span 6; }
+
+    @media (max-width: 1200px) {
+      .cw-8, .cw-4, .cw-6 { grid-column: 1 / -1; }
+    }
+
+    /* 画布内图元卡片：对齐总览看板 dash-card + card-head */
+    .widget-card {
+      position: relative;
+      background: var(--bg-card);
+      border: 1px solid rgba(232, 238, 243, 0.95);
+      border-radius: var(--radius-lg);
+      padding: 0;
+      min-height: 160px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-card);
+      transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+    }
+
+    .widget-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08), 0 4px 12px rgba(15, 23, 42, 0.05);
+      border-color: rgba(214, 225, 233, 0.96);
+    }
+
+    .widget-card.selected {
+      border-color: rgba(0, 200, 83, 0.55);
+      box-shadow: 0 0 0 2px rgba(0, 200, 83, 0.18), var(--shadow-card);
+    }
+
+    .widget-card.hidden-widget { display: none; }
+
+    .widget-card .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px 12px;
+      padding-right: 42px;
+      border-bottom: 1px solid var(--border-light);
+      background: linear-gradient(180deg, #FFFFFF 0%, #FBFCFD 100%);
+    }
+
+    .widget-card .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .widget-card .card-title-dot {
+      width: 4px;
+      height: 15px;
+      border-radius: 2px;
+      background: var(--primary);
+      flex-shrink: 0;
+    }
+
+    .widget-card .card-tag {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 500;
+      background: #F7FAFC;
+      color: #7B8794;
+      border: 1px solid #E9EEF4;
+    }
+
+    .widget-card .grade-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 9px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    .widget-card .grade-badge.lv2 { background: #E6F7FF; color: #1890FF; }
+
+    .widget-card-body {
+      flex: 1;
+      padding: 14px 16px 16px;
+    }
+
+    .widget-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 2;
+      width: 26px;
+      height: 26px;
+      border: none;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--text-hint);
+      font-size: 18px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: 1px solid var(--border-light);
+      transition: background var(--transition), color var(--transition), border-color var(--transition);
+    }
+
+    .widget-close:hover {
+      background: #FFF1F0;
+      border-color: #FFCCC7;
+      color: #CF1322;
+    }
+
+    .placeholder-metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    @media (max-width: 700px) {
+      .placeholder-metrics { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .ph-metric {
+      text-align: left;
+      padding: 14px 14px 16px;
+      background: linear-gradient(180deg, #FFFFFF 0%, #FAFCFF 100%);
+      border-radius: 12px;
+      border: 1px solid #EDF2F7;
+      transition: box-shadow var(--transition), border-color var(--transition);
+    }
+
+    .ph-metric:hover {
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+      border-color: #DFE8F0;
+    }
+
+    .ph-circle {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      margin: 0 0 8px;
+      background: linear-gradient(135deg, #EAF4FF, #BAD7FF);
+    }
+
+    .ph-val { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+    .ph-sub { font-size: 11px; font-weight: 600; color: var(--text-hint); margin-top: 4px; }
+
+    .cfg-chart-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 200px;
+      padding: 12px 10px;
+      background: linear-gradient(180deg, #FCFDFE 0%, #F8FBFD 100%);
+      border: 1px solid #EEF3F7;
+      border-radius: 12px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78);
+    }
+
+    .cfg-chart-inner--hint {
+      font-size: 12px;
+      color: var(--text-hint);
+      text-align: center;
+      line-height: 1.5;
+      padding: 8px;
+    }
+
+    .ph-gauge-mini {
+      width: 180px;
+      max-width: 100%;
+    }
+
+    .ph-gauge-mini svg { display: block; width: 100%; height: auto; }
+
+    .ph-donut {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      width: 100%;
+    }
+
+    .ph-donut svg { width: 120px; height: 120px; }
+
+    .ph-trend-mini {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .ph-trend-pill {
+      display: inline-flex;
+      width: fit-content;
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    }
+
+    .ph-trend-bars {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 5px;
+      height: 76px;
+      padding: 0 4px;
+    }
+
+    .ph-trend-bars span {
+      flex: 1;
+      min-width: 6px;
+      max-width: 22px;
+      border-radius: 3px 3px 0 0;
+      background: linear-gradient(180deg, #1890FF 0%, #13C2C2 100%);
+      opacity: 0.9;
+    }
+
+    .toast {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      padding: 10px 14px;
+      background: rgba(0, 0, 0, 0.78);
+      color: #fff;
+      font-size: 13px;
+      border-radius: 8px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s;
+      z-index: 300;
+    }
+
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+        <div class="config-page">
+          <header class="config-topbar">
+            <h1>看板配置</h1>
+            <div class="config-actions">
+              <a class="btn-ghost" href="总览看板.html">返回</a>
+              <button type="button" class="btn-ghost" id="btnPageManage">页面管理</button>
+              <button type="button" class="btn-ghost" id="btnReset">重置默认</button>
+              <button type="button" class="btn-save" id="btnSave">保存</button>
+            </div>
+          </header>
+
+          <div class="config-workspace">
+            <aside class="config-side" aria-label="配置侧栏">
+              <div class="side-card side-card--tree">
+                <div class="side-card-h">对象树</div>
+                <div class="tree-scroll" role="tree">
+                  <div class="tree-node active" tabindex="0" data-tree-node>互联数据中心</div>
+                  <div class="tree-children">
+                    <div class="tree-node" tabindex="0" data-tree-node>华东园区</div>
+                    <div class="tree-node" tabindex="0" data-tree-node>华南园区</div>
+                  </div>
+                </div>
+              </div>
+              <div class="side-card">
+                <div class="side-card-h">图元组件</div>
+                <div class="widget-list" id="widgetList">
+                  <label class="widget-check"><input type="checkbox" checked data-widget="overview"> 用能总览</label>
+                  <label class="widget-check"><input type="checkbox" checked data-widget="infra"> 基础设施效率</label>
+                  <label class="widget-check"><input type="checkbox" checked data-widget="clf"> 制冷负载系数</label>
+                  <label class="widget-check"><input type="checkbox" checked data-widget="plf"> PLF</label>
+                  <label class="widget-check"><input type="checkbox" checked data-widget="pue-e"> PUE（能耗）</label>
+                  <label class="widget-check"><input type="checkbox" checked data-widget="pue-p"> PUE（功率）</label>
+                  <label class="widget-check"><input type="checkbox" checked data-widget="trend"> 能耗趋势（电）</label>
+                  <label class="widget-check"><input type="checkbox" checked data-widget="subitem"> 用能分项统计（电）</label>
+                </div>
+              </div>
+            </aside>
+
+            <section class="config-canvas" aria-label="看板画布">
+              <div class="canvas-head">
+                <div class="canvas-tabs" role="tablist">
+                  <button type="button" class="canvas-tab active" role="tab" aria-selected="true" data-canvas-tab="stat">能耗统计</button>
+                  <button type="button" class="canvas-tab" role="tab" aria-selected="false" data-canvas-tab="eff">能效总览</button>
+                </div>
+              </div>
+              <div class="canvas-scroll">
+                <div class="canvas-grid" id="canvasGrid">
+                  <div class="widget-card cw-8 selected" data-widget-card="overview">
+                    <button type="button" class="widget-close" aria-label="移除用能总览" data-close>×</button>
+                    <div class="card-head">
+                      <div class="card-title"><span class="card-title-dot" aria-hidden="true"></span><span>用能总览</span></div>
+                      <span class="card-tag">支持任意对象</span>
+                    </div>
+                    <div class="widget-card-body">
+                      <div class="placeholder-metrics">
+                        <div class="ph-metric"><div class="ph-circle"></div><div class="ph-val">用电量</div><div class="ph-sub">环比 · 示意</div></div>
+                        <div class="ph-metric"><div class="ph-circle" style="background:linear-gradient(135deg,#E0F7FA,#80DEEA)"></div><div class="ph-val">用水量</div><div class="ph-sub">环比 · 示意</div></div>
+                        <div class="ph-metric"><div class="ph-circle" style="background:linear-gradient(135deg,#FFF4E0,#FFD080)"></div><div class="ph-val">标准煤</div><div class="ph-sub">环比 · 示意</div></div>
+                        <div class="ph-metric"><div class="ph-circle" style="background:linear-gradient(135deg,#ECFDF5,#6EE7B7)"></div><div class="ph-val">碳排放</div><div class="ph-sub">环比 · 示意</div></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="widget-card cw-4" data-widget-card="pue-p">
+                    <button type="button" class="widget-close" aria-label="移除 PUE（功率）" data-close>×</button>
+                    <div class="card-head">
+                      <div class="card-title"><span class="card-title-dot" aria-hidden="true"></span><span>PUE（实时功率）</span></div>
+                      <span class="grade-badge lv2">二级</span>
+                    </div>
+                    <div class="widget-card-body">
+                      <div class="cfg-chart-inner">
+                        <div class="ph-gauge-mini">
+                          <svg viewBox="0 0 210 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <defs>
+                              <linearGradient id="cfgGp1" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#3B82F6"/>
+                                <stop offset="100%" style="stop-color:#8B5CF6"/>
+                              </linearGradient>
+                            </defs>
+                            <path d="M25 105 A80 80 0 0 1 185 105" fill="none" stroke="#EBEBEB" stroke-width="16" stroke-linecap="round"/>
+                            <path d="M25 105 A80 80 0 0 1 160 42" fill="none" stroke="url(#cfgGp1)" stroke-width="16" stroke-linecap="round"/>
+                            <text x="105" y="102" font-size="22" font-weight="800" fill="#262626" text-anchor="middle">1.25</text>
+                          </svg>
+                        </div>
+                        <p class="cfg-chart-inner--hint">半圆刻度 1.0～3.0 · 总功率 / IT 功率（与总览看板一致）</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="widget-card cw-6" data-widget-card="pue-e">
+                    <button type="button" class="widget-close" aria-label="移除 PUE（能耗）" data-close>×</button>
+                    <div class="card-head">
+                      <div class="card-title"><span class="card-title-dot" aria-hidden="true"></span><span>PUE（能耗）</span></div>
+                      <span class="grade-badge lv2">二级</span>
+                    </div>
+                    <div class="widget-card-body">
+                      <div class="cfg-chart-inner">
+                        <div class="ph-gauge-mini">
+                          <svg viewBox="0 0 210 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <defs>
+                              <linearGradient id="cfgGp2" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#06B6D4"/>
+                                <stop offset="100%" style="stop-color:#6366F1"/>
+                              </linearGradient>
+                            </defs>
+                            <path d="M25 105 A80 80 0 0 1 185 105" fill="none" stroke="#EBEBEB" stroke-width="16" stroke-linecap="round"/>
+                            <path d="M25 105 A80 80 0 0 1 157 45" fill="none" stroke="url(#cfgGp2)" stroke-width="16" stroke-linecap="round"/>
+                            <text x="105" y="102" font-size="22" font-weight="800" fill="#262626" text-anchor="middle">1.24</text>
+                          </svg>
+                        </div>
+                        <p class="cfg-chart-inner--hint">周期能耗口径 · 制冷 / IT 总能耗（与总览看板一致）</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="widget-card cw-6" data-widget-card="clf">
+                    <button type="button" class="widget-close" aria-label="移除制冷负载系数" data-close>×</button>
+                    <div class="card-head">
+                      <div class="card-title"><span class="card-title-dot" aria-hidden="true"></span><span>制冷负载系数</span></div>
+                      <span class="card-tag">仅园区/数据中心</span>
+                    </div>
+                    <div class="widget-card-body">
+                      <div class="cfg-chart-inner">
+                        <div class="ph-donut">
+                          <svg viewBox="0 0 100 100" aria-hidden="true">
+                            <circle cx="50" cy="50" r="36" fill="none" stroke="#F0F0F0" stroke-width="12"/>
+                            <circle cx="50" cy="50" r="36" fill="none" stroke="#5C6BC0" stroke-width="12" stroke-dasharray="166" stroke-dashoffset="40" transform="rotate(-90 50 50)"/>
+                            <circle cx="50" cy="50" r="36" fill="none" stroke="#EC407A" stroke-width="12" stroke-dasharray="166" stroke-dashoffset="174" transform="rotate(-90 50 50)"/>
+                          </svg>
+                        </div>
+                        <p class="cfg-chart-inner--hint">IT / 暖通空调 · 双扇区环形（配色对齐总览）</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="widget-card cw-6" data-widget-card="plf">
+                    <button type="button" class="widget-close" aria-label="移除 PLF" data-close>×</button>
+                    <div class="card-head">
+                      <div class="card-title"><span class="card-title-dot" aria-hidden="true"></span><span>PLF</span></div>
+                      <span class="card-tag">仅园区/数据中心</span>
+                    </div>
+                    <div class="widget-card-body">
+                      <div class="cfg-chart-inner">
+                        <div class="ph-donut">
+                          <svg viewBox="0 0 100 100" aria-hidden="true">
+                            <circle cx="50" cy="50" r="36" fill="none" stroke="#F0F0F0" stroke-width="12"/>
+                            <circle cx="50" cy="50" r="36" fill="none" stroke="#26A69A" stroke-width="12" stroke-dasharray="166" stroke-dashoffset="40" transform="rotate(-90 50 50)"/>
+                            <circle cx="50" cy="50" r="36" fill="none" stroke="#FF7043" stroke-width="12" stroke-dasharray="166" stroke-dashoffset="174" transform="rotate(-90 50 50)"/>
+                          </svg>
+                        </div>
+                        <p class="cfg-chart-inner--hint">IT / 动力系统 · 双扇区环形（配色对齐总览）</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="widget-card cw-6" data-widget-card="infra">
+                    <button type="button" class="widget-close" aria-label="移除基础设施效率" data-close>×</button>
+                    <div class="card-head">
+                      <div class="card-title"><span class="card-title-dot" aria-hidden="true"></span><span>基础设施效率</span></div>
+                      <span class="card-tag">仅园区/数据中心</span>
+                    </div>
+                    <div class="widget-card-body">
+                      <div class="cfg-chart-inner">
+                        <div class="ph-donut">
+                          <svg viewBox="0 0 100 100" aria-hidden="true">
+                            <circle cx="50" cy="50" r="32" fill="none" stroke="#F0F0F0" stroke-width="12"/>
+                            <circle cx="50" cy="50" r="32" fill="none" stroke="#1890FF" stroke-width="12" stroke-linecap="butt" stroke-dasharray="50.27 150.8" transform="rotate(-90 50 50)"/>
+                            <circle cx="50" cy="50" r="32" fill="none" stroke="#13C2C2" stroke-width="12" stroke-linecap="butt" stroke-dasharray="50.27 150.8" stroke-dashoffset="-50.27" transform="rotate(-90 50 50)"/>
+                            <circle cx="50" cy="50" r="32" fill="none" stroke="#EB2F96" stroke-width="12" stroke-linecap="butt" stroke-dasharray="50.27 150.8" stroke-dashoffset="-100.54" transform="rotate(-90 50 50)"/>
+                            <circle cx="50" cy="50" r="32" fill="none" stroke="#722ED1" stroke-width="12" stroke-linecap="butt" stroke-dasharray="50.27 150.8" stroke-dashoffset="-150.81" transform="rotate(-90 50 50)"/>
+                          </svg>
+                        </div>
+                        <p class="cfg-chart-inner--hint">DCIE 四象限环 · 与总览看板图元一致</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="widget-card cw-6" data-widget-card="trend">
+                    <button type="button" class="widget-close" aria-label="移除能耗趋势" data-close>×</button>
+                    <div class="card-head">
+                      <div class="card-title"><span class="card-title-dot" aria-hidden="true"></span><span>能耗趋势（电）</span></div>
+                      <span class="card-tag">支持任意对象</span>
+                    </div>
+                    <div class="widget-card-body">
+                      <div class="cfg-chart-inner">
+                        <div class="ph-trend-mini">
+                          <span class="ph-trend-pill">能耗趋势</span>
+                          <div class="ph-trend-bars" aria-hidden="true">
+                            <span style="height:38%"></span>
+                            <span style="height:55%"></span>
+                            <span style="height:72%"></span>
+                            <span style="height:48%"></span>
+                            <span style="height:88%"></span>
+                            <span style="height:62%"></span>
+                            <span style="height:50%"></span>
+                          </div>
+                        </div>
+                        <p class="cfg-chart-inner--hint">堆叠柱趋势示意 · 标题旁汇总 kWh（总览同结构）</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="widget-card cw-6" data-widget-card="subitem">
+                    <button type="button" class="widget-close" aria-label="移除用能分项统计" data-close>×</button>
+                    <div class="card-head">
+                      <div class="card-title"><span class="card-title-dot" aria-hidden="true"></span><span>用能分项统计（电）</span></div>
+                      <span class="card-tag">支持任意对象</span>
+                    </div>
+                    <div class="widget-card-body">
+                      <div class="cfg-chart-inner">
+                        <div class="ph-donut">
+                          <svg viewBox="0 0 100 100" aria-hidden="true">
+                            <circle cx="50" cy="50" r="34" fill="none" stroke="#F0F0F0" stroke-width="14"/>
+                            <circle cx="50" cy="50" r="34" fill="none" stroke="#1890FF" stroke-width="14" stroke-linecap="butt" stroke-dasharray="85.4 128.2" transform="rotate(-90 50 50)"/>
+                            <circle cx="50" cy="50" r="34" fill="none" stroke="#13C2C2" stroke-width="14" stroke-linecap="butt" stroke-dasharray="59.8 153.8" stroke-dashoffset="-85.4" transform="rotate(-90 50 50)"/>
+                            <circle cx="50" cy="50" r="34" fill="none" stroke="#722ED1" stroke-width="14" stroke-linecap="butt" stroke-dasharray="47 166.6" stroke-dashoffset="-145.2" transform="rotate(-90 50 50)"/>
+                            <circle cx="50" cy="50" r="34" fill="none" stroke="#EB2F96" stroke-width="14" stroke-linecap="butt" stroke-dasharray="21.4 192.2" stroke-dashoffset="-192.2" transform="rotate(-90 50 50)"/>
+                          </svg>
+                        </div>
+                        <p class="cfg-chart-inner--hint">四色分项环 · 与总览看板手绘图元一致</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (function () {
+      var toast = document.getElementById('toast')
+      var showToast = function (msg) {
+        toast.textContent = msg
+        toast.classList.add('show')
+        setTimeout(function () { toast.classList.remove('show') }, 2000)
+      }
+
+      var map = {
+        overview: 'overview',
+        infra: 'infra',
+        clf: 'clf',
+        plf: 'plf',
+        'pue-e': 'pue-e',
+        'pue-p': 'pue-p',
+        trend: 'trend',
+        subitem: 'subitem'
+      }
+
+      document.querySelectorAll('#widgetList input[type="checkbox"]').forEach(function (input) {
+        input.addEventListener('change', function () {
+          var key = input.getAttribute('data-widget')
+          var id = map[key]
+          if (!id) return
+          var card = document.querySelector('[data-widget-card="' + id + '"]')
+          if (!card) return
+          if (input.checked) {
+            card.classList.remove('hidden-widget')
+          } else {
+            card.classList.add('hidden-widget')
+            card.classList.remove('selected')
+          }
+        })
+      })
+
+      document.querySelectorAll('[data-widget-card]').forEach(function (card) {
+        card.addEventListener('click', function (e) {
+          if (e.target.closest('[data-close]')) return
+          document.querySelectorAll('[data-widget-card]').forEach(function (c) { c.classList.remove('selected') })
+          card.classList.add('selected')
+        })
+      })
+
+      document.querySelectorAll('[data-close]').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation()
+          var card = btn.closest('[data-widget-card]')
+          if (!card) return
+          var id = card.getAttribute('data-widget-card')
+          var rev = Object.keys(map).find(function (k) { return map[k] === id })
+          if (rev) {
+            var input = document.querySelector('#widgetList input[data-widget="' + rev + '"]')
+            if (input) {
+              input.checked = false
+              input.dispatchEvent(new Event('change'))
+            }
+          }
+        })
+      })
+
+      document.querySelectorAll('[data-tree-node]').forEach(function (node) {
+        node.addEventListener('click', function () {
+          document.querySelectorAll('[data-tree-node]').forEach(function (n) { n.classList.remove('active') })
+          node.classList.add('active')
+        })
+      })
+
+      document.querySelectorAll('[data-canvas-tab]').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          document.querySelectorAll('[data-canvas-tab]').forEach(function (t) {
+            t.classList.remove('active')
+            t.setAttribute('aria-selected', 'false')
+          })
+          tab.classList.add('active')
+          tab.setAttribute('aria-selected', 'true')
+        })
+      })
+
+      document.getElementById('btnSave').addEventListener('click', function () {
+        showToast('已保存（原型示意）')
+      })
+      document.getElementById('btnReset').addEventListener('click', function () {
+        document.querySelectorAll('#widgetList input[type="checkbox"]').forEach(function (input) {
+          input.checked = true
+          input.dispatchEvent(new Event('change'))
+        })
+        showToast('已恢复默认勾选与展示')
+      })
+      document.getElementById('btnPageManage').addEventListener('click', function () {
+        showToast('页面管理（原型占位）')
+      })
+    })()
+  </script>
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="总览看板"></script>
+  <style id="kanban-config-nav-theme">
+    :root {
+      --nav-primary: #00C853;
+      --nav-primary-dark: #00A846;
+      --nav-primary-tint: #E8F8EE;
+    }
+    .sidebar-item.active:hover {
+      background: rgba(0, 200, 83, 0.12) !important;
+      color: var(--nav-primary-dark) !important;
+    }
+    .sidebar-item.active .sidebar-item-ver {
+      color: var(--nav-primary) !important;
+      background: rgba(0, 200, 83, 0.14) !important;
+    }
+    .sidebar.sidebar--collapsed .sidebar-group-children .sidebar-item.active::before {
+      box-shadow: 0 0 0 3px rgba(0, 200, 83, 0.22) !important;
+    }
+  </style>
+</body>
+</html>

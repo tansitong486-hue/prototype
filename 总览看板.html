@@ -1,0 +1,2387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>总览看板</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-light: #EEF4FF;
+      --primary-dark: #17358A;
+      --primary-tint: #EEF4FF;
+      --primary-soft: #F5F8FF;
+      --success: #16A34A;
+      --success-light: #F0FDF4;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --radius: 8px;
+      --radius-lg: 14px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, .04);
+      --shadow-card: 0 1px 3px rgba(15, 23, 42, .06), 0 8px 24px rgba(15, 23, 42, .04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+      --tab-active: var(--primary);
+      --tab-active-dark: var(--primary-dark);
+      --focus-ring: rgba(30, 64, 175, .22);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(15, 23, 42, .12); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(15, 23, 42, .2); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background:
+        radial-gradient(circle at top left, rgba(30, 64, 175, .07), transparent 30%),
+        linear-gradient(180deg, #F8FAFC 0%, var(--bg-body) 20%, var(--bg-body) 100%);
+      -webkit-font-smoothing: antialiased;
+    }
+    button { border: none; background: none; font: inherit; cursor: pointer; }
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main { flex: 1; min-width: 0; overflow-y: auto; background: transparent; }
+    .page-shell {
+      padding: 16px 20px 32px;
+      max-width: 1520px;
+      margin: 0 auto;
+    }
+
+    /* ── 工具条：第一行筛选+时间段；第二行 Tab + 看板管理（在时间段下方） ── */
+    .dash-toolbar-wrap {
+      margin-bottom: 18px;
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(232, 232, 232, .88);
+      border-radius: 16px;
+      box-shadow: var(--shadow-card);
+      backdrop-filter: blur(8px);
+      overflow: hidden;
+    }
+    .dash-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px 14px;
+      padding: 14px 16px 10px;
+      margin-bottom: 0;
+    }
+    .dash-toolbar-left { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .dash-toolbar-right {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-left: auto;
+    }
+    .dash-select {
+      height: 32px;
+      padding: 0 30px 0 12px;
+      font-size: 13px;
+      color: var(--text-primary);
+      border: 1px solid #DDE5EC;
+      border-radius: 999px;
+      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238C8C8C' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 8px center;
+      appearance: none; cursor: pointer; min-width: 116px;
+      transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+    }
+    .dash-select:focus-visible { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px var(--focus-ring); }
+
+    /* ── 数据中心：自定义下钻（数据中心 → 子系统 → 设备） ── */
+    .dc-dropdown { position: relative; display: inline-block; z-index: 40; }
+    .dc-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 32px;
+      padding: 0 28px 0 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary-dark);
+      background: linear-gradient(180deg, #F8FAFF 0%, var(--primary-tint) 100%);
+      border: 1px solid rgba(30, 64, 175, 0.32);
+      border-radius: 999px;
+      cursor: pointer;
+      position: relative;
+      min-width: 132px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+      transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
+    }
+    .dc-trigger:hover { background: #E0E7FF; border-color: rgba(30, 64, 175, 0.48); }
+    .dc-trigger:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--focus-ring); }
+    .dc-trigger[aria-expanded="true"] { background: #C7D2FE; border-color: var(--primary); }
+    .dc-trigger .dc-caret {
+      position: absolute;
+      right: 9px;
+      top: 50%;
+      margin-top: -3px;
+      width: 0;
+      height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 5px solid var(--primary-dark);
+      pointer-events: none;
+    }
+    .dc-panel {
+      position: absolute;
+      left: 0;
+      top: calc(100% + 6px);
+      min-width: 380px;
+      max-width: min(420px, calc(100vw - 40px));
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card), 0 8px 24px rgba(0,0,0,.08);
+      overflow: hidden;
+    }
+    .dc-panel[hidden] { display: none !important; }
+    .dc-panel-inner { display: flex; min-height: 168px; }
+    .dc-panel-rail {
+      width: 52px;
+      flex-shrink: 0;
+      background: #E6F7FF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-right: 1px solid #BAE7FF;
+    }
+    .dc-panel-rail svg { color: var(--primary-dark); }
+    .dc-panel-body { flex: 1; padding: 12px 14px 14px; min-width: 0; }
+    .dc-dc-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .dc-dc-pill {
+      padding: 4px 10px;
+      font-size: 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition), border-color var(--transition);
+    }
+    .dc-dc-pill:hover { border-color: var(--primary); color: var(--primary-dark); }
+    .dc-dc-pill.active {
+      background: var(--primary-tint);
+      border-color: var(--primary);
+      color: var(--primary-dark);
+      font-weight: 600;
+    }
+    .dc-subgrid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px 10px;
+    }
+    @media (max-width: 480px) {
+      .dc-subgrid { grid-template-columns: 1fr 1fr; }
+    }
+    .dc-sub-btn {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 10px 11px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      background: #FAFAFA;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .dc-sub-btn:hover {
+      background: #F0F9FF;
+      border-color: #91D5FF;
+      color: var(--tab-active);
+    }
+    .dc-sub-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--focus-ring); }
+    .dc-dev-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .dc-back {
+      font-size: 12px;
+      color: var(--tab-active);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 2px 0;
+      font-weight: 600;
+    }
+    .dc-back:hover { text-decoration: underline; }
+    .dc-dev-title { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+    .dc-dev-list { display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow-y: auto; }
+    .dc-dev-item {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 9px 11px;
+      font-size: 13px;
+      color: var(--text-primary);
+      background: #fff;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .dc-dev-item:hover {
+      background: var(--primary-tint);
+      border-color: rgba(30, 64, 175, 0.35);
+    }
+    .dc-dev-item:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--focus-ring); }
+    .dc-step[hidden] { display: none !important; }
+    .dash-seg {
+      display: inline-flex;
+      border: 1px solid #DDE5EC;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+    }
+    .dash-seg button { padding: 6px 14px; font-size: 13px; color: var(--text-secondary); border-right: 1px solid var(--border-light); transition: background var(--transition), color var(--transition); }
+    .dash-seg button:last-child { border-right: none; }
+    .dash-seg button:hover { color: var(--text-primary); background: #FAFAFA; }
+    .dash-seg button.active { color: #fff; background: var(--primary); font-weight: 600; }
+    .dash-date-pill {
+      height: 32px; padding: 0 12px;
+      display: inline-flex; align-items: center; gap: 6px;
+      max-width: min(360px, 92vw);
+      font-size: 13px; color: var(--text-primary);
+      border: 1px solid #DDE5EC; border-radius: 999px; background: #fff; cursor: pointer;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .dash-date-pill span#datePillLabel {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+    }
+    .dash-date-pill:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--focus-ring); }
+
+    .dash-time-picker-host {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+    .dash-date-native {
+      position: fixed;
+      left: -9999px;
+      top: 0;
+      opacity: 0;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: 0;
+      border: 0;
+      pointer-events: none;
+    }
+
+    .dash-subbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px 16px;
+      padding: 0 16px;
+      background: linear-gradient(180deg, rgba(255,255,255,.9) 0%, rgba(245,248,255,.94) 100%);
+      border-top: 1px solid rgba(240,240,240,.9);
+    }
+    .dash-subbar-tabs {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      border-bottom: none;
+    }
+    .dash-tab {
+      padding: 12px 18px 13px;
+      font-size: 14px;
+      color: var(--text-primary);
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      background: none;
+      cursor: pointer;
+      transition: color var(--transition), border-color var(--transition);
+    }
+    .dash-tab:hover { color: var(--tab-active); }
+    .dash-tab.active {
+      color: var(--tab-active);
+      font-weight: 600;
+      border-bottom-color: var(--tab-active);
+    }
+    .dash-tab:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--focus-ring); border-radius: 4px; }
+
+    .btn-kanban {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 32px;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 1px solid var(--primary);
+      background: linear-gradient(180deg, #FFFFFF 0%, var(--primary-soft) 100%);
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      white-space: nowrap;
+      box-shadow: 0 4px 14px rgba(30, 64, 175, .1);
+      transition: background var(--transition), color var(--transition), border-color var(--transition), box-shadow var(--transition);
+    }
+    .btn-kanban:hover {
+      background: var(--primary-tint);
+      color: var(--primary-dark);
+      border-color: var(--primary-dark);
+      box-shadow: 0 6px 16px rgba(30, 64, 175, .16);
+    }
+    .btn-kanban:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--primary);
+    }
+    .btn-kanban svg { flex-shrink: 0; }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+    /* ── 主网格 ── */
+    .dash-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    /* 图元批注贴在卡片上方时占满整行，避免批注模式下图元说明只占据左列 */
+    .dash-grid > .anno { grid-column: 1 / -1; }
+    @media (max-width: 1080px) { .dash-grid { grid-template-columns: 1fr; } }
+
+    /* ── 卡片基础 ── */
+    .dash-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(232, 238, 243, .95);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+      padding: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+    }
+    .dash-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 32px rgba(15, 23, 42, .08), 0 4px 12px rgba(15, 23, 42, .05);
+      border-color: rgba(214, 225, 233, .96);
+    }
+    .dash-card--wide { grid-column: 1 / -1; }
+
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px 12px;
+      border-bottom: 1px solid var(--border-light);
+      background: linear-gradient(180deg, #FFFFFF 0%, #FBFCFD 100%);
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title-dot {
+      width: 4px;
+      height: 15px;
+      border-radius: 2px;
+      background: var(--primary);
+      flex-shrink: 0;
+    }
+    .card-tag {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 500;
+      background: #F7FAFC;
+      color: #7B8794;
+      border: 1px solid #E9EEF4;
+    }
+    .card-body { flex: 1; padding: 16px 18px 18px; }
+
+    /* ── 用能总览 ── */
+    .energy-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    @media (max-width: 780px) { .energy-row { grid-template-columns: repeat(2,1fr); } }
+    .energy-item {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 15px 15px 16px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #FFFFFF 0%, #FAFCFF 100%);
+      border: 1px solid #EDF2F7;
+      transition: box-shadow var(--transition), transform var(--transition), border-color var(--transition);
+      position: relative;
+    }
+    .energy-item::before {
+      content: "";
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      top: 0;
+      height: 3px;
+      border-radius: 0 0 999px 999px;
+      background: linear-gradient(90deg, rgba(30,64,175,.72), rgba(59,130,246,.55));
+      opacity: .18;
+    }
+    .energy-item:hover {
+      box-shadow: 0 10px 24px rgba(15, 23, 42, .06);
+      transform: translateY(-1px);
+      border-color: #DFE8F0;
+    }
+    .energy-item-top { display: flex; align-items: center; gap: 10px; }
+    .energy-ico {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .energy-ico svg { width: 22px; height: 22px; }
+    .energy-ico.elec { background: linear-gradient(135deg,#EAF4FF,#BAD7FF); }
+    .energy-ico.water { background: linear-gradient(135deg,#E0F7FA,#80DEEA); }
+    .energy-ico.coal { background: linear-gradient(135deg,#FFF4E0,#FFD080); }
+    .energy-ico.carbon { background: linear-gradient(135deg,#ECFDF5,#6EE7B7); }
+    .energy-name { font-size: 12px; color: var(--text-secondary); margin-bottom: 2px; }
+    .energy-value-wrap { display: flex; align-items: baseline; gap: 3px; }
+    .energy-value { font-size: 24px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.03em; line-height: 1.15; }
+    .energy-unit { font-size: 11px; font-weight: 600; color: var(--text-hint); }
+    .energy-trend {
+      display: inline-flex; align-items: center; gap: 3px;
+      font-size: 11px; font-weight: 600; padding: 2px 7px;
+      border-radius: 4px;
+      width: fit-content;
+    }
+    .energy-trend.up { color: #F5222D; background: #FFF1F0; }
+    .energy-trend.down { color: var(--success); background: var(--success-light); }
+    .energy-trend.neutral { color: var(--text-hint); background: #F5F5F5; }
+    .energy-usage-hint {
+      font-size: 12px;
+      color: var(--text-hint);
+      line-height: 1.5;
+      padding: 0 2px 12px;
+      margin-top: -2px;
+    }
+    .chart-granularity-hint {
+      font-size: 11px;
+      color: var(--text-hint);
+      font-weight: 500;
+    }
+    .cost-chart-head-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 0 0 6px;
+    }
+
+    /* ── 图表卡片公共 ── */
+    .chart-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      width: 100%;
+      min-height: 252px;
+      padding: 14px 12px 12px;
+      background: linear-gradient(180deg, #FCFDFE 0%, #F8FBFD 100%);
+      border: 1px solid #EEF3F7;
+      border-radius: 12px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.78);
+    }
+
+    /* ── 能耗成本 ── */
+    .cost-card-body { padding: 0; }
+    .cost-layout {
+      display: grid;
+      grid-template-columns: 128px minmax(0, 1fr);
+      gap: 16px;
+      align-items: stretch;
+      padding: 12px 16px;
+    }
+    @media (max-width: 980px) {
+      .cost-layout { grid-template-columns: 1fr; }
+    }
+    .cost-summary {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      gap: 8px;
+      padding: 18px 14px 0 2px;
+      border-right: 1px solid #EEF3F7;
+    }
+    .cost-value-row {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+    .cost-value {
+      font-size: 26px;
+      line-height: 1;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: var(--text-primary);
+    }
+    .cost-unit {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .cost-chart-panel {
+      border: 1px solid #EEF3F7;
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, #FFFFFF 0%, #FBFCFE 100%);
+      min-width: 0;
+      padding: 6px 10px 4px;
+      overflow: hidden;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.78);
+    }
+    .cost-chart-head {
+      display: none;
+    }
+    .cost-axis-note {
+      display: inline-flex;
+      font-size: 11px;
+      color: #7F7F7F;
+    }
+    .cost-chart-box {
+      width: 100%;
+      padding: 0;
+    }
+    .cost-chart-box canvas {
+      display: block;
+      width: 100% !important;
+      height: 176px !important;
+      min-height: 176px;
+    }
+
+    /* ── 能耗趋势（堆叠柱状，古典「能耗趋势」） ── */
+    .trend-card-body { padding: 0; }
+    .trend-layout {
+      display: grid;
+      grid-template-columns: 132px minmax(0, 1fr);
+      gap: 16px;
+      align-items: stretch;
+      padding: 12px 16px;
+    }
+    @media (max-width: 980px) {
+      .trend-layout { grid-template-columns: 1fr; }
+    }
+    .trend-summary {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      gap: 10px;
+      padding: 14px 14px 0 2px;
+      border-right: 1px solid #EEF3F7;
+    }
+    .trend-value-row {
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+      flex-wrap: nowrap;
+      white-space: nowrap;
+    }
+    .trend-value {
+      font-size: 28px;
+      line-height: 1;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: var(--text-primary);
+    }
+    .trend-unit {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .trend-chart-panel {
+      border: 1px solid #EEF3F7;
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, #FFFFFF 0%, #FBFCFE 100%);
+      min-width: 0;
+      padding: 8px 10px 8px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.78);
+    }
+    .trend-chart-legend {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px 18px;
+      margin-bottom: 6px;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .trend-chart-legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .trend-chart-legend i {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .trend-chart-box {
+      width: 100%;
+    }
+    .trend-chart-box canvas {
+      display: block;
+      width: 100% !important;
+      height: 210px !important;
+      min-height: 210px;
+    }
+
+    /* ── 仪表（半圆） ── */
+    .pue-card-body {
+      padding: 8px 14px 16px;
+    }
+    .pue-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      min-height: 318px;
+      padding: 4px 8px 0;
+      background: #fff;
+    }
+    .pue-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      width: 100%;
+      margin-bottom: 4px;
+    }
+    .pue-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 56px;
+      padding: 2px 12px;
+      text-align: center;
+    }
+    .pue-stat + .pue-stat {
+      border-left: 1px solid #D8DEE8;
+    }
+    .pue-stat-value {
+      font-size: 18px;
+      line-height: 1.15;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: #1F1F1F;
+      white-space: nowrap;
+    }
+    .pue-stat-label {
+      font-size: 12px;
+      line-height: 1.2;
+      color: #7F7F7F;
+    }
+    .pue-gauge-wrap {
+      width: 100%;
+      max-width: 360px;
+      margin: 0 auto;
+      padding-top: 4px;
+    }
+    .pue-gauge-svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .pue-reading {
+      margin-top: -2px;
+      font-size: 34px;
+      line-height: 1;
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      color: #3FCFD0;
+    }
+    .pue-needle {
+      stroke: #3FCFD0;
+      stroke-width: 4;
+      stroke-linecap: round;
+    }
+    .pue-needle-dot {
+      fill: #3FCFD0;
+    }
+    .pue-scale-major {
+      stroke: #697386;
+      stroke-width: 2.2;
+    }
+    .pue-scale-minor {
+      stroke: #98A2B3;
+      stroke-width: 1.4;
+    }
+    .pue-scale-text {
+      fill: #667085;
+      font-size: 12px;
+      font-family: inherit;
+      text-anchor: middle;
+    }
+    .gauge-wrap {
+      position: relative;
+      width: 210px;
+      height: 120px;
+      flex-shrink: 0;
+      padding-top: 2px;
+    }
+    .gauge-wrap svg { display: block; width: 100%; height: auto; }
+    .gauge-label { position: absolute; left: 50%; bottom: 4px; transform: translateX(-50%); text-align: center; }
+    .gauge-num { font-size: 30px; font-weight: 900; color: var(--text-primary); line-height: 1.1; letter-spacing: -0.04em; }
+
+    .metrics-row {
+      display: flex; flex-wrap: wrap; gap: 6px 16px;
+      justify-content: center; font-size: 12px; color: var(--text-secondary);
+      width: 100%;
+      padding-top: 10px;
+      margin-top: 2px;
+      border-top: 1px solid #EEF3F7;
+    }
+    .metrics-row .metric-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      min-width: 116px;
+      padding: 0 4px;
+    }
+    .metrics-row .metric-val { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+    .metrics-row .metric-lbl { font-size: 11px; color: var(--text-hint); }
+    .grade-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 9px; border-radius: 20px; font-size: 12px; font-weight: 700;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+    }
+    .grade-badge.lv1 { background: var(--primary-light); color: var(--primary-dark); }
+    .grade-badge.lv2 { background: #DBEAFE; color: var(--primary); }
+    .grade-badge.lv3 { background: #FFF7E6; color: #FA8C16; }
+
+    /* ── 环形 ── */
+    .donut-row {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 100%;
+      min-height: 226px;
+      padding: 8px 8px 6px;
+    }
+    .donut-wrap { position: relative; width: 154px; height: 154px; flex-shrink: 0; }
+    .donut-wrap canvas { width: 154px !important; height: 154px !important; display: block; }
+    .donut-center { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); text-align: center; }
+    .donut-num { font-size: 24px; font-weight: 900; color: var(--text-primary); letter-spacing: -0.03em; }
+    .donut-unit { font-size: 12px; color: var(--text-secondary); font-weight: 600; }
+    .donut-legend { display: flex; flex-direction: column; gap: 10px; min-width: 220px; }
+    .legend-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.82);
+      border: 1px solid #EEF3F7;
+    }
+    .legend-left { display: flex; align-items: center; gap: 7px; }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .legend-val { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+
+    /* ── 手绘：用能分项统计（四色环） ── */
+    .drawn-chart-box {
+      background: linear-gradient(180deg, #FCFDFE 0%, #F8FBFD 100%);
+      border: 1px solid #EEF3F7;
+      border-radius: 12px;
+      padding: 18px 16px 16px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.75);
+      min-height: 252px;
+      display: flex;
+      align-items: center;
+    }
+    .subitem-chart {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      width: 100%;
+      justify-content: center;
+    }
+    /* 环形 stroke 会超出 SVG 布局盒，默认 overflow:visible 会把色块画到下一行图例上造成「重叠」 */
+    .subitem-donut {
+      position: relative;
+      width: 176px;
+      height: 176px;
+      flex-shrink: 0;
+      overflow: hidden;
+      border-radius: 50%;
+    }
+    .subitem-donut canvas { width: 176px !important; height: 176px !important; display: block; margin: 0 auto; }
+    .subitem-center {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+    }
+    .subitem-center-val {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+    .subitem-center-lbl {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 600;
+      margin-top: 2px;
+    }
+    .subitem-legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px 18px;
+      width: 100%;
+      max-width: 360px;
+      position: relative;
+      z-index: 1;
+    }
+    .subitem-legend .lg {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .subitem-legend .lg-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── 手绘：基础设施效率（单卡 DCIE 环） ── */
+    .infra-panel {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .infra-donut-wrap {
+      position: relative;
+      width: 160px;
+      height: 160px;
+    }
+    .infra-donut-wrap canvas { width: 160px !important; height: 160px !important; display: block; margin: 0 auto; }
+    .infra-center {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .infra-center-num { font-size: 22px; font-weight: 800; color: var(--text-primary); }
+    .infra-center-lbl { font-size: 11px; color: var(--text-hint); font-weight: 600; margin-top: 2px; }
+    .infra-mini-legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px 14px;
+      margin-top: 14px;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .infra-mini-legend span { white-space: nowrap; }
+
+    @media (max-width: 1080px) {
+      .dash-subbar { padding-top: 8px; padding-bottom: 4px; }
+    }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+        <div class="anno-filter-bar" id="annoFilterBar">
+          <span class="anno-filter-label">批注版本：</span>
+          <div class="anno-filter-tags" id="annoFilterTags"></div>
+        </div>
+        <div class="page-shell">
+
+          <div class="anno anno-version-header" data-version="v1.0">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v1.0（初版）</p>
+              <p><b>更新日期：</b>2026-03-26</p>
+              <p><b>变更概述：</b>总览看板增加标准化批注与版本筛选；各能耗/能效图元在卡片上方配有独立「图元说明」批注；能耗成本折线、用电堆叠柱与环形图元使用 Chart.js 绘制，支持悬停提示与图例外环交互；PUE 半圆仪表仍为矢量示意。</p>
+              <p><b>本页说明：</b>点击右下角「批注」进入批注模式；主网格内每一类图元均有对应批注块。子页「看板配置」维护对象树、图元勾选与画布 Tab。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-req" data-version="v1.0">
+            <span class="anno-tag">需求说明</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source" data-type="产品推断">产品推断</span>
+            <div class="anno-body">
+              <p>面向运营与管理人员，在选定<strong>视图（空间 / 能效）、数据中心与时间范围</strong>下查看<strong>能耗统计 / 能效总览</strong>两类 Tab 下的指标卡片（本原型以静态示意为主）。用户可通过「看板管理」进入配置页，调整展示的图元与布局。本期原型不覆盖实时告警流、单卡下钻详情、导出报表等能力，若评审需要请另列单据。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-ux" data-version="v1.0">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source" data-type="引用自古典原型">引用自古典原型</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>顶栏筛选、时间粒度与日期、副栏 Tab、看板管理</p>
+              <ul>
+                <li><b>视图：</b>下拉在<strong>空间视图</strong>（按物理空间/机房拓扑维度组织）、<strong>能效视图</strong>（侧重 PUE、能效指标与对比）之间切换；切换后下方卡片数据范围与默认图元组合随所选视图刷新（原型未接真实数据，两类下卡片布局可一致，仅作语义区分）。</li>
+                <li><b>数据中心：</b>点击绿色触发器展开面板；可先切换顶部数据中心 pill，再在网格中选择<strong>子系统</strong>（IT / 电力 / 暖通空调 / 其他）；进入子系统后列出<strong>设备</strong>，点选设备后触发器展示「数据中心 / 子系统 / 设备」并收起面板，看板范围随所选对象更新（示意）。</li>
+                <li><b>时间粒度：</b>年 / 月 / 日 / 时段四段切换；右侧日期 pill 文案联动为：年→YYYY，月→YYYY-MM，日 与 时段→YYYY-MM-DD（时段在本原型中同样只精确到<strong>日</strong>，不展示起止时刻）。</li>
+                <li><b>用量与成本图表联动：</b>选择<strong>年</strong>时，用量与成本/趋势横轴按<strong>月</strong>；选择<strong>月</strong>时按<strong>日</strong>；选择<strong>日</strong>时按<strong>小时</strong>（所选日 24 小时内示意）；选择<strong>时段</strong>时 pill 展示<strong>起止日期</strong>，依次点选开始/结束日期，图表仍按<strong>小时</strong>粒度在范围内均匀取刻度示意。</li>
+                <li><b>日期 pill：</b>点击后按当前粒度调起浏览器原生 <code>month</code> 或 <code>date</code> 选择器；变更后 pill 与内部状态同步。</li>
+                <li><b>能耗统计 / 能效总览：</b>副栏 Tab 切换当前看板语义（原型内仅切换选中态，卡片集一致，真实系统可按 Tab 过滤图元）。</li>
+                <li><b>看板管理：</b>进入「看板配置.html」编辑对象树、勾选图元与画布 Tab；保存后返回本页（配置页行为见该页批注）。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="anno anno-data" data-version="v1.0">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source" data-type="引用自古典原型">引用自古典原型</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>看板图元（总览）</p>
+              <ul>
+                <li><b>分析对象：</b>数据中心选择器支持<strong>数据中心 → 子系统 → 设备</strong>三级；未选到设备时统计范围默认为当前数据中心；选定设备后各图元指标按该对象聚合，细则以需求为准。</li>
+                <li><b>与看板管理：</b>下列每一类图元均可在「看板配置」中勾选是否展示；<strong>各图元的目的、字段含义与古典稿对应关系</strong>见该卡片<strong>正上方</strong>的「图元说明」批注。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="anno anno-state" data-version="v1.0">
+            <span class="anno-tag">状态说明</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source" data-type="产品推断">产品推断</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>卡片与图表</p>
+              <ul>
+                <li><b>加载中：</b>真实系统可对整页或单卡骨架/转圈；本原型为静态数据，无加载态。</li>
+                <li><b>无权限 / 无数据：</b>某图元对当前对象不适用时可隐藏卡片或展示「暂无数据」；本原型用标签（如「仅园区/数据中心」）提示适用范围。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="anno anno-edge" data-version="v1.0">
+            <span class="anno-tag">边界与异常</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source" data-type="待确认">待确认</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>时间与对象范围</p>
+              <ul>
+                <li><b>时段粒度：</b>若业务需选择自然日内的起止时刻，需在需求中单列，本原型不展示时刻段。</li>
+                <li><b>浏览器兼容：</b>极旧浏览器可能不支持 <code>showPicker</code>，需降级为点击隐藏 input 触发选择（本页已做基础兼容）。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="dash-toolbar-wrap">
+            <!-- 第一行：左 视图/数据中心；右 时间粒度 + 联动日期 -->
+            <div class="dash-toolbar">
+              <div class="dash-toolbar-left">
+                <label class="visually-hidden" for="viewSelect">视图选择</label>
+                <select id="viewSelect" class="dash-select" aria-label="视图选择">
+                  <option value="space" selected>空间视图</option>
+                  <option value="efficiency">能效视图</option>
+                </select>
+                <div class="dc-dropdown" id="dcDropdown">
+                  <button type="button" class="dc-trigger" id="dcTrigger" aria-expanded="false" aria-haspopup="dialog" aria-controls="dcPanel" aria-label="数据中心与下钻对象，当前选择">
+                    <span id="dcTriggerLabel">互盟数据中心</span>
+                    <span class="dc-caret" aria-hidden="true"></span>
+                  </button>
+                  <div class="dc-panel" id="dcPanel" role="dialog" aria-modal="false" aria-label="选择数据中心、子系统或设备" hidden>
+                    <div class="dc-panel-inner">
+                      <div class="dc-panel-rail" aria-hidden="true">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                          <rect x="4" y="4" width="7" height="7" rx="1"/>
+                          <rect x="13" y="4" width="7" height="7" rx="1"/>
+                          <rect x="4" y="13" width="7" height="7" rx="1"/>
+                          <rect x="13" y="13" width="7" height="7" rx="1"/>
+                        </svg>
+                      </div>
+                      <div class="dc-panel-body">
+                        <div class="dc-dc-row" id="dcDcPills" role="tablist" aria-label="切换数据中心"></div>
+                        <div class="dc-step" id="dcStepSub">
+                          <div class="dc-subgrid" id="dcSubGrid" role="list" aria-label="子系统"></div>
+                        </div>
+                        <div class="dc-step" id="dcStepDev" hidden>
+                          <div class="dc-dev-head">
+                            <button type="button" class="dc-back" id="dcBackSub">‹ 返回子系统</button>
+                            <span class="dc-dev-title" id="dcDevSubsystemTitle"></span>
+                          </div>
+                          <div class="dc-dev-list" id="dcDevList" role="list" aria-label="设备"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="dash-toolbar-right">
+                <div class="dash-seg" id="timeDimSeg" role="group" aria-label="时间粒度">
+                  <button type="button" class="active" data-dim="year" aria-pressed="true">年</button>
+                  <button type="button" data-dim="month" aria-pressed="false">月</button>
+                  <button type="button" data-dim="day" aria-pressed="false">日</button>
+                  <button type="button" data-dim="period" aria-pressed="false">时段</button>
+                </div>
+                <div class="dash-time-picker-host">
+                  <input type="month" class="dash-date-native" id="pickerMonth" value="2026-03" aria-hidden="true" tabindex="-1">
+                  <input type="date" class="dash-date-native" id="pickerDay" value="2026-03-26" aria-hidden="true" tabindex="-1">
+                  <input type="date" class="dash-date-native" id="pickerDayEnd" value="2026-03-28" aria-hidden="true" tabindex="-1" title="时段结束日期">
+                  <button type="button" class="dash-date-pill" id="datePillBtn" aria-label="选择时间范围">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <span id="datePillLabel">2026</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <!-- 第二行（时间段选择器下方）：Tab + 看板管理 -->
+            <div class="dash-subbar">
+              <div class="dash-subbar-tabs" role="tablist" aria-label="看板内容切换">
+                <button type="button" class="dash-tab active" role="tab" aria-selected="true">能耗统计</button>
+                <button type="button" class="dash-tab" role="tab" aria-selected="false">能效总览</button>
+              </div>
+              <a class="btn-kanban" href="看板配置.html" id="kanbanManageLink">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <rect x="3" y="3" width="7" height="7" rx="1"/>
+                  <rect x="14" y="3" width="7" height="7" rx="1"/>
+                  <rect x="3" y="14" width="7" height="7" rx="1"/>
+                  <rect x="14" y="14" width="7" height="7" rx="1"/>
+                </svg>
+                看板管理
+              </a>
+            </div>
+          </div>
+
+          <!-- 主网格 -->
+          <div class="dash-grid">
+
+            <div class="anno anno-data" data-version="v1.0">
+              <span class="anno-tag">图元说明</span>
+              <span class="anno-version">v1.0</span>
+              <span class="anno-source" data-type="引用自古典原型">引用自古典原型</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>用能总览图元</p>
+                <ul>
+                  <li><b>用途：</b>在顶栏所选时间范围内，对当前分析对象汇总展示电、水、折标煤与碳排放等核心用量，并给出环比变化，便于一眼判断用能规模与波动。</li>
+                  <li><b>适用范围：</b>卡片角标「支持任意对象」——园区、数据中心或下钻至子系统/设备后均可挂载（以权限与数据完备性为准）。</li>
+                  <li><b>古典对应：</b>「用能总览」单页/图元。</li>
+                  <li><b>空态：</b>某分项无数据时展示「暂无数据」或「—」，不强行补零。</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- 1. 用能总览（全宽） -->
+            <section class="dash-card dash-card--wide" aria-labelledby="t-energy">
+              <div class="card-head">
+                <div class="card-title"><span class="card-title-dot"></span><span id="t-energy">用能总览</span></div>
+                <span class="card-tag">支持任意对象</span>
+              </div>
+              <div class="card-body">
+                <p class="energy-usage-hint" id="energyUsageGranularity" aria-live="polite"></p>
+                <div class="energy-row">
+                  <div class="energy-item">
+                    <div class="energy-item-top">
+                      <div class="energy-ico elec" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                      </div>
+                      <div>
+                        <div class="energy-name">用电量</div>
+                        <div class="energy-value-wrap">
+                          <span class="energy-value">2,475,792</span><span class="energy-unit">kWh</span>
+                        </div>
+                      </div>
+                    </div>
+                    <span class="energy-trend up">↑ +21.45% 环比</span>
+                  </div>
+                  <div class="energy-item">
+                    <div class="energy-item-top">
+                      <div class="energy-ico water" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#0891B2" stroke-width="2"><path d="M12 2C6 10 3 14 3 17a9 9 0 0018 0c0-3-3-7-9-15z"/></svg>
+                      </div>
+                      <div>
+                        <div class="energy-name">用水量</div>
+                        <div class="energy-value-wrap">
+                          <span class="energy-value">—</span><span class="energy-unit">万 m³</span>
+                        </div>
+                      </div>
+                    </div>
+                    <span class="energy-trend neutral">— 暂无数据</span>
+                  </div>
+                  <div class="energy-item">
+                    <div class="energy-item-top">
+                      <div class="energy-ico coal" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg>
+                      </div>
+                      <div>
+                        <div class="energy-name">标准煤</div>
+                        <div class="energy-value-wrap">
+                          <span class="energy-value">304,274</span><span class="energy-unit">tce</span>
+                        </div>
+                      </div>
+                    </div>
+                    <span class="energy-trend up">↑ +21.45% 环比</span>
+                  </div>
+                  <div class="energy-item">
+                    <div class="energy-item-top">
+                      <div class="energy-ico carbon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8 12h8M12 8v8"/></svg>
+                      </div>
+                      <div>
+                        <div class="energy-name">碳排放</div>
+                        <div class="energy-value-wrap">
+                          <span class="energy-value">2,468,364</span><span class="energy-unit">kg</span>
+                        </div>
+                      </div>
+                    </div>
+                    <span class="energy-trend up">↑ +21.45% 环比</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <div class="anno anno-data" data-version="v1.0">
+              <span class="anno-tag">图元说明</span>
+              <span class="anno-version">v1.0</span>
+              <span class="anno-source" data-type="引用自古典原型">引用自古典原型</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>能耗成本（IT用电量）图元</p>
+                <ul>
+                  <li><b>对象范围：</b>支持在任意对象上（园区、数据中心、设备组、设备）展示能耗成本图表。</li>
+                  <li><b>展示规则：</b>根据对象下已关联计费方案的测点动态展示；当对象存在 2 个测点（IT 用电量、总电量）且都关联计费方案时，应分别展示对应图表；若对象下测点均未关联计费方案，则无需展示。</li>
+                  <li><b>图表名称：</b>能耗成本（#测点名称#）。</li>
+                  <li><b>卡片内容：</b>左侧展示筛选时间段内能耗成本总和，保留 2 位小数；右侧展示按时间粒度聚合的成本趋势。</li>
+                  <li><b>单一计价样式：</b>当测点所属计费方案为单一计价规则时，按当前卡片样式展示总成本与单条成本趋势。</li>
+                  <li><b>峰平谷样式：</b>当测点所属计费方案为峰平谷或尖峰平谷规则时，应切换为分时成本展示样式；除总成本外，还需体现峰 / 平 / 谷（以及尖峰场景下的尖）各时段成本分布与趋势，前端样式按古典原型对应的峰平谷展示稿执行。</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- 2. 能耗成本（IT用电量）（全宽） -->
+            <section class="dash-card dash-card--wide" aria-labelledby="t-cost">
+              <div class="card-head">
+                <div class="card-title"><span class="card-title-dot"></span><span id="t-cost">能耗成本（IT用电量）</span></div>
+              </div>
+              <div class="card-body cost-card-body">
+                <div class="cost-layout">
+                  <div class="cost-summary">
+                    <div class="cost-value-row">
+                      <span class="cost-value">345.12</span>
+                      <span class="cost-unit">元</span>
+                    </div>
+                  </div>
+                  <div class="cost-chart-panel">
+                    <div class="cost-chart-head">
+                      <div class="cost-chart-head-row">
+                        <span class="cost-axis-note">元</span>
+                        <span class="chart-granularity-hint" id="costGranularityHint"></span>
+                      </div>
+                    </div>
+                    <div class="cost-chart-box">
+                      <canvas id="chartCost" role="img" aria-label="能耗成本趋势图（可悬停查看数值）"></canvas>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <div class="anno anno-data" data-version="v1.0">
+              <span class="anno-tag">图元说明</span>
+              <span class="anno-version">v1.0</span>
+              <span class="anno-source" data-type="引用自古典原型">引用自古典原型</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>能耗趋势（电）图元</p>
+                <ul>
+                  <li><b>用途：</b>在顶栏筛选时间范围内，按时间序列展示<strong>用电量</strong>的<strong>堆叠柱状</strong>趋势；柱内各段对应计量方案下的分项（如按子节点或按计量对象拆分，见古典规则）。左侧汇总为<strong>该时间段内能耗量总和</strong>，单位取当前能源（电）单位，小数位规则与古典一致。</li>
+                  <li><b>动态出现：</b>对象启用哪种能源的能耗计量，就看板上出现对应「能耗趋势（能源名）」卡片；未启用则不展示。可同时存在电、水等多张趋势卡（本原型仅示意<strong>电</strong>一张）。</li>
+                  <li><b>X 轴粒度：</b>与顶栏时间维度联动：<strong>年</strong>→按月，<strong>月</strong>→按日，<strong>日</strong>→按小时（当日 24 小时内示意），<strong>时段</strong>→起止日期范围内按小时均匀刻度示意；与「能耗成本」趋势图同一套规则。古典另有按筛选区间自适应的规则时，以实现为准。</li>
+                  <li><b>适用范围：</b>古典写明支持园区、数据中心、设备组、设备等<strong>任意对象</strong>。</li>
+                  <li><b>古典对应：</b>「能耗趋势」页堆叠柱状图元。</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- 2b. 能耗趋势（电）·堆叠柱 -->
+            <section class="dash-card dash-card--wide" aria-labelledby="t-trend">
+              <div class="card-head">
+                <div class="card-title"><span class="card-title-dot"></span><span id="t-trend">能耗趋势（电）</span></div>
+                <span class="card-tag">支持任意对象</span>
+              </div>
+              <div class="card-body trend-card-body">
+                <div class="trend-layout">
+                  <div class="trend-summary">
+                    <div class="trend-value-row">
+                      <span class="trend-value">345.12</span>
+                      <span class="trend-unit">kWh</span>
+                    </div>
+                  </div>
+                  <div class="trend-chart-panel">
+                    <p class="chart-granularity-hint" id="trendGranularityHint" style="margin-bottom:8px" aria-live="polite"></p>
+                    <div class="trend-chart-legend" aria-label="堆叠分项">
+                      <span><i style="background:#9BB8EA" aria-hidden="true"></i>IT 耗电</span>
+                      <span><i style="background:#7EC8D6" aria-hidden="true"></i>制冷耗电</span>
+                      <span><i style="background:#B0A8DC" aria-hidden="true"></i>配电耗电</span>
+                      <span><i style="background:#D4BCE4" aria-hidden="true"></i>其他耗电</span>
+                    </div>
+                    <div class="trend-chart-box">
+                      <canvas id="chartTrend" role="img" aria-label="能耗堆叠柱状趋势（可悬停查看分项与合计）"></canvas>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <div class="anno anno-data" data-version="v1.0">
+              <span class="anno-tag">图元说明</span>
+              <span class="anno-version">v1.0</span>
+              <span class="anno-source" data-type="引用自古典原型">引用自古典原型</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>PUE（实时功率）图元</p>
+                <ul>
+                  <li><b>用途：</b>基于<strong>实时功率</strong>计算 PUE，半圆仪表展示当前值所处区间（示意刻度 1.0～3.0），并列出<strong>总功率</strong>与<strong>IT 功率</strong>（kW）供对照。</li>
+                  <li><b>能效等级徽标：</b>如「二级」表示当前值落在运维或国标划定的等级区间内（区间表以需求/标准为准）。</li>
+                  <li><b>适用范围：</b>园区、数据中心级对象；下钻过细粒度时是否仍展示由产品规则决定。</li>
+                  <li><b>古典对应：</b>「pue（功率）」图元。</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- 3. PUE（功率） -->
+            <section class="dash-card dash-card--pue" aria-labelledby="t-pue-p">
+              <div class="card-head">
+                <div class="card-title"><span class="card-title-dot"></span><span id="t-pue-p">PUE(功率)</span></div>
+              </div>
+              <div class="card-body pue-card-body">
+                <div class="pue-panel">
+                  <div class="pue-stats">
+                    <div class="pue-stat">
+                      <div class="pue-stat-value">1523.20kW</div>
+                      <div class="pue-stat-label">总功率</div>
+                    </div>
+                    <div class="pue-stat">
+                      <div class="pue-stat-value">1215.60kW</div>
+                      <div class="pue-stat-label">IT功率</div>
+                    </div>
+                    <div class="pue-stat">
+                      <div class="pue-stat-value">2级</div>
+                      <div class="pue-stat-label">能效等级</div>
+                    </div>
+                  </div>
+                  <div class="pue-gauge-wrap">
+                    <svg class="pue-gauge-svg" viewBox="0 0 280 210" xmlns="http://www.w3.org/2000/svg" aria-label="PUE功率仪表">
+                      <path d="M32 144 A108 108 0 0 1 248 144" fill="none" stroke="#E8EDF3" stroke-width="10" stroke-linecap="round"/>
+                      <path d="M32 144 A108 108 0 0 1 84 49" fill="none" stroke="#3C7CF6" stroke-width="10" stroke-linecap="round"/>
+                      <path d="M84 49 A108 108 0 0 1 196 49" fill="none" stroke="#42D3CE" stroke-width="10" stroke-linecap="round"/>
+                      <path d="M196 49 A108 108 0 0 1 248 144" fill="none" stroke="#8A58E8" stroke-width="10" stroke-linecap="round"/>
+
+                      <g transform="translate(140 144)">
+                        <line class="pue-scale-major" x1="0" y1="-86" x2="0" y2="-96" transform="rotate(-90)"/>
+                        <line class="pue-scale-minor" x1="0" y1="-89" x2="0" y2="-96" transform="rotate(-81)"/>
+                        <line class="pue-scale-major" x1="0" y1="-86" x2="0" y2="-96" transform="rotate(-72)"/>
+                        <line class="pue-scale-minor" x1="0" y1="-89" x2="0" y2="-96" transform="rotate(-63)"/>
+                        <line class="pue-scale-major" x1="0" y1="-86" x2="0" y2="-96" transform="rotate(-54)"/>
+                        <line class="pue-scale-minor" x1="0" y1="-89" x2="0" y2="-96" transform="rotate(-45)"/>
+                        <line class="pue-scale-major" x1="0" y1="-86" x2="0" y2="-96" transform="rotate(-36)"/>
+                        <line class="pue-scale-minor" x1="0" y1="-89" x2="0" y2="-96" transform="rotate(-27)"/>
+                        <line class="pue-scale-major" x1="0" y1="-86" x2="0" y2="-96" transform="rotate(-18)"/>
+                        <line class="pue-scale-minor" x1="0" y1="-89" x2="0" y2="-96" transform="rotate(-9)"/>
+                        <line class="pue-scale-major" x1="0" y1="-86" x2="0" y2="-96" transform="rotate(0)"/>
+                        <line class="pue-scale-minor" x1="0" y1="-89" x2="0" y2="-96" transform="rotate(9)"/>
+                        <line class="pue-scale-major" x1="0" y1="-86" x2="0" y2="-96" transform="rotate(18)"/>
+                        <line class="pue-scale-minor" x1="0" y1="-89" x2="0" y2="-96" transform="rotate(27)"/>
+                        <line class="pue-scale-major" x1="0" y1="-86" x2="0" y2="-96" transform="rotate(36)"/>
+                        <line class="pue-scale-minor" x1="0" y1="-89" x2="0" y2="-96" transform="rotate(45)"/>
+                        <line class="pue-scale-major" x1="0" y1="-86" x2="0" y2="-96" transform="rotate(54)"/>
+                        <line class="pue-scale-minor" x1="0" y1="-89" x2="0" y2="-96" transform="rotate(63)"/>
+                        <line class="pue-scale-major" x1="0" y1="-86" x2="0" y2="-96" transform="rotate(72)"/>
+                        <line class="pue-scale-minor" x1="0" y1="-89" x2="0" y2="-96" transform="rotate(81)"/>
+                        <line class="pue-scale-major" x1="0" y1="-86" x2="0" y2="-96" transform="rotate(90)"/>
+                      </g>
+
+                      <g class="pue-scale-text">
+                        <text x="44" y="147">0</text>
+                        <text x="58" y="114">0.3</text>
+                        <text x="82" y="87">0.6</text>
+                        <text x="111" y="68">0.9</text>
+                        <text x="140" y="58">1.2</text>
+                        <text x="167" y="58">1.5</text>
+                        <text x="195" y="68">1.8</text>
+                        <text x="220" y="87">2.1</text>
+                        <text x="238" y="114">2.4</text>
+                        <text x="232" y="132">2.7</text>
+                        <text x="252" y="147">3</text>
+                      </g>
+
+                      <line class="pue-needle" x1="140" y1="146" x2="124" y2="86"/>
+                      <circle class="pue-needle-dot" cx="140" cy="146" r="4"/>
+                    </svg>
+                  </div>
+                  <div class="pue-reading">1.253</div>
+                </div>
+              </div>
+            </section>
+
+            <div class="anno anno-data" data-version="v1.0">
+              <span class="anno-tag">图元说明</span>
+              <span class="anno-version">v1.0</span>
+              <span class="anno-source" data-type="引用自古典原型">引用自古典原型</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>PUE（能耗）图元</p>
+                <ul>
+                  <li><b>用途：</b>与「PUE（实时功率）」互补：在统计周期内用<strong>累积能耗</strong>折算 PUE，仪表展示周期内等效能效水平；下方给出<strong>制冷总能耗</strong>与<strong>IT 总能耗</strong>（kWh）作为构成说明。</li>
+                  <li><b>与功率版差异：</b>一为瞬时/近期功率口径，一为周期累计能耗口径，评审时不要混用解读。</li>
+                  <li><b>古典对应：</b>「pue（能耗）」图元。</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- 4. PUE（能耗） -->
+            <section class="dash-card dash-card--pue" aria-labelledby="t-pue-e">
+              <div class="card-head">
+                <div class="card-title"><span class="card-title-dot"></span><span id="t-pue-e">PUE(能耗)</span></div>
+              </div>
+              <div class="card-body pue-card-body">
+                <div class="pue-panel">
+                  <div class="pue-stats">
+                    <div class="pue-stat">
+                      <div class="pue-stat-value">321,978kWh</div>
+                      <div class="pue-stat-label">制冷总能耗</div>
+                    </div>
+                    <div class="pue-stat">
+                      <div class="pue-stat-value">2,001,421kWh</div>
+                      <div class="pue-stat-label">IT总能耗</div>
+                    </div>
+                    <div class="pue-stat">
+                      <div class="pue-stat-value">2级</div>
+                      <div class="pue-stat-label">能效等级</div>
+                    </div>
+                  </div>
+                  <div class="pue-gauge-wrap">
+                    <svg class="pue-gauge-svg" viewBox="0 0 280 210" xmlns="http://www.w3.org/2000/svg" aria-label="PUE能耗仪表">
+                      <path d="M32 144 A108 108 0 0 1 248 144" fill="none" stroke="#E8EDF3" stroke-width="10" stroke-linecap="round"/>
+                      <path d="M32 144 A108 108 0 0 1 84 49" fill="none" stroke="#3C7CF6" stroke-width="10" stroke-linecap="round"/>
+                      <path d="M84 49 A108 108 0 0 1 196 49" fill="none" stroke="#42D3CE" stroke-width="10" stroke-linecap="round"/>
+                      <path d="M196 49 A108 108 0 0 1 248 144" fill="none" stroke="#8A58E8" stroke-width="10" stroke-linecap="round"/>
+
+                      <g transform="translate(140 144)">
+                        <line class="pue-scale-major" x1="0" y1="-86" x2="0" y2="-96" transform="rotate(-90)"/>
+                        <line class="pue-scale-minor" x1="0" y1="-89" x2="0" y2="-96" transform="rotate(-81)"/>
+                        <line class="pue-scale-major" x1="0" y1="-86" x2="0" y2="-96" transform="rotate(-72)"/>
+                        <line class="pue-scale-minor" x1="0" y1="-89" x2="0" y2="-96" transform="rotate(-63)"/>
+                        <line class="pue-scale-major" x1="0" y1="-86" x2="0" y2="-96" transform="rotate(-54)"/>
+                        <line class="pue-scale-minor" x1="0" y1="-89" x2="0" y2="-96" transform="rotate(-45)"/>
+                        <line class="pue-scale-major" x1="0" y1="-86" x2="0" y2="-96" transform="rotate(-36)"/>
+                        <line class="pue-scale-minor" x1="0" y1="-89" x2="0" y2="-96" transform="rotate(-27)"/>
+                        <line class="pue-scale-major" x1="0" y1="-86" x2="0" y2="-96" transform="rotate(-18)"/>
+                        <line class="pue-scale-minor" x1="0" y1="-89" x2="0" y2="-96" transform="rotate(-9)"/>
+                        <line class="pue-scale-major" x1="0" y1="-86" x2="0" y2="-96" transform="rotate(0)"/>
+                        <line class="pue-scale-minor" x1="0" y1="-89" x2="0" y2="-96" transform="rotate(9)"/>
+                        <line class="pue-scale-major" x1="0" y1="-86" x2="0" y2="-96" transform="rotate(18)"/>
+                        <line class="pue-scale-minor" x1="0" y1="-89" x2="0" y2="-96" transform="rotate(27)"/>
+                        <line class="pue-scale-major" x1="0" y1="-86" x2="0" y2="-96" transform="rotate(36)"/>
+                        <line class="pue-scale-minor" x1="0" y1="-89" x2="0" y2="-96" transform="rotate(45)"/>
+                        <line class="pue-scale-major" x1="0" y1="-86" x2="0" y2="-96" transform="rotate(54)"/>
+                        <line class="pue-scale-minor" x1="0" y1="-89" x2="0" y2="-96" transform="rotate(63)"/>
+                        <line class="pue-scale-major" x1="0" y1="-86" x2="0" y2="-96" transform="rotate(72)"/>
+                        <line class="pue-scale-minor" x1="0" y1="-89" x2="0" y2="-96" transform="rotate(81)"/>
+                        <line class="pue-scale-major" x1="0" y1="-86" x2="0" y2="-96" transform="rotate(90)"/>
+                      </g>
+
+                      <g class="pue-scale-text">
+                        <text x="44" y="147">0</text>
+                        <text x="58" y="114">0.3</text>
+                        <text x="82" y="87">0.6</text>
+                        <text x="111" y="68">0.9</text>
+                        <text x="140" y="58">1.2</text>
+                        <text x="167" y="58">1.5</text>
+                        <text x="195" y="68">1.8</text>
+                        <text x="220" y="87">2.1</text>
+                        <text x="238" y="114">2.4</text>
+                        <text x="232" y="132">2.7</text>
+                        <text x="252" y="147">3</text>
+                      </g>
+
+                      <line class="pue-needle" x1="140" y1="146" x2="122" y2="88"/>
+                      <circle class="pue-needle-dot" cx="140" cy="146" r="4"/>
+                    </svg>
+                  </div>
+                  <div class="pue-reading">1.237</div>
+                </div>
+              </div>
+            </section>
+
+            <div class="anno anno-data" data-version="v1.0">
+              <span class="anno-tag">图元说明</span>
+              <span class="anno-version">v1.0</span>
+              <span class="anno-source" data-type="引用自古典原型">引用自古典原型</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>制冷负载系数（CLF）图元</p>
+                <ul>
+                  <li><b>用途：</b>用双扇区环形对比<strong>IT 系统</strong>与<strong>暖通空调系统</strong>在相关能耗中的占比关系，中心展示<strong>CLF</strong>综合指标，用于看制冷侧负荷与 IT 侧的相对权重。</li>
+                  <li><b>适用范围：</b>角标「仅园区/数据中心」——楼栋以下粒度是否展示由需求约定。</li>
+                  <li><b>古典对应：</b>「制冷负载系数」图元。</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- 5. 制冷负载系数（CLF） -->
+            <section class="dash-card" aria-labelledby="t-clf">
+              <div class="card-head">
+                <div class="card-title"><span class="card-title-dot"></span><span id="t-clf">制冷负载系数</span></div>
+                <span class="card-tag">仅园区/数据中心</span>
+              </div>
+              <div class="card-body">
+                <div class="chart-inner">
+                  <div class="donut-row">
+                    <div class="donut-wrap">
+                      <canvas id="chartClf" aria-hidden="true"></canvas>
+                      <div class="donut-center">
+                        <div class="donut-num">0.161</div>
+                        <div class="donut-unit">CLF</div>
+                      </div>
+                    </div>
+                    <div class="donut-legend">
+                      <div class="legend-row">
+                        <div class="legend-left"><span class="legend-dot" style="background:#5C6BC0"></span>IT 系统</div>
+                        <span class="legend-val">2,001,421 kWh</span>
+                      </div>
+                      <div class="legend-row">
+                        <div class="legend-left"><span class="legend-dot" style="background:#EC407A"></span>暖通空调系统</div>
+                        <span class="legend-val">321,978 kWh</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <div class="anno anno-data" data-version="v1.0">
+              <span class="anno-tag">图元说明</span>
+              <span class="anno-version">v1.0</span>
+              <span class="anno-source" data-type="引用自古典原型">引用自古典原型</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>PLF 图元</p>
+                <ul>
+                  <li><b>用途：</b>环形对比<strong>IT 系统</strong>与<strong>动力系统</strong>相关能耗占比，中心为 <strong>PLF</strong> 指标，用于观察动力侧（如供配电等）相对 IT 的负荷特征。</li>
+                  <li><b>适用范围：</b>「仅园区/数据中心」。</li>
+                  <li><b>古典对应：</b>「plf」图元；与 CLF 的拆分维度不同，评审时对照分项定义区分。</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- 6. PLF -->
+            <section class="dash-card" aria-labelledby="t-plf">
+              <div class="card-head">
+                <div class="card-title"><span class="card-title-dot"></span><span id="t-plf">PLF</span></div>
+                <span class="card-tag">仅园区/数据中心</span>
+              </div>
+              <div class="card-body">
+                <div class="chart-inner">
+                  <div class="donut-row">
+                    <div class="donut-wrap">
+                      <canvas id="chartPlf" aria-hidden="true"></canvas>
+                      <div class="donut-center">
+                        <div class="donut-num">0.043</div>
+                        <div class="donut-unit">PLF</div>
+                      </div>
+                    </div>
+                    <div class="donut-legend">
+                      <div class="legend-row">
+                        <div class="legend-left"><span class="legend-dot" style="background:#26A69A"></span>IT 系统</div>
+                        <span class="legend-val">2,001,421 kWh</span>
+                      </div>
+                      <div class="legend-row">
+                        <div class="legend-left"><span class="legend-dot" style="background:#FF7043"></span>动力系统</div>
+                        <span class="legend-val">85,163 kWh</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <div class="anno anno-data" data-version="v1.0">
+              <span class="anno-tag">图元说明</span>
+              <span class="anno-version">v1.0</span>
+              <span class="anno-source" data-type="引用自古典原型">引用自古典原型</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>用能分项统计（电）图元</p>
+                <ul>
+                  <li><b>用途：</b>按电耗<strong>分项</strong>（如 IT、制冷、配电、其他）展示占比与绝对量；多段环形堆叠，中心为所选对象在该周期内的<strong>用电总能耗</strong>。</li>
+                  <li><b>图例：</b>与各色扇区一一对应，便于核对分项名称与 kWh 数值。</li>
+                  <li><b>适用范围：</b>「支持任意对象」；分项树是否随对象类型变化以需求为准。</li>
+                  <li><b>古典对应：</b>「用能分项统计」图元。</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- 7. 用能分项统计（电）·手绘环形（蓝/青/紫/品红） -->
+            <section class="dash-card" aria-labelledby="t-subitem">
+              <div class="card-head">
+                <div class="card-title"><span class="card-title-dot"></span><span id="t-subitem">用能分项统计（电）</span></div>
+                <span class="card-tag">支持任意对象</span>
+              </div>
+              <div class="card-body">
+                <div class="drawn-chart-box">
+                  <div class="subitem-chart">
+                    <div class="subitem-donut" aria-hidden="true">
+                      <canvas id="chartSubitem"></canvas>
+                      <div class="subitem-center">
+                        <div class="subitem-center-val">169.00 kWh</div>
+                        <div class="subitem-center-lbl">总能耗</div>
+                      </div>
+                    </div>
+                    <div class="subitem-legend">
+                      <div class="lg"><span class="lg-dot" style="background:#9BB8EA"></span>IT 耗电 · 68.00 kWh</div>
+                      <div class="lg"><span class="lg-dot" style="background:#7EC8D6"></span>制冷耗电 · 47.32 kWh</div>
+                      <div class="lg"><span class="lg-dot" style="background:#B0A8DC"></span>配电耗电 · 37.18 kWh</div>
+                      <div class="lg"><span class="lg-dot" style="background:#D4BCE4"></span>其他耗电 · 16.90 kWh</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <div class="anno anno-data" data-version="v1.0">
+              <span class="anno-tag">图元说明</span>
+              <span class="anno-version">v1.0</span>
+              <span class="anno-source" data-type="引用自古典原型">引用自古典原型</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>基础设施效率（DCIE）图元</p>
+                <ul>
+                  <li><b>用途：</b>四象限环形展示 IT、制冷、配电、其他等<strong>基础设施相关用电</strong>的结构占比；中心为 <strong>DCIE</strong>（数据中心基础设施效率），与 PUE 互为倒数关系：DCIE = IT 电量 / 总电量（定义以发布的需求为准）。</li>
+                  <li><b>适用范围：</b>「仅园区/数据中心」。</li>
+                  <li><b>古典对应：</b>「基础设施效率」图元。</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- 8. 基础设施效率·四等分 DCIE 环（手绘） -->
+            <section class="dash-card" aria-labelledby="t-infra">
+              <div class="card-head">
+                <div class="card-title"><span class="card-title-dot"></span><span id="t-infra">基础设施效率</span></div>
+                <span class="card-tag">仅园区/数据中心</span>
+              </div>
+              <div class="card-body">
+                <div class="drawn-chart-box">
+                  <div class="infra-panel">
+                    <div class="infra-donut-wrap" aria-hidden="true">
+                      <canvas id="chartInfra"></canvas>
+                      <div class="infra-center">
+                        <div class="infra-center-num">—</div>
+                        <div class="infra-center-lbl">DCIE</div>
+                      </div>
+                    </div>
+                    <div class="infra-mini-legend">
+                      <span style="color:#486A9E">IT 0%</span>
+                      <span style="color:#3D7A8A">制冷 0%</span>
+                      <span style="color:#5E5690">配电 0%</span>
+                      <span style="color:#755E8C">其他 0%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+          </div><!-- /dash-grid -->
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var dim = 'year'
+      var state = { y: 2026, m: 3, d: 26, y2: 2026, m2: 3, d2: 28 }
+      var periodNextPick = 'start'
+      var monthInput = document.getElementById('pickerMonth')
+      var dayInput = document.getElementById('pickerDay')
+      var dayEndInput = document.getElementById('pickerDayEnd')
+      var labelEl = document.getElementById('datePillLabel')
+      var pillBtn = document.getElementById('datePillBtn')
+      var seg = document.getElementById('timeDimSeg')
+
+      function pad (n) {
+        return String(n).padStart(2, '0')
+      }
+
+      function syncPickersFromState () {
+        monthInput.value = state.y + '-' + pad(state.m)
+        dayInput.value = state.y + '-' + pad(state.m) + '-' + pad(state.d)
+        if (dayEndInput) {
+          dayEndInput.value = state.y2 + '-' + pad(state.m2) + '-' + pad(state.d2)
+        }
+      }
+
+      function dateToTs (y, m, d) {
+        return new Date(y, m - 1, d).getTime()
+      }
+
+      function normalizePeriodRange () {
+        var t0 = dateToTs(state.y, state.m, state.d)
+        var t1 = dateToTs(state.y2, state.m2, state.d2)
+        if (t1 < t0) {
+          var a = { y: state.y, m: state.m, d: state.d }
+          state.y = state.y2
+          state.m = state.m2
+          state.d = state.d2
+          state.y2 = a.y
+          state.m2 = a.m
+          state.d2 = a.d
+        }
+      }
+
+      function formatLabel () {
+        var y = state.y
+        var m = state.m
+        var d = state.d
+        if (dim === 'year') return String(y)
+        if (dim === 'month') return y + '-' + pad(m)
+        if (dim === 'day') return y + '-' + pad(m) + '-' + pad(d)
+        if (dim === 'period') {
+          return y + '-' + pad(m) + '-' + pad(d) + ' ~ ' + state.y2 + '-' + pad(state.m2) + '-' + pad(state.d2)
+        }
+        return ''
+      }
+
+      function daysInMonth (y, m) {
+        return new Date(y, m, 0).getDate()
+      }
+
+      function hourLabelsSeven () {
+        var hours = [0, 4, 8, 12, 16, 20, 23]
+        return hours.map(function (h) { return pad(h) + ':00' })
+      }
+
+      /** 年→月；月→日；日→小时（当日）；时段→范围内按小时均匀 7 点 */
+      function buildSevenAxisLabels () {
+        var y = state.y
+        var m = state.m
+        var d = state.d
+        var n = 7
+        var labels = []
+        var i
+        if (dim === 'year') {
+          return ['1月', '3月', '5月', '7月', '9月', '11月', '12月']
+        }
+        if (dim === 'month') {
+          var dm = daysInMonth(y, m)
+          for (i = 0; i < n; i++) {
+            var day = i === n - 1 ? dm : Math.max(1, Math.round(1 + i * (dm - 1) / (n - 1)))
+            labels.push(pad(m) + '-' + pad(day))
+          }
+          return labels
+        }
+        if (dim === 'day') {
+          return hourLabelsSeven()
+        }
+        normalizePeriodRange()
+        var t0 = dateToTs(state.y, state.m, state.d)
+        var t1 = dateToTs(state.y2, state.m2, state.d2) + 86400000 - 1
+        var spanH = Math.max(1, Math.ceil((t1 - t0) / 3600000))
+        labels = []
+        for (i = 0; i < n; i++) {
+          var off = Math.floor(i * (spanH - 1) / Math.max(1, n - 1))
+          var tt = new Date(t0 + off * 3600000)
+          labels.push(pad(tt.getMonth() + 1) + '/' + pad(tt.getDate()) + ' ' + pad(tt.getHours()) + '时')
+        }
+        return labels
+      }
+
+      function updateChartGranularity () {
+        var labels = buildSevenAxisLabels()
+        var energyHint = document.getElementById('energyUsageGranularity')
+        if (energyHint) {
+          if (dim === 'year') {
+            energyHint.textContent = '用量汇总粒度：按月（所选年「' + state.y + '」）'
+          } else if (dim === 'month') {
+            energyHint.textContent = '用量汇总粒度：按日（所选月「' + state.y + '-' + pad(state.m) + '」）'
+          } else if (dim === 'day') {
+            energyHint.textContent = '用量汇总粒度：按小时（所选日「' + formatLabel() + '」）'
+          } else {
+            energyHint.textContent = '用量汇总粒度：按小时（时段「' + formatLabel() + '」）'
+          }
+        }
+        var costH = document.getElementById('costGranularityHint')
+        if (costH) {
+          costH.textContent =
+            dim === 'year' ? '成本趋势横轴：月' :
+            dim === 'month' ? '成本趋势横轴：日' :
+            dim === 'day' ? '成本趋势横轴：小时（当日）' :
+            '成本趋势横轴：小时（范围内）'
+        }
+        var trendH = document.getElementById('trendGranularityHint')
+        if (trendH) {
+          trendH.textContent =
+            dim === 'year' ? '用电堆叠趋势横轴：月' :
+            dim === 'month' ? '用电堆叠趋势横轴：日' :
+            dim === 'day' ? '用电堆叠趋势横轴：小时（当日）' :
+            '用电堆叠趋势横轴：小时（范围内）'
+        }
+        if (typeof window.refreshDashCharts === 'function') {
+          window.refreshDashCharts()
+        }
+      }
+
+      window.__dashboardChartsApi = {
+        buildSevenAxisLabels: buildSevenAxisLabels,
+        getDim: function () { return dim }
+      }
+
+      function updatePillAria () {
+        var map = { year: '年', month: '月', day: '日', period: '时段' }
+        var hint = ''
+        if (dim === 'period') {
+          hint = periodNextPick === 'start' ? '（下次点选开始日期）' : '（下次点选结束日期）'
+        }
+        pillBtn.setAttribute('aria-label', '选择' + (map[dim] || '') + hint + '：当前为 ' + formatLabel())
+      }
+
+      function applyLabel () {
+        labelEl.textContent = formatLabel()
+        updatePillAria()
+        updateChartGranularity()
+      }
+
+      function setDim (next) {
+        dim = next
+        if (dim === 'period') {
+          periodNextPick = 'start'
+        }
+        seg.querySelectorAll('button').forEach(function (b) {
+          var on = b.getAttribute('data-dim') === dim
+          b.classList.toggle('active', on)
+          b.setAttribute('aria-pressed', on ? 'true' : 'false')
+        })
+        applyLabel()
+      }
+
+      seg.querySelectorAll('button[data-dim]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          setDim(btn.getAttribute('data-dim'))
+        })
+      })
+
+      monthInput.addEventListener('change', function () {
+        var v = monthInput.value
+        if (!v) return
+        var parts = v.split('-')
+        state.y = parseInt(parts[0], 10)
+        state.m = parseInt(parts[1], 10)
+        syncPickersFromState()
+        applyLabel()
+      })
+
+      dayInput.addEventListener('change', function () {
+        var v = dayInput.value
+        if (!v) return
+        var parts = v.split('-')
+        state.y = parseInt(parts[0], 10)
+        state.m = parseInt(parts[1], 10)
+        state.d = parseInt(parts[2], 10)
+        if (dim === 'period') {
+          if (dateToTs(state.y2, state.m2, state.d2) < dateToTs(state.y, state.m, state.d)) {
+            state.y2 = state.y
+            state.m2 = state.m
+            state.d2 = state.d
+          }
+        }
+        syncPickersFromState()
+        applyLabel()
+      })
+
+      if (dayEndInput) {
+        dayEndInput.addEventListener('change', function () {
+          var v = dayEndInput.value
+          if (!v) return
+          var parts = v.split('-')
+          state.y2 = parseInt(parts[0], 10)
+          state.m2 = parseInt(parts[1], 10)
+          state.d2 = parseInt(parts[2], 10)
+          normalizePeriodRange()
+          syncPickersFromState()
+          applyLabel()
+        })
+      }
+
+      pillBtn.addEventListener('click', function () {
+        syncPickersFromState()
+        if (dim === 'year' || dim === 'month') {
+          if (typeof monthInput.showPicker === 'function') {
+            monthInput.showPicker()
+          } else {
+            monthInput.click()
+          }
+          return
+        }
+        if (dim === 'day') {
+          if (typeof dayInput.showPicker === 'function') {
+            dayInput.showPicker()
+          } else {
+            dayInput.click()
+          }
+          return
+        }
+        if (dim === 'period' && dayEndInput) {
+          if (periodNextPick === 'start') {
+            if (typeof dayInput.showPicker === 'function') {
+              dayInput.showPicker()
+            } else {
+              dayInput.click()
+            }
+            periodNextPick = 'end'
+          } else {
+            if (typeof dayEndInput.showPicker === 'function') {
+              dayEndInput.showPicker()
+            } else {
+              dayEndInput.click()
+            }
+            periodNextPick = 'start'
+          }
+          updatePillAria()
+        }
+      })
+
+      syncPickersFromState()
+      applyLabel()
+
+      document.querySelectorAll('.dash-tab').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          document.querySelectorAll('.dash-tab').forEach(function (t) {
+            t.classList.remove('active')
+            t.setAttribute('aria-selected', 'false')
+          })
+          tab.classList.add('active')
+          tab.setAttribute('aria-selected', 'true')
+        })
+      })
+    })()
+  </script>
+  <script>
+    (function () {
+      if (typeof Chart === 'undefined') return
+
+      var fontStack = '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif'
+      Chart.defaults.font.family = fontStack
+      Chart.defaults.color = '#8C8C8C'
+      Chart.defaults.scale.grid.color = '#EAF0F6'
+      Chart.defaults.plugins.tooltip.padding = 10
+      Chart.defaults.plugins.tooltip.cornerRadius = 8
+
+      var charts = { cost: null, trend: null, clf: null, plf: null, subitem: null, infra: null }
+
+      function getLabels () {
+        var api = window.__dashboardChartsApi
+        if (!api || typeof api.buildSevenAxisLabels !== 'function') return ['—', '—', '—', '—', '—', '—', '—']
+        return api.buildSevenAxisLabels()
+      }
+
+      function costSeries (n, seed) {
+        var out = []
+        var s = seed || 0
+        var i
+        for (i = 0; i < n; i++) {
+          var t = 18 + 52 * Math.sin((i + s) / 1.35) + i * 2.8 + (s % 7) * 0.4
+          out.push(Math.max(8, Math.round(t * 10) / 10))
+        }
+        return out
+      }
+
+      function stackedRows (n, seed) {
+        var rows = []
+        var i
+        var j
+        var bases = [0.42, 0.22, 0.18, 0.08]
+        for (i = 0; i < n; i++) {
+          var wave = 0.75 + 0.25 * Math.sin((i + seed) / 1.1)
+          var total = (280 + 180 * Math.sin((i + seed * 0.3) / 2)) * wave
+          var parts = []
+          for (j = 0; j < 4; j++) {
+            var jitter = 0.88 + 0.24 * Math.sin((i * 1.7 + j + seed) / 3)
+            parts.push(Math.round(total * bases[j] * jitter * 10) / 10)
+          }
+          var sum = parts[0] + parts[1] + parts[2] + parts[3]
+          parts[0] = Math.round((parts[0] + (total - sum)) * 10) / 10
+          rows.push(parts)
+        }
+        var datasets = [[], [], [], []]
+        for (i = 0; i < n; i++) {
+          for (j = 0; j < 4; j++) datasets[j].push(rows[i][j])
+        }
+        return datasets
+      }
+
+      function dimSeed () {
+        var api = window.__dashboardChartsApi
+        var d = api && api.getDim ? api.getDim() : 'year'
+        return { year: 1, month: 2, day: 3, period: 4 }[d] || 0
+      }
+
+      function buildOrRefresh () {
+        var labels = getLabels()
+        var n = labels.length
+        var seed = dimSeed()
+        var costData = costSeries(n, seed)
+
+        if (charts.cost) {
+          charts.cost.data.labels = labels
+          charts.cost.data.datasets[0].data = costData
+          charts.cost.update('none')
+        } else {
+          var elCost = document.getElementById('chartCost')
+          if (elCost) {
+            var ctxC = elCost.getContext('2d')
+            charts.cost = new Chart(ctxC, {
+              type: 'line',
+              data: {
+                labels: labels,
+                datasets: [{
+                  label: '成本（元）',
+                  data: costData,
+                  fill: true,
+                  tension: 0.35,
+                  pointRadius: 4,
+                  pointHoverRadius: 6,
+                  pointBackgroundColor: '#fff',
+                  pointBorderColor: '#1677FF',
+                  pointBorderWidth: 2,
+                  borderWidth: 3,
+                  borderColor: '#6BAFAF',
+                  backgroundColor: 'rgba(109, 180, 190, 0.14)'
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'nearest', axis: 'x', intersect: false },
+                plugins: {
+                  legend: { display: false },
+                  tooltip: {
+                    callbacks: {
+                      label: function (ctx) {
+                        var v = ctx.parsed.y
+                        return '成本：' + (v != null ? v : '—') + ' 元'
+                      }
+                    }
+                  }
+                },
+                scales: {
+                  x: {
+                    ticks: { maxRotation: 0, autoSkip: true, font: { size: 10 } },
+                    grid: { display: false }
+                  },
+                  y: {
+                    beginAtZero: true,
+                    title: { display: true, text: '元', color: '#94A3B8', font: { size: 11 } },
+                    ticks: { font: { size: 10 } },
+                    grid: { color: '#EAF0F6' }
+                  }
+                }
+              }
+            })
+          }
+        }
+
+        var stacks = stackedRows(n, seed)
+        var trendSets = [
+          { label: 'IT 耗电', data: stacks[0], backgroundColor: '#9BB8EA', borderRadius: { bottomLeft: 5, bottomRight: 5 }, borderWidth: 0 },
+          { label: '制冷耗电', data: stacks[1], backgroundColor: '#7EC8D6', borderRadius: 0, borderWidth: 0 },
+          { label: '配电耗电', data: stacks[2], backgroundColor: '#B0A8DC', borderRadius: 0, borderWidth: 0 },
+          { label: '其他耗电', data: stacks[3], backgroundColor: '#D4BCE4', borderRadius: { topLeft: 5, topRight: 5 }, borderWidth: 0 }
+        ]
+
+        if (charts.trend) {
+          charts.trend.data.labels = labels
+          trendSets.forEach(function (ds, idx) {
+            charts.trend.data.datasets[idx].data = ds.data
+          })
+          charts.trend.update('none')
+        } else {
+          var elTrend = document.getElementById('chartTrend')
+          if (elTrend) {
+            charts.trend = new Chart(elTrend.getContext('2d'), {
+              type: 'bar',
+              data: { labels: labels, datasets: trendSets },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                datasets: {
+                  bar: {
+                    maxBarThickness: 36,
+                    categoryPercentage: 0.5,
+                    barPercentage: 0.92
+                  }
+                },
+                plugins: {
+                  legend: { display: false },
+                  tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.88)',
+                    padding: 10,
+                    cornerRadius: 8,
+                    callbacks: {
+                      footer: function (items) {
+                        if (!items.length) return ''
+                        var t = 0
+                        items.forEach(function (it) { t += it.parsed.y || 0 })
+                        return '合计：' + Math.round(t * 10) / 10 + ' kWh'
+                      }
+                    }
+                  }
+                },
+                scales: {
+                  x: {
+                    stacked: true,
+                    ticks: { maxRotation: 0, font: { size: 10 }, color: '#64748B' },
+                    grid: { display: false }
+                  },
+                  y: {
+                    stacked: true,
+                    beginAtZero: true,
+                    title: { display: true, text: 'kWh', color: '#94A3B8', font: { size: 11 } },
+                    ticks: { font: { size: 10 }, color: '#64748B' },
+                    grid: { color: 'rgba(148, 163, 184, 0.18)', drawBorder: false }
+                  }
+                }
+              }
+            })
+          }
+        }
+      }
+
+      function doughnutCommon (key, canvasId, labels, data, colors, cutout, valueSuffix) {
+        var suffix = valueSuffix || ' kWh'
+        var el = document.getElementById(canvasId)
+        if (!el) return
+        if (charts[key]) {
+          charts[key].data.labels = labels
+          charts[key].data.datasets[0].data = data
+          charts[key].options.plugins.tooltip.callbacks.label = function (ctx) {
+            var lab = ctx.label || ''
+            var v = ctx.parsed
+            return lab + '：' + v + suffix
+          }
+          charts[key].update('none')
+          return
+        }
+        charts[key] = new Chart(el.getContext('2d'), {
+          type: 'doughnut',
+          data: {
+            labels: labels,
+            datasets: [{
+              data: data,
+              backgroundColor: colors,
+              borderWidth: 0,
+              hoverOffset: 8
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: cutout || '68%',
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function (ctx) {
+                    var lab = ctx.label || ''
+                    var v = ctx.parsed
+                    return lab + '：' + v + suffix
+                  }
+                }
+              }
+            }
+          }
+        })
+      }
+
+      function refreshDonuts () {
+        doughnutCommon('clf', 'chartClf', ['IT 系统', '暖通空调系统'], [2001421, 321978], ['#5C6BC0', '#EC407A'], '68%', ' kWh')
+        doughnutCommon('plf', 'chartPlf', ['IT 系统', '动力系统'], [2001421, 85163], ['#26A69A', '#FF7043'], '68%', ' kWh')
+        doughnutCommon('subitem', 'chartSubitem', ['IT 耗电', '制冷耗电', '配电耗电', '其他耗电'], [68, 47.32, 37.18, 16.9], ['#9BB8EA', '#7EC8D6', '#B0A8DC', '#D4BCE4'], '72%', ' kWh')
+        doughnutCommon('infra', 'chartInfra', ['IT', '制冷', '配电', '其他'], [25, 25, 25, 25], ['#9BB8EA', '#7EC8D6', '#B0A8DC', '#D4BCE4'], '70%', '%（结构占比示意）')
+      }
+
+      window.refreshDashCharts = function () {
+        buildOrRefresh()
+        refreshDonuts()
+      }
+
+      window.refreshDashCharts()
+
+      var roCost = document.querySelector('.cost-chart-panel')
+      var roTrend = document.querySelector('.trend-chart-panel')
+      if (typeof ResizeObserver !== 'undefined') {
+        var ro = new ResizeObserver(function () {
+          if (charts.cost) charts.cost.resize()
+          if (charts.trend) charts.trend.resize()
+        })
+        if (roCost) ro.observe(roCost)
+        if (roTrend) ro.observe(roTrend)
+      }
+    })()
+  </script>
+  <script>
+    (function () {
+      var tree = {
+        '互盟数据中心': {
+          'IT系统': ['机柜列 A-1', '机柜列 A-2', 'PDU-01', '列头柜-东区'],
+          '电力系统': ['低压配电柜-1', 'UPS 主机 A', '电池组-1'],
+          '其他系统': ['环境传感器-大厅', '门禁控制器-1'],
+          '暖通空调系统': ['冷机-01', '冷却塔-1', '空调末端-东区']
+        },
+        '华东一号': {
+          'IT系统': ['IT 模块-01', '机柜区-H1'],
+          '电力系统': ['配电单元-H1'],
+          '其他系统': ['弱电间设备'],
+          '暖通空调系统': ['精密空调-01']
+        },
+        '华南二号': {
+          'IT系统': ['服务器区-S2'],
+          '电力系统': ['市电进线柜', '变压器-2'],
+          '其他系统': ['消防监控'],
+          '暖通空调系统': ['风冷机组-1', '末端风机-南']
+        }
+      }
+      var subsOrder = ['IT系统', '其他系统', '暖通空调系统', '电力系统']
+      var dcNames = Object.keys(tree)
+      var currentDc = dcNames[0]
+      var selectedSubsystem = null
+      var selectedDevice = null
+
+      var dropdown = document.getElementById('dcDropdown')
+      var trigger = document.getElementById('dcTrigger')
+      var panel = document.getElementById('dcPanel')
+      var labelEl = document.getElementById('dcTriggerLabel')
+      var pillsHost = document.getElementById('dcDcPills')
+      var subGrid = document.getElementById('dcSubGrid')
+      var stepSub = document.getElementById('dcStepSub')
+      var stepDev = document.getElementById('dcStepDev')
+      var devTitle = document.getElementById('dcDevSubsystemTitle')
+      var devList = document.getElementById('dcDevList')
+      var backBtn = document.getElementById('dcBackSub')
+
+      function setPanelOpen (open) {
+        panel.hidden = !open
+        trigger.setAttribute('aria-expanded', open ? 'true' : 'false')
+      }
+
+      function updateTriggerLabel () {
+        if (selectedDevice && selectedSubsystem && currentDc) {
+          labelEl.textContent = currentDc + ' / ' + selectedSubsystem + ' / ' + selectedDevice
+        } else {
+          labelEl.textContent = currentDc
+        }
+      }
+
+      function renderPills () {
+        pillsHost.innerHTML = ''
+        dcNames.forEach(function (name) {
+          var b = document.createElement('button')
+          b.type = 'button'
+          b.className = 'dc-dc-pill' + (name === currentDc ? ' active' : '')
+          b.textContent = name
+          b.setAttribute('role', 'tab')
+          b.setAttribute('aria-selected', name === currentDc ? 'true' : 'false')
+          b.addEventListener('click', function () {
+            currentDc = name
+            selectedSubsystem = null
+            selectedDevice = null
+            renderPills()
+            renderSubsystems()
+            showSubStep()
+            updateTriggerLabel()
+          })
+          pillsHost.appendChild(b)
+        })
+      }
+
+      function showSubStep () {
+        stepSub.hidden = false
+        stepDev.hidden = true
+      }
+
+      function showDevStep (subName) {
+        selectedSubsystem = subName
+        selectedDevice = null
+        stepSub.hidden = true
+        stepDev.hidden = false
+        devTitle.textContent = subName
+        devList.innerHTML = ''
+        var devices = (tree[currentDc] && tree[currentDc][subName]) || []
+        devices.forEach(function (dev) {
+          var btn = document.createElement('button')
+          btn.type = 'button'
+          btn.className = 'dc-dev-item'
+          btn.textContent = dev
+          btn.setAttribute('role', 'listitem')
+          btn.addEventListener('click', function () {
+            selectedDevice = dev
+            updateTriggerLabel()
+            setPanelOpen(false)
+          })
+          devList.appendChild(btn)
+        })
+        updateTriggerLabel()
+      }
+
+      function renderSubsystems () {
+        subGrid.innerHTML = ''
+        var subs = tree[currentDc]
+        if (!subs) return
+        subsOrder.forEach(function (subName) {
+          if (!subs[subName]) return
+          var btn = document.createElement('button')
+          btn.type = 'button'
+          btn.className = 'dc-sub-btn'
+          btn.textContent = subName
+          btn.setAttribute('role', 'listitem')
+          btn.addEventListener('click', function () {
+            showDevStep(subName)
+          })
+          subGrid.appendChild(btn)
+        })
+      }
+
+      backBtn.addEventListener('click', function () {
+        selectedSubsystem = null
+        selectedDevice = null
+        showSubStep()
+        renderSubsystems()
+        updateTriggerLabel()
+      })
+
+      trigger.addEventListener('click', function (e) {
+        e.stopPropagation()
+        var willOpen = panel.hidden
+        setPanelOpen(willOpen)
+        if (willOpen) {
+          renderPills()
+          renderSubsystems()
+          showSubStep()
+        }
+      })
+
+      document.addEventListener('click', function (e) {
+        if (!panel.hidden && dropdown && !dropdown.contains(e.target)) {
+          setPanelOpen(false)
+        }
+      })
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !panel.hidden) {
+          setPanelOpen(false)
+        }
+      })
+
+      updateTriggerLabel()
+    })()
+  </script>
+  <button type="button" class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+
+  <script>
+  function initAnnoVersionFilter() {
+    var bar = document.getElementById('annoFilterBar');
+    var tags = document.getElementById('annoFilterTags');
+    if (!document.body.classList.contains('annotation-mode')) return;
+    var annos = document.querySelectorAll('.anno[data-version]');
+    var versions = [];
+    annos.forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (v && versions.indexOf(v) === -1) versions.push(v);
+    });
+    versions.sort(function(a, b) {
+      var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+      var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+      for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+        if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+      }
+      return 0;
+    });
+    tags.innerHTML = '';
+    var allBtn = document.createElement('span');
+    allBtn.className = 'anno-filter-tag';
+    allBtn.textContent = '全部';
+    allBtn.onclick = function() { filterAnno('all', versions[0]); setActive(this); };
+    tags.appendChild(allBtn);
+    versions.forEach(function(v, i) {
+      var btn = document.createElement('span');
+      btn.className = 'anno-filter-tag' + (i === 0 ? ' active' : '');
+      btn.textContent = v;
+      btn.onclick = function() { filterAnno(v, versions[0]); setActive(this); };
+      tags.appendChild(btn);
+    });
+    if (versions.length > 0) filterAnno(versions[0], versions[0]);
+  }
+  function filterAnno(version, latest) {
+    document.querySelectorAll('.anno[data-version]').forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (version === 'all') {
+        a.style.display = '';
+        a.style.opacity = (v === latest) ? '1' : '0.6';
+      } else {
+        a.style.display = (v === version) ? '' : 'none';
+        a.style.opacity = '1';
+      }
+    });
+  }
+  function setActive(el) {
+    el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function(t) { t.classList.remove('active'); });
+    el.classList.add('active');
+  }
+  </script>
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="总览看板"></script>
+  <style>
+    :root { --nav-primary: #1E40AF; --nav-primary-dark: #17358A; --nav-primary-tint: #EEF4FF; }
+    .sidebar-item.active:hover { background: rgba(30,64,175,.12) !important; color: var(--nav-primary-dark) !important; }
+    .sidebar-item.active .sidebar-item-ver { color: var(--nav-primary) !important; background: rgba(30,64,175,.14) !important; }
+    .sidebar.sidebar--collapsed .sidebar-group-children .sidebar-item.active::before { box-shadow: 0 0 0 3px rgba(30,64,175,.24) !important; }
+  </style>
+</body>
+</html>

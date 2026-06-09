@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>机房总览</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-dark: #17358A;
+      --success: #16A34A;
+      --danger: #DC2626;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --sidebar-bg: #071B2E;
+      --header-bg: #071B2E;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { text-decoration: none; color: inherit; cursor: pointer; }
+
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main { flex: 1; min-width: 0; overflow-y: auto; background: var(--bg-body); }
+
+    .page-shell { padding: 18px 20px 24px; }
+
+    /* 顶部 Tab */
+    .page-header-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .sys-tabs {
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+    .sys-tab {
+      padding: 10px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition);
+      border-bottom: 2px solid transparent;
+    }
+    .sys-tab:hover { color: var(--primary); }
+    .sys-tab.active {
+      color: var(--primary);
+      font-weight: 600;
+      border-bottom-color: var(--primary);
+      background: #F8FAFF;
+    }
+
+    /* 概览卡片 */
+    .overview-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .overview-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 16px 18px;
+      box-shadow: var(--shadow-sm);
+      transition: all var(--transition);
+    }
+    .overview-card:hover { box-shadow: var(--shadow-card); }
+    .overview-card .card-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+    .overview-card .card-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    .overview-card .card-hint {
+      font-size: 11px;
+      color: var(--text-hint);
+      line-height: 1.5;
+    }
+
+    /* 机房列表卡片 */
+    .page-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+    .page-head {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      background: #FBFCFE;
+    }
+    .table-wrap { overflow-x: auto; }
+    .data-table {
+      width: 100%;
+      min-width: 1280px;
+      border-collapse: collapse;
+    }
+    .data-table thead th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .data-table tbody td {
+      padding: 14px 16px;
+      font-size: 13px;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-light);
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+    .data-table tbody tr:hover { background: #FBFCFE; }
+    .room-link {
+      color: var(--primary);
+      cursor: pointer;
+      font-weight: 500;
+      transition: opacity var(--transition);
+    }
+    .room-link:hover { opacity: 0.85; text-decoration: underline; }
+    .temp-high { color: var(--danger); font-weight: 600; }
+    .status-optimizing { color: var(--success); font-weight: 500; }
+    .status-stopped { color: var(--text-secondary); }
+
+    @media (max-width: 1100px) {
+      .overview-cards { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 640px) {
+      .overview-cards { grid-template-columns: 1fr; }
+      .page-header-row { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+        <div class="page-shell">
+
+          <!-- ===== 版本信息 ===== -->
+          <div class="anno anno-version-header" data-version="v1.6">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v1.6</p>
+              <p><b>更新日期：</b>2026-03-20</p>
+              <p><b>变更概述：</b>机房总览页，展示末端水冷系统下所有机房的运行概况与寻优状态。</p>
+              <p><b>本页说明：</b>按末端水冷系统 Tab 切换实例；顶部概览卡聚合 pPUE、IT 负载、空调总功率、寻优中机房占比；下方「机房列表」无分页展示全部机房，点击机房名进入单机房寻优详情（柔性/加减机由详情路由决定）。验收要点：Tab 与列表数据联动刷新；温度超阈红色高亮；列表按能效树顺序排列。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-version-header" data-version="v1.9">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v1.9</p>
+              <p><b>更新日期：</b>2026-04-17</p>
+              <p><b>变更概述：</b>机房列表新增「最新机房健康度」列——展示每个机房最近一次自动诊断报告的综合健康度得分（0–100），点击数值可跳转至「机房智能诊断」页查看该机房最近一次诊断详情。</p>
+            </div>
+          </div>
+
+          <div class="page-header-row">
+            <div class="sys-tabs">
+              <div class="sys-tab active" data-tab="G11-3">G11-3</div>
+              <div class="sys-tab" data-tab="G12-3">G12-3</div>
+            </div>
+          </div>
+
+          <div class="anno anno-ux" data-version="v1.6">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v1.6</span>
+            <span class="anno-source">基于文档推断</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>顶部系统 Tab（末端水冷系统切换）</p>
+              <ul>
+                <li><b>Tab 切换：</b>点击 Tab 切换到对应系统，当前 Tab 高亮，下方概览卡片和机房列表同步刷新</li>
+                <li><b>默认选中：</b>进入页面时默认选中第一个系统 Tab</li>
+                <li><b>切换时加载：</b>切换 Tab 后概览卡片和列表区域显示 loading，数据加载完成后渲染</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="anno anno-data" data-version="v1.6">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v1.6</span>
+            <span class="anno-source">基于文档推断</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>系统 Tab 数据</p>
+              <ul>
+                <li><b>Tab 列表来源：</b>读取能效视图下所有末端水冷系统实例，按能效树节点顺序排列</li>
+                <li><b>Tab 名称：</b>取末端水冷系统实例名称</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="overview-cards">
+            <div class="overview-card">
+              <div class="card-label">pPUE</div>
+              <div class="card-value">1.062</div>
+              <div class="card-hint">数据来源末端水冷系统上的最新测点值</div>
+            </div>
+            <div class="overview-card">
+              <div class="card-label">IT负载</div>
+              <div class="card-value">1723.6 kW</div>
+            </div>
+            <div class="overview-card">
+              <div class="card-label">空调总功率</div>
+              <div class="card-value">27.2 kW</div>
+            </div>
+            <div class="overview-card">
+              <div class="card-label">寻优中/总机房</div>
+              <div class="card-value">7/10</div>
+            </div>
+          </div>
+
+          <div class="anno anno-field" data-version="v1.6">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v1.6</span>
+            <span class="anno-source">基于文档推断</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>概览指标卡片（四卡片区）</p>
+              <table class="anno-table">
+                <thead>
+                  <tr><th>指标</th><th>类型</th><th>单位</th><th>计算逻辑</th><th>备注</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>pPUE</td><td>Float</td><td>无量纲</td><td>末端水冷系统上的最新 pPUE 测点值</td><td>保留 3 位小数</td></tr>
+                  <tr><td>IT 负载</td><td>Float</td><td>kW</td><td>末端水冷系统上的 IT 负载测点最新值</td><td>保留 1 位小数</td></tr>
+                  <tr><td>空调总功率</td><td>Float</td><td>kW</td><td>末端水冷系统上的空调总功率测点最新值</td><td>保留 1 位小数</td></tr>
+                  <tr><td>寻优中/总机房</td><td>String</td><td>—</td><td>当前系统下寻优中的机房数 / 机房总数</td><td>格式：N/M</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="anno anno-data" data-version="v1.6">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v1.6</span>
+            <span class="anno-source">基于文档推断</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>概览指标卡片</p>
+              <ul>
+                <li><b>数据来源：</b>各指标取自末端水冷系统实例上的对应测点最新值</li>
+                <li><b>刷新策略：</b>随页面加载获取，切换 Tab 时重新拉取；不自动轮询</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="anno anno-state" data-version="v1.6">
+            <span class="anno-tag">状态说明</span>
+            <span class="anno-version">v1.6</span>
+            <span class="anno-source">基于文档推断</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>概览指标卡片</p>
+              <ul>
+                <li><b>加载中：</b>卡片区域显示骨架屏（4 个卡片占位）</li>
+                <li><b>测点无数据：</b>对应卡片数值显示 "--"</li>
+                <li><b>接口异常：</b>卡片区域显示"数据加载失败" + 重试按钮</li>
+              </ul>
+            </div>
+          </div>
+
+          <section class="page-card">
+            <div class="page-head">机房列表</div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>机房名称</th>
+                    <th>平均/最高冷通道温度</th>
+                    <th>平均/最高热通道温度</th>
+                    <th>空调开机/投入总数</th>
+                    <th>pPUE</th>
+                    <th>IT负载</th>
+                    <th>空调总功率</th>
+                    <th>柔性寻优状态</th>
+                    <th>加减机寻优状态</th>
+                    <th>最新机房健康度</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><a class="room-link" href="机房寻优-柔性寻优.html">1号机房</a></td>
+                    <td>19.2/<span class="temp-high">24.1</span>°C</td>
+                    <td>19.2/<span class="temp-high">24.1</span>°C</td>
+                    <td>5/10</td>
+                    <td>1.024</td>
+                    <td>102.4KW</td>
+                    <td>102.4KW</td>
+                    <td class="status-optimizing">寻优中</td>
+                    <td class="status-optimizing">寻优中</td>
+                    <td><a class="room-link" href="机房智能诊断.html?system=G11-3&amp;room=1%E5%8F%B7%E6%9C%BA%E6%88%BF" title="查看该机房最近一次诊断结果">75</a></td>
+                  </tr>
+                  <tr>
+                    <td><a class="room-link" href="机房寻优-柔性寻优.html">2号机房</a></td>
+                    <td>12.4/21.4°C</td>
+                    <td>12.4/21.4°C</td>
+                    <td>5/10</td>
+                    <td>1.024</td>
+                    <td>102.4KW</td>
+                    <td>102.4KW</td>
+                    <td class="status-optimizing">寻优中</td>
+                    <td class="status-stopped">停止寻优</td>
+                    <td><a class="room-link" href="机房智能诊断.html?system=G11-3&amp;room=2%E5%8F%B7%E6%9C%BA%E6%88%BF" title="查看该机房最近一次诊断结果">82</a></td>
+                  </tr>
+                  <tr>
+                    <td><a class="room-link" href="机房寻优-柔性寻优.html">3号机房</a></td>
+                    <td>12.4/21.4°C</td>
+                    <td>12.4/21.4°C</td>
+                    <td>5/10</td>
+                    <td>1.024</td>
+                    <td>102.4KW</td>
+                    <td>102.4KW</td>
+                    <td class="status-stopped">停止寻优</td>
+                    <td class="status-optimizing">寻优中</td>
+                    <td><a class="room-link" href="机房智能诊断.html?system=G11-3&amp;room=3%E5%8F%B7%E6%9C%BA%E6%88%BF" title="查看该机房最近一次诊断结果">68</a></td>
+                  </tr>
+                  <tr>
+                    <td><a class="room-link" href="机房寻优-柔性寻优.html">4号机房</a></td>
+                    <td>12.4/21.4°C</td>
+                    <td>12.4/21.4°C</td>
+                    <td>5/10</td>
+                    <td>1.098</td>
+                    <td>102.4KW</td>
+                    <td>102.4KW</td>
+                    <td class="status-stopped">停止寻优</td>
+                    <td class="status-stopped">停止寻优</td>
+                    <td><a class="room-link" href="机房智能诊断.html?system=G11-3&amp;room=4%E5%8F%B7%E6%9C%BA%E6%88%BF" title="查看该机房最近一次诊断结果">91</a></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="anno anno-field" data-version="v1.6">
+              <span class="anno-tag">字段说明</span>
+              <span class="anno-version">v1.6</span>
+              <span class="anno-source">基于文档推断</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>机房列表（表格 + 底栏说明）</p>
+                <table class="anno-table">
+                  <thead>
+                    <tr><th>列名</th><th>类型</th><th>说明</th><th>备注</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>机房名称</td><td>String</td><td>机房实例名称，可点击跳转详情</td><td>蓝色链接样式</td></tr>
+                    <tr><td>平均/最高冷通道温度</td><td>Float/Float</td><td>格式：平均值/最高值 °C</td><td>最高值超阈值时红色加粗</td></tr>
+                    <tr><td>平均/最高热通道温度</td><td>Float/Float</td><td>格式：平均值/最高值 °C</td><td>最高值超阈值时红色加粗</td></tr>
+                    <tr><td>空调开机/投入总数</td><td>Int/Int</td><td>当前开机台数/总投入台数</td><td>格式：N/M</td></tr>
+                    <tr><td>pPUE</td><td>Float</td><td>该机房的 pPUE 值</td><td>保留 3 位小数</td></tr>
+                    <tr><td>IT 负载</td><td>Float</td><td>该机房的 IT 负载功率</td><td>单位 KW，保留 1 位小数</td></tr>
+                    <tr><td>空调总功率</td><td>Float</td><td>该机房空调设备总功率</td><td>单位 KW，保留 1 位小数</td></tr>
+                    <tr><td>柔性寻优状态</td><td>Enum</td><td>该机房的柔性寻优任务状态：寻优中 / 停止寻优</td><td>"寻优中"绿色，"停止寻优"灰色</td></tr>
+                    <tr><td>加减机寻优状态</td><td>Enum</td><td>该机房的加减机寻优任务状态：寻优中 / 停止寻优</td><td>样式同柔性寻优状态列</td></tr>
+                    <tr><td>最新机房健康度</td><td>Int</td><td>该机最近一次自动诊断报告的综合健康度分数（0–100）</td><td>可点击跳转机房智能诊断详情，查看该机房最近一次诊断结果</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="anno anno-ux" data-version="v1.6">
+              <span class="anno-tag">交互说明</span>
+              <span class="anno-version">v1.6</span>
+              <span class="anno-source">基于文档推断</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>机房列表</p>
+                <ul>
+                  <li><b>点击机房名称：</b>跳转至「机房柔性寻优」详情页（机房寻优-柔性寻优.html），传入机房 ID</li>
+                  <li><b>点击最新机房健康度：</b>跳转至「机房智能诊断」详情页，顶栏切换为对应末端水冷系统与机房，展示该机房最近一次诊断报告内容</li>
+                  <li><b>行悬停：</b>整行背景色变为 #FBFCFE，增强定位感</li>
+                  <li><b>列表不可排序：</b>固定按能效树节点顺序排列</li>
+                  <li><b>无分页：</b>展示所有机房，无需分页控件</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="anno anno-data" data-version="v1.6">
+              <span class="anno-tag">数据逻辑</span>
+              <span class="anno-version">v1.6</span>
+              <span class="anno-source">基于文档推断</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>机房列表</p>
+                <ul>
+                  <li><b>数据来源：</b>各列数值取自空调设备组上的测点最新值</li>
+                  <li><b>温度来源：</b>冷/热通道温度取自机房内所有温度测点的平均值和最大值</li>
+                  <li><b>排序规则：</b>按能效树节点顺序排列，不支持用户手动排序</li>
+                  <li><b>刷新策略：</b>随页面加载/Tab 切换时拉取，无自动轮询</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="anno anno-state" data-version="v1.6">
+              <span class="anno-tag">状态说明</span>
+              <span class="anno-version">v1.6</span>
+              <span class="anno-source">基于文档推断</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>机房列表</p>
+                <ul>
+                  <li><b>默认态：</b>展示所有机房数据行</li>
+                  <li><b>空态：</b>当前系统下暂无机房，表格区域显示"暂无机房数据"</li>
+                  <li><b>加载中：</b>表格区域显示骨架屏（4 行占位）</li>
+                  <li><b>寻优中：</b>柔性/加减机对应列绿色文字，表示该项寻优任务正在执行</li>
+                  <li><b>停止寻优：</b>对应列灰色文字，表示该项寻优未开启或已暂停</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="anno anno-edge" data-version="v1.6">
+              <span class="anno-tag">边界与异常</span>
+              <span class="anno-version">v1.6</span>
+              <span class="anno-source">基于文档推断</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>机房列表</p>
+                <ul>
+                  <li><b>温度高亮规则：</b>最高冷/热通道温度超过安全阈值时，数值以红色加粗展示（阈值由后端安全边界配置决定）</li>
+                  <li><b>测点无数据：</b>对应单元格显示 "--"，不影响其他列展示</li>
+                  <li><b>机房数量上限：</b>无硬性上限，但单个末端水冷系统下通常不超过 50 个机房</li>
+                  <li><b>跳转目标不存在：</b>若机房详情页数据加载失败，在详情页内提示"机房数据异常"</li>
+                  <li><b>接口超时：</b>列表请求超过 10 秒未响应 → 显示"加载超时，请重试" + 重试按钮</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- ===== v1.9 新增：最新机房健康度列 ===== -->
+            <div class="anno anno-field" data-version="v1.9">
+              <span class="anno-tag">字段说明</span>
+              <span class="anno-version">v1.9</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>机房列表 — 最新机房健康度列（v1.9 新增列）</p>
+                <table class="anno-table">
+                  <thead>
+                    <tr><th>字段</th><th>类型</th><th>取值范围</th><th>说明</th><th>备注</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>最新机房健康度</td>
+                      <td>Int</td>
+                      <td>0–100 或 "--"</td>
+                      <td>取该机房最近一次完成的自动诊断任务的综合健康度得分；若该机房尚无任何诊断记录，显示 "--"</td>
+                      <td>有诊断记录时为蓝色可点击链接；无记录时为灰色不可点击文本</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="anno anno-ux" data-version="v1.9">
+              <span class="anno-tag">交互说明</span>
+              <span class="anno-version">v1.9</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>机房列表 — 最新机房健康度列（v1.9 新增）</p>
+                <ul>
+                  <li><b>有诊断记录时：</b>健康度数值以蓝色链接样式展示，鼠标悬停 tooltip 提示"查看该机房最近一次诊断结果"</li>
+                  <li><b>点击跳转：</b>跳转至「机房智能诊断」页，URL 携带 system（末端水冷系统名）和 room（机房名）参数，页面自动定位至该机房最新一次诊断报告</li>
+                  <li><b>无诊断记录时：</b>显示 "--"，无链接样式，不可点击，无 tooltip</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="anno anno-data" data-version="v1.9">
+              <span class="anno-tag">数据逻辑</span>
+              <span class="anno-version">v1.9</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>机房列表 — 最新机房健康度列（v1.9 新增）</p>
+                <ul>
+                  <li><b>数据来源：</b>取该机房所有已完成的自动诊断任务中，完成时间最近的那条记录的综合健康度字段</li>
+                  <li><b>刷新策略：</b>随机房列表一并加载，切换 Tab 或手动刷新时重新拉取；不单独轮询</li>
+                  <li><b>与诊断页联动：</b>健康度分数与「机房智能诊断」页展示的最新诊断综合得分保持一致</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      document.querySelectorAll('.sys-tab').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          document.querySelectorAll('.sys-tab').forEach(function (t) { t.classList.remove('active'); });
+          this.classList.add('active');
+        });
+      });
+    })();
+  </script>
+  <!-- 批注切换按钮 -->
+  <button class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+
+  <!-- 版本筛选栏 -->
+  <div class="anno-filter-bar" id="annoFilterBar">
+    <span class="anno-filter-label">批注版本：</span>
+    <div class="anno-filter-tags" id="annoFilterTags"></div>
+  </div>
+
+  <!-- 批注版本筛选 JS -->
+  <script>
+  function initAnnoVersionFilter() {
+    var bar = document.getElementById('annoFilterBar');
+    var tags = document.getElementById('annoFilterTags');
+    if (!document.body.classList.contains('annotation-mode')) return;
+    var annos = document.querySelectorAll('.anno[data-version]');
+    var versions = [];
+    annos.forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (v && versions.indexOf(v) === -1) versions.push(v);
+    });
+    versions.sort(function(a, b) {
+      var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+      var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+      for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+        if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+      }
+      return 0;
+    });
+    tags.innerHTML = '';
+    var allBtn = document.createElement('span');
+    allBtn.className = 'anno-filter-tag';
+    allBtn.textContent = '全部';
+    allBtn.onclick = function() { filterAnno('all', versions[0]); setActive(this); };
+    tags.appendChild(allBtn);
+    versions.forEach(function(v, i) {
+      var btn = document.createElement('span');
+      btn.className = 'anno-filter-tag' + (i === 0 ? ' active' : '');
+      btn.textContent = v;
+      btn.onclick = function() { filterAnno(v, versions[0]); setActive(this); };
+      tags.appendChild(btn);
+    });
+    if (versions.length > 0) filterAnno(versions[0], versions[0]);
+  }
+  function filterAnno(version, latest) {
+    document.querySelectorAll('.anno[data-version]').forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (version === 'all') {
+        a.style.display = '';
+        a.style.opacity = (v === latest) ? '1' : '0.6';
+      } else {
+        a.style.display = (v === version) ? '' : 'none';
+        a.style.opacity = '1';
+      }
+    });
+  }
+  function setActive(el) {
+    el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function(t) { t.classList.remove('active'); });
+    el.classList.add('active');
+  }
+  </script>
+
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="机房总览"></script>
+</body>
+</html>

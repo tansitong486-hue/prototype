@@ -1,0 +1,2088 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>冷站柔性调优</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-light: #EEF4FF;
+      --primary-dark: #17358A;
+      --success: #16A34A;
+      --success-light: #F0FDF4;
+      --warning: #D97706;
+      --warning-light: #FFF7ED;
+      --danger: #DC2626;
+      --danger-light: #FEF2F2;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --sidebar-bg: #071B2E;
+      --header-bg: #071B2E;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15,23,42,.04);
+      --shadow-card: 0 1px 3px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.04);
+      --shadow-hover: 0 6px 18px rgba(15,23,42,.08);
+      --transition: .22s cubic-bezier(.4,0,.2,1);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size:14px; color:var(--text-primary); background:var(--bg-body);
+      -webkit-font-smoothing:antialiased;
+    }
+    a { text-decoration:none; color:inherit; }
+    ::-webkit-scrollbar { width:6px; height:6px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:rgba(0,0,0,.12); border-radius:3px; }
+    ::-webkit-scrollbar-thumb:hover { background:rgba(0,0,0,.2); }
+
+    .layout { display:flex; flex-direction:column; min-height:100vh; }
+
+    .body-wrap { display:flex; flex:1; overflow:hidden; }
+
+    .main { flex:1; display:flex; flex-direction:column; overflow-y:auto; background:var(--bg-body); }
+
+    .page-header {
+      background:var(--bg-card); padding:0 20px;
+      border-bottom:1px solid var(--border-light);
+      display:flex; align-items:stretch; flex-shrink:0;
+      min-height:52px;
+    }
+    .page-header-left {
+      display:flex; align-items:center; gap:12px; padding:10px 0;
+    }
+    .page-header-nav {
+      display:flex; align-items:stretch; margin-left:auto;
+    }
+    /* 与参考原型一致：未选中为深灰/近黑，选中为品牌蓝 + 底部粗下划线 */
+    .page-nav-item {
+      display:flex; align-items:center; padding:0 20px;
+      font-size:14px; font-weight:500; color:var(--text-primary);
+      cursor:pointer; position:relative; transition:color .2s, border-color .2s;
+      border-bottom:3px solid transparent; margin-bottom:-1px;
+    }
+    .page-nav-item:hover { color:var(--primary); }
+    .page-nav-item.active {
+      color:var(--primary); font-weight:600;
+      border-bottom-color:var(--primary);
+    }
+    .selector {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 14px; border:1px solid #E2E8F0;
+      border-radius:999px; cursor:pointer; font-size:13px;
+      background:#fff; transition:all .2s; font-weight:500;
+      color:var(--text-primary);
+    }
+    .selector:hover { border-color:var(--primary); color:var(--primary); }
+    .selector .arrow-down { font-size:10px; color:var(--text-hint); }
+
+    .module-strip {
+      display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;
+      padding:12px 20px; flex-shrink:0;
+    }
+    .module-card {
+      background:var(--bg-card); border-radius:var(--radius-lg);
+      box-shadow:var(--shadow-sm); overflow:hidden;
+      border:1px solid var(--border-light); transition:all var(--transition);
+    }
+    .module-card:hover { box-shadow:var(--shadow-card); border-color:var(--border); }
+    .module-card-header {
+      padding:8px 14px; display:flex; align-items:center; gap:8px;
+      font-size:12.5px; font-weight:600; color:var(--text-primary);
+      border-bottom:1px solid var(--border-light); background:#FBFCFE;
+    }
+    .module-card-header .module-icon { display:flex; align-items:center; }
+    .module-card-header .module-icon svg { width:14px; height:14px; }
+    .module-card-body { padding:12px 14px 10px; }
+    .module-status-row {
+      display:flex; flex-wrap:wrap; gap:2px 14px; margin-bottom:10px;
+    }
+    .status-item { display:flex; flex-direction:column; gap:3px; }
+    .status-item .label { font-size:10.5px; color:var(--text-hint); line-height:1.1; }
+    .status-item .value { font-size:12.5px; font-weight:600; line-height:1.2; }
+    .status-item .value.blue { color:var(--primary); }
+    .status-item .value.green { color:var(--success); }
+    .module-actions { display:flex; gap:6px; flex-wrap:nowrap; }
+    .module-actions .btn { padding:4px 10px; font-size:12px; gap:4px; }
+    .module-card-header.opt { color:var(--primary); }
+    .module-card-header.opt .module-icon svg { fill:var(--primary); }
+    .module-card-header.deliver { color:#722ED1; }
+    .module-card-header.deliver .module-icon svg { fill:#722ED1; }
+    .module-card-header.safety { color:var(--success); }
+    .module-card-header.safety .module-icon svg { fill:var(--success); }
+    .module-status-badge {
+      margin-left:auto; font-size:10.5px; font-weight:600; padding:1px 8px;
+      border-radius:10px; line-height:1.6;
+    }
+    .module-status-badge.active { background:#F6FFED; color:#52C41A; }
+    .module-status-badge.inactive { background:#FFF1F0; color:#FF4D4F; }
+    .btn.disabled {
+      opacity:.45; cursor:not-allowed; pointer-events:none;
+    }
+    .strategy-list { list-style:none; padding:0; }
+    .strategy-item {
+      display:flex; align-items:center; gap:10px; padding:12px 16px;
+      border:1px solid var(--border-light); border-radius:var(--radius);
+      margin-bottom:8px; cursor:pointer; transition:all .2s;
+    }
+    .strategy-item:hover { border-color:var(--primary); background:var(--primary-light); }
+    .strategy-item.selected { border-color:var(--primary); background:var(--primary-light); }
+    .strategy-item .strategy-radio {
+      width:16px; height:16px; border-radius:50%;
+      border:2px solid var(--border); flex-shrink:0; position:relative;
+      transition:all .2s;
+    }
+    .strategy-item.selected .strategy-radio {
+      border-color:var(--primary);
+    }
+    .strategy-item.selected .strategy-radio::after {
+      content:''; position:absolute; top:3px; left:3px; width:6px; height:6px;
+      border-radius:50%; background:var(--primary);
+    }
+    .strategy-item .strategy-info { flex:1; }
+    .strategy-item .strategy-name { font-size:13px; font-weight:600; }
+    .strategy-item .strategy-desc { font-size:11px; color:var(--text-hint); margin-top:2px; }
+    .btn {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:5px 12px; border-radius:7px;
+      border:1px solid var(--border); cursor:pointer;
+      font-size:12px; background:#fff; color:var(--text-primary);
+      transition:all .2s; white-space:nowrap; font-weight:500; line-height:1.45;
+    }
+    .btn:hover { border-color:#B8C6D8; color:var(--primary); background:#F8FBFF; }
+    .btn-primary {
+      background:var(--primary);
+      color:#fff; border-color:transparent;
+    }
+    .btn-primary:hover {
+      background:var(--primary-dark);
+      color:#fff; box-shadow:none;
+    }
+    .btn-danger { color:var(--danger); border-color:#FECACA; background:#FFF7F7; }
+    .btn-danger:hover { background:#FFF1F1; color:var(--danger); border-color:#FCA5A5; box-shadow:none; }
+    .btn .btn-icon { display:flex; align-items:center; }
+    .btn .btn-icon svg { width:14px; height:14px; fill:currentColor; }
+
+    .summary-cards {
+      display:flex; gap:0; padding:0 20px; flex-shrink:0; flex-wrap:nowrap;
+      background:transparent; border-radius:0; margin:0 0 10px;
+    }
+    .summary-card {
+      flex:1; min-width:0; display:flex; align-items:center; gap:10px;
+      padding:12px 14px; position:relative; background:#fff;
+      border-right:1px solid var(--border-light); transition:background .2s;
+      border-top:1px solid var(--border-light); border-bottom:1px solid var(--border-light);
+    }
+    .summary-card:first-child { border-left:1px solid var(--border-light); border-radius:var(--radius-lg) 0 0 var(--radius-lg); }
+    .summary-card:last-child { border-right:1px solid var(--border-light); border-radius:0 var(--radius-lg) var(--radius-lg) 0; }
+    .summary-card:hover { background:#F9FBFF; }
+    .summary-card .card-icon {
+      width:32px; height:32px; border-radius:8px; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .summary-card .card-icon svg { width:18px; height:18px; }
+    .summary-card:nth-child(1) .card-icon { background:#EFF6FF; }
+    .summary-card:nth-child(1) .card-icon svg { fill:#2563EB; }
+    .summary-card:nth-child(2) .card-icon { background:#FFF7ED; }
+    .summary-card:nth-child(2) .card-icon svg { fill:#D97706; }
+    .summary-card:nth-child(3) .card-icon { background:#EEF2FF; }
+    .summary-card:nth-child(3) .card-icon svg { fill:#4F46E5; }
+    .summary-card:nth-child(4) .card-icon { background:#ECFEFF; }
+    .summary-card:nth-child(4) .card-icon svg { fill:#0F766E; }
+    .summary-card .card-body { flex:1; min-width:0; }
+    .summary-card .card-label { font-size:11px; color:var(--text-hint); margin-bottom:3px; font-weight:500; white-space:nowrap; }
+    .summary-card .card-value { font-size:18px; font-weight:700; color:var(--text-primary); letter-spacing:-.2px; white-space:nowrap; }
+    .summary-card .card-value .unit { font-size:11px; font-weight:500; color:var(--text-secondary); margin-left:2px; }
+    .summary-card .card-extra { font-size:10.5px; color:var(--text-secondary); line-height:1.55; white-space:nowrap; text-align:right; flex-shrink:0; margin-left:8px; }
+
+    .tabs-bar {
+      display:flex; background:transparent;
+      border-bottom:1px solid var(--border-light); padding:0 20px; flex-shrink:0;
+    }
+    .tab-item {
+      padding:10px 18px; cursor:pointer; font-size:13px;
+      color:var(--text-secondary); border-bottom:2px solid transparent;
+      transition:all .2s; font-weight:500;
+    }
+    .tab-item:hover { color:var(--primary); }
+    .tab-item.active { color:var(--primary); border-bottom-color:var(--primary); }
+
+    .content-body { padding:12px 20px 20px; flex:1; }
+    .tab-pane { display:block; }
+    .tab-pane:not(.active) { display:none !important; }
+
+    .room-viz {
+      background:#FFF; border:1px solid var(--border);
+      border-radius:var(--radius-lg); margin-bottom:12px;
+      overflow:visible; position:relative;
+      box-shadow:var(--shadow-sm);
+    }
+    .room-viz svg { display:block; width:100%; height:auto; }
+    .room-viz .tooltip {
+      position:absolute; pointer-events:none; opacity:0;
+      background:rgba(0,20,40,.88); color:#fff; padding:8px 12px;
+      border-radius:6px; font-size:12px; line-height:1.6;
+      white-space:normal; max-width:min(320px, calc(100vw - 48px)); z-index:50;
+      transition:opacity .15s;
+      box-shadow:0 4px 12px rgba(0,0,0,.2);
+    }
+    .room-viz .tooltip.show { opacity:1; }
+    .room-viz-legend {
+      display:flex; align-items:center; gap:12px; padding:8px 12px;
+      border-top:1px solid var(--border-light); font-size:10.5px; color:var(--text-secondary);
+      flex-wrap:wrap;
+    }
+    .room-viz-legend .leg-item { display:flex; align-items:center; gap:5px; }
+    .room-viz-legend .leg-swatch {
+      width:14px; height:14px; border-radius:3px; flex-shrink:0;
+    }
+
+    .filter-bar {
+      display:flex; align-items:center; gap:8px; margin-bottom:12px;
+      flex-wrap:nowrap; padding:9px 12px;
+      background:var(--bg-card); border-radius:10px;
+      box-shadow:none; border:1px solid var(--border);
+    }
+    .filter-label { font-size:12px; color:var(--text-secondary); white-space:nowrap; font-weight:600; }
+    .filter-input, .search-input {
+      padding:5px 10px; border:1px solid var(--border); border-radius:7px;
+      font-size:12px; outline:none; background:#fff; transition:all .2s;
+    }
+    .filter-input { min-width:120px; }
+    .search-input { min-width:190px; }
+    .filter-input:focus, .search-input:focus {
+      border-color:var(--primary); box-shadow:0 0 0 3px rgba(24,144,255,.08);
+    }
+    .filter-sep { color:var(--text-hint); margin:0 2px; }
+    .filter-group { display:flex; align-items:center; gap:6px; }
+    .filter-group + .filter-group { margin-left:8px; }
+    .step-btn {
+      width:20px; height:20px; border:1px solid var(--border); border-radius:6px;
+      background:#fff; cursor:pointer; font-size:12px; line-height:1;
+      display:flex; align-items:center; justify-content:center;
+      color:var(--text-secondary); transition:all .2s; padding:0;
+    }
+    .step-btn:hover { border-color:var(--primary); color:var(--primary); }
+    .var-tag {
+      display:inline-flex; align-items:center; gap:4px;
+      padding:2px 8px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; transition:all .15s;
+      white-space:nowrap; cursor:default; line-height:1.6;
+      border:1px solid transparent;
+    }
+    .var-tag.controlled { background:#EFF6FF; color:#2563EB; border-color:#DBEAFE; }
+    .var-tag.optimizing { background:#F0FDF4; color:#16A34A; border-color:#DCFCE7; }
+    .var-tag.unopt { background:#F8FAFC; color:#64748B; border-color:#E2E8F0; }
+    .var-tag.disturbance { background:#FFF7ED; color:#D97706; border-color:#FED7AA; }
+    .filter-group .var-tag { opacity:0.5; user-select:none; }
+    .filter-group .var-tag.active { opacity:1; box-shadow:0 0 0 2px currentColor; }
+    .filter-group .var-tag:hover { opacity:0.85; }
+    .filter-check {
+      display:inline-flex; align-items:center; gap:5px;
+      font-size:11.5px; color:var(--text-secondary); cursor:pointer;
+      white-space:nowrap; user-select:none;
+    }
+    .filter-check input[type="checkbox"] {
+      width:14px; height:14px; accent-color:var(--success); cursor:pointer;
+    }
+
+    .data-table-wrap {
+      background:var(--bg-card); border-radius:var(--radius-lg);
+      box-shadow:var(--shadow-sm); overflow-x:auto; border:1px solid var(--border);
+    }
+    .data-table { width:100%; border-collapse:collapse; min-width:900px; }
+    .data-table thead th {
+      background:#F8FAFC; padding:10px 12px; text-align:left;
+      font-size:11px; font-weight:600; color:var(--text-secondary);
+      border-bottom:1px solid var(--border); white-space:nowrap;
+    }
+    .data-table tbody td {
+      padding:8px 12px; font-size:12.5px;
+      border-bottom:1px solid var(--border-light); vertical-align:middle;
+    }
+    .data-table tbody tr { transition:background .15s; }
+    .data-table tbody tr:hover { background:#FAFCFF; }
+
+    .obj-name-cell {
+      font-weight:600; font-size:13px; color:var(--text-primary);
+      background:#FBFCFE; vertical-align:middle !important;
+      border-right:2px solid var(--border-light);
+    }
+    .obj-name-inner { display:flex; flex-direction:column; gap:4px; }
+    .obj-tags { display:flex; gap:4px; flex-wrap:wrap; }
+    .obj-status {
+      display:inline-flex; align-items:center; gap:4px;
+      padding:1px 7px; border-radius:20px; font-size:10.5px; font-weight:600;
+    }
+    .obj-status.running { background:var(--success-light); color:var(--success); }
+    .obj-status.stopped { background:var(--danger-light); color:var(--danger); }
+    .obj-status-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+    .obj-status.running .obj-status-dot { background:var(--success); }
+    .obj-status.stopped .obj-status-dot { background:var(--danger); }
+
+    .obj-fi-tag {
+      display:inline-flex; align-items:center;
+      padding:1px 7px; border-radius:20px; font-size:10.5px; font-weight:600;
+    }
+    .obj-fi-tag.in { background:var(--primary-light); color:var(--primary); }
+    .obj-fi-tag.out { background:#F5F5F5; color:#999; }
+
+    .var-tag {
+      display:inline-block; padding:1px 7px; border-radius:4px;
+      font-size:10px; font-weight:600; white-space:nowrap;
+    }
+    .var-tag.controlled   { background:#EFF6FF; color:#2563EB; }
+    .var-tag.optimizing   { background:#F0FDF4; color:#16A34A; }
+    .var-tag.unopt        { background:#F5F5F5; color:#999; }
+    .var-tag.disturbance  { background:#FFF7ED; color:#D97706; }
+
+    .var-name-type { font-weight:600; }
+    .var-name-type.controlled { color:#2563EB; }
+    .var-name-type.optimizing { color:#16A34A; }
+    .var-name-type.unopt { color:#64748B; }
+    .var-name-type.disturbance { color:#D97706; }
+
+    .change-cell { font-weight:500; }
+    .change-positive { color:var(--success); font-weight:600; }
+    .change-negative { color:var(--danger); font-weight:600; }
+    .change-none { color:var(--text-hint); }
+
+    .link-btn {
+      color:var(--primary); cursor:pointer; font-size:11.5px;
+      display:inline-flex; align-items:center; gap:4px;
+      padding:1px 6px; border-radius:6px; transition:all .15s;
+      white-space:nowrap;
+    }
+    .link-btn:hover { background:var(--primary-light); }
+
+    .obj-separator td { height:2px; padding:0; background:var(--bg-body); border:none; }
+
+    .panel-overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,.25);
+      z-index:200; opacity:0; pointer-events:none; transition:opacity .3s;
+    }
+    .panel-overlay.open { opacity:1; pointer-events:auto; }
+    .right-panel {
+      position:fixed; top:0; right:-480px; bottom:0; width:480px;
+      background:var(--bg-card); z-index:210;
+      box-shadow:-8px 0 28px rgba(15,23,42,.12);
+      transition:right .35s cubic-bezier(.4,0,.2,1);
+      display:flex; flex-direction:column;
+    }
+    .right-panel.open { right:0; }
+    .panel-header {
+      padding:14px 18px; border-bottom:1px solid var(--border-light);
+      display:flex; align-items:center; justify-content:space-between;
+      background:#FBFCFE;
+    }
+    .panel-header h3 { font-size:15px; font-weight:700; }
+    .panel-close {
+      width:32px; height:32px; border-radius:50%; display:flex;
+      align-items:center; justify-content:center; cursor:pointer;
+      font-size:18px; color:var(--text-hint);
+      transition:all .2s; background:transparent;
+    }
+    .panel-close:hover { background:#F5F5F5; color:var(--text-primary); }
+    .panel-tabs { display:flex; border-bottom:1px solid var(--border-light); padding:0 18px; }
+    .panel-tab {
+      padding:10px 4px; margin-right:20px; font-size:12px; cursor:pointer;
+      color:var(--text-secondary); border-bottom:2px solid transparent;
+      transition:all .2s; font-weight:500;
+    }
+    .panel-tab:hover { color:var(--primary); }
+    .panel-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
+    .panel-body { padding:18px; flex:1; overflow-y:auto; }
+    .panel-pane { display:block; }
+    .panel-pane:not(.active) { display:none !important; }
+    .form-group { margin-bottom:18px; }
+    .form-label {
+      font-size:13px; color:var(--text-primary); margin-bottom:6px;
+      display:flex; align-items:center; gap:2px; font-weight:500;
+    }
+    .form-label .required { color:#FF4D4F; font-weight:700; }
+    .form-control {
+      width:100%; padding:7px 12px; border:1px solid var(--border);
+      border-radius:var(--radius); font-size:13px; outline:none;
+      transition:all .2s; background:#fff;
+    }
+    .form-control:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(24,144,255,.08); }
+    .form-row { display:flex; gap:10px; align-items:center; }
+    .form-suffix { font-size:13px; color:var(--text-secondary); white-space:nowrap; }
+    .panel-footer {
+      padding:12px 18px; border-top:1px solid var(--border-light);
+      display:flex; justify-content:flex-end; gap:10px; background:#FBFCFE;
+    }
+    .form-section {
+      font-size:13px; font-weight:600; color:var(--text-primary);
+      padding:10px 0 8px; margin-top:8px;
+      border-bottom:1px solid var(--border-light); margin-bottom:14px;
+    }
+    .pref-slider-group { margin-bottom:20px; }
+    .pref-slider-end-labels {
+      display:flex; justify-content:space-between; align-items:center;
+      font-size:11px; color:var(--text-secondary); margin-bottom:6px; font-weight:500;
+    }
+    .pref-slider-ticks {
+      display:flex; justify-content:space-between;
+      font-size:10px; color:var(--text-hint); margin:0 0 4px;
+      font-variant-numeric:tabular-nums;
+    }
+    .pref-slider-default-cap {
+      font-size:10px; color:var(--text-hint); text-align:center; margin:-2px 0 6px;
+    }
+    input.range-pref {
+      width:100%; height:6px; margin:0; cursor:pointer;
+      accent-color:var(--primary);
+    }
+    .pref-slider-meta {
+      display:flex; justify-content:space-between; align-items:center;
+      font-size:11px; margin-top:6px; color:var(--text-secondary);
+    }
+    .pref-slider-meta .pref-val {
+      font-weight:700; color:var(--primary); font-variant-numeric:tabular-nums;
+    }
+    .pref-hint {
+      font-size:11px; color:var(--text-secondary); line-height:1.55;
+      margin-top:8px; padding:9px 11px;
+      background:#F8FAFC; border:1px solid var(--border-light);
+      border-radius:var(--radius);
+    }
+    .pref-slider-group.is-na .range-pref {
+      opacity:.45; pointer-events:none; cursor:not-allowed;
+    }
+    .pref-slider-group.is-na .pref-na-tag {
+      font-size:10px; font-weight:600; color:var(--warning);
+      margin-left:6px;
+    }
+    .smart-recommend-btn {
+      display:inline-flex; align-items:center; gap:5px;
+      padding:3px 10px; border-radius:5px; cursor:pointer;
+      font-size:11px; font-weight:600; border:1px solid #7C3AED;
+      color:#7C3AED; background:#F5F3FF; transition:all .2s;
+      margin-left:auto; white-space:nowrap; line-height:1.6;
+    }
+    .smart-recommend-btn:hover { background:#EDE9FE; border-color:#6D28D9; color:#6D28D9; }
+    .smart-recommend-btn:active { transform:scale(.96); }
+    .smart-recommend-btn svg { width:13px; height:13px; fill:currentColor; flex-shrink:0; }
+    .smart-recommend-btn.loading { pointer-events:none; opacity:.7; }
+    @keyframes sparkle { 0%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.1)} 100%{opacity:1;transform:scale(1)} }
+    .smart-recommend-btn.loading svg { animation:sparkle .6s ease infinite; }
+    .pref-section-header {
+      display:flex; align-items:center; gap:8px;
+    }
+    .pref-recommend-toast {
+      font-size:10.5px; color:#7C3AED; font-weight:500;
+      opacity:0; transition:opacity .3s; margin-left:8px; white-space:nowrap;
+    }
+    .pref-recommend-toast.show { opacity:1; }
+    .analog-rule-wrap {
+      border:1px solid var(--border); border-radius:var(--radius);
+      overflow:hidden;
+    }
+    .analog-rule-table {
+      width:100%; border-collapse:collapse; font-size:12px;
+    }
+    .analog-rule-table thead th {
+      background:#F8FAFC; padding:7px 10px; text-align:left;
+      font-size:11px; font-weight:600; color:var(--text-secondary);
+      border-bottom:1px solid var(--border); white-space:nowrap;
+    }
+    .analog-rule-table tbody td {
+      padding:7px 10px; border-bottom:1px solid var(--border-light);
+      vertical-align:middle;
+    }
+    .analog-rule-table tbody tr:last-child td { border-bottom:none; }
+    .analog-rule-table tbody tr:hover { background:#FAFCFF; }
+    .rule-device {
+      display:block; font-size:12px; font-weight:600; color:var(--text-primary);
+    }
+    .rule-param {
+      display:block; font-size:11px; color:var(--text-secondary); margin-top:1px;
+    }
+    .rule-num {
+      width:60px !important; padding:4px 8px !important;
+      font-size:12px !important; text-align:center;
+    }
+    .ctrl-module {
+      border:1px solid var(--border-light); border-radius:8px;
+      margin-top:14px; overflow:hidden;
+    }
+    .ctrl-module-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 16px; background:#F8FAFC;
+      border-bottom:1px solid var(--border-light);
+    }
+    .ctrl-module-header .module-title {
+      font-size:13px; font-weight:600; color:var(--text-primary);
+      display:flex; align-items:center; gap:8px;
+    }
+    .ctrl-module-header .module-title .tag {
+      font-size:10px; font-weight:500; padding:1px 6px; border-radius:4px;
+    }
+    .ctrl-module-header .module-title .tag.on { background:#F0FDF4; color:#16A34A; }
+    .ctrl-module-header .module-title .tag.off { background:#F1F5F9; color:#94A3B8; }
+    .ctrl-module-body {
+      padding:14px 16px 6px;
+    }
+    .form-row-2col { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .form-group-sm { margin-bottom:12px; }
+    .form-group-sm .form-label { font-size:12px; margin-bottom:4px; }
+    .form-group-sm .form-control { padding:5px 10px; font-size:12px; }
+
+    .io-list { margin-bottom:8px; }
+    .io-item {
+      display:flex; align-items:center; gap:12px;
+      padding:12px 0; border-bottom:1px solid var(--border-light);
+    }
+    .io-item:last-child { border-bottom:none; }
+    .io-name { flex:1; font-size:13px; color:var(--text-primary); }
+    .io-status {
+      font-size:12px; font-weight:600; min-width:36px; text-align:center;
+    }
+    .io-status.in { color:var(--success); }
+    .io-status.out { color:var(--text-hint); }
+    .toggle-switch {
+      position:relative; display:inline-block; width:44px; height:24px; flex-shrink:0;
+    }
+    .toggle-switch input { opacity:0; width:0; height:0; }
+    .toggle-slider {
+      position:absolute; cursor:pointer; inset:0;
+      background:#ccc; border-radius:24px; transition:.3s;
+    }
+    .toggle-slider::before {
+      content:''; position:absolute; height:18px; width:18px;
+      left:3px; bottom:3px; background:#fff; border-radius:50%;
+      transition:.3s; box-shadow:0 1px 3px rgba(0,0,0,.2);
+    }
+    .toggle-switch input:checked + .toggle-slider { background:var(--success); }
+    .toggle-switch input:checked + .toggle-slider::before { transform:translateX(20px); }
+
+    .modal-mask {
+      position:fixed; inset:0; background:rgba(0,0,0,.35);
+      z-index:300; display:flex; align-items:center; justify-content:center;
+      opacity:0; pointer-events:none; transition:opacity .25s;
+    }
+    .modal-mask.show { opacity:1; pointer-events:auto; }
+    .modal-box {
+      background:#fff; border-radius:var(--radius-lg);
+      box-shadow:0 18px 42px rgba(15,23,42,.18);
+      max-width:620px; width:90%; max-height:85vh;
+      display:flex; flex-direction:column; border:1px solid var(--border-light);
+      transform:translateY(20px) scale(.97);
+      transition:transform .3s cubic-bezier(.4,0,.2,1);
+    }
+    .modal-mask.show .modal-box { transform:translateY(0) scale(1); }
+    .modal-head {
+      padding:16px 20px 12px; display:flex; align-items:flex-start; gap:10px;
+    }
+    .modal-head .modal-icon {
+      width:22px; height:22px; flex-shrink:0; margin-top:1px;
+    }
+    .modal-head .modal-title { font-size:14px; font-weight:700; flex:1; line-height:1.5; }
+    .modal-body { padding:0 20px 14px; flex:1; overflow-y:auto; font-size:12.5px; }
+    .modal-foot {
+      padding:12px 20px; border-top:1px solid var(--border-light);
+      display:flex; align-items:center; gap:10px;
+    }
+    .modal-foot .modal-hint { font-size:11.5px; color:var(--warning); flex:1; line-height:1.5; }
+    .modal-foot .btn-group { display:flex; gap:10px; margin-left:auto; }
+
+    .dispatch-section {
+      font-size:12.5px; font-weight:700; padding:8px 0 6px; margin-top:12px;
+      border-bottom:2px solid var(--border-light); margin-bottom:0;
+      display:flex; align-items:center; gap:8px;
+    }
+    .dispatch-section:first-child { margin-top:0; }
+    .dispatch-section .ds-badge {
+      display:inline-block; padding:2px 8px; border-radius:3px;
+      font-size:11px; font-weight:600; color:#fff;
+    }
+    .dispatch-section .ds-badge.save { background:#16A34A; }
+    .dispatch-section .ds-badge.cool { background:#1890FF; }
+    .dispatch-table {
+      width:100%; border-collapse:collapse; font-size:11.5px; margin-bottom:6px;
+    }
+    .dispatch-table th {
+      text-align:left; padding:7px 9px; font-weight:600;
+      color:var(--text-secondary); background:#F8FAFC;
+      border-bottom:1px solid var(--border-light); font-size:10.5px;
+    }
+    .dispatch-table td {
+      padding:6px 9px; border-bottom:1px solid var(--border-light);
+      color:var(--text-primary); vertical-align:middle;
+    }
+    .dispatch-table .dev-name { font-weight:600; white-space:nowrap; }
+    .dispatch-table .param-name { color:var(--text-secondary); }
+    .dispatch-table .val-actual { color:var(--text-hint); }
+    .dispatch-table .val-ai { color:var(--primary); font-weight:600; }
+    .dispatch-table input.dispatch-val {
+      width:76px; padding:4px 6px; border:1px solid var(--border);
+      border-radius:6px; font-size:11.5px; text-align:center;
+    }
+    .dispatch-table input.dispatch-val:focus {
+      border-color:var(--primary); outline:none; box-shadow:0 0 0 2px rgba(24,144,255,.1);
+    }
+
+    .modal-box.chart-modal { max-width:720px; }
+    .chart-head {
+      display:flex; align-items:center; gap:16px; padding:18px 24px;
+      border-bottom:1px solid var(--border-light);
+    }
+    .chart-head .chart-title { font-size:15px; font-weight:600; }
+    .chart-head .chart-subtitle { font-size:12px; color:var(--primary); }
+    .chart-head .chart-close {
+      margin-left:auto; width:28px; height:28px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; font-size:16px; color:var(--text-hint);
+      transition:all .2s;
+    }
+    .chart-head .chart-close:hover { background:#F5F5F5; color:var(--text-primary); }
+    .chart-toolbar {
+      display:flex; align-items:center; gap:12px; padding:14px 24px;
+    }
+    .time-tabs { display:flex; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+    .time-tab {
+      padding:5px 16px; font-size:12px; cursor:pointer; font-weight:500;
+      border-right:1px solid var(--border); color:var(--text-secondary);
+      transition:all .15s;
+    }
+    .time-tab:last-child { border-right:none; }
+    .time-tab:hover { color:var(--primary); }
+    .time-tab.active { background:var(--primary); color:#fff; }
+    .chart-canvas {
+      padding:0 24px 16px; height:280px; position:relative;
+    }
+    .chart-canvas canvas { width:100%!important; height:100%!important; }
+    .chart-legend {
+      display:flex; align-items:center; gap:24px; justify-content:center;
+      padding:0 24px 18px; font-size:12px; color:var(--text-secondary);
+    }
+    .chart-legend .leg { display:flex; align-items:center; gap:6px; }
+    .chart-legend .leg-line { width:20px; height:2px; border-radius:1px; }
+    .chart-legend .leg-line.dashed { background:repeating-linear-gradient(90deg,currentColor 0 4px,transparent 4px 8px); height:2px; }
+    .chart-foot {
+      padding:14px 24px; border-top:1px solid var(--border-light);
+      display:flex; justify-content:flex-end; gap:10px;
+    }
+
+    @media (max-width:1400px) { .summary-cards { gap:0; } }
+    @media (max-width:1200px) { .sidebar { width:180px; } }
+    @media (max-width:768px) {
+      .sidebar { display:none; }
+      .right-panel { width:100%; right:-100%; }
+    }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+</head>
+<body>
+<div class="layout">
+
+  <div id="app-header"></div>
+
+  <div class="body-wrap">
+
+    <div id="app-sidebar"></div>
+
+    <div class="main">
+
+      <!-- ===== 版本信息 ===== -->
+      <div class="anno anno-version-header" data-version="v2.0">
+        <span class="anno-tag">版本信息</span>
+        <div class="anno-body">
+          <p><b>当前版本：</b>v2.0</p>
+          <p><b>更新日期：</b>2026-05-08</p>
+          <p><b>v2.0 变更：</b>适配风冷冷水系统：寻优规则配置中的模拟量寻优规则收敛为「风冷冷水机组冷冻水出水温度 + 冷冻水泵/二次冷冻水泵频率」，隐藏冷却水泵、冷却塔等冷却侧设备及参数；投入/投出配置移除冷却水测点、冷却泵组、冷却塔组；寻优记录和下发记录不再展示冷却侧变量，室外扰动变量展示为室外干球温度。</p>
+          <p><b>v1.0 基线：</b>页面由古典 Axure「冷站柔性调优」迁移至本 AI 单页。三策略卡、关键指标、寻优/下发双 Tab、规则侧栏与下发弹窗。</p>
+          <p><b>v1.8 变更：</b>「寻优规则配置」面板重构，对齐当前系统实际字段——新增仿真模型、寻优器（L-SHADE / SLSQP，切换后参数联动）、种群初始化数量、种群最终数量、最大迭代数（SLSQP 改为最大迭代数 + 收敛精度）、模拟量寻优规则表格；移除机房寻优错误复用的主控制/辅助控制/K_safe 字段。新增「寻优目标偏好」区块：三个业务化滑块（安全余量偏好 λ₁、设备切换容忍度 λ₂、参数平稳偏好 λ₃），对应多目标加权寻优方案（v1.8 需求文档《寻优目标函数优化方案设计》）；柔性寻优下 λ₂ 置灰不可用。</p>
+          <p><b>v1.8 补充：</b>冷站配置支持<strong>二次冷冻泵频率</strong>参与寻优——模拟量规则表新增「二次冷冻水泵 / 频率反馈」；投入/投出增加「二次冷冻泵组」；关键指标与下发记录展示二次泵变频设定。</p>
+        </div>
+      </div>
+
+      <div class="page-header">
+        <div class="page-header-left">
+          <a href="index.html" style="display:inline-flex; align-items:center; gap:4px; font-size:14px; color:var(--text-primary); cursor:pointer; text-decoration:none; margin-right:4px;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-primary)'">
+            <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            返回
+          </a>
+          <div class="selector">前海园区 <span class="arrow-down">▾</span></div>
+          <div class="selector">1号冷站 <span class="arrow-down">▾</span></div>
+        </div>
+        <div class="page-header-nav">
+          <div class="page-nav-item active">冷站柔性调优</div>
+          <div class="page-nav-item" onclick="window.location.assign(encodeURI('冷站全局寻优.html'))">冷站全局寻优</div>
+          <div class="page-nav-item" onclick="window.location.assign(encodeURI('冷站长周期寻优.html'))">冷站长周期寻优</div>
+        </div>
+      </div>
+
+      <!-- 三模块区域 -->
+      <div class="anno anno-ux" data-version="v1.0">
+        <span class="anno-tag">交互说明</span>
+        <span class="anno-version">v1.0</span>
+        <span class="anno-source">引用自需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>顶部三卡片（寻优策略 / 智控下发策略 / 安全策略）</p>
+          <p><b>寻优策略：</b>停用/启用切换寻优开关；「规则配置」打开右侧面板，配置仿真模型、安全边界、寻优器与参数、模拟量寻优规则。</p>
+          <p><b>智控下发：</b>手动下发、工单下发、切换策略均需密码校验；手动下发展示 AI 建议值，可改为空值不下发。</p>
+          <p><b>安全策略：</b>一键回退、切换回退策略；异常时触发回退（见边界批注）。</p>
+        </div>
+      </div>
+      <div class="module-strip">
+
+        <div class="module-card" id="modOpt">
+          <div class="module-card-header opt">
+            <span class="module-icon"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54A.48.48 0 0013.93 2h-3.86a.48.48 0 00-.48.41l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96a.49.49 0 00-.59.22L2.71 8.87a.48.48 0 00.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.26.41.48.41h3.86c.22 0 .43-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg></span>
+            寻优策略
+            <span class="module-status-badge active" id="optBadge">已启用</span>
+          </div>
+          <div class="module-card-body">
+            <div class="module-status-row">
+              <div class="status-item">
+                <span class="label">寻优周期</span>
+                <span class="value">5分钟/次</span>
+              </div>
+              <div class="status-item">
+                <span class="label">最新寻优时间</span>
+                <span class="value">2026-03-17 13:25</span>
+              </div>
+            </div>
+            <div class="module-actions">
+              <button class="btn btn-danger" id="btnOptToggle" onclick="toggleOptStatus()">
+                <span class="btn-icon"><svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></span>
+                停用
+              </button>
+              <button class="btn" onclick="togglePanel()">
+                <span class="btn-icon"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54A.48.48 0 0013.93 2h-3.86a.48.48 0 00-.48.41l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96a.49.49 0 00-.59.22L2.71 8.87a.48.48 0 00.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.26.41.48.41h3.86c.22 0 .43-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg></span>
+                规则配置
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="module-card" id="modDeliver">
+          <div class="module-card-header deliver">
+            <span class="module-icon"><svg viewBox="0 0 24 24"><path d="M3 4l9 8-9 8V4z"/><path d="M14 4l9 8-9 8V4z"/></svg></span>
+            智控下发策略
+          </div>
+          <div class="module-card-body">
+            <div class="module-status-row">
+              <div class="status-item">
+                <span class="label">当前下发策略</span>
+                <span class="value blue" id="deliverStrategyName">冷启动模式</span>
+              </div>
+              <div class="status-item">
+                <span class="label">下发模式</span>
+                <span class="value" id="deliverModeText">手动下发</span>
+              </div>
+            </div>
+            <div class="module-actions">
+              <button class="btn btn-primary" id="btnManualDeliver" onclick="openDispatch('手动下发')">
+                <span class="btn-icon"><svg viewBox="0 0 24 24"><path d="M3 4l9 8-9 8V4z" fill="#fff"/><path d="M14 4l9 8-9 8V4z" fill="#fff"/></svg></span>
+                手动下发
+              </button>
+              <button class="btn" onclick="openModal('modalPwdConfirm')">
+                <span class="btn-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM8 13h8v2H8v-2zm0 4h8v2H8v-2zm0-8h3v2H8V9z"/></svg></span>
+                工单下发
+              </button>
+              <button class="btn" onclick="openModal('modalStrategySelect')">
+                <span class="btn-icon"><svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg></span>
+                切换策略
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="module-card">
+          <div class="module-card-header safety">
+            <span class="module-icon"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg></span>
+            安全策略
+          </div>
+          <div class="module-card-body">
+            <div class="module-status-row">
+              <div class="status-item">
+                <span class="label">安全回退策略</span>
+                <span class="value blue">保险策略1</span>
+              </div>
+              <div class="status-item">
+                <span class="label">今日安全诊断</span>
+                <span class="value green">正常</span>
+              </div>
+            </div>
+            <div class="module-actions">
+              <button class="btn" onclick="openDispatch('一键回退')">
+                <span class="btn-icon"><svg viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg></span>
+                一键回退
+              </button>
+              <button class="btn" onclick="openModal('modalSafetySelect')">
+                <span class="btn-icon"><svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg></span>
+                切换策略
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+
+
+
+      <div class="tabs-bar">
+        <div class="tab-item active" data-tab="optRecord">寻优记录</div>
+        <div class="tab-item" data-tab="dispatchRecord">下发记录</div>
+      </div>
+
+      <!-- TAB: 寻优记录 -->
+      <div class="anno anno-state" data-version="v1.0">
+        <span class="anno-tag">状态说明</span>
+        <span class="anno-version">v1.0</span>
+        <span class="anno-source">引用自需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>寻优记录 Tab — 冷站工艺示意图与图例</p>
+          <p><b>示意图：</b>占位展示风冷冷水系统主要能量流与可调对象（风冷冷水机组、冷冻泵、二次冷冻泵、末端总管），非 1:1 拓扑；风冷场景不展示冷却泵、冷却塔和板换等冷却侧设备。</p>
+        </div>
+      </div>
+      <div class="content-body tab-pane active" id="pane-optRecord">
+        <div class="room-viz" id="roomViz">
+          <svg viewBox="0 0 960 400" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:auto;min-height:260px;">
+            <rect x="12" y="12" width="936" height="376" rx="10" fill="#F8FAFC" stroke="var(--border)" stroke-width="1"/>
+            <text x="480" y="42" text-anchor="middle" font-size="13" fill="var(--text-secondary)" font-weight="600">1号冷站 · 风冷冷水系统工艺示意（原型占位，非拓扑编辑器）</text>
+            <line x1="190" y1="200" x2="360" y2="200" stroke="#1890FF" stroke-width="4" stroke-linecap="round"/>
+            <line x1="480" y1="200" x2="630" y2="200" stroke="#1890FF" stroke-width="4" stroke-linecap="round"/>
+            <line x1="710" y1="200" x2="830" y2="200" stroke="#1890FF" stroke-width="4" stroke-linecap="round"/>
+            <line x1="480" y1="150" x2="480" y2="105" stroke="#22D3EE" stroke-width="3" stroke-dasharray="8 6" stroke-linecap="round"/>
+            <rect x="80" y="150" width="140" height="100" rx="8" fill="#ECFDF3" stroke="#16A34A" stroke-width="1.5"/>
+            <text x="150" y="192" text-anchor="middle" font-size="11" fill="#166534" font-weight="600">1# / 2#</text>
+            <text x="150" y="212" text-anchor="middle" font-size="11" fill="#166534" font-weight="600">风冷冷水机组</text>
+            <rect x="350" y="150" width="110" height="100" rx="8" fill="#E0F2FE" stroke="#0369A1"/>
+            <text x="405" y="205" text-anchor="middle" font-size="11" fill="#0369A1" font-weight="600">冷冻泵</text>
+            <rect x="590" y="150" width="120" height="100" rx="8" fill="#EFF6FF" stroke="#2563EB"/>
+            <text x="650" y="198" text-anchor="middle" font-size="11" fill="#1D4ED8" font-weight="600">二次冷冻泵</text>
+            <text x="650" y="218" text-anchor="middle" font-size="10" fill="#64748B">按项目配置</text>
+            <rect x="810" y="150" width="120" height="100" rx="8" fill="#F1F5F9" stroke="#64748B"/>
+            <text x="870" y="205" text-anchor="middle" font-size="11" fill="#334155" font-weight="600">末端总管</text>
+            <rect x="420" y="72" width="120" height="48" rx="8" fill="#ECFEFF" stroke="#06B6D4"/>
+            <text x="480" y="101" text-anchor="middle" font-size="11" fill="#0E7490" font-weight="600">室外干球温度</text>
+            <text x="480" y="310" text-anchor="middle" font-size="11" fill="var(--text-hint)">风冷场景无冷却水循环；箭头方向表示冷冻水流与室外空气扰动示意</text>
+          </svg>
+          <div class="room-viz-legend">
+            <span style="font-weight:600;color:var(--text-primary);">图例：</span>
+            <div class="leg-item"><div class="leg-swatch" style="background:#1890FF;"></div>冷冻水侧</div>
+            <div class="leg-item"><div class="leg-swatch" style="background:#22D3EE;"></div>室外空气扰动</div>
+            <div class="leg-item"><div class="leg-swatch" style="background:#ECFDF3;border:1px solid #16A34A;"></div>可调设备</div>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <div class="filter-group">
+            <span class="filter-label">时间：</span>
+            <input type="date" class="filter-input" value="2026-03-17">
+            <button class="step-btn" title="上一条">‹</button>
+            <button class="step-btn" title="下一条">›</button>
+            <input type="time" class="filter-input" value="13:25:00" step="1">
+            <button class="step-btn" title="上一条">‹</button>
+            <button class="step-btn" title="下一条">›</button>
+          </div>
+          <div class="filter-group" id="varTypeFilter">
+            <span class="filter-label">变量分类：</span>
+            <span class="var-tag active" data-filter="all" style="background:#F0F0F0;color:#333;border-color:#D9D9D9;">全部</span>
+            <span class="var-tag controlled" data-filter="controlled">被控变量</span>
+            <span class="var-tag optimizing" data-filter="optimizing">控制变量（寻优中）</span>
+            <span class="var-tag unopt" data-filter="unopt">控制变量（未寻优）</span>
+            <span class="var-tag disturbance" data-filter="disturbance">扰动变量</span>
+          </div>
+          <label class="filter-check">
+            <input type="checkbox" id="hideOffDevice">
+            <span>隐藏停机/投出设备</span>
+          </label>
+          <div class="filter-group" style="margin-left:auto;">
+            <span class="filter-label">Q</span>
+            <input type="text" class="search-input" placeholder="对象名称、变量名称搜索">
+          </div>
+        </div>
+
+        <div class="anno anno-field" data-version="v1.0">
+          <span class="anno-tag">字段说明</span>
+          <span class="anno-version">v1.0</span>
+          <span class="anno-source">引用自需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>寻优记录 Tab — 时间/变量筛选与变量表</p>
+            <p><b>变量分类：</b>被控变量=Ts、Tr、Nfan、水阀反馈等；控制变量（寻优中）= V1、V2；控制变量（未寻优）= 投出或关机设备的 V1/V2；扰动变量=非寻优变量。</p>
+            <p><b>表格列：</b>对象名称、变量名称（颜色表示分类，与上方筛选一致）、实际值、AI寻优值、寻优变化、历史趋势。</p>
+          </div>
+        </div>
+
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:140px;">对象名称</th>
+                <th style="width:220px;">变量名称</th>
+                <th style="width:90px;">实际值</th>
+                <th style="width:90px;">AI寻优值</th>
+                <th style="width:90px;">寻优变化</th>
+                <th style="width:70px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB: 下发记录 -->
+      <div class="anno anno-field" data-version="v1.0">
+        <span class="anno-tag">字段说明</span>
+        <span class="anno-version">v1.0</span>
+        <span class="anno-source">基于文档推断</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>下发记录 Tab — 筛选条件与表格</p>
+          <p><b>下发记录：</b>记录冷站柔性调优自动/手动下发的策略、时间、下发人、对象与属性、实际参数、下发参数、下发结果。可按策略、日期、关键词筛选。</p>
+        </div>
+      </div>
+      <div class="content-body tab-pane" id="pane-dispatchRecord">
+        <div class="filter-bar">
+          <div class="filter-group">
+            <span class="filter-label">策略：</span>
+            <select class="filter-input" id="dispatchStrategyFilter" style="min-width:120px;">
+              <option value="">请选择</option>
+              <option>冷站柔性调优自动下发策略</option>
+              <option>冷站柔性调优手动下发策略</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">日期：</span>
+            <input type="date" class="filter-input" value="2026-03-17">
+            <span class="filter-sep">~</span>
+            <input type="date" class="filter-input" value="2026-03-17">
+          </div>
+          <div class="filter-group" style="margin-left:auto;">
+            <span class="filter-label">Q</span>
+            <input type="text" class="search-input" placeholder="设备名称、属性名称" style="min-width:160px;">
+          </div>
+        </div>
+
+        <div class="data-table-wrap">
+          <table class="data-table" id="dispatchTable">
+            <thead>
+              <tr>
+                <th style="width:200px;">下发策略</th>
+                <th style="width:160px;">下发时间</th>
+                <th style="width:80px;">下发人</th>
+                <th style="width:200px;">对象名称、下发属性</th>
+                <th style="width:90px;">实际参数</th>
+                <th style="width:90px;">下发参数</th>
+                <th style="width:80px;">下发结果</th>
+              </tr>
+            </thead>
+            <tbody id="dispatchBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="anno anno-edge" data-version="v1.0">
+        <span class="anno-tag">边界与异常</span>
+        <span class="anno-version">v1.0</span>
+        <span class="anno-source">引用自需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>全页通用（传感器质量、紧急回退与调节幅度折减）</p>
+          <p><b>温度数据异常：</b>温度值为空、非数值或采集时间戳距当前超过 2×T_opt 未更新 → 该传感器本轮剔除；Th&lt;Tc → 该传感器本轮剔除。</p>
+          <p><b>温度超限紧急回退：</b>若 Tc ≥ Tc,max,c，仅对超限传感器对应的空调执行紧急增冷（V1 向增冷方向调 ΔV1_max，V2 开至上限）。</p>
+          <p><b>数据质量分级：</b>A 级全精度、B 级调节幅度×0.7、C 级移出集合 A 不参与；B 级占比≥80% 时全局再×0.5。</p>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="panel-overlay" id="panelOverlay" onclick="togglePanel()"></div>
+
+    <!-- 规则配置面板：对齐柔性寻优算法文档参数 -->
+    <div class="right-panel" id="rulePanel">
+      <div class="panel-header">
+        <h3>冷站柔性调优规则配置</h3>
+        <span class="panel-close" onclick="togglePanel()">&times;</span>
+      </div>
+      <div class="panel-tabs">
+        <div class="panel-tab active" data-ptab="ruleConfig">寻优规则配置</div>
+        <div class="panel-tab" data-ptab="ioConfig">投入/投出配置</div>
+      </div>
+
+      <!-- 面板TAB: 寻优规则配置 -->
+      <div class="panel-body panel-pane active" id="ppane-ruleConfig">
+
+        <div class="form-group">
+          <div class="form-label"><span class="required">*</span> 寻优周期 T_opt</div>
+          <div class="form-row">
+            <input type="number" class="form-control" value="5" style="width:140px;">
+            <span class="form-suffix">分钟</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label"><span class="required">*</span> 仿真模型</div>
+          <select class="form-control">
+            <option>请选择</option>
+            <option selected>仿真模型</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label"><span class="required">*</span> 安全边界</div>
+          <select class="form-control">
+            <option>请选择</option>
+            <option selected>测试安全边界</option>
+            <option>保守模式1</option>
+            <option>标准模式</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label"><span class="required">*</span> 寻优器</div>
+          <select class="form-control" id="optimizerSelect" onchange="onOptimizerChange(this.value)">
+            <option value="">请选择</option>
+            <option value="lshade" selected>L-SHADE 优化器</option>
+            <option value="slsqp">SLSQP 梯度优化器</option>
+          </select>
+        </div>
+
+        <!-- L-SHADE 专属参数 -->
+        <div id="optimizerParams-lshade">
+          <div class="form-group">
+            <div class="form-label"><span class="required">*</span> 种群初始化数量</div>
+            <input type="number" class="form-control" value="50.0" step="1" min="1">
+          </div>
+          <div class="form-group">
+            <div class="form-label"><span class="required">*</span> 种群最终数量</div>
+            <input type="number" class="form-control" value="10.0" step="1" min="1">
+          </div>
+          <div class="form-group">
+            <div class="form-label"><span class="required">*</span> 最大迭代数</div>
+            <input type="number" class="form-control" value="50.0" step="1" min="1">
+          </div>
+        </div>
+
+        <!-- SLSQP 专属参数 -->
+        <div id="optimizerParams-slsqp" style="display:none;">
+          <div class="form-group">
+            <div class="form-label"><span class="required">*</span> 最大迭代数</div>
+            <input type="number" class="form-control" value="200.0" step="1" min="1">
+          </div>
+          <div class="form-group">
+            <div class="form-label"><span class="required">*</span> 收敛精度（小数位数）</div>
+            <input type="number" class="form-control" value="1.0" step="1" min="0">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label"><span class="required">*</span> 模拟量寻优规则</div>
+          <div class="analog-rule-wrap">
+            <table class="analog-rule-table">
+              <thead>
+                <tr>
+                  <th>规则名称</th>
+                  <th>启用开关</th>
+                  <th>寻优步长<span class="required">*</span></th>
+                  <th>寻优粒度<span class="required">*</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="rule-device">风冷冷水机组</span><span class="rule-param">冷冻水出水温度</span></td>
+                  <td><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></td>
+                  <td><input type="number" class="form-control rule-num" value="1"></td>
+                  <td><input type="number" class="form-control rule-num" value="1"></td>
+                </tr>
+                <tr>
+                  <td><span class="rule-device">冷冻水泵</span><span class="rule-param">频率反馈</span></td>
+                  <td><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></td>
+                  <td><input type="number" class="form-control rule-num" value="1"></td>
+                  <td><input type="number" class="form-control rule-num" value="1"></td>
+                </tr>
+                <tr>
+                  <td><span class="rule-device">二次冷冻水泵</span><span class="rule-param">频率反馈</span></td>
+                  <td><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></td>
+                  <td><input type="number" class="form-control rule-num" value="1"></td>
+                  <td><input type="number" class="form-control rule-num" value="1"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="anno anno-field" data-version="v1.8">
+          <span class="anno-tag">字段说明</span>
+          <span class="anno-version">v1.8</span>
+          <span class="anno-source">引用自需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>规则配置右侧面板 —「寻优规则配置」Tab</p>
+            <p><b>寻优周期 T_opt：</b>定时触发寻优计算的时间间隔（分钟）。</p>
+            <p><b>仿真模型：</b>单选，绑定当前冷站使用的风冷冷水系统仿真模型实例。</p>
+            <p><b>安全边界：</b>单选，选择当前项目/园区下已配置的安全边界方案。</p>
+            <p><b>寻优器：</b>选择后下方参数联动切换——L-SHADE：种群初始化数量 + 种群最终数量 + 最大迭代数；SLSQP 梯度优化器：最大迭代数 + 收敛精度（小数位数）。</p>
+            <p><b>模拟量寻优规则：</b>风冷场景保留风冷冷水机组冷冻水出水温度、冷冻水泵频率、二次冷冻水泵频率；冷却水泵、冷却塔频率、冷却塔风机开机数等冷却侧控制量不展示。</p>
+            <p><b>【v1.8 新增】寻优目标偏好：</b>多目标加权寻优配置，对应目标函数 J = P_norm + λ₁·C_safety + λ₂·C_switch + λ₃·C_swing。三个滑块业务含义：</p>
+            <ul>
+              <li><b>安全余量偏好（λ₁）：</b>0.00～0.50，默认 0.10；越大寻优结果越远离安全硬边界。</li>
+              <li><b>设备切换容忍度（λ₂）：</b>0.00～0.50，默认 0.15；柔性寻优不涉及设备启停，本页置灰不可用，全局/长周期寻优中生效。</li>
+              <li><b>参数平稳偏好（λ₃）：</b>0.00～0.30，默认 0.05；越大寻优结果越倾向与当前值靠近，减少控制参数振荡。</li>
+            </ul>
+            <p>三项权重均为 0 时行为与原单目标最小功率等价（向下兼容）。</p>
+          </div>
+        </div>
+
+        <div class="form-section pref-section-header">
+          <span>寻优目标偏好</span>
+          <button type="button" class="smart-recommend-btn" id="fSmartRecommendBtn" onclick="smartRecommendFlex(this)">
+            <svg viewBox="0 0 24 24"><path d="M9 21c0 .5.4 1 1 1h4c.6 0 1-.5 1-1v-1H9v1zm3-19C8.1 2 5 5.1 5 9c0 2.4 1.2 4.5 3 5.7V17c0 .5.4 1 1 1h6c.6 0 1-.5 1-1v-2.3c1.8-1.3 3-3.4 3-5.7 0-3.9-3.1-7-7-7zm2.9 11.1l-.9.6V16h-4v-2.3l-.9-.6C7.8 12.2 7 10.6 7 9c0-2.8 2.2-5 5-5s5 2.2 5 5c0 1.6-.8 3.2-2.1 4.1z"/></svg>
+            智能推荐
+          </button>
+          <span class="pref-recommend-toast" id="fSmartToast"></span>
+        </div>
+        <p style="font-size:11.5px;color:var(--text-secondary);line-height:1.5;margin:-8px 0 14px;">
+          在省电基础上，用三个滑块调节偏好强度；值为 0 时退化为仅最小功率模式。
+        </p>
+
+        <div class="form-group pref-slider-group">
+          <div class="form-label">安全余量偏好（λ₁）</div>
+          <div class="pref-slider-end-labels"><span>够用就行</span><span>留足余量</span></div>
+          <div class="pref-slider-ticks"><span>0.00</span><span>0.10</span><span>0.30</span><span>0.50</span></div>
+          <div class="pref-slider-default-cap">（刻度默认参考点：0.10）</div>
+          <input type="range" class="range-pref" id="prefLambda1" min="0" max="0.5" step="0.01" value="0.10" aria-label="安全余量偏好">
+          <div class="pref-slider-meta"><span>当前值</span><span class="pref-val" id="prefLambda1Val">0.10</span></div>
+        </div>
+
+        <div class="form-group pref-slider-group is-na" id="prefLambda2Wrap">
+          <div class="form-label">设备切换容忍度（λ₂）<span class="pref-na-tag">本页策略不适用</span></div>
+          <div class="pref-slider-end-labels"><span>随意切换</span><span>尽量别动</span></div>
+          <div class="pref-slider-ticks"><span>0.00</span><span>0.15</span><span>0.30</span><span>0.50</span></div>
+          <div class="pref-slider-default-cap">柔性寻优不涉及设备启停；全局/长周期寻优时可调（默认 0.15）</div>
+          <input type="range" class="range-pref" id="prefLambda2" min="0" max="0.5" step="0.01" value="0" disabled aria-label="设备切换容忍度">
+          <div class="pref-slider-meta"><span>当前值</span><span class="pref-val" id="prefLambda2Val">0.00</span></div>
+        </div>
+
+        <div class="form-group pref-slider-group">
+          <div class="form-label">参数平稳偏好（λ₃）</div>
+          <div class="pref-slider-end-labels"><span>可以跳</span><span>越平越好</span></div>
+          <div class="pref-slider-ticks"><span>0.00</span><span>0.05</span><span>0.15</span><span>0.30</span></div>
+          <div class="pref-slider-default-cap">（刻度默认参考点：0.05）</div>
+          <input type="range" class="range-pref" id="prefLambda3" min="0" max="0.3" step="0.01" value="0.05" aria-label="参数平稳偏好">
+          <div class="pref-slider-meta"><span>当前值</span><span class="pref-val" id="prefLambda3Val">0.05</span></div>
+        </div>
+
+
+      </div>
+
+      <!-- 面板TAB: 投入/投出配置 -->
+      <div class="panel-body panel-pane" id="ppane-ioConfig">
+
+        <div class="anno anno-data" data-version="v1.0">
+          <span class="anno-tag">数据逻辑</span>
+          <span class="anno-version">v1.0</span>
+          <span class="anno-source">引用自需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>规则配置右侧面板 —「投入/投出配置」Tab</p>
+            <p><b>投入/投出：</b>参与寻优计算的测点与设备以「投入」为准；投出对象不参与本轮优化但仍可采集。风冷场景不展示冷却水泵、冷却塔、冷却水温度等冷却侧对象。</p>
+          </div>
+        </div>
+
+        <div class="form-section">冷冻水系统测点</div>
+        <div class="io-list">
+          <div class="io-item">
+            <span class="io-name">1号冷站—冷冻水总管供水温度</span>
+            <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            <span class="io-status in">投入</span>
+          </div>
+          <div class="io-item">
+            <span class="io-name">1号冷站—冷冻水总管回水温度</span>
+            <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            <span class="io-status in">投入</span>
+          </div>
+          <div class="io-item">
+            <span class="io-name">1号冷站—分集水器压差</span>
+            <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            <span class="io-status in">投入</span>
+          </div>
+          <div class="io-item">
+            <span class="io-name">1号冷站—末端最不利供回水压差</span>
+            <label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label>
+            <span class="io-status out">投出</span>
+          </div>
+        </div>
+
+        <div class="form-section">室外环境</div>
+        <div class="io-list">
+          <div class="io-item">
+            <span class="io-name">1号冷站—室外干球温度</span>
+            <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            <span class="io-status in">投入</span>
+          </div>
+        </div>
+
+        <div class="form-section">主要可调设备</div>
+        <div class="io-list">
+          <div class="io-item">
+            <span class="io-name">1#风冷冷水机组</span>
+            <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            <span class="io-status in">投入</span>
+          </div>
+          <div class="io-item">
+            <span class="io-name">2#风冷冷水机组</span>
+            <label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label>
+            <span class="io-status out">投出</span>
+          </div>
+          <div class="io-item">
+            <span class="io-name">冷冻泵组</span>
+            <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            <span class="io-status in">投入</span>
+          </div>
+          <div class="io-item">
+            <span class="io-name">二次冷冻泵组</span>
+            <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            <span class="io-status in">投入</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="panel-footer">
+        <button class="btn" onclick="togglePanel()">取 消</button>
+        <button class="btn btn-primary" onclick="togglePanel();">保 存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：密码权限校验（通用） -->
+<div class="modal-mask" id="modalPwd">
+  <div class="modal-box" style="max-width:400px;">
+    <div class="modal-head">
+      <svg class="modal-icon" viewBox="0 0 24 24" fill="#1890FF"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z"/></svg>
+      <span class="modal-title" id="pwdTitle">密码权限校验</span>
+    </div>
+    <div class="modal-body">
+      <div class="anno anno-ux" data-version="v1.0">
+        <span class="anno-tag">交互说明</span>
+        <span class="anno-version">v1.0</span>
+        <span class="anno-source">基于文档推断</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>密码权限校验弹窗（通用，<code>modalPwd</code>）</p>
+          <p><b>入口：</b>手动下发、切换策略等需二次校验时弹出。</p>
+          <ul><li><b>取消/确认：</b>取消关闭；确认提交密码校验，通过后继续后续流程。</li></ul>
+        </div>
+      </div>
+      <div class="anno anno-field" data-version="v1.0">
+        <span class="anno-tag">字段说明</span>
+        <span class="anno-version">v1.0</span>
+        <span class="anno-source">基于文档推断</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>密码权限校验弹窗（通用）</p>
+          <p><b>操作密码：</b>密文输入，必填。</p>
+        </div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div class="form-label">请输入操作密码</div>
+        <input type="password" class="form-control" id="pwdInput" placeholder="请输入密码">
+      </div>
+      <div style="font-size:12px; color:var(--text-hint);" id="pwdHint">校验通过后操作即刻生效</div>
+    </div>
+    <div class="modal-foot">
+      <div class="btn-group" style="margin-left:auto;">
+        <button class="btn" onclick="closeModal('modalPwd')">取 消</button>
+        <button class="btn btn-primary" onclick="onPwdConfirm()">确 认</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：工单下发密码校验 -->
+<div class="modal-mask" id="modalPwdConfirm">
+  <div class="modal-box" style="max-width:400px;">
+    <div class="modal-head">
+      <svg class="modal-icon" viewBox="0 0 24 24" fill="#1890FF"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z"/></svg>
+      <span class="modal-title">工单下发 — 密码校验</span>
+    </div>
+    <div class="modal-body">
+      <div class="anno anno-ux" data-version="v1.0">
+        <span class="anno-tag">交互说明</span>
+        <span class="anno-version">v1.0</span>
+        <span class="anno-source">基于文档推断</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>工单下发 — 密码校验弹窗（<code>modalPwdConfirm</code>）</p>
+          <p><b>入口：</b>智控下发策略区「工单下发」。</p>
+        </div>
+      </div>
+      <div class="anno anno-field" data-version="v1.0">
+        <span class="anno-tag">字段说明</span>
+        <span class="anno-version">v1.0</span>
+        <span class="anno-source">基于文档推断</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>工单下发 — 密码校验弹窗</p>
+          <p><b>操作密码：</b>密文输入，必填。</p>
+        </div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div class="form-label">请输入操作密码</div>
+        <input type="password" class="form-control" placeholder="请输入密码">
+      </div>
+      <div style="font-size:12px; color:var(--warning);">点击后需密码权限校验，校验后才可发起工单下发</div>
+    </div>
+    <div class="modal-foot">
+      <div class="btn-group" style="margin-left:auto;">
+        <button class="btn" onclick="closeModal('modalPwdConfirm')">取 消</button>
+        <button class="btn btn-primary" onclick="closeModal('modalPwdConfirm')">确 认</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：智控下发策略选择 -->
+<div class="modal-mask" id="modalStrategySelect">
+  <div class="modal-box" style="max-width:480px;">
+    <div class="modal-head">
+      <svg class="modal-icon" viewBox="0 0 24 24" fill="#722ED1"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+      <span class="modal-title">选择智控下发策略</span>
+    </div>
+    <div class="modal-body">
+      <div class="anno anno-ux" data-version="v1.0">
+        <span class="anno-tag">交互说明</span>
+        <span class="anno-version">v1.0</span>
+        <span class="anno-source">引用自需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>选择智控下发策略弹窗（modalStrategySelect）</p>
+          <p><b>入口：</b>智控下发策略区「切换策略」。</p>
+          <ul><li><b>单选列表：</b>确认后进入密码校验。</li><li><b>清空：</b>末项清除当前策略。</li></ul>
+        </div>
+      </div>
+      <div class="anno anno-field" data-version="v1.0">
+        <span class="anno-tag">字段说明</span>
+        <span class="anno-version">v1.0</span>
+        <span class="anno-source">基于文档推断</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>选择智控下发策略弹窗</p>
+          <p><b>策略项：</b>名称+描述；末项为清空。</p>
+        </div>
+      </div>
+      <ul class="strategy-list" id="strategyList">
+        <li class="strategy-item selected" data-name="节能模式" onclick="selectStrategy(this)">
+          <div class="strategy-radio"></div>
+          <div class="strategy-info">
+            <div class="strategy-name">节能模式</div>
+            <div class="strategy-desc">低负载场景优先节能，在温度安全范围内极致降低风机转速</div>
+          </div>
+        </li>
+        <li class="strategy-item" data-name="安全优先模式" onclick="selectStrategy(this)">
+          <div class="strategy-radio"></div>
+          <div class="strategy-info">
+            <div class="strategy-name">安全优先模式</div>
+            <div class="strategy-desc">高负载或异常场景，优先保障温度安全边界，调节幅度保守</div>
+          </div>
+        </li>
+        <li class="strategy-item" data-name="均衡模式" onclick="selectStrategy(this)">
+          <div class="strategy-radio"></div>
+          <div class="strategy-info">
+            <div class="strategy-name">均衡模式</div>
+            <div class="strategy-desc">兼顾节能与安全，差异化调节各空调控制参数</div>
+          </div>
+        </li>
+        <li class="strategy-item" data-name="" onclick="selectStrategy(this)">
+          <div class="strategy-radio"></div>
+          <div class="strategy-info">
+            <div class="strategy-name" style="color:var(--text-hint);">不选定（清空当前策略）</div>
+            <div class="strategy-desc">清除当前启用的下发策略</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div class="modal-foot">
+      <div class="modal-hint">切换后需密码权限校验，校验后才能生效</div>
+      <div class="btn-group">
+        <button class="btn" onclick="closeModal('modalStrategySelect')">取 消</button>
+        <button class="btn btn-primary" onclick="confirmStrategySwitch()">确 认</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：安全策略切换 -->
+<div class="modal-mask" id="modalSafetySelect">
+  <div class="modal-box" style="max-width:480px;">
+    <div class="modal-head" style="justify-content:space-between;">
+      <span class="modal-title" style="font-size:16px;font-weight:700;">绑定回退策略</span>
+      <span class="modal-close" onclick="closeModal('modalSafetySelect')" style="cursor:pointer;font-size:20px;color:var(--text-hint);line-height:1;">&times;</span>
+    </div>
+    <div class="modal-body" style="padding:20px 24px 28px;">
+      <div class="anno anno-ux" data-version="v1.0">
+        <span class="anno-tag">交互说明</span>
+        <span class="anno-version">v1.0</span>
+        <span class="anno-source">基于文档推断</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>绑定回退策略弹窗（modalSafetySelect）</p>
+          <p><b>入口：</b>安全策略区「切换策略」。</p>
+        </div>
+      </div>
+      <div class="anno anno-field" data-version="v1.0">
+        <span class="anno-tag">字段说明</span>
+        <span class="anno-version">v1.0</span>
+        <span class="anno-source">基于文档推断</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>绑定回退策略弹窗</p>
+          <p><b>回退策略：</b>下拉单选。</p>
+        </div>
+      </div>
+      <select class="form-control" id="safetyRollbackSelect" style="width:100%;padding:10px 14px;font-size:14px;">
+        <option value="温度超限紧急增冷回退策略">温度超限紧急增冷回退策略</option>
+        <option value="全量回退策略">全量回退策略</option>
+        <option value="最小干预回退策略">最小干预回退策略</option>
+      </select>
+    </div>
+    <div class="modal-foot" style="justify-content:flex-end;">
+      <div class="btn-group">
+        <button class="btn" onclick="closeModal('modalSafetySelect')" style="border-color:var(--success);color:var(--success);">取 消</button>
+        <button class="btn" onclick="confirmSafetySwitch()" style="background:var(--success);color:#fff;border-color:var(--success);">确认绑定</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：手动下发 / 一键回退确认 -->
+<div class="modal-mask" id="modalDispatch">
+  <div class="modal-box" style="max-width:780px;">
+    <div class="modal-head">
+      <svg class="modal-icon" viewBox="0 0 24 24" fill="#FA8C16"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+      <span class="modal-title" id="dispatchTitle">请仔细核对下发的指令参数，改为空值可不下发</span>
+    </div>
+    <div class="modal-body" style="padding-bottom:0;">
+      <div class="anno anno-ux" data-version="v1.0">
+        <span class="anno-tag">交互说明</span>
+        <span class="anno-version">v1.0</span>
+        <span class="anno-source">引用自需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>手动下发 / 一键回退确认弹窗（modalDispatch）</p>
+          <p><b>入口：</b>「手动下发」或「一键回退」。下发值可编辑，空值表示不下发。</p>
+        </div>
+      </div>
+      <div class="anno anno-field" data-version="v1.8">
+        <span class="anno-tag">字段说明</span>
+        <span class="anno-version">v1.8</span>
+        <span class="anno-source">引用自需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>下发/回退确认弹窗内容区</p>
+          <p><b>下发值列：</b>与当前值、AI 建议对照；柔性场景含 V1/V2 等多参数行。</p>
+          <p><b>【v1.8 新增】二次冷冻泵频率设定值：</b>当冷站配置中「二次冷冻泵组」已投入寻优时，下发弹窗增加「二次冷冻水泵 / 频率设定」行，展示当前值、AI 建议值与可编辑下发值；置空表示不下发该点位。</p>
+        </div>
+      </div>
+      <div id="dispatchModalBody" style="max-height:55vh;overflow-y:auto;padding:0 20px 14px;"></div>
+    </div>
+    <div class="modal-foot" style="flex-direction:column;align-items:stretch;gap:10px;">
+      <div class="modal-hint" style="color:#FA8C16;font-size:12px;line-height:1.6;">
+        1、点击后需密码权限校验，校验后才可正式下发<br>
+        2、下发后需要基于反馈结果确定是否下发成功，若出现下发失败的点位，需要再次下发一次
+      </div>
+      <div class="btn-group" style="justify-content:flex-end;">
+        <button class="btn" onclick="closeModal('modalDispatch')">取 消</button>
+        <button class="btn btn-primary" id="dispatchConfirmBtn" onclick="closeModal('modalDispatch')">确认下发</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：历史趋势图表 -->
+<div class="modal-mask" id="modalChart">
+  <div class="modal-box chart-modal">
+    <div class="chart-head">
+      <span class="chart-title" id="chartMainTitle">送风温度设定</span>
+      <span class="chart-subtitle" id="chartSubTitle">1#风冷冷水机组</span>
+      <span class="chart-close" onclick="closeModal('modalChart')">&times;</span>
+    </div>
+    <div class="chart-toolbar">
+      <div class="time-tabs">
+        <div class="time-tab" onclick="switchTimeTab(this)">月</div>
+        <div class="time-tab active" onclick="switchTimeTab(this)">日</div>
+        <div class="time-tab" onclick="switchTimeTab(this)">段</div>
+      </div>
+      <input type="date" class="filter-input" value="2026-03-17" style="font-size:12px;">
+    </div>
+    <div class="anno anno-ux" data-version="v1.0" style="margin:0 20px 8px;">
+      <span class="anno-tag">交互说明</span>
+      <span class="anno-version">v1.0</span>
+      <span class="anno-source">基于文档推断</span>
+      <div class="anno-body">
+        <p><b>关联模块：</b>历史趋势图表弹窗（modalChart）</p>
+        <p><b>入口：</b>寻优记录变量表「历史趋势」。</p>
+      </div>
+    </div>
+    <div class="anno anno-field" data-version="v1.0" style="margin:0 20px 8px;">
+      <span class="anno-tag">字段说明</span>
+      <span class="anno-version">v1.0</span>
+      <span class="anno-source">基于文档推断</span>
+      <div class="anno-body">
+        <p><b>关联模块：</b>历史趋势图表弹窗</p>
+        <p><b>图例：</b>实际值与 AI 寻优值曲线；粒度由月/日/段与日期选择控制。</p>
+      </div>
+    </div>
+    <div class="chart-canvas">
+      <canvas id="trendChart"></canvas>
+    </div>
+    <div class="chart-legend">
+      <div class="leg"><div class="leg-line" style="background:#1890FF;"></div>实际值</div>
+      <div class="leg"><div class="leg-line dashed" style="color:#52C41A;"></div>AI寻优值</div>
+    </div>
+    <div class="chart-foot">
+      <button class="btn" onclick="closeModal('modalChart')">取 消</button>
+      <button class="btn btn-primary" onclick="closeModal('modalChart')">确 定</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+const DATA = [
+  {
+    name: '冷冻水总管',
+    status: 'running',
+    statusText: '运行中',
+    fi: 'in',
+    fiText: '投入',
+    variables: [
+      { name:'总管供水温度', type:'controlled', actual:'6.30℃', ai:'-', change:'无变化' },
+      { name:'总管回水温度', type:'controlled', actual:'12.80℃', ai:'-', change:'无变化' },
+      { name:'总管目标温差（寻优）', type:'optimizing', actual:'5.20℃', ai:'5.45℃', change:'+0.25℃' },
+      { name:'室外干球温度（扰动）', type:'disturbance', actual:'18.6℃', ai:'-', change:'无变化' },
+    ]
+  },
+  {
+    name: '1#风冷冷水机组',
+    status: 'running',
+    statusText: '运行中',
+    fi: 'in',
+    fiText: '投入',
+    variables: [
+      { name:'冷冻水出水温度', type:'controlled', actual:'6.10℃', ai:'-', change:'无变化' },
+      { name:'冷凝器小温差', type:'controlled', actual:'2.1℃', ai:'-', change:'无变化' },
+      { name:'冷冻水出水温度设定（V1）', type:'optimizing', actual:'6.50℃', ai:'6.20℃', change:'-0.30℃' },
+      { name:'导叶开度上限（V2）', type:'optimizing', actual:'88%', ai:'92%', change:'+4%' },
+    ]
+  },
+  {
+    name: '2#风冷冷水机组',
+    status: 'stopped',
+    statusText: '停机中',
+    fi: 'out',
+    fiText: '投出',
+    variables: [
+      { name:'冷冻水出水温度', type:'controlled', actual:'—', ai:'-', change:'无变化' },
+      { name:'冷冻水出水温度设定（V1）', type:'unopt', actual:'—', ai:'-', change:'无变化' },
+    ]
+  },
+  {
+    name: '冷冻泵组（并联）',
+    status: 'running',
+    statusText: '运行中',
+    fi: 'in',
+    fiText: '投入',
+    variables: [
+      { name:'总管压差', type:'controlled', actual:'0.42 MPa', ai:'-', change:'无变化' },
+      { name:'变频频率设定（寻优）', type:'optimizing', actual:'42.0 Hz', ai:'38.5 Hz', change:'-3.5 Hz' },
+    ]
+  },
+  {
+    name: '二次冷冻泵组（并联）',
+    status: 'running',
+    statusText: '运行中',
+    fi: 'in',
+    fiText: '投入',
+    variables: [
+      { name:'分集水器压差', type:'controlled', actual:'0.18 MPa', ai:'-', change:'无变化' },
+      { name:'变频频率设定（寻优）', type:'optimizing', actual:'36.0 Hz', ai:'39.2 Hz', change:'+3.2 Hz' },
+    ]
+  },
+];
+
+function getActiveVarFilter() {
+  const el = document.querySelector('#varTypeFilter .var-tag.active');
+  return el ? el.dataset.filter : 'all';
+}
+
+function renderTable() {
+  const tbody = document.getElementById('tableBody');
+  const hideOff = document.getElementById('hideOffDevice').checked;
+  const typeFilter = getActiveVarFilter();
+  let html = '';
+  let visibleIdx = 0;
+  DATA.forEach((ac) => {
+    if (hideOff && (ac.status === 'stopped' || ac.fi === 'out')) return;
+    const filteredVars = typeFilter === 'all'
+      ? ac.variables
+      : ac.variables.filter(v => v.type === typeFilter);
+    if (filteredVars.length === 0) return;
+    if (visibleIdx > 0) {
+      html += '<tr class="obj-separator"><td colspan="6"></td></tr>';
+    }
+    visibleIdx++;
+    filteredVars.forEach((v, i) => {
+      const isPositive = v.change.startsWith('+');
+      const isNegative = v.change.startsWith('-');
+      const changeClass = v.change === '无变化' ? 'change-none' : (isPositive ? 'change-positive' : 'change-negative');
+      html += '<tr>';
+      if (i === 0) {
+        html += `<td class="obj-name-cell" rowspan="${filteredVars.length}">
+          <div class="obj-name-inner">
+            <div style="font-size:14px;font-weight:600;">${ac.name}</div>
+            <div class="obj-tags">
+              <span class="obj-status ${ac.status}">
+                <span class="obj-status-dot"></span>${ac.statusText}
+              </span>
+              <span class="obj-fi-tag ${ac.fi}">${ac.fiText}</span>
+            </div>
+          </div>
+        </td>`;
+      }
+      html += `<td><span class="var-name-type ${v.type}">${v.name}</span></td>`;
+      html += `<td>${v.actual}</td>`;
+      html += `<td style="font-weight:500;">${v.ai}</td>`;
+      html += `<td class="change-cell ${changeClass}">${v.change}</td>`;
+      html += `<td><span class="link-btn" onclick="openChart('${ac.name}','${v.name}')">历史趋势</span></td>`;
+      html += '</tr>';
+    });
+  });
+  tbody.innerHTML = html;
+}
+
+function togglePanel() {
+  document.getElementById('rulePanel').classList.toggle('open');
+  document.getElementById('panelOverlay').classList.toggle('open');
+}
+
+function onOptimizerChange(val) {
+  var allKeys = ['lshade', 'slsqp'];
+  allKeys.forEach(function(k) {
+    var el = document.getElementById('optimizerParams-' + k);
+    if (el) el.style.display = (val === k) ? 'block' : 'none';
+  });
+}
+
+/** 寻优目标偏好：基准功率与折算用常量（保存后由后端刷新） */
+const PREF_MOCK = {
+  pBaselineKw: 200,
+  wChiller: 5,
+  sumW: 24,
+  analogParamCount: 8
+};
+
+function clampPrefM(v) {
+  const n = Number(v);
+  if (Number.isNaN(n)) return 0.30;
+  return Math.min(0.50, Math.max(0.10, Math.round(n * 100) / 100));
+}
+
+function formatLambda(v) {
+  return (Math.round(Number(v) * 100) / 100).toFixed(2);
+}
+
+function syncObjectivePreferenceHints() {
+  const l1 = Number(document.getElementById('prefLambda1')?.value ?? 0.1);
+  const l1v = document.getElementById('prefLambda1Val');
+  if (l1v) l1v.textContent = formatLambda(l1);
+
+  const l2v = document.getElementById('prefLambda2Val');
+  if (l2v) l2v.textContent = '0.00';
+
+  const l3 = Number(document.getElementById('prefLambda3')?.value ?? 0.05);
+  const l3v = document.getElementById('prefLambda3Val');
+  if (l3v) l3v.textContent = formatLambda(l3);
+}
+
+window.smartRecommendFlex = function (btn) {
+  btn.classList.add('loading');
+  setTimeout(function () {
+    var recommended = { prefLambda1: 0.18, prefLambda3: 0.08 };
+    Object.keys(recommended).forEach(function (id) {
+      var slider = document.getElementById(id);
+      var valEl = document.getElementById(id + 'Val');
+      if (!slider || !valEl) return;
+      slider.value = recommended[id];
+      valEl.textContent = recommended[id].toFixed(2);
+    });
+    btn.classList.remove('loading');
+    var toast = document.getElementById('fSmartToast');
+    toast.textContent = '✓ 已基于近 30 天历史数据自动推荐';
+    toast.classList.add('show');
+    setTimeout(function () { toast.classList.remove('show'); }, 3000);
+  }, 800);
+};
+
+function initObjectivePreferenceControls() {
+  const l1 = document.getElementById('prefLambda1');
+  const l3 = document.getElementById('prefLambda3');
+  const mEl = document.getElementById('prefMarginM');
+  [l1, l3].forEach(function (el) {
+    if (el) {
+      el.addEventListener('input', syncObjectivePreferenceHints);
+      el.addEventListener('change', syncObjectivePreferenceHints);
+    }
+  });
+  syncObjectivePreferenceHints();
+}
+
+function onCtrlToggle(type, checked) {
+  var body = document.getElementById(type === 'main' ? 'mainCtrlBody' : 'auxCtrlBody');
+  var tag = document.getElementById(type === 'main' ? 'mainCtrlTag' : 'auxCtrlTag');
+  body.style.display = checked ? 'block' : 'none';
+  tag.textContent = checked ? '已启用' : '已停用';
+  tag.className = 'tag ' + (checked ? 'on' : 'off');
+}
+
+document.querySelectorAll('.tabs-bar .tab-item').forEach(tab => {
+  tab.addEventListener('click', function() {
+    this.parentElement.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+    const target = this.dataset.tab;
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    const pane = document.getElementById('pane-' + target);
+    if (pane) pane.classList.add('active');
+  });
+});
+document.querySelectorAll('.page-nav-item').forEach(nav => {
+  nav.addEventListener('click', function() {
+    if (this.getAttribute('onclick')) return;
+    this.parentElement.querySelectorAll('.page-nav-item').forEach(n => n.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+document.querySelectorAll('.panel-tab').forEach(tab => {
+  tab.addEventListener('click', function() {
+    this.parentElement.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+    const target = this.dataset.ptab;
+    document.querySelectorAll('.panel-pane').forEach(p => p.classList.remove('active'));
+    const pane = document.getElementById('ppane-' + target);
+    if (pane) pane.classList.add('active');
+  });
+});
+renderTable();
+initObjectivePreferenceControls();
+
+document.getElementById('hideOffDevice').addEventListener('change', function() {
+  renderTable();
+});
+
+document.querySelectorAll('#varTypeFilter .var-tag').forEach(tag => {
+  tag.addEventListener('click', function() {
+    document.querySelectorAll('#varTypeFilter .var-tag').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+    renderTable();
+  });
+});
+
+const DISPATCH_DATA = [
+  { strategy:'冷站柔性调优自动下发策略', time:'2026-03-17 13:25:00', user:'系统管理员', target:'1#风冷冷水机组/冷冻水出水温度设定', actual:'6.50', dispatch:'6.20', result:'成功' },
+  { strategy:'',                          time:'2026-03-17 13:25:00', user:'系统管理员', target:'1#风冷冷水机组/导叶开度上限', actual:'88', dispatch:'92', result:'成功' },
+  { strategy:'',                          time:'2026-03-17 13:25:00', user:'系统管理员', target:'冷冻泵组/变频频率设定', actual:'42.0', dispatch:'38.5', result:'成功' },
+  { strategy:'',                          time:'2026-03-17 13:25:00', user:'系统管理员', target:'二次冷冻泵组/变频频率设定', actual:'36.0', dispatch:'39.2', result:'成功' },
+  { strategy:'冷站柔性调优自动下发策略', time:'2026-03-17 13:20:00', user:'系统管理员', target:'冷冻水总管/目标温差', actual:'5.20', dispatch:'5.45', result:'成功' },
+  { strategy:'',                          time:'2026-03-17 13:20:00', user:'系统管理员', target:'1#风冷冷水机组/冷冻水出水温度设定', actual:'6.50', dispatch:'6.25', result:'成功' },
+];
+
+function renderDispatchTable() {
+  const tbody = document.getElementById('dispatchBody');
+  const rows = DISPATCH_DATA.map(d => {
+    const showStrategy = d.strategy !== '';
+    const resultClass = d.result === '成功' ? 'color:#52C41A' : 'color:#FF4D4F';
+    return `<tr>
+      <td style="font-weight:${showStrategy ? 500 : 400};color:${showStrategy ? 'var(--text-primary)' : 'transparent'}">${showStrategy ? d.strategy : ''}</td>
+      <td>${d.time}</td>
+      <td>${d.user}</td>
+      <td>${d.target}</td>
+      <td>${d.actual}</td>
+      <td>${d.dispatch}</td>
+      <td style="${resultClass};font-weight:500">${d.result}</td>
+    </tr>`;
+  }).join('');
+  tbody.innerHTML = rows;
+}
+renderDispatchTable();
+
+document.querySelectorAll('.toggle-switch input').forEach(sw => {
+  sw.addEventListener('change', function() {
+    const status = this.closest('.io-item').querySelector('.io-status');
+    if (this.checked) {
+      status.textContent = '投入';
+      status.className = 'io-status in';
+    } else {
+      status.textContent = '投出';
+      status.className = 'io-status out';
+    }
+  });
+});
+
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+document.querySelectorAll('.modal-mask').forEach(m => {
+  m.addEventListener('click', function(e) {
+    if (e.target === this) closeModal(this.id);
+  });
+});
+
+let optEnabled = true;
+let pendingPwdAction = null;
+
+function toggleOptStatus() {
+  pendingPwdAction = optEnabled ? 'disableOpt' : 'enableOpt';
+  document.getElementById('pwdTitle').textContent =
+    (optEnabled ? '停用寻优' : '启用寻优') + ' — 密码校验';
+  document.getElementById('pwdHint').textContent =
+    '校验通过后将' + (optEnabled ? '停用' : '启用') + '冷站柔性调优策略';
+  document.getElementById('pwdInput').value = '';
+  openModal('modalPwd');
+}
+
+function onPwdConfirm() {
+  closeModal('modalPwd');
+  if (pendingPwdAction === 'disableOpt' || pendingPwdAction === 'enableOpt') {
+    optEnabled = !optEnabled;
+    refreshOptUI();
+  } else if (pendingPwdAction === 'switchStrategy') {
+    const name = window._pendingStrategy;
+    document.getElementById('deliverStrategyName').textContent = name || '—';
+    document.getElementById('deliverStrategyName').style.color = name ? '' : 'var(--text-hint)';
+  }
+  pendingPwdAction = null;
+}
+
+function refreshOptUI() {
+  const badge = document.getElementById('optBadge');
+  const btn = document.getElementById('btnOptToggle');
+  if (optEnabled) {
+    badge.textContent = '已启用';
+    badge.className = 'module-status-badge active';
+    btn.className = 'btn btn-danger';
+    btn.innerHTML = '<span class="btn-icon"><svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></span>停用';
+  } else {
+    badge.textContent = '已停用';
+    badge.className = 'module-status-badge inactive';
+    btn.className = 'btn btn-primary';
+    btn.innerHTML = '<span class="btn-icon"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="#fff"/></svg></span>启用';
+  }
+}
+
+let deliverMode = 'manual';
+
+function refreshDeliverUI() {
+  const btn = document.getElementById('btnManualDeliver');
+  const modeText = document.getElementById('deliverModeText');
+  if (deliverMode === 'auto') {
+    modeText.textContent = '自动下发';
+    btn.classList.add('disabled');
+  } else {
+    modeText.textContent = '手动下发';
+    btn.classList.remove('disabled');
+  }
+}
+
+function selectStrategy(el) {
+  document.querySelectorAll('#strategyList .strategy-item').forEach(i => i.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function confirmSafetySwitch() {
+  const sel = document.getElementById('safetyRollbackSelect');
+  closeModal('modalSafetySelect');
+  const safetyLabel = document.querySelectorAll('.module-card')[2].querySelector('.value.blue');
+  if (safetyLabel) safetyLabel.textContent = sel.value;
+}
+
+function confirmStrategySwitch() {
+  const selected = document.querySelector('#strategyList .strategy-item.selected');
+  const name = selected ? selected.dataset.name : '';
+  closeModal('modalStrategySelect');
+  pendingPwdAction = 'switchStrategy';
+  document.getElementById('pwdTitle').textContent = '切换下发策略 — 密码校验';
+  document.getElementById('pwdHint').textContent = name
+    ? '校验通过后将切换为「' + name + '」'
+    : '校验通过后将清空当前下发策略';
+  document.getElementById('pwdInput').value = '';
+  window._pendingStrategy = name;
+  openModal('modalPwd');
+}
+
+refreshDeliverUI();
+
+function openDispatch(mode) {
+  const isRollback = mode === '一键回退';
+  document.getElementById('dispatchTitle').textContent =
+    '请仔细核对' + (isRollback ? '回退' : '下发') + '的指令参数，改为空值可不下发';
+  document.getElementById('dispatchConfirmBtn').textContent =
+    isRollback ? '确认回退' : '确认下发';
+
+  const rows = [];
+  DATA.forEach(eq => {
+    if (eq.fi === 'out' || eq.status === 'stopped') return;
+    eq.variables.forEach(v => {
+      if (v.type === 'optimizing' && v.ai !== '-') {
+        rows.push({ dev: eq.name, param: v.name, actual: v.actual, ai: v.ai });
+      }
+    });
+  });
+
+  let html = '';
+  if (rows.length) {
+    html += `<div class="dispatch-section"><span class="ds-badge save">寻优</span> AI 建议调节（${rows.length} 条）— 冷站对象</div>`;
+    html += `<table class="dispatch-table"><thead><tr>
+      <th>对象</th><th>下发属性</th><th>当前值</th><th>AI寻优值</th><th>下发值</th>
+    </tr></thead><tbody>`;
+    rows.forEach(r => {
+      html += `<tr>
+        <td class="dev-name">${r.dev}</td>
+        <td class="param-name">${r.param}</td>
+        <td class="val-actual">${r.actual}</td>
+        <td class="val-ai">${r.ai}</td>
+        <td><input class="dispatch-val" type="text" value="${String(r.ai).replace(/\s*Hz\s*$/i,'').replace(/[℃%]/g,'').trim()}"></td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+  } else {
+    html = '<div style="text-align:center;padding:30px;color:var(--text-hint);">当前无需下发变更</div>';
+  }
+
+  document.getElementById('dispatchModalBody').innerHTML = html;
+  openModal('modalDispatch');
+}
+
+let trendChartInstance = null;
+
+function openChart(acName, varName) {
+  document.getElementById('chartMainTitle').textContent = varName;
+  document.getElementById('chartSubTitle').textContent = acName;
+  openModal('modalChart');
+  setTimeout(() => drawTrendChart(), 80);
+}
+
+function switchTimeTab(el) {
+  el.parentElement.querySelectorAll('.time-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  drawTrendChart();
+}
+
+function drawTrendChart() {
+  const canvas = document.getElementById('trendChart');
+  const ctx = canvas.getContext('2d');
+  const container = canvas.parentElement;
+  const dpr = window.devicePixelRatio || 1;
+  const w = container.clientWidth, h = container.clientHeight;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+  ctx.scale(dpr, dpr);
+
+  const hours = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'];
+  const actual  = [20.0, 20.0, 20.5, 20.5, 21.0, 20.0, 19.0, 19.5, 20.0, 20.5, 21.0, 20.5];
+  const aiValue = [20.0, 20.5, 21.0, 21.5, 22.0, 19.0, 18.5, 19.0, 19.5, 21.5, 22.0, 21.0];
+
+  const pad = { l:50, r:20, t:20, b:40 };
+  const chartW = w - pad.l - pad.r;
+  const chartH = h - pad.t - pad.b;
+  const yMin = 16, yMax = 26, yStep = 2;
+
+  ctx.clearRect(0, 0, w, h);
+
+  ctx.strokeStyle = '#E8E8E8'; ctx.lineWidth = 1;
+  ctx.fillStyle = '#999'; ctx.font = '11px sans-serif'; ctx.textAlign = 'right';
+  for (let v = yMin; v <= yMax; v += yStep) {
+    const y = pad.t + chartH - ((v - yMin) / (yMax - yMin)) * chartH;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + chartW, y); ctx.stroke();
+    ctx.fillText(v + '℃', pad.l - 8, y + 4);
+  }
+
+  ctx.textAlign = 'center';
+  hours.forEach((lbl, i) => {
+    const x = pad.l + (i / (hours.length - 1)) * chartW;
+    ctx.fillText(lbl, x, h - pad.b + 20);
+  });
+
+  function drawLine(data, color, dashed) {
+    ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 2;
+    if (dashed) ctx.setLineDash([6, 4]); else ctx.setLineDash([]);
+    data.forEach((v, i) => {
+      const x = pad.l + (i / (data.length - 1)) * chartW;
+      const y = pad.t + chartH - ((v - yMin) / (yMax - yMin)) * chartH;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    ctx.setLineDash([]);
+    data.forEach((v, i) => {
+      const x = pad.l + (i / (data.length - 1)) * chartW;
+      const y = pad.t + chartH - ((v - yMin) / (yMax - yMin)) * chartH;
+      ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2);
+      ctx.fillStyle = color; ctx.fill();
+    });
+  }
+
+  drawLine(actual, '#1890FF', false);
+  drawLine(aiValue, '#52C41A', true);
+}
+
+</script>
+
+  <button class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+
+  <div class="anno-filter-bar" id="annoFilterBar">
+    <span class="anno-filter-label">批注版本：</span>
+    <div class="anno-filter-tags" id="annoFilterTags"></div>
+  </div>
+
+  <script>
+  function initAnnoVersionFilter() {
+    var bar = document.getElementById('annoFilterBar');
+    var tags = document.getElementById('annoFilterTags');
+    if (!document.body.classList.contains('annotation-mode')) return;
+    var annos = document.querySelectorAll('.anno[data-version]');
+    var versions = [];
+    annos.forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (v && versions.indexOf(v) === -1) versions.push(v);
+    });
+    versions.sort(function(a, b) {
+      var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+      var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+      for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+        if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+      }
+      return 0;
+    });
+    tags.innerHTML = '';
+    var allBtn = document.createElement('span');
+    allBtn.className = 'anno-filter-tag';
+    allBtn.textContent = '全部';
+    allBtn.onclick = function() { filterAnno('all', versions[0]); setActive(this); };
+    tags.appendChild(allBtn);
+    versions.forEach(function(v, i) {
+      var btn = document.createElement('span');
+      btn.className = 'anno-filter-tag' + (i === 0 ? ' active' : '');
+      btn.textContent = v;
+      btn.onclick = function() { filterAnno(v, versions[0]); setActive(this); };
+      tags.appendChild(btn);
+    });
+    if (versions.length > 0) filterAnno(versions[0], versions[0]);
+  }
+  function filterAnno(version, latest) {
+    document.querySelectorAll('.anno[data-version]').forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (version === 'all') {
+        a.style.display = '';
+        a.style.opacity = (v === latest) ? '1' : '0.6';
+      } else {
+        a.style.display = (v === version) ? '' : 'none';
+        a.style.opacity = '1';
+      }
+    });
+  }
+  function setActive(el) {
+    el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function(t) { t.classList.remove('active'); });
+    el.classList.add('active');
+  }
+  </script>
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="冷站柔性调优"></script>
+</body>
+</html>

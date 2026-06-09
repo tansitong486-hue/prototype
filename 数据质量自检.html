@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数据质量自检</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-dark: #17358A;
+      --primary-tint: #EEF4FF;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --danger: #DC2626;
+      --danger-light: #FEF2F2;
+      --danger-border: #FCA5A5;
+      --success: #16A34A;
+      --success-light: #F0FDF4;
+      --warning: #D97706;
+      --warning-light: #FFFBEB;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button { border: none; background: none; font: inherit; cursor: pointer; }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(0,0,0,.12); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,.2); }
+
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main { flex: 1; min-width: 0; overflow-y: auto; background: var(--bg-body); }
+
+    .page-shell { padding: 18px 20px 32px; }
+
+    .page-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    /* ===== Page Head ===== */
+    .page-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px 12px;
+      flex-wrap: wrap;
+    }
+
+    .page-head-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: var(--radius);
+      transition: all var(--transition);
+    }
+    .back-btn:hover { color: var(--primary); background: var(--primary-tint); }
+    .back-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    .head-divider {
+      width: 1px;
+      height: 18px;
+      background: var(--border);
+    }
+
+    .page-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .page-meta {
+      font-size: 12px;
+      color: var(--text-hint);
+      margin-top: 2px;
+    }
+
+    .page-head-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* ===== Buttons ===== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 34px;
+      padding: 0 14px;
+      border-radius: var(--radius);
+      font-size: 12px;
+      font-weight: 600;
+      transition: all var(--transition);
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+    .btn-primary { color: #fff; background: var(--primary); border: 1px solid var(--primary); }
+    .btn-primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); }
+    .btn-ghost { color: var(--text-primary); background: #fff; border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ===== Status Banner ===== */
+    .status-banner {
+      margin: 0 18px 14px;
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      border: 1px solid;
+    }
+    .status-banner.running {
+      background: #EFF6FF;
+      border-color: #BFDBFE;
+      color: #1D4ED8;
+    }
+    .status-banner.success {
+      background: var(--success-light);
+      border-color: #BBF7D0;
+      color: var(--success);
+    }
+    .status-banner.failed {
+      background: var(--danger-light);
+      border-color: var(--danger-border);
+      color: var(--danger);
+    }
+    .status-banner.empty {
+      background: #FAFBFD;
+      border-color: var(--border-light);
+      color: var(--text-hint);
+    }
+    .banner-icon { flex-shrink: 0; }
+    .banner-icon svg { width: 16px; height: 16px; display: block; }
+    .banner-text { flex: 1; }
+    .banner-sub { font-size: 12px; opacity: 0.8; margin-top: 1px; }
+
+    /* 运行中旋转动画 */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinning { animation: spin 1s linear infinite; }
+
+    /* ===== Toolbar ===== */
+    .page-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 18px 14px;
+      flex-wrap: wrap;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      flex: 1;
+    }
+
+    .toolbar-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .toolbar-select {
+      height: 32px;
+      padding: 0 26px 0 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 12px;
+      color: var(--text-primary);
+      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 8px center;
+      appearance: none;
+      cursor: pointer;
+      min-width: 110px;
+    }
+    .toolbar-select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.12);
+    }
+
+    .search-field {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      height: 32px;
+      padding: 0 10px;
+      min-width: 220px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text-secondary);
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .search-field:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.12);
+    }
+    .search-field svg { width: 13px; height: 13px; fill: currentColor; opacity: .7; flex-shrink: 0; }
+    .search-input {
+      border: none;
+      outline: none;
+      font-size: 12px;
+      width: 100%;
+      color: var(--text-primary);
+      background: transparent;
+    }
+    .search-input::placeholder { color: var(--text-hint); }
+
+    /* ===== Summary Row ===== */
+    .summary-row {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 0 18px 12px;
+      flex-wrap: wrap;
+    }
+    .summary-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .chip-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .chip-dot.fail { background: var(--danger); }
+    .chip-dot.insuf { background: var(--warning); }
+    .chip-dot.pass { background: var(--success); }
+    .chip-count { font-weight: 700; color: var(--text-primary); }
+
+    /* ===== Table ===== */
+    .table-wrap { overflow-x: auto; }
+
+    .data-table {
+      width: 100%;
+      min-width: 1200px;
+      border-collapse: collapse;
+    }
+
+    .data-table thead th {
+      padding: 11px 14px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 13px 14px;
+      font-size: 13px;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:last-child td { border-bottom: none; }
+    .data-table tbody tr:hover { background: #FBFCFE; }
+
+    .col-object { min-width: 150px; }
+    .col-name { min-width: 160px; }
+    .col-id { width: 100px; font-family: monospace; font-size: 12px; color: var(--text-secondary); }
+    .col-source { width: 100px; }
+    .col-value { width: 110px; text-align: right; font-variant-numeric: tabular-nums; }
+    .col-time { width: 148px; font-size: 12px; color: var(--text-secondary); }
+    .col-result { width: 90px; }
+    .col-desc { min-width: 220px; font-size: 12px; line-height: 1.5; white-space: normal; }
+
+    /* 最新值可点击态（有历史曲线的测点） */
+    .data-table tbody td.col-value-link {
+      cursor: pointer;
+      color: #1D6FF3;
+      font-weight: 500;
+    }
+    .data-table tbody td.col-value-link:hover { text-decoration: underline; }
+
+    /* 问题描述内每条规则命中项 */
+    .desc-item { color: var(--text-secondary); line-height: 1.6; }
+    .desc-item + .desc-item { margin-top: 3px; }
+
+    /* 规则分类徽标（仅中文，内联紧凑） */
+    .rule-badge {
+      display: inline;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-right: 4px;
+      white-space: nowrap;
+      vertical-align: 1px;
+    }
+    .rule-badge.fail   { background: var(--danger-light);   color: var(--danger); }
+    .rule-badge.insuf  { background: var(--warning-light);  color: var(--warning); }
+    .rule-badge.pass   { background: var(--success-light);  color: var(--success); }
+
+    /* ===== Status Tag ===== */
+    .result-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .result-tag.fail {
+      background: var(--danger-light);
+      color: var(--danger);
+    }
+    .result-tag.insuf {
+      background: var(--warning-light);
+      color: var(--warning);
+    }
+    .result-tag.pass {
+      background: var(--success-light);
+      color: var(--success);
+    }
+    .result-tag-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      flex-shrink: 0;
+    }
+
+    .type-tag {
+      display: inline-block;
+      padding: 1px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      background: #F1F5F9;
+      color: var(--text-secondary);
+    }
+    .type-tag.static {
+      background: #F5F3FF;
+      color: #7C3AED;
+    }
+
+    .source-tag {
+      display: inline-block;
+      padding: 1px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      background: #F0F9FF;
+      color: #0369A1;
+    }
+    .source-tag.calc {
+      background: #FFF7ED;
+      color: #C2410C;
+    }
+    .source-tag.static {
+      background: #F5F3FF;
+      color: #7C3AED;
+    }
+
+    /* ===== Action link ===== */
+    .action-link {
+      font-size: 12px;
+      cursor: pointer;
+      color: #1890FF;
+      transition: opacity var(--transition);
+      background: none;
+      border: none;
+      padding: 0;
+      font-family: inherit;
+    }
+    .action-link:hover { opacity: 0.72; }
+
+    /* ===== Empty State ===== */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 72px 24px;
+      color: var(--text-hint);
+      text-align: center;
+    }
+    .empty-icon {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 14px;
+      opacity: 0.35;
+    }
+    .empty-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    .empty-desc { font-size: 13px; line-height: 1.6; }
+    .empty-action { margin-top: 18px; }
+
+
+    /* ===== Curve Modal ===== */
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.44);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .22s;
+    }
+    .modal-mask.open { opacity: 1; pointer-events: auto; }
+
+    .modal-box {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 12px 40px rgba(15,23,42,.18);
+      width: 680px;
+      max-width: 100%;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(12px);
+      transition: transform .22s;
+    }
+    .modal-mask.open .modal-box { transform: translateY(0); }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .modal-title { font-size: 15px; font-weight: 700; }
+    .modal-close {
+      width: 28px; height: 28px;
+      display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 6px; color: var(--text-hint);
+      cursor: pointer; transition: background var(--transition), color var(--transition);
+    }
+    .modal-close:hover { background: #F1F5F9; color: var(--text-primary); }
+    .modal-close svg { width: 16px; height: 16px; }
+
+    .modal-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 18px;
+    }
+    .curve-placeholder {
+      height: 240px;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-hint);
+      background: #FAFBFD;
+      font-size: 13px;
+      gap: 6px;
+    }
+    .curve-placeholder svg { width: 32px; height: 32px; opacity: .4; }
+    .curve-meta {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .curve-meta-item { font-size: 12px; }
+    .curve-meta-label { color: var(--text-hint); margin-bottom: 2px; }
+    .curve-meta-value { color: var(--text-primary); font-weight: 500; }
+
+    /* ===== Toast ===== */
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 28px;
+      min-width: 180px;
+      max-width: 320px;
+      padding: 11px 14px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.92);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.6;
+      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.28);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: all .25s ease;
+      z-index: 260;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .page-head { flex-direction: column; align-items: flex-start; }
+      .filter-group { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+        <div class="anno-filter-bar" id="annoFilterBar">
+          <span class="anno-filter-label">批注版本：</span>
+          <div class="anno-filter-tags" id="annoFilterTags"></div>
+        </div>
+        <div class="page-shell">
+          <div class="page-card">
+
+            <!-- ====== 批注区 ====== -->
+            <div class="anno anno-version-header" data-version="v2.1">
+              <span class="anno-tag">版本信息</span>
+              <div class="anno-body">
+                <p><b>当前版本：</b>v2.1</p>
+                <p><b>更新日期：</b>2026-05</p>
+                <p><b>变更概述：</b>新增实施期数据质量自检能力，覆盖水冷冷水系统与风冷冷水系统；A 组（测点类）/ B 组（二次计算类）/ C 组（静态属性类）三组共 9 大类规则、子条约 20+ 条；数据窗口固定最近 1 天（24 小时），5 分钟粒度原始数据。本期不交付：历史记录列表、项目级阈值覆盖。</p>
+                <p><b>本页说明：</b>自检结果页。触发路径：能效视图 → 选中「水冷冷水系统」→ 点击「数据质量自检」按钮 → 跳转至本页并立即开始计算。不保存历史记录；每次触发以新结果覆盖当前展示。支持重新执行、筛选/搜索、导出 xlsx。</p>
+              </div>
+            </div>
+
+            <div class="anno anno-ux" data-version="v2.1">
+              <span class="anno-tag">交互说明</span>
+              <span class="anno-version">v2.1</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>页头操作区（返回 / 元信息行 / 重新执行 / 导出 xlsx）</p>
+                <ul>
+                  <li><b>返回：</b>点击「← 返回」跳转至来源能效视图页，不弹确认。</li>
+                  <li><b>元信息行：</b>展示当前系统类型 + 冷站名称 + 数据窗口（固定：最近 1 天）；由能效视图传参带入，本页只读展示。</li>
+                  <li><b>重新执行：</b>点击后立即重新触发自检计算流程；计算期间本按钮与「导出 xlsx」按钮均禁用（防重复触发）；计算完成后新结果覆盖当前结果页展示，无需刷新页面。</li>
+                  <li><b>导出 xlsx：</b>导出当前结果表；列与在线主表一致（8 列），不含历史曲线图片；文件名格式：<code>项目名称_数据质量自检_yyyyMMdd_HHmm.xlsx</code>；计算期间禁用。</li>
+                </ul>
+              </div>
+            </div>
+            <!-- ====== /批注区 ====== -->
+
+            <!-- Page Head -->
+            <div class="page-head">
+              <div class="page-head-left">
+                <a href="能效视图.html" class="back-btn" aria-label="返回能效视图">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                    <path d="M10 3L5 8l5 5"/>
+                  </svg>
+                  返回
+                </a>
+                <span class="head-divider" aria-hidden="true"></span>
+                <div>
+                  <div class="page-title">数据质量自检</div>
+                  <div class="page-meta" id="pageMetaLine">水冷冷水系统 · 1# 冷站 · 数据窗口：最近 1 天</div>
+                </div>
+              </div>
+              <div class="page-head-actions">
+                <button type="button" class="btn btn-ghost" id="btnRerun" title="重新执行自检">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M13.5 8A5.5 5.5 0 1 1 8 2.5"/>
+                    <path d="M8 2.5L11 5.5M8 2.5l3-3"/>
+                  </svg>
+                  重新执行
+                </button>
+                <button type="button" class="btn btn-primary" id="btnExport">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M8 2v8M5 7l3 3 3-3M3 13h10"/>
+                  </svg>
+                  导出 xlsx
+                </button>
+              </div>
+            </div>
+
+            <!-- ====== 批注区 ====== -->
+            <div class="anno anno-state" data-version="v2.1">
+              <span class="anno-tag">状态说明</span>
+              <span class="anno-version">v2.1</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>自检任务执行状态横幅（四态，运行时动态切换）</p>
+                <ul>
+                  <li><b>执行中（running·蓝色）：</b>旋转加载图标；主文「自检执行中，请稍候…」；副文「正在加载固化清单、执行 A / B / C 三组规则」；同时将「重新执行」与「导出 xlsx」按钮置灰禁用。</li>
+                  <li><b>成功（success·绿色）：</b>对勾图标；主文「自检完成，共检查 X 项」（X 为本次生成规则任务总数）；副文展示执行时间与耗时；汇总统计行同步显示。</li>
+                  <li><b>失败（failed·红色）：</b>叉号图标；展示失败原因文案；若上次曾执行成功，保留上次结果表展示，同时提示「重新执行」；按钮恢复可用。</li>
+                  <li><b>空态（empty·灰色）：</b>尚未执行过任何自检；展示「尚未执行自检」提示文案及操作引导；结果表区域不展示。（本原型默认展示「成功」态以示意完整功能。）</li>
+                </ul>
+              </div>
+            </div>
+            <!-- ====== /批注区 ====== -->
+
+            <!-- Status Banner: running / success / failed / empty; toggle via JS -->
+            <div class="status-banner success" id="statusBanner">
+              <span class="banner-icon">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M13.5 4L6.5 11 2.5 7"/>
+                </svg>
+              </span>
+              <div class="banner-text">
+                <div id="bannerMain">自检完成，共检查 <strong>42</strong> 项</div>
+                <div class="banner-sub" id="bannerSub">执行时间：2026-05-13 16:48:22 · 耗时约 3s</div>
+              </div>
+            </div>
+
+            <!-- ====== 批注区 ====== -->
+            <div class="anno anno-data" data-version="v2.1">
+              <span class="anno-tag">数据逻辑</span>
+              <span class="anno-version">v2.1</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>汇总统计行（不通过 / 数据不足 / 通过 三项计数）</p>
+                <ul>
+                  <li>三项计数从本次自检结果表实时汇总，随结果表同步更新，不另行接口。</li>
+                  <li>仅在自检状态为「成功」时展示本行；执行中、失败、空态时不显示。</li>
+                  <li>计数口径：按检查项（行）数统计，同一测点命中多条规则仍计为 1 行 / 1 条。</li>
+                </ul>
+              </div>
+            </div>
+            <!-- ====== /批注区 ====== -->
+
+            <!-- Summary Row -->
+            <div class="summary-row" id="summaryRow">
+              <span class="summary-chip">
+                <span class="chip-dot fail"></span>不通过 <span class="chip-count" id="cntFail">7</span> 项
+              </span>
+              <span class="summary-chip">
+                <span class="chip-dot insuf"></span>数据不足 <span class="chip-count" id="cntInsuf">5</span> 项
+              </span>
+              <span class="summary-chip">
+                <span class="chip-dot pass"></span>通过 <span class="chip-count" id="cntPass">30</span> 项
+              </span>
+            </div>
+
+            <!-- ====== 批注区 ====== -->
+            <div class="anno anno-field" data-version="v2.1">
+              <span class="anno-tag">字段说明</span>
+              <span class="anno-version">v2.1</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>结果表筛选与搜索工具栏</p>
+                <table class="anno-table">
+                  <thead>
+                    <tr><th>控件</th><th>可选值 / 交互规则</th><th>说明</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>数据来源</td>
+                      <td>全部来源 / 数采绑点 / 自动计算 / 静态属性</td>
+                      <td>按平台原始来源映射：连接视图/子系统级联→数采绑点；表达式/联动策略→自动计算；静态属性配置→静态属性</td>
+                    </tr>
+                    <tr>
+                      <td>对象</td>
+                      <td>全部对象 / 项目各实例名称</td>
+                      <td>选项由项目实例清单动态生成，不硬编码；需求文档明确</td>
+                    </tr>
+                    <tr>
+                      <td>规则</td>
+                      <td>全部规则 / A1~A5 / B1~B2 / C1~C2</td>
+                      <td>需求文档仅明确「对象、数据来源、校验结果」三个筛选维度；「规则」筛选为原型扩展，评审时与团队确认是否交付</td>
+                    </tr>
+                    <tr>
+                      <td>结果</td>
+                      <td>全部结果 / 不通过 / 数据不足 / 通过</td>
+                      <td>需求文档明确</td>
+                    </tr>
+                    <tr>
+                      <td>搜索框</td>
+                      <td>输入关键词即时过滤</td>
+                      <td>匹配范围：测点名称、标准属性 ID、对象名称；实时过滤，无需按回车；需求文档明确</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <p style="margin-top:6px">多个筛选条件取交集；所有条件清空后恢复全量展示。筛选结果为空时显示「暂无匹配结果」空状态。</p>
+              </div>
+            </div>
+            <!-- ====== /批注区 ====== -->
+
+            <!-- Toolbar: Filters + Search -->
+            <div class="page-toolbar">
+              <div class="filter-group">
+                <label class="toolbar-item">
+                  数据来源
+                  <select class="toolbar-select" id="filterSource" aria-label="按数据来源筛选">
+                    <option value="">全部来源</option>
+                    <option value="binding">数采绑点</option>
+                    <option value="calc">自动计算</option>
+                    <option value="static">静态属性</option>
+                  </select>
+                </label>
+                <label class="toolbar-item">
+                  对象
+                  <select class="toolbar-select" id="filterObject" aria-label="按对象筛选">
+                    <option value="">全部对象</option>
+                    <option>水冷冷水系统</option>
+                    <option>水冷冷水机组·1#</option>
+                    <option>水冷冷水机组·2#</option>
+                    <option>水冷冷水机组·3#</option>
+                    <option>冷冻水泵·1#</option>
+                    <option>冷冻水泵·2#</option>
+                    <option>冷却水泵·1#</option>
+                    <option>冷却塔·1#</option>
+                    <option>冷却塔·2#</option>
+                    <option>制冷单元·1#</option>
+                    <option>并联冷冻水泵管路·1#</option>
+                  </select>
+                </label>
+                <label class="toolbar-item">
+                  规则
+                  <select class="toolbar-select" id="filterRule" aria-label="按规则筛选">
+                    <option value="">全部规则</option>
+                    <option>A1 数据范围越界</option>
+                    <option>A2 时序写死</option>
+                    <option>A3 物理可行性</option>
+                    <option>A4 必绑测点未配置</option>
+                    <option>A5 时序跳变</option>
+                    <option>B1 自动计算量值越界</option>
+                    <option>B2 物理守恒校验</option>
+                    <option>C1 静态属性缺失</option>
+                    <option>C2 静态属性物理可行性</option>
+                  </select>
+                </label>
+                <label class="toolbar-item">
+                  结果
+                  <select class="toolbar-select" id="filterResult" aria-label="按校验结果筛选">
+                    <option value="">全部结果</option>
+                    <option value="fail">不通过</option>
+                    <option value="insuf">数据不足</option>
+                    <option value="pass">通过</option>
+                  </select>
+                </label>
+              </div>
+              <label class="search-field" aria-label="搜索">
+                <svg viewBox="0 0 16 16" aria-hidden="true">
+                  <path d="M6.5 1.5a5 5 0 1 0 3.1 8.9l3.5 3.5a1 1 0 0 0 1.4-1.4l-3.5-3.5A5 5 0 0 0 6.5 1.5zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/>
+                </svg>
+                <input class="search-input" id="searchInput" type="search" placeholder="测点名称 / 属性 ID / 对象名称" autocomplete="off">
+              </label>
+            </div>
+
+            <!-- ====== 批注区 ====== -->
+            <div class="anno anno-data" data-version="v2.1">
+              <span class="anno-tag">数据逻辑</span>
+              <span class="anno-version">v2.1</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>自检结果主表（8 列）</p>
+                <table class="anno-table">
+                  <thead>
+                    <tr><th>列名</th><th>内容说明</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>对象</td><td>系统对象或设备实例名，如「水冷冷水机组·1#」；由项目实例清单展开</td></tr>
+                    <tr><td>名称</td><td>测点名称或静态属性名称</td></tr>
+                    <tr><td>ID</td><td>标准属性 ID 或静态属性 ID，如 <code>1_24_0</code></td></tr>
+                    <tr><td>数据来源</td><td>数采绑点 / 自动计算 / 静态属性（按平台原始来源映射展示，不展示平台内部分类名）</td></tr>
+                    <tr><td>最新值</td><td>动态测点取数据窗口内最新有效采样值；静态属性取当前配置值。数采绑点与自动计算类显示为蓝色可点击，点击弹出历史数据曲线弹窗；静态属性最新值不可点击。无有效值时显示「—」。</td></tr>
+                    <tr><td>最新值时间</td><td>动态测点展示最新有效采样时间（精确到分钟）；静态属性显示「—」</td></tr>
+                    <tr><td>校验结果</td><td>通过（绿）/ 不通过（红）/ 数据不足（黄）；含色点徽标</td></tr>
+                    <tr><td>问题描述</td><td>不通过 / 数据不足：每条命中规则前缀展示中文分类名称（如「温度方向」「时序写死」「属性缺失」），不显示英文规则编号（A3-a 等仅用于后端实现）；同一检查项命中多条规则时分行展示。通过项显示「—」。</td></tr>
+                  </tbody>
+                </table>
+                <p style="margin-top:6px"><b>默认排序：</b>不通过 → 数据不足 → 通过；同一状态内按对象类型 → 对象序号 → 规则编号升序。</p>
+                <p style="margin-top:4px"><b>当前无异常时：</b>主表展示全部通过项，顶部状态横幅提示「本次未发现不通过项」。</p>
+              </div>
+            </div>
+
+            <div class="anno anno-edge" data-version="v2.1">
+              <span class="anno-tag">边界与异常</span>
+              <span class="anno-version">v2.1</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>规则执行边界与结果判定特殊情况</p>
+                <ul>
+                  <li><b>数据不足分层门槛：</b>即时（C1/C2，0 样本，配好即查）/ 存在性（A4，≥1 个 5min 样本）/ 轻量（A1/A3/A5/B1/B2，≥6 个 5min 样本）/ 模式（A2，≥48 个连续 5min 样本即 4 小时）；不满足门槛时该规则输出「数据不足」，不影响其他已满足门槛的规则正常执行。</li>
+                  <li><b>B2 来源一致性：</b>B2 子条中若被校验目标值与左侧计算公式来源完全一致，该子条恒成立，运行时不生成规则任务，输出「数据不足」并注明「被校验量与计算公式来源一致」。</li>
+                  <li><b>A2 停机排除：</b>A2 仅校验设备「运行状态 = 1」的连续窗口；停机时段恒定值不计入写死判定；若最近 1 天内无连续 4 小时运行窗口，A2 对该设备输出「数据不足」。</li>
+                  <li><b>A3 温度方向类：</b>A3-a / A3-b / A3-h 仅校验「运行状态 = 1」的样本；停机期间进出水温度趋同属正常物理行为，不计入违反占比。</li>
+                  <li><b>A5 开停排除：</b>同对象运行状态在某时刻发生 0↔1 转换，该时刻前后各 1 个 5min 样本内的跳变不计为异常。</li>
+                  <li><b>静态属性缺失连锁：</b>C1 报缺失时，依赖该属性计算的 C2 子条输出「数据不足」。</li>
+                  <li><b>风冷项目规则差异：</b>自动跳过冷却侧规则（A3-b/c、B2-b/e/f/h 等）；B2-g 剔除冷却泵与冷却塔功率项；蓄冷对象仅在实例清单中存在时生成检查项。</li>
+                  <li><b>阈值来源：</b>物模型 min/max 优先；物模型为空时使用规则表内固定阈值；规则表未定义阈值时不生成该规则任务。</li>
+                </ul>
+              </div>
+            </div>
+            <!-- ====== /批注区 ====== -->
+
+            <!-- Table -->
+            <div class="table-wrap" id="tableArea">
+              <table class="data-table" aria-label="数据质量自检结果">
+                <thead>
+                  <tr>
+                    <th class="col-object">对象</th>
+                    <th class="col-name">名称</th>
+                    <th class="col-id">ID</th>
+                    <th class="col-source">数据来源</th>
+                    <th class="col-value">最新值</th>
+                    <th class="col-time">最新值时间</th>
+                    <th class="col-result">校验结果</th>
+                    <th class="col-desc">问题描述</th>
+                  </tr>
+                </thead>
+                <tbody id="tableBody">
+                  <!-- ===== 不通过 ===== -->
+                  <tr data-result="fail" data-source="binding" data-object="水冷冷水机组·1#" data-rule="A3,A2" data-name="冷冻水出水温度" data-id="1_24_0">
+                    <td class="col-object">水冷冷水机组·1#</td>
+                    <td class="col-name">冷冻水出水温度</td>
+                    <td class="col-id">1_24_0</td>
+                    <td class="col-source"><span class="source-tag">数采绑点</span></td>
+                    <td class="col-value col-value-link" data-curve="1">14.2 ℃</td>
+                    <td class="col-time">2026-05-13 16:40</td>
+                    <td class="col-result"><span class="result-tag fail"><span class="result-tag-dot"></span>不通过</span></td>
+                    <td class="col-desc">
+                      <div class="desc-item"><span class="rule-badge fail">温度方向</span>最近1天违反物理约束18个样本，占比6.25%</div>
+                      <div class="desc-item"><span class="rule-badge fail">时序写死</span>连续4小时无明显变化，但关联测点同期有变化，疑似测点写死或采集异常</div>
+                    </td>
+                  </tr>
+                  <tr data-result="fail" data-source="binding" data-object="水冷冷水机组·2#" data-rule="A3" data-name="冷冻水出水温度" data-id="1_24_0">
+                    <td class="col-object">水冷冷水机组·2#</td>
+                    <td class="col-name">冷冻水出水温度</td>
+                    <td class="col-id">1_24_0</td>
+                    <td class="col-source"><span class="source-tag">数采绑点</span></td>
+                    <td class="col-value col-value-link" data-curve="2">13.8 ℃</td>
+                    <td class="col-time">2026-05-13 16:40</td>
+                    <td class="col-result"><span class="result-tag fail"><span class="result-tag-dot"></span>不通过</span></td>
+                    <td class="col-desc">
+                      <div class="desc-item"><span class="rule-badge fail">温度方向</span>最近1天违反物理约束15个样本，占比5.2%</div>
+                    </td>
+                  </tr>
+                  <tr data-result="fail" data-source="binding" data-object="冷却塔·1#" data-rule="A2" data-name="冷却水流量" data-id="1_1268_0">
+                    <td class="col-object">冷却塔·1#</td>
+                    <td class="col-name">冷却水流量</td>
+                    <td class="col-id">1_1268_0</td>
+                    <td class="col-source"><span class="source-tag">数采绑点</span></td>
+                    <td class="col-value col-value-link" data-curve="3">312.0 m³/h</td>
+                    <td class="col-time">2026-05-13 16:40</td>
+                    <td class="col-result"><span class="result-tag fail"><span class="result-tag-dot"></span>不通过</span></td>
+                    <td class="col-desc">
+                      <div class="desc-item"><span class="rule-badge fail">时序写死</span>连续4小时无明显变化，但关联测点同期有变化，疑似测点写死或采集异常</div>
+                    </td>
+                  </tr>
+                  <tr data-result="fail" data-source="binding" data-object="水冷冷水机组·3#" data-rule="A4" data-name="冷冻水流量" data-id="1_1261_0">
+                    <td class="col-object">水冷冷水机组·3#</td>
+                    <td class="col-name">冷冻水流量</td>
+                    <td class="col-id">1_1261_0</td>
+                    <td class="col-source"><span class="source-tag">数采绑点</span></td>
+                    <td class="col-value" style="color:var(--text-hint)">—</td>
+                    <td class="col-time">—</td>
+                    <td class="col-result"><span class="result-tag fail"><span class="result-tag-dot"></span>不通过</span></td>
+                    <td class="col-desc">
+                      <div class="desc-item"><span class="rule-badge fail">必绑点缺失</span>未配置绑点或无效样本占比100%，无法支撑自检计算</div>
+                    </td>
+                  </tr>
+                  <tr data-result="fail" data-source="calc" data-object="水冷冷水系统" data-rule="B2" data-name="热不平衡率" data-id="1_1902_0">
+                    <td class="col-object">水冷冷水系统</td>
+                    <td class="col-name">热不平衡率</td>
+                    <td class="col-id">1_1902_0</td>
+                    <td class="col-source"><span class="source-tag calc">自动计算</span></td>
+                    <td class="col-value col-value-link" data-curve="5">-18.4 %</td>
+                    <td class="col-time">2026-05-13 16:40</td>
+                    <td class="col-result"><span class="result-tag fail"><span class="result-tag-dot"></span>不通过</span></td>
+                    <td class="col-desc">
+                      <div class="desc-item"><span class="rule-badge fail">热平衡</span>计算值与目标值偏差超过5%，命中占比42%</div>
+                    </td>
+                  </tr>
+                  <tr data-result="fail" data-source="static" data-object="水冷冷水机组·1#" data-rule="C1" data-name="最小冷冻出水与冷却进水温差" data-id="minColdCoolTpdiff">
+                    <td class="col-object">水冷冷水机组·1#</td>
+                    <td class="col-name">最小冷冻出水与冷却进水温差</td>
+                    <td class="col-id">minColdCoolTpdiff</td>
+                    <td class="col-source"><span class="source-tag static">静态属性</span></td>
+                    <td class="col-value" style="color:var(--text-hint)">—</td>
+                    <td class="col-time">—</td>
+                    <td class="col-result"><span class="result-tag fail"><span class="result-tag-dot"></span>不通过</span></td>
+                    <td class="col-desc">
+                      <div class="desc-item"><span class="rule-badge fail">属性缺失</span>未填写或配置值不可解析，请补齐静态属性</div>
+                    </td>
+                  </tr>
+                  <tr data-result="fail" data-source="static" data-object="冷冻水泵·1#" data-rule="C2" data-name="最大流量" data-id="flow_max">
+                    <td class="col-object">冷冻水泵·1#</td>
+                    <td class="col-name">最大流量</td>
+                    <td class="col-id">flow_max</td>
+                    <td class="col-source"><span class="source-tag static">静态属性</span></td>
+                    <td class="col-value">280 m³/h</td>
+                    <td class="col-time">—</td>
+                    <td class="col-result"><span class="result-tag fail"><span class="result-tag-dot"></span>不通过</span></td>
+                    <td class="col-desc">
+                      <div class="desc-item"><span class="rule-badge fail">偏序校验</span>配置不满足偏序校验，请检查静态属性取值是否合理</div>
+                    </td>
+                  </tr>
+
+                  <!-- ===== 数据不足 ===== -->
+                  <tr data-result="insuf" data-source="binding" data-object="水冷冷水机组·3#" data-rule="A2" data-name="冷冻水进水温度" data-id="1_23_0">
+                    <td class="col-object">水冷冷水机组·3#</td>
+                    <td class="col-name">冷冻水进水温度</td>
+                    <td class="col-id">1_23_0</td>
+                    <td class="col-source"><span class="source-tag">数采绑点</span></td>
+                    <td class="col-value col-value-link" data-curve="6">12.1 ℃</td>
+                    <td class="col-time">2026-05-13 10:20</td>
+                    <td class="col-result"><span class="result-tag insuf"><span class="result-tag-dot"></span>数据不足</span></td>
+                    <td class="col-desc">
+                      <div class="desc-item"><span class="rule-badge insuf">时序写死</span>因有效连续样本数不足48个，无法完成校验，请补齐数据后重新执行自检</div>
+                    </td>
+                  </tr>
+                  <tr data-result="insuf" data-source="calc" data-object="制冷单元·1#" data-rule="B2" data-name="实时制冷量" data-id="1_1300_0">
+                    <td class="col-object">制冷单元·1#</td>
+                    <td class="col-name">实时制冷量</td>
+                    <td class="col-id">1_1300_0</td>
+                    <td class="col-source"><span class="source-tag calc">自动计算</span></td>
+                    <td class="col-value col-value-link" data-curve="7">1,240 kW</td>
+                    <td class="col-time">2026-05-13 16:40</td>
+                    <td class="col-result"><span class="result-tag insuf"><span class="result-tag-dot"></span>数据不足</span></td>
+                    <td class="col-desc">
+                      <div class="desc-item"><span class="rule-badge insuf">制冷量守恒</span>因被校验量与计算公式来源一致，无法完成校验，请补齐数据后重新执行自检</div>
+                    </td>
+                  </tr>
+                  <tr data-result="insuf" data-source="static" data-object="水冷冷水机组·2#" data-rule="C2" data-name="COP" data-id="cop">
+                    <td class="col-object">水冷冷水机组·2#</td>
+                    <td class="col-name">COP</td>
+                    <td class="col-id">cop</td>
+                    <td class="col-source"><span class="source-tag static">静态属性</span></td>
+                    <td class="col-value">5.8</td>
+                    <td class="col-time">—</td>
+                    <td class="col-result"><span class="result-tag insuf"><span class="result-tag-dot"></span>数据不足</span></td>
+                    <td class="col-desc">
+                      <div class="desc-item"><span class="rule-badge insuf">铭牌恒等式</span>因关联的额定功率属性缺失，无法完成校验，请补齐数据后重新执行自检</div>
+                    </td>
+                  </tr>
+                  <tr data-result="insuf" data-source="binding" data-object="水冷冷水系统" data-rule="A1" data-name="室外湿球温度" data-id="1_63_0">
+                    <td class="col-object">水冷冷水系统</td>
+                    <td class="col-name">室外湿球温度</td>
+                    <td class="col-id">1_63_0</td>
+                    <td class="col-source"><span class="source-tag">数采绑点</span></td>
+                    <td class="col-value col-value-link" data-curve="8">28.6 ℃</td>
+                    <td class="col-time">2026-05-13 16:40</td>
+                    <td class="col-result"><span class="result-tag insuf"><span class="result-tag-dot"></span>数据不足</span></td>
+                    <td class="col-desc">
+                      <div class="desc-item"><span class="rule-badge insuf">数据范围越界</span>因物模型未登记该测点的范围，无法完成校验，请补齐数据后重新执行自检</div>
+                    </td>
+                  </tr>
+                  <tr data-result="insuf" data-source="binding" data-object="并联冷冻水泵管路·1#" data-rule="B2" data-name="冷冻水流量" data-id="1_1261_0">
+                    <td class="col-object">并联冷冻水泵管路·1#</td>
+                    <td class="col-name">冷冻水流量</td>
+                    <td class="col-id">1_1261_0</td>
+                    <td class="col-source"><span class="source-tag">数采绑点</span></td>
+                    <td class="col-value" style="color:var(--text-hint)">—</td>
+                    <td class="col-time">—</td>
+                    <td class="col-result"><span class="result-tag insuf"><span class="result-tag-dot"></span>数据不足</span></td>
+                    <td class="col-desc">
+                      <div class="desc-item"><span class="rule-badge insuf">流量守恒</span>因实例归属关系未配置，无法完成校验，请补齐数据后重新执行自检</div>
+                    </td>
+                  </tr>
+
+                  <!-- ===== 通过（问题描述列留空）===== -->
+                  <tr data-result="pass" data-source="binding" data-object="水冷冷水机组·1#" data-rule="A1" data-name="有功功率" data-id="1_627_0">
+                    <td class="col-object">水冷冷水机组·1#</td>
+                    <td class="col-name">有功功率</td>
+                    <td class="col-id">1_627_0</td>
+                    <td class="col-source"><span class="source-tag">数采绑点</span></td>
+                    <td class="col-value col-value-link" data-curve="10">386.2 kW</td>
+                    <td class="col-time">2026-05-13 16:40</td>
+                    <td class="col-result"><span class="result-tag pass"><span class="result-tag-dot"></span>通过</span></td>
+                    <td class="col-desc" style="color:var(--text-hint)">—</td>
+                  </tr>
+                  <tr data-result="pass" data-source="calc" data-object="冷却塔·1#" data-rule="A3" data-name="冷却塔逼近度" data-id="1_166_0">
+                    <td class="col-object">冷却塔·1#</td>
+                    <td class="col-name">冷却塔逼近度</td>
+                    <td class="col-id">1_166_0</td>
+                    <td class="col-source"><span class="source-tag calc">自动计算</span></td>
+                    <td class="col-value col-value-link" data-curve="11">3.8 ℃</td>
+                    <td class="col-time">2026-05-13 16:40</td>
+                    <td class="col-result"><span class="result-tag pass"><span class="result-tag-dot"></span>通过</span></td>
+                    <td class="col-desc" style="color:var(--text-hint)">—</td>
+                  </tr>
+                  <tr data-result="pass" data-source="binding" data-object="水冷冷水系统" data-rule="A3" data-name="室外干球温度" data-id="1_62_0">
+                    <td class="col-object">水冷冷水系统</td>
+                    <td class="col-name">室外干球温度</td>
+                    <td class="col-id">1_62_0</td>
+                    <td class="col-source"><span class="source-tag">数采绑点</span></td>
+                    <td class="col-value col-value-link" data-curve="12">34.1 ℃</td>
+                    <td class="col-time">2026-05-13 16:40</td>
+                    <td class="col-result"><span class="result-tag pass"><span class="result-tag-dot"></span>通过</span></td>
+                    <td class="col-desc" style="color:var(--text-hint)">—</td>
+                  </tr>
+                  <tr data-result="pass" data-source="binding" data-object="冷冻水泵·2#" data-rule="A3" data-name="运行状态" data-id="2_167_0">
+                    <td class="col-object">冷冻水泵·2#</td>
+                    <td class="col-name">运行状态</td>
+                    <td class="col-id">2_167_0</td>
+                    <td class="col-source"><span class="source-tag">数采绑点</span></td>
+                    <td class="col-value col-value-link" data-curve="13">1</td>
+                    <td class="col-time">2026-05-13 16:40</td>
+                    <td class="col-result"><span class="result-tag pass"><span class="result-tag-dot"></span>通过</span></td>
+                    <td class="col-desc" style="color:var(--text-hint)">—</td>
+                  </tr>
+                  <tr data-result="pass" data-source="static" data-object="水冷冷水机组·1#" data-rule="C1" data-name="额定制冷量" data-id="RatedCool">
+                    <td class="col-object">水冷冷水机组·1#</td>
+                    <td class="col-name">额定制冷量</td>
+                    <td class="col-id">RatedCool</td>
+                    <td class="col-source"><span class="source-tag static">静态属性</span></td>
+                    <td class="col-value">2800 kW</td>
+                    <td class="col-time">—</td>
+                    <td class="col-result"><span class="result-tag pass"><span class="result-tag-dot"></span>通过</span></td>
+                    <td class="col-desc" style="color:var(--text-hint)">—</td>
+                  </tr>
+                  <tr data-result="pass" data-source="static" data-object="水冷冷水机组·2#" data-rule="C2" data-name="额定制冷量" data-id="RatedCool">
+                    <td class="col-object">水冷冷水机组·2#</td>
+                    <td class="col-name">额定制冷量</td>
+                    <td class="col-id">RatedCool</td>
+                    <td class="col-source"><span class="source-tag static">静态属性</span></td>
+                    <td class="col-value">2800 kW</td>
+                    <td class="col-time">—</td>
+                    <td class="col-result"><span class="result-tag pass"><span class="result-tag-dot"></span>通过</span></td>
+                    <td class="col-desc" style="color:var(--text-hint)">—</td>
+                  </tr>
+                  <tr data-result="pass" data-source="calc" data-object="水冷冷水系统" data-rule="B2" data-name="总功率" data-id="1_167_0">
+                    <td class="col-object">水冷冷水系统</td>
+                    <td class="col-name">总功率</td>
+                    <td class="col-id">1_167_0</td>
+                    <td class="col-source"><span class="source-tag calc">自动计算</span></td>
+                    <td class="col-value col-value-link" data-curve="14">1,852.4 kW</td>
+                    <td class="col-time">2026-05-13 16:40</td>
+                    <td class="col-result"><span class="result-tag pass"><span class="result-tag-dot"></span>通过</span></td>
+                    <td class="col-desc" style="color:var(--text-hint)">—</td>
+                  </tr>
+                  <tr data-result="pass" data-source="static" data-object="冷冻水泵·1#" data-rule="C1" data-name="额定流量" data-id="flow">
+                    <td class="col-object">冷冻水泵·1#</td>
+                    <td class="col-name">额定流量</td>
+                    <td class="col-id">flow</td>
+                    <td class="col-source"><span class="source-tag static">静态属性</span></td>
+                    <td class="col-value">320 m³/h</td>
+                    <td class="col-time">—</td>
+                    <td class="col-result"><span class="result-tag pass"><span class="result-tag-dot"></span>通过</span></td>
+                    <td class="col-desc" style="color:var(--text-hint)">—</td>
+                  </tr>
+                  <tr data-result="pass" data-source="binding" data-object="冷却水泵·1#" data-rule="A5" data-name="有功功率" data-id="1_627_0">
+                    <td class="col-object">冷却水泵·1#</td>
+                    <td class="col-name">有功功率</td>
+                    <td class="col-id">1_627_0</td>
+                    <td class="col-source"><span class="source-tag">数采绑点</span></td>
+                    <td class="col-value col-value-link" data-curve="15">48.6 kW</td>
+                    <td class="col-time">2026-05-13 16:40</td>
+                    <td class="col-result"><span class="result-tag pass"><span class="result-tag-dot"></span>通过</span></td>
+                    <td class="col-desc" style="color:var(--text-hint)">—</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Empty State (hidden by default; shown when no results) -->
+            <div class="empty-state" id="emptyState" style="display:none;" aria-live="polite">
+              <svg class="empty-icon" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <circle cx="32" cy="32" r="28"/>
+                <path d="M22 32h20M32 22v20"/>
+              </svg>
+              <div class="empty-title">暂无匹配结果</div>
+              <div class="empty-desc">请调整筛选条件，或<br>清除搜索关键词后重试</div>
+            </div>
+
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- 历史曲线弹窗（占位） -->
+  <div class="modal-mask" id="curveModal" role="dialog" aria-modal="true" aria-label="历史数据曲线">
+    <div class="modal-box">
+      <div class="modal-head">
+        <div class="modal-title" id="curveModalTitle">历史数据曲线</div>
+        <button class="modal-close" id="curveModalClose" aria-label="关闭">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <path d="M12 4L4 12M4 4l8 8"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- ====== 批注区 ====== -->
+        <div class="anno anno-ux" data-version="v2.1">
+          <span class="anno-tag">交互说明</span>
+          <span class="anno-version">v2.1</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>历史数据曲线弹窗；入口：结果表「最新值」列蓝色可点击数值（仅数采绑点与自动计算类）</p>
+            <ul>
+              <li><b>触发条件：</b>点击最新值列蓝色数值触发弹窗；静态属性行最新值不可点击（无蓝色样式）。</li>
+              <li><b>弹窗标题：</b>「历史数据曲线 · {测点名称}」，随点击行动态更新。</li>
+              <li><b>弹窗内容：</b>复用平台现有历史弹窗组件，不另行定义；数据窗口为最近 1 天（24 小时），粒度 5 分钟；此处为原型占位示意。</li>
+              <li><b>关闭方式：</b>点击右上角「×」按钮 / 点击遮罩层 / 按 Esc 键均可关闭弹窗。</li>
+            </ul>
+          </div>
+        </div>
+        <!-- ====== /批注区 ====== -->
+        <div class="curve-placeholder">
+          <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <polyline points="2,26 10,14 16,18 22,8 30,16"/>
+          </svg>
+          <span>曲线图复用平台历史弹窗组件，此处为占位示意</span>
+          <span style="font-size:11px;color:var(--text-hint)">数据窗口：最近 1 天（24 小时），粒度 5 分钟</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="components/nav.js" data-active-nav="能效视图" data-active-sidebar="能效视图"></script>
+  <script>
+    // ─── Filter & Search ───────────────────────────────────────────────
+    const filterSource = document.getElementById('filterSource');
+    const filterObject = document.getElementById('filterObject');
+    const filterRule   = document.getElementById('filterRule');
+    const filterResult = document.getElementById('filterResult');
+    const searchInput  = document.getElementById('searchInput');
+    const tableBody    = document.getElementById('tableBody');
+    const emptyState   = document.getElementById('emptyState');
+
+    function applyFilters() {
+      const objVal    = filterObject.value.trim();
+      const ruleVal   = filterRule.value.trim();
+      const resultVal = filterResult.value.trim();
+      const kw        = searchInput.value.trim().toLowerCase();
+
+      const rows = tableBody.querySelectorAll('tr');
+      let shown = 0;
+
+      rows.forEach(row => {
+        const sourceVal = filterSource.value.trim();
+
+        const obj    = row.dataset.object  || '';
+        const source = row.dataset.source  || '';
+        const result = row.dataset.result  || '';
+        const rule   = row.dataset.rule    || '';
+        const name   = row.dataset.name    || '';
+        const id     = row.dataset.id      || '';
+
+        const matchSource = !sourceVal || source === sourceVal;
+        const matchObj    = !objVal    || obj.startsWith(objVal.replace('·', ''));
+        // rule 可能是逗号分隔的多值，如 "A3,A2"；只要任意一个规则前缀匹配选项文本即可
+        const matchRule   = !ruleVal   || rule.split(',').some(r => ruleVal.includes(r.trim()));
+        const matchResult = !resultVal || result === resultVal;
+        const matchKw     = !kw        || name.toLowerCase().includes(kw)
+                                       || id.toLowerCase().includes(kw)
+                                       || obj.toLowerCase().includes(kw);
+
+        if (matchSource && matchObj && matchRule && matchResult && matchKw) {
+          row.style.display = '';
+          shown++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      emptyState.style.display = shown === 0 ? 'flex' : 'none';
+    }
+
+    filterSource.addEventListener('change', applyFilters);
+    filterObject.addEventListener('change', applyFilters);
+    filterRule.addEventListener('change', applyFilters);
+    filterResult.addEventListener('change', applyFilters);
+    searchInput.addEventListener('input', applyFilters);
+
+    // ─── Curve Modal ────────────────────────────────────────────────────
+    const curveModal = document.getElementById('curveModal');
+    const curveModalClose = document.getElementById('curveModalClose');
+
+    function openCurveModal(row) {
+      document.getElementById('curveModalTitle').textContent = '历史数据曲线 · ' + (row.dataset.name || '');
+      curveModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    curveModalClose.addEventListener('click', closeCurveModal);
+    curveModal.addEventListener('click', e => { if (e.target === curveModal) closeCurveModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCurveModal(); });
+
+    function closeCurveModal() {
+      curveModal.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    tableBody.addEventListener('click', e => {
+      const cell = e.target.closest('.col-value-link[data-curve]');
+      if (!cell) return;
+      const row = cell.closest('tr');
+      if (row) openCurveModal(row);
+    });
+
+    // ─── Export Toast ────────────────────────────────────────────────────
+    const toast = document.getElementById('toast');
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2400);
+    }
+    document.getElementById('btnExport').addEventListener('click', () => {
+      showToast('正在导出 xlsx…（原型示意）');
+    });
+
+    // ─── Re-run ──────────────────────────────────────────────────────────
+    const statusBanner = document.getElementById('statusBanner');
+    const bannerMain   = document.getElementById('bannerMain');
+    const bannerSub    = document.getElementById('bannerSub');
+    const btnRerun     = document.getElementById('btnRerun');
+
+    btnRerun.addEventListener('click', () => {
+      // Simulate executing state
+      statusBanner.className = 'status-banner running';
+      statusBanner.querySelector('.banner-icon').innerHTML = `
+        <svg class="spinning" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <circle cx="8" cy="8" r="6" stroke-dasharray="22" stroke-dashoffset="8"/>
+        </svg>`;
+      bannerMain.innerHTML = '自检执行中，请稍候…';
+      bannerSub.textContent  = '正在加载固化清单、执行 A / B / C 三组规则';
+      btnRerun.disabled = true;
+      document.getElementById('btnExport').disabled = true;
+
+      setTimeout(() => {
+        statusBanner.className = 'status-banner success';
+        statusBanner.querySelector('.banner-icon').innerHTML = `
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M13.5 4L6.5 11 2.5 7"/>
+          </svg>`;
+        bannerMain.innerHTML = '自检完成，共检查 <strong>42</strong> 项';
+        bannerSub.textContent = '执行时间：' + new Date().toLocaleString('zh-CN', {hour12:false}).replace(/\//g,'-') + ' · 耗时约 4s';
+        btnRerun.disabled = false;
+        document.getElementById('btnExport').disabled = false;
+        showToast('自检完成');
+      }, 3000);
+    });
+
+    // ─── Back button ─────────────────────────────────────────────────────
+    document.querySelector('.back-btn')?.addEventListener('click', (e) => {
+      // allow default href navigation
+    });
+  </script>
+
+  <button class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+
+  <script>
+    function initAnnoVersionFilter() {
+      var bar = document.getElementById('annoFilterBar');
+      var tags = document.getElementById('annoFilterTags');
+      if (!document.body.classList.contains('annotation-mode')) return;
+      var annos = document.querySelectorAll('.anno[data-version]');
+      var versions = [];
+      annos.forEach(function(a) {
+        var v = a.getAttribute('data-version');
+        if (v && versions.indexOf(v) === -1) versions.push(v);
+      });
+      versions.sort(function(a, b) {
+        var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+        var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+        for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+          if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+        }
+        return 0;
+      });
+      tags.innerHTML = '';
+      var allBtn = document.createElement('span');
+      allBtn.className = 'anno-filter-tag active';
+      allBtn.textContent = '全部';
+      allBtn.onclick = function() { filterAnno('all', versions[0]); setActive(this); };
+      tags.appendChild(allBtn);
+      versions.forEach(function(v) {
+        var btn = document.createElement('span');
+        btn.className = 'anno-filter-tag';
+        btn.textContent = v;
+        btn.onclick = function() { filterAnno(v, versions[0]); setActive(this); };
+        tags.appendChild(btn);
+      });
+      if (versions.length > 0) filterAnno('all', versions[0]);
+    }
+    function filterAnno(version, latest) {
+      document.querySelectorAll('.anno[data-version]').forEach(function(a) {
+        var v = a.getAttribute('data-version');
+        if (version === 'all') {
+          a.style.display = '';
+          a.style.opacity = (v === latest) ? '1' : '0.6';
+        } else {
+          a.style.display = (v === version) ? '' : 'none';
+          a.style.opacity = '1';
+        }
+      });
+    }
+    function setActive(el) {
+      el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function(t) { t.classList.remove('active'); });
+      el.classList.add('active');
+    }
+  </script>
+</body>
+</html>

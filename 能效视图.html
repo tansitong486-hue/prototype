@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>能效视图</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-dark: #17358A;
+      --primary-tint: #EEF4FF;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --danger: #DC2626;
+      --danger-border: #FCA5A5;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button { border: none; background: none; font: inherit; cursor: pointer; }
+
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main { flex: 1; min-width: 0; overflow-y: auto; background: var(--bg-body); }
+
+    .page-shell { padding: 18px 20px 24px; }
+
+    .page-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .page-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px 12px;
+      flex-wrap: wrap;
+    }
+
+    .page-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .page-head-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 34px;
+      padding: 0 14px;
+      border-radius: var(--radius);
+      font-size: 12px;
+      font-weight: 600;
+      transition: all var(--transition);
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      color: #fff;
+      background: var(--primary);
+    }
+
+    .btn-primary:hover { background: var(--primary-dark); }
+
+    .btn-outline {
+      color: var(--primary);
+      background: #fff;
+      border: 1px solid var(--primary);
+    }
+
+    .btn-outline:hover { background: var(--primary-tint); }
+
+    .btn-danger-outline {
+      color: var(--danger);
+      background: #fff;
+      border: 1px solid var(--danger-border);
+    }
+
+    .btn-danger-outline:hover { background: #FEF2F2; }
+
+    /* 左树 + 右详情 */
+    .model-split {
+      display: flex;
+      min-height: 560px;
+      border-top: 1px solid var(--border-light);
+    }
+
+    .model-tree {
+      width: 280px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border-light);
+      background: #FAFBFD;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .model-tree-search {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .model-tree-search input {
+      width: 100%;
+      height: 34px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      outline: none;
+    }
+
+    .model-tree-search input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.12);
+    }
+
+    .model-tree-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 8px 14px;
+    }
+
+    .tree-node {
+      font-size: 13px;
+      color: var(--text-secondary);
+      user-select: none;
+    }
+
+    .tree-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition);
+    }
+
+    .tree-row:hover {
+      background: rgba(30, 64, 175, 0.06);
+      color: var(--text-primary);
+    }
+
+    .tree-row.active {
+      background: var(--primary-tint);
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .tree-chevron {
+      width: 14px;
+      font-size: 10px;
+      color: var(--text-hint);
+      flex-shrink: 0;
+    }
+
+    .tree-children { padding-left: 18px; }
+
+    .model-detail {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-card);
+    }
+
+    .detail-inner {
+      padding: 14px 18px 18px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .breadcrumb-bar {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .breadcrumb-bar strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .main-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border-light);
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .main-tab {
+      padding: 10px 16px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      background: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: color var(--transition), border-color var(--transition);
+    }
+
+    .main-tab:hover { color: var(--primary); }
+
+    .main-tab.active {
+      color: var(--primary);
+      font-weight: 600;
+      border-bottom-color: var(--primary);
+    }
+
+    .tab-panel { display: none; flex: 1; min-height: 0; }
+    .tab-panel.active { display: flex; flex-direction: column; }
+
+    .panel-placeholder {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-hint);
+      font-size: 13px;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      min-height: 200px;
+      background: #FAFBFD;
+    }
+
+    /* 测点列表（对齐产品测点列表截图） */
+    .tab-panel#panel-points {
+      min-height: 0;
+    }
+
+    .points-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      flex-shrink: 0;
+    }
+
+    .points-toolbar-left,
+    .points-toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-ghost {
+      color: var(--text-primary);
+      background: #fff;
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .toolbar-field {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .toolbar-label {
+      white-space: nowrap;
+    }
+
+    .toolbar-select {
+      height: 34px;
+      padding: 0 28px 0 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      color: var(--text-primary);
+      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center;
+      appearance: none;
+      cursor: pointer;
+      min-width: 120px;
+    }
+
+    .toolbar-select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.12);
+    }
+
+    .toolbar-select-narrow {
+      min-width: 72px;
+    }
+
+    .toolbar-search {
+      width: 200px;
+      max-width: 42vw;
+      height: 34px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+    }
+
+    .toolbar-search:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.12);
+    }
+
+    .icon-tool-btn {
+      width: 34px;
+      height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: border-color var(--transition), color var(--transition);
+    }
+
+    .icon-tool-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .icon-tool-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .points-table-wrap {
+      flex: 1;
+      min-height: 280px;
+      overflow: auto;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      background: #fff;
+    }
+
+    .data-table {
+      width: 100%;
+      min-width: 1280px;
+      border-collapse: collapse;
+    }
+
+    .data-table thead th {
+      padding: 12px 14px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 12px 14px;
+      font-size: 13px;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover {
+      background: #FBFCFE;
+    }
+
+    .data-table .col-check {
+      width: 44px;
+      text-align: center;
+    }
+
+    .data-table .col-check input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: var(--primary);
+    }
+
+    .data-table .num-cell {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .status-ok {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #389E0D;
+      background: #F6FFED;
+      border: 1px solid #B7EB8F;
+    }
+
+    .points-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      white-space: nowrap;
+    }
+
+    .points-actions .action-link {
+      font-size: 13px;
+      color: var(--primary);
+      cursor: pointer;
+      text-decoration: none;
+      background: none;
+      border: none;
+      padding: 0;
+      font-family: inherit;
+    }
+
+    .points-actions .action-link:hover {
+      text-decoration: underline;
+    }
+
+    /* 关系拓扑画布 */
+    .topo-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .topo-hint {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .topo-zoom {
+      display: flex;
+      gap: 6px;
+    }
+
+    .topo-zoom .btn {
+      width: 34px;
+      padding: 0;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text-secondary);
+      font-weight: 700;
+    }
+
+    .topo-zoom .btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .topo-canvas-wrap {
+      flex: 1;
+      min-height: 420px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);
+      overflow: auto;
+      position: relative;
+    }
+
+    .topo-svg {
+      display: block;
+      width: 100%;
+      min-width: 720px;
+      height: auto;
+    }
+
+    .topo-line {
+      stroke: #CBD5E1;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .topo-card {
+      fill: #fff;
+      stroke: var(--border);
+      stroke-width: 1.5;
+    }
+
+    .topo-card.root {
+      fill: var(--primary-tint);
+      stroke: var(--primary);
+      stroke-width: 2;
+    }
+
+    .topo-title {
+      font-size: 13px;
+      font-weight: 700;
+      fill: var(--text-primary);
+    }
+
+    .topo-metric {
+      font-size: 11px;
+      fill: var(--text-secondary);
+    }
+
+    .topo-tag {
+      font-size: 10px;
+      font-weight: 600;
+      fill: var(--primary);
+    }
+
+    .page-note-bar {
+      padding: 10px 18px 14px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      border-top: 1px solid var(--border-light);
+      background: #FAFBFD;
+    }
+
+    @media (max-width: 960px) {
+      .model-split { flex-direction: column; }
+      .model-tree {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border-light);
+        max-height: 280px;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+        <div class="anno-filter-bar" id="annoFilterBar">
+          <span class="anno-filter-label">批注版本：</span>
+          <div class="anno-filter-tags" id="annoFilterTags"></div>
+        </div>
+        <div class="page-shell">
+          <div class="anno anno-version-header" data-version="v1.0">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v1.0</p>
+              <p><b>更新日期：</b>2026-03-26</p>
+              <p><b>变更概述：</b>能效视图（原菜单「拓扑建模」）原型页：主内容区标题与侧栏入口均为「能效视图」；左树选节点、右侧多 Tab；<b>进入页面默认展示「测点列表」</b>；「测点列表」含工具栏与全列表格；「关系拓扑」为能效流示意图；工具栏「创建集合」跳转至 <code>创建集合-能耗模型.html</code>（能耗模型集合创建，侧栏不单独挂菜单）。页面文件名为 <code>能效视图.html</code>。</p>
+            </div>
+          </div>
+
+          <section class="page-card" aria-label="能效视图">
+            <div class="page-head">
+              <h1 class="page-title">能效视图</h1>
+              <div class="page-head-actions">
+                <button type="button" class="btn btn-outline" id="btnQualityCheck" style="display:none;" onclick="location.href='数据质量自检.html'">数据质量自检</button>
+                <button type="button" class="btn btn-primary" id="btnCreateSet">创建集合</button>
+                <button type="button" class="btn btn-outline" id="btnLinkDevice">关联设备</button>
+                <button type="button" class="btn btn-danger-outline" id="btnDelete">删除</button>
+              </div>
+            </div>
+
+            <div class="model-split">
+              <aside class="model-tree" aria-label="组织与模型树">
+                <div class="model-tree-search">
+                  <input type="search" placeholder="请输入关键词" aria-label="树节点搜索" id="treeSearch">
+                </div>
+                <div class="model-tree-scroll">
+                  <div class="tree-node" id="treeRoot">
+                    <div class="tree-row" data-expand="gongji">
+                      <span class="tree-chevron" aria-hidden="true">▼</span>
+                      <span>共济科技</span>
+                    </div>
+                    <div class="tree-children">
+                      <div class="tree-row" data-expand="dc">
+                        <span class="tree-chevron">▼</span>
+                        <span>数据中心</span>
+                      </div>
+                      <div class="tree-children">
+                        <div class="tree-row active" data-expand="hm-dc" tabindex="0" role="treeitem" aria-selected="true">
+                          <span class="tree-chevron">▼</span>
+                          <span>0_842：互盟数据中心</span>
+                        </div>
+                        <div class="tree-children">
+                          <div class="tree-row" data-expand="hm-cs1">
+                            <span class="tree-chevron">▼</span>
+                            <span>1# 冷站</span>
+                          </div>
+                          <div class="tree-children">
+                            <div class="tree-row" data-node="chws" data-node-type="water-cooled" tabindex="0" role="treeitem" aria-selected="false">
+                              <span class="tree-chevron" style="visibility:hidden">▸</span>
+                              <span>水冷冷水系统</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="tree-row" data-node="other" tabindex="0" role="treeitem" aria-selected="false">
+                          <span class="tree-chevron" style="visibility:hidden">▸</span>
+                          <span>0_901：示例园区</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </aside>
+
+              <div class="model-detail">
+                <div class="detail-inner">
+                  <div class="breadcrumb-bar" aria-label="当前节点">
+                    <strong id="crumbName">0_842：互盟数据中心</strong>
+                    <span> · 数据中心单元</span>
+                  </div>
+
+                  <div class="main-tabs" role="tablist" aria-label="节点详情 Tab">
+                    <button type="button" class="main-tab active" role="tab" aria-selected="true" data-tab="points">测点列表</button>
+                    <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="devices">设备列表</button>
+                    <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="info">详情信息</button>
+                    <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="topology">关系拓扑</button>
+                    <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="history">设备履历</button>
+                    <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="eff">能效配置</button>
+                  </div>
+
+                  <div class="tab-panel active" id="panel-points" role="tabpanel">
+                    <div class="points-toolbar" aria-label="测点列表工具栏">
+                      <div class="points-toolbar-left">
+                        <button type="button" class="btn btn-outline" id="btnBatchBind">批量绑定</button>
+                        <button type="button" class="btn btn-ghost" id="btnBatchUnbind">批量解绑</button>
+                        <label class="toolbar-field">
+                          <span class="toolbar-label">测点类型</span>
+                          <select class="toolbar-select" id="pointTypeFilter" aria-label="测点类型">
+                            <option value="">全部</option>
+                            <option value="electric">电量</option>
+                            <option value="power">功率</option>
+                            <option value="eff">能效</option>
+                            <option value="temp">温度</option>
+                          </select>
+                        </label>
+                        <label class="toolbar-field">
+                          <span class="toolbar-label">刷新间隔</span>
+                          <select class="toolbar-select toolbar-select-narrow" id="refreshInterval" aria-label="刷新间隔">
+                            <option value="1" selected>1s</option>
+                            <option value="3">3s</option>
+                            <option value="5">5s</option>
+                            <option value="0">手动</option>
+                          </select>
+                        </label>
+                      </div>
+                      <div class="points-toolbar-right">
+                        <input type="search" class="toolbar-search" id="pointSearch" placeholder="请输入关键词" aria-label="搜索测点" autocomplete="off">
+                        <button type="button" class="icon-tool-btn" id="btnColSettings" title="显示列" aria-label="显示列设置">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true">
+                            <rect x="3" y="3" width="7" height="7" rx="1"/>
+                            <rect x="14" y="3" width="7" height="7" rx="1"/>
+                            <rect x="3" y="14" width="7" height="7" rx="1"/>
+                            <rect x="14" y="14" width="7" height="7" rx="1"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="table-wrap points-table-wrap">
+                      <table class="data-table points-table" aria-label="测点列表">
+                        <thead>
+                          <tr>
+                            <th class="col-check" scope="col">
+                              <input type="checkbox" id="pointCheckAll" aria-label="全选测点" title="全选">
+                            </th>
+                            <th scope="col">测点ID</th>
+                            <th scope="col">名称</th>
+                            <th scope="col">数据来源</th>
+                            <th scope="col">当前值</th>
+                            <th scope="col">状态</th>
+                            <th scope="col">数据时间</th>
+                            <th scope="col">单位</th>
+                            <th scope="col">状态映射</th>
+                            <th scope="col">告警等级</th>
+                            <th scope="col">操作</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td class="col-check"><input type="checkbox" class="point-row-check" aria-label="选择测点 MP_DC842_001"></td>
+                            <td class="num-cell">MP_DC842_001</td>
+                            <td>总用电功率</td>
+                            <td>共济科技 / 互盟数据中心</td>
+                            <td class="num-cell">2,856.32</td>
+                            <td><span class="status-ok">正常</span></td>
+                            <td class="num-cell">2026-03-26 14:32:08</td>
+                            <td>kW</td>
+                            <td>正常</td>
+                            <td>—</td>
+                            <td>
+                              <div class="points-actions">
+                                <button type="button" class="action-link">曲线</button>
+                                <button type="button" class="action-link">编辑</button>
+                              </div>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td class="col-check"><input type="checkbox" class="point-row-check" aria-label="选择测点 MP_DC842_002"></td>
+                            <td class="num-cell">MP_DC842_002</td>
+                            <td>PUE</td>
+                            <td>能效计算 / 互盟数据中心</td>
+                            <td class="num-cell">1.42</td>
+                            <td><span class="status-ok">正常</span></td>
+                            <td class="num-cell">2026-03-26 14:32:08</td>
+                            <td>—</td>
+                            <td>正常</td>
+                            <td>—</td>
+                            <td>
+                              <div class="points-actions">
+                                <button type="button" class="action-link">曲线</button>
+                                <button type="button" class="action-link">编辑</button>
+                              </div>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td class="col-check"><input type="checkbox" class="point-row-check" aria-label="选择测点 MP_DC842_003"></td>
+                            <td class="num-cell">MP_DC842_003</td>
+                            <td>IT 负载功率</td>
+                            <td>列头柜汇总 / 机房 A</td>
+                            <td class="num-cell">1,208.65</td>
+                            <td><span class="status-ok">正常</span></td>
+                            <td class="num-cell">2026-03-26 14:32:07</td>
+                            <td>kW</td>
+                            <td>正常</td>
+                            <td>—</td>
+                            <td>
+                              <div class="points-actions">
+                                <button type="button" class="action-link">曲线</button>
+                                <button type="button" class="action-link">编辑</button>
+                              </div>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td class="col-check"><input type="checkbox" class="point-row-check" aria-label="选择测点 MP_DC842_004"></td>
+                            <td class="num-cell">MP_DC842_004</td>
+                            <td>冷站总功率</td>
+                            <td>冷站控制器 / 1# 冷站</td>
+                            <td class="num-cell">1,052.10</td>
+                            <td><span class="status-ok">正常</span></td>
+                            <td class="num-cell">2026-03-26 14:32:07</td>
+                            <td>kW</td>
+                            <td>正常</td>
+                            <td>—</td>
+                            <td>
+                              <div class="points-actions">
+                                <button type="button" class="action-link">曲线</button>
+                                <button type="button" class="action-link">编辑</button>
+                              </div>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td class="col-check"><input type="checkbox" class="point-row-check" aria-label="选择测点 MP_DC842_005"></td>
+                            <td class="num-cell">MP_DC842_005</td>
+                            <td>冷冻水供水温度</td>
+                            <td>传感器 / 末端环路 B</td>
+                            <td class="num-cell">9.8</td>
+                            <td><span class="status-ok">正常</span></td>
+                            <td class="num-cell">2026-03-26 14:32:06</td>
+                            <td>℃</td>
+                            <td>正常</td>
+                            <td>—</td>
+                            <td>
+                              <div class="points-actions">
+                                <button type="button" class="action-link">曲线</button>
+                                <button type="button" class="action-link">编辑</button>
+                              </div>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td class="col-check"><input type="checkbox" class="point-row-check" aria-label="选择测点 MP_DC842_006"></td>
+                            <td class="num-cell">MP_DC842_006</td>
+                            <td>机房进风温度</td>
+                            <td>传感器 / 机房 A</td>
+                            <td class="num-cell">24.6</td>
+                            <td><span class="status-ok">正常</span></td>
+                            <td class="num-cell">2026-03-26 14:32:06</td>
+                            <td>℃</td>
+                            <td>正常</td>
+                            <td>—</td>
+                            <td>
+                              <div class="points-actions">
+                                <button type="button" class="action-link">曲线</button>
+                                <button type="button" class="action-link">编辑</button>
+                              </div>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td class="col-check"><input type="checkbox" class="point-row-check" aria-label="选择测点 MP_DC842_007"></td>
+                            <td class="num-cell">MP_DC842_007</td>
+                            <td>累计用电量（月）</td>
+                            <td>电能表 / 市电进线 1</td>
+                            <td class="num-cell">1,842,560</td>
+                            <td><span class="status-ok">正常</span></td>
+                            <td class="num-cell">2026-03-26 14:31:00</td>
+                            <td>kWh</td>
+                            <td>正常</td>
+                            <td>—</td>
+                            <td>
+                              <div class="points-actions">
+                                <button type="button" class="action-link">曲线</button>
+                                <button type="button" class="action-link">编辑</button>
+                              </div>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td class="col-check"><input type="checkbox" class="point-row-check" aria-label="选择测点 MP_DC842_008"></td>
+                            <td class="num-cell">MP_DC842_008</td>
+                            <td>制冷负载率</td>
+                            <td>能效计算 / 1# 冷站</td>
+                            <td class="num-cell">68.4</td>
+                            <td><span class="status-ok">正常</span></td>
+                            <td class="num-cell">2026-03-26 14:32:08</td>
+                            <td>%</td>
+                            <td>正常</td>
+                            <td>—</td>
+                            <td>
+                              <div class="points-actions">
+                                <button type="button" class="action-link">曲线</button>
+                                <button type="button" class="action-link">编辑</button>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div class="tab-panel" id="panel-devices" role="tabpanel" hidden>
+                    <div class="panel-placeholder">设备列表占位。</div>
+                  </div>
+                  <div class="tab-panel" id="panel-info" role="tabpanel" hidden>
+                    <div class="panel-placeholder">详情信息占位。</div>
+                  </div>
+                  <div class="tab-panel" id="panel-topology" role="tabpanel" hidden>
+                    <div class="topo-toolbar">
+                      <p class="topo-hint">按能效归属展示供配电 → IT/制冷 → 末端设备的能量流与关键指标（示意数据）。侧栏入口已统一为「能效视图」；Tab 名称可与产品文案再对齐。</p>
+                      <div class="topo-zoom" aria-label="画布缩放">
+                        <button type="button" class="btn" id="zoomOut" title="缩小" aria-label="缩小">−</button>
+                        <button type="button" class="btn" id="zoomIn" title="放大" aria-label="放大">+</button>
+                        <button type="button" class="btn" id="zoomReset" title="重置" aria-label="重置缩放">1:1</button>
+                      </div>
+                    </div>
+                    <div class="topo-canvas-wrap" id="topoViewport">
+                      <svg class="topo-svg" viewBox="0 0 900 460" xmlns="http://www.w3.org/2000/svg" aria-label="关系拓扑图" id="topoSvg">
+                        <!-- 连线 -->
+                        <path class="topo-line" d="M450 62 L450 92" />
+                        <path class="topo-line" d="M150 92 L750 92" />
+                        <path class="topo-line" d="M150 92 L150 118" />
+                        <path class="topo-line" d="M450 92 L450 118" />
+                        <path class="topo-line" d="M750 92 L750 118" />
+                        <path class="topo-line" d="M150 178 L150 204" />
+                        <path class="topo-line" d="M90 204 L210 204" />
+                        <path class="topo-line" d="M90 204 L90 230" />
+                        <path class="topo-line" d="M210 204 L210 230" />
+                        <path class="topo-line" d="M450 178 L450 204" />
+                        <path class="topo-line" d="M390 204 L510 204" />
+                        <path class="topo-line" d="M390 204 L390 230" />
+                        <path class="topo-line" d="M510 204 L510 230" />
+                        <path class="topo-line" d="M750 178 L750 204" />
+                        <path class="topo-line" d="M690 204 L810 204" />
+                        <path class="topo-line" d="M690 204 L690 230" />
+                        <path class="topo-line" d="M810 204 L810 230" />
+
+                        <!-- 根节点 -->
+                        <rect class="topo-card root" x="310" y="8" width="280" height="54" rx="10" />
+                        <text class="topo-title" x="450" y="34" text-anchor="middle">互盟数据中心</text>
+                        <text class="topo-metric" x="450" y="52" text-anchor="middle">PUE 1.42 · 总功率 2.86 MW</text>
+
+                        <!-- 二层 -->
+                        <rect class="topo-card" x="40" y="118" width="220" height="60" rx="8" />
+                        <text class="topo-title" x="150" y="144" text-anchor="middle">IT 配电与负载</text>
+                        <text class="topo-metric" x="150" y="162" text-anchor="middle">IT 功率 1.21 MW · 占比 42%</text>
+
+                        <rect class="topo-card" x="340" y="118" width="220" height="60" rx="8" />
+                        <text class="topo-title" x="450" y="144" text-anchor="middle">制冷系统</text>
+                        <text class="topo-metric" x="450" y="162" text-anchor="middle">冷站功率 1.05 MW · 占比 37%</text>
+
+                        <rect class="topo-card" x="640" y="118" width="220" height="60" rx="8" />
+                        <text class="topo-title" x="750" y="144" text-anchor="middle">辅助与其它</text>
+                        <text class="topo-metric" x="750" y="162" text-anchor="middle">0.60 MW · 占比 21%</text>
+
+                        <!-- 三层 IT -->
+                        <rect class="topo-card" x="30" y="230" width="120" height="52" rx="8" />
+                        <text class="topo-title" x="90" y="252" text-anchor="middle" style="font-size:12px">列头柜 A 路</text>
+                        <text class="topo-metric" x="90" y="268" text-anchor="middle">612 kW</text>
+
+                        <rect class="topo-card" x="170" y="230" width="120" height="52" rx="8" />
+                        <text class="topo-title" x="230" y="252" text-anchor="middle" style="font-size:12px">列头柜 B 路</text>
+                        <text class="topo-metric" x="230" y="268" text-anchor="middle">598 kW</text>
+
+                        <!-- 制冷 -->
+                        <rect class="topo-card" x="330" y="230" width="100" height="52" rx="8" />
+                        <text class="topo-title" x="380" y="252" text-anchor="middle" style="font-size:11px">冷水机组</text>
+                        <text class="topo-metric" x="380" y="268" text-anchor="middle">480 kW</text>
+
+                        <rect class="topo-card" x="450" y="230" width="100" height="52" rx="8" />
+                        <text class="topo-title" x="500" y="252" text-anchor="middle" style="font-size:11px">冷却塔群</text>
+                        <text class="topo-metric" x="500" y="268" text-anchor="middle">310 kW</text>
+
+                        <rect class="topo-card" x="570" y="230" width="100" height="52" rx="8" />
+                        <text class="topo-title" x="620" y="254" text-anchor="middle" style="font-size:11px">冷冻泵</text>
+                        <text class="topo-metric" x="620" y="268" text-anchor="middle">185 kW</text>
+
+                        <!-- 辅助 -->
+                        <rect class="topo-card" x="630" y="230" width="120" height="52" rx="8" />
+                        <text class="topo-title" x="690" y="252" text-anchor="middle" style="font-size:12px">照明与弱电</text>
+                        <text class="topo-metric" x="690" y="268" text-anchor="middle">210 kW</text>
+
+                        <rect class="topo-card" x="770" y="230" width="120" height="52" rx="8" />
+                        <text class="topo-title" x="830" y="252" text-anchor="middle" style="font-size:12px">其它支路</text>
+                        <text class="topo-metric" x="830" y="268" text-anchor="middle">390 kW</text>
+
+                        <text class="topo-tag" x="24" y="310">能效视图</text>
+                        <text class="topo-metric" x="24" y="328">与侧栏「能效视图」入口一致</text>
+                      </svg>
+                    </div>
+                  </div>
+                  <div class="tab-panel" id="panel-history" role="tabpanel" hidden>
+                    <div class="panel-placeholder">设备履历占位。</div>
+                  </div>
+                  <div class="tab-panel" id="panel-eff" role="tabpanel" hidden>
+                    <div class="panel-placeholder">能效配置占位。</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="page-note-bar">
+              侧栏入口为「能效视图」；「创建集合」打开能耗模型集合创建页。页面文件为能效视图.html，与菜单名称一致。
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const showToast = function (msg) {
+        var t = document.getElementById('protoToast');
+        if (!t) {
+          t = document.createElement('div');
+          t.id = 'protoToast';
+          t.style.cssText = 'position:fixed;right:24px;bottom:24px;padding:12px 14px;border-radius:10px;background:rgba(15,23,42,.92);color:#fff;font-size:12px;z-index:300;opacity:0;transition:opacity .2s';
+          document.body.appendChild(t);
+        }
+        t.textContent = msg;
+        t.style.opacity = '1';
+        clearTimeout(t._h);
+        t._h = setTimeout(function () { t.style.opacity = '0'; }, 2200);
+      };
+
+      document.getElementById('btnCreateSet').addEventListener('click', function () {
+        window.location.href = '创建集合-能耗模型.html';
+      });
+      document.getElementById('btnLinkDevice').addEventListener('click', function () {
+        showToast('示意：打开关联设备');
+      });
+      document.getElementById('btnDelete').addEventListener('click', function () {
+        showToast('示意：校验选中节点后删除');
+      });
+
+      const pointCheckAll = document.getElementById('pointCheckAll');
+      const pointRowChecks = function () {
+        return document.querySelectorAll('.point-row-check');
+      };
+      if (pointCheckAll) {
+        pointCheckAll.addEventListener('change', function () {
+          const on = pointCheckAll.checked;
+          pointRowChecks().forEach(function (cb) {
+            cb.checked = on;
+          });
+        });
+        pointRowChecks().forEach(function (cb) {
+          cb.addEventListener('change', function () {
+            const all = Array.prototype.every.call(pointRowChecks(), function (x) {
+              return x.checked;
+            });
+            const none = Array.prototype.every.call(pointRowChecks(), function (x) {
+              return !x.checked;
+            });
+            pointCheckAll.checked = all;
+            pointCheckAll.indeterminate = !all && !none;
+          });
+        });
+      }
+
+      var btnBatchBind = document.getElementById('btnBatchBind');
+      if (btnBatchBind) {
+        btnBatchBind.addEventListener('click', function () {
+          showToast('示意：请先勾选测点后再批量绑定');
+        });
+      }
+      var btnBatchUnbind = document.getElementById('btnBatchUnbind');
+      if (btnBatchUnbind) {
+        btnBatchUnbind.addEventListener('click', function () {
+          showToast('示意：请先勾选测点后再批量解绑');
+        });
+      }
+      var btnColSettings = document.getElementById('btnColSettings');
+      if (btnColSettings) {
+        btnColSettings.addEventListener('click', function () {
+          showToast('示意：打开显示列配置');
+        });
+      }
+      document.querySelectorAll('.points-table .action-link').forEach(function (el) {
+        el.addEventListener('click', function () {
+          var act = el.textContent.trim();
+          showToast('示意：' + act + '（测点详情/曲线）');
+        });
+      });
+      var refreshIntervalEl = document.getElementById('refreshInterval');
+      if (refreshIntervalEl) {
+        refreshIntervalEl.addEventListener('change', function () {
+          showToast('刷新间隔已切换为 ' + refreshIntervalEl.options[refreshIntervalEl.selectedIndex].text);
+        });
+      }
+
+      const panels = {
+        points: document.getElementById('panel-points'),
+        devices: document.getElementById('panel-devices'),
+        info: document.getElementById('panel-info'),
+        topology: document.getElementById('panel-topology'),
+        history: document.getElementById('panel-history'),
+        eff: document.getElementById('panel-eff')
+      };
+
+      document.querySelectorAll('.main-tab').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          const key = tab.getAttribute('data-tab');
+          document.querySelectorAll('.main-tab').forEach(function (t) {
+            const on = t === tab;
+            t.classList.toggle('active', on);
+            t.setAttribute('aria-selected', on ? 'true' : 'false');
+          });
+          Object.keys(panels).forEach(function (k) {
+            const p = panels[k];
+            const on = k === key;
+            p.classList.toggle('active', on);
+            p.hidden = !on;
+          });
+        });
+      });
+
+      var qualityCheckBtn = document.getElementById('btnQualityCheck');
+      document.querySelectorAll('.tree-row[data-node]').forEach(function (row) {
+        row.addEventListener('click', function () {
+          document.querySelectorAll('.tree-row[data-node]').forEach(function (r) {
+            r.classList.remove('active');
+            r.setAttribute('aria-selected', 'false');
+          });
+          row.classList.add('active');
+          row.setAttribute('aria-selected', 'true');
+          const label = row.querySelector('span:last-child').textContent;
+          document.getElementById('crumbName').textContent = label;
+          // 仅「水冷冷水系统」节点展示数据质量自检按钮
+          qualityCheckBtn.style.display = row.dataset.nodeType === 'water-cooled' ? '' : 'none';
+        });
+        row.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            row.click();
+          }
+        });
+      });
+
+      document.querySelectorAll('.tree-row[data-expand]').forEach(function (row) {
+        row.addEventListener('click', function (e) {
+          e.stopPropagation();
+          const chev = row.querySelector('.tree-chevron');
+          const next = row.nextElementSibling;
+          if (next && next.classList.contains('tree-children')) {
+            const open = next.style.display !== 'none';
+            next.style.display = open ? 'none' : 'block';
+            if (chev) chev.textContent = open ? '▶' : '▼';
+          }
+        });
+      });
+
+      let scale = 1;
+      const svg = document.getElementById('topoSvg');
+      const wrap = document.getElementById('topoViewport');
+      const applyScale = function () {
+        svg.style.transform = 'scale(' + scale + ')';
+        svg.style.transformOrigin = 'top left';
+        wrap.style.cursor = scale !== 1 ? 'grab' : 'default';
+      };
+      document.getElementById('zoomIn').addEventListener('click', function () {
+        scale = Math.min(1.6, scale + 0.1);
+        applyScale();
+      });
+      document.getElementById('zoomOut').addEventListener('click', function () {
+        scale = Math.max(0.7, scale - 0.1);
+        applyScale();
+      });
+      document.getElementById('zoomReset').addEventListener('click', function () {
+        scale = 1;
+        applyScale();
+      });
+    })();
+  </script>
+
+  <button type="button" class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+  <script>
+  function initAnnoVersionFilter() {
+    var bar = document.getElementById('annoFilterBar');
+    var tags = document.getElementById('annoFilterTags');
+    if (!document.body.classList.contains('annotation-mode')) return;
+    var annos = document.querySelectorAll('.anno[data-version]');
+    var versions = [];
+    annos.forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (v && versions.indexOf(v) === -1) versions.push(v);
+    });
+    versions.sort(function(a, b) {
+      var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+      var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+      for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+        if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+      }
+      return 0;
+    });
+    tags.innerHTML = '';
+    var allBtn = document.createElement('span');
+    allBtn.className = 'anno-filter-tag';
+    allBtn.textContent = '全部';
+    allBtn.onclick = function() { filterAnno('all', versions[0]); setActive(this); };
+    tags.appendChild(allBtn);
+    versions.forEach(function(v, i) {
+      var btn = document.createElement('span');
+      btn.className = 'anno-filter-tag' + (i === 0 ? ' active' : '');
+      btn.textContent = v;
+      btn.onclick = function() { filterAnno(v, versions[0]); setActive(this); };
+      tags.appendChild(btn);
+    });
+    if (versions.length > 0) filterAnno(versions[0], versions[0]);
+  }
+  function filterAnno(version, latest) {
+    document.querySelectorAll('.anno[data-version]').forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (version === 'all') {
+        a.style.display = '';
+        a.style.opacity = (v === latest) ? '1' : '0.6';
+      } else {
+        a.style.display = (v === version) ? '' : 'none';
+        a.style.opacity = '1';
+      }
+    });
+  }
+  function setActive(el) {
+    el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function(t) { t.classList.remove('active'); });
+    el.classList.add('active');
+  }
+  </script>
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="能效视图"></script>
+</body>
+</html>

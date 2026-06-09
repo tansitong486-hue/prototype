@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>能耗智能管理 - 原型导航</title>
+  <style>
+    :root {
+      --primary: #00C853;
+      --primary-dark: #00A846;
+      --bg: #F0F2F5;
+      --card-bg: #FFFFFF;
+      --text-main: #262626;
+      --text-sub: #595959;
+      --border: #E8E8E8;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      margin: 0;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .header {
+      margin-bottom: 40px;
+      text-align: center;
+    }
+    .header h1 {
+      font-size: 28px;
+      margin: 0 0 10px 0;
+    }
+    .header p {
+      color: var(--text-sub);
+      margin: 0;
+    }
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+      justify-content: center;
+    }
+    .filter-btn {
+      padding: 6px 16px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--text-sub);
+      transition: all 0.2s;
+    }
+    .filter-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .module-section {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px 32px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .module-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0 0 24px 0;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .module-title::before {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 16px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+
+    /* 拓扑树状结构样式 */
+    .tree {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .tree ul {
+      margin: 16px 0 0 0;
+      padding: 0 0 0 40px;
+      list-style: none;
+      position: relative;
+    }
+    /* 垂直辅助线 */
+    .tree ul::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 20px;
+      border-left: 2px solid var(--border);
+    }
+    .tree li {
+      position: relative;
+      margin-bottom: 16px;
+      transition: opacity 0.3s;
+    }
+    .tree li:last-child {
+      margin-bottom: 0;
+    }
+    /* 水平连接线 */
+    .tree ul > li::before {
+      content: '';
+      position: absolute;
+      top: 36px;
+      left: -20px;
+      width: 16px;
+      border-top: 2px solid var(--border);
+    }
+    /* 遮罩最后一个子节点的下半段垂直线 */
+    .tree ul > li:last-child::after {
+      content: '';
+      position: absolute;
+      top: 38px;
+      bottom: -16px;
+      left: -22px;
+      width: 6px;
+      background: #fff;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 16px 20px;
+      border: 1px solid var(--border);
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      width: fit-content;
+      min-width: 450px;
+      max-width: 100%;
+      position: relative;
+      z-index: 2;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,200,83,0.12);
+      border-color: var(--primary);
+    }
+    .card-main {
+      flex: 1;
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .version-tag {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(0, 200, 83, 0.1);
+      color: var(--primary-dark);
+      font-weight: 500;
+    }
+    .card-desc {
+      font-size: 13px;
+      color: var(--text-sub);
+      line-height: 1.5;
+    }
+    .arrow-icon {
+      color: #BFBFBF;
+      transition: color 0.2s, transform 0.2s;
+    }
+    .card:hover .arrow-icon {
+      color: var(--primary);
+      transform: translateX(4px);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>能耗智能管理 - 原型导航</h1>
+      <p>展示页面层级拓扑关系，点击卡片快速跳转</p>
+    </div>
+
+    <div class="filters" id="filters">
+      <button type="button" class="filter-btn active" data-version="all">全部版本</button>
+    </div>
+
+    <div id="topology-container">
+      <!-- Modules will be generated here -->
+    </div>
+  </div>
+
+  <script>
+    // 定义页面的拓扑结构
+    const topologyData = [
+      {
+        module: '总览',
+        nodes: [
+          {
+            title: '总览看板',
+            file: '总览看板.html',
+            version: 'v1.0',
+            desc: 'v1.0：标准化批注（默认 v1.0）；顶栏视图/数据中心与时间 pill、副栏 Tab 与看板管理；图元卡片与古典稿对应关系见页内批注',
+            children: [
+              { title: '看板配置', file: '看板配置.html', version: 'v1.0', desc: '对象树 + 图元勾选、画布 Tab（能耗统计/能效总览）、卡片关闭与选中描边；返回总览看板' }
+            ]
+          }
+        ]
+      },
+      {
+        module: '能耗分析',
+        nodes: [
+          {
+            title: '能耗流向分析',
+            file: '能耗流向分析.html',
+            version: 'v1.0',
+            desc: 'v1.0：桑基图支持图例/色带下钻最多 2 层，面包屑返回；左栏筛选与树不变'
+          },
+          {
+            title: '用能对比分析',
+            file: '用能对比分析.html',
+            version: 'v1.0',
+            desc: 'v1.0：多选节点（≤5）、多时间段（≤3）、柱状图/表格切换；示意数据对齐古典表'
+          }
+        ]
+      },
+      {
+        module: '机房能效优化',
+        nodes: [
+          {
+            title: '机房总览', file: '机房总览.html', version: 'v1.9', desc: '末端水冷系统下所有机房的运行概况与寻优状态列表；v1.9 新增「最新机房健康度」列，展示每个机房最近一次自动诊断综合得分，点击跳转智能诊断详情',
+            children: [
+              { title: '柔性寻优详情', file: '机房寻优-柔性寻优.html', version: 'v1.7', desc: 'v1.7：寻优记录「总览/机房组态」、单组态绑定、平面图缩放与悬停供冷/换热及温差、总览简化底图；V1/V2 柔性寻优、规则配置与下发' },
+              { title: '加减机寻优详情', file: '机房寻优-加减机寻优.html', version: 'v1.7', desc: 'v1.7：寻优记录平面图与柔性页一致（缩放、拓扑温差、总览简图/组态全图、共用组态关联）；加减机 zi 与空调状态为演示数据' }
+            ]
+          },
+          {
+            title: '机房智能诊断', file: '机房智能诊断.html', version: 'v1.9', desc: 'v1.9：机房智能诊断看板，展示综合评分、诊断模块问题卡片与处置建议；支持启停控制、规则管理及诊断配置抽屉'
+          }
+        ]
+      },
+      {
+        module: '冷站能效优化',
+        nodes: [
+          {
+            title: '冷站柔性调优', file: '冷站柔性调优.html', version: 'v2.0', desc: 'v2.0：适配风冷冷水系统，规则配置隐藏冷却侧设备及寻优参数，工艺示意、寻优记录、投入/投出和下发记录收敛为风冷冷水机组 + 冷冻泵/二次泵；v1.8：规则配置面板对齐真实系统字段并新增寻优目标偏好三滑块（λ₁/λ₂/λ₃）；v1.0：冷站指标、工艺流示意、寻优变量表、规则侧栏与智控下发',
+            children: [
+              { title: '冷站全局寻优', file: '冷站全局寻优.html', version: 'v2.0', desc: 'v2.0：适配风冷冷水系统，控制策略对比、寻优明细、能效预测与规则配置隐藏冷却侧设备及参数，主机口径切换为风冷冷水机组，室外特征参数展示室外干球温度；v1.8：新增规则配置弹窗及寻优目标偏好三滑块（λ₁/λ₂/λ₃）' },
+              { title: '冷站长周期寻优', file: '冷站长周期寻优.html', version: 'v2.0', desc: 'v2.0：适配风冷冷水系统，规则配置隐藏冷却侧设备及寻优参数，环境变量与明细展示室外干球温度；v1.8：对齐真实截图结构与规则配置弹窗，新增寻优目标偏好三滑块（λ₁/λ₂/λ₃）；v1.0：24h 预测曲线与逐时段寻优明细表' }
+            ]
+          }
+        ]
+      },
+      {
+        module: 'AI寻优配置',
+        nodes: [
+          {
+            title: '机理模型训练', file: '机理模型训练.html', version: 'v2.2', desc: 'v2.2：新增训练失败原因展示，失败状态与历史失败版本可查看错误码、错误描述和失败时间，并支持重新训练入口；v1.8：重构模型同步弹窗——按设备实例/预测类型折叠分组、每组单选算法（含推荐标签）、新增已选模型右侧面板；v1.1：对齐真实截图，页面工具栏、分类面板徽标、主表二级筛选等',
+            children: [
+              { title: '创建 / 编辑模型', file: '创建-编辑模型.html', version: 'v1.7', desc: 'v1.7：在 v1.0 古典对齐基线上含稳态阈值 ε、标准工况（手动新增/导入全量覆盖/导出）、冷却塔逼近度灰箱 Merkel 仅「冷却塔逼近度预测」分类可选、模型分类与算法联动等；从「机理模型训练」列表进入，不在侧栏单独挂菜单' }
+            ]
+          },
+          {
+            title: '系统仿真建模', file: '系统仿真建模.html', version: 'v1.0', desc: '仿真模型列表、创建时间倒序、服务状态与行操作；由古典「系统仿真建模」迁移，首批为无批注干净原型',
+            children: [
+              { title: '创建仿真模型', file: '创建仿真模型.html', version: 'v2.2', desc: 'v2.2：Section 3「预测」支持部分成功回显，成功模型逐行展示预测值与偏差，失败模型仅在下方列表行内展示失败原因，不再要求全部模型成功才回显；「模型选择规则」新增「多工况泛化优先」（基于 Max-bin RMSE）并设为默认；各自动策略叠加实时偏差健康检查（>15% 仿真结果页告警不阻断）；v1.8：最不利末端压差求解新增二级模式选择（冷冻泵 / 二次泵），勾选后展开子面板单选；编辑与创建共用本页（列表「编辑」带 ?mode=edit）' },
+              { title: '仿真验证', file: '仿真校验.html', version: 'v1.0', desc: '与真实系统一致：面包屑与标题为「仿真验证」；提示/失败条、请选择+指标名称搜索、六列表格空态（文件名仍为仿真校验.html）' }
+            ]
+          },
+          {
+            title: '机房热力模型列表', file: '机房寻优-机房热力模型列表.html', version: 'v1.6', desc: '管理机房热力模型，展示模型状态与基本信息',
+            children: [
+              {
+                title: '创建机房模型 (步骤1)', file: '机房寻优-创建机房模型.html', version: 'v1.9', desc: 'v1.9：新增通道封闭模式，空调改为弹窗关联，并在步骤1完成通道分组、传感器与机柜归属配置',
+                children: [
+                  { title: '创建机房模型 (步骤2)', file: '机房寻优-创建机房模型-步骤2.html', version: 'v1.6', desc: '配置冷热通道与空调的对应关系' }
+                ]
+              }
+            ]
+          },
+          {
+            title: '安全边界列表', file: '安全边界-列表.html', version: 'v1.8', desc: 'v1.8：管理各系统安全边界规则；创建/编辑子页已升至 v2.0（风冷系统动态隐藏冷却侧设备配置行）',
+            children: [
+              { title: '创建安全边界', file: '安全边界-创建.html', version: 'v2.0', desc: 'v2.0：设备数量边界配置支持动态显隐——选择风冷冷水系统时自动隐藏冷却塔数量和冷却泵数量行；v1.8：步骤2 水冷设备数量新增「二次泵」' },
+              { title: '编辑安全边界', file: '安全边界-编辑.html', version: 'v2.0', desc: 'v2.0：与创建页对齐，页面回填后按系统类型动态显隐冷却侧设备配置行；v1.8：字段与创建页对齐（含水冷二次泵台数上下限）' }
+            ]
+          }
+        ]
+      },
+      {
+        module: '节能效果评估',
+        nodes: [
+          { title: '节能分析', file: '节能分析.html', version: 'v1.0', desc: '节能指标、设备对比、节能/能效趋势与每日明细、规则配置；批注 v1.0 对齐古典「节能分析-月」' }
+        ]
+      },
+      {
+        module: '基础配置',
+        nodes: [
+          {
+            title: '能效视图',
+            file: '能效视图.html',
+            version: 'v1.0',
+            desc: '能效视图.html：主标题与侧栏一致；左树选节点、右侧 Tab；默认测点列表全表；关系拓扑为能效流图（示意）；工具栏「创建集合」进入子页',
+            children: [
+              {
+                title: '创建集合',
+                file: '创建集合-能耗模型.html',
+                version: 'v2.0',
+                desc: 'v2.0：集合类型选水冷后新增「系统类型」子选项（水冷/风冷），风冷时隐藏冷却水侧设备关联行；v1.8：设备关联关系（主机-冷冻/冷却泵、冷塔-冷却泵）+ 二次泵开关；由能效视图「创建集合」进入，侧栏不单独挂菜单'
+              },
+              {
+                title: '数据质量自检',
+                file: '数据质量自检.html',
+                version: 'v2.1',
+                desc: 'v2.1：实施期数据质量自检结果页；选中「水冷冷水系统」节点后从能效视图点击「数据质量自检」进入；含执行中/成功/失败三态、A/B/C 三组规则结果表（对象/名称/类型/ID/数据来源/规则/结果/问题描述/最新值/时间）、对象+规则+结果筛选、搜索、导出 xlsx、历史曲线占位弹窗；默认排序：不通过>数据不足>通过；侧栏高亮入口模块「能效视图」'
+              }
+            ]
+          },
+          {
+            title: '能源配置',
+            file: '能源配置.html',
+            version: 'v1.0',
+            desc: '能源计费配置子页：能源类型、单位、度量类型、标煤/二氧化碳折算系数与创建时间；预置电/水/冷量不可删',
+            children: [
+              {
+                title: '计费方案配置',
+                file: '计费方案配置.html',
+                version: 'v1.0',
+                desc: '方案列表、名称/物模型筛选、应用测点弹窗与删除校验；对齐古典「计费方案配置」',
+                children: [
+                  { title: '新增 / 编辑能源计费方案', file: '新增-编辑能源计费方案.html', version: 'v1.0', desc: '方案基础信息 + 方案明细表；明细新增/编辑弹窗（峰平谷/尖峰平谷/统一单价、生效日期）；由列表「新增」「编辑」进入，不在侧栏单独挂菜单' }
+                ]
+              },
+              { title: '新增 / 编辑能源', file: '新增-编辑能源.html', version: 'v1.0', desc: '基础信息 + 计量累积量测点表（物模型/测点/删除/新增行）；?mode=edit 编辑态锁定能源类型；由列表「新增」「编辑」进入，不在侧栏单独挂菜单' }
+            ]
+          }
+        ]
+      }
+    ];
+
+    /** 从拓扑数据递归收集去重后的版本号，用于生成筛选按钮 */
+    function collectVersionsFromTopology(data) {
+      const set = new Set();
+      function walk(node) {
+        if (node.version) set.add(node.version);
+        (node.children || []).forEach(walk);
+      }
+      data.forEach(function (m) {
+        (m.nodes || []).forEach(walk);
+      });
+      return Array.from(set).sort();
+    }
+
+    function buildVersionFilterButtons() {
+      const versions = collectVersionsFromTopology(topologyData);
+      const filtersEl = document.getElementById('filters');
+      versions.forEach(function (v) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'filter-btn';
+        btn.dataset.version = v;
+        btn.textContent = v;
+        filtersEl.appendChild(btn);
+      });
+    }
+
+    const container = document.getElementById('topology-container');
+    const filters = document.getElementById('filters');
+
+    buildVersionFilterButtons();
+
+    // 判断节点及其子节点是否包含匹配版本的节点
+    function hasMatchingNode(node, filterVersion) {
+      if (filterVersion === 'all') return true;
+      if (node.version === filterVersion) return true;
+      if (node.children && node.children.length > 0) {
+        return node.children.some(child => hasMatchingNode(child, filterVersion));
+      }
+      return false;
+    }
+
+    // 递归渲染节点
+    function renderNode(node, filterVersion) {
+      // 如果当前节点和子节点都不匹配，则直接返回空字符串（隐藏）
+      if (!hasMatchingNode(node, filterVersion)) return '';
+
+      const isMatch = filterVersion === 'all' || node.version === filterVersion;
+      // 如果当前节点不匹配，但子节点匹配，则将当前节点置灰（作为占位），否则正常显示
+      const opacity = isMatch ? '1' : '0.35';
+      const pointerEvents = isMatch ? 'auto' : 'none';
+
+      let html = `<li style="opacity: ${opacity}; pointer-events: ${pointerEvents}">`;
+      html += `
+        <a href="${node.file}" class="card">
+          <div class="card-main">
+            <div class="card-title">
+              ${node.title}
+              <span class="version-tag">${node.version}</span>
+            </div>
+            <div class="card-desc">${node.desc}</div>
+          </div>
+          <svg class="arrow-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M9 18l6-6-6-6"/></svg>
+        </a>
+      `;
+      
+      if (node.children && node.children.length > 0) {
+        const childrenHtml = node.children.map(child => renderNode(child, filterVersion)).join('');
+        if (childrenHtml) {
+          html += `<ul>${childrenHtml}</ul>`;
+        }
+      }
+      
+      html += '</li>';
+      return html;
+    }
+
+    // 渲染整个拓扑图
+    function renderTopology(filterVersion) {
+      container.innerHTML = '';
+      topologyData.forEach(module => {
+        // 检查整个模块是否有匹配的节点
+        const moduleHasMatch = module.nodes.some(node => hasMatchingNode(node, filterVersion));
+        if (!moduleHasMatch) return; // 如果模块内没有任何匹配节点，则隐藏整个模块
+
+        const section = document.createElement('div');
+        section.className = 'module-section';
+        
+        let nodesHtml = '<ul class="tree">';
+        module.nodes.forEach(node => {
+          nodesHtml += renderNode(node, filterVersion);
+        });
+        nodesHtml += '</ul>';
+
+        section.innerHTML = `
+          <h2 class="module-title">${module.module}</h2>
+          ${nodesHtml}
+        `;
+        container.appendChild(section);
+      });
+    }
+
+    // 绑定筛选事件（用 closest：避免点击到 button 内文本节点时 e.target 无 classList 导致整段脚本报错、筛选失效）
+    filters.addEventListener('click', e => {
+      const t = e.target;
+      const root = t.nodeType === Node.TEXT_NODE ? t.parentElement : t;
+      const btn = root && root.closest ? root.closest('.filter-btn') : null;
+      if (!btn) return;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const ver = btn.getAttribute('data-version') || 'all';
+      renderTopology(ver);
+    });
+
+    // 初始渲染
+    renderTopology('all');
+  </script>
+</body>
+</html>

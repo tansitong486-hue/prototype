@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>创建 / 编辑模型</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-dark: #17358A;
+      --primary-light: #EEF4FF;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --danger: #DC2626;
+      --success: #16A34A;
+      --warning: #D97706;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button { border: none; background: none; font: inherit; cursor: pointer; }
+
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main {
+      flex: 1;
+      min-width: 0;
+      overflow-y: auto;
+      background: var(--bg-body);
+    }
+
+    .page-shell { padding: 16px 20px 32px; max-width: 1400px; margin: 0 auto; }
+
+    .page-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .page-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .section-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .section-head {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-light);
+      background: #F8FAFC;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-head::before {
+      content: '';
+      width: 3px;
+      height: 14px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+    .section-body { padding: 18px; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px 28px;
+    }
+    @media (max-width: 900px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field.full { grid-column: 1 / -1; }
+    .field-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .field-label .req { color: var(--danger); }
+    .field-control, .field-select, .field-textarea {
+      width: 100%;
+      max-width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      background: #fff;
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .field-control:focus-visible, .field-select:focus-visible, .field-textarea:focus-visible {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.12);
+    }
+    .field-textarea { min-height: 72px; resize: vertical; font-family: inherit; }
+    .field-hint {
+      font-size: 12px;
+      color: var(--text-hint);
+      line-height: 1.5;
+    }
+    /* 校验/古典引用类说明：仅批注模式展示；原型模式界面保持干净 */
+    body:not(.annotation-mode) .field-hint.field-hint-annoonly {
+      display: none !important;
+    }
+
+    .radio-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      align-items: center;
+    }
+    .radio-opt {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .radio-opt input { accent-color: var(--primary); }
+    .radio-opt.radio-opt-disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+    .radio-opt.radio-opt-disabled input {
+      cursor: not-allowed;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 34px;
+      padding: 0 14px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .btn-default {
+      background: #fff;
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+    }
+    .btn-default:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    .btn-primary {
+      color: #fff;
+      background: var(--primary);
+      border: 1px solid transparent;
+    }
+    .btn-primary:hover { background: var(--primary-dark); }
+
+    .foot-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding-top: 8px;
+    }
+
+    .table-wrap { overflow-x: auto; }
+    .data-table {
+      width: 100%;
+      min-width: 1120px;
+      border-collapse: collapse;
+    }
+    .data-table th.col-steady-threshold,
+    .data-table td.col-steady-threshold {
+      min-width: 148px;
+      max-width: 220px;
+    }
+    .data-table .cell-input.param-steady-threshold {
+      font-size: 11px;
+    }
+    .data-table.std-data-table {
+      min-width: 680px;
+    }
+    .table-section-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .data-table thead th {
+      padding: 10px 10px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .data-table tbody td {
+      padding: 8px 10px;
+      font-size: 12px;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+    }
+    .data-table td:first-child { white-space: nowrap; }
+    .cell-id {
+      display: inline-block;
+      min-width: 28px;
+      font-weight: 700;
+      font-size: 12px;
+      color: var(--primary);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      letter-spacing: 0.02em;
+    }
+    .data-table tbody tr:hover { background: #FBFCFE; }
+    .data-table .cell-input {
+      width: 100%;
+      min-width: 56px;
+      height: 30px;
+      padding: 0 8px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12px;
+    }
+    .data-table .cell-select {
+      width: 100%;
+      min-width: 72px;
+      height: 30px;
+      padding: 0 6px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12px;
+      background: #fff;
+    }
+    .action-link {
+      font-size: 12px;
+      color: #1890FF;
+      cursor: pointer;
+    }
+    .action-link:hover { opacity: 0.8; }
+    .action-link.danger { color: var(--danger); }
+
+    .subgrid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px 16px;
+      margin-top: 12px;
+    }
+    @media (max-width: 900px) {
+      .subgrid { grid-template-columns: 1fr; }
+    }
+
+    .hidden { display: none !important; }
+
+    .formula-field-wrap {
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+    }
+    .formula-field-wrap .field-label { margin-bottom: 8px; }
+    .formula-box {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .algo-tune-block {
+      margin-top: 20px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border-light);
+    }
+    .sub-section-head {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .sub-section-head::before {
+      content: '';
+      width: 3px;
+      height: 12px;
+      background: var(--primary);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .cell-dash {
+      display: inline-block;
+      color: var(--text-hint);
+      padding: 4px 0;
+      min-width: 1em;
+    }
+    td.param-cell-muted {
+      background: #FAFBFC;
+      vertical-align: middle;
+    }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+</head>
+<body>
+  <div class="anno-filter-bar" id="annoFilterBar">
+    <span class="anno-filter-label">批注版本：</span>
+    <div class="anno-filter-tags" id="annoFilterTags"></div>
+  </div>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+        <div class="page-shell">
+          <div class="anno anno-version-header" data-version="v1.7">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v1.7</p>
+              <p><b>更新日期：</b>2026-03-23</p>
+              <p><b>变更概述：</b>在 <b>v1.0</b> 基线（古典「创建_编辑模型」字段与批注对齐：模型名称/模型分类、训练范围、参数表、自学习、多算法与调参/公式等）上，<b>v1.7</b> 增补：稳态阈值 ε、标准工况数据区（手动新增/批量导入全量覆盖/导出）、算法「冷却塔逼近度灰箱（Merkel）」且仅模型分类「冷却塔逼近度预测」可选、表单项与批注交互统一等。历史说明仍以 <code>data-version=&quot;v1.0&quot;</code> 批注块保留，可用顶部版本筛选查看。</p>
+              <p><b>本页说明：</b>承接「机理模型训练」列表的新增/编辑；字段规则与交互以古典 <code>创建_编辑模型</code>（Axure 说明 u8774–u8807 等）为准，本页在批注中逐条对照；界面较古典稿的调整（如算法区块位置、标识符列、去掉「小时」列、去掉「预测误差触发」「分层拟合」）在字段说明中单独标注；<b>v1.7</b> 能力见同标签 <code>data-version=&quot;v1.7&quot;</code> 批注块。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-req" data-version="v1.0">
+            <span class="anno-tag">需求说明</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source">引用自古典原型</span>
+            <div class="anno-body">
+              <p><b>页面级验收要点：</b>模型分类、模型名称、训练范围、参数表、自学习（最小周期与自动训练系数）、算法及对应调参/公式均按古典说明校验；全模型仅允许 1 个「预测参数」行；编辑态模型分类与算法等「编辑时不可改/不可选」以古典批注为准。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-ux" data-version="v1.0">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source">引用自古典原型 + AI 补充</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>整页</p>
+              <ul>
+                <li><b>原型 / 批注：</b>默认原型模式不展示字段下「校验与古典引用」类灰字；点击「批注」进入批注模式后，各模块 <code>.anno</code> 批注与上述灰字一并显示，便于对照需求。</li>
+                <li><b>批注版本：</b>存在 <code>v1.0</code> / <code>v1.7</code> 等多版本时，顶部筛选默认选<strong>全部</strong>，历史基线批注与新版增补同时可见（非最新版略透明）；点某一版本可仅查看该版批注块。</li>
+                <li><b>保存 / 取消：</b>实装需校验后保存；取消返回列表（原型为确认 + 跳转）。</li>
+                <li><b>训练对象范围：</b>「相同型号」显型号；「独立实例」显实例（古典 u8778、u8779）。</li>
+                <li><b>参数类型：</b>v1.0 仅「动态特征」「预测参数」；单调性、最值、分层抽样对两类均展示并按规则可编辑（古典 u8786–u8789 在去掉静态属性后的适用部分）。</li>
+                <li><b>预测参数：</b>全表仅允许一行；切换类型时若将产生第二行预测参数则回退并提示。</li>
+                <li><b>算法：</b>选定模型分类后可选；支持多种回归/提升类算法；单调性神经网络展示专用调参；线性回归展示公式配置；多项式及 GBDT/KNN/随机森林/SVR/XGBoost 展示对应模型调参表单（古典 u8798、u8799 逻辑延伸）。<b>v1.7</b> 另增「冷却塔逼近度灰箱（Merkel）」：仅模型分类为「冷却塔逼近度预测」时可选，无单独表单调参。本页算法区在表单底部。</li>
+                <li><b>公式配置标签：</b>随「预测参数」行标识符更新（如 A2）。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="page-head">
+            <h1 class="page-title">创建模型</h1>
+          </div>
+
+          <div class="anno anno-field" data-version="v1.0">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source">引用自古典原型</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>基础信息（古典 u8774–u8776）</p>
+              <table class="anno-table">
+                <thead><tr><th>字段</th><th>规则（古典原文要点）</th></tr></thead>
+                <tbody>
+                  <tr><td>模型名称</td><td>必填，文本型，可输入最多 99 字符；编辑时可修改；表单位于「模型分类」之前（v1.0 版式调整）</td></tr>
+                  <tr><td>模型分类</td><td>必选，单选；界面称谓，逻辑同古典「物模型」（u8774）：可选择集合、资产下分类/类型；编辑时不可修改</td></tr>
+                  <tr><td>模型描述</td><td>非必填，文本，最多可输入 199 字符</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <section class="section-card">
+            <div class="section-head">基础信息</div>
+            <div class="section-body">
+              <div class="form-grid">
+                <div class="field">
+                  <label class="field-label"><span class="req">*</span>模型名称</label>
+                  <input class="field-control" type="text" placeholder="请输入" maxlength="99" value="冷冻水泵功率预测">
+                  <p class="field-hint field-hint-annoonly">必填文本，最多 99 字符；编辑时可修改</p>
+                </div>
+                <div class="field">
+                  <label class="field-label"><span class="req">*</span>模型分类</label>
+                  <select class="field-select" id="thingModel" aria-label="模型分类">
+                    <option value="">请选择</option>
+                    <option value="pump" selected>冷冻水泵</option>
+                    <option value="chiller">冷水主机</option>
+                    <option value="cooling_tower_approach">冷却塔逼近度预测</option>
+                  </select>
+                  <p class="field-hint field-hint-annoonly">必选，单选；编辑时不可修改（古典稿「物模型」语义，本页称模型分类）</p>
+                </div>
+                <div class="field full">
+                  <label class="field-label">模型描述</label>
+                  <textarea class="field-textarea" placeholder="请输入模型描述" maxlength="199"></textarea>
+                  <p class="field-hint field-hint-annoonly">非必填，最多 199 字符</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="anno anno-field" data-version="v1.0">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source">引用自古典原型</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>训练数据范围（古典 u8780、u8778、u8779）</p>
+              <table class="anno-table">
+                <thead><tr><th>字段</th><th>规则（古典原文要点）</th></tr></thead>
+                <tbody>
+                  <tr><td>数据集开始日期</td><td>必选，默认前一年日期；编辑时可修改</td></tr>
+                  <tr><td>型号选择</td><td>当选择「相同型号实例」时动态展示；必选，单选，当前模型分类下具体型号；编辑时不可选</td></tr>
+                  <tr><td>实例选择</td><td>当选择「独立实例」时动态展示；必选，单选，当前模型分类下具体实例；编辑时不可选</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="anno anno-data" data-version="v1.0">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source">AI 生成</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>训练数据范围</p>
+              <ul>
+                <li>切换训练对象范围时建议清空对侧下拉或重拉选项，避免型号/实例混用。</li>
+                <li>开始日期与对象范围参与训练样本筛选。</li>
+              </ul>
+            </div>
+          </div>
+
+          <section class="section-card">
+            <div class="section-head">训练数据范围</div>
+            <div class="section-body">
+              <div class="form-grid">
+                <div class="field">
+                  <label class="field-label"><span class="req">*</span>数据集开始日期</label>
+                  <input class="field-control" type="date" value="2023-10-02">
+                </div>
+                <div class="field full">
+                  <label class="field-label"><span class="req">*</span>训练对象范围</label>
+                  <div class="radio-row" id="scopeRow">
+                    <label class="radio-opt"><input type="radio" name="scope" value="model" checked> 相同型号实例</label>
+                    <label class="radio-opt"><input type="radio" name="scope" value="instance"> 独立实例</label>
+                  </div>
+                </div>
+                <div class="field" id="wrapModelNo">
+                  <label class="field-label"><span class="req">*</span>型号选择</label>
+                  <select class="field-select">
+                    <option value="">请选择</option>
+                    <option selected>格兰富 CR-200</option>
+                  </select>
+                </div>
+                <div class="field hidden" id="wrapInstance">
+                  <label class="field-label"><span class="req">*</span>实例选择</label>
+                  <select class="field-select">
+                    <option value="">请选择</option>
+                    <option selected>冷冻水泵 1#</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="anno anno-field" data-version="v1.0">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source">引用自古典原型</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>模型参数表（古典 u8783–u8789；类型含「预测参数」选项）</p>
+              <table class="anno-table">
+                <thead><tr><th>项</th><th>规则（古典原文要点）</th></tr></thead>
+                <tbody>
+                  <tr><td>预测参数</td><td>一个模型仅能 1 个预测参数，因此固定即可（古典 u8783）</td></tr>
+                  <tr><td>参数类型</td><td>单选：动态特征、预测参数（v1.0 已去掉静态属性）；下挂属性/测点规则见古典 u8784、u8785 中与动态相关部分</td></tr>
+                  <tr><td>单调性</td><td>动态特征时可选（u8786）；预测参数行按产品约定展示</td></tr>
+                  <tr><td>最小值</td><td>必填，数值，保留 2 位小数（u8787）</td></tr>
+                  <tr><td>最大值</td><td>同上；且须大于最小值（u8788）</td></tr>
+                  <tr><td>分层抽样</td><td>必填整数，默认 1，范围 1–10（u8789）</td></tr>
+                  <tr><td>本页相对古典</td><td>增加只读「标识符」列（A1…）供公式引用；已去掉古典「小时」列</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="anno anno-ux" data-version="v1.0">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source">AI 生成</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>模型参数表</p>
+              <ul>
+                <li>变更「参数类型」时校验仅一行「预测参数」；单调性、最值、分层抽样列始终展示（v1.0 无静态属性分支）。</li>
+                <li>手动新增/删除行后重排标识符；至少保留一行；工具条在表上方，与「标准工况数据」区块一致。</li>
+              </ul>
+            </div>
+          </div>
+          <div class="anno anno-state" data-version="v1.0">
+            <span class="anno-tag">状态说明</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source">AI 生成</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>模型参数表</p>
+              <ul>
+                <li>示例两行：动 / 预测；预测行标识符用于公式配置左侧标签联动。</li>
+              </ul>
+            </div>
+          </div>
+
+          <section class="section-card">
+            <div class="section-head">模型参数</div>
+            <div class="section-body">
+              <div class="table-section-toolbar">
+                <button type="button" class="btn btn-primary" id="btnAddParam">手动新增</button>
+              </div>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>标识符</th>
+                      <th>属性/测点</th>
+                      <th>参数类型</th>
+                      <th>最小值</th>
+                      <th>最大值</th>
+                      <th class="col-steady-threshold">稳态阈值 ε</th>
+                      <th>单调性</th>
+                      <th>分层抽样</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="paramBody">
+                    <tr>
+                      <td><span class="cell-id" aria-label="参数标识符">A1</span></td>
+                      <td>频率反馈</td>
+                      <td><select class="cell-select param-type" aria-label="参数类型"><option selected>动态特征</option><option>预测参数</option></select></td>
+                      <td><input class="cell-input" value="8"></td>
+                      <td><input class="cell-input" value="50"></td>
+                      <td class="col-steady-threshold"><input class="cell-input param-steady-threshold" type="number" step="any" value="3" placeholder="可不填" title="第三层极差阈值 ε，单位 HZ；默认见方案第六章 §3.1"></td>
+                      <td><select class="cell-select"><option>正相关</option><option>负相关</option><option>不相关</option></select></td>
+                      <td><input class="cell-input" type="number" value="1" min="1" max="10"></td>
+                      <td><span class="action-link danger" data-del-row>删除</span></td>
+                    </tr>
+                    <tr>
+                      <td><span class="cell-id" aria-label="参数标识符">A2</span></td>
+                      <td>水泵功率（预测）</td>
+                      <td><select class="cell-select param-type" aria-label="参数类型"><option>动态特征</option><option selected>预测参数</option></select></td>
+                      <td><input class="cell-input" value="0"></td>
+                      <td><input class="cell-input" value="120"></td>
+                      <td class="col-steady-threshold"><input class="cell-input param-steady-threshold" type="number" step="any" value="5" placeholder="可不填" title="第三层极差阈值 ε，单位 KW；默认见方案第六章 §3.1"></td>
+                      <td><select class="cell-select"><option>不相关</option></select></td>
+                      <td><input class="cell-input" type="number" value="3" min="1" max="10"></td>
+                      <td><span class="action-link danger" data-del-row>删除</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <div class="anno anno-field" data-version="v1.7">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v1.7</span>
+            <span class="anno-source">基于《机理模型数据预处理优化方案》</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>模型参数表 · 稳态阈值 ε（第三层稳态筛选）</p>
+              <table class="anno-table">
+                <thead><tr><th>字段</th><th>说明</th></tr></thead>
+                <tbody>
+                  <tr><td>稳态阈值 ε</td><td><b>v1.7 新增。</b>选填；不填时按《机理模型数据预处理优化方案》<b>第六章 §2、§3</b> 该量默认 ε 执行。第三层统一判据为窗口内 <b>R=max−min＜ε</b>（连续 3 点、历时 10 min），<b>ε 为与测点单位一致的绝对阈值</b>，不再使用相对分式。</td></tr>
+                  <tr><td>本页示例</td><td>冷冻水泵功率预测（§3.1）：频率反馈 ε 默认 <b>3</b>（HZ）；有功功率 ε 默认 <b>5</b>（KW）。</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <section class="section-card">
+            <div class="section-head">标准工况数据</div>
+            <div class="section-body">
+              <p class="field-hint" style="margin-bottom:10px;">适用于<strong>冷启动</strong>、<strong>历史稳态训练样本偏少</strong>，或<strong>典型工况在实采里还没出现/覆盖不全</strong>等情形：在此补充离散标准工况点（已知工况下各测点的数值组合），用于模型早期训练与辨识校验。</p>
+              <div class="table-section-toolbar">
+                <button type="button" class="btn btn-primary" id="btnStdRowAdd">手动新增</button>
+                <button type="button" class="btn btn-default" id="btnStdImport">批量导入</button>
+                <button type="button" class="btn btn-default" id="btnStdExport">导出</button>
+              </div>
+              <input type="file" id="stdImportFile" class="hidden" accept=".csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" aria-hidden="true">
+              <div class="table-wrap">
+                <table class="data-table std-data-table" id="stdPointTable" aria-label="标准工况数据表">
+                  <thead>
+                    <tr>
+                      <th>序号</th>
+                      <th>A1 频率反馈（HZ）</th>
+                      <th>A2 水泵功率（KW）</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="stdPointBody">
+                    <tr>
+                      <td class="std-row-idx">1</td>
+                      <td><input class="cell-input" value="35"></td>
+                      <td><input class="cell-input" value="12.5"></td>
+                      <td><span class="action-link danger" data-del-std-row>删除</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <div class="anno anno-field" data-version="v1.7">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v1.7</span>
+            <span class="anno-source">基于《机理模型数据预处理优化方案》第七章</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>标准工况数据（冷启动手动注入）</p>
+              <table class="anno-table">
+                <thead><tr><th>能力</th><th>说明</th></tr></thead>
+                <tbody>
+                  <tr><td>表头与文件列</td><td>标准工况表的<b>列（表头）随当前模型动态变化</b>：由「模型参数」中各行的<b>标识符（A1…）+ 属性/测点名称 + 单位</b>共同决定界面列名；导入/导出文件的<b>第一行表头</b>须与<b>当前界面表头</b>一致（不含「操作」列）。增删参数、改测点或切换模型分类后列集合会变，应<b>重新导出</b>再按新模板填写，勿混用旧文件列名。</td></tr>
+                  <tr><td>手动新增</td><td>在表中新增一行，逐列录入该标准工况下各模型输入/输出测点的数值；列为序号、各测点（与参数表 A1… 及含义对齐）、操作；<b>不含</b>「工况说明」列。实装可由模型分类驱动测点列集合。</td></tr>
+                  <tr><td>批量导入</td><td>选择文件（如 CSV / Excel），解析校验通过后以文件内容<b>全量覆盖</b>当前表内标准工况（非追加、非合并）；须校验字段与当前表头一致，坏行提示行号/原因（原型为占位）。<p style="margin:10px 0 4px;"><b>示例（CSV）</b>：下列仅为<strong>当前页示例模型</strong>（冷冻水泵：A1 频率反馈、A2 水泵功率）下的样例；真实环境下列名须与<strong>当时界面表头</strong>一致。</p><pre style="font-size:11px;line-height:1.45;margin:0;padding:8px 10px;background:#F1F5F9;border-radius:6px;overflow-x:auto;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">序号,A1 频率反馈（HZ）,A2 水泵功率（KW）
+1,35,12.5
+2,40,</pre><p style="margin:6px 0 0;font-size:12px;color:#64748b;">首行为表头；字段含英文逗号或需转义时按 RFC 4180 使用双引号。Excel 与 CSV 列逻辑相同，首行为表头。</p></td></tr>
+                  <tr><td>导出</td><td>将当前表中标准工况导出为文件（如 CSV / Excel），列与<b>当前表头</b>一致，便于备份、线下编辑后<b>再批量导入</b>全量覆盖。<p style="margin:10px 0 4px;"><b>示例（与导入模板同构）</b>：导出内容结构与上表「批量导入」示例相同——第一行为动态表头，后续每行一条标准工况；无数据时也可导出仅含表头的空模板。</p><pre style="font-size:11px;line-height:1.45;margin:0;padding:8px 10px;background:#F1F5F9;border-radius:6px;overflow-x:auto;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">序号,A1 频率反馈（HZ）,A2 水泵功率（KW）
+1,35,12.5</pre></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="anno anno-ux" data-version="v1.7">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v1.7</span>
+            <span class="anno-source">AI 生成</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>标准工况数据</p>
+              <ul>
+                <li><b>手动新增：</b>在表尾追加空行，用户填写后随模型一并保存。</li>
+                <li><b>批量导入：</b>弹出系统文件选择；成功导入后<b>全量覆盖</b>表中现有标准工况；校验失败时提示行号/原因（原型仅 Toast）。文件列与<b>当前动态表头</b>对齐规则见上表「表头与文件列」及字段说明中的 CSV 示例。</li>
+                <li><b>导出：</b>下载与当前表头一致的文件，可作模板；详见上表导出示例。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="anno anno-field" data-version="v1.0">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source">引用自古典原型</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>自学习与触发（古典 u8781、u8782；本页不含古典稿「预测误差触发」u8738、「分层拟合」u8807）</p>
+              <table class="anno-table">
+                <thead><tr><th>字段</th><th>规则（古典原文要点）</th></tr></thead>
+                <tbody>
+                  <tr><td>自学习最小周期</td><td>必填，整数，默认 12 小时；编辑时可修改（u8781）</td></tr>
+                  <tr><td>自动训练系数</td><td>按古典紧邻说明 u8782：必填，保留 2 位小数，默认 3；编辑时可修改（本页控件已对齐）</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <section class="section-card">
+            <div class="section-head">自学习与触发</div>
+            <div class="section-body">
+              <div class="form-grid">
+                <div class="field">
+                  <label class="field-label"><span class="req">*</span>自学习最小周期</label>
+                  <input class="field-control" type="number" value="12" min="1" step="1">
+                  <p class="field-hint field-hint-annoonly">必填整数，单位：小时；默认 12（古典 u8781）</p>
+                </div>
+                <div class="field">
+                  <label class="field-label"><span class="req">*</span>自动训练系数</label>
+                  <input class="field-control" type="number" value="3" placeholder="请输入" step="0.01" min="0">
+                  <p class="field-hint field-hint-annoonly">必填，保留 2 位小数，默认 3（古典 u8782）</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="anno anno-field" data-version="v1.0">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source">引用自古典原型</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>算法与调参（古典 u8777、u8790、u8798–u8799、u8791–u8797；含多算法及分算法调参）</p>
+              <table class="anno-table">
+                <thead><tr><th>字段</th><th>规则（古典原文要点）</th></tr></thead>
+                <tbody>
+                  <tr><td>算法选择</td><td>选定模型分类后展示；必选单选；编辑时不可选/不可改（u8777、u8790）</td></tr>
+                  <tr><td>联动</td><td>选单调性神经网络→神经网络调参；选线性回归→公式配置；选多项式/梯度提升/KNN/随机森林/SVR/XGBoost→对应模型调参字段（u8798、u8799 延伸）。<b>v1.7：</b>「冷却塔逼近度灰箱（Merkel）」仅当模型分类为冷却塔逼近度预测时可选，见 v1.7 批注。</td></tr>
+                  <tr><td>学习率</td><td>必填，保留 5 位小数，默认 0.001（u8791）</td></tr>
+                  <tr><td>Batch Size</td><td>必填，整数，默认 1024（u8792）</td></tr>
+                  <tr><td>最大 epoch</td><td>必填，整数，默认 200（u8793）</td></tr>
+                  <tr><td>激活函数</td><td>必选，默认 elu（u8794）</td></tr>
+                  <tr><td>原始/凸/有界函数权重</td><td>各必填，整数，默认 1（u8795–u8797）</td></tr>
+                  <tr><td>公式配置</td><td>拟合函数系数用 a–f；因变量用参数标识符；公式区下方两条为界面内简短填写说明（原型模式仍展示）；校验与古典对照见本批注表及字段说明</td></tr>
+                  <tr><td>各算法模型调参</td><td>梯度提升/KNN/多项式/随机森林/SVR/XGBoost 等展示与产品默认模板一致的占位字段；实装时与后端算法注册表对齐</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="anno anno-ux" data-version="v1.0">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source">AI 生成</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>算法与调参</p>
+              <ul>
+                <li>本页算法区在表单底部；切换算法后展示对应调参或公式区。</li>
+                <li>公式配置左侧标签随「预测参数」行标识符联动更新。</li>
+              </ul>
+            </div>
+          </div>
+          <div class="anno anno-edge" data-version="v1.0">
+            <span class="anno-tag">边界与异常</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source">AI 生成</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>算法与调参</p>
+              <ul>
+                <li>公式引用未定义的标识符 → 保存前报错并定位行号/列。</li>
+                <li>多个「预测参数」行 → 保存前拒绝；原型中切换类型时已自动保留一行预测并提示。</li>
+                <li>最值：最大值须大于最小值（古典 u8788）。</li>
+                <li>训练任务进行中编辑并保存 → 与后端版本策略对齐（是否允许覆盖、是否新建版本）。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="anno anno-field" data-version="v1.7">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v1.7</span>
+            <span class="anno-source">冷却塔逼近度预测模型算法设计</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>算法与调参 · 新增算法类型</p>
+              <table class="anno-table">
+                <thead><tr><th>项</th><th>说明</th></tr></thead>
+                <tbody>
+                  <tr><td>冷却塔逼近度灰箱（Merkel）</td><td><b>v1.7 新增。</b>面向冷却塔逼近度 App 预测的<strong>机理灰箱</strong>：骨架为 Merkel 热质传递 + 塔特性式 NTU = c×(L/G)^(−n)，风量按 G = G_rated×(f/f_rated) 换算。必要输入、物性计算、迭代与数值积分等见 <code>05-需求文档/AI节能v1.7版本/冷却塔模型优化/冷却塔逼近度预测模型算法设计文档.md</code>。</td></tr>
+                  <tr><td>适用模型分类</td><td>仅当模型分类为<strong>冷却塔逼近度预测</strong>（原型 <code>thingModel</code>=<code>cooling_tower_approach</code>）时，算法「冷却塔逼近度灰箱（Merkel）」才可选；其它分类下该项<strong>禁用</strong>。若切换分类前已选 Merkel，自动改选「线性回归」并 Toast 提示。实装时该 value 须与算法注册表、模型分类枚举一致。</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <section class="section-card">
+            <div class="section-head">算法与调参</div>
+            <div class="section-body">
+              <div class="field full">
+                <label class="field-label"><span class="req">*</span>算法选择</label>
+                <div class="radio-row" id="algoRow">
+                  <label class="radio-opt"><input type="radio" name="algo" value="monotonic_nn"> 单调性神经网络</label>
+                  <label class="radio-opt"><input type="radio" name="algo" value="gbrt"> 梯度提升</label>
+                  <label class="radio-opt"><input type="radio" name="algo" value="knn"> K近邻回归</label>
+                  <label class="radio-opt"><input type="radio" name="algo" value="linear" checked> 线性回归</label>
+                  <label class="radio-opt"><input type="radio" name="algo" value="poly"> 多项式回归</label>
+                  <label class="radio-opt"><input type="radio" name="algo" value="rf"> 随机森林</label>
+                  <label class="radio-opt"><input type="radio" name="algo" value="svr"> 支持向量回归</label>
+                  <label class="radio-opt"><input type="radio" name="algo" value="xgboost"> 极致梯度提升</label>
+                  <label class="radio-opt radio-opt-disabled" id="wrapAlgoCtMerkel" title="仅「冷却塔逼近度预测」模型分类下可选"><input type="radio" name="algo" value="ct_approach_merkel" disabled> 冷却塔逼近度灰箱（Merkel）</label>
+                </div>
+                <p class="field-hint field-hint-annoonly">选定模型分类后展示；必选单选；编辑时不可改（古典 u8777、u8790）。切换算法后下方展示对应调参或公式配置区。<b>v1.7：</b>「冷却塔逼近度灰箱（Merkel）」仅当模型分类为「冷却塔逼近度预测」时可选，否则禁用。</p>
+              </div>
+
+              <div id="blockNn" class="algo-tune-block hidden">
+                <div class="sub-section-head"><span class="req">*</span>模型调参（单调性神经网络）</div>
+                <div class="form-grid">
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>激活函数</label>
+                    <select class="field-select">
+                      <option selected>elu</option>
+                      <option>relu</option>
+                      <option>tanh</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>学习率</label>
+                    <input class="field-control" type="text" value="0.001">
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>Batch Size</label>
+                    <input class="field-control" type="number" value="1024">
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>最大 epoch</label>
+                    <input class="field-control" type="number" value="200">
+                  </div>
+                </div>
+                <div class="subgrid">
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>原始函数权重</label>
+                    <input class="field-control" type="number" value="1" min="1">
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>凸函数权重</label>
+                    <input class="field-control" type="number" value="1" min="1">
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>有界函数权重</label>
+                    <input class="field-control" type="number" value="1" min="1">
+                  </div>
+                </div>
+              </div>
+
+              <div id="blockFormula" class="algo-tune-block">
+                <div class="sub-section-head"><span class="req">*</span>公式配置</div>
+                <div class="field full formula-field-wrap">
+                  <label class="field-label" id="formulaDepLabel">A2 =</label>
+                  <textarea class="field-textarea formula-box" rows="3">a * A1 ** 2 + b * A1 + c</textarea>
+                </div>
+                <p class="field-hint" style="margin-top:8px;">
+                  1、拟合函数请分别用 a、b、c、d、e、f 表示；<br>
+                  2、因变量请使用模型参数的标识符表达。
+                </p>
+              </div>
+
+              <div id="blockTuneGbrt" class="algo-tune-block hidden">
+                <div class="sub-section-head"><span class="req">*</span>模型调参</div>
+                <div class="form-grid">
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>模型类型</label>
+                    <input class="field-control" type="text" value="gradient_boosting">
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>树的数量</label>
+                    <input class="field-control" type="text" value="100">
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>最大深度</label>
+                    <input class="field-control" type="text" value="5">
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>学习率</label>
+                    <input class="field-control" type="text" value="0.10">
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>样本采样比例</label>
+                    <input class="field-control" type="text" value="0.8">
+                  </div>
+                </div>
+              </div>
+
+              <div id="blockTuneKnn" class="algo-tune-block hidden">
+                <div class="sub-section-head"><span class="req">*</span>模型调参</div>
+                <div class="form-grid">
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>模型类型</label>
+                    <input class="field-control" type="text" value="knn">
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>邻居数量</label>
+                    <input class="field-control" type="text" value="5">
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>权重方式</label>
+                    <select class="field-select">
+                      <option selected>uniform</option>
+                      <option>distance</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>算法</label>
+                    <select class="field-select">
+                      <option selected>auto</option>
+                      <option>ball_tree</option>
+                      <option>kd_tree</option>
+                      <option>brute</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div id="blockTunePoly" class="algo-tune-block hidden">
+                <div class="sub-section-head"><span class="req">*</span>模型调参</div>
+                <div class="form-grid">
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>模型类型</label>
+                    <input class="field-control" type="text" value="polynomial">
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>多项式次数</label>
+                    <input class="field-control" type="text" value="3">
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>正则化系数</label>
+                    <input class="field-control" type="text" value="0.50">
+                  </div>
+                </div>
+              </div>
+
+              <div id="blockTuneRf" class="algo-tune-block hidden">
+                <div class="sub-section-head"><span class="req">*</span>模型调参</div>
+                <div class="form-grid">
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>模型类型</label>
+                    <input class="field-control" type="text" value="random_forest">
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>树的数量</label>
+                    <input class="field-control" type="text" value="150">
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>最大深度</label>
+                    <input class="field-control" type="text" value="25">
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>内部节点最小样本数</label>
+                    <input class="field-control" type="text" value="5">
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>叶子节点最小样本数</label>
+                    <input class="field-control" type="text" value="2">
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>并行作业数</label>
+                    <input class="field-control" type="text" value="-1">
+                  </div>
+                </div>
+              </div>
+
+              <div id="blockTuneSvr" class="algo-tune-block hidden">
+                <div class="sub-section-head"><span class="req">*</span>模型调参</div>
+                <div class="form-grid">
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>模型类型</label>
+                    <input class="field-control" type="text" value="svr">
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>核函数</label>
+                    <select class="field-select">
+                      <option selected>rbf</option>
+                      <option>linear</option>
+                      <option>poly</option>
+                      <option>sigmoid</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>正则化参数</label>
+                    <input class="field-control" type="text" value="100.0">
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>核函数系数</label>
+                    <select class="field-select">
+                      <option selected>scale</option>
+                      <option>auto</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>损失函数阈值</label>
+                    <input class="field-control" type="text" value="0.10">
+                  </div>
+                </div>
+              </div>
+
+              <div id="blockTuneXgboost" class="algo-tune-block hidden">
+                <div class="sub-section-head"><span class="req">*</span>模型调参</div>
+                <div class="form-grid">
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>模型类型</label>
+                    <input class="field-control" type="text" value="xgboost">
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>树的数量</label>
+                    <input class="field-control" type="text" value="300">
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>最大深度</label>
+                    <input class="field-control" type="text" value="8">
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>学习率</label>
+                    <input class="field-control" type="text" value="0.050">
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>样本采样比例</label>
+                    <input class="field-control" type="text" value="0.8">
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>特征采样比例</label>
+                    <input class="field-control" type="text" value="0.8">
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>最小损失减少量</label>
+                    <input class="field-control" type="text" value="0.1">
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>L1正则化系数</label>
+                    <input class="field-control" type="text" value="0.1">
+                  </div>
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>L2正则化系数</label>
+                    <input class="field-control" type="text" value="1.0">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="foot-actions">
+            <button type="button" class="btn btn-default" id="btnCancel">取 消</button>
+            <button type="button" class="btn btn-primary" id="btnSave">保 存</button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <style>
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      min-width: 180px;
+      max-width: 360px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.92);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.6;
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: all .25s ease;
+      z-index: 400;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+  </style>
+
+  <script>
+    (function () {
+      function showToast(msg) {
+        var el = document.getElementById('toast');
+        el.textContent = msg;
+        el.classList.add('show');
+        clearTimeout(el._t);
+        el._t = setTimeout(function () { el.classList.remove('show'); }, 2200);
+      }
+
+      var ML_TUNE_IDS = ['blockTuneGbrt', 'blockTuneKnn', 'blockTunePoly', 'blockTuneRf', 'blockTuneSvr', 'blockTuneXgboost'];
+      var ALGO_TO_TUNE = {
+        gbrt: 'blockTuneGbrt',
+        knn: 'blockTuneKnn',
+        poly: 'blockTunePoly',
+        rf: 'blockTuneRf',
+        svr: 'blockTuneSvr',
+        xgboost: 'blockTuneXgboost'
+      };
+
+      var THING_ALGO_CT_MERKEL = 'cooling_tower_approach';
+
+      function syncAlgoBlocks() {
+        var sel = document.querySelector('input[name="algo"]:checked');
+        var v = sel ? sel.value : '';
+        var activeTune = ALGO_TO_TUNE[v];
+        document.getElementById('blockNn').classList.toggle('hidden', v !== 'monotonic_nn');
+        document.getElementById('blockFormula').classList.toggle('hidden', v !== 'linear');
+        ML_TUNE_IDS.forEach(function (id) {
+          document.getElementById(id).classList.toggle('hidden', activeTune !== id);
+        });
+      }
+
+      function syncThingModelAlgoGate() {
+        var tm = document.getElementById('thingModel');
+        var wrap = document.getElementById('wrapAlgoCtMerkel');
+        var input = wrap ? wrap.querySelector('input[name="algo"][value="ct_approach_merkel"]') : null;
+        if (!wrap || !input) return;
+        var ok = tm && tm.value === THING_ALGO_CT_MERKEL;
+        input.disabled = !ok;
+        wrap.classList.toggle('radio-opt-disabled', !ok);
+        if (!ok && input.checked) {
+          var linear = document.querySelector('input[name="algo"][value="linear"]');
+          if (linear) linear.checked = true;
+          else {
+            var first = document.querySelector('input[name="algo"]:not(:disabled)');
+            if (first) first.checked = true;
+          }
+          showToast('当前模型分类不支持「冷却塔逼近度灰箱」，已切换为线性回归');
+          syncAlgoBlocks();
+        }
+      }
+
+      function syncScope() {
+        var modelScope = document.querySelector('input[name="scope"][value="model"]').checked;
+        document.getElementById('wrapModelNo').classList.toggle('hidden', !modelScope);
+        document.getElementById('wrapInstance').classList.toggle('hidden', modelScope);
+      }
+
+      function renumberParamIds() {
+        document.querySelectorAll('#paramBody tr').forEach(function (tr, i) {
+          var el = tr.querySelector('.cell-id');
+          if (el) el.textContent = 'A' + (i + 1);
+        });
+        updateFormulaDepLabel();
+      }
+
+      function syncParamRow(tr) {
+        var sel = tr.querySelector('select.param-type');
+        if (!sel) return;
+        var tds = tr.querySelectorAll('td');
+        var cells = [tds[3], tds[4], tds[5], tds[6], tds[7]];
+        cells.forEach(function (td, i) {
+          td.classList.remove('param-cell-muted');
+          var s = td.dataset.stash;
+          if (s && (s.indexOf('cell-input') !== -1 || s.indexOf('cell-select') !== -1)) {
+            td.innerHTML = s;
+          } else if (i === 0 || i === 1) {
+            td.classList.remove('col-steady-threshold');
+            td.innerHTML = '<input class="cell-input" value="' + (i === 0 ? '0' : '1') + '">';
+          } else if (i === 2) {
+            td.className = 'col-steady-threshold';
+            td.innerHTML = '<input class="cell-input param-steady-threshold" type="number" step="any" value="" placeholder="可不填">';
+          } else if (i === 3) {
+            td.classList.remove('col-steady-threshold');
+            td.innerHTML = '<select class="cell-select"><option>不相关</option><option>负相关</option><option>正相关</option></select>';
+          } else if (i === 4) {
+            td.classList.remove('col-steady-threshold');
+            td.innerHTML = '<input class="cell-input" type="number" value="1" min="1" max="10">';
+          }
+        });
+      }
+
+      function enforceSinglePredict(activeSel) {
+        if (!activeSel || activeSel.value !== '预测参数') return;
+        document.querySelectorAll('#paramBody select.param-type').forEach(function (s) {
+          if (s === activeSel) return;
+          if (s.value === '预测参数') {
+            s.value = '动态特征';
+            syncParamRow(s.closest('tr'));
+            showToast('全模型仅允许 1 个预测参数，已将其余行改为「动态特征」');
+          }
+        });
+      }
+
+      function updateFormulaDepLabel() {
+        var label = document.getElementById('formulaDepLabel');
+        if (!label) return;
+        var id = 'A1';
+        document.querySelectorAll('#paramBody tr').forEach(function (tr) {
+          var s = tr.querySelector('select.param-type');
+          var cid = tr.querySelector('.cell-id');
+          if (s && cid && s.value === '预测参数') id = cid.textContent.trim();
+        });
+        label.textContent = id + ' =';
+      }
+
+      document.querySelectorAll('input[name="algo"]').forEach(function (r) {
+        r.addEventListener('change', syncAlgoBlocks);
+      });
+      document.querySelectorAll('input[name="scope"]').forEach(function (r) {
+        r.addEventListener('change', syncScope);
+      });
+      document.getElementById('thingModel').addEventListener('change', function () {
+        syncThingModelAlgoGate();
+      });
+
+      syncThingModelAlgoGate();
+      syncAlgoBlocks();
+      syncScope();
+      renumberParamIds();
+
+      document.getElementById('paramBody').addEventListener('change', function (e) {
+        var t = e.target;
+        if (t.matches && t.matches('select.param-type')) {
+          enforceSinglePredict(t);
+          syncParamRow(t.closest('tr'));
+          updateFormulaDepLabel();
+        }
+      });
+
+      document.getElementById('btnCancel').addEventListener('click', function () {
+        if (confirm('放弃未保存的更改并返回列表？')) {
+          window.location.href = '机理模型训练.html';
+        }
+      });
+      document.getElementById('btnSave').addEventListener('click', function () {
+        showToast('已保存（原型占位）');
+      });
+
+      document.getElementById('btnAddParam').addEventListener('click', function () {
+        var tbody = document.getElementById('paramBody');
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td><span class="cell-id" aria-label="参数标识符"></span></td>' +
+          '<td><input class="cell-input" placeholder="名称"></td>' +
+          '<td><select class="cell-select param-type" aria-label="参数类型"><option selected>动态特征</option><option>预测参数</option></select></td>' +
+          '<td><input class="cell-input" value="0"></td>' +
+          '<td><input class="cell-input" value="1"></td>' +
+          '<td class="col-steady-threshold"><input class="cell-input param-steady-threshold" type="number" step="any" value="" placeholder="可不填"></td>' +
+          '<td><select class="cell-select"><option>不相关</option><option>负相关</option><option>正相关</option></select></td>' +
+          '<td><input class="cell-input" type="number" value="1" min="1" max="10"></td>' +
+          '<td><span class="action-link danger" data-del-row>删除</span></td>';
+        tbody.appendChild(tr);
+        renumberParamIds();
+        syncParamRow(tr);
+        showToast('已手动新增一行模型参数（原型）');
+      });
+
+      document.getElementById('paramBody').addEventListener('click', function (e) {
+        if (e.target.getAttribute('data-del-row') !== null) {
+          var row = e.target.closest('tr');
+          if (row && document.querySelectorAll('#paramBody tr').length > 1) {
+            row.remove();
+            renumberParamIds();
+            showToast('已删除该行');
+          } else {
+            showToast('至少保留一行');
+          }
+        }
+      });
+
+      function renumberStdRows() {
+        document.querySelectorAll('#stdPointBody tr').forEach(function (tr, i) {
+          var idx = tr.querySelector('.std-row-idx');
+          if (idx) idx.textContent = String(i + 1);
+        });
+      }
+
+      document.getElementById('btnStdRowAdd').addEventListener('click', function () {
+        var tbody = document.getElementById('stdPointBody');
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td class="std-row-idx"></td>' +
+          '<td><input class="cell-input" value=""></td>' +
+          '<td><input class="cell-input" value=""></td>' +
+          '<td><span class="action-link danger" data-del-std-row>删除</span></td>';
+        tbody.appendChild(tr);
+        renumberStdRows();
+        showToast('已手动新增一条标准工况（原型）');
+      });
+
+      document.getElementById('btnStdImport').addEventListener('click', function () {
+        document.getElementById('stdImportFile').click();
+      });
+
+      document.getElementById('stdImportFile').addEventListener('change', function () {
+        if (this.files && this.files.length) {
+          showToast('已选择文件：' + this.files[0].name + '（批量导入解析为原型占位）');
+        }
+        this.value = '';
+      });
+
+      document.getElementById('btnStdExport').addEventListener('click', function () {
+        showToast('已导出标准工况（原型占位，可落为 CSV/Excel）');
+      });
+
+      document.getElementById('stdPointBody').addEventListener('click', function (e) {
+        if (e.target.getAttribute('data-del-std-row') !== null) {
+          var row = e.target.closest('tr');
+          if (row) {
+            row.remove();
+            renumberStdRows();
+            showToast('已删除该条标准工况');
+          }
+        }
+      });
+    })();
+  </script>
+  <button type="button" class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+  <script>
+    function initAnnoVersionFilter() {
+      var bar = document.getElementById('annoFilterBar');
+      var tags = document.getElementById('annoFilterTags');
+      if (!document.body.classList.contains('annotation-mode')) return;
+      var annos = document.querySelectorAll('.anno[data-version]');
+      var versions = [];
+      annos.forEach(function (a) {
+        var v = a.getAttribute('data-version');
+        if (v && versions.indexOf(v) === -1) versions.push(v);
+      });
+      versions.sort(function (a, b) {
+        var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+        var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+        for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+          if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+        }
+        return 0;
+      });
+      tags.innerHTML = '';
+      var allBtn = document.createElement('span');
+      allBtn.className = 'anno-filter-tag';
+      allBtn.textContent = '全部';
+      allBtn.onclick = function () { filterAnno('all', versions[0]); setActive(this); };
+      tags.appendChild(allBtn);
+      versions.forEach(function (v) {
+        var btn = document.createElement('span');
+        btn.className = 'anno-filter-tag';
+        btn.textContent = v;
+        btn.onclick = function () { filterAnno(v, versions[0]); setActive(this); };
+        tags.appendChild(btn);
+      });
+      if (versions.length > 0) {
+        filterAnno('all', versions[0]);
+        allBtn.classList.add('active');
+      }
+    }
+    function filterAnno(version, latest) {
+      document.querySelectorAll('.anno[data-version]').forEach(function (a) {
+        var v = a.getAttribute('data-version');
+        if (version === 'all') {
+          a.style.display = '';
+          a.style.opacity = (v === latest) ? '1' : '0.6';
+        } else {
+          a.style.display = (v === version) ? '' : 'none';
+          a.style.opacity = '1';
+        }
+      });
+    }
+    function setActive(el) {
+      el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function (t) { t.classList.remove('active'); });
+      el.classList.add('active');
+    }
+  </script>
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="机理模型训练"></script>
+</body>
+</html>

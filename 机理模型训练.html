@@ -1,0 +1,2355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>机理模型训练</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-dark: #17358A;
+      --primary-light: #EEF4FF;
+      --accent: #3B82F6;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --danger: #DC2626;
+      --success: #16A34A;
+      --warning: #D97706;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+      --focus-ring: 0 0 0 2px var(--bg-card), 0 0 0 4px var(--primary);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button { border: none; background: none; font: inherit; }
+    button:focus-visible,
+    .select-like:focus-visible,
+    .modal-close:focus-visible,
+    .page-item:focus-visible,
+    .page-arrow:focus-visible,
+    .action-link:focus-visible:not(.disabled),
+    .toggle:focus-visible,
+    .cat-item:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-ring);
+    }
+    .btn-primary:focus-visible {
+      box-shadow: var(--focus-ring), 0 0 0 1px rgba(255, 255, 255, 0.35) inset;
+    }
+
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main {
+      flex: 1;
+      min-width: 0;
+      overflow-y: auto;
+      background: var(--bg-body);
+    }
+
+    .page-shell { padding: 16px 20px 24px; }
+
+    .workbench {
+      display: flex;
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .cat-panel {
+      width: 280px;
+      flex-shrink: 0;
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 120px);
+    }
+    .cat-panel-head {
+      padding: 12px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      border-bottom: 1px solid var(--border-light);
+      background: #F8FAFC;
+    }
+    .cat-panel-body {
+      padding: 0;
+      overflow-y: auto;
+    }
+    .cat-item {
+      padding: 10px 14px 10px 11px;
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition);
+      border-left: 3px solid transparent;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .cat-item:last-child { border-bottom: none; }
+    .cat-item:hover { background: #F8FAFC; }
+    .cat-item.active {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 600;
+      border-left-color: var(--primary);
+    }
+    .cat-item .count {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-hint);
+      white-space: nowrap;
+    }
+    .cat-item.active .count { color: var(--primary); }
+
+    .main-panel {
+      flex: 1;
+      min-width: 0;
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .main-panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-light);
+      flex-wrap: wrap;
+    }
+    .main-panel-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+    .main-panel-tools {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 34px;
+      padding: 0 14px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .btn-default {
+      background: #fff;
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+    }
+    .btn-default:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: #FAFBFF;
+    }
+    .btn-primary {
+      color: #fff;
+      background: var(--primary);
+      border: 1px solid transparent;
+    }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn:active {
+      transition-duration: 0.08s;
+    }
+
+    .select-like {
+      height: 34px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .select-like:hover {
+      border-color: var(--primary);
+      color: var(--text-primary);
+      background: #FAFBFF;
+    }
+    .select-like .ico-chevron {
+      flex-shrink: 0;
+      width: 14px;
+      height: 14px;
+      margin-left: auto;
+      color: var(--text-hint);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      flex: 1;
+      overscroll-behavior-x: contain;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(15, 23, 42, 0.2) transparent;
+    }
+    .table-wrap::-webkit-scrollbar {
+      height: 8px;
+    }
+    .table-wrap::-webkit-scrollbar-thumb {
+      background: rgba(15, 23, 42, 0.18);
+      border-radius: 4px;
+    }
+    .table-wrap::-webkit-scrollbar-thumb:hover {
+      background: rgba(15, 23, 42, 0.28);
+    }
+    .data-table {
+      width: 100%;
+      min-width: 1280px;
+      border-collapse: collapse;
+    }
+    .data-table.has-sticky-actions {
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+    .data-table thead th {
+      padding: 12px 14px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .data-table tbody td {
+      padding: 12px 14px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+    }
+    .data-table tbody tr {
+      transition: background-color 0.15s ease;
+    }
+    .data-table tbody tr:hover { background: #F1F5F9; }
+
+    /* 主表：操作列横向滚动时固定在右侧 */
+    .data-table.has-sticky-actions thead th:last-child,
+    .data-table.has-sticky-actions tbody td:last-child {
+      position: sticky;
+      right: 0;
+      min-width: 260px;
+      box-sizing: border-box;
+      background: var(--bg-card);
+      box-shadow: -10px 0 20px -12px rgba(15, 23, 42, 0.18);
+      border-left: 1px solid var(--border);
+      z-index: 2;
+    }
+    .data-table.has-sticky-actions thead th:last-child {
+      z-index: 4;
+      background: #F8FAFC;
+    }
+    .data-table.has-sticky-actions tbody tr:hover td:last-child {
+      background: #F1F5F9;
+    }
+
+    /* 开关列：表头与单元格居中；主表第 7 列固定宽度避免表格抖动 */
+    .data-table.has-sticky-actions thead th:nth-child(7) {
+      text-align: center;
+      width: 108px;
+      max-width: 108px;
+      padding-left: 10px;
+      padding-right: 10px;
+    }
+    .data-table tbody td:has(> .toggle) {
+      text-align: center;
+      vertical-align: middle;
+    }
+    .data-table.has-sticky-actions tbody td:has(> .toggle) {
+      width: 108px;
+      max-width: 108px;
+      padding-left: 10px;
+      padding-right: 10px;
+    }
+
+    .metrics-stack {
+      font-size: 11px;
+      line-height: 1.5;
+      color: var(--text-secondary);
+      white-space: normal;
+      max-width: 200px;
+      font-variant-numeric: tabular-nums;
+    }
+    .metrics-stack .muted { color: var(--text-hint); }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .status-pill.done { background: #ECFDF5; color: var(--success); }
+    .status-pill.train { background: #FFFBEB; color: var(--warning); }
+    .status-pill.fail { background: #FEF2F2; color: var(--danger); }
+    .status-pill.none { background: #F1F5F9; color: var(--text-hint); }
+
+    /* span 默认 inline 会导致 width/height 不生效；滑块用 50% 垂直居中避免与轨道错位 */
+    .toggle {
+      position: relative;
+      display: block;
+      margin: 0 auto;
+      width: 40px;
+      height: 22px;
+      box-sizing: border-box;
+      border-radius: 11px;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
+      background: #64748B;
+      border: 1px solid #475569;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+    .toggle.on {
+      background: var(--primary);
+      border-color: var(--primary-dark);
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.22);
+    }
+    .toggle::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      z-index: 1;
+      background: linear-gradient(180deg, #F8FAFC 0%, #E2E8F0 100%);
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.35);
+      transform: translateY(-50%);
+      transition: transform var(--transition), background var(--transition), border-color var(--transition);
+    }
+    .toggle.on::after {
+      background: #fff;
+      border-color: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+      transform: translate(18px, -50%);
+    }
+
+    .actions {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 8px 12px;
+    }
+    .action-link {
+      font-size: 13px;
+      color: var(--accent);
+      cursor: pointer;
+      white-space: nowrap;
+      text-decoration: none;
+      text-underline-offset: 3px;
+      border-radius: 4px;
+      padding: 1px 2px;
+      margin: -1px -2px;
+      transition: color var(--transition), text-decoration-color var(--transition);
+    }
+    .action-link:hover:not(.disabled) {
+      color: var(--primary);
+      text-decoration: underline;
+      text-decoration-color: rgba(30, 64, 175, 0.45);
+    }
+    .action-link.danger { color: var(--danger); }
+    .action-link.danger:hover:not(.disabled) {
+      color: #B91C1C;
+      text-decoration-color: rgba(220, 38, 38, 0.45);
+    }
+    .action-link.disabled {
+      color: var(--text-hint);
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    /* 需高于 nav 顶栏与侧栏，避免弹窗被盖住 */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100000;
+      padding: 24px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .modal-backdrop.show { display: flex; }
+    body.modal-open {
+      overflow: hidden;
+    }
+    .modal {
+      position: relative;
+      z-index: 1;
+      background: #fff;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18), var(--shadow-card);
+      max-width: 920px;
+      width: 100%;
+      max-height: min(90vh, 900px);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      pointer-events: auto;
+      animation: modal-in .22s var(--transition);
+    }
+    @keyframes modal-in {
+      from { opacity: 0; transform: translateY(8px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .modal.sm { max-width: 520px; }
+    .modal-head {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .modal-title { font-size: 16px; font-weight: 700; }
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      color: var(--text-hint);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      line-height: 1;
+    }
+    .modal-close:hover { background: #F1F5F9; color: var(--text-primary); }
+    .modal-close:focus-visible {
+      background: #EEF4FF;
+      color: var(--primary);
+    }
+    .modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+    .modal-foot {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .form-row { margin-bottom: 14px; }
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    .form-label .req { color: var(--danger); }
+    .input-text {
+      width: 100%;
+      max-width: 280px;
+      height: 34px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      color: var(--text-primary);
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .input-text:focus-visible {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.15);
+    }
+
+    .hint-block {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      padding: 10px 12px;
+      background: #F8FAFC;
+      border-radius: var(--radius);
+      margin-bottom: 14px;
+    }
+
+    .modal.md { max-width: 860px; }
+
+    .sync-hint {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: #FFFBEB;
+      border-radius: var(--radius);
+      border: 1px solid #FDE68A;
+      font-size: 13px;
+      font-weight: 500;
+      color: #92400E;
+      margin-bottom: 14px;
+    }
+    .sync-hint svg { flex-shrink: 0; color: #F59E0B; }
+
+    .input-date-wrap {
+      position: relative;
+      display: inline-block;
+    }
+    .input-date-wrap .input-text {
+      padding-right: 36px;
+      cursor: pointer;
+      max-width: 220px;
+    }
+    .input-date-wrap .ico-cal {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-hint);
+      pointer-events: none;
+      width: 16px;
+      height: 16px;
+    }
+
+    /* 模型同步 — 折叠分组布局 */
+    .sync-body-split {
+      display: flex;
+      gap: 14px;
+      height: 380px;
+    }
+    .sync-group-scroll {
+      flex: 1;
+      min-width: 0;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(15,23,42,.16) transparent;
+    }
+    .sync-group-scroll::-webkit-scrollbar { width: 5px; }
+    .sync-group-scroll::-webkit-scrollbar-thumb { background: rgba(15,23,42,.16); border-radius: 3px; }
+
+    .sync-group {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+    .sync-group-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      background: #F8FAFC;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      user-select: none;
+      transition: background .12s, color .12s;
+    }
+    .sync-group-head:hover { background: #EEF4FF; color: var(--primary); }
+    .sync-group.open > .sync-group-head {
+      background: #EEF4FF;
+      color: var(--primary);
+    }
+    .sync-group-caret {
+      flex-shrink: 0;
+      width: 14px;
+      height: 14px;
+      transition: transform .2s;
+      color: var(--text-hint);
+    }
+    .sync-group.open > .sync-group-head .sync-group-caret { transform: rotate(90deg); }
+    .sync-group-name { flex: 1; }
+    .sync-group-badge {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--primary);
+      background: rgba(30,64,175,.1);
+      border-radius: 10px;
+      padding: 1px 8px;
+      display: none;
+    }
+    .sync-group-badge.show { display: inline-block; }
+
+    .sync-algo-list {
+      display: none;
+      flex-direction: column;
+      border-top: 1px solid var(--border-light);
+      padding: 6px 10px;
+      gap: 2px;
+    }
+    .sync-group.open > .sync-algo-list { display: flex; }
+
+    .sync-algo-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-primary);
+      transition: background .1s;
+    }
+    .sync-algo-item:hover { background: #F8FAFC; }
+    .sync-algo-item.is-selected { background: var(--primary-light); }
+    .sync-algo-item input[type="radio"] {
+      flex-shrink: 0;
+      accent-color: var(--primary);
+      width: 14px; height: 14px;
+      cursor: pointer;
+    }
+    .sync-algo-name { flex: 1; }
+    .tag-rec {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 7px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #D97706;
+      background: #FEF3C7;
+      border: 1px solid #FDE68A;
+      white-space: nowrap;
+    }
+
+    /* 已选模型面板 */
+    .sync-selected-panel {
+      width: 228px;
+      flex-shrink: 0;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .sync-selected-head {
+      padding: 9px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border-light);
+      background: #F8FAFC;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .sync-sel-count-badge {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+      background: rgba(30,64,175,.1);
+      border-radius: 10px;
+      padding: 1px 8px;
+      min-width: 22px;
+      text-align: center;
+    }
+    .sync-selected-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+      scrollbar-width: thin;
+    }
+    .sync-sel-empty {
+      color: var(--text-hint);
+      font-size: 12px;
+      text-align: center;
+      padding: 28px 8px;
+      line-height: 1.6;
+    }
+    .sync-sel-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      padding: 7px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--text-primary);
+      margin-bottom: 5px;
+      background: var(--primary-light);
+      border: 1px solid rgba(30,64,175,.08);
+    }
+    .sync-sel-item-text { flex: 1; min-width: 0; word-break: break-all; }
+    .sync-sel-remove {
+      flex-shrink: 0;
+      color: var(--text-hint);
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      margin-top: -1px;
+    }
+    .sync-sel-remove:hover { color: var(--danger); }
+
+    .sync-count-text { font-size: 13px; color: var(--text-secondary); margin-right: auto; }
+    .sync-count-text strong { color: var(--accent); font-weight: 600; }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      min-width: 180px;
+      max-width: 360px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.92);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.6;
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: all .25s ease;
+      z-index: 100050;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    .pagination-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 18px;
+      border-top: 1px solid var(--border-light);
+      flex-wrap: wrap;
+    }
+    .pagination-total { font-size: 12px; color: var(--text-secondary); }
+    .pagination {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .page-item, .page-arrow {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .page-item:hover, .page-arrow:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    .page-item.active {
+      color: #fff;
+      border-color: var(--primary);
+      background: var(--primary);
+    }
+
+    .radio-row {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .radio-opt {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .text-muted { color: var(--text-hint); }
+
+    /* 页面顶部工具栏 */
+    .page-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 0 16px;
+      flex-wrap: wrap;
+    }
+    .page-toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .page-toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .toolbar-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+    }
+    .toolbar-divider {
+      width: 1px;
+      height: 16px;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+
+    /* 分类面板 - 头部 flex 布局支持全部链接 */
+    .cat-panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .cat-panel-head-all {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent);
+      cursor: pointer;
+    }
+    .cat-panel-head-all:hover { color: var(--primary); }
+
+    /* 分类条目改为 flex，数量右对齐 */
+    .cat-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .cat-item .cat-name {
+      flex: 1;
+      min-width: 0;
+    }
+    .cat-count {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-hint);
+      background: #F1F5F9;
+      border-radius: 10px;
+      padding: 1px 7px;
+      flex-shrink: 0;
+      margin-left: 8px;
+      line-height: 18px;
+    }
+    .cat-item.active .cat-count {
+      color: var(--primary);
+      background: rgba(30, 64, 175, 0.1);
+    }
+
+    /* 主面板 - 二级筛选行 */
+    .main-panel-filters {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 18px;
+      border-bottom: 1px solid var(--border-light);
+      flex-wrap: wrap;
+    }
+
+    /* 训练失败原因 */
+    .status-fail-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .fail-reason-link {
+      font-size: 11px;
+      color: var(--danger);
+      cursor: pointer;
+      text-decoration: underline;
+      text-decoration-color: rgba(220, 38, 38, 0.4);
+      text-underline-offset: 2px;
+      user-select: none;
+      width: fit-content;
+    }
+    .fail-reason-link:hover { color: #B91C1C; text-decoration-color: rgba(185, 28, 28, 0.6); }
+
+    .fail-reason-box {
+      background: #FEF2F2;
+      border: 1px solid #FECACA;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 14px;
+    }
+    .fail-reason-box .fail-code {
+      font-size: 12px;
+      color: var(--danger);
+      font-weight: 700;
+      margin-bottom: 6px;
+      font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+      letter-spacing: 0.02em;
+    }
+    .fail-reason-box .fail-desc {
+      font-size: 13px;
+      color: var(--text-primary);
+      line-height: 1.7;
+    }
+    .fail-meta {
+      font-size: 12px;
+      color: var(--text-hint);
+      margin-top: 12px;
+    }
+
+    /* 训练并发计数徽标 */
+    .train-limit-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: #FFFBEB;
+      border: 1px solid #FDE68A;
+      color: #92400E;
+      white-space: nowrap;
+    }
+    .train-limit-badge.at-limit {
+      background: #FEF2F2;
+      border-color: #FECACA;
+      color: var(--danger);
+    }
+    .train-limit-badge .tl-num {
+      font-variant-numeric: tabular-nums;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .modal {
+        animation: none;
+      }
+      .toast {
+        transition: opacity 0.2s ease;
+      }
+      .toast.show {
+        transform: none;
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .workbench { flex-direction: column; }
+      .cat-panel { width: 100%; max-height: none; }
+      .workbench-col-cat { width: 100% !important; }
+    }
+
+    .workbench-col-cat {
+      width: 280px;
+      flex-shrink: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .workbench-col-main {
+      flex: 1;
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .proto-module {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      flex: 1;
+      min-height: 0;
+    }
+    .workbench-col-cat .cat-panel,
+    .workbench-col-main .main-panel {
+      flex: 1;
+      min-height: 0;
+    }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+        <div class="page-shell">
+          <div class="anno anno-version-header" data-version="v1.0">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v1.0</p>
+              <p><b>更新日期：</b>2026-03-21</p>
+              <p><b>变更概述：</b>v1.0 首版：机理模型训练列表 AI 单页原型（模型分类、训练列表、操作与自学习开关、历史版本 / 迁移学习 / 模型同步弹窗）+ 标准化批注；规则对齐古典 Axure「机理模型训练」说明块。</p>
+              <p><b>本页说明：</b>在能效管理应用内维护各「物模型 + 预测参数」分组下的可训练模型；支持按节点树与状态筛选、同步缺失模型、查看版本与迁移学习。与「创建 / 编辑模型」「训练 / 评估详情」等页通过列表操作跳转衔接。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-version-header" data-version="v1.1">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v1.1</p>
+              <p><b>更新日期：</b>2026-04-07</p>
+              <p><b>变更概述：</b>v1.1 对齐真实系统截图：① 新增页面级工具栏（页面标题 + 项目选择器「共济科技」+ 训练状态筛选，右侧放「模型同步」「新增」）；② 分类面板增加「全部」快捷链接与右对齐数量徽标；③ 主表新增「适用对象」「应用算法」二级筛选行；④ 列名「模型效果」→「评估效果」；⑤ 训练完成状态文字「完成」→「完成训练」；⑥ 示例数据更新为冷却水泵实例（一~四号），含真实 MAPE / RMSE / R² 指标与 2025-2026 训练时间。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-version-header" data-version="v2.2">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v2.2</p>
+              <p><b>更新日期：</b>2026-05-28</p>
+              <p><b>变更概述：</b>v2.2 包含三项功能更新：</p>
+              <p><b>① 训练失败原因展示：</b>主表「最新训练状态」列失败状态下追加「查看原因」链接；历史版本弹窗失败行同步追加入口；新增「训练失败原因」弹窗，展示错误码、错误描述与失败时间；弹窗底部提供「重新训练」快捷入口。</p>
+              <p><b>② 训练并发上限限制（10 个）：</b>主面板标题行右侧新增「训练中 N/10」实时计数徽标，达到上限时徽标变红告警；点击「训练」时前端校验当前训练中数量，已达 10 个则阻断并提示「当前已有 10 个模型训练中，请等待训练完成后再提交」；训练停止后计数自动刷新。</p>
+              <p><b>③ 评估效果新增 Max-bin RMSE：</b>主表「评估效果」列、历史版本弹窗「模型效果」列、迁移学习弹窗「模型效果」列均新增 Max-bin RMSE（最大分区误差）指标，位于 RMSE 之后。该指标为「多工况泛化优先」模型选择策略的排序依据，取自模型评估详情中各样本充足分区 RMSE 的最大值。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-version-header" data-version="v1.8">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v1.8</p>
+              <p><b>更新日期：</b>2026-04-07</p>
+              <p><b>变更概述：</b>v1.8 重构「模型同步」弹窗交互：① 待新增模型改为按「设备实例 / 预测类型」折叠分组展示，替代原平铺列表；② 每组内改为单选算法（radio），同组不可多选；③ 各算法选项增加「推荐」标签（规则：冷却塔/水泵功率→线性回归；冷水主机功率→单调性神经网络；流量/压差→支持向量回归；冷却塔逼近度→灰箱Merkel；板换温差→单调性神经网络）；④ 弹窗新增右侧「已选模型」面板，实时展示已选条目，支持单条移除；⑤ 弹窗宽度由 680px 扩至 860px 以容纳分栏布局；⑥ 底部去除「全选」，改为已选数量文字 + 取消/确定。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-req" data-version="v1.0">
+            <span class="anno-tag">需求说明</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source">引用自古典原型</span>
+            <div class="anno-body">
+              <p><b>页面级验收要点：</b>左侧分类与数量统计规则、主表字段与排序、各训练状态下操作按钮可用性、自学习开关初始化与切换、历史版本分页与字段、迁移学习对象范围与评估流程、模型同步异步与批量新增规则，均须与古典「机理模型训练」说明及配套需求一致。</p>
+            </div>
+          </div>
+
+          <!-- 页面级工具栏 -->
+          <div class="page-toolbar">
+            <div class="page-toolbar-left">
+              <span class="toolbar-title">机理模型训练</span>
+              <div class="toolbar-divider"></div>
+              <button type="button" class="select-like" id="btnProjectFilter" title="切换项目">
+                共济科技
+                <svg class="ico-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+              <button type="button" class="select-like" id="btnStatusFilter" aria-haspopup="listbox" aria-expanded="false" title="按训练状态筛选">
+                训练状态
+                <svg class="ico-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+            </div>
+            <div class="page-toolbar-right">
+              <button type="button" class="btn btn-default" id="btnSync">模型同步</button>
+              <button type="button" class="btn btn-primary" id="btnAdd">新增</button>
+            </div>
+          </div>
+
+          <div class="workbench">
+            <div class="workbench-col-cat">
+              <section class="proto-module" data-module="model-category">
+                <div class="anno anno-field" data-version="v1.1">
+                  <span class="anno-tag">字段说明</span>
+                  <span class="anno-version">v1.1</span>
+                  <span class="anno-source">引用自古典原型</span>
+                  <div class="anno-body">
+                    <p><b>关联模块：</b>模型分类（左侧列表）</p>
+                    <ul>
+                      <li><b>分组粒度：</b>按「物模型 + 预测参数」分类；分类顺序按产品约定（与原型列表顺序一致）。</li>
+                      <li><b>数量徽标：</b>展示当前筛选条件下该分组的模型数量，右对齐显示；筛选后若无模型，该分组可不展示（古典说明）。</li>
+                      <li><b>全部：</b>面板头部右侧「全部」快捷链接，点击清除选中分类、显示所有模型（v1.1 新增，与真实系统一致）。</li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="anno anno-data" data-version="v1.0">
+                  <span class="anno-tag">数据逻辑</span>
+                  <span class="anno-version">v1.0</span>
+                  <span class="anno-source">引用自古典原型</span>
+                  <div class="anno-body">
+                    <p><b>关联模块：</b>模型分类 + 主表联动</p>
+                    <ul>
+                      <li><b>节点树：</b>能效系统节点树选择器默认根节点；前端可缓存上次选定节点；选定节点后，列表按模型适用范围过滤（古典说明）。</li>
+                      <li><b>与主表关系：</b>切换左侧分类，右侧仅展示属于该分类的模型行。</li>
+                    </ul>
+                  </div>
+                </div>
+            <aside class="cat-panel" aria-label="模型分类">
+              <div class="cat-panel-head">
+                <span>模型分类</span>
+                <span class="cat-panel-head-all" id="catAll">全部</span>
+              </div>
+              <div class="cat-panel-body">
+                <div class="cat-item" data-cat="ct-pressure">
+                  <span class="cat-name">开路冷却塔组压差预测模型</span>
+                  <span class="cat-count">1</span>
+                </div>
+                <div class="cat-item active" data-cat="pump-power">
+                  <span class="cat-name">水泵功率预测模型</span>
+                  <span class="cat-count">8</span>
+                </div>
+                <div class="cat-item" data-cat="pump-flow">
+                  <span class="cat-name">水泵流量预测模型</span>
+                  <span class="cat-count">8</span>
+                </div>
+                <div class="cat-item" data-cat="ct-power">
+                  <span class="cat-name">冷却塔功率预测模型</span>
+                  <span class="cat-count">5</span>
+                </div>
+                <div class="cat-item" data-cat="ct-approach">
+                  <span class="cat-name">冷却塔逼近度预测模型</span>
+                  <span class="cat-count">5</span>
+                </div>
+                <div class="cat-item" data-cat="unconfirmed">
+                  <span class="cat-name">未确认对比任务预测模型</span>
+                  <span class="cat-count">1</span>
+                </div>
+                <div class="cat-item" data-cat="chw-pump-power">
+                  <span class="cat-name">冷冻水泵功率预测模型</span>
+                  <span class="cat-count">6</span>
+                </div>
+                <div class="cat-item" data-cat="sec-pump-power">
+                  <span class="cat-name">二次泵功率预测模型</span>
+                  <span class="cat-count">2</span>
+                </div>
+                <div class="cat-item" data-cat="sec-pump-flow">
+                  <span class="cat-name">二次泵流量预测模型</span>
+                  <span class="cat-count">2</span>
+                </div>
+                <div class="cat-item" data-cat="unit-chw-dp">
+                  <span class="cat-name">制冷单元冷冻侧压差预测模型</span>
+                  <span class="cat-count">2</span>
+                </div>
+                <div class="cat-item" data-cat="chiller-power">
+                  <span class="cat-name">冷水主机功率预测模型</span>
+                  <span class="cat-count">8</span>
+                </div>
+                <div class="cat-item" data-cat="unit-cw-dp">
+                  <span class="cat-name">冷却侧差预测模型</span>
+                  <span class="cat-count">5</span>
+                </div>
+              </div>
+            </aside>
+              </section>
+            </div>
+
+            <div class="workbench-col-main">
+              <section class="proto-module" data-module="model-training">
+                <div class="anno anno-ux" data-version="v1.1">
+                  <span class="anno-tag">交互说明</span>
+                  <span class="anno-version">v1.1</span>
+                  <span class="anno-source">引用自古典原型</span>
+                  <div class="anno-body">
+                    <p><b>关联模块：</b>模型训练（页面级工具栏 + 主表二级筛选）</p>
+                    <ul>
+                      <li><b>页面级工具栏（v1.1 调整）：</b>左侧放「机理模型训练」标题、「项目选择器」（示例：共济科技）、「训练状态▼」筛选；右侧放「模型同步」「新增」。与真实系统布局一致。</li>
+                      <li><b>项目选择器：</b>切换当前所属项目/客户，列表随之刷新（占位交互，示例值「共济科技」）。</li>
+                      <li><b>训练状态▼：</b>默认全部；可筛完成训练 / 训练中 / 失败 / 未训练（古典说明）。</li>
+                      <li><b>模型同步：</b>打开同步弹窗；确定后异步批量新增，处理中按钮 loading、不可重复提交（古典说明）。</li>
+                      <li><b>新增：</b>进入创建模型页（本原型跳转「创建-编辑模型.html」）。</li>
+                      <li><b>适用对象▼ / 应用算法▼（v1.1 新增）：</b>位于主表上方，对当前分类内的模型做二次过滤；下拉选项由实际实例与算法类型决定（待确认）。</li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="anno anno-field" data-version="v1.1">
+                  <span class="anno-tag">字段说明</span>
+                  <span class="anno-version">v1.1</span>
+                  <span class="anno-source">引用自古典原型</span>
+                  <div class="anno-body">
+                    <p><b>关联模块：</b>模型训练列表（主表）</p>
+                    <table class="anno-table">
+                      <thead><tr><th>列</th><th>说明（古典要点）</th></tr></thead>
+                      <tbody>
+                        <tr><td>模型名称</td><td>略（产品命名规则见创建页）</td></tr>
+                        <tr><td>训练对象</td><td>对象为型号时显示型号名称；为具体实例时显示实例名称。</td></tr>
+                        <tr><td>适用范围</td><td>模型可应用的实例范围；同一模型可挂多个实例。</td></tr>
+                        <tr><td>评估效果（v1.1 改名）</td><td>原「模型效果」，展示当前模型下<strong>最新已完成训练</strong>版本的评价指标（MAPE / RMSE / Max-bin RMSE / R² 等）；未完成训练时显示「—」。<b>v2.2：</b>新增 Max-bin RMSE（最大分区误差），位于 RMSE 之后，是「多工况泛化优先」策略的排序依据。</td></tr>
+                        <tr><td>最新训练状态</td><td>最新版本状态：训练中（含进度百分比，如「99% 训练中」）、完成训练、失败；无历史版本时显示「未训练」。v1.1 状态文字「完成」更新为「完成训练」，与真实系统一致。</td></tr>
+                        <tr><td>最新训练时间</td><td>最新版本<strong>开始训练</strong>时间。</td></tr>
+                        <tr><td>自学习开关</td><td>初始化 / 新建后默认关；点击切换开/关（古典说明）。</td></tr>
+                        <tr><td>操作</td><td>见交互说明（评估、训练、停止训练、迁移学习、历史、编辑、删除）。</td></tr>
+                      </tbody>
+                    </table>
+                    <p><b>列表规则：</b>分组内数据不多时可不分页；行排序按<strong>模型创建时间倒序</strong>（古典说明）。</p>
+                  </div>
+                </div>
+                <div class="anno anno-state" data-version="v1.0">
+                  <span class="anno-tag">状态说明</span>
+                  <span class="anno-version">v1.0</span>
+                  <span class="anno-source">引用自古典原型</span>
+                  <div class="anno-body">
+                    <p><b>关联模块：</b>操作列 + 自学习开关</p>
+                    <ul>
+                      <li><b>评估：</b>存在已完成训练版本时可点，否则置灰；跳转最新已完成版本的评估详情。</li>
+                      <li><b>训练：</b>状态为完成、未训练、失败时可显示；跳转训练页。</li>
+                      <li><b>停止训练：</b>仅训练中显示；二次确认后停止并删除当前训练任务。</li>
+                      <li><b>迁移学习 / 历史 / 编辑 / 删除：</b>分别打开弹窗或跳转；删除需二次确认并清除模型及历史版本数据（古典说明）。</li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="anno anno-ux" data-version="v2.2">
+                  <span class="anno-tag">交互说明</span>
+                  <span class="anno-version">v2.2</span>
+                  <span class="anno-source">产品推断</span>
+                  <div class="anno-body">
+                    <p><b>关联模块：</b>训练失败原因入口（主表最新训练状态列 + 历史版本弹窗）。</p>
+                    <ul>
+                      <li><b>主表入口：</b>当最新训练状态为「失败」时，在失败状态标签下方展示「查看原因」；非失败状态不展示该入口，避免干扰正常训练与评估操作。</li>
+                      <li><b>历史入口：</b>历史版本中仅失败版本展示「查看原因」；训练中、完成或无结果版本不展示，用户可通过历史记录追溯某一次失败的具体原因。</li>
+                      <li><b>点击反馈：</b>点击「查看原因」后打开「训练失败原因」弹窗，不跳转页面；用户关闭弹窗后回到原列表或原历史弹窗上下文。</li>
+                      <li><b>重新处理：</b>用户查看失败原因后，可点击「重新训练」进入训练配置处理链路；若只是查看问题，可点「关闭」返回。</li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="anno anno-edge" data-version="v1.0">
+                  <span class="anno-tag">边界与异常</span>
+                  <span class="anno-version">v1.0</span>
+                    <span class="anno-source" data-type="基于文档推断">基于文档推断</span>
+                  <div class="anno-body">
+                    <p><b>关联模块：</b>整页</p>
+                    <ul>
+                      <li>同步、停止训练、删除等长耗时或高风险操作须有明确失败提示与可重试策略（实装约定）。</li>
+                      <li>列表为空时建议保留表头 + 空态文案，并提供「新增 / 模型同步」入口。</li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="anno anno-edge" data-version="v2.2">
+                  <span class="anno-tag">边界与异常</span>
+                  <span class="anno-version">v2.2</span>
+                  <span class="anno-source">产品设计</span>
+                  <div class="anno-body">
+                    <p><b>关联模块：</b>「训练」操作 + 主面板标题栏</p>
+                    <ul>
+                      <li><b>训练并发上限：</b>系统最多支持 10 个模型同时处于「训练中」状态；超出后「训练」操作被前端阻断，Toast 提示「当前已有 10 个模型训练中，请等待训练完成后再提交」。</li>
+                      <li><b>计数来源：</b>统计当前列表中所有「训练中」状态的行数（含进度中的，不含「完成训练」「失败」「未训练」）；计数在页面加载、触发训练/停止训练后实时刷新。</li>
+                      <li><b>上限告警：</b>「训练中 N/10」徽标在 N 达到 10 时切换为红色样式，直观提示不可再提交；N 回落后恢复正常颜色。</li>
+                    </ul>
+                  </div>
+                </div>
+            <section class="main-panel">
+              <div class="main-panel-head">
+                <div class="main-panel-title">模型训练</div>
+                <span class="train-limit-badge" id="trainLimitBadge" title="系统最多支持 10 个模型同时训练">
+                  训练中 <span class="tl-num" id="trainCountNum">1</span> / 10
+                </span>
+              </div>
+              <div class="main-panel-filters">
+                <button type="button" class="select-like" id="btnScopeFilter" title="按适用对象筛选">
+                  适用对象
+                  <svg class="ico-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+                <button type="button" class="select-like" id="btnAlgoFilter" title="按应用算法筛选">
+                  应用算法
+                  <svg class="ico-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+              </div>
+
+              <div class="table-wrap">
+                <table class="data-table has-sticky-actions">
+                  <thead>
+                    <tr>
+                      <th>模型名称</th>
+                      <th>训练对象</th>
+                      <th>适用范围</th>
+                      <th>评估效果</th>
+                      <th>最新训练状态</th>
+                      <th>最新训练时间</th>
+                      <th>自学习开关</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="modelTableBody">
+                    <tr data-row="1">
+                      <td>四号冷却水泵-流量-流量预测模型</td>
+                      <td>四号冷却水泵-流量-...</td>
+                      <td>四号冷却水泵</td>
+                      <td>
+                        <div class="metrics-stack">
+                          MAPE: 481215376<br>RMSE: 797.124<br>Max-bin: 812.3<br><span class="muted">R2: 0.095</span>
+                        </div>
+                      </td>
+                      <td><span class="status-pill done">完成训练</span></td>
+                      <td>2026-01-23 16:45:25</td>
+                      <td><span class="toggle" data-on="false" role="switch" aria-checked="false"></span></td>
+                      <td>
+                        <div class="actions">
+                          <a class="action-link" data-act="eval" href="模型评估详情.html">评估</a>
+                          <span class="action-link" data-act="train">训练</span>
+                          <span class="action-link" data-act="transfer">迁移学习</span>
+                          <span class="action-link" data-act="history">历史</span>
+                          <span class="action-link" data-act="edit">编辑</span>
+                          <span class="action-link danger" data-act="del">删除</span>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr data-row="2">
+                      <td>四号冷却水泵-有功功率预测模型</td>
+                      <td>四号冷水泵-有功功...</td>
+                      <td>四号冷却水泵</td>
+                      <td>
+                        <div class="metrics-stack">
+                          MAPE: 1.493<br>RMSE: 0.382<br>Max-bin: 0.51<br><span class="muted">R2: —</span>
+                        </div>
+                      </td>
+                      <td><span class="status-pill done">完成训练</span></td>
+                      <td>2025-12-24 17:09:54</td>
+                      <td><span class="toggle" data-on="false" role="switch" aria-checked="false"></span></td>
+                      <td>
+                        <div class="actions">
+                          <a class="action-link" data-act="eval" href="模型评估详情.html">评估</a>
+                          <span class="action-link" data-act="train">训练</span>
+                          <span class="action-link" data-act="transfer">迁移学习</span>
+                          <span class="action-link" data-act="history">历史</span>
+                          <span class="action-link" data-act="edit">编辑</span>
+                          <span class="action-link danger" data-act="del">删除</span>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr data-row="3">
+                      <td>四号冷却水泵-流量-机理公式</td>
+                      <td>四号冷水泵-流量-...</td>
+                      <td>四号冷却水泵</td>
+                      <td>
+                        <div class="metrics-stack">
+                          MAPE: 90.562<br>RMSE: 319.814<br>Max-bin: 425.6<br><span class="muted">R2: -30.255</span>
+                        </div>
+                      </td>
+                      <td><span class="status-pill done">完成训练</span></td>
+                      <td>2025-12-24 17:10:21</td>
+                      <td><span class="toggle" data-on="false" role="switch" aria-checked="false"></span></td>
+                      <td>
+                        <div class="actions">
+                          <a class="action-link" data-act="eval" href="模型评估详情.html">评估</a>
+                          <span class="action-link" data-act="train">训练</span>
+                          <span class="action-link" data-act="transfer">迁移学习</span>
+                          <span class="action-link" data-act="history">历史</span>
+                          <span class="action-link" data-act="edit">编辑</span>
+                          <span class="action-link danger" data-act="del">删除</span>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr data-row="4">
+                      <td>三号冷却水泵-有功功率预测模型</td>
+                      <td>三号冷水泵-有功功...</td>
+                      <td>三号冷却水泵</td>
+                      <td>
+                        <div class="metrics-stack">
+                          MAPE: 1.930<br>RMSE: 0.569<br>Max-bin: 0.73<br><span class="muted">R2: 0.877</span>
+                        </div>
+                      </td>
+                      <td><span class="status-pill done">完成训练</span></td>
+                      <td>2025-12-24 17:10:40</td>
+                      <td><span class="toggle" data-on="false" role="switch" aria-checked="false"></span></td>
+                      <td>
+                        <div class="actions">
+                          <a class="action-link" data-act="eval" href="模型评估详情.html">评估</a>
+                          <span class="action-link" data-act="train">训练</span>
+                          <span class="action-link" data-act="transfer">迁移学习</span>
+                          <span class="action-link" data-act="history">历史</span>
+                          <span class="action-link" data-act="edit">编辑</span>
+                          <span class="action-link danger" data-act="del">删除</span>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr data-row="5">
+                      <td>三号冷却水泵-流量-流量预测模型</td>
+                      <td>三号冷水泵-流量-...</td>
+                      <td>三号冷却水泵</td>
+                      <td>
+                        <div class="metrics-stack">
+                          MAPE: 8.592<br>RMSE: 29.780<br>Max-bin: 38.2<br><span class="muted">R2: 0.079</span>
+                        </div>
+                      </td>
+                      <td><span class="status-pill done">完成训练</span></td>
+                      <td>2025-12-24 17:10:48</td>
+                      <td><span class="toggle" data-on="false" role="switch" aria-checked="false"></span></td>
+                      <td>
+                        <div class="actions">
+                          <a class="action-link" data-act="eval" href="模型评估详情.html">评估</a>
+                          <span class="action-link" data-act="train">训练</span>
+                          <span class="action-link" data-act="transfer">迁移学习</span>
+                          <span class="action-link" data-act="history">历史</span>
+                          <span class="action-link" data-act="edit">编辑</span>
+                          <span class="action-link danger" data-act="del">删除</span>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr data-row="6">
+                      <td>制冷单元冷冻水系统功率预测模型</td>
+                      <td>二号冷水泵-有功功...</td>
+                      <td>二号冷却水泵</td>
+                      <td>
+                        <div class="metrics-stack">
+                          MAPE: 2.260<br>RMSE: 0.580<br>Max-bin: 0.81<br><span class="muted">R2: 0.826</span>
+                        </div>
+                      </td>
+                      <td><span class="status-pill done">完成训练</span></td>
+                      <td>2025-12-24 17:10:55</td>
+                      <td><span class="toggle" data-on="false" role="switch" aria-checked="false"></span></td>
+                      <td>
+                        <div class="actions">
+                          <a class="action-link" data-act="eval" href="模型评估详情.html">评估</a>
+                          <span class="action-link" data-act="train">训练</span>
+                          <span class="action-link" data-act="transfer">迁移学习</span>
+                          <span class="action-link" data-act="history">历史</span>
+                          <span class="action-link" data-act="edit">编辑</span>
+                          <span class="action-link danger" data-act="del">删除</span>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr data-row="7">
+                      <td>冷却侧差预测模型</td>
+                      <td>二号冷水泵-流量-...</td>
+                      <td>二号冷却水泵</td>
+                      <td>
+                        <div class="metrics-stack">
+                          MAPE: 4.392<br>RMSE: 18.548<br>Max-bin: 24.1<br><span class="muted">R2: 0.100</span>
+                        </div>
+                      </td>
+                      <td><span class="status-pill done">完成训练</span></td>
+                      <td>2025-12-24 17:11:04</td>
+                      <td><span class="toggle" data-on="false" role="switch" aria-checked="false"></span></td>
+                      <td>
+                        <div class="actions">
+                          <a class="action-link" data-act="eval" href="模型评估详情.html">评估</a>
+                          <span class="action-link" data-act="train">训练</span>
+                          <span class="action-link" data-act="transfer">迁移学习</span>
+                          <span class="action-link" data-act="history">历史</span>
+                          <span class="action-link" data-act="edit">编辑</span>
+                          <span class="action-link danger" data-act="del">删除</span>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr data-row="8">
+                      <td>一号冷却水泵-有功功率预测模型</td>
+                      <td>一号冷水泵</td>
+                      <td>一号冷却水泵</td>
+                      <td>
+                        <div class="metrics-stack">
+                          MAPE: 3.052<br>RMSE: 0.730<br>Max-bin: 0.95<br><span class="muted">R2: 0.785</span>
+                        </div>
+                      </td>
+                      <td><span class="status-pill done">完成训练</span></td>
+                      <td>2025-12-24 17:11:11</td>
+                      <td><span class="toggle" data-on="false" role="switch" aria-checked="false"></span></td>
+                      <td>
+                        <div class="actions">
+                          <a class="action-link" data-act="eval" href="模型评估详情.html">评估</a>
+                          <span class="action-link" data-act="train">训练</span>
+                          <span class="action-link" data-act="transfer">迁移学习</span>
+                          <span class="action-link" data-act="history">历史</span>
+                          <span class="action-link" data-act="edit">编辑</span>
+                          <span class="action-link danger" data-act="del">删除</span>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr data-row="9">
+                      <td>一号冷却水泵-流量-流量预测模型</td>
+                      <td>一号冷水泵-有功功...</td>
+                      <td>一号冷却水泵</td>
+                      <td><div class="metrics-stack muted">—</div></td>
+                      <td><span class="status-pill train" style="white-space:nowrap;">99% 训练中</span></td>
+                      <td>2025-12-24 17:11:20</td>
+                      <td><span class="toggle" data-on="false" role="switch" aria-checked="false"></span></td>
+                      <td>
+                        <div class="actions">
+                          <span class="action-link disabled">评估</span>
+                          <span class="action-link" data-act="stop">停止训练</span>
+                          <span class="action-link" data-act="transfer">迁移学习</span>
+                          <span class="action-link" data-act="history">历史</span>
+                          <span class="action-link" data-act="edit">编辑</span>
+                          <span class="action-link danger" data-act="del">删除</span>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr data-row="10">
+                      <td>一号二次泵-有功功率-线性回归预测模型</td>
+                      <td>一号二次泵-有功功...</td>
+                      <td>一号二次泵</td>
+                      <td>
+                        <div class="metrics-stack">
+                          MAPE: 2.187<br>RMSE: 0.614<br>Max-bin: 0.82<br><span class="muted">R2: 0.841</span>
+                        </div>
+                      </td>
+                      <td><span class="status-pill done">完成训练</span></td>
+                      <td>2026-03-15 10:22:08</td>
+                      <td><span class="toggle" data-on="true" role="switch" aria-checked="true"></span></td>
+                      <td>
+                        <div class="actions">
+                          <a class="action-link" data-act="eval" href="模型评估详情.html">评估</a>
+                          <span class="action-link" data-act="train">训练</span>
+                          <span class="action-link" data-act="transfer">迁移学习</span>
+                          <span class="action-link" data-act="history">历史</span>
+                          <span class="action-link" data-act="edit">编辑</span>
+                          <span class="action-link danger" data-act="del">删除</span>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr data-row="11">
+                      <td>一号二次泵-流量-支持向量回归预测模型</td>
+                      <td>一号二次泵-流量-...</td>
+                      <td>一号二次泵</td>
+                      <td>
+                        <div class="metrics-stack">
+                          MAPE: 5.034<br>RMSE: 22.416<br>Max-bin: 31.5<br><span class="muted">R2: 0.762</span>
+                        </div>
+                      </td>
+                      <td><span class="status-pill done">完成训练</span></td>
+                      <td>2026-03-15 10:35:41</td>
+                      <td><span class="toggle" data-on="true" role="switch" aria-checked="true"></span></td>
+                      <td>
+                        <div class="actions">
+                          <a class="action-link" data-act="eval" href="模型评估详情.html">评估</a>
+                          <span class="action-link" data-act="train">训练</span>
+                          <span class="action-link" data-act="transfer">迁移学习</span>
+                          <span class="action-link" data-act="history">历史</span>
+                          <span class="action-link" data-act="edit">编辑</span>
+                          <span class="action-link danger" data-act="del">删除</span>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr data-row="12"
+                      data-fail-code="TRAIN_ERR_002"
+                      data-fail-msg="训练数据量不足：当前数据集有效数据共 142 条，低于模型训练最低要求（500 条）。部分时间段数据缺失率超过 35%，已被质量过滤剔除。"
+                      data-fail-time="2026-05-20 03:12:44">
+                      <td>二号冷冻水泵-有功功率-线性回归预测模型</td>
+                      <td>二号冷冻水泵</td>
+                      <td>二号冷冻水泵</td>
+                      <td><div class="metrics-stack muted">—</div></td>
+                      <td>
+                        <div class="status-fail-wrap">
+                          <span class="status-pill fail">失败</span>
+                          <span class="fail-reason-link" data-act="fail-reason">查看原因</span>
+                        </div>
+                      </td>
+                      <td>2026-05-20 03:12:44</td>
+                      <td><span class="toggle" data-on="false" role="switch" aria-checked="false"></span></td>
+                      <td>
+                        <div class="actions">
+                          <span class="action-link disabled">评估</span>
+                          <span class="action-link" data-act="train">训练</span>
+                          <span class="action-link" data-act="transfer">迁移学习</span>
+                          <span class="action-link" data-act="history">历史</span>
+                          <span class="action-link" data-act="edit">编辑</span>
+                          <span class="action-link danger" data-act="del">删除</span>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr data-row="13"
+                      data-fail-code="TRAIN_ERR_005"
+                      data-fail-msg="算法收敛失败：梯度提升算法在第 147 轮迭代时损失函数出现 NaN，训练任务自动中止。输入特征存在极端异常值（传感器故障导致的跳变数据），导致梯度更新紊乱。"
+                      data-fail-time="2026-05-22 18:47:03">
+                      <td>冷水主机-功率-梯度提升预测模型</td>
+                      <td>冷水主机</td>
+                      <td>冷水主机</td>
+                      <td><div class="metrics-stack muted">—</div></td>
+                      <td>
+                        <div class="status-fail-wrap">
+                          <span class="status-pill fail">失败</span>
+                          <span class="fail-reason-link" data-act="fail-reason">查看原因</span>
+                        </div>
+                      </td>
+                      <td>2026-05-22 18:47:03</td>
+                      <td><span class="toggle" data-on="false" role="switch" aria-checked="false"></span></td>
+                      <td>
+                        <div class="actions">
+                          <span class="action-link disabled">评估</span>
+                          <span class="action-link" data-act="train">训练</span>
+                          <span class="action-link" data-act="transfer">迁移学习</span>
+                          <span class="action-link" data-act="history">历史</span>
+                          <span class="action-link" data-act="edit">编辑</span>
+                          <span class="action-link danger" data-act="del">删除</span>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+              </section>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- 历史版本 -->
+  <div class="modal-backdrop" id="modalHistory" aria-hidden="true">
+    <div class="modal" role="dialog" aria-labelledby="histTitle">
+      <div class="modal-head">
+        <div class="modal-title" id="histTitle">历史版本</div>
+        <button type="button" class="modal-close" data-close="history" aria-label="关闭">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="anno anno-ux" data-version="v1.0">
+          <span class="anno-tag">交互说明</span>
+          <span class="anno-version">v1.0</span>
+          <span class="anno-source">引用自古典原型</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>历史版本弹窗；入口：主表操作列「历史」。</p>
+            <ul>
+              <li><b>分页：</b>10 条/页；排序按<strong>训练时间倒序</strong>（古典说明）。</li>
+              <li><b>评估结果：</b>仅当该版本状态为「完成」时可点击，跳转评估详情页；未完成/失败置灰（古典说明）。</li>
+              <li><b>取消：</b>关闭弹窗。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="anno anno-field" data-version="v1.0">
+          <span class="anno-tag">字段说明</span>
+          <span class="anno-version">v1.0</span>
+          <span class="anno-source">引用自古典原型</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>历史版本列表</p>
+            <table class="anno-table">
+              <thead><tr><th>列</th><th>说明</th></tr></thead>
+              <tbody>
+                <tr><td>版本</td><td>以训练时间生成的版本名（如 v2401291700）。</td></tr>
+                <tr><td>训练状态</td><td>训练中（可含进度）、完成、失败。</td></tr>
+                <tr><td>训练方式</td><td>手动训练 / 自学习（古典稿「自动训练」与自学习并列时以产品词典为准）。</td></tr>
+                <tr><td>模型效果</td><td>该版本若已完成训练则展示指标，否则「—」。</td></tr>
+                <tr><td>训练时间</td><td>该版本开始训练时间。</td></tr>
+                <tr><td>数据集时间范围</td><td>该版本训练所用数据起止（古典说明略写处按接口字段补全）。</td></tr>
+                <tr><td>失败原因（v2.2）</td><td>仅状态为「失败」的版本显示「查看原因」链接；点击弹出训练失败原因弹窗，展示错误码、错误描述与失败时间。</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" style="min-width:800px;">
+            <thead>
+              <tr>
+                <th>版本</th>
+                <th>训练状态</th>
+                <th>训练方式</th>
+                <th>模型效果</th>
+                <th>训练时间</th>
+                <th>数据集时间范围</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>v2401291700</td>
+                <td><span class="status-pill done">完成</span></td>
+                <td>自学习</td>
+                <td class="metrics-stack">RMSE: 0.012<br>Max-bin: 0.019<br>MAPE: 2.45%<br>R2：0.997</td>
+                <td>2024/01/29 17:00</td>
+                <td>2023/01/29 - 2024/01/29</td>
+                <td><span class="action-link">评估结果</span></td>
+              </tr>
+              <tr>
+                <td>v2401291600</td>
+                <td><span class="status-pill done">完成</span></td>
+                <td>手动训练</td>
+                <td class="metrics-stack muted">—</td>
+                <td>2024/01/29 16:00</td>
+                <td>2023/01/29 - 2024/01/29</td>
+                <td><span class="action-link disabled">评估结果</span></td>
+              </tr>
+              <tr
+                data-fail-code="TRAIN_ERR_008"
+                data-fail-msg="训练超时：本次训练任务运行时长超过系统上限（24 小时）被强制终止。数据集时间跨度 3 年、特征维度 28 维，导致计算量超出资源配额。"
+                data-fail-time="2024/01/29 15:00">
+                <td>v2401291500</td>
+                <td>
+                  <div class="status-fail-wrap">
+                    <span class="status-pill fail">失败</span>
+                    <span class="fail-reason-link" data-act="fail-reason">查看原因</span>
+                  </div>
+                </td>
+                <td>手动训练</td>
+                <td class="metrics-stack muted">—</td>
+                <td>2024/01/29 15:00</td>
+                <td>2023/01/29 - 2024/01/29</td>
+                <td><span class="action-link disabled">评估结果</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="pagination-wrap">
+        <div class="pagination-total">总共 85 个项目</div>
+        <div class="pagination">
+          <span class="page-arrow">‹</span>
+          <span class="page-item active">1</span>
+          <span class="page-item">2</span>
+          <span class="page-item">3</span>
+          <span class="page-item">4</span>
+          <span class="page-item">5</span>
+          <span class="page-arrow">›</span>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-default" data-close="history">取 消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 迁移学习 -->
+  <div class="modal-backdrop" id="modalTransfer" aria-hidden="true">
+    <div class="modal" role="dialog" aria-labelledby="trTitle">
+      <div class="modal-head">
+        <div class="modal-title" id="trTitle">迁移学习</div>
+        <button type="button" class="modal-close" data-close="transfer" aria-label="关闭">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="anno anno-ux" data-version="v1.0">
+          <span class="anno-tag">交互说明</span>
+          <span class="anno-version">v1.0</span>
+          <span class="anno-source">引用自古典原型</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>迁移学习弹窗；入口：主表操作列「迁移学习」。</p>
+            <ul>
+              <li><b>对象范围：</b>单选「相同设备型号」或「相同物模型」；切换后下方实例列表按规则过滤并隐藏当前训练对象自身（古典说明）。</li>
+              <li><b>开始评估 / 重新评估：</b>首次迁移需评估；有结果后可开迁移开关；支持重算，逻辑同首次（古典说明）。</li>
+              <li><b>保存 / 取消：</b>保存写入配置后关闭；取消放弃未保存修改。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="anno anno-data" data-version="v1.0">
+          <span class="anno-tag">数据逻辑</span>
+          <span class="anno-version">v1.0</span>
+          <span class="anno-source">引用自古典原型</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>迁移学习 — 评估</p>
+            <ul>
+              <li><b>数据集对象：</b>当前迁移对象。</li>
+              <li><b>取样：</b>在模型最新版本时间范围内随机抽取至多 1000 条校验后有效数据。</li>
+              <li><b>评估：</b>批量调用模型最新版本预测接口，对比实际值计算 RMSE、MAPE、R²；计算中展示 loading（古典说明）。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="anno anno-state" data-version="v1.0">
+          <span class="anno-tag">状态说明</span>
+          <span class="anno-version">v1.0</span>
+          <span class="anno-source">引用自古典原型</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>迁移学习开关列</p>
+            <ul>
+              <li>无评估效果时开关置灰不可开；评估完成后可开启，开启后该对象纳入模型适用范围。</li>
+              <li>评估结果持久化，再次进入可查看；支持重新评估覆盖（古典说明）。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="hint-block">
+          迁移学习：相同类型或型号的设备运行特征相似，模型可共享至其他设备以提升学习效果。
+        </div>
+        <div class="radio-row">
+          <label class="radio-opt"><input type="radio" name="scope" checked> 相同设备型号</label>
+          <label class="radio-opt"><input type="radio" name="scope"> 相同物模型</label>
+        </div>
+        <p class="form-label"><span class="req">*</span>对象范围</p>
+        <div class="table-wrap">
+          <table class="data-table" style="min-width:640px;">
+            <thead>
+              <tr>
+                <th>对象名称</th>
+                <th>模型效果</th>
+                <th></th>
+                <th>迁移学习开关</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>冷水主机1</td>
+                <td class="metrics-stack">RMSE: 0.012<br>Max-bin: 0.019<br>MAPE: 2.45%</td>
+                <td><span class="action-link">开始评估</span></td>
+                <td><span class="toggle on" data-on="true"></span></td>
+              </tr>
+              <tr>
+                <td>冷水主机3</td>
+                <td class="metrics-stack muted">评估中</td>
+                <td><span class="action-link">重新评估</span></td>
+                <td><span class="toggle" data-on="false"></span></td>
+              </tr>
+              <tr>
+                <td>冷水主机4</td>
+                <td class="metrics-stack">RMSE: 0.012<br>Max-bin: 0.022<br>MAPE: 2.45%</td>
+                <td><span class="action-link">重新评估</span></td>
+                <td><span class="toggle" data-on="false"></span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-default" data-close="transfer">取 消</button>
+        <button type="button" class="btn btn-primary" id="btnSaveTransfer">保 存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模型同步 -->
+  <div class="modal-backdrop" id="modalSync" aria-hidden="true">
+    <div class="modal md" role="dialog" aria-labelledby="syncTitle">
+      <div class="modal-head">
+        <div class="modal-title" id="syncTitle">模型同步</div>
+        <button type="button" class="modal-close" data-close="sync" aria-label="关闭">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="anno anno-ux" data-version="v1.8">
+          <span class="anno-tag">交互说明</span>
+          <span class="anno-version">v1.8</span>
+          <span class="anno-source">产品设计</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>模型同步弹窗；入口：页面工具栏「模型同步」按钮。</p>
+            <ul>
+              <li><b>分组折叠：</b>待新增模型按「设备实例 / 预测类型」分组，默认第一组展开，其余收起；点击组标题切换展开/收起；已选组在标题右侧显示已选算法名称角标，收起后仍可感知。</li>
+              <li><b>算法单选：</b>每组内只能选一种算法（radio），切换算法时自动替换同组之前的选择；「推荐」标签标注最优算法，用户也可选其他算法。</li>
+              <li><b>已选模型面板：</b>右侧实时展示所有已选条目，每条可点 × 移除，移除后对应分组 radio 联动取消，组标题角标消失。</li>
+              <li><b>确定：</b>至少选择 1 组算法后可点；批量异步新增，不可重复提交。未选任何组时「确定」置灰。</li>
+              <li><b>取消：</b>关闭弹窗，不提交；再次打开时重置为初始状态。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="anno anno-data" data-version="v1.8">
+          <span class="anno-tag">数据逻辑</span>
+          <span class="anno-version">v1.8</span>
+          <span class="anno-source">产品设计</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>模型同步 — 分组与推荐规则</p>
+            <ul>
+              <li><b>分组来源：</b>依据节点树选中的设备实例 + 系统预定义的预测参数类型组合生成分组；每个「设备实例 / 预测类型」组内枚举系统支持的所有算法。</li>
+              <li><b>推荐算法规则：</b>冷却塔/冷冻/冷却/二次泵 功率 → 线性回归；冷水主机 功率 → 单调性神经网络；各类流量/压差预测 → 支持向量回归；冷却塔逼近度 → 冷却塔逼近度灰箱(Merkel)；板换温差 → 单调性神经网络。</li>
+              <li><b>新增命名规则：</b>{设备实例}–{预测类型}–{所选算法}预测模型；数据集起始日取弹窗所选「数据集开始日期」。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="anno anno-field" data-version="v1.8">
+          <span class="anno-tag">字段说明</span>
+          <span class="anno-version">v1.8</span>
+          <span class="anno-source">产品设计</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>模型同步表单与选择区</p>
+            <ul>
+              <li><b>数据集开始日期：</b>必填，默认当天；点击日历图标可选历史日期；所选日期作为所有新增模型的数据集起始日。</li>
+              <li><b>分组列表（左侧）：</b>每组标题含「设备实例 / 预测类型」；组内每行为一个算法选项，带「推荐」标签的为最优默认选择；选中行高亮蓝色背景；已选时组头右侧显示选中算法名。</li>
+              <li><b>已选模型（右侧）：</b>显示所有已选条目的完整模型名；顶部徽标实时更新已选数量；每条可 × 移除；未选时展示空态文字。</li>
+              <li><b>确定按钮：</b>已选 0 组时置灰禁用，有选择后激活；底部文字同步显示「已选择 N 个模型」。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label"><span class="req">*</span>数据集开始日期</label>
+          <div class="input-date-wrap">
+            <input type="text" class="input-text" id="syncDateInput" value="2026-04-07" readonly>
+            <svg class="ico-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="sync-hint">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+          按实例分组展示，每组单选一种算法，标有「推荐」的为默认最优选项
+        </div>
+
+        <div class="sync-body-split">
+          <div class="sync-group-scroll" id="syncGroupContainer"></div>
+          <div class="sync-selected-panel">
+            <div class="sync-selected-head">
+              已选模型
+              <span class="sync-sel-count-badge" id="syncSelCount">0</span>
+            </div>
+            <div class="sync-selected-body" id="syncSelBody">
+              <div class="sync-sel-empty">暂未选择任何模型<br>请在左侧分组中<br>选择算法</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <span class="sync-count-text">已选择 <strong id="syncSelectedCount">0</strong> 个模型</span>
+        <button type="button" class="btn btn-default" data-close="sync">取 消</button>
+        <button type="button" class="btn btn-primary" id="btnConfirmSync" disabled style="opacity:.5;cursor:not-allowed;">确 定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 训练失败原因 -->
+  <div class="modal-backdrop" id="modalFailReason" aria-hidden="true">
+    <div class="modal sm" role="dialog" aria-labelledby="failReasonTitle">
+      <div class="modal-head">
+        <div class="modal-title" id="failReasonTitle">训练失败原因</div>
+        <button type="button" class="modal-close" data-close="failReason" aria-label="关闭">&times;</button>
+      </div>
+      <div class="modal-body" id="failReasonBody">
+        <div class="anno anno-field" data-version="v2.2">
+          <span class="anno-tag">字段说明</span>
+          <span class="anno-version">v2.2</span>
+          <span class="anno-source">产品推断</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>训练失败原因弹窗；入口：主表或历史版本中的「查看原因」。</p>
+            <table class="anno-table">
+              <thead><tr><th>字段</th><th>说明</th></tr></thead>
+              <tbody>
+                <tr><td>错误码</td><td>用于定位失败类型，面向排查与沟通；为空时展示「—」，不影响用户查看其他信息。</td></tr>
+                <tr><td>错误描述</td><td>说明本次训练失败的直接原因，需用业务可理解语言描述，例如数据量不足、异常值导致算法收敛失败等。</td></tr>
+                <tr><td>失败时间</td><td>展示该训练任务判定失败的时间，便于与历史版本、日志和数据质量问题进行交叉核对。</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="anno anno-state" data-version="v2.2">
+          <span class="anno-tag">状态说明</span>
+          <span class="anno-version">v2.2</span>
+          <span class="anno-source">产品推断</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>训练失败原因弹窗状态与异常处理。</p>
+            <ul>
+              <li><b>正常展示：</b>弹窗打开后展示错误码、错误描述和失败时间；信息较长时允许在弹窗内换行展示，不截断关键原因。</li>
+              <li><b>原因缺失：</b>若失败详情未返回，弹窗保留标题与操作按钮，并提示「未获取到失败详情，请联系运维人员查看训练日志」。</li>
+              <li><b>重新训练：</b>点击后关闭失败原因弹窗并进入训练配置处理链路；若后续跳转失败，应给出明确失败提示并保留当前上下文。</li>
+            </ul>
+          </div>
+        </div>
+        <div id="failReasonContent">
+          <!-- 动态填充 -->
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-default" data-close="failReason">关 闭</button>
+        <button type="button" class="btn btn-primary" id="btnRetrainFromFail">重新训练</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function () {
+      var toast = document.getElementById('toast');
+      var toastTimer = null;
+
+      function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 2000);
+      }
+
+      function syncBodyModalLock() {
+        var any = document.querySelector('.modal-backdrop.show');
+        document.body.classList.toggle('modal-open', !!any);
+      }
+
+      function openModal(id) {
+        var el = document.getElementById(id);
+        if (el) {
+          el.classList.add('show');
+          el.setAttribute('aria-hidden', 'false');
+          syncBodyModalLock();
+        }
+      }
+      function closeModal(key) {
+        var map = { history: 'modalHistory', transfer: 'modalTransfer', sync: 'modalSync', failReason: 'modalFailReason' };
+        var el = document.getElementById(map[key]);
+        if (el) {
+          el.classList.remove('show');
+          el.setAttribute('aria-hidden', 'true');
+          syncBodyModalLock();
+        }
+      }
+
+      function openFailReason(code, msg, time) {
+        var body = document.getElementById('failReasonContent');
+        body.innerHTML =
+          '<div class="fail-reason-box">' +
+            '<div class="fail-code">错误码：' + (code || 'UNKNOWN') + '</div>' +
+            '<div class="fail-desc">' + (msg || '未获取到失败详情，请联系运维人员查看训练日志。') + '</div>' +
+            (time ? '<div class="fail-meta">失败时间：' + time + '</div>' : '') +
+          '</div>';
+        openModal('modalFailReason');
+      }
+
+      document.querySelectorAll('.modal-close, [data-close]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var k = btn.getAttribute('data-close');
+          if (k) closeModal(k);
+        });
+      });
+
+      document.querySelectorAll('.modal-backdrop').forEach(function (bd) {
+        bd.addEventListener('click', function (e) {
+          if (e.target === bd) {
+            bd.classList.remove('show');
+            bd.setAttribute('aria-hidden', 'true');
+            syncBodyModalLock();
+          }
+        });
+      });
+
+      document.querySelectorAll('.cat-item').forEach(function (item) {
+        item.setAttribute('role', 'button');
+        item.setAttribute('tabindex', '0');
+        item.addEventListener('click', function () {
+          document.querySelectorAll('.cat-item').forEach(function (x) { x.classList.remove('active'); });
+          item.classList.add('active');
+          var nameEl = item.querySelector('.cat-name');
+          showToast('切换分类：' + (nameEl ? nameEl.textContent.trim() : item.textContent.replace(/\s+/g, ' ').trim()));
+        });
+        item.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            item.click();
+          }
+        });
+      });
+
+      document.querySelectorAll('#modelTableBody [data-act]').forEach(function (el) {
+        el.setAttribute('role', 'button');
+        el.setAttribute('tabindex', el.classList.contains('disabled') ? '-1' : '0');
+      });
+
+      document.getElementById('modelTableBody').addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        var t = e.target.closest('[data-act]');
+        if (!t || t.classList.contains('disabled')) return;
+        e.preventDefault();
+        t.click();
+      });
+
+      document.getElementById('btnAdd').addEventListener('click', function () {
+        window.location.href = '创建-编辑模型.html';
+      });
+      document.getElementById('btnStatusFilter').addEventListener('click', function () {
+        showToast('筛选：完成训练 / 训练中 / 失败 / 未训练');
+      });
+      document.getElementById('btnProjectFilter').addEventListener('click', function () {
+        showToast('切换项目：共济科技 / ...');
+      });
+      document.getElementById('btnScopeFilter').addEventListener('click', function () {
+        showToast('筛选适用对象');
+      });
+      document.getElementById('btnAlgoFilter').addEventListener('click', function () {
+        showToast('筛选应用算法：神经网络 / 机理公式');
+      });
+      document.getElementById('catAll').addEventListener('click', function () {
+        document.querySelectorAll('.cat-item').forEach(function (x) { x.classList.remove('active'); });
+        showToast('显示全部分类');
+      });
+      document.getElementById('btnSync').addEventListener('click', function () {
+        openModal('modalSync');
+      });
+      /* 模型同步 v1.1：折叠分组 + 单选算法 + 已选模型面板 */
+      (function () {
+        // 标准算法列表（按使用频率排序）
+        var STD_ALGOS = ['线性回归', '支持向量回归', '梯度提升', '极致梯度提升', '单调性神经网络', 'K近邻回归', '随机森林', '多项式回归'];
+        var CT_APPROACH_ALGOS = ['冷却塔逼近度灰箱(Merkel)', '线性回归', '支持向量回归', '梯度提升', '极致梯度提升', 'K近邻回归'];
+
+        // 推荐规则
+        function getRec(type) {
+          if (type === '逼近度') return '冷却塔逼近度灰箱(Merkel)';
+          if (type === '温差') return '单调性神经网络';
+          if (type.indexOf('主机') !== -1 || type.indexOf('冷水机') !== -1) return '单调性神经网络';
+          if (type === '功率') return '线性回归';
+          return '支持向量回归'; // 流量、压差、压力
+        }
+
+        // 分组定义（结构：{id, instance, type, rec, algos}）
+        function mkGroup(id, instance, type, algos) {
+          return { id: id, instance: instance, type: type, rec: getRec(type), algos: algos || STD_ALGOS };
+        }
+        var GROUPS = [
+          mkGroup('ck1-flow',  '一号冷却水泵', '流量'),
+          mkGroup('ck1-pwr',   '一号冷却水泵', '功率'),
+          mkGroup('ck2-flow',  '二号冷却水泵', '流量'),
+          mkGroup('ck2-pwr',   '二号冷却水泵', '功率'),
+          mkGroup('ck3-flow',  '三号冷却水泵', '流量'),
+          mkGroup('ck3-pwr',   '三号冷却水泵', '功率'),
+          mkGroup('ck4-flow',  '四号冷却水泵', '流量'),
+          mkGroup('ck4-pwr',   '四号冷却水泵', '功率'),
+          mkGroup('ct1-pwr',   '冷却塔', '功率'),
+          mkGroup('ct1-app',   '冷却塔', '逼近度', CT_APPROACH_ALGOS),
+          mkGroup('chiller-pwr','冷水主机',  '功率'),
+          mkGroup('chw-pump-flow', '冷冻水泵', '流量'),
+          mkGroup('chw-pump-pwr',  '冷冻水泵', '功率'),
+          mkGroup('sec1-flow', '一号二次泵', '流量'),
+          mkGroup('sec1-pwr',  '一号二次泵', '功率'),
+          mkGroup('sec2-flow', '二号二次泵', '流量'),
+          mkGroup('sec2-pwr',  '二号二次泵', '功率'),
+          mkGroup('end-dp-sec', '末端（二次泵版）', '最不利压差'),
+          mkGroup('unit-chw-dp',  '制冷单元', '冷冻侧压差'),
+          mkGroup('unit-cw-dp',   '制冷单元', '冷却侧压差'),
+          mkGroup('phe-dt',   '板换',  '温差'),
+          mkGroup('end-dp',   '末端', '最不利压差'),
+        ];
+
+        var selected = {}; // { groupId: algoName }
+        var container = document.getElementById('syncGroupContainer');
+        var selBody = document.getElementById('syncSelBody');
+        var selCount = document.getElementById('syncSelCount');
+        var footCount = document.getElementById('syncSelectedCount');
+        var confirmBtn = document.getElementById('btnConfirmSync');
+
+        // 渲染所有分组
+        GROUPS.forEach(function (g, idx) {
+          var div = document.createElement('div');
+          div.className = 'sync-group' + (idx === 0 ? ' open' : '');
+          div.setAttribute('data-gid', g.id);
+
+          var algoRows = g.algos.map(function (a) {
+            var isRec = a === g.rec;
+            return '<label class="sync-algo-item" data-algo="' + a + '">' +
+              '<input type="radio" name="grp-' + g.id + '" value="' + a + '">' +
+              '<span class="sync-algo-name">' + a + '预测模型</span>' +
+              (isRec ? '<span class="tag-rec">推荐</span>' : '') +
+              '</label>';
+          }).join('');
+
+          div.innerHTML =
+            '<div class="sync-group-head">' +
+              '<svg class="sync-group-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>' +
+              '<span class="sync-group-name">' + g.instance + ' / ' + g.type + '预测</span>' +
+              '<span class="sync-group-badge"></span>' +
+            '</div>' +
+            '<div class="sync-algo-list">' + algoRows + '</div>';
+
+          // 折叠展开
+          div.querySelector('.sync-group-head').addEventListener('click', function () {
+            div.classList.toggle('open');
+          });
+
+          // 单选
+          div.querySelectorAll('input[type="radio"]').forEach(function (radio) {
+            radio.addEventListener('change', function () {
+              if (!radio.checked) return;
+              selected[g.id] = radio.value;
+              div.querySelectorAll('.sync-algo-item').forEach(function (item) {
+                item.classList.toggle('is-selected', item.getAttribute('data-algo') === radio.value);
+              });
+              var badge = div.querySelector('.sync-group-badge');
+              badge.textContent = radio.value;
+              badge.classList.add('show');
+              refreshSelPanel();
+              refreshConfirm();
+            });
+          });
+
+          container.appendChild(div);
+        });
+
+        // 更新已选模型面板
+        function refreshSelPanel() {
+          var keys = Object.keys(selected);
+          var n = keys.length;
+          selCount.textContent = n;
+          footCount.textContent = n;
+          if (n === 0) {
+            selBody.innerHTML = '<div class="sync-sel-empty">暂未选择任何模型<br>请在左侧分组中<br>选择算法</div>';
+            return;
+          }
+          var html = '';
+          keys.forEach(function (gid) {
+            var g = GROUPS.find(function (x) { return x.id === gid; });
+            if (!g) return;
+            var name = g.instance + '-' + g.type + '-' + selected[gid] + '预测模型';
+            html += '<div class="sync-sel-item" data-gid="' + gid + '">' +
+              '<span class="sync-sel-item-text">' + name + '</span>' +
+              '<span class="sync-sel-remove" title="移除">×</span>' +
+              '</div>';
+          });
+          selBody.innerHTML = html;
+          selBody.querySelectorAll('.sync-sel-remove').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              var gid = btn.closest('.sync-sel-item').getAttribute('data-gid');
+              delete selected[gid];
+              var groupEl = container.querySelector('[data-gid="' + gid + '"]');
+              if (groupEl) {
+                groupEl.querySelectorAll('input[type="radio"]').forEach(function (r) { r.checked = false; });
+                groupEl.querySelectorAll('.sync-algo-item').forEach(function (i) { i.classList.remove('is-selected'); });
+                var badge = groupEl.querySelector('.sync-group-badge');
+                if (badge) { badge.textContent = ''; badge.classList.remove('show'); }
+              }
+              refreshSelPanel();
+              refreshConfirm();
+            });
+          });
+        }
+
+        function refreshConfirm() {
+          var n = Object.keys(selected).length;
+          confirmBtn.disabled = n === 0;
+          confirmBtn.style.opacity = n === 0 ? '.5' : '1';
+          confirmBtn.style.cursor = n === 0 ? 'not-allowed' : 'pointer';
+        }
+
+        confirmBtn.addEventListener('click', function () {
+          if (confirmBtn.disabled) return;
+          showToast('同步请求已提交（异步占位）');
+          closeModal('sync');
+          // 重置
+          selected = {};
+          container.querySelectorAll('input[type="radio"]').forEach(function (r) { r.checked = false; });
+          container.querySelectorAll('.sync-algo-item').forEach(function (i) { i.classList.remove('is-selected'); });
+          container.querySelectorAll('.sync-group-badge').forEach(function (b) { b.textContent = ''; b.classList.remove('show'); });
+          refreshSelPanel();
+          refreshConfirm();
+        });
+      })();
+      document.getElementById('btnSaveTransfer').addEventListener('click', function () {
+        showToast('已保存迁移学习配置（占位）');
+        closeModal('transfer');
+      });
+
+      var TRAIN_LIMIT = 10;
+
+      function refreshTrainCount() {
+        var n = document.querySelectorAll('#modelTableBody .status-pill.train').length;
+        var numEl = document.getElementById('trainCountNum');
+        var badge = document.getElementById('trainLimitBadge');
+        if (numEl) numEl.textContent = n;
+        if (badge) badge.classList.toggle('at-limit', n >= TRAIN_LIMIT);
+      }
+      refreshTrainCount();
+
+      document.getElementById('modelTableBody').addEventListener('click', function (e) {
+        var t = e.target.closest ? e.target.closest('[data-act]') : null;
+        if (!t || !t.getAttribute('data-act')) return;
+        if (t.classList.contains('disabled')) return;
+        var act = t.getAttribute('data-act');
+        if (act === 'history') openModal('modalHistory');
+        else if (act === 'transfer') openModal('modalTransfer');
+        else if (act === 'fail-reason') {
+          var row = t.closest('tr[data-fail-code], tr[data-fail-msg]');
+          if (row) {
+            openFailReason(
+              row.getAttribute('data-fail-code'),
+              row.getAttribute('data-fail-msg'),
+              row.getAttribute('data-fail-time')
+            );
+          }
+        } else if (act === 'stop') {
+          if (confirm('确认停止并删除当前训练任务？')) {
+            showToast('已停止训练（占位）');
+            refreshTrainCount();
+          }
+        } else if (act === 'del') {
+          if (confirm('确认删除该模型及历史版本？')) showToast('已删除（占位）');
+        } else if (act === 'train') {
+          var trainingCount = document.querySelectorAll('#modelTableBody .status-pill.train').length;
+          if (trainingCount >= TRAIN_LIMIT) {
+            showToast('当前已有 ' + trainingCount + ' 个模型训练中，请等待训练完成后再提交');
+            return;
+          }
+          showToast('跳转：训练配置页');
+        } else if (act === 'eval') showToast('跳转：评估详情（最新已完成版本）');
+        else if (act === 'edit') showToast('跳转：编辑模型');
+      });
+
+      // 历史版本弹窗中的「查看原因」
+      document.getElementById('modalHistory').addEventListener('click', function (e) {
+        var t = e.target.closest ? e.target.closest('[data-act="fail-reason"]') : null;
+        if (!t) return;
+        var row = t.closest('tr[data-fail-code], tr[data-fail-msg]');
+        if (row) {
+          openFailReason(
+            row.getAttribute('data-fail-code'),
+            row.getAttribute('data-fail-msg'),
+            row.getAttribute('data-fail-time')
+          );
+        }
+      });
+
+      document.getElementById('btnRetrainFromFail').addEventListener('click', function () {
+        closeModal('failReason');
+        showToast('跳转：训练配置页');
+      });
+
+      document.querySelectorAll('.toggle').forEach(function (sw) {
+        sw.setAttribute('tabindex', '0');
+        sw.addEventListener('keydown', function (e) {
+          if (e.key !== 'Enter' && e.key !== ' ') return;
+          e.preventDefault();
+          sw.click();
+        });
+        sw.addEventListener('click', function () {
+          if (sw.classList.contains('disabled')) return;
+          var on = sw.classList.toggle('on');
+          sw.setAttribute('data-on', on ? 'true' : 'false');
+          sw.setAttribute('aria-checked', on ? 'true' : 'false');
+        });
+      });
+
+      document.querySelectorAll('#modalHistory .page-item, #modalHistory .page-arrow').forEach(function (p) {
+        p.addEventListener('click', function () { showToast('历史版本分页示意'); });
+      });
+    })();
+  </script>
+  <button type="button" class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+  <div class="anno-filter-bar" id="annoFilterBar">
+    <span class="anno-filter-label">批注版本：</span>
+    <div class="anno-filter-tags" id="annoFilterTags"></div>
+  </div>
+  <script>
+    function initAnnoVersionFilter() {
+      var bar = document.getElementById('annoFilterBar');
+      var tags = document.getElementById('annoFilterTags');
+      if (!document.body.classList.contains('annotation-mode')) return;
+      var annos = document.querySelectorAll('.anno[data-version]');
+      var versions = [];
+      annos.forEach(function (a) {
+        var v = a.getAttribute('data-version');
+        if (v && versions.indexOf(v) === -1) versions.push(v);
+      });
+      versions.sort(function (a, b) {
+        var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+        var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+        for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+          if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+        }
+        return 0;
+      });
+      tags.innerHTML = '';
+      var allBtn = document.createElement('span');
+      allBtn.className = 'anno-filter-tag';
+      allBtn.textContent = '全部';
+      allBtn.onclick = function () { filterAnno('all', versions[0]); setActive(this); };
+      tags.appendChild(allBtn);
+      versions.forEach(function (v, i) {
+        var btn = document.createElement('span');
+        btn.className = 'anno-filter-tag' + (i === 0 ? ' active' : '');
+        btn.textContent = v;
+        btn.onclick = function () { filterAnno(v, versions[0]); setActive(this); };
+        tags.appendChild(btn);
+      });
+      if (versions.length > 0) filterAnno(versions[0], versions[0]);
+    }
+    function filterAnno(version, latest) {
+      document.querySelectorAll('.anno[data-version]').forEach(function (a) {
+        var v = a.getAttribute('data-version');
+        if (version === 'all') {
+          a.style.display = '';
+          a.style.opacity = (v === latest) ? '1' : '0.6';
+        } else {
+          a.style.display = (v === version) ? '' : 'none';
+          a.style.opacity = '1';
+        }
+      });
+    }
+    function setActive(el) {
+      el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function (t) { t.classList.remove('active'); });
+      el.classList.add('active');
+    }
+  </script>
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="机理模型训练"></script>
+</body>
+</html>

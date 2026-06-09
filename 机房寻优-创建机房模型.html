@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>机房寻优 - 创建机房模型</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-light: #EEF4FF;
+      --primary-dark: #17358A;
+      --secondary: #3B82F6;
+      --cta: #F59E0B;
+      --success: #16A34A;
+      --success-light: #F0FDF4;
+      --warning: #D97706;
+      --warning-light: #FFF7ED;
+      --danger: #DC2626;
+      --danger-light: #FEF2F2;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F8FAFC;
+      --bg-card: #FFFFFF;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15,23,42,.04);
+      --shadow-card: 0 1px 3px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.04);
+      --transition: .2s cubic-bezier(.4,0,.2,1);
+      --sidebar-bg: #071B2E;
+      --header-bg: #071B2E;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Fira Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+    a { text-decoration: none; color: inherit; cursor: pointer; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(0,0,0,.12); border-radius: 3px; }
+
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main { flex: 1; min-width: 0; overflow-y: auto; background: var(--bg-body); }
+
+    .page-header {
+      background: var(--bg-card);
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: color var(--transition);
+    }
+    .back-link:hover { color: var(--primary); }
+    .back-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+
+    .progress-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px 0;
+      background: var(--bg-body);
+    }
+    .progress-steps {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .progress-step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    .progress-step.active {
+      color: var(--primary);
+      font-weight: 600;
+    }
+    .step-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .step-icon.active {
+      background: var(--primary);
+      color: #fff;
+      border: 1px solid var(--primary);
+    }
+    .step-icon.pending {
+      background: #fff;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+    .progress-line {
+      width: 120px;
+      height: 2px;
+      background: #E2E8F0;
+    }
+
+    .content-body { padding: 0 20px 24px; display: flex; flex-direction: column; gap: 16px; }
+
+    .section-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+    }
+    .section-head {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+      background: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-head::before {
+      content: '';
+      display: block;
+      width: 3px;
+      height: 14px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+
+    .section-body { padding: 18px; }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px 24px;
+      margin-bottom: 16px;
+    }
+    .form-row:last-child { margin-bottom: 0; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field.full { grid-column: 1 / -1; }
+    .field-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .field-label .required { color: var(--danger); }
+    .field-control, .field-select {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      background: #fff;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .field-control:focus-visible, .field-select:focus-visible {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30,64,175,.12);
+    }
+    .field-hint {
+      font-size: 12px;
+      color: var(--text-hint);
+      line-height: 1.5;
+    }
+    .field-inline { display: flex; align-items: center; gap: 8px; }
+    .field-suffix { font-size: 13px; color: var(--text-secondary); }
+
+    .table-wrap { overflow-x: auto; }
+    .data-table {
+      width: 100%;
+      min-width: 880px;
+      border-collapse: collapse;
+    }
+    .data-table thead th {
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .data-table tbody td {
+      padding: 10px 12px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+    }
+    .data-table tbody tr:hover { background: #FAFCFF; }
+    .radio-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .radio-group label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: normal;
+    }
+    .radio-group input[type="radio"] {
+      margin: 0;
+    }
+    .action-link {
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--primary);
+      transition: opacity .2s;
+    }
+    .action-link:hover { opacity: .85; }
+    .action-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 2px; }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: #fff;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+    .btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+    .btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      border-color: transparent;
+    }
+    .btn-primary:hover { background: var(--primary-dark); color: #fff; }
+    .btn-primary:focus-visible { outline: 2px solid var(--cta); outline-offset: 2px; }
+
+    .foot-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 16px 20px;
+      border-top: 1px solid var(--border-light);
+      background: #FBFCFE;
+      margin: 0 -18px -18px;
+    }
+
+    .note-block {
+      padding: 10px 12px;
+      background: #F8FAFC;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+    @media (max-width: 768px) {
+      .form-row { grid-template-columns: 1fr; }
+      .page-header { flex-direction: column; align-items: flex-start; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition-duration: .01ms !important; }
+    }
+
+    /* ── 通道分组配置 ── */
+    .channel-subsection { margin-bottom: 4px; }
+    .channel-subsection-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .channel-subsection-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .channel-type-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    .dot-cold { background: #3B82F6; }
+    .dot-hot  { background: #EF4444; }
+    .group-card {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+      background: #FAFCFF;
+    }
+    .group-card-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: #F4F7FD;
+      border-radius: var(--radius) var(--radius) 0 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .group-name-input {
+      flex: 1;
+      min-width: 0;
+      padding: 3px 8px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 12px;
+      background: #fff;
+    }
+    .group-name-input:focus-visible { outline: none; border-color: var(--primary); }
+    .group-card-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .group-card-body { padding: 10px 12px; }
+    .tag-list { display: flex; flex-wrap: wrap; gap: 6px; min-height: 20px; }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+    .tag-sensor  { background: #EEF4FF; color: #1E40AF; }
+    .tag-cabinet { background: #FFF7ED; color: #D97706; }
+    .tag-remove {
+      border: none;
+      background: none;
+      cursor: pointer;
+      padding: 0 1px;
+      font-size: 13px;
+      line-height: 1;
+      opacity: .6;
+      color: inherit;
+    }
+    .tag-remove:hover { opacity: 1; }
+    .section-empty { font-size: 12px; color: var(--text-hint); font-style: italic; line-height: 2; }
+
+    /* ── 通用关联弹窗 ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,.4);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.is-open { display: flex; }
+    .modal-dialog {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 24px 48px rgba(15,23,42,.16);
+      width: 100%;
+      max-width: 900px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .modal-title { font-size: 16px; font-weight: 600; }
+    .modal-close {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 18px;
+      line-height: 1;
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-close:hover { background: var(--border-light); color: var(--text-primary); }
+    .modal-close:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .modal-body {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .modal-left {
+      flex: 1;
+      min-width: 0;
+      padding: 16px 20px;
+      overflow-y: auto;
+      border-right: 1px solid var(--border-light);
+    }
+    .modal-filters {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .modal-filters .field-control { width: 180px; }
+    .modal-filters .field-select { min-width: 160px; }
+    .modal-table-wrap { overflow-x: auto; margin-bottom: 12px; }
+    .modal-table-wrap .data-table { min-width: 400px; }
+    .modal-table-wrap th:first-child,
+    .modal-table-wrap td:first-child { width: 40px; text-align: center; }
+    .modal-pagination {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+    .modal-pagination button {
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .modal-pagination button:hover { border-color: var(--primary); color: var(--primary); }
+    .modal-pagination button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .modal-datasource {
+      font-size: 12px;
+      color: var(--text-secondary);
+      padding: 8px 10px;
+      background: #F8FAFC;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+    }
+    .modal-right {
+      width: 240px;
+      flex-shrink: 0;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid var(--border-light);
+    }
+    .modal-right-title { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+    .modal-selected-list {
+      flex: 1;
+      min-height: 80px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+    }
+    .modal-selected-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 8px;
+      font-size: 12px;
+      border-radius: 4px;
+      margin-bottom: 4px;
+      background: #F8FAFC;
+    }
+    .modal-selected-item .remove-btn {
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: var(--text-hint);
+      padding: 0 4px;
+      font-size: 14px;
+      line-height: 1;
+    }
+    .modal-selected-item .remove-btn:hover { color: var(--danger); }
+    .modal-right-hint {
+      font-size: 11px;
+      color: var(--text-hint);
+      line-height: 1.5;
+    }
+    .modal-footer {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+
+      <div class="anno anno-version-header" data-version="v1.9">
+        <span class="anno-tag">版本信息</span>
+        <div class="anno-body">
+          <p><b>当前版本：</b>v1.9</p>
+          <p><b>更新日期：</b>2026-04-16</p>
+          <p><b>变更概述：</b></p>
+          <ol style="margin:6px 0 0 1.25em;padding-left:0;line-height:1.55;">
+            <li><b>通道封闭模式前置：</b>机房基础信息新增必填「通道封闭模式」，在步骤 1 即确定后续分组生成规则（含无封闭时仅保留一个冷通道分组）；所选模式通过 localStorage 传递至步骤 2。</li>
+            <li><b>空调单独关联：</b>设备信息区收敛为「空调设备信息」，通过「关联空调」弹窗勾选实例；候选数据为所选空间—机房内设备，并按物模型过滤为<strong>末端空调</strong>及其子模型。</li>
+            <li><b>气流组织阈值：</b>步骤 1 配置冷/热通道温湿度与送回风等全局阈值；无封闭时「热通道温度上限」置灰不可用。</li>
+            <li><b>通道分组与归属：</b>按封闭模式生成分组并支持关联传感器与机柜；冷通道分组下关联的传感器须将通道/位置类属性选为冷通道，热通道分组下由系统自动置为热通道；分组配置为步骤 1 必审项，决定诊断粒度能否到通道/区域级。</li>
+          </ol>
+          <p><b>本页说明：</b>多步表单第一步；顶部面包屑导航；底部「下一步」校验必填后跳转步骤2，「取消」回列表不落库。</p>
+        </div>
+      </div>
+
+      <div class="page-header">
+        <div class="page-header-left">
+          <a class="back-link" href="机房寻优-机房热力模型列表.html">← 创建机房热力模型</a>
+        </div>
+      </div>
+
+      <div class="progress-container">
+        <div class="progress-steps">
+          <div class="progress-step active">
+            <span class="step-icon active">1</span>
+            <span>机房基础信息</span>
+          </div>
+          <div class="progress-line"></div>
+          <div class="progress-step">
+            <span class="step-icon pending">2</span>
+            <span>气流组织信息</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-body">
+          <div class="anno anno-field" data-version="v1.0">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v1.0</span>
+            <span class="anno-source">产品推断</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>机房基础信息（历史字段）</p>
+              <p><b>选择机房</b>：必选，用于确定本次建模所对应的机房范围；后续所有候选设备实例都以该机房为筛选边界。</p>
+              <p><b>末端系统</b>：必选，用于指定热力模型挂靠的末端系统实例，属于历史版本已存在的基础建模字段，不是 v1.9 新增能力。</p>
+              <p><b>额定IT总负载 / 空调额定容量</b>：用于补充建模所需的总量级参数，属于历史版本沿用字段，本期仍保留在步骤1中录入。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-field" data-version="v1.9">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v1.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>机房基础信息（v1.9 新增字段）</p>
+              <p><b>通道封闭模式</b>：为 v1.9 新增必填项，用于决定后续通道分组与机柜挂载规则。封闭冷通道时冷通道可拆多组、热通道固定一组；封闭热通道时规则相反；无封闭时，统一就一个冷通道分组进行处理。</p>
+            </div>
+          </div>
+
+          <!-- 1. 机房基础信息 -->
+          <section class="section-card">
+            <div class="section-head">机房基础信息</div>
+            <div class="section-body">
+              <div class="note-block">
+                在选取空间视图的具体机房后，可按需关联当前机房下的空调实例，并在下方通道分组配置中分别关联温湿度传感器与 IT 机柜实例。
+              </div>
+              <div class="form-row">
+                <div class="field">
+                  <label class="field-label"><span class="required">*</span>选择机房：</label>
+                  <select class="field-select">
+                    <option value="">请选择</option>
+                    <option>1号机楼 / 1层 / A机房</option>
+                    <option>1号机楼 / 2层 / B机房</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label class="field-label"><span class="required">*</span>通道封闭模式：</label>
+                  <select class="field-select" id="selectAisleMode">
+                    <option value="">请选择</option>
+                    <option value="封闭冷通道">封闭冷通道</option>
+                    <option value="封闭热通道">封闭热通道</option>
+                    <option value="无封闭">无封闭</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label class="field-label"><span class="required">*</span>末端系统：</label>
+                  <select class="field-select">
+                    <option value="">请选择</option>
+                    <option>末端系统 A-01</option>
+                    <option>末端系统 A-02</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label class="field-label"><span class="required">*</span>额定IT总负载：</label>
+                  <div class="field-inline">
+                    <input type="text" class="field-control" placeholder="请输入">
+                    <span class="field-suffix">kW</span>
+                  </div>
+                </div>
+                <div class="field">
+                  <label class="field-label"><span class="required">*</span>空调额定容量：</label>
+                  <div class="field-inline">
+                    <input type="text" class="field-control" placeholder="请输入">
+                    <span class="field-suffix">kW</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="anno anno-field" data-version="v1.9">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v1.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>气流组织信息</p>
+              <p>冷/热通道温湿度与送回风温差等基础阈值；无封闭时「热通道温度上限」置灰不可用。阈值为机房级全局配置。</p>
+            </div>
+          </div>
+
+          <!-- 2. 气流组织信息 -->
+          <section class="section-card">
+            <div class="section-head">气流组织信息</div>
+            <div class="section-body">
+              <div class="form-row">
+                <div class="field">
+                  <label class="field-label"><span class="required">*</span>冷通道温度上限：</label>
+                  <div class="field-inline">
+                    <input type="text" class="field-control" placeholder="请输入">
+                    <span class="field-suffix">℃</span>
+                  </div>
+                </div>
+                <div class="field" id="fieldHotTempLimit">
+                  <label class="field-label" id="labelHotTempLimit"><span class="required">*</span>热通道温度上限：</label>
+                  <div class="field-inline">
+                    <input type="text" class="field-control" id="inputHotTempLimit" placeholder="请输入">
+                    <span class="field-suffix">℃</span>
+                  </div>
+                  <span class="field-hint" id="hintHotTempLimit" style="display:none;color:var(--text-hint);">无封闭模式下不存在热通道传感器，无需配置</span>
+                </div>
+                <div class="field">
+                  <label class="field-label"><span class="required">*</span>冷通道湿度上限：</label>
+                  <div class="field-inline">
+                    <input type="text" class="field-control" placeholder="请输入">
+                    <span class="field-suffix">%</span>
+                  </div>
+                </div>
+                <div class="field">
+                  <label class="field-label"><span class="required">*</span>冷通道湿度下限：</label>
+                  <div class="field-inline">
+                    <input type="text" class="field-control" placeholder="请输入">
+                    <span class="field-suffix">%</span>
+                  </div>
+                </div>
+                <div class="field">
+                  <label class="field-label"><span class="required">*</span>送回风温差下限：</label>
+                  <div class="field-inline">
+                    <input type="text" class="field-control" placeholder="请输入">
+                    <span class="field-suffix">℃</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="anno anno-ux" data-version="v1.9">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v1.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>空调设备信息</p>
+              <p>本模块仅保留空调实例，不再在此区域展示温湿度传感器，避免把设备关联与分组归属配置混在同一张表里。</p>
+              <p>点击「关联空调」后打开复用弹窗。弹窗列表的数据源为当前表单已选<strong>空间</strong>下、<strong>机房</strong>内的设备实例；在此基础上按<strong>物模型</strong>过滤，仅展示并允许勾选<strong>末端空调</strong>物模型及其<strong>子模型</strong>下的实例。确认后回写到表格，并继续在表格内补录额定制冷量、额定功率、额定风量等属性。</p>
+              <p>若用户解除关联某台空调，仅影响该空调在本页建模中的参与范围，不影响机房下原始设备实例本身。</p>
+            </div>
+          </div>
+
+          <!-- 3. 空调设备信息 -->
+          <section class="section-card">
+            <div class="section-head">空调设备信息</div>
+            <div class="section-body">
+              <div class="toolbar">
+                <button type="button" class="btn btn-primary" id="btnLinkAsset">关联空调</button>
+              </div>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>空调末端</th>
+                      <th>设备类型</th>
+                      <th>制冷量（kW）</th>
+                      <th>额定功率（kW）</th>
+                      <th>额定风量（m³/h）</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="airconTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <div class="anno anno-data" data-version="v1.9">
+            <span class="anno-tag">产品说明</span>
+            <span class="anno-version">v1.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>通道分组配置</p>
+              <p>通道分组配置是本期新增重点，用于明确诊断分析颗粒度。系统先根据封闭模式生成基础分组结构，用户再分别为每个分组补充测点与机柜归属。</p>
+              <p><b>封闭冷通道</b>：冷通道可新增多个分组，热通道固定一组，机柜挂在冷通道分组下。</p>
+              <p><b>封闭热通道</b>：热通道可新增多个分组，冷通道固定一组，机柜挂在热通道分组下。</p>
+              <p><b>无封闭</b>：统一就一个冷通道分组进行处理与展示，既可关联传感器，也可关联机柜，用于支撑非封闭机房的诊断。</p>
+              <p><b>关联传感器</b>：在<strong>冷通道分组</strong>下关联的传感器，其实例上通道/位置类属性须选<strong>冷通道</strong>；在<strong>热通道分组</strong>下关联的传感器，该属性由系统<strong>自动置为热通道</strong>，与分组一致。</p>
+              <p>步骤1必审；本配置决定诊断粒度能否到通道/区域级。</p>
+            </div>
+          </div>
+
+          <!-- 4. 通道分组配置（模式选定后显示） -->
+          <section class="section-card" id="sectionGrouping" style="display:none;">
+            <div class="section-head">通道分组配置</div>
+            <div class="section-body" id="groupingBody">
+              <!-- 由 ChannelGrouping.applyMode() 动态渲染 -->
+            </div>
+          </section>
+
+          <!-- 底部操作栏 -->
+          <section class="section-card" style="margin-top:12px;">
+            <div class="section-body">
+              <div class="foot-actions">
+                <button type="button" class="btn">取 消</button>
+                <a href="机房寻优-创建机房模型-步骤2.html" class="btn btn-primary" id="btnNext">下一步</a>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- 通用关联弹窗 -->
+  <div class="modal-overlay" id="modalLinkAsset" aria-hidden="true">
+    <div class="modal-dialog" role="dialog" aria-labelledby="modalLinkAssetTitle">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalLinkAssetTitle">关联对象</h2>
+        <button type="button" class="modal-close" id="modalLinkAssetClose" aria-label="关闭">×</button>
+      </div>
+      <div class="anno anno-ux" data-version="v1.9" style="margin:12px 20px 0;">
+        <span class="anno-tag">交互说明</span>
+        <span class="anno-version">v1.9</span>
+        <span class="anno-source">产品推断</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>通用关联弹窗（触发入口：关联空调 / 关联传感器 / 关联机柜）</p>
+          <p>该弹窗复用同一套结构，根据触发入口切换标题、候选对象和已选对象列表，降低用户在不同配置区间切换时的理解成本。</p>
+          <p>左侧用于筛选和勾选候选对象，右侧实时展示已选结果；点击“确定”后回写到对应模块，点击“取消”或关闭按钮则不保存本次改动。</p>
+          <p>弹窗只展示当前机房范围内的对象实例，不跨机房混选；当用于分组配置时，用户在这里确认的是“归属关系”，不是修改对象本身属性。</p>
+          <p>由「关联空调」进入时，数据源为所选空间—机房下的设备，并在物模型维度过滤：<strong>仅末端空调</strong>物模型及其子模型下的实例出现在候选列表中。</p>
+          <p>由「关联传感器」进入时，候选仍按机房与温湿度物模型过滤；确认写入对应冷/热通道分组后，冷分组要求传感器实例的通道/位置类属性为<strong>冷通道</strong>，热分组则<strong>自动置为热通道</strong>。</p>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="modal-left">
+          <div class="modal-filters">
+            <input type="text" class="field-control" placeholder="请输入名称" id="assetSearchName">
+            <select class="field-select" id="assetFilterModel">
+              <option value="">请选择类型</option>
+            </select>
+          </div>
+          <div class="modal-table-wrap">
+            <table class="data-table" id="assetTable">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>名称</th>
+                  <th>物模型</th>
+                  <th>位置</th>
+                </tr>
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+          </div>
+          <div class="modal-pagination">
+            <span>总共 85 个项目</span>
+            <button type="button">‹</button>
+            <button type="button" class="active">1</button>
+            <button type="button">2</button>
+            <button type="button">3</button>
+            <button type="button">4</button>
+            <button type="button">5</button>
+            <button type="button">›</button>
+          </div>
+          <div class="modal-datasource">
+            <span id="modalDatasourceText">数据来源：当前机房下可关联的对象实例。</span>
+          </div>
+        </div>
+        <div class="modal-right">
+          <div class="modal-right-title" id="modalSelectedTitle">已选择的对象明细</div>
+          <div class="modal-selected-list" id="assetSelectedList"></div>
+          <div class="modal-right-hint">
+            显示已选定的明细，按照选定的对象依次往下排列。<br>点击 × 可直接取消选定。
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn" id="modalLinkAssetCancel">取 消</button>
+        <button type="button" class="btn btn-primary" id="modalLinkAssetConfirm">确 定</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var AIRCON_ITEMS = [
+        { id: 'ac-1', name: '1#空调', model: '冷冻水精密空调', location: '1号机楼/1层/A机房', cooling: '120', power: '18', airflow: '' },
+        { id: 'ac-2', name: '2#空调', model: '冷冻水精密空调', location: '1号机楼/1层/A机房', cooling: '120', power: '18', airflow: '' },
+        { id: 'ac-3', name: '3#空调', model: '冷冻水精密空调', location: '1号机楼/1层/A机房', cooling: '100', power: '16', airflow: '' }
+      ];
+      var SENSOR_ITEMS = [
+        { id: 'sensor-1', name: '1#温湿度传感器', model: '温湿度传感器', location: '1号机楼/1层/A机房' },
+        { id: 'sensor-2', name: '2#温湿度传感器', model: '温湿度传感器', location: '1号机楼/1层/A机房' },
+        { id: 'sensor-3', name: '3#温湿度传感器', model: '温湿度传感器', location: '1号机楼/1层/A机房' },
+        { id: 'sensor-4', name: '4#温湿度传感器', model: '温湿度传感器', location: '1号机楼/1层/A机房' }
+      ];
+      var CABINET_ITEMS = [
+        { id: 'cab-1', name: '机柜-A01', model: 'IT机柜', location: '1号机楼/1层/A机房' },
+        { id: 'cab-2', name: '机柜-A02', model: 'IT机柜', location: '1号机楼/1层/A机房' },
+        { id: 'cab-3', name: '机柜-B01', model: 'IT机柜', location: '1号机楼/1层/A机房' },
+        { id: 'cab-4', name: '机柜-B02', model: 'IT机柜', location: '1号机楼/1层/A机房' },
+        { id: 'cab-5', name: '机柜-C01', model: 'IT机柜', location: '1号机楼/1层/A机房' }
+      ];
+
+      var overlay = document.getElementById('modalLinkAsset');
+      var btnClose = document.getElementById('modalLinkAssetClose');
+      var btnCancel = document.getElementById('modalLinkAssetCancel');
+      var btnConfirm = document.getElementById('modalLinkAssetConfirm');
+      var btnOpen = document.getElementById('btnLinkAsset');
+      var title = document.getElementById('modalLinkAssetTitle');
+      var datasource = document.getElementById('modalDatasourceText');
+      var selectedTitle = document.getElementById('modalSelectedTitle');
+      var searchName = document.getElementById('assetSearchName');
+      var filterModel = document.getElementById('assetFilterModel');
+      var selectedList = document.getElementById('assetSelectedList');
+      var table = document.getElementById('assetTable');
+      var airconTableBody = document.getElementById('airconTableBody');
+      var currentConfig = null;
+      var workingSelected = [];
+      var selectedAircons = [AIRCON_ITEMS[0], AIRCON_ITEMS[1]];
+
+      function cloneItems(items) {
+        return items.map(function (item) { return Object.assign({}, item); });
+      }
+
+      function getModels(items) {
+        var models = [];
+        items.forEach(function (item) {
+          if (models.indexOf(item.model) === -1) models.push(item.model);
+        });
+        return models;
+      }
+
+      function getVisibleItems() {
+        if (!currentConfig) return [];
+        var keyword = (searchName.value || '').trim().toLowerCase();
+        var model = filterModel.value || '';
+        return currentConfig.items.filter(function (item) {
+          var hitKeyword = !keyword || item.name.toLowerCase().indexOf(keyword) > -1;
+          var hitModel = !model || item.model === model;
+          return hitKeyword && hitModel;
+        });
+      }
+
+      function renderAirconTable() {
+        if (!airconTableBody) return;
+        if (!selectedAircons.length) {
+          airconTableBody.innerHTML = '<tr><td colspan="6" class="section-empty" style="text-align:center;padding:18px;">尚未关联空调</td></tr>';
+          return;
+        }
+        airconTableBody.innerHTML = selectedAircons.map(function (item) {
+          return '<tr>'
+            + '<td>' + item.name + '</td>'
+            + '<td>' + item.model + '</td>'
+            + '<td><input type="text" class="field-control" value="' + item.cooling + '" style="width:80px;"></td>'
+            + '<td><input type="text" class="field-control" value="' + item.power + '" style="width:80px;"></td>'
+            + '<td><input type="text" class="field-control" value="' + (item.airflow || '') + '" placeholder="请输入" style="width:100px;"></td>'
+            + '<td><span class="action-link" onclick="AssociationModal.removeAircon(\'' + item.id + '\')">解除关联</span></td>'
+            + '</tr>';
+        }).join('');
+      }
+
+      function renderSelected() {
+        selectedList.innerHTML = workingSelected.map(function (item) {
+          return '<div class="modal-selected-item" data-id="' + item.id + '">' +
+            '<span>' + item.name + '</span>' +
+            '<button type="button" class="remove-btn" aria-label="取消选定">×</button></div>';
+        }).join('');
+        selectedList.querySelectorAll('.remove-btn').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var item = btn.closest('.modal-selected-item');
+            var id = item.getAttribute('data-id');
+            workingSelected = workingSelected.filter(function (s) { return s.id !== id; });
+            var row = table.querySelector('tr[data-id="' + id + '"]');
+            if (row) row.querySelector('.asset-check').checked = false;
+            renderSelected();
+          });
+        });
+      }
+
+      function renderTable() {
+        var visibleItems = getVisibleItems();
+        table.querySelector('tbody').innerHTML = visibleItems.map(function (item) {
+          var checked = workingSelected.some(function (s) { return s.id === item.id; }) ? ' checked' : '';
+          return '<tr data-id="' + item.id + '" data-name="' + item.name + '">'
+            + '<td><input type="checkbox" class="asset-check"' + checked + '></td>'
+            + '<td>' + item.name + '</td>'
+            + '<td>' + item.model + '</td>'
+            + '<td>' + item.location + '</td>'
+            + '</tr>';
+        }).join('');
+        table.querySelectorAll('.asset-check').forEach(function (cb) {
+          cb.addEventListener('change', function () {
+            var row = this.closest('tr');
+            var id = row.getAttribute('data-id');
+            var item = currentConfig.items.filter(function (s) { return s.id === id; })[0];
+            if (!item) return;
+            if (this.checked) {
+              if (!workingSelected.some(function (s) { return s.id === id; })) {
+                workingSelected.push(Object.assign({}, item));
+              }
+            } else {
+              workingSelected = workingSelected.filter(function (s) { return s.id !== id; });
+            }
+            renderSelected();
+          });
+        });
+      }
+
+      function openModal(config) {
+        currentConfig = config;
+        workingSelected = cloneItems(config.selectedItems || []);
+        title.textContent = config.title;
+        selectedTitle.textContent = config.selectedTitle || '已选择的对象明细';
+        datasource.textContent = config.datasourceText || '数据来源：当前机房下可关联的对象实例。';
+        searchName.value = '';
+        filterModel.innerHTML = '<option value=\"\">请选择类型</option>' + getModels(config.items).map(function (model) {
+          return '<option value=\"' + model + '\">' + model + '</option>';
+        }).join('');
+        renderTable();
+        renderSelected();
+        overlay.classList.add('is-open');
+        overlay.setAttribute('aria-hidden', 'false');
+      }
+      function closeModal() {
+        overlay.classList.remove('is-open');
+        overlay.setAttribute('aria-hidden', 'true');
+      }
+
+      btnOpen.addEventListener('click', function () {
+        openModal({
+          title: '关联空调',
+          selectedTitle: '已选择的空调',
+          items: AIRCON_ITEMS,
+          selectedItems: selectedAircons,
+          datasourceText: '数据来源：筛选出当前机房下所有「空调末端」物模型及子物模型下的实例。',
+          onConfirm: function (items) {
+            selectedAircons = items;
+            renderAirconTable();
+          }
+        });
+      });
+      btnClose.addEventListener('click', closeModal);
+      btnCancel.addEventListener('click', closeModal);
+      btnConfirm.addEventListener('click', function () {
+        if (currentConfig && currentConfig.onConfirm) {
+          currentConfig.onConfirm(cloneItems(workingSelected));
+        }
+        closeModal();
+      });
+      searchName.addEventListener('input', renderTable);
+      filterModel.addEventListener('change', renderTable);
+
+      overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) closeModal();
+      });
+
+      renderAirconTable();
+
+      window.AssociationModal = {
+        open: openModal,
+        removeAircon: function (id) {
+          selectedAircons = selectedAircons.filter(function (item) { return item.id !== id; });
+          renderAirconTable();
+        },
+        getSensors: function () { return SENSOR_ITEMS; },
+        getCabinets: function () { return CABINET_ITEMS; }
+      };
+    })();
+  </script>
+  <script>
+    (function () {
+      var selectMode = document.getElementById('selectAisleMode');
+      var inputHot   = document.getElementById('inputHotTempLimit');
+      var hintHot    = document.getElementById('hintHotTempLimit');
+      var labelHot   = document.getElementById('labelHotTempLimit');
+      var btnNext    = document.getElementById('btnNext');
+
+      function applyMode(mode) {
+        var isNoSeal = (mode === '无封闭');
+
+        /* 热通道温度上限联动 */
+        inputHot.disabled = isNoSeal;
+        inputHot.style.background = isNoSeal ? '#F8FAFC' : '';
+        inputHot.style.color      = isNoSeal ? 'var(--text-hint)' : '';
+        hintHot.style.display     = isNoSeal ? '' : 'none';
+        var required = labelHot.querySelector('.required');
+        if (required) required.style.display = isNoSeal ? 'none' : '';
+
+        /* 通道分组模块 */
+        window.ChannelGrouping.applyMode(mode);
+      }
+
+      selectMode.addEventListener('change', function () { applyMode(this.value); });
+
+      if (btnNext) {
+        btnNext.addEventListener('click', function () {
+          localStorage.setItem('aisleMode', selectMode.value || '');
+        });
+      }
+
+      /* 延迟到所有 <script> 执行完毕后再初始化，确保 ChannelGrouping 已定义 */
+      setTimeout(function () {
+        var cached = localStorage.getItem('aisleMode');
+        if (cached && selectMode) {
+          selectMode.value = cached;
+          applyMode(cached);
+        }
+      }, 0);
+    })();
+  </script>
+
+  <script>
+    /* ══ ChannelGrouping 模块 ══
+     *  管理步骤1「通道分组配置」区域的数据与渲染
+     *  - 封闭冷通道：冷通道分组可多个，热通道固定1个，机柜关联在冷通道分组下
+     *  - 封闭热通道：热通道分组可多个，冷通道固定1个，机柜关联在热通道分组下
+     *  - 无封闭：仅一个冷通道分组，不区分热通道，机柜挂在该分组下
+     */
+    window.ChannelGrouping = (function () {
+      var _mode       = '';
+      var _coldGroups = [];
+      var _hotGroups  = [];
+      var _seq        = 0;
+
+      function _uid()             { return ++_seq; }
+      function _newGroup(t, n)    { return { id: _uid(), type: t, name: n, sensors: [], cabinets: [] }; }
+      function _find(type, id)    {
+        return (_arr(type)).filter(function (g) { return g.id === id; })[0] || null;
+      }
+      function _arr(type)         { return type === 'cold' ? _coldGroups : _hotGroups; }
+      function _canMulti(type)    { return (type === 'cold' && _mode === '封闭冷通道') || (type === 'hot' && _mode === '封闭热通道'); }
+      function _showCab(type)     { return (type === 'cold' && (_mode === '封闭冷通道' || _mode === '无封闭')) || (type === 'hot' && _mode === '封闭热通道'); }
+
+      /* ── 公开 API ── */
+      function applyMode(mode) {
+        _mode = mode;
+        _seq  = 0;
+        _coldGroups = [];
+        _hotGroups  = [];
+        if (mode === '封闭冷通道') {
+          _coldGroups = [_newGroup('cold', '冷通道分组1')];
+          _hotGroups  = [_newGroup('hot',  '热通道')];
+        } else if (mode === '封闭热通道') {
+          _coldGroups = [_newGroup('cold', '冷通道')];
+          _hotGroups  = [_newGroup('hot',  '热通道分组1')];
+        } else if (mode === '无封闭') {
+          _coldGroups = [_newGroup('cold', '冷通道分组')];
+        }
+        _render();
+      }
+
+      function addGroup(type) {
+        var arr  = _arr(type);
+        var seq  = arr.length + 1;
+        var name = type === 'cold' ? '冷通道分组' + seq : '热通道分组' + seq;
+        arr.push(_newGroup(type, name));
+        _render();
+      }
+
+      function removeGroup(type, id) {
+        if (type === 'cold') _coldGroups = _coldGroups.filter(function (g) { return g.id !== id; });
+        else                 _hotGroups  = _hotGroups.filter(function (g)  { return g.id !== id; });
+        _render();
+      }
+
+      function setSensors(type, groupId, sensors) {
+        var g = _find(type, groupId);
+        if (g) g.sensors = sensors.map(function (item) { return item.name; });
+        _render();
+      }
+
+      function removeSensor(type, groupId, sensor) {
+        var g = _find(type, groupId);
+        if (g) g.sensors = g.sensors.filter(function (s) { return s !== sensor; });
+        _render();
+      }
+
+      function setCabinets(type, groupId, cabinets) {
+        var g = _find(type, groupId);
+        if (g) g.cabinets = cabinets.map(function (item) { return item.name; });
+        _render();
+      }
+
+      function removeCabinet(type, groupId, cabinet) {
+        var g = _find(type, groupId);
+        if (g) g.cabinets = g.cabinets.filter(function (c) { return c !== cabinet; });
+        _render();
+      }
+
+      function renameGroup(type, id, name) {
+        var g = _find(type, id);
+        if (g) g.name = name;
+        /* 不重新渲染：避免编辑时焦点丢失 */
+      }
+
+      function openSensorModal(type, groupId) {
+        var g = _find(type, groupId);
+        if (!g) return;
+        window.AssociationModal.open({
+          title: '关联传感器',
+          selectedTitle: '已选择的传感器',
+          items: window.AssociationModal.getSensors(),
+          selectedItems: g.sensors.map(function (name, idx) { return { id: type + '-sensor-' + idx + '-' + name, name: name, model: '温湿度传感器', location: '1号机楼/1层/A机房' }; }),
+          datasourceText: '数据来源：筛选出当前机房下所有「温湿度传感器」物模型及子物模型下的实例。',
+          onConfirm: function (items) {
+            setSensors(type, groupId, items);
+          }
+        });
+      }
+
+      function openCabinetModal(type, groupId) {
+        var g = _find(type, groupId);
+        if (!g) return;
+        window.AssociationModal.open({
+          title: '关联机柜',
+          selectedTitle: '已选择的机柜',
+          items: window.AssociationModal.getCabinets(),
+          selectedItems: g.cabinets.map(function (name, idx) { return { id: type + '-cab-' + idx + '-' + name, name: name, model: 'IT机柜', location: '1号机楼/1层/A机房' }; }),
+          datasourceText: '数据来源：筛选出当前机房下所有「机柜」实例。',
+          onConfirm: function (items) {
+            setCabinets(type, groupId, items);
+          }
+        });
+      }
+
+      /* ── 私有：渲染 ── */
+      function _render() {
+        var section = document.getElementById('sectionGrouping');
+        if (!section) return;
+        var visible = _mode === '封闭冷通道' || _mode === '封闭热通道' || _mode === '无封闭';
+        section.style.display = visible ? '' : 'none';
+        if (!visible) return;
+
+        var html = _renderSub('cold', _coldGroups);
+        if (_mode === '封闭冷通道' || _mode === '封闭热通道') {
+          html += '<div style="height:1px;background:var(--border-light);margin:20px 0;"></div>';
+          html += _renderSub('hot', _hotGroups);
+        }
+        document.getElementById('groupingBody').innerHTML = html;
+      }
+
+      function _renderSub(type, groups) {
+        var isCold  = type === 'cold';
+        var typeCN  = isCold ? '冷通道' : '热通道';
+        var dotCls  = isCold ? 'dot-cold' : 'dot-hot';
+        var addBtn  = _canMulti(type)
+          ? '<button type="button" class="btn" style="font-size:11px;padding:4px 10px;" onclick="ChannelGrouping.addGroup(\'' + type + '\')">+ 新增' + typeCN + '分组</button>'
+          : '';
+        var html = '<div class="channel-subsection">'
+          + '<div class="channel-subsection-head">'
+          +   '<div class="channel-subsection-title"><span class="channel-type-dot ' + dotCls + '"></span>' + typeCN + '分组</div>'
+          +   addBtn
+          + '</div>';
+        groups.forEach(function (g, i) {
+          html += _renderCard(g, type, i > 0 && _canMulti(type), _showCab(type), groups);
+        });
+        return html + '</div>';
+      }
+
+      function _renderCard(g, type, canDel, showCab, allInType) {
+        var typeCN = type === 'cold' ? '冷通道' : '热通道';
+        var delBtn = canDel
+          ? '<button type="button" class="btn" style="font-size:11px;padding:3px 8px;color:var(--danger);border-color:var(--danger);" onclick="ChannelGrouping.removeGroup(\'' + type + '\',' + g.id + ')">删除</button>'
+          : '';
+
+        var senTags = g.sensors.map(function (s) {
+          return '<span class="tag tag-sensor">' + s
+            + '<button type="button" class="tag-remove" onclick="ChannelGrouping.removeSensor(\'' + type + '\',' + g.id + ',\'' + s + '\')">×</button>'
+            + '</span>';
+        }).join('');
+
+        var cabBlock = '';
+        if (showCab) {
+          var cabTags = g.cabinets.map(function (c) {
+            return '<span class="tag tag-cabinet">' + c
+              + '<button type="button" class="tag-remove" onclick="ChannelGrouping.removeCabinet(\'' + type + '\',' + g.id + ',\'' + c + '\')">×</button>'
+              + '</span>';
+          }).join('');
+          cabBlock = '<div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border-light);">'
+            + '<div style="font-size:11px;font-weight:500;color:var(--text-secondary);margin-bottom:6px;">关联 IT 机柜（当前机房下的机柜实例）</div>'
+            + '<div class="tag-list">' + (cabTags || '<span class="section-empty">未关联机柜</span>') + '</div>'
+            + '<button type="button" class="btn btn-primary" style="font-size:11px;padding:4px 10px;margin-top:6px;" onclick="ChannelGrouping.openCabinetModal(\'' + type + '\',' + g.id + ')">关联机柜</button>'
+            + '</div>';
+        }
+
+        return '<div class="group-card">'
+          + '<div class="group-card-head">'
+          +   '<input type="text" class="group-name-input" value="' + g.name + '" onchange="ChannelGrouping.renameGroup(\'' + type + '\',' + g.id + ',this.value)">'
+          +   '<div class="group-card-actions">' + delBtn + '</div>'
+          + '</div>'
+          + '<div class="group-card-body">'
+          +   '<div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">关联温湿度传感器（用于标记该' + typeCN + '分组下的测点归属）</div>'
+          +   '<div class="tag-list">' + (senTags || '<span class="section-empty">未关联传感器</span>') + '</div>'
+          +   '<button type="button" class="btn btn-primary" style="font-size:11px;padding:4px 10px;margin-top:6px;" onclick="ChannelGrouping.openSensorModal(\'' + type + '\',' + g.id + ')">关联传感器</button>'
+          +   cabBlock
+          + '</div>'
+          + '</div>';
+      }
+
+      return {
+        applyMode:      applyMode,
+        addGroup:       addGroup,
+        removeGroup:    removeGroup,
+        removeSensor:   removeSensor,
+        removeCabinet:  removeCabinet,
+        renameGroup:    renameGroup,
+        openSensorModal: openSensorModal,
+        openCabinetModal: openCabinetModal,
+      };
+    })();
+  </script>
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="机房热力模型"></script>
+
+  <button class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+  <div class="anno-filter-bar" id="annoFilterBar">
+    <span class="anno-filter-label">批注版本：</span>
+    <div class="anno-filter-tags" id="annoFilterTags"></div>
+  </div>
+  <script>
+  function initAnnoVersionFilter() {
+    var bar = document.getElementById('annoFilterBar');
+    var tags = document.getElementById('annoFilterTags');
+    if (!document.body.classList.contains('annotation-mode')) return;
+    var annos = document.querySelectorAll('.anno[data-version]');
+    var versions = [];
+    annos.forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (v && versions.indexOf(v) === -1) versions.push(v);
+    });
+    versions.sort(function(a, b) {
+      var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+      var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+      for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+        if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+      }
+      return 0;
+    });
+    tags.innerHTML = '';
+    var allBtn = document.createElement('span');
+    allBtn.className = 'anno-filter-tag';
+    allBtn.textContent = '全部';
+    allBtn.onclick = function() { filterAnno('all', versions[0]); setActive(this); };
+    tags.appendChild(allBtn);
+    versions.forEach(function(v, i) {
+      var btn = document.createElement('span');
+      btn.className = 'anno-filter-tag' + (i === 0 ? ' active' : '');
+      btn.textContent = v;
+      btn.onclick = function() { filterAnno(v, versions[0]); setActive(this); };
+      tags.appendChild(btn);
+    });
+    if (versions.length > 0) filterAnno(versions[0], versions[0]);
+  }
+  function filterAnno(version, latest) {
+    document.querySelectorAll('.anno[data-version]').forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (version === 'all') {
+        a.style.display = '';
+        a.style.opacity = (v === latest) ? '1' : '0.6';
+      } else {
+        a.style.display = (v === version) ? '' : 'none';
+        a.style.opacity = '1';
+      }
+    });
+  }
+  function setActive(el) {
+    el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function(t) { t.classList.remove('active'); });
+    el.classList.add('active');
+  }
+  </script>
+</body>
+</html>

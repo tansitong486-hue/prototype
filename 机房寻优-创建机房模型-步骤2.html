@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>机房寻优 - 创建机房模型（步骤2）</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-light: #EEF4FF;
+      --primary-dark: #17358A;
+      --secondary: #3B82F6;
+      --cta: #F59E0B;
+      --success: #16A34A;
+      --danger: #DC2626;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F8FAFC;
+      --bg-card: #FFFFFF;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15,23,42,.04);
+      --shadow-card: 0 1px 3px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.04);
+      --transition: .2s cubic-bezier(.4,0,.2,1);
+      --sidebar-bg: #071B2E;
+      --header-bg: #071B2E;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    body {
+      font-family: 'Fira Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+    a { text-decoration: none; color: inherit; cursor: pointer; }
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .main { flex: 1; min-width: 0; overflow-y: auto; background: var(--bg-body); }
+    @media (max-width: 900px) { .sidebar { display: none; } }
+
+    .page-header {
+      background: var(--bg-card);
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: color var(--transition);
+    }
+    .back-link:hover { color: var(--primary); }
+    .back-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+
+    .progress-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px 0;
+      background: var(--bg-body);
+    }
+    .progress-steps {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .progress-step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    .progress-step.active {
+      color: var(--primary);
+      font-weight: 600;
+    }
+    .step-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .step-icon.done {
+      background: #fff;
+      color: var(--success);
+      border: 1px solid var(--success);
+    }
+    .step-icon.active {
+      background: var(--primary);
+      color: #fff;
+      border: 1px solid var(--primary);
+    }
+    .progress-line {
+      width: 120px;
+      height: 2px;
+      background: #E2E8F0;
+    }
+    .progress-line.active {
+      background: var(--success);
+    }
+
+    .content-body { padding: 0 20px 24px; display: flex; gap: 16px; }
+    .content-left { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .content-right { width: 340px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px; }
+
+    .panel-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+      padding: 20px;
+      height: 100%;
+    }
+    .panel-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .panel-title::before {
+      content: '';
+      display: block;
+      width: 3px;
+      height: 14px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+
+    .topology-wrap {
+      flex: 1;
+      position: relative;
+      background: #F8FAFC;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .topology-svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 500px;
+      font-family: 'Fira Sans', sans-serif;
+    }
+    .target-btn {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      width: 32px;
+      height: 32px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      box-shadow: 0 1px 2px rgba(0,0,0,.05);
+    }
+    .target-btn:hover { color: var(--primary); border-color: var(--primary); }
+
+    .node-ac-rect { fill: #EEF4FF; stroke: var(--secondary); stroke-width: 1.5; rx: 8; }
+    .node-ac-text { font-size: 12px; fill: var(--text-primary); font-weight: 600; }
+    .node-ac-sub { font-size: 10px; fill: var(--text-secondary); }
+    .node-cold-circle { fill: #E0F2FE; stroke: #0EA5E9; stroke-width: 1.5; }
+    .node-hot-circle { fill: #FEF2F2; stroke: var(--danger); stroke-width: 1.5; }
+    .node-val { font-size: 12px; fill: var(--text-primary); font-weight: 500; text-anchor: middle; dominant-baseline: middle; }
+    .node-label { font-size: 12px; fill: var(--text-primary); font-weight: 600; text-anchor: middle; }
+
+    .edge-line { fill: none; stroke-width: 1.5; }
+    .edge-cold { stroke: #3B82F6; }
+    .edge-hot { stroke: #F59E0B; }
+    .edge-pill { fill: #fff; stroke-width: 1; rx: 10; }
+    .edge-pill.cold { stroke: #3B82F6; }
+    .edge-pill.hot { stroke: #F59E0B; }
+    .edge-pill-text { font-size: 10px; font-weight: 500; text-anchor: middle; dominant-baseline: middle; }
+    .edge-pill-text.cold { fill: #3B82F6; }
+    .edge-pill-text.hot { fill: #F59E0B; }
+
+    .toolbar-row { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+    .btn {
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      color: var(--text-primary);
+      transition: border-color var(--transition), background-color var(--transition), color var(--transition);
+    }
+    .btn:hover { border-color: var(--secondary); color: var(--primary); }
+    .btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .btn-primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); color: #fff; }
+    .btn-primary:focus-visible { outline: 2px solid var(--cta); outline-offset: 2px; }
+
+    .field { margin-bottom: 12px; }
+    .field-label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+    .field-control {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 100%;
+      font-size: 13px;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .field-control:focus-visible {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30,64,175,.12);
+    }
+    .field-select {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 100%;
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .field-select:focus-visible {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30,64,175,.12);
+    }
+
+    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .data-table th, .data-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-light); }
+    .data-table th { font-weight: 600; color: var(--text-secondary); font-size: 12px; }
+    .data-table tbody tr { transition: background-color var(--transition); }
+    .data-table tbody tr:hover { background: #F8FAFC; }
+
+    .foot-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 16px 20px;
+      border-top: 1px solid var(--border-light);
+      background: #fff;
+      gap: 12px;
+    }
+
+    /* 同步3D配置弹窗 */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,.4);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.is-open { display: flex; }
+    .modal-dialog {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 24px 48px rgba(15,23,42,.16);
+      width: 100%;
+      max-width: 480px;
+      overflow: hidden;
+    }
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-title { font-size: 16px; font-weight: 600; }
+    .modal-close {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 18px;
+      line-height: 1;
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-close:hover { background: var(--border-light); color: var(--text-primary); }
+    .modal-close:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .modal-body { padding: 20px; }
+    .modal-body .field { margin-bottom: 16px; }
+    .modal-body .field-label { margin-bottom: 6px; }
+    .field-hint {
+      font-size: 12px;
+      color: var(--text-hint);
+      line-height: 1.6;
+      margin-top: 12px;
+    }
+    .modal-footer {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .required { color: #DC2626; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition-duration: .01ms !important; }
+    }
+
+    /* 级联选择器：楼层 → 机房 */
+    .cascade-select {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      display: flex;
+      overflow: hidden;
+      height: 180px;
+    }
+    .cascade-col {
+      flex: 1;
+      overflow-y: auto;
+      border-right: 1px solid var(--border-light);
+    }
+    .cascade-col:last-child { border-right: none; }
+    .cascade-col-header {
+      padding: 6px 10px;
+      font-size: 11px;
+      color: var(--text-hint);
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border-light);
+      font-weight: 500;
+    }
+    .cascade-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--text-primary);
+      transition: background var(--transition);
+      gap: 4px;
+    }
+    .cascade-item:hover { background: var(--primary-light); }
+    .cascade-item.active {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 500;
+    }
+    .cascade-item.selected {
+      background: #DCFCE7;
+      color: var(--success);
+      font-weight: 500;
+    }
+    .cascade-item .cascade-arrow {
+      font-size: 11px;
+      color: var(--text-hint);
+      flex-shrink: 0;
+    }
+    .cascade-selected-val {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      min-height: 18px;
+    }
+    .cascade-selected-val span {
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    /* 多选供冷关系 */
+    .multi-select-wrap {
+      position: relative;
+    }
+    .multi-select-trigger {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 4px;
+      min-height: 34px;
+      padding: 4px 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      cursor: pointer;
+      transition: border-color var(--transition);
+    }
+    .multi-select-trigger:hover { border-color: var(--primary); }
+    .multi-select-trigger.is-open { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30,64,175,.12); }
+    .ms-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 6px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .ms-tag-remove {
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: var(--primary);
+      padding: 0;
+      font-size: 13px;
+      line-height: 1;
+      opacity: .7;
+    }
+    .ms-tag-remove:hover { opacity: 1; }
+    .ms-placeholder { font-size: 12px; color: var(--text-hint); }
+    .ms-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 4px 12px rgba(15,23,42,.1);
+      z-index: 200;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .ms-dropdown.is-open { display: block; }
+    .ms-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background var(--transition);
+    }
+    .ms-option:hover { background: var(--primary-light); }
+    .ms-option input[type="checkbox"] { margin: 0; cursor: pointer; }
+
+    /* 通道分组 */
+    .group-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+    .group-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      background: #FAFCFF;
+    }
+    .group-name-input {
+      flex: 1;
+      padding: 4px 8px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .group-name-input:focus-visible { outline: none; border-color: var(--primary); }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .badge-blue { background: var(--primary-light); color: var(--primary); }
+    .badge-orange { background: #FFF7ED; color: #D97706; }
+    .badge-green { background: #F0FDF4; color: #16A34A; }
+    .group-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .section-note {
+      padding: 8px 10px;
+      background: #F8FAFC;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      font-size: 11px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+    .section-note.warn { background: #FFF7ED; border-color: #FDE68A; color: #92400E; }
+
+    /* 机柜映射 */
+    .empty-state {
+      text-align: center;
+      padding: 24px 12px;
+      color: var(--text-hint);
+      font-size: 12px;
+      line-height: 1.8;
+    }
+    .empty-state .empty-icon { font-size: 28px; margin-bottom: 6px; }
+
+    /* 分隔标题 */
+    .panel-title-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    /* 换热关系容器，供联动控制 */
+    #sectionHeatExchange { transition: opacity .2s; }
+
+    .action-link {
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--primary);
+      transition: opacity .2s;
+    }
+    .action-link:hover { opacity: .75; }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+
+      <div class="anno anno-version-header" data-version="v1.9">
+        <span class="anno-tag">版本信息</span>
+        <div class="anno-body">
+          <p><b>当前版本：</b>v1.9</p>
+          <p><b>更新日期：</b>2026-04-16</p>
+          <p><b>变更概述：</b>①供冷关系改为多选（tag 选择）；②无封闭模式下换热关系面板隐藏；③新增通道分组配置 Section（系统自动生成+人工确认）；④新增机柜/PDU映射 Section（有配置即为A级诊断）。</p>
+          <p><b>本页说明：</b>多步表单第二步；顶部面包屑显示当前步骤；底部「完成」提交并跳转列表，「上一步」回步骤1保留已填数据，「取消」回列表不落库。</p>
+        </div>
+      </div>
+
+      <div class="page-header">
+        <div class="page-header-left">
+          <a class="back-link" href="机房寻优-机房热力模型列表.html">← 创建机房热力模型</a>
+        </div>
+        <button type="button" class="btn btn-primary" id="btnSync3D" style="background:#fff; color:var(--primary); border-color:var(--primary);">同步3D数据</button>
+      </div>
+
+      <div class="progress-container">
+        <div class="progress-steps">
+          <div class="progress-step active">
+            <span class="step-icon done">✓</span>
+            <span>机房基础信息</span>
+          </div>
+          <div class="progress-line active"></div>
+          <div class="progress-step active">
+            <span class="step-icon active">2</span>
+            <span style="color:var(--primary); font-weight:600;">气流组织信息</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-body">
+        <div class="content-left">
+          <div class="topology-wrap">
+            <button class="target-btn" aria-label="定位" title="定位居中">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+            </button>
+            <svg class="topology-svg" viewBox="0 0 720 400" xmlns="http://www.w3.org/2000/svg" aria-label="气流组织拓扑">
+              <!-- Definitions -->
+              <defs>
+                <marker id="arrow-cold" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                  <path d="M0,0 L6,3 L0,6" fill="none" stroke="#3B82F6" stroke-width="1.5"/>
+                </marker>
+                <marker id="arrow-hot" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                  <path d="M0,0 L6,3 L0,6" fill="none" stroke="#F59E0B" stroke-width="1.5"/>
+                </marker>
+              </defs>
+
+              <!-- Lines from AC to Cold Aisle -->
+              <path class="edge-line edge-cold" d="M 120 100 Q 120 150 70 190" marker-end="url(#arrow-cold)" />
+              <path class="edge-line edge-cold" d="M 120 100 Q 120 150 170 190" marker-end="url(#arrow-cold)" />
+              
+              <path class="edge-line edge-cold" d="M 280 100 Q 280 150 170 190" marker-end="url(#arrow-cold)" />
+              <path class="edge-line edge-cold" d="M 280 100 Q 280 150 270 190" marker-end="url(#arrow-cold)" />
+
+              <path class="edge-line edge-cold" d="M 440 100 Q 440 150 370 190" marker-end="url(#arrow-cold)" />
+              <path class="edge-line edge-cold" d="M 440 100 Q 440 150 470 190" marker-end="url(#arrow-cold)" />
+              
+              <path class="edge-line edge-cold" d="M 600 100 Q 600 150 470 190" marker-end="url(#arrow-cold)" />
+              <path class="edge-line edge-cold" d="M 600 100 Q 600 150 570 190" marker-end="url(#arrow-cold)" />
+              <path class="edge-line edge-cold" d="M 600 100 Q 600 150 670 190" marker-end="url(#arrow-cold)" />
+
+              <!-- Lines from Cold Aisle to Hot Aisle -->
+              <path class="edge-line edge-hot" d="M 70 230 Q 70 270 70 310" marker-end="url(#arrow-hot)" />
+              <path class="edge-line edge-hot" d="M 70 230 Q 120 270 170 310" marker-end="url(#arrow-hot)" />
+              
+              <path class="edge-line edge-hot" d="M 170 230 Q 170 270 170 310" marker-end="url(#arrow-hot)" />
+              <path class="edge-line edge-hot" d="M 170 230 Q 220 270 270 310" marker-end="url(#arrow-hot)" />
+
+              <path class="edge-line edge-hot" d="M 270 230 Q 270 270 270 310" marker-end="url(#arrow-hot)" />
+              <path class="edge-line edge-hot" d="M 270 230 Q 320 270 370 310" marker-end="url(#arrow-hot)" />
+
+              <path class="edge-line edge-hot" d="M 370 230 Q 370 270 370 310" marker-end="url(#arrow-hot)" />
+              <path class="edge-line edge-hot" d="M 370 230 Q 420 270 470 310" marker-end="url(#arrow-hot)" />
+
+              <path class="edge-line edge-hot" d="M 470 230 Q 470 270 470 310" marker-end="url(#arrow-hot)" />
+              <path class="edge-line edge-hot" d="M 470 230 Q 520 270 570 310" marker-end="url(#arrow-hot)" />
+
+              <path class="edge-line edge-hot" d="M 570 230 Q 620 270 670 310" marker-end="url(#arrow-hot)" />
+              <path class="edge-line edge-hot" d="M 670 230 Q 670 270 670 310" marker-end="url(#arrow-hot)" />
+
+              <!-- Row 1: AC Nodes -->
+              <!-- AC 1 -->
+              <g transform="translate(120, 50)">
+                <rect class="node-ac-rect" x="-24" y="-30" width="48" height="60" />
+                <svg x="-12" y="-12" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="12" y1="10" x2="12" y2="18"/><path d="M9 13l3 3 3-3"/></svg>
+                <text class="node-ac-text" y="45" text-anchor="middle">风冷精密空调1</text>
+              </g>
+              <!-- AC 2 -->
+              <g transform="translate(280, 50)">
+                <rect class="node-ac-rect" x="-24" y="-30" width="48" height="60" />
+                <svg x="-12" y="-12" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="12" y1="10" x2="12" y2="18"/><path d="M9 13l3 3 3-3"/></svg>
+                <text class="node-ac-text" y="45" text-anchor="middle">风冷精密空调2</text>
+              </g>
+              <!-- Fresh Air 1 -->
+              <g transform="translate(440, 50)">
+                <rect class="node-ac-rect" x="-24" y="-30" width="48" height="60" />
+                <svg x="-12" y="-12" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="10" y1="16" x2="14" y2="16"/></svg>
+                <text class="node-ac-text" y="45" text-anchor="middle">新风机1</text>
+              </g>
+              <!-- Fresh Air 2 -->
+              <g transform="translate(600, 50)">
+                <rect class="node-ac-rect" x="-24" y="-30" width="48" height="60" />
+                <svg x="-12" y="-12" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="10" y1="16" x2="14" y2="16"/></svg>
+                <text class="node-ac-text" y="45" text-anchor="middle">新风机2</text>
+              </g>
+
+              <!-- Row 2: Cold Aisle Nodes -->
+              <g transform="translate(70, 210)">
+                <circle class="node-cold-circle" r="20" />
+                <text class="node-label" y="34">冷通道1</text>
+              </g>
+              <g transform="translate(170, 210)">
+                <circle class="node-cold-circle" r="20" />
+                <text class="node-label" y="34">冷通道2</text>
+              </g>
+              <g transform="translate(270, 210)">
+                <circle class="node-cold-circle" r="20" />
+                <text class="node-label" y="34">冷通道3</text>
+              </g>
+              <g transform="translate(370, 210)">
+                <circle class="node-cold-circle" r="20" />
+                <text class="node-label" y="34">冷通道4</text>
+              </g>
+              <g transform="translate(470, 210)">
+                <circle class="node-cold-circle" r="20" />
+                <text class="node-label" y="34">冷通道5</text>
+              </g>
+              <g transform="translate(570, 210)">
+                <circle class="node-cold-circle" r="20" />
+                <text class="node-label" y="34">冷通道6</text>
+              </g>
+              <g transform="translate(670, 210)">
+                <circle class="node-cold-circle" r="20" />
+                <text class="node-label" y="34">冷通道7</text>
+              </g>
+
+              <!-- Row 3: Hot Aisle Nodes -->
+              <g transform="translate(70, 330)">
+                <circle class="node-hot-circle" r="20" />
+                <text class="node-label" y="34">热通道1</text>
+              </g>
+              <g transform="translate(170, 330)">
+                <circle class="node-hot-circle" r="20" />
+                <text class="node-label" y="34">热通道2</text>
+              </g>
+              <g transform="translate(270, 330)">
+                <circle class="node-hot-circle" r="20" />
+                <text class="node-label" y="34">热通道3</text>
+              </g>
+              <g transform="translate(370, 330)">
+                <circle class="node-hot-circle" r="20" />
+                <text class="node-label" y="34">热通道4</text>
+              </g>
+              <g transform="translate(470, 330)">
+                <circle class="node-hot-circle" r="20" />
+                <text class="node-label" y="34">热通道5</text>
+              </g>
+              <g transform="translate(570, 330)">
+                <circle class="node-hot-circle" r="20" />
+                <text class="node-label" y="34">热通道6</text>
+              </g>
+              <g transform="translate(670, 330)">
+                <circle class="node-hot-circle" r="20" />
+                <text class="node-label" y="34">热通道7</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <div class="content-right">
+          <div class="panel-card" style="overflow-y: auto;">
+            <div class="panel-title">空间位置</div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>空调末端</th>
+                  <th>空间位置</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>空调-空调1</td><td>
+                  <div style="display:flex;gap:4px;">
+                    <input type="text" class="field-control" placeholder="x坐标" value="80" style="width:60px;text-align:center;">
+                    <input type="text" class="field-control" placeholder="y坐标" value="60" style="width:60px;text-align:center;">
+                  </div>
+                </td></tr>
+                <tr><td>空调-空调2</td><td>
+                  <div style="display:flex;gap:4px;">
+                    <input type="text" class="field-control" placeholder="x坐标" value="200" style="width:60px;text-align:center;">
+                    <input type="text" class="field-control" placeholder="y坐标" value="60" style="width:60px;text-align:center;">
+                  </div>
+                </td></tr>
+                <tr><td>新风机-新风机1</td><td>
+                  <div style="display:flex;gap:4px;">
+                    <input type="text" class="field-control" placeholder="x坐标" value="320" style="width:60px;text-align:center;">
+                    <input type="text" class="field-control" placeholder="y坐标" value="60" style="width:60px;text-align:center;">
+                  </div>
+                </td></tr>
+                <tr><td>新风机-新风机2</td><td>
+                  <div style="display:flex;gap:4px;">
+                    <input type="text" class="field-control" placeholder="x坐标" value="440" style="width:60px;text-align:center;">
+                    <input type="text" class="field-control" placeholder="y坐标" value="60" style="width:60px;text-align:center;">
+                  </div>
+                </td></tr>
+                <tr><td>加除湿器-加除湿器</td><td>
+                  <div style="display:flex;gap:4px;">
+                    <input type="text" class="field-control" placeholder="x坐标" value="560" style="width:60px;text-align:center;">
+                    <input type="text" class="field-control" placeholder="y坐标" value="60" style="width:60px;text-align:center;">
+                  </div>
+                </td></tr>
+                <tr><td>冷通道1</td><td>
+                  <div style="display:flex;gap:4px;">
+                    <input type="text" class="field-control" placeholder="x坐标" value="60" style="width:60px;text-align:center;">
+                    <input type="text" class="field-control" placeholder="y坐标" value="180" style="width:60px;text-align:center;">
+                  </div>
+                </td></tr>
+                <tr><td>冷通道2</td><td>
+                  <div style="display:flex;gap:4px;">
+                    <input type="text" class="field-control" placeholder="x坐标" value="160" style="width:60px;text-align:center;">
+                    <input type="text" class="field-control" placeholder="y坐标" value="180" style="width:60px;text-align:center;">
+                  </div>
+                </td></tr>
+                <tr><td>冷通道3</td><td>
+                  <div style="display:flex;gap:4px;">
+                    <input type="text" class="field-control" placeholder="x坐标" value="260" style="width:60px;text-align:center;">
+                    <input type="text" class="field-control" placeholder="y坐标" value="180" style="width:60px;text-align:center;">
+                  </div>
+                </td></tr>
+                <tr><td>热通道1</td><td>
+                  <div style="display:flex;gap:4px;">
+                    <input type="text" class="field-control" placeholder="x坐标" value="60" style="width:60px;text-align:center;">
+                    <input type="text" class="field-control" placeholder="y坐标" value="300" style="width:60px;text-align:center;">
+                  </div>
+                </td></tr>
+                <tr><td>热通道2</td><td>
+                  <div style="display:flex;gap:4px;">
+                    <input type="text" class="field-control" placeholder="x坐标" value="160" style="width:60px;text-align:center;">
+                    <input type="text" class="field-control" placeholder="y坐标" value="300" style="width:60px;text-align:center;">
+                  </div>
+                </td></tr>
+              </tbody>
+            </table>
+
+            <!-- 供冷关系（多选） -->
+            <div class="panel-title" style="margin-top:24px;">空调与冷通道传感器的供冷关系</div>
+            <table class="data-table" id="tableSupply">
+              <thead>
+                <tr>
+                  <th>空调末端</th>
+                  <th>供冷传感器（可多选）</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="white-space:nowrap;">1#空调</td>
+                  <td>
+                    <div class="multi-select-wrap" data-ac="1">
+                      <div class="multi-select-trigger" role="button" tabindex="0">
+                        <span class="ms-placeholder">请选择</span>
+                      </div>
+                      <div class="ms-dropdown">
+                        <label class="ms-option"><input type="checkbox" value="1#温湿度传感器"> 1#温湿度传感器</label>
+                        <label class="ms-option"><input type="checkbox" value="2#温湿度传感器"> 2#温湿度传感器</label>
+                        <label class="ms-option"><input type="checkbox" value="3#温湿度传感器"> 3#温湿度传感器</label>
+                        <label class="ms-option"><input type="checkbox" value="4#温湿度传感器"> 4#温湿度传感器</label>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="white-space:nowrap;">2#空调</td>
+                  <td>
+                    <div class="multi-select-wrap" data-ac="2">
+                      <div class="multi-select-trigger" role="button" tabindex="0">
+                        <span class="ms-placeholder">请选择</span>
+                      </div>
+                      <div class="ms-dropdown">
+                        <label class="ms-option"><input type="checkbox" value="1#温湿度传感器"> 1#温湿度传感器</label>
+                        <label class="ms-option"><input type="checkbox" value="2#温湿度传感器"> 2#温湿度传感器</label>
+                        <label class="ms-option"><input type="checkbox" value="3#温湿度传感器"> 3#温湿度传感器</label>
+                        <label class="ms-option"><input type="checkbox" value="4#温湿度传感器"> 4#温湿度传感器</label>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- 换热关系（无封闭模式时隐藏） -->
+            <div id="sectionHeatExchange" style="margin-top:24px;">
+              <div class="panel-title">冷通道与热通道传感器的换热关系</div>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>冷通道传感器</th>
+                    <th>配对热通道传感器</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>1#温湿度传感器</td><td><select class="field-select" style="width:100%;"><option value="">请选择</option><option>2#温湿度传感器</option><option>3#温湿度传感器</option></select></td></tr>
+                  <tr><td>2#温湿度传感器</td><td><select class="field-select" style="width:100%;"><option value="">请选择</option><option>3#温湿度传感器</option><option>4#温湿度传感器</option></select></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div id="sectionHeatExchangeHint" style="display:none;margin-top:16px;">
+              <div class="section-note">无封闭模式下不区分冷热通道，无需配置换热配对关系。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="foot-actions" style="margin:0;">
+        <button type="button" class="btn">取消</button>
+        <a href="机房寻优-创建机房模型.html" class="btn">上一步</a>
+        <button type="button" class="btn btn-primary" id="btnComplete">完成</button>
+      </div>
+    </main>
+    </div>
+  </div>
+
+  <!-- 同步3D配置数据弹窗 -->
+  <div class="modal-overlay" id="modalSync3D" aria-hidden="true">
+    <div class="modal-dialog" role="dialog" aria-labelledby="modalSync3DTitle">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalSync3DTitle">同步3D配置数据</h2>
+        <button type="button" class="modal-close" id="modalSync3DClose" aria-label="关闭">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label class="field-label"><span class="required">*</span> 3D项目</label>
+          <select class="field-select">
+            <option value="">请选择</option>
+            <option>3D项目A</option>
+            <option>3D项目B</option>
+          </select>
+          <span class="field-hint" style="display:inline;margin-left:8px;margin-top:0;">单选，选择3D项目</span>
+        </div>
+        <div class="field">
+          <label class="field-label"><span class="required">*</span> 机房</label>
+          <div class="cascade-select" id="cascadeRoom">
+            <div class="cascade-col">
+              <div class="cascade-col-header">楼层</div>
+              <div id="cascadeFloorList"></div>
+            </div>
+            <div class="cascade-col">
+              <div class="cascade-col-header">机房</div>
+              <div id="cascadeRoomList"><div style="padding:12px 10px;font-size:12px;color:var(--text-hint);">请先选择楼层</div></div>
+            </div>
+          </div>
+          <div class="cascade-selected-val" id="cascadeSelectedVal">已选：<span>—</span></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn" id="modalSync3DCancel">取 消</button>
+        <button type="button" class="btn btn-primary" id="modalSync3DConfirm">同步化</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ── 同步3D弹窗 ── */
+    (function () {
+      var overlay = document.getElementById('modalSync3D');
+      var btnOpen = document.getElementById('btnSync3D');
+      var btnClose = document.getElementById('modalSync3DClose');
+      var btnCancel = document.getElementById('modalSync3DCancel');
+      var btnConfirm = document.getElementById('modalSync3DConfirm');
+      function openModal() { overlay.classList.add('is-open'); overlay.setAttribute('aria-hidden', 'false'); }
+      function closeModal() { overlay.classList.remove('is-open'); overlay.setAttribute('aria-hidden', 'true'); }
+      if (btnOpen) btnOpen.addEventListener('click', openModal);
+      if (btnClose) btnClose.addEventListener('click', closeModal);
+      if (btnCancel) btnCancel.addEventListener('click', closeModal);
+      if (btnConfirm) btnConfirm.addEventListener('click', closeModal);
+      if (overlay) overlay.addEventListener('click', function (e) { if (e.target === overlay) closeModal(); });
+    })();
+
+    /* ── 级联选择：楼层 → 机房 ── */
+    (function () {
+      var data = {
+        'B1层': ['B1-机房A', 'B1-机房B'],
+        '1层':  ['1F-核心机房', '1F-边缘机房1', '1F-边缘机房2'],
+        '2层':  ['2F-机房01', '2F-机房02', '2F-机房03'],
+        '3层':  ['3F-主机房', '3F-备用机房'],
+        '4层':  ['4F-机房'],
+      };
+
+      var floorList  = document.getElementById('cascadeFloorList');
+      var roomList   = document.getElementById('cascadeRoomList');
+      var selectedVal = document.getElementById('cascadeSelectedVal');
+
+      var activeFloor  = null;
+      var selectedRoom = null;
+
+      // 渲染楼层列表
+      Object.keys(data).forEach(function (floor) {
+        var item = document.createElement('div');
+        item.className = 'cascade-item';
+        item.innerHTML = '<span>' + floor + '</span><span class="cascade-arrow">›</span>';
+        item.addEventListener('click', function () {
+          activeFloor = floor;
+          // 更新楼层高亮
+          floorList.querySelectorAll('.cascade-item').forEach(function (el) {
+            el.classList.remove('active');
+          });
+          item.classList.add('active');
+          // 渲染机房列表
+          renderRooms(floor);
+        });
+        floorList.appendChild(item);
+      });
+
+      function renderRooms(floor) {
+        roomList.innerHTML = '';
+        (data[floor] || []).forEach(function (room) {
+          var item = document.createElement('div');
+          item.className = 'cascade-item' + (selectedRoom === room ? ' selected' : '');
+          item.textContent = room;
+          item.addEventListener('click', function () {
+            selectedRoom = room;
+            roomList.querySelectorAll('.cascade-item').forEach(function (el) {
+              el.classList.remove('selected');
+            });
+            item.classList.add('selected');
+            selectedVal.innerHTML = '已选：<span>' + activeFloor + ' / ' + room + '</span>';
+          });
+          roomList.appendChild(item);
+        });
+      }
+    })();
+
+    /* ── 完成按钮 ── */
+    document.getElementById('btnComplete').addEventListener('click', function () {
+      alert('完成：可在此对接提交接口，并跳转至列表或详情。');
+    });
+
+    /* ── 多选供冷关系 ── */
+    (function () {
+      function initMultiSelect(wrap) {
+        var trigger  = wrap.querySelector('.multi-select-trigger');
+        var dropdown = wrap.querySelector('.ms-dropdown');
+        var cbs      = wrap.querySelectorAll('input[type="checkbox"]');
+
+        function renderTags() {
+          var checked = Array.from(cbs).filter(function (c) { return c.checked; });
+          trigger.innerHTML = '';
+          if (checked.length === 0) {
+            trigger.innerHTML = '<span class="ms-placeholder">请选择</span>';
+          } else {
+            checked.forEach(function (c) {
+              var tag = document.createElement('span');
+              tag.className = 'ms-tag';
+              tag.innerHTML = c.value + '<button type="button" class="ms-tag-remove" aria-label="移除">×</button>';
+              tag.querySelector('.ms-tag-remove').addEventListener('click', function (e) {
+                e.stopPropagation();
+                c.checked = false;
+                renderTags();
+              });
+              trigger.appendChild(tag);
+            });
+          }
+        }
+
+        trigger.addEventListener('click', function (e) {
+          e.stopPropagation();
+          dropdown.classList.toggle('is-open');
+          trigger.classList.toggle('is-open');
+        });
+
+        cbs.forEach(function (cb) {
+          cb.addEventListener('change', renderTags);
+        });
+
+        document.addEventListener('click', function () {
+          dropdown.classList.remove('is-open');
+          trigger.classList.remove('is-open');
+        });
+
+        dropdown.addEventListener('click', function (e) { e.stopPropagation(); });
+        renderTags();
+      }
+
+      document.querySelectorAll('.multi-select-wrap').forEach(initMultiSelect);
+    })();
+
+    /* ── 通道封闭模式联动（读取步骤1 localStorage） ── */
+    (function () {
+      var mode = localStorage.getItem('aisleMode') || '';
+      var isNoSeal = (mode === '无封闭');
+
+      var sectionHE     = document.getElementById('sectionHeatExchange');
+      var sectionHEHint = document.getElementById('sectionHeatExchangeHint');
+
+      if (sectionHE)     sectionHE.style.display     = isNoSeal ? 'none' : '';
+      if (sectionHEHint) sectionHEHint.style.display  = isNoSeal ? '' : 'none';
+    })();
+  </script>
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="机房热力模型"></script>
+
+  <button class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+  <div class="anno-filter-bar" id="annoFilterBar">
+    <span class="anno-filter-label">批注版本：</span>
+    <div class="anno-filter-tags" id="annoFilterTags"></div>
+  </div>
+  <script>
+  function initAnnoVersionFilter() {
+    var bar = document.getElementById('annoFilterBar');
+    var tags = document.getElementById('annoFilterTags');
+    if (!document.body.classList.contains('annotation-mode')) return;
+    var annos = document.querySelectorAll('.anno[data-version]');
+    var versions = [];
+    annos.forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (v && versions.indexOf(v) === -1) versions.push(v);
+    });
+    versions.sort(function(a, b) {
+      var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+      var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+      for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+        if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+      }
+      return 0;
+    });
+    tags.innerHTML = '';
+    var allBtn = document.createElement('span');
+    allBtn.className = 'anno-filter-tag';
+    allBtn.textContent = '全部';
+    allBtn.onclick = function() { filterAnno('all', versions[0]); setActive(this); };
+    tags.appendChild(allBtn);
+    versions.forEach(function(v, i) {
+      var btn = document.createElement('span');
+      btn.className = 'anno-filter-tag' + (i === 0 ? ' active' : '');
+      btn.textContent = v;
+      btn.onclick = function() { filterAnno(v, versions[0]); setActive(this); };
+      tags.appendChild(btn);
+    });
+    if (versions.length > 0) filterAnno(versions[0], versions[0]);
+  }
+  function filterAnno(version, latest) {
+    document.querySelectorAll('.anno[data-version]').forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (version === 'all') {
+        a.style.display = '';
+        a.style.opacity = (v === latest) ? '1' : '0.6';
+      } else {
+        a.style.display = (v === version) ? '' : 'none';
+        a.style.opacity = '1';
+      }
+    });
+  }
+  function setActive(el) {
+    el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function(t) { t.classList.remove('active'); });
+    el.classList.add('active');
+  }
+  </script>
+</body>
+</html>

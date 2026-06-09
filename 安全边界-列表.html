@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>安全边界 - 列表</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-dark: #17358A;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --sidebar-bg: #071B2E;
+      --header-bg: #071B2E;
+      --danger: #DC2626;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button {
+      border: none;
+      background: none;
+      font: inherit;
+    }
+
+    .layout {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .body-wrap {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .main {
+      flex: 1;
+      min-width: 0;
+      overflow-y: auto;
+      background: var(--bg-body);
+    }
+
+    .page-shell {
+      padding: 18px 20px 24px;
+    }
+
+    .page-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .page-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px 10px;
+    }
+
+    .page-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.4;
+    }
+
+    .page-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 0 18px 16px;
+    }
+
+    .search-field {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      height: 34px;
+      padding: 0 12px;
+      min-width: 260px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text-secondary);
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .search-field:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.12);
+    }
+
+    .search-field svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+      opacity: .75;
+    }
+
+    .search-input {
+      border: none;
+      outline: none;
+      font-size: 12px;
+      width: 100%;
+      color: var(--text-primary);
+    }
+
+    .search-input::placeholder {
+      color: var(--text-hint);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 34px;
+      padding: 0 14px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .btn-primary {
+      color: #fff;
+      background: var(--primary);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    .data-table {
+      width: 100%;
+      min-width: 980px;
+      border-collapse: collapse;
+    }
+
+    .data-table thead th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 14px 16px;
+      font-size: 13px;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-light);
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover {
+      background: #FBFCFE;
+    }
+
+    .status-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #F1F5F9;
+      color: var(--text-secondary);
+    }
+
+    .status-tag.active {
+      background: #ECFDF3;
+      color: #16A34A;
+    }
+
+    .actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      white-space: nowrap;
+    }
+
+    .action-link {
+      font-size: 13px;
+      cursor: pointer;
+      color: #1890FF;
+      transition: opacity var(--transition);
+    }
+
+    .action-link:hover {
+      opacity: 0.72;
+    }
+
+    .action-link.delete {
+      color: var(--danger);
+    }
+
+    .page-foot {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px;
+    }
+
+    .page-note {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.75;
+    }
+
+    .pagination-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+    }
+
+    .pagination-total {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .pagination {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .page-item,
+    .page-arrow {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .page-item:hover,
+    .page-arrow:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .page-item.active {
+      color: #fff;
+      border-color: var(--primary);
+      background: var(--primary);
+    }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      min-width: 180px;
+      max-width: 320px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.92);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.6;
+      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.28);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: all .25s ease;
+      z-index: 260;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 900px) {
+      .sidebar {
+        display: none;
+      }
+
+      .page-head,
+      .page-toolbar,
+      .page-foot {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .search-field {
+        width: 100%;
+      }
+
+      .pagination-wrap {
+        align-items: flex-start;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+        <div class="page-shell">
+          <div class="anno anno-version-header" data-version="v1.6">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v1.6</p>
+              <p><b>更新日期：</b>2026-03-20</p>
+              <p><b>变更概述：</b>安全边界策略列表与运维操作说明批注对齐新版规范。</p>
+              <p><b>本页说明：</b>集中展示安全边界策略，支持按名称查询、创建、查看、编辑、删除；列表区展示类型、创建时间、策略状态与行操作；底部分页与排序规则见数据批注。与创建页、编辑页衔接。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-ux" data-version="v1.6">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v1.6</span>
+            <span class="anno-source" data-type="AI 生成">AI 生成</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>整页导航与列表框架</p>
+              <ul>
+                <li><b>页面入口：</b>点击“创建安全边界”跳转创建页。</li>
+                <li><b>行操作：</b>支持查看、编辑、删除三类操作入口。</li>
+                <li><b>分页：</b>底部分页支持页码切换，当前示例为静态演示。</li>
+              </ul>
+            </div>
+          </div>
+
+          <section class="page-card">
+            <div class="page-head">
+              <div class="page-title">安全边界</div>
+            </div>
+
+            <div class="page-toolbar">
+              <label class="search-field">
+                <svg viewBox="0 0 16 16" aria-hidden="true">
+                  <path d="M6.5 1.5a5 5 0 1 0 3.1 8.9l3.5 3.5a1 1 0 0 0 1.4-1.4l-3.5-3.5a5 5 0 0 0-4.5-7.5zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/>
+                </svg>
+                <input class="search-input" type="text" placeholder="安全边界名称">
+              </label>
+              <button class="btn btn-primary" id="createBtn">创建安全边界</button>
+            </div>
+
+            <div class="anno anno-field" data-version="v1.6">
+              <span class="anno-tag">字段说明</span>
+              <span class="anno-version">v1.6</span>
+              <span class="anno-source" data-type="AI 生成">AI 生成</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>工具栏（搜索 + 创建）</p>
+                <table class="anno-table">
+                  <thead>
+                    <tr><th>控件</th><th>类型</th><th>规则</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>搜索输入框</td><td>String</td><td>按安全边界名称模糊匹配</td></tr>
+                    <tr><td>创建安全边界按钮</td><td>Action</td><td>点击跳转创建页</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="anno anno-ux" data-version="v1.6">
+              <span class="anno-tag">交互说明</span>
+              <span class="anno-version">v1.6</span>
+              <span class="anno-source" data-type="AI 生成">AI 生成</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>工具栏</p>
+                <ul>
+                  <li><b>查询时机：</b>可按回车触发查询，或输入后防抖触发。</li>
+                  <li><b>创建跳转：</b>点击按钮进入创建页，默认空白表单。</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="anno anno-data" data-version="v1.6">
+              <span class="anno-tag">数据逻辑</span>
+              <span class="anno-version">v1.6</span>
+              <span class="anno-source" data-type="基于文档推断">基于文档推断</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>工具栏查询</p>
+                <ul>
+                  <li><b>查询字段：</b>仅按“安全边界名称”进行筛选。</li>
+                  <li><b>空关键字：</b>关键字为空时返回全部数据。</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>安全边界</th>
+                    <th>安全边界类型</th>
+                    <th>创建时间</th>
+                    <th>策略状态</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>安全策略1</td>
+                    <td>水冷冷水系统</td>
+                    <td>2017-10-01 12:00</td>
+                    <td><span class="status-tag">已生成</span></td>
+                    <td>
+                      <div class="actions">
+                        <span class="action-link" data-action="view">查看</span>
+                        <span class="action-link" data-action="edit">编辑</span>
+                        <span class="action-link delete" data-action="delete">删除</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>正常策略2</td>
+                    <td>水冷冷水系统</td>
+                    <td>2017-10-01 12:00</td>
+                    <td><span class="status-tag">已生成</span></td>
+                    <td>
+                      <div class="actions">
+                        <span class="action-link" data-action="view">查看</span>
+                        <span class="action-link" data-action="edit">编辑</span>
+                        <span class="action-link delete" data-action="delete">删除</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>正常策略3</td>
+                    <td>水冷冷水系统</td>
+                    <td>2017-10-01 12:00</td>
+                    <td><span class="status-tag active">已引用</span></td>
+                    <td>
+                      <div class="actions">
+                        <span class="action-link" data-action="view">查看</span>
+                        <span class="action-link" data-action="edit">编辑</span>
+                        <span class="action-link delete" data-action="delete">删除</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>正常策略4</td>
+                    <td>水冷冷水系统</td>
+                    <td>2017-10-01 12:00</td>
+                    <td><span class="status-tag">已生成</span></td>
+                    <td>
+                      <div class="actions">
+                        <span class="action-link" data-action="view">查看</span>
+                        <span class="action-link" data-action="edit">编辑</span>
+                        <span class="action-link delete" data-action="delete">删除</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>保守策略</td>
+                    <td>水冷冷水系统</td>
+                    <td>2017-10-01 12:00</td>
+                    <td><span class="status-tag">已生成</span></td>
+                    <td>
+                      <div class="actions">
+                        <span class="action-link" data-action="view">查看</span>
+                        <span class="action-link" data-action="edit">编辑</span>
+                        <span class="action-link delete" data-action="delete">删除</span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="anno anno-field" data-version="v1.6">
+              <span class="anno-tag">字段说明</span>
+              <span class="anno-version">v1.6</span>
+              <span class="anno-source" data-type="基于文档推断">基于文档推断</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>策略数据表格</p>
+                <table class="anno-table">
+                  <thead>
+                    <tr><th>列名</th><th>类型</th><th>说明</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>安全边界</td><td>String</td><td>策略名称</td></tr>
+                    <tr><td>安全边界类型</td><td>Enum</td><td>水冷冷水系统 / 末端水冷系统</td></tr>
+                    <tr><td>创建时间</td><td>DateTime</td><td>策略创建时间</td></tr>
+                    <tr><td>策略状态</td><td>Enum</td><td>已生成 / 已引用</td></tr>
+                    <tr><td>操作</td><td>Action</td><td>查看 / 编辑 / 删除</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="anno anno-ux" data-version="v1.6">
+              <span class="anno-tag">交互说明</span>
+              <span class="anno-version">v1.6</span>
+              <span class="anno-source" data-type="AI 生成">AI 生成</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>表格行操作</p>
+                <ul>
+                  <li><b>查看：</b>点击“查看”进入详情（当前示意复用编辑页）。</li>
+                  <li><b>编辑：</b>点击“编辑”进入编辑页并回填当前策略。</li>
+                  <li><b>删除：</b>点击“删除”触发删除确认流程（示意版为 toast）。</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="anno anno-data" data-version="v1.6">
+              <span class="anno-tag">数据逻辑</span>
+              <span class="anno-version">v1.6</span>
+              <span class="anno-source" data-type="基于文档推断">基于文档推断</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>表格与分页</p>
+                <ul>
+                  <li><b>排序规则：</b>按创建时间倒序。</li>
+                  <li><b>分页规则：</b>20 条/页，支持页码切换。</li>
+                  <li><b>状态口径：</b>“已引用”表示策略已被运行策略引用，不建议直接删除。</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="anno anno-state" data-version="v1.6">
+              <span class="anno-tag">状态说明</span>
+              <span class="anno-version">v1.6</span>
+              <span class="anno-source" data-type="AI 生成">AI 生成</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>表格区域</p>
+                <ul>
+                  <li><b>默认态：</b>展示当前页策略列表。</li>
+                  <li><b>空态：</b>无数据时显示“暂无安全边界，请先创建”。</li>
+                  <li><b>加载态：</b>列表加载中显示骨架行。</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="anno anno-edge" data-version="v1.6">
+              <span class="anno-tag">边界与异常</span>
+              <span class="anno-version">v1.6</span>
+              <span class="anno-source" data-type="AI 生成">AI 生成</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>列表与删除/并发场景</p>
+                <ul>
+                  <li><b>删除限制：</b>已引用策略删除时应二次确认并提示引用风险。</li>
+                  <li><b>并发变更：</b>若策略已被他人删除/修改，操作时提示数据已变化并刷新。</li>
+                  <li><b>请求异常：</b>列表接口失败时展示重试提示。</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="page-foot">
+              <div class="page-note">
+                <div>排序：按照创建时间倒序排列</div>
+                <div>分页：20条/页</div>
+              </div>
+              <div class="pagination-wrap">
+                <div class="pagination-total">总共 85 个项目</div>
+                <div class="pagination">
+                  <span class="page-arrow" data-page="prev">‹</span>
+                  <span class="page-item active">1</span>
+                  <span class="page-item">2</span>
+                  <span class="page-item">3</span>
+                  <span class="page-item">4</span>
+                  <span class="page-item">5</span>
+                  <span class="page-arrow" data-page="next">›</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function () {
+      const toast = document.getElementById('toast');
+      let toastTimer = null;
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () {
+          toast.classList.remove('show');
+        }, 1800);
+      }
+
+      document.getElementById('createBtn').addEventListener('click', function () {
+        window.location.assign(encodeURI('安全边界-创建.html'));
+      });
+
+      document.querySelectorAll('.action-link').forEach(function (item) {
+        item.addEventListener('click', function () {
+          const action = item.getAttribute('data-action');
+          const row = item.closest('tr');
+          const name = row ? row.children[0].textContent.trim() : '当前安全边界';
+
+          if (action === 'view') {
+            window.location.assign(encodeURI('安全边界-编辑.html'));
+          } else if (action === 'edit') {
+            window.location.assign(encodeURI('安全边界-编辑.html'));
+          } else {
+            showToast('删除：' + name);
+          }
+        });
+      });
+
+      document.querySelectorAll('.page-item, .page-arrow').forEach(function (item) {
+        item.addEventListener('click', function () {
+          showToast('分页为静态示意');
+        });
+      });
+    })();
+  </script>
+  <button class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+
+  <div class="anno-filter-bar" id="annoFilterBar">
+    <span class="anno-filter-label">批注版本：</span>
+    <div class="anno-filter-tags" id="annoFilterTags"></div>
+  </div>
+
+  <script>
+  function initAnnoVersionFilter() {
+    var bar = document.getElementById('annoFilterBar');
+    var tags = document.getElementById('annoFilterTags');
+    if (!document.body.classList.contains('annotation-mode')) return;
+    var annos = document.querySelectorAll('.anno[data-version]');
+    var versions = [];
+    annos.forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (v && versions.indexOf(v) === -1) versions.push(v);
+    });
+    versions.sort(function(a, b) {
+      var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+      var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+      for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+        if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+      }
+      return 0;
+    });
+    tags.innerHTML = '';
+    var allBtn = document.createElement('span');
+    allBtn.className = 'anno-filter-tag';
+    allBtn.textContent = '全部';
+    allBtn.onclick = function() { filterAnno('all', versions[0]); setActive(this); };
+    tags.appendChild(allBtn);
+    versions.forEach(function(v, i) {
+      var btn = document.createElement('span');
+      btn.className = 'anno-filter-tag' + (i === 0 ? ' active' : '');
+      btn.textContent = v;
+      btn.onclick = function() { filterAnno(v, versions[0]); setActive(this); };
+      tags.appendChild(btn);
+    });
+    if (versions.length > 0) filterAnno(versions[0], versions[0]);
+  }
+  function filterAnno(version, latest) {
+    document.querySelectorAll('.anno[data-version]').forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (version === 'all') {
+        a.style.display = '';
+        a.style.opacity = (v === latest) ? '1' : '0.6';
+      } else {
+        a.style.display = (v === version) ? '' : 'none';
+        a.style.opacity = '1';
+      }
+    });
+  }
+  function setActive(el) {
+    el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function(t) { t.classList.remove('active'); });
+    el.classList.add('active');
+  }
+  </script>
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="安全边界"></script>
+</body>
+</html>
