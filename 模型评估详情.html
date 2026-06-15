@@ -502,86 +502,48 @@
       color: var(--text-secondary);
     }
 
-    .richness-layout {
-      display: grid;
-      grid-template-columns: minmax(360px, 0.92fr) minmax(0, 1.08fr);
-      gap: 16px;
-      align-items: stretch;
-    }
-
-    .score-panel {
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius);
-      background: #fff;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .score-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      padding-bottom: 14px;
-      border-bottom: 1px solid var(--border-light);
-    }
-
-    .score-title {
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin-bottom: 4px;
-    }
-
-    .score-value {
-      font-size: 26px;
-      font-weight: 700;
-      color: var(--primary);
-      line-height: 1;
-    }
-
-    .score-badge {
-      display: inline-flex;
-      align-items: center;
-      height: 26px;
-      padding: 0 10px;
-      border-radius: 999px;
-      background: rgba(30, 64, 175, 0.08);
-      color: var(--primary);
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    .quartile-table {
+    .richness-table {
       width: 100%;
       border-collapse: collapse;
+      background: #fff;
     }
 
-    .quartile-table thead th,
-    .quartile-table tbody td {
-      padding: 9px 8px;
+    .richness-table thead th,
+    .richness-table tbody td {
+      padding: 12px 8px;
       border-bottom: 1px solid var(--border-light);
       text-align: left;
       font-size: 12px;
-      vertical-align: top;
+      vertical-align: middle;
     }
 
-    .quartile-table thead th {
-      background: #F8FAFC;
-      color: var(--text-secondary);
+    .richness-table thead th {
+      color: var(--text-primary);
       font-weight: 600;
       white-space: nowrap;
+      border-bottom-color: var(--border);
     }
 
-    .quartile-table tbody tr:last-child td { border-bottom: none; }
-
-    .quartile-col {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      font-variant-numeric: tabular-nums;
+    .richness-table tbody td {
       color: var(--text-primary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .richness-table tbody tr:last-child td { border-bottom: none; }
+
+    .richness-info-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 12px;
+      height: 12px;
+      margin-left: 4px;
+      border: 1px solid #CBD5E1;
+      border-radius: 50%;
+      color: #94A3B8;
+      font-size: 9px;
+      line-height: 1;
+      vertical-align: middle;
     }
 
     /* 导出模态 */
@@ -677,11 +639,24 @@
       align-items: center;
       gap: 10px;
     }
-
+    .layer-pill,
+    .confidence-pill {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .layer-pill.base { background: #EFF6FF; color: var(--primary); }
+    .layer-pill.standard { background: #ECFDF5; color: var(--success); }
+    .confidence-pill.high { background: #ECFDF5; color: var(--success); }
+    .confidence-pill.low { background: #F1F5F9; color: #475569; }
     @media (max-width: 1200px) {
       .meta-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .split-layout,
-      .richness-layout { grid-template-columns: 1fr; }
+      .split-layout { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 760px) {
@@ -698,6 +673,10 @@
   <div class="layout">
     <div class="body-wrap">
       <main class="main">
+        <div class="anno-filter-bar" id="annoFilterBar">
+          <span class="anno-filter-label">批注版本：</span>
+          <div class="anno-filter-tags" id="annoFilterTags"></div>
+        </div>
         <header class="page-header">
           <div class="page-header-left">
             <a class="back-link" href="javascript:history.back()">
@@ -705,7 +684,7 @@
               <span>返回</span>
             </a>
             <div>
-              <div class="page-title">冷水主机功率预测&nbsp;|&nbsp;美的E3005-AI模型</div>
+              <div class="page-title">冷水主机功率预测&nbsp;|&nbsp;美的E3005预测模型服务</div>
               <div class="page-subtitle">版本：v202508121230</div>
             </div>
           </div>
@@ -723,7 +702,16 @@
             <div class="anno-body">
               <p><b>当前版本：</b>v2.2</p>
               <p><b>更新日期：</b>2026-05-28</p>
-              <p><b>变更概述：</b>v2.2 包含三项变更：① 整体评估区新增 Max-bin RMSE（最大分区误差）指标行，位于 RMSE 与 MAPE 之间，是「多工况泛化优先」模型选择策略的排序依据；② 新增「分工况表现」区块（Section 2），按模型参数的分层抽样配置对验证集分区，展示各区间 RMSE、样本量和数据覆盖率；③ 新增数据集导出功能：页头右侧增加「导出数据集」按钮，点击后下载原始数据集 CSV 文件。</p>
+              <p><b>变更概述：</b>v2.2 包含三项变更：① 评估指标区新增 Max-bin RMSE（最大分区误差）指标，位于 RMSE 与 MAPE 之间，是「多工况泛化优先」模型选择策略的排序依据；② 新增「分工况表现」区块，按模型参数的分层抽样配置对验证集分区，展示各区间 RMSE、样本量和数据覆盖率；③ 新增数据集导出功能：页头右侧增加「导出数据集」按钮，点击后下载原始数据集 CSV 文件。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-version-header" data-version="v2.3">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v2.3</p>
+              <p><b>更新日期：</b>2026-06-15</p>
+              <p><b>变更概述：</b>详情页从“单模型评估结果”调整为“两类模型评估结果”：整体评估与分层指标合并为「评估指标」，并在说明列解释机理模型与混合增强模型的作用；「分工况表现」复用统一高/低置信分箱，补充置信等级、分箱样本数、出值层级和区间 RMSE，用于解释覆盖缺口。</p>
             </div>
           </div>
 
@@ -764,12 +752,12 @@
             <span class="anno-version">v2.2</span>
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>整体评估 · Max-bin RMSE 行</p>
+              <p><b>关联模块：</b>评估指标 · Max-bin RMSE 行</p>
               <table class="anno-table">
                 <thead><tr><th>字段</th><th>说明</th></tr></thead>
                 <tbody>
                   <tr><td>Max-bin RMSE（最大分区误差）</td><td><b>v2.2 新增。</b>取自「分工况表现」区块：所有样本充足区间（样本 ≥ 20）中 RMSE 的最大值。反映模型在最薄弱工况下的预测能力，值越低越好。该指标同时出现在机理模型训练列表的「评估效果」列、历史版本弹窗、迁移学习弹窗中，是「多工况泛化优先」模型选择策略的排序依据。</td></tr>
-                  <tr><td>展示位置</td><td>位于 RMSE 和 MAPE 之间；若模型训练未完成分工况评估（如分层数全为 1、或无充足区间），显示「—」。</td></tr>
+                  <tr><td>展示位置</td><td>位于评估指标表的整体口径行；若模型训练未完成分工况评估（如分层数全为 1、或无充足区间），显示「—」。</td></tr>
                 </tbody>
               </table>
             </div>
@@ -779,41 +767,58 @@
             <div class="section-head">
               <div class="section-head-main">
                 <span class="step-num">1</span>
-                <h2 class="section-title">整体评估</h2>
+                <h2 class="section-title">评估指标</h2>
               </div>
             </div>
             <div class="section-body">
-              <table class="overview-table">
-                <thead>
-                  <tr>
-                    <th style="width: 220px;">指标名称</th>
-                    <th style="width: 180px;">数值</th>
-                    <th>解释说明</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td class="metric-name">RMSE（均方根误差）</td>
-                    <td class="metric-value">0.012</td>
-                    <td class="metric-desc">是观测值与真实值偏差的平方值的平均数的平方根。它衡量的是模型预测值与实际观测值之间的差异程度；值越低表示模型质量越高。</td>
-                  </tr>
-                  <tr>
-                    <td class="metric-name">Max-bin RMSE（最大分区误差）</td>
-                    <td class="metric-value">0.019</td>
-                    <td class="metric-desc">所有样本充足区间中 RMSE 的最大值，反映模型在最薄弱工况下的预测能力；值越低表示多工况泛化越好。是「多工况泛化优先」模型选择策略的排序依据。</td>
-                  </tr>
-                  <tr>
-                    <td class="metric-name">MAPE（平均绝对百分比误差）</td>
-                    <td class="metric-value">2.45%</td>
-                    <td class="metric-desc">标签与预测值之间的平均绝对百分比差。该指标的范围介于 0 到无穷大之间；值越低表示模型质量越高。</td>
-                  </tr>
-                  <tr>
-                    <td class="metric-name">R2 Score（决定系数）</td>
-                    <td class="metric-value">0.994</td>
-                    <td class="metric-desc">R 平方（R^2）也称为决定系数，反映因变量的全部变异能通过回归关系被自变量解释的比例，该指标值越接近于 1 表示模型效果越好。</td>
-                  </tr>
-                </tbody>
-              </table>
+              <div class="table-wrap">
+                <table class="data-table" style="min-width:1120px;">
+                  <thead>
+                    <tr>
+                      <th>口径</th>
+                      <th style="text-align:right;">RMSE</th>
+                      <th style="text-align:right;">Max-bin RMSE</th>
+                      <th style="text-align:right;">MAE</th>
+                      <th style="text-align:right;">MAPE</th>
+                      <th style="text-align:right;">R²</th>
+                      <th style="text-align:right;">样本数</th>
+                      <th style="min-width:340px;">说明</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><span class="layer-pill standard">整体出值口径</span></td>
+                      <td style="text-align:right;">0.012</td>
+                      <td style="text-align:right;">0.019</td>
+                      <td style="text-align:right;">—</td>
+                      <td style="text-align:right;">2.45%</td>
+                      <td style="text-align:right;">0.994</td>
+                      <td style="text-align:right;">812</td>
+                      <td>用于判断当前对外出值的整体质量和多工况泛化表现。</td>
+                    </tr>
+                    <tr>
+                      <td><span class="layer-pill base">机理模型</span></td>
+                      <td style="text-align:right;">—</td>
+                      <td style="text-align:right;">—</td>
+                      <td style="text-align:right;">0.094</td>
+                      <td style="text-align:right;">12.8%</td>
+                      <td style="text-align:right;">0.812</td>
+                      <td style="text-align:right;">812</td>
+                      <td>在训练数据不足、冷启动或超出高置信分箱时，按基础物理关系给出保底预测，保证仿真和寻优不会因为缺少历史数据中断。</td>
+                    </tr>
+                    <tr>
+                      <td><span class="layer-pill standard">混合增强模型</span></td>
+                      <td style="text-align:right;">—</td>
+                      <td style="text-align:right;">—</td>
+                      <td style="text-align:right;">0.018</td>
+                      <td style="text-align:right;">2.45%</td>
+                      <td style="text-align:right;">0.994</td>
+                      <td style="text-align:right;">812</td>
+                      <td>在训练数据覆盖充分的工况下，用现场历史数据校准模型偏差，作为常规高置信工况下的主力预测模型，提升预测精度和泛化稳定性。算法类型：机理模型。</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </section>
 
@@ -823,7 +828,7 @@
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
               <p><b>关联模块：</b>分工况表现</p>
-              <p><b>v2.2 新增：</b>模型训练评估完成后，对分层数 ≥ 2 的所有参与特征做笛卡尔积，生成多维组合工况；仅展示样本量 ≥ 20 的组合，样本不足的组合自动隐藏。Max-bin RMSE（最大分区误差）汇总后已在「整体评估」区展示，本区不再重复。</p>
+              <p><b>v2.2 新增，v2.3 调整：</b>模型训练评估完成后，对分层数 ≥ 2 的所有参与特征做笛卡尔积，生成多维组合工况。v2.3 起低样本组合不再隐藏，保留为低置信行；Max-bin RMSE（最大分区误差）汇总后已在「评估指标」区展示，本区不再重复。</p>
               <table class="anno-table">
                 <thead><tr><th>字段</th><th>说明</th></tr></thead>
                 <tbody>
@@ -833,6 +838,22 @@
                 </tbody>
               </table>
               <p><b>与模型参数配置的关联：</b>分区特征和分层数完全由模型参数的「分层抽样」驱动，不需人工定义分区规则。修改分层数后，重新训练即可获得新的分区评估结果。</p>
+            </div>
+          </div>
+          <div class="anno anno-field" data-version="v2.3">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.3</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>分工况表现 · 置信与出值层级</p>
+              <table class="anno-table">
+                <thead><tr><th>字段</th><th>说明</th></tr></thead>
+                <tbody>
+                  <tr><td>置信等级</td><td>按统一工况分箱样本数判定，样本数 ≥ 20 为高置信，否则为低置信。</td></tr>
+                  <tr><td>出值层级</td><td>展示该分箱当前预测调用优先使用机理模型还是混合增强模型；低置信分箱可由机理模型兜底。</td></tr>
+                  <tr><td>低置信行</td><td>v2.3 不再默认隐藏样本不足分箱，保留低置信行用于解释覆盖缺口。</td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
 
@@ -845,15 +866,17 @@
             </div>
             <div class="section-body">
               <div class="note-block">
-                仅展示样本量 ≥ 20 的多维组合工况，样本不足的组合自动隐藏。每行为所有参与分区特征的区间笛卡尔积组合（分层数 ≥ 2）；Max-bin RMSE（所有行中 RMSE 最大值）已在「整体评估」区统一展示。
+                每行为所有参与分区特征的区间笛卡尔积组合（分层数 ≥ 2）；样本量 ≥ 20 判为高置信，样本不足时保留为低置信行，用于解释覆盖缺口。Max-bin RMSE（高置信行中 RMSE 最大值）已在「评估指标」区统一展示。
               </div>
 
               <div class="table-wrap">
-                <table class="data-table" style="min-width:580px;">
+                <table class="data-table" style="min-width:860px;">
                   <thead>
                     <tr>
                       <th>工况区间</th>
                       <th style="text-align:right;">样本量</th>
+                      <th>置信等级</th>
+                      <th>出值层级</th>
                       <th style="text-align:right;">区间 RMSE</th>
                     </tr>
                   </thead>
@@ -861,37 +884,52 @@
                     <tr>
                       <td style="font-size:12px;">流量 低(≤200 m³/h) · 供水温度 低(≤7℃) · 频率 低(≤35Hz)</td>
                       <td style="text-align:right;">40</td>
+                      <td><span class="confidence-pill high">高置信</span></td>
+                      <td><span class="layer-pill standard">混合增强模型</span></td>
                       <td style="text-align:right;">0.013</td>
                     </tr>
                     <tr>
                       <td style="font-size:12px;">流量 低(≤200 m³/h) · 供水温度 低(≤7℃) · 频率 高(&gt;35Hz)</td>
                       <td style="text-align:right;">28</td>
+                      <td><span class="confidence-pill high">高置信</span></td>
+                      <td><span class="layer-pill standard">混合增强模型</span></td>
                       <td style="text-align:right;">0.016</td>
                     </tr>
                     <tr>
                       <td style="font-size:12px;">流量 中(200-400 m³/h) · 供水温度 低(≤7℃) · 频率 低(≤35Hz)</td>
                       <td style="text-align:right;">68</td>
+                      <td><span class="confidence-pill high">高置信</span></td>
+                      <td><span class="layer-pill standard">混合增强模型</span></td>
                       <td style="text-align:right;">0.010</td>
                     </tr>
                     <tr>
                       <td style="font-size:12px;">流量 中(200-400 m³/h) · 供水温度 低(≤7℃) · 频率 高(&gt;35Hz)</td>
                       <td style="text-align:right;">78</td>
+                      <td><span class="confidence-pill high">高置信</span></td>
+                      <td><span class="layer-pill standard">混合增强模型</span></td>
                       <td style="text-align:right;">0.009</td>
                     </tr>
                     <tr>
                       <td style="font-size:12px;">流量 中(200-400 m³/h) · 供水温度 中(7-10℃) · 频率 低(≤35Hz)</td>
                       <td style="text-align:right;">48</td>
+                      <td><span class="confidence-pill high">高置信</span></td>
+                      <td><span class="layer-pill standard">混合增强模型</span></td>
                       <td style="text-align:right;font-weight:700;color:var(--warning);">0.019 ▲</td>
                     </tr>
                     <tr>
                       <td style="font-size:12px;">流量 中(200-400 m³/h) · 供水温度 中(7-10℃) · 频率 高(&gt;35Hz)</td>
                       <td style="text-align:right;">52</td>
+                      <td><span class="confidence-pill high">高置信</span></td>
+                      <td><span class="layer-pill standard">混合增强模型</span></td>
                       <td style="text-align:right;">0.015</td>
                     </tr>
                     <tr style="background:#F8FAFC;color:var(--text-hint);">
                       <td style="font-size:12px;">流量 高(&gt;400 m³/h) · 供水温度 低(≤7℃) · 频率 低(≤35Hz)</td>
                       <td style="text-align:right;">8</td>
+                      <td><span class="confidence-pill low">低置信</span></td>
+                      <td><span class="layer-pill base">机理模型</span></td>
                       <td style="text-align:right;">—</td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -909,95 +947,76 @@
               </div>
             </div>
             <div class="section-body">
-              <div class="richness-layout">
-                <div class="score-panel">
-                  <div class="score-top">
-                    <div>
-                      <div class="score-title">IQRNR</div>
-                      <div class="score-value">0.12</div>
-                    </div>
-                    <span class="score-badge">离散度评估</span>
-                  </div>
-
-                  <table class="quartile-table">
-                    <thead>
-                      <tr>
-                        <th style="width: 130px;">参数名称</th>
-                        <th>开关状态</th>
-                        <th>冷冻水流量</th>
-                        <th>频率</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>最小值</td>
-                        <td>1.00</td>
-                        <td>25.52</td>
-                        <td>12.23</td>
-                      </tr>
-                      <tr>
-                        <td>下四分位数</td>
-                        <td>1.00</td>
-                        <td>25.52</td>
-                        <td>12.23</td>
-                      </tr>
-                      <tr>
-                        <td>中位数</td>
-                        <td>1.00</td>
-                        <td>25.52</td>
-                        <td>12.23</td>
-                      </tr>
-                      <tr>
-                        <td>上四分位数</td>
-                        <td>1.00</td>
-                        <td>25.52</td>
-                        <td>12.23</td>
-                      </tr>
-                      <tr>
-                        <td>最大值</td>
-                        <td>1.00</td>
-                        <td>25.52</td>
-                        <td>12.23</td>
-                      </tr>
-                    </tbody>
-                  </table>
-
-                  <div class="info-tip">表示数据的离散程度，该指标通常在 0-1 之间，越大说明离散程度越高。</div>
-                </div>
-
-                <div class="chart-card">
-                  <div class="chart-frame">
-                    <span class="chart-side-label">关键 y 轴属性</span>
-                    <svg viewBox="0 0 920 360" aria-label="数据集丰富度评估图">
-                      <line x1="70" y1="300" x2="860" y2="300" stroke="#64748B" stroke-width="1.5" />
-                      <line x1="70" y1="300" x2="70" y2="34" stroke="#64748B" stroke-width="1.5" />
-
-                      <g stroke="#2563EB" stroke-width="3" fill="none">
-                        <line x1="180" y1="232" x2="180" y2="126" />
-                        <rect x="148" y="154" width="64" height="48" fill="rgba(37, 99, 235, 0.14)" />
-                        <line x1="148" y1="178" x2="212" y2="178" />
-
-                        <line x1="406" y1="252" x2="406" y2="114" />
-                        <rect x="374" y="164" width="64" height="58" fill="rgba(37, 99, 235, 0.14)" />
-                        <line x1="374" y1="192" x2="438" y2="192" />
-
-                        <line x1="632" y1="272" x2="632" y2="102" />
-                        <rect x="600" y="182" width="64" height="68" fill="rgba(37, 99, 235, 0.14)" />
-                        <line x1="600" y1="212" x2="664" y2="212" />
-                      </g>
-
-                      <g fill="#64748B" font-size="12">
-                        <text x="160" y="320">开关状态</text>
-                        <text x="378" y="320">冷冻水流量</text>
-                        <text x="620" y="320">频率</text>
-                      </g>
-                    </svg>
-                  </div>
-                  <div class="chart-axis-labels">
-                    <span>关键 x 轴属性</span>
-                    <span>通过分位数分布观察训练样本覆盖范围与离散程度</span>
-                  </div>
-                </div>
+              <div class="table-wrap">
+                <table class="richness-table" style="min-width:980px;">
+                  <thead>
+                    <tr>
+                      <th style="width: 200px;">参数名称</th>
+                      <th>最小值</th>
+                      <th>下四分位数</th>
+                      <th>中位数</th>
+                      <th>上四分位数</th>
+                      <th>最大值</th>
+                      <th>IQRNR<span class="richness-info-icon">?</span></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>冷冻水出水温度(℃)</td>
+                      <td>6.68</td>
+                      <td>11.88</td>
+                      <td>11.9</td>
+                      <td>12.06</td>
+                      <td>12.12</td>
+                      <td>0.033</td>
+                    </tr>
+                    <tr>
+                      <td>冷却水进水温度（计算）(℃)</td>
+                      <td>17</td>
+                      <td>24.61</td>
+                      <td>26.9</td>
+                      <td>29.6</td>
+                      <td>31.87</td>
+                      <td>0.336</td>
+                    </tr>
+                    <tr>
+                      <td>冷冻水流量(m3/h)</td>
+                      <td>164.63</td>
+                      <td>199.17</td>
+                      <td>208.19</td>
+                      <td>458.17</td>
+                      <td>599.13</td>
+                      <td>0.596</td>
+                    </tr>
+                    <tr>
+                      <td>冷却水流量(m3/h)</td>
+                      <td>200.79</td>
+                      <td>236.95</td>
+                      <td>248.33</td>
+                      <td>645.64</td>
+                      <td>796.7</td>
+                      <td>0.686</td>
+                    </tr>
+                    <tr>
+                      <td>实时制冷量(kW)</td>
+                      <td>983.23</td>
+                      <td>1184.19</td>
+                      <td>1239.6</td>
+                      <td>2103.09</td>
+                      <td>2498.98</td>
+                      <td>0.606</td>
+                    </tr>
+                    <tr>
+                      <td>有功功率(kW)</td>
+                      <td>168.21</td>
+                      <td>193.34</td>
+                      <td>203.59</td>
+                      <td>263.46</td>
+                      <td>330.9</td>
+                      <td>0.431</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </section>
@@ -1066,9 +1085,9 @@
                         <th style="width:60px;">序号</th>
                         <th>预测值</th>
                         <th>实际值</th>
-                        <th>特征值1</th>
-                        <th>特征值2</th>
-                        <th>特征值3</th>
+                        <th>开关状态</th>
+                        <th>冷冻水流量</th>
+                        <th>频率</th>
                         <th>特征值4</th>
                         <th>特征值5</th>
                         <th>特征值6</th>
@@ -1123,9 +1142,9 @@
                   <thead>
                     <tr>
                       <th>预测值</th>
-                      <th>特征值1</th>
-                      <th>特征值2</th>
-                      <th>特征值3</th>
+                      <th>开关状态</th>
+                      <th>冷冻水流量</th>
+                      <th>频率</th>
                       <th>特征值4</th>
                       <th>特征值5</th>
                       <th>特征值6</th>
@@ -1232,10 +1251,6 @@
   <div class="toast" id="toast"></div>
 
   <button type="button" class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoFilter();">批注</button>
-  <div class="anno-filter-bar" id="annoFilterBar">
-    <span class="anno-filter-label">批注版本：</span>
-    <div class="anno-filter-tags" id="annoFilterTags"></div>
-  </div>
 
   <script>
     (function () {

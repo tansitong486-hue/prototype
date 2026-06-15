@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>创建/编辑智控下发策略</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-dark: #17358A;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --danger: #DC2626;
+      --success: #16A34A;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button { border: none; background: none; font: inherit; }
+    a { color: inherit; text-decoration: none; }
+
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main { flex: 1; min-width: 0; overflow-y: auto; background: var(--bg-body); }
+
+    .breadcrumb {
+      padding: 10px 20px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      background: var(--bg-body);
+    }
+    .breadcrumb a { color: var(--text-secondary); cursor: pointer; }
+    .breadcrumb a:hover { color: var(--primary); }
+    .breadcrumb .sep { margin: 0 6px; color: var(--text-hint); }
+    .breadcrumb .current { color: var(--text-primary); }
+
+    .content-body {
+      padding: 0 16px 76px;
+    }
+
+    .form-card {
+      min-height: calc(100vh - 150px);
+      padding: 22px 18px 28px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      background: var(--bg-card);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .page-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 22px;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+    .page-back:hover { color: var(--primary); }
+    .page-back .arrow { font-size: 18px; }
+    .page-back .title {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .form-body {
+      max-width: 820px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .field-label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .required { color: var(--danger); margin-left: 2px; }
+
+    .input-wrap {
+      position: relative;
+      max-width: 808px;
+    }
+
+    .field-control {
+      width: 100%;
+      height: 34px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      outline: none;
+      background: #fff;
+      font-size: 13px;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .field-control:focus-visible {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.12);
+    }
+    .field-control::placeholder { color: var(--text-hint); }
+    .field-control:disabled,
+    select:disabled {
+      background: #F8FAFC;
+      color: var(--text-hint);
+      cursor: not-allowed;
+    }
+
+    .char-count {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .input-wrap .field-control { padding-right: 60px; }
+
+    .radio-group,
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      flex-wrap: wrap;
+      min-height: 34px;
+    }
+
+    .radio-group label,
+    .checkbox-group label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 28px;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--text-primary);
+    }
+
+    input[type="radio"],
+    input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      accent-color: #1E88E5;
+    }
+
+    .hint-red {
+      margin-left: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--danger);
+    }
+
+    .schedule-panel,
+    .condition-panel,
+    .group-control-panel {
+      width: 100%;
+      max-width: 808px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      margin-top: 10px;
+    }
+
+    .mode-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+
+    .mix-rule-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .mix-rule-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .mix-rule-desc {
+      margin-top: 4px;
+      max-width: 520px;
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+    .fallback-line {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 34px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .field-select {
+      height: 34px;
+      min-width: 98px;
+      padding: 0 28px 0 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text-primary);
+      font-size: 13px;
+      outline: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%2394A3B8' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+    }
+
+    .sub-label {
+      display: block;
+      margin: 14px 0 8px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .time-range-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .time-range {
+      display: inline-flex;
+      align-items: center;
+      height: 34px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .time-range input {
+      width: 145px;
+      height: 32px;
+      border: none;
+      outline: none;
+      padding: 0 10px;
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+    .time-range span {
+      color: var(--text-secondary);
+      padding: 0 4px;
+    }
+
+    .text-link {
+      color: #1890FF;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .text-link:hover { opacity: .75; }
+    .text-link.danger { color: var(--danger); }
+
+    .time-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .time-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: #F1F5F9;
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+
+    .mix-summary {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: #F8FAFC;
+      color: var(--text-secondary);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .summary-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .summary-tag {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid var(--border-light);
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .confidence-rule-panel {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #F8FAFC;
+      border: 1px solid var(--border-light);
+    }
+    .confidence-rule-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .confidence-rule-desc {
+      margin-top: 3px;
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+    .confidence-rule-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .confidence-rule-item {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+      padding: 10px;
+      border-radius: 8px;
+      background: #fff;
+      border: 1px solid var(--border-light);
+    }
+    .confidence-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 22px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .confidence-pill.high {
+      color: #15803D;
+      background: #ECFDF3;
+      border: 1px solid #BBF7D0;
+    }
+    .confidence-pill.low {
+      color: #475569;
+      background: #F1F5F9;
+      border: 1px solid #E2E8F0;
+    }
+
+    .condition-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      font-size: 13px;
+    }
+    .condition-head .spacer { flex: 1; min-width: 12px; }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .data-table thead th {
+      padding: 10px 10px;
+      text-align: left;
+      border-top: 1px solid var(--border-light);
+      border-bottom: 1px solid var(--border-light);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-primary);
+      background: #FBFCFE;
+      white-space: nowrap;
+    }
+    .data-table tbody td {
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 13px;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    .table-select,
+    .table-input {
+      width: 100%;
+      height: 32px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0 8px;
+      font-size: 12px;
+      color: var(--text-primary);
+      background: #fff;
+      outline: none;
+    }
+
+    .limit-inputs {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      width: 164px;
+    }
+
+    .empty-row td {
+      height: 56px;
+      text-align: center;
+      color: var(--text-hint);
+    }
+
+    .switch-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      max-width: 808px;
+      flex-wrap: wrap;
+    }
+    .switch-label {
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .switch-desc {
+      font-size: 12px;
+      color: var(--danger);
+    }
+
+    .switch {
+      position: relative;
+      display: inline-flex;
+      width: 42px;
+      height: 22px;
+      margin-left: auto;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      border-radius: 999px;
+      background: #CBD5E1;
+      transition: all var(--transition);
+    }
+    .slider::before {
+      content: "";
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      left: 2px;
+      top: 2px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.24);
+      transition: all var(--transition);
+    }
+    .switch input:checked + .slider { background: #1E88E5; }
+    .switch input:checked + .slider::before { transform: translateX(20px); }
+
+    .group-control-panel {
+      margin-top: 12px;
+      border: none;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+    }
+
+    .mapping-row {
+      display: grid;
+      grid-template-columns: 150px minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .mapping-row:last-child { border-bottom: none; }
+    .mapping-title {
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 28px;
+    }
+    .mapping-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      min-width: 0;
+    }
+    .mapping-options label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 28px;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .action-bar {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 14px 20px;
+      background: rgba(255, 255, 255, 0.96);
+      border-top: 1px solid var(--border-light);
+      z-index: 220;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 68px;
+      height: 36px;
+      padding: 0 18px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .btn-primary {
+      color: #fff;
+      background: var(--primary);
+    }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-ghost {
+      color: var(--primary);
+      background: #fff;
+      border: 1px solid var(--primary);
+    }
+    .btn-ghost:hover { background: #EEF4FF; }
+
+    .hidden { display: none !important; }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 78px;
+      min-width: 180px;
+      max-width: 320px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.92);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.6;
+      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.28);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: all .25s ease;
+      z-index: 260;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 900px) {
+      .content-body { padding: 0 12px 84px; }
+      .form-card { padding: 18px 14px 24px; }
+      .switch { margin-left: 0; }
+      .mapping-row { grid-template-columns: 1fr; }
+      .mapping-options label { white-space: normal; }
+      .mix-rule-head { flex-direction: column; }
+      .fallback-line {
+        width: 100%;
+        flex-wrap: wrap;
+        white-space: normal;
+      }
+      .fallback-line .field-select {
+        width: 100%;
+        min-width: 0;
+      }
+      .data-table { min-width: 760px; }
+      .condition-panel { overflow-x: auto; }
+      .confidence-rule-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+        <div class="anno-filter-bar" id="annoFilterBar">
+          <span class="anno-filter-label">批注版本：</span>
+          <div class="anno-filter-tags" id="annoFilterTags"></div>
+        </div>
+
+        <div class="anno anno-version-header" data-version="v2.3">
+          <span class="anno-tag">版本信息</span>
+          <div class="anno-body">
+            <p><b>当前版本：</b>v2.3</p>
+            <p><b>更新日期：</b>2026-06-15</p>
+            <p><b>变更概述：</b>新增/编辑智控下发策略页补充高/低置信处理语义：混合下发在时间命中后继续按置信等级展示处理方式，低置信默认手动下发；页面保留新增、编辑、查看三态与群控映射配置，本期不新增额外准入配置。</p>
+          </div>
+        </div>
+
+        <div class="anno anno-version-header" data-version="v1.0">
+          <span class="anno-tag">版本信息</span>
+          <div class="anno-body">
+            <p><b>当前版本：</b>v1.0</p>
+            <p><b>更新日期：</b>2026-06-15</p>
+            <p><b>v1.0 基线：</b>基于真实系统补齐新增、编辑、查看智控下发策略表单，支持下发策略名称、下发模式、手动下发工单通知规则、群控下发策略映射与保存/返回操作。</p>
+          </div>
+        </div>
+
+        <div class="breadcrumb">
+          <a href="智控下发策略管理.html">智控下发策略</a>
+          <span class="sep">/</span>
+          <span class="current" id="breadcrumbCurrent">新增下发策略</span>
+        </div>
+
+        <div class="content-body">
+          <section class="form-card">
+            <div class="page-back" id="backBtn">
+              <span class="arrow">←</span>
+              <span class="title" id="pageTitle">新增下发策略</span>
+            </div>
+
+            <div class="form-body">
+              <div class="anno anno-field" data-version="v1.0">
+                <span class="anno-tag">字段说明</span>
+                <span class="anno-version">v1.0</span>
+                <span class="anno-source">产品推断</span>
+                <div class="anno-body">
+                  <p><b>关联模块：</b>下发策略名称</p>
+                  <p>用于区分不同下发策略，新增时必填；编辑时可修改，查看态只读展示。最长 30 个字，输入框右侧实时展示字数。</p>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="field-label">下发策略名称<span class="required">*</span></label>
+                <div class="input-wrap">
+                  <input class="field-control" id="strategyName" type="text" maxlength="30" placeholder="请输入">
+                  <span class="char-count" id="nameCount">0 / 30</span>
+                </div>
+              </div>
+
+              <div class="anno anno-field" data-version="v1.0">
+                <span class="anno-tag">字段说明</span>
+                <span class="anno-version">v1.0</span>
+                <span class="anno-source">产品推断</span>
+                <div class="anno-body">
+                  <p><b>关联模块：</b>下发模式</p>
+                  <p>手动下发表示寻优结果需人工处理；自动下发表示命中策略后按系统流程执行；混合下发表示先按日期和时间范围判断，命中时间段后进入自动流程，未命中时按兜底方式处理。</p>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="field-label">下发模式<span class="required">*</span></label>
+                <div class="radio-group">
+                  <label><input type="radio" name="issueMode" value="manual" checked>手动下发</label>
+                  <label><input type="radio" name="issueMode" value="auto">自动下发</label>
+                  <label><input type="radio" name="issueMode" value="mixed">混合下发</label>
+                </div>
+              </div>
+
+              <div class="anno anno-data" data-version="v2.3">
+                <span class="anno-tag">数据逻辑</span>
+                <span class="anno-version">v2.3</span>
+                <span class="anno-source">需求文档</span>
+                <div class="anno-body">
+                  <p><b>关联模块：</b>混合规则与置信度规则</p>
+                  <p>混合下发先判断日期和时间是否命中。时间命中时默认进入自动下发流程，并按本轮寻优置信等级展示处理方式；高置信可直接执行，低置信建议手动下发。时间未命中时走兜底方式。</p>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="schedule-panel hidden" id="schedulePanel">
+                  <div class="mix-rule-head">
+                    <div>
+                      <div class="mix-rule-title">混合规则</div>
+                      <div class="mix-rule-desc">先限定日期与时间范围；未命中时间范围时走兜底方式。</div>
+                    </div>
+                    <label class="fallback-line">
+                      <span>兜底方式</span>
+                      <select class="field-select" id="fallbackMode">
+                        <option value="manual">手动下发</option>
+                        <option value="auto">自动下发</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  <span class="sub-label">日期范围<span class="required">*</span></span>
+                  <div class="radio-group">
+                    <label><input type="radio" name="dateRange" value="legal" checked>法定工作日</label>
+                    <label><input type="radio" name="dateRange" value="custom">自定义</label>
+                  </div>
+
+                  <div id="weekPanel" class="hidden">
+                    <span class="sub-label">每周<span class="required">*</span></span>
+                    <div class="checkbox-group">
+                      <label><input type="checkbox" checked>周一</label>
+                      <label><input type="checkbox" checked>周二</label>
+                      <label><input type="checkbox" checked>周三</label>
+                      <label><input type="checkbox" checked>周四</label>
+                      <label><input type="checkbox" checked>周五</label>
+                      <label><input type="checkbox">周六</label>
+                      <label><input type="checkbox">周日</label>
+                    </div>
+                  </div>
+
+                  <span class="sub-label">时间范围<span class="required">*</span></span>
+                  <div class="time-range-row">
+                    <div class="time-range">
+                      <input type="text" id="startTime" placeholder="开始时间">
+                      <span>到</span>
+                      <input type="text" id="endTime" placeholder="结束时间">
+                    </div>
+                    <span class="text-link" id="addTimeBtn">新增</span>
+                  </div>
+                  <div class="time-list" id="timeList"></div>
+                  <div class="confidence-rule-panel" id="confidenceRulePanel">
+                    <div>
+                      <div class="confidence-rule-title">置信度规则</div>
+                      <div class="confidence-rule-desc">命中自动流程后，按本轮寻优结果的高/低置信等级展示处理方式；低置信默认手动下发。</div>
+                    </div>
+                    <div class="confidence-rule-grid">
+                      <label class="confidence-rule-item">
+                        <span class="confidence-pill high">高置信</span>
+                        <select class="field-select" id="highConfidenceMode">
+                          <option value="auto" selected>自动下发</option>
+                          <option value="manual">手动下发</option>
+                        </select>
+                      </label>
+                      <label class="confidence-rule-item">
+                        <span class="confidence-pill low">低置信</span>
+                        <select class="field-select" id="lowConfidenceMode">
+                          <option value="manual" selected>手动下发</option>
+                          <option value="auto">自动下发</option>
+                        </select>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="mix-summary" id="mixSummary"></div>
+                </div>
+              </div>
+
+              <div class="anno anno-field" data-version="v1.0">
+                <span class="anno-tag">字段说明</span>
+                <span class="anno-version">v1.0</span>
+                <span class="anno-source">产品推断</span>
+                <div class="anno-body">
+                  <p><b>关联模块：</b>手动下发时工单通知规则</p>
+                  <p>仅手动下发模式，以及混合规则最终命中手动下发时生效。选择“不通知”时不创建工单提醒；选择“每次寻优都通知”时每轮寻优均提醒；选择“按需通知”时需维护通知条件。</p>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="field-label">
+                  手动下发时工单通知规则<span class="required">*</span>
+                  <span class="hint-red">（注：仅手动下发模式及混合规则命中手动下发时有效）</span>
+                </label>
+                <div class="radio-group">
+                  <label><input type="radio" name="noticeMode" value="none" checked>不通知</label>
+                  <label><input type="radio" name="noticeMode" value="always">每次寻优都通知</label>
+                  <label><input type="radio" name="noticeMode" value="condition">按需通知</label>
+                </div>
+
+                <div class="condition-panel hidden" id="conditionPanel">
+                  <div class="condition-head">
+                    <span>满足下列</span>
+                    <select class="field-select">
+                      <option>任意</option>
+                      <option>所有</option>
+                    </select>
+                    <span>条件工单通知：</span>
+                    <span class="required">*</span>
+                    <span class="spacer"></span>
+                    <button class="btn btn-primary" id="addConditionBtn" type="button">新增条件</button>
+                  </div>
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th style="width: 64px;">序号</th>
+                        <th style="width: 190px;">物模型</th>
+                        <th style="width: 190px;">变量名</th>
+                        <th style="width: 136px;">变量类型</th>
+                        <th style="width: 190px;">上下限</th>
+                        <th style="width: 70px;">操作</th>
+                      </tr>
+                    </thead>
+                    <tbody id="conditionTbody">
+                      <tr class="empty-row" id="conditionEmpty"><td colspan="6">暂无条件</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="anno anno-data" data-version="v1.0">
+                <span class="anno-tag">数据逻辑</span>
+                <span class="anno-version">v1.0</span>
+                <span class="anno-source">产品推断</span>
+                <div class="anno-body">
+                  <p><b>关联模块：</b>群控下发策略</p>
+                  <p>开启后将寻优对象映射到群控点位。适用于现场已接入 BA 群控系统的项目；未开启时按单设备点位下发。</p>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="switch-row">
+                  <span class="switch-label">群控下发策略</span>
+                  <span class="switch-desc">（适用于配备 BA 自控系统的场景：控制指令先下发至群控点位，再由群控系统统一下发至各设备点位）</span>
+                  <label class="switch">
+                    <input type="checkbox" id="groupSwitch">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <div class="group-control-panel hidden" id="groupPanel">
+                  <div class="mapping-row">
+                    <div class="mapping-title">冷水主机数量寻优</div>
+                    <div class="mapping-options">
+                      <label><input type="radio" name="mapChillerNum" checked>单设备下发</label>
+                      <label><input type="radio" name="mapChillerNum">群控-制冷单元开机数量设定</label>
+                    </div>
+                  </div>
+                  <div class="mapping-row">
+                    <div class="mapping-title">板换数量寻优</div>
+                    <div class="mapping-options">
+                      <label><input type="radio" name="mapPlate" checked>群控-制冷模式设定</label>
+                      <label><input type="radio" name="mapPlate">群控-制冷模式切换温度设定</label>
+                    </div>
+                  </div>
+                  <div class="mapping-row">
+                    <div class="mapping-title">冷冻泵数量寻优</div>
+                    <div class="mapping-options">
+                      <label><input type="radio" name="mapFrozenPumpNum" checked>单设备下发</label>
+                      <label><input type="radio" name="mapFrozenPumpNum">群控-冷冻泵开机数量设定</label>
+                    </div>
+                  </div>
+                  <div class="mapping-row">
+                    <div class="mapping-title">冷却泵数量寻优</div>
+                    <div class="mapping-options">
+                      <label><input type="radio" name="mapCoolingPumpNum" checked>单设备下发</label>
+                      <label><input type="radio" name="mapCoolingPumpNum">群控-冷却泵开机数量设定</label>
+                    </div>
+                  </div>
+                  <div class="mapping-row">
+                    <div class="mapping-title">冷却塔数量寻优</div>
+                    <div class="mapping-options">
+                      <label><input type="radio" name="mapTowerNum" checked>单设备下发</label>
+                      <label><input type="radio" name="mapTowerNum">群控-冷却塔开机数量设定</label>
+                    </div>
+                  </div>
+                  <div class="mapping-row">
+                    <div class="mapping-title">冷水主机出水温度寻优</div>
+                    <div class="mapping-options">
+                      <label><input type="radio" name="mapChillerTemp" checked>单设备下发</label>
+                      <label><input type="radio" name="mapChillerTemp">群控-冷冻水出水温度设定</label>
+                    </div>
+                  </div>
+                  <div class="mapping-row">
+                    <div class="mapping-title">冷冻泵变频</div>
+                    <div class="mapping-options">
+                      <label><input type="radio" name="mapFrozenPumpFreq" checked>单设备下发</label>
+                      <label><input type="radio" name="mapFrozenPumpFreq">群控-冷冻水温差设定</label>
+                      <label><input type="radio" name="mapFrozenPumpFreq">群控-冷冻水压差设定</label>
+                      <label><input type="radio" name="mapFrozenPumpFreq">群控-最不利压差设定</label>
+                    </div>
+                  </div>
+                  <div class="mapping-row">
+                    <div class="mapping-title">冷却泵变频</div>
+                    <div class="mapping-options">
+                      <label><input type="radio" name="mapCoolingPumpFreq" checked>单设备下发</label>
+                      <label><input type="radio" name="mapCoolingPumpFreq">群控-冷却水温差设定</label>
+                    </div>
+                  </div>
+                  <div class="mapping-row">
+                    <div class="mapping-title">冷却塔变频</div>
+                    <div class="mapping-options">
+                      <label><input type="radio" name="mapTowerFreq" checked>单设备下发</label>
+                      <label><input type="radio" name="mapTowerFreq">群控-冷却塔出水温度设定</label>
+                      <label><input type="radio" name="mapTowerFreq">群控-冷却塔逼近度设定</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="action-bar">
+    <button class="btn btn-ghost" id="cancelBtn">取消</button>
+    <button class="btn btn-primary" id="saveBtn">保存</button>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      var pageMode = params.get('mode') || 'create';
+      var strategyName = params.get('name') || '';
+      var toast = document.getElementById('toast');
+      var toastTimer = null;
+      var conditionIndex = 0;
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 1800);
+      }
+
+      function goList() {
+        window.location.assign(encodeURI('智控下发策略管理.html'));
+      }
+
+      function updateTitle() {
+        var map = {
+          create: '新增下发策略',
+          edit: '编辑下发策略',
+          view: '查看下发策略'
+        };
+        var title = map[pageMode] || map.create;
+        document.getElementById('pageTitle').textContent = title;
+        document.getElementById('breadcrumbCurrent').textContent = title;
+        document.title = title;
+      }
+
+      function updateNameCount() {
+        var value = document.getElementById('strategyName').value;
+        document.getElementById('nameCount').textContent = value.length + ' / 30';
+      }
+
+      function currentIssueMode() {
+        var checked = document.querySelector('input[name="issueMode"]:checked');
+        return checked ? checked.value : 'manual';
+      }
+
+      function updateIssueMode() {
+        var mode = currentIssueMode();
+        document.getElementById('schedulePanel').classList.toggle('hidden', mode !== 'mixed');
+      }
+
+      function modeText(value) {
+        return value === 'auto' ? '自动下发' : '手动下发';
+      }
+
+      function confidenceModeText(value) {
+        return value === 'auto' ? '自动下发' : '手动下发';
+      }
+
+      function updateMixSummary() {
+        var summary = document.getElementById('mixSummary');
+        var fallbackMode = document.getElementById('fallbackMode').value;
+        var highConfidenceMode = document.getElementById('highConfidenceMode').value;
+        var lowConfidenceMode = document.getElementById('lowConfidenceMode').value;
+        summary.innerHTML =
+          '<div class="summary-row"><span class="summary-tag">时间命中</span><span>→ 高置信：' + confidenceModeText(highConfidenceMode) + '；低置信：' + confidenceModeText(lowConfidenceMode) + '</span></div>' +
+          '<div class="summary-row"><span class="summary-tag">时间未命中</span><span>→ ' + modeText(fallbackMode) + '</span></div>';
+      }
+
+      function updateDateRange() {
+        var checked = document.querySelector('input[name="dateRange"]:checked');
+        document.getElementById('weekPanel').classList.toggle('hidden', !checked || checked.value !== 'custom');
+      }
+
+      function updateNoticeMode() {
+        var checked = document.querySelector('input[name="noticeMode"]:checked');
+        document.getElementById('conditionPanel').classList.toggle('hidden', !checked || checked.value !== 'condition');
+      }
+
+      function updateGroupPanel() {
+        document.getElementById('groupPanel').classList.toggle('hidden', !document.getElementById('groupSwitch').checked);
+      }
+
+      function addTimeChip() {
+        var list = document.getElementById('timeList');
+        var start = document.getElementById('startTime').value.trim() || '09:00';
+        var end = document.getElementById('endTime').value.trim() || '18:00';
+        var chip = document.createElement('span');
+        var deleteBtn = document.createElement('span');
+        chip.className = 'time-chip';
+        chip.appendChild(document.createTextNode(start + ' - ' + end));
+        deleteBtn.className = 'text-link danger';
+        deleteBtn.textContent = '删除';
+        deleteBtn.addEventListener('click', function () { chip.remove(); });
+        chip.appendChild(deleteBtn);
+        list.appendChild(chip);
+      }
+
+      function createConditionRow() {
+        conditionIndex += 1;
+        document.getElementById('conditionEmpty').classList.add('hidden');
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + conditionIndex + '</td>' +
+          '<td><select class="table-select"><option>请选择</option><option>冷水主机</option><option>冷冻泵</option><option>冷却塔</option><option>水冷冷水系统</option></select></td>' +
+          '<td><select class="table-select"><option>请选择</option><option>冷冻水出水温度</option><option>冷冻水温差</option><option>冷却塔逼近度</option><option>最不利压差</option></select></td>' +
+          '<td><select class="table-select"><option>请选择</option><option>实际值</option><option>预测值</option><option>偏差值</option><option>实际值-预测值</option><option>预测值-实际值</option></select></td>' +
+          '<td><div class="limit-inputs"><input class="table-input" placeholder="不限"><span>-</span><input class="table-input" placeholder="不限"></div></td>' +
+          '<td><span class="text-link danger" data-delete-row>删除</span></td>';
+        tr.querySelector('[data-delete-row]').addEventListener('click', function () {
+          tr.remove();
+          if (!document.querySelector('#conditionTbody tr:not(.empty-row)')) {
+            document.getElementById('conditionEmpty').classList.remove('hidden');
+            conditionIndex = 0;
+          }
+        });
+        document.getElementById('conditionTbody').appendChild(tr);
+      }
+
+      function applyInitialData() {
+        if (pageMode === 'edit' || pageMode === 'view') {
+          document.getElementById('strategyName').value = strategyName || 'ttt1';
+          var mode = strategyName === '末端手动下发' || strategyName === '手动下发' ? 'manual' : 'auto';
+          var radio = document.querySelector('input[name="issueMode"][value="' + mode + '"]');
+          if (radio) radio.checked = true;
+        }
+        if (pageMode === 'view') {
+          document.querySelectorAll('input, select, button').forEach(function (el) {
+            if (el.id !== 'cancelBtn' && el.id !== 'backBtn') el.disabled = true;
+          });
+          document.getElementById('saveBtn').classList.add('hidden');
+          document.getElementById('cancelBtn').textContent = '返回';
+        }
+      }
+
+      document.getElementById('strategyName').addEventListener('input', updateNameCount);
+      document.querySelectorAll('input[name="issueMode"]').forEach(function (radio) {
+        radio.addEventListener('change', updateIssueMode);
+      });
+      document.querySelectorAll('input[name="dateRange"]').forEach(function (radio) {
+        radio.addEventListener('change', updateDateRange);
+      });
+      document.querySelectorAll('input[name="noticeMode"]').forEach(function (radio) {
+        radio.addEventListener('change', updateNoticeMode);
+      });
+      document.getElementById('fallbackMode').addEventListener('change', updateMixSummary);
+      document.getElementById('highConfidenceMode').addEventListener('change', updateMixSummary);
+      document.getElementById('lowConfidenceMode').addEventListener('change', updateMixSummary);
+      document.getElementById('groupSwitch').addEventListener('change', updateGroupPanel);
+      document.getElementById('addTimeBtn').addEventListener('click', addTimeChip);
+      document.getElementById('addConditionBtn').addEventListener('click', createConditionRow);
+      document.getElementById('cancelBtn').addEventListener('click', goList);
+      document.getElementById('backBtn').addEventListener('click', goList);
+      document.getElementById('saveBtn').addEventListener('click', function () {
+        showToast('已保存（原型示意）');
+      });
+
+      updateTitle();
+      applyInitialData();
+      updateNameCount();
+      updateIssueMode();
+      updateMixSummary();
+      updateDateRange();
+      updateNoticeMode();
+      updateGroupPanel();
+    })();
+  </script>
+  <button type="button" class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+  <script>
+    function initAnnoVersionFilter() {
+      var bar = document.getElementById('annoFilterBar');
+      var tags = document.getElementById('annoFilterTags');
+      if (!document.body.classList.contains('annotation-mode')) return;
+      var annos = document.querySelectorAll('.anno[data-version]');
+      var versions = [];
+      annos.forEach(function (a) {
+        var v = a.getAttribute('data-version');
+        if (v && versions.indexOf(v) === -1) versions.push(v);
+      });
+      versions.sort(function (a, b) {
+        var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+        var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+        for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+          if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+        }
+        return 0;
+      });
+      tags.innerHTML = '';
+      var allBtn = document.createElement('span');
+      allBtn.className = 'anno-filter-tag';
+      allBtn.textContent = '全部';
+      allBtn.onclick = function () { filterAnno('all', versions[0]); setActive(this); };
+      tags.appendChild(allBtn);
+      versions.forEach(function (v) {
+        var btn = document.createElement('span');
+        btn.className = 'anno-filter-tag';
+        btn.textContent = v;
+        btn.onclick = function () { filterAnno(v, versions[0]); setActive(this); };
+        tags.appendChild(btn);
+      });
+      if (versions.length > 0) {
+        filterAnno('all', versions[0]);
+        allBtn.classList.add('active');
+      }
+    }
+    function filterAnno(version, latest) {
+      document.querySelectorAll('.anno[data-version]').forEach(function (a) {
+        var v = a.getAttribute('data-version');
+        if (version === 'all') {
+          a.style.display = '';
+          a.style.opacity = (v === latest) ? '1' : '0.6';
+        } else {
+          a.style.display = (v === version) ? '' : 'none';
+          a.style.opacity = '1';
+        }
+      });
+    }
+    function setActive(el) {
+      el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function (t) { t.classList.remove('active'); });
+      el.classList.add('active');
+    }
+  </script>
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="智控下发策略"></script>
+</body>
+</html>

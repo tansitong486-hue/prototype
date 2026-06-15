@@ -11,10 +11,7 @@
 (function () {
   'use strict';
 
-  const NAV_ITEMS = [
-    '设施监控', '集成系统', '数据分析', '系统管理', '工程配置',
-    '运营管理', '运维管理', '设备组管理', '蓄电池管理'
-  ];
+  const NAV_ITEMS = ['设施监控', '运营管理', '系统管理', '数据分析', '工程配置'];
 
   const SIDEBAR_TREE = [
     { label: '原型导航', href: 'index.html' },
@@ -25,14 +22,9 @@
       children: ['能耗流向分析', '用能对比分析', '用能趋势预测', '用能定额考核']
     },
     {
-      group: '机房能效优化',
-      open: true,
-      children: ['机房总览', '机房柔性寻优', '机房加减机寻优', '机房智能诊断']
-    },
-    {
       group: '冷站能效优化',
       open: true,
-      children: ['冷站仿真对比', '冷站柔性调优', '冷站全局寻优', '冷站长周期寻优']
+      children: ['冷站仿真对比', '冷站柔性寻优', '冷站全局寻优', '冷站长周期寻优']
     },
     {
       group: '节能效果评估',
@@ -40,14 +32,19 @@
       children: ['节能分析']
     },
     {
-      group: 'AI寻优配置',
+      group: '机房能效优化',
       open: true,
-      children: ['机理模型训练', '系统仿真建模', '安全边界', '智控下发策略', '安全回退策略', '机房热力模型']
+      children: ['机房总览', '机房柔性寻优', '机房加减机寻优', '机房智能诊断']
     },
     {
       group: '基础配置',
       open: true,
       children: ['能效视图', '能源计费配置']
+    },
+    {
+      group: 'AI节能配置',
+      open: true,
+      children: ['机理模型训练', '系统仿真建模', '安全边界', '智控下发策略', '安全回退策略', '机房热力模型']
     }
   ];
 
@@ -65,10 +62,11 @@
     '机房加减机寻优': '机房寻优-加减机寻优.html',
     '机房智能诊断': '机房智能诊断.html',
     '机房热力模型': '机房寻优-机房热力模型列表.html',
-    '冷站柔性调优': '冷站柔性调优.html',
+    '冷站柔性寻优': '冷站柔性调优.html',
     '冷站全局寻优': '冷站全局寻优.html',
     '冷站长周期寻优': '冷站长周期寻优.html',
     '安全边界': '安全边界-列表.html',
+    '智控下发策略': '智控下发策略管理.html',
     '节能分析': '节能分析.html',
     '用能定额考核': '用能定额考核.html',
     '冷站仿真对比': '节能仿真对比-设定.html'
@@ -82,17 +80,19 @@
     '用能趋势预测': 'v1.0',
     '能效视图': 'v1.0',
     '能源计费配置': 'v1.0',
-    '机理模型训练': 'v2.2',
-    '系统仿真建模': 'v1.8',
+    '机理模型训练': 'v2.3',
+    '系统仿真建模': 'v2.3',
     '机房总览': 'v1.9',
     '机房柔性寻优': 'v1.7',
     '机房加减机寻优': 'v1.7',
     '机房智能诊断': 'v1.9',
     '机房热力模型': 'v1.6',
-    '冷站柔性调优': 'v2.0',
-    '冷站全局寻优': 'v2.0',
-    '冷站长周期寻优': 'v2.0',
+    '冷站仿真对比': 'v2.3',
+    '冷站柔性寻优': 'v2.3',
+    '冷站全局寻优': 'v2.3',
+    '冷站长周期寻优': 'v2.3',
     '安全边界': 'v1.8',
+    '智控下发策略': 'v1.0',
     '节能分析': 'v1.0'
   };
 
@@ -111,7 +111,7 @@
     '机房能效优化': ICON_SERVER,
     '冷站能效优化': ICON_COOL,
     '节能效果评估': ICON_LEAF,
-    'AI寻优配置': ICON_GEAR,
+    'AI节能配置': ICON_GEAR,
     '基础配置': ICON_SLIDERS
   };
 
@@ -134,8 +134,8 @@
     style.id = 'nav-component-styles';
     style.textContent = `
       :root {
-        --nav-top-bg: #262626;
-        --nav-top-hover: #333333;
+        --nav-top-bg: #2F78F6;
+        --nav-top-hover: rgba(255,255,255,.12);
         /* 与页面内 .btn-primary / --primary 对齐 */
         --nav-primary: #1E40AF;
         --nav-primary-dark: #17358A;
@@ -149,24 +149,24 @@
       }
 
       .header {
-        height: 52px;
+        height: 40px;
         background: var(--nav-top-bg);
         display: flex;
         align-items: center;
-        padding: 0 16px 0 20px;
+        padding: 0 12px 0 18px;
         color: #fff;
         flex-shrink: 0;
         z-index: 100;
-        box-shadow: 0 1px 0 rgba(0,0,0,.2);
+        box-shadow: 0 1px 0 rgba(13,77,170,.22);
       }
       .header-logo {
-        margin-right: 36px;
+        margin-right: 28px;
         display: flex;
         align-items: center;
         height: 100%;
       }
       .header-logo img {
-        height: 20px;
+        height: 18px;
         width: auto;
         display: block;
       }
@@ -191,36 +191,29 @@
         border-radius: 2px;
       }
       .header-nav-item {
-        padding: 0 20px;
+        padding: 0 18px;
         display: flex;
         align-items: center;
         cursor: pointer;
-        font-size: 14px;
-        color: rgba(255,255,255,.75);
+        font-size: 13px;
+        color: rgba(255,255,255,.88);
         transition: background .15s, color .15s;
         white-space: nowrap;
         position: relative;
-        margin: 8px 4px 0;
-        border-radius: 6px 6px 0 0;
+        margin: 0 1px;
+        border-radius: 0;
       }
       .header-nav-item:hover {
         color: #fff;
-        background: rgba(255,255,255,.05);
+        background: var(--nav-top-hover);
       }
       .header-nav-item.active {
-        color: var(--nav-sidebar-text-title);
+        color: var(--nav-primary);
         font-weight: 600;
         background: var(--nav-body-bg);
       }
       .header-nav-item.active::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: var(--nav-primary);
-        border-radius: 6px 6px 0 0;
+        display: none;
       }
       .header-nav-item.active:hover {
         background: var(--nav-body-bg);
@@ -230,14 +223,14 @@
         margin-left: auto;
         display: flex;
         align-items: center;
-        gap: 16px;
+        gap: 12px;
         color: rgba(255,255,255,.88);
-        font-size: 13px;
+        font-size: 12px;
       }
       .header-bell {
         position: relative;
-        width: 36px;
-        height: 36px;
+        width: 30px;
+        height: 30px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -266,10 +259,10 @@
         cursor: default;
       }
       .header-user-avatar {
-        width: 32px;
-        height: 32px;
+        width: 26px;
+        height: 26px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #434343, #595959);
+        background: rgba(255,255,255,.18);
         border: 2px solid rgba(255,255,255,.12);
         display: flex;
         align-items: center;
@@ -281,7 +274,7 @@
 
       /* —— 侧栏 浅色 —— */
       .sidebar {
-        width: 220px;
+        width: 210px;
         background: var(--nav-sidebar-surface);
         overflow: hidden;
         flex-shrink: 0;
@@ -294,7 +287,7 @@
       }
 
       .sidebar-brand {
-        padding: 18px 16px 14px;
+        padding: 0 16px;
         font-size: 15px;
         font-weight: 700;
         color: var(--nav-sidebar-text-title);
@@ -306,7 +299,7 @@
         align-items: center;
         justify-content: flex-start;
         gap: 10px;
-        min-height: 52px;
+        min-height: 42px;
       }
       .sidebar-brand-mark {
         display: none;
@@ -332,7 +325,7 @@
         min-height: 0;
         overflow-x: hidden;
         overflow-y: auto;
-        padding: 8px 0 12px;
+        padding: 8px 0 10px;
         -webkit-overflow-scrolling: touch;
       }
       .sidebar-scroll::-webkit-scrollbar { width: 5px; }
@@ -350,12 +343,12 @@
       .sidebar-item.active .sidebar-ico { opacity: 1; color: var(--nav-primary); }
 
       .sidebar-item {
-        padding: 11px 14px 11px 13px;
-        margin: 0 8px;
+        padding: 9px 12px 9px 13px;
+        margin: 0 6px;
         border-radius: 6px;
         color: var(--nav-sidebar-text);
         cursor: pointer;
-        font-size: 13px;
+        font-size: 12px;
         transition: background .15s, color .15s;
         display: flex;
         align-items: center;
@@ -371,6 +364,12 @@
         gap: 8px;
         flex: 1;
         min-width: 0;
+      }
+      .sidebar-item-text {
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .sidebar-item-ver {
         flex-shrink: 0;
@@ -403,10 +402,10 @@
       }
 
       .sidebar-group-label {
-        padding: 12px 14px 12px 16px;
+        padding: 10px 12px 10px 14px;
         margin-top: 4px;
         color: var(--nav-sidebar-text-title);
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 600;
         cursor: pointer;
         display: flex;
@@ -435,7 +434,7 @@
         padding-bottom: 4px;
       }
       .sidebar-group-children .sidebar-item {
-        padding-left: 39px;
+        padding-left: 32px;
       }
 
       .sidebar-foot {
@@ -619,7 +618,7 @@
 
     const logo = document.createElement('div');
     logo.className = 'header-logo';
-    logo.innerHTML = '<img src="assets/logo.png" alt="X-BROTHER">';
+    logo.innerHTML = '<img src="http://192.168.0.50:11182/page/authority/login/image/logo-login.png" alt="X-BROTHER">';
 
     const nav = document.createElement('nav');
     nav.className = 'header-nav';
@@ -739,8 +738,8 @@
     brand.className = 'sidebar-brand';
     brand.innerHTML =
       '<span class="sidebar-brand-mark" aria-hidden="true">AI</span>' +
-      '<span class="sidebar-brand-text">能耗智能管理</span>';
-    brand.setAttribute('data-nav-tip', '能耗智能管理');
+      '<span class="sidebar-brand-text">能效管理</span>';
+    brand.setAttribute('data-nav-tip', '能效管理');
     aside.appendChild(brand);
 
     const scroll = document.createElement('div');

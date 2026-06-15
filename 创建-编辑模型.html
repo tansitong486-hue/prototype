@@ -106,6 +106,11 @@
       font-weight: 600;
       color: var(--text-secondary);
     }
+    .field-label.with-id {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
     .field-label .req { color: var(--danger); }
     .field-control, .field-select, .field-textarea {
       width: 100%;
@@ -121,6 +126,40 @@
     .field-control:focus-visible, .field-select:focus-visible, .field-textarea:focus-visible {
       border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.12);
+    }
+    .readonly-value {
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      background: #F8FAFC;
+      color: var(--text-primary);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    .readonly-value.empty {
+      color: var(--text-hint);
+    }
+    .field.is-invalid .readonly-value {
+      border-color: rgba(220, 38, 38, 0.45);
+      background: #FEF2F2;
+      color: var(--danger);
+    }
+    .static-validate-tip {
+      display: none;
+      margin-top: 12px;
+      padding: 10px 12px;
+      border: 1px solid rgba(220, 38, 38, 0.24);
+      border-radius: var(--radius);
+      background: #FEF2F2;
+      color: var(--danger);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .static-validate-tip.show {
+      display: block;
     }
     .field-textarea { min-height: 72px; resize: vertical; font-family: inherit; }
     .field-hint {
@@ -242,6 +281,13 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       letter-spacing: 0.02em;
     }
+    .field-label .cell-id {
+      min-width: auto;
+      padding: 1px 6px;
+      border-radius: 6px;
+      background: #EFF6FF;
+      line-height: 18px;
+    }
     .data-table tbody tr:hover { background: #FBFCFE; }
     .data-table .cell-input {
       width: 100%;
@@ -317,6 +363,101 @@
       border-radius: 2px;
       flex-shrink: 0;
     }
+    .slot-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    @media (max-width: 900px) {
+      .slot-grid { grid-template-columns: 1fr; }
+    }
+    .slot-card {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      background: #FBFDFF;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 0;
+    }
+    .slot-card.is-required {
+      border-color: rgba(30, 64, 175, 0.22);
+      background: var(--primary-light);
+    }
+    .slot-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .slot-title { font-size: 14px; font-weight: 700; }
+    .slot-badge {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: #E0F2FE;
+      color: #075985;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .slot-badge.locked { background: #E2E8F0; color: #475569; }
+    .slot-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.65; }
+    .slot-meta {
+      display: grid;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .slot-meta b { color: var(--text-primary); }
+    .readonly-formula {
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      white-space: pre-line;
+    }
+    .capability-summary {
+      display: grid;
+      gap: 8px;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 10px 12px;
+    }
+    .summary-row {
+      display: grid;
+      grid-template-columns: 72px minmax(0, 1fr);
+      gap: 10px;
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      align-items: start;
+    }
+    .summary-row span {
+      color: var(--text-hint);
+      white-space: nowrap;
+    }
+    .summary-row b {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    .advanced-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 14px 0 12px;
+    }
 
     .cell-dash {
       display: inline-block;
@@ -332,15 +473,15 @@
   <link rel="stylesheet" href="annotation-styles.css">
 </head>
 <body>
-  <div class="anno-filter-bar" id="annoFilterBar">
-    <span class="anno-filter-label">批注版本：</span>
-    <div class="anno-filter-tags" id="annoFilterTags"></div>
-  </div>
   <div class="layout">
     <div id="app-header"></div>
     <div class="body-wrap">
       <div id="app-sidebar"></div>
       <main class="main">
+        <div class="anno-filter-bar" id="annoFilterBar">
+          <span class="anno-filter-label">批注版本：</span>
+          <div class="anno-filter-tags" id="annoFilterTags"></div>
+        </div>
         <div class="page-shell">
           <div class="anno anno-version-header" data-version="v1.7">
             <span class="anno-tag">版本信息</span>
@@ -349,6 +490,16 @@
               <p><b>更新日期：</b>2026-03-23</p>
               <p><b>变更概述：</b>在 <b>v1.0</b> 基线（古典「创建_编辑模型」字段与批注对齐：模型名称/模型分类、训练范围、参数表、自学习、多算法与调参/公式等）上，<b>v1.7</b> 增补：稳态阈值 ε、标准工况数据区（手动新增/批量导入全量覆盖/导出）、算法「冷却塔逼近度灰箱（Merkel）」且仅模型分类「冷却塔逼近度预测」可选、表单项与批注交互统一等。历史说明仍以 <code>data-version=&quot;v1.0&quot;</code> 批注块保留，可用顶部版本筛选查看。</p>
               <p><b>本页说明：</b>承接「机理模型训练」列表的新增/编辑；字段规则与交互以古典 <code>创建_编辑模型</code>（Axure 说明 u8774–u8807 等）为准，本页在批注中逐条对照；界面较古典稿的调整（如算法区块位置、标识符列、去掉「小时」列、去掉「预测误差触发」「分层拟合」）在字段说明中单独标注；<b>v1.7</b> 能力见同标签 <code>data-version=&quot;v1.7&quot;</code> 批注块。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-version-header" data-version="v2.3">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v2.3</p>
+              <p><b>更新日期：</b>2026-06-15</p>
+              <p><b>变更概述：</b>页面心智从“创建机器学习模型”调整为“创建预测模型服务”：按模型分类自动生成固定“机理模型 + 混合增强模型”两槽位模板。机理模型为必备只读槽位，不允许删除、置空或编辑；默认界面不展示公式原文、系数或内部计算关系；静态属性从设备或设备组对象读取，只读展示；混合增强模型按模型分类自动确定增强形态，有机理增强类展示为混合增强能力，末端最不利压差等数理算法类展示当前算法。</p>
+              <p><b>本页说明：</b>查看两层模型服务改造请筛选 <code>v2.3</code>。残差修正为混合增强模型内部能力，本页不单独呈现；静态属性如缺失或需修正，回到对应设备或设备组对象维护。</p>
             </div>
           </div>
 
@@ -381,7 +532,7 @@
           </div>
 
           <div class="page-head">
-            <h1 class="page-title">创建模型</h1>
+            <h1 class="page-title">创建预测模型服务</h1>
           </div>
 
           <div class="anno anno-field" data-version="v1.0">
@@ -417,6 +568,7 @@
                     <option value="pump" selected>冷冻水泵</option>
                     <option value="chiller">冷水主机</option>
                     <option value="cooling_tower_approach">冷却塔逼近度预测</option>
+                    <option value="terminal_pressure_diff">末端最不利压差预测</option>
                   </select>
                   <p class="field-hint field-hint-annoonly">必选，单选；编辑时不可修改（古典稿「物模型」语义，本页称模型分类）</p>
                 </div>
@@ -491,6 +643,107 @@
             </div>
           </section>
 
+          <div class="anno anno-field" data-version="v2.3">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.3</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>静态属性（铭牌/设计参数）</p>
+              <table class="anno-table">
+                <thead><tr><th>字段组</th><th>规则</th></tr></thead>
+                <tbody>
+                  <tr><td>来源口径</td><td>静态属性本质属于设备或设备组对象，本页只读取并展示属性值。</td></tr>
+                  <tr><td>创建校验</td><td>当前模型分类涉及的所有静态属性都必须有值；任一静态属性为空、未配置或缺失时，创建不成功，并在本区提示缺失项。</td></tr>
+                  <tr><td>缺省/估算</td><td>设计湿球、冷机额定工况、冷却塔额定风量、板换选型单等允许按需求文档缺省或估算兜底；缺省/估算结果视为有值，但需在模型服务中只读标记。</td></tr>
+                  <tr><td>编辑边界</td><td>本页不提供静态属性编辑、补录或来源选择；缺失或需修正时，引导用户回到对应设备或设备组对象维护。</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <section class="section-card">
+            <div class="section-head">静态属性（铭牌/设计参数）</div>
+            <div class="section-body">
+              <div class="form-grid" id="staticPump">
+                <div class="field">
+                  <label class="field-label with-id"><span class="cell-id">S1</span><span><span class="req">*</span>额定功率</span></label>
+                  <div class="readonly-value">55 kW</div>
+                </div>
+                <div class="field">
+                  <label class="field-label with-id"><span class="cell-id">S2</span><span><span class="req">*</span>额定流量</span></label>
+                  <div class="readonly-value">220 m³/h</div>
+                </div>
+                <div class="field">
+                  <label class="field-label with-id"><span class="cell-id">S3</span><span><span class="req">*</span>额定扬程</span></label>
+                  <div class="readonly-value">32 m</div>
+                </div>
+              </div>
+              <div class="form-grid hidden" id="staticChiller">
+                <div class="field">
+                  <label class="field-label with-id"><span class="cell-id">S1</span><span><span class="req">*</span>额定制冷量</span></label>
+                  <div class="readonly-value">1163 kW</div>
+                </div>
+                <div class="field">
+                  <label class="field-label with-id"><span class="cell-id">S2</span><span><span class="req">*</span>额定功率</span></label>
+                  <div class="readonly-value">215 kW</div>
+                </div>
+                <div class="field">
+                  <label class="field-label with-id"><span class="cell-id">S3</span><span>额定冷冻水出水温度</span></label>
+                  <div class="readonly-value">7 ℃ <span style="color:var(--text-secondary);font-size:12px;">（缺省）</span></div>
+                </div>
+                <div class="field">
+                  <label class="field-label with-id"><span class="cell-id">S4</span><span>额定冷却水进水温度</span></label>
+                  <div class="readonly-value">30 ℃ <span style="color:var(--text-secondary);font-size:12px;">（缺省）</span></div>
+                </div>
+                <div class="field">
+                  <label class="field-label with-id"><span class="cell-id">S5</span><span>压缩机类型 <span style="color:#1E40AF;font-size:11px;">【v2.3 新增·机型】</span></span></label>
+                  <div class="readonly-value">离心式</div>
+                </div>
+                <div class="field">
+                  <label class="field-label with-id"><span class="cell-id">S6</span><span>调节方式 <span style="color:#1E40AF;font-size:11px;">【v2.3 新增·机型】</span></span></label>
+                  <div class="readonly-value">变频</div>
+                </div>
+              </div>
+              <div class="form-grid hidden" id="staticCoolingTower">
+                <div class="field">
+                  <label class="field-label with-id"><span class="cell-id">S1</span><span><span class="req">*</span>额定水流量</span></label>
+                  <div class="readonly-value">500 m³/h</div>
+                </div>
+                <div class="field">
+                  <label class="field-label with-id"><span class="cell-id">S2</span><span><span class="req">*</span>设计逼近度</span></label>
+                  <div class="readonly-value">4 ℃</div>
+                </div>
+                <div class="field">
+                  <label class="field-label with-id"><span class="cell-id">S3</span><span><span class="req">*</span>设计进出塔温差</span></label>
+                  <div class="readonly-value">5 ℃</div>
+                </div>
+                <div class="field">
+                  <label class="field-label with-id"><span class="cell-id">S4</span><span>设计湿球温度</span></label>
+                  <div class="readonly-value">28 ℃</div>
+                </div>
+                <div class="field">
+                  <label class="field-label with-id"><span class="cell-id">S5</span><span>额定风量</span></label>
+                  <div class="readonly-value">180000 m³/h</div>
+                </div>
+              </div>
+              <div class="form-grid hidden" id="staticTerminalPressure">
+                <div class="field">
+                  <label class="field-label with-id"><span class="cell-id">S1</span><span><span class="req">*</span>末端设计压差</span></label>
+                  <div class="readonly-value">0.28 bar</div>
+                </div>
+                <div class="field">
+                  <label class="field-label with-id"><span class="cell-id">S2</span><span><span class="req">*</span>主管最大压差</span></label>
+                  <div class="readonly-value empty">—</div>
+                </div>
+                <div class="field">
+                  <label class="field-label with-id"><span class="cell-id">S3</span><span><span class="req">*</span>设计总流量</span></label>
+                  <div class="readonly-value">980 m³/h</div>
+                </div>
+              </div>
+              <div class="static-validate-tip" id="staticValidateTip"></div>
+            </div>
+          </section>
+
           <div class="anno anno-field" data-version="v1.0">
             <span class="anno-tag">字段说明</span>
             <span class="anno-version">v1.0</span>
@@ -530,7 +783,7 @@
             <div class="anno-body">
               <p><b>关联模块：</b>模型参数表</p>
               <ul>
-                <li>示例两行：动 / 预测；预测行标识符用于公式配置左侧标签联动。</li>
+                <li>示例三行：两个动态特征 / 一个预测参数；预测行标识符用于公式配置左侧标签联动。</li>
               </ul>
             </div>
           </div>
@@ -570,6 +823,17 @@
                     </tr>
                     <tr>
                       <td><span class="cell-id" aria-label="参数标识符">A2</span></td>
+                      <td>流量反馈</td>
+                      <td><select class="cell-select param-type" aria-label="参数类型"><option selected>动态特征</option><option>预测参数</option></select></td>
+                      <td><input class="cell-input" value="0"></td>
+                      <td><input class="cell-input" value="260"></td>
+                      <td class="col-steady-threshold"><input class="cell-input param-steady-threshold" type="number" step="any" value="5" placeholder="可不填" title="第三层极差阈值 ε，单位 m³/h"></td>
+                      <td><select class="cell-select"><option>正相关</option><option>负相关</option><option>不相关</option></select></td>
+                      <td><input class="cell-input" type="number" value="3" min="1" max="10"></td>
+                      <td><span class="action-link danger" data-del-row>删除</span></td>
+                    </tr>
+                    <tr>
+                      <td><span class="cell-id" aria-label="参数标识符">A3</span></td>
                       <td>水泵功率（预测）</td>
                       <td><select class="cell-select param-type" aria-label="参数类型"><option>动态特征</option><option selected>预测参数</option></select></td>
                       <td><input class="cell-input" value="0"></td>
@@ -595,7 +859,7 @@
                 <thead><tr><th>字段</th><th>说明</th></tr></thead>
                 <tbody>
                   <tr><td>稳态阈值 ε</td><td><b>v1.7 新增。</b>选填；不填时按《机理模型数据预处理优化方案》<b>第六章 §2、§3</b> 该量默认 ε 执行。第三层统一判据为窗口内 <b>R=max−min＜ε</b>（连续 3 点、历时 10 min），<b>ε 为与测点单位一致的绝对阈值</b>，不再使用相对分式。</td></tr>
-                  <tr><td>本页示例</td><td>冷冻水泵功率预测（§3.1）：频率反馈 ε 默认 <b>3</b>（HZ）；有功功率 ε 默认 <b>5</b>（KW）。</td></tr>
+                  <tr><td>本页示例</td><td>冷冻水泵功率预测（§3.1）：频率反馈 ε 默认 <b>3</b>（HZ）；流量反馈 ε 默认 <b>5</b>（m³/h）；有功功率 ε 默认 <b>5</b>（KW）。</td></tr>
                 </tbody>
               </table>
             </div>
@@ -617,7 +881,8 @@
                     <tr>
                       <th>序号</th>
                       <th>A1 频率反馈（HZ）</th>
-                      <th>A2 水泵功率（KW）</th>
+                      <th>A2 流量反馈（m³/h）</th>
+                      <th>A3 水泵功率（KW）</th>
                       <th>操作</th>
                     </tr>
                   </thead>
@@ -625,6 +890,7 @@
                     <tr>
                       <td class="std-row-idx">1</td>
                       <td><input class="cell-input" value="35"></td>
+                      <td><input class="cell-input" value="145"></td>
                       <td><input class="cell-input" value="12.5"></td>
                       <td><span class="action-link danger" data-del-std-row>删除</span></td>
                     </tr>
@@ -645,11 +911,11 @@
                 <tbody>
                   <tr><td>表头与文件列</td><td>标准工况表的<b>列（表头）随当前模型动态变化</b>：由「模型参数」中各行的<b>标识符（A1…）+ 属性/测点名称 + 单位</b>共同决定界面列名；导入/导出文件的<b>第一行表头</b>须与<b>当前界面表头</b>一致（不含「操作」列）。增删参数、改测点或切换模型分类后列集合会变，应<b>重新导出</b>再按新模板填写，勿混用旧文件列名。</td></tr>
                   <tr><td>手动新增</td><td>在表中新增一行，逐列录入该标准工况下各模型输入/输出测点的数值；列为序号、各测点（与参数表 A1… 及含义对齐）、操作；<b>不含</b>「工况说明」列。实装可由模型分类驱动测点列集合。</td></tr>
-                  <tr><td>批量导入</td><td>选择文件（如 CSV / Excel），解析校验通过后以文件内容<b>全量覆盖</b>当前表内标准工况（非追加、非合并）；须校验字段与当前表头一致，坏行提示行号/原因（原型为占位）。<p style="margin:10px 0 4px;"><b>示例（CSV）</b>：下列仅为<strong>当前页示例模型</strong>（冷冻水泵：A1 频率反馈、A2 水泵功率）下的样例；真实环境下列名须与<strong>当时界面表头</strong>一致。</p><pre style="font-size:11px;line-height:1.45;margin:0;padding:8px 10px;background:#F1F5F9;border-radius:6px;overflow-x:auto;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">序号,A1 频率反馈（HZ）,A2 水泵功率（KW）
-1,35,12.5
-2,40,</pre><p style="margin:6px 0 0;font-size:12px;color:#64748b;">首行为表头；字段含英文逗号或需转义时按 RFC 4180 使用双引号。Excel 与 CSV 列逻辑相同，首行为表头。</p></td></tr>
-                  <tr><td>导出</td><td>将当前表中标准工况导出为文件（如 CSV / Excel），列与<b>当前表头</b>一致，便于备份、线下编辑后<b>再批量导入</b>全量覆盖。<p style="margin:10px 0 4px;"><b>示例（与导入模板同构）</b>：导出内容结构与上表「批量导入」示例相同——第一行为动态表头，后续每行一条标准工况；无数据时也可导出仅含表头的空模板。</p><pre style="font-size:11px;line-height:1.45;margin:0;padding:8px 10px;background:#F1F5F9;border-radius:6px;overflow-x:auto;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">序号,A1 频率反馈（HZ）,A2 水泵功率（KW）
-1,35,12.5</pre></td></tr>
+                  <tr><td>批量导入</td><td>选择文件（如 CSV / Excel），解析校验通过后以文件内容<b>全量覆盖</b>当前表内标准工况（非追加、非合并）；须校验字段与当前表头一致，坏行提示行号/原因（原型为占位）。<p style="margin:10px 0 4px;"><b>示例（CSV）</b>：下列仅为<strong>当前页示例模型</strong>（冷冻水泵：A1 频率反馈、A2 流量反馈、A3 水泵功率）下的样例；真实环境下列名须与<strong>当时界面表头</strong>一致。</p><pre style="font-size:11px;line-height:1.45;margin:0;padding:8px 10px;background:#F1F5F9;border-radius:6px;overflow-x:auto;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">序号,A1 频率反馈（HZ）,A2 流量反馈（m³/h）,A3 水泵功率（KW）
+1,35,145,12.5
+2,40,172,</pre><p style="margin:6px 0 0;font-size:12px;color:#64748b;">首行为表头；字段含英文逗号或需转义时按 RFC 4180 使用双引号。Excel 与 CSV 列逻辑相同，首行为表头。</p></td></tr>
+                  <tr><td>导出</td><td>将当前表中标准工况导出为文件（如 CSV / Excel），列与<b>当前表头</b>一致，便于备份、线下编辑后<b>再批量导入</b>全量覆盖。<p style="margin:10px 0 4px;"><b>示例（与导入模板同构）</b>：导出内容结构与上表「批量导入」示例相同——第一行为动态表头，后续每行一条标准工况；无数据时也可导出仅含表头的空模板。</p><pre style="font-size:11px;line-height:1.45;margin:0;padding:8px 10px;background:#F1F5F9;border-radius:6px;overflow-x:auto;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">序号,A1 频率反馈（HZ）,A2 流量反馈（m³/h）,A3 水泵功率（KW）
+1,35,145,12.5</pre></td></tr>
                 </tbody>
               </table>
             </div>
@@ -768,23 +1034,67 @@
             </div>
           </div>
 
+          <div class="anno anno-field" data-version="v2.3">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.3</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>模型结构与训练策略</p>
+              <table class="anno-table">
+                <thead><tr><th>区域</th><th>规则</th></tr></thead>
+                <tbody>
+                  <tr><td>机理模型</td><td>所有模型服务必有；默认界面只展示能力定位、依赖输入与校验结论，不展示公式原文、系数或内部计算关系。</td></tr>
+                  <tr><td>混合增强模型</td><td>有机理增强类展示为“混合增强能力”；末端最不利压差等默认数理算法类展示为“数理算法增强能力”，并展示当前算法名称（默认 SVR）。</td></tr>
+                  <tr><td>高级模式</td><td>机理增强类用于切换为数理算法；默认数理算法类用于调整算法。算法列表不含“冷却塔逼近度灰箱（Merkel）”，因为机理模型已是混合增强槽位默认形态。</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           <section class="section-card">
-            <div class="section-head">算法与调参</div>
+            <div class="section-head">模型结构</div>
             <div class="section-body">
+              <div class="slot-grid">
+                <div class="slot-card is-required">
+                  <div class="slot-head">
+                    <div class="slot-title">机理模型</div>
+                  </div>
+                  <div class="capability-summary" id="basicSummary">
+                    <div class="summary-row"><span>能力定位</span><b>内置机理能力</b></div>
+                    <div class="summary-row"><span>服务作用</span><b>全工况可用，低置信工况兜底</b></div>
+                    <div class="summary-row"><span>依赖输入</span><b>模型参数表中的动态特征、设备静态属性</b></div>
+                    <div class="summary-row"><span>校验结论</span><b>物理边界校验已启用</b></div>
+                  </div>
+                </div>
+                <div class="slot-card">
+                  <div class="slot-head">
+                    <div class="slot-title">混合增强模型</div>
+                  </div>
+                  <div class="capability-summary" id="standardSummary">
+                    <div class="summary-row"><span>能力定位</span><b>混合增强能力</b></div>
+                    <div class="summary-row"><span>服务作用</span><b>高置信工况优先出值</b></div>
+                    <div class="summary-row"><span>依赖输入</span><b>模型参数表中的动态特征、静态属性、统一工况分箱</b></div>
+                    <div class="summary-row"><span>校验结论</span><b>训练质量、分箱置信、边界校验已启用</b></div>
+                  </div>
+                </div>
+              </div>
+              <label class="advanced-toggle">
+                <input type="checkbox" id="advancedAlgoToggle"> <span id="advancedAlgoLabel">高级模式：混合增强模型改用数理算法</span>
+              </label>
+              <div id="advancedAlgoArea" class="hidden">
               <div class="field full">
-                <label class="field-label"><span class="req">*</span>算法选择</label>
+                <label class="field-label"><span class="req">*</span>数理算法选择</label>
                 <div class="radio-row" id="algoRow">
                   <label class="radio-opt"><input type="radio" name="algo" value="monotonic_nn"> 单调性神经网络</label>
                   <label class="radio-opt"><input type="radio" name="algo" value="gbrt"> 梯度提升</label>
                   <label class="radio-opt"><input type="radio" name="algo" value="knn"> K近邻回归</label>
-                  <label class="radio-opt"><input type="radio" name="algo" value="linear" checked> 线性回归</label>
+                  <label class="radio-opt"><input type="radio" name="algo" value="linear"> 线性回归</label>
                   <label class="radio-opt"><input type="radio" name="algo" value="poly"> 多项式回归</label>
                   <label class="radio-opt"><input type="radio" name="algo" value="rf"> 随机森林</label>
-                  <label class="radio-opt"><input type="radio" name="algo" value="svr"> 支持向量回归</label>
+                  <label class="radio-opt"><input type="radio" name="algo" value="svr" checked> 支持向量回归</label>
                   <label class="radio-opt"><input type="radio" name="algo" value="xgboost"> 极致梯度提升</label>
-                  <label class="radio-opt radio-opt-disabled" id="wrapAlgoCtMerkel" title="仅「冷却塔逼近度预测」模型分类下可选"><input type="radio" name="algo" value="ct_approach_merkel" disabled> 冷却塔逼近度灰箱（Merkel）</label>
                 </div>
-                <p class="field-hint field-hint-annoonly">选定模型分类后展示；必选单选；编辑时不可改（古典 u8777、u8790）。切换算法后下方展示对应调参或公式配置区。<b>v1.7：</b>「冷却塔逼近度灰箱（Merkel）」仅当模型分类为「冷却塔逼近度预测」时可选，否则禁用。</p>
+                <p class="field-hint">高级模式仅含数理算法；选择数理算法后，低置信工况直接由机理模型兜底。</p>
               </div>
 
               <div id="blockNn" class="algo-tune-block hidden">
@@ -830,8 +1140,8 @@
               <div id="blockFormula" class="algo-tune-block">
                 <div class="sub-section-head"><span class="req">*</span>公式配置</div>
                 <div class="field full formula-field-wrap">
-                  <label class="field-label" id="formulaDepLabel">A2 =</label>
-                  <textarea class="field-textarea formula-box" rows="3">a * A1 ** 2 + b * A1 + c</textarea>
+                  <label class="field-label" id="formulaDepLabel">A3 =</label>
+                  <textarea class="field-textarea formula-box" rows="3">a * A1 + b * A2 + c</textarea>
                 </div>
                 <p class="field-hint" style="margin-top:8px;">
                   1、拟合函数请分别用 a、b、c、d、e、f 表示；<br>
@@ -1018,6 +1328,7 @@
                   </div>
                 </div>
               </div>
+              </div>
             </div>
           </section>
 
@@ -1072,8 +1383,19 @@
         svr: 'blockTuneSvr',
         xgboost: 'blockTuneXgboost'
       };
+      var ALGO_LABELS = {
+        monotonic_nn: '单调性神经网络',
+        gbrt: '梯度提升',
+        knn: 'K近邻回归',
+        linear: '线性回归',
+        poly: '多项式回归',
+        rf: '随机森林',
+        svr: '支持向量回归（SVR）',
+        xgboost: '极致梯度提升'
+      };
 
       var THING_ALGO_CT_MERKEL = 'cooling_tower_approach';
+      var MATH_DEFAULT_MODELS = ['terminal_pressure_diff'];
 
       function syncAlgoBlocks() {
         var sel = document.querySelector('input[name="algo"]:checked');
@@ -1084,6 +1406,15 @@
         ML_TUNE_IDS.forEach(function (id) {
           document.getElementById(id).classList.toggle('hidden', activeTune !== id);
         });
+        syncModelStructureSummary();
+      }
+
+      function syncAdvancedArea() {
+        var toggle = document.getElementById('advancedAlgoToggle');
+        var area = document.getElementById('advancedAlgoArea');
+        if (!toggle || !area) return;
+        area.classList.toggle('hidden', !toggle.checked);
+        if (toggle.checked) syncAlgoBlocks();
       }
 
       function syncThingModelAlgoGate() {
@@ -1170,19 +1501,214 @@
         label.textContent = id + ' =';
       }
 
+      function paramRowHtml(row) {
+        return '<tr>' +
+          '<td><span class="cell-id" aria-label="参数标识符">' + row.id + '</span></td>' +
+          '<td>' + row.name + '</td>' +
+          '<td><select class="cell-select param-type" aria-label="参数类型"><option ' + (row.type === '动态特征' ? 'selected' : '') + '>动态特征</option><option ' + (row.type === '预测参数' ? 'selected' : '') + '>预测参数</option></select></td>' +
+          '<td><input class="cell-input" value="' + row.min + '"></td>' +
+          '<td><input class="cell-input" value="' + row.max + '"></td>' +
+          '<td class="col-steady-threshold"><input class="cell-input param-steady-threshold" type="number" step="any" value="' + row.epsilon + '" placeholder="可不填"></td>' +
+          '<td><select class="cell-select">' + row.monotonicity.map(function (opt) { return '<option>' + opt + '</option>'; }).join('') + '</select></td>' +
+          '<td><input class="cell-input" type="number" value="' + row.layers + '" min="1" max="10"></td>' +
+          '<td><span class="action-link danger" data-del-row>删除</span></td>' +
+          '</tr>';
+      }
+
+      function syncStdPointTable(headers, sample) {
+        var table = document.getElementById('stdPointTable');
+        if (!table) return;
+        var theadRow = table.querySelector('thead tr');
+        var tbody = document.getElementById('stdPointBody');
+        theadRow.innerHTML = '<th>序号</th>' + headers.map(function (h) { return '<th>' + h + '</th>'; }).join('') + '<th>操作</th>';
+        tbody.innerHTML = '<tr><td class="std-row-idx">1</td>' + sample.map(function (v) { return '<td><input class="cell-input" value="' + v + '"></td>'; }).join('') + '<td><span class="action-link danger" data-del-std-row>删除</span></td></tr>';
+      }
+
+      function renderCapabilitySummary(el, rows) {
+        if (!el) return;
+        el.innerHTML = rows.map(function (row) {
+          return '<div class="summary-row"><span>' + row.label + '</span><b>' + row.value + '</b></div>';
+        }).join('');
+      }
+
+      function getSelectedAlgoLabel() {
+        var sel = document.querySelector('input[name="algo"]:checked');
+        return sel ? (ALGO_LABELS[sel.value] || sel.parentElement.textContent.trim()) : '支持向量回归（SVR）';
+      }
+
+      function setDefaultAlgo(value) {
+        var input = document.querySelector('input[name="algo"][value="' + value + '"]');
+        if (input) input.checked = true;
+      }
+
+      function isMathDefaultModel() {
+        var tm = document.getElementById('thingModel');
+        return !!tm && MATH_DEFAULT_MODELS.indexOf(tm.value) >= 0;
+      }
+
+      function syncAdvancedLabel() {
+        var label = document.getElementById('advancedAlgoLabel');
+        if (!label) return;
+        label.textContent = isMathDefaultModel()
+          ? '高级模式：调整混合增强模型数理算法'
+          : '高级模式：混合增强模型改用数理算法';
+      }
+
+      function syncModelStructureSummary() {
+        var basicSummary = document.getElementById('basicSummary');
+        var standardSummary = document.getElementById('standardSummary');
+        if (!basicSummary || !standardSummary) return;
+        renderCapabilitySummary(basicSummary, [
+          { label: '能力定位', value: '内置机理能力' },
+          { label: '服务作用', value: '全工况可用，低置信工况兜底' },
+          { label: '依赖输入', value: '模型参数表中的动态特征、设备静态属性' },
+          { label: '校验结论', value: '物理边界校验已启用' }
+        ]);
+        if (isMathDefaultModel()) {
+          renderCapabilitySummary(standardSummary, [
+            { label: '能力定位', value: '数理算法增强能力' },
+            { label: '当前算法', value: getSelectedAlgoLabel() },
+            { label: '服务作用', value: '高置信工况优先出值' },
+            { label: '依赖输入', value: '模型参数表中的动态特征、静态属性、统一工况分箱' },
+            { label: '校验结论', value: '训练质量、分箱置信、边界校验已启用' }
+          ]);
+        } else {
+          renderCapabilitySummary(standardSummary, [
+            { label: '能力定位', value: '混合增强能力' },
+            { label: '服务作用', value: '高置信工况优先出值' },
+            { label: '依赖输入', value: '模型参数表中的动态特征、静态属性、统一工况分箱' },
+            { label: '校验结论', value: '训练质量、分箱置信、边界校验已启用' }
+          ]);
+        }
+        syncAdvancedLabel();
+      }
+
+      function syncModelExample() {
+        var tm = document.getElementById('thingModel');
+        var tbody = document.getElementById('paramBody');
+        if (!tm || !tbody) return;
+        if (tm.value === 'cooling_tower_approach') {
+          tbody.innerHTML = [
+            { id: 'A1', name: '冷却水流量', type: '动态特征', min: '0', max: '650', epsilon: '10', monotonicity: ['正相关', '负相关', '不相关'], layers: '3' },
+            { id: 'A2', name: '风机频率反馈', type: '动态特征', min: '8', max: '50', epsilon: '3', monotonicity: ['负相关', '正相关', '不相关'], layers: '3' },
+            { id: 'A3', name: '室外湿球温度', type: '动态特征', min: '10', max: '32', epsilon: '0.5', monotonicity: ['正相关', '负相关', '不相关'], layers: '3' },
+            { id: 'A4', name: '冷却塔逼近度（预测）', type: '预测参数', min: '0', max: '15', epsilon: '0.5', monotonicity: ['不相关'], layers: '3' }
+          ].map(paramRowHtml).join('');
+          syncStdPointTable(['A1 冷却水流量（m³/h）', 'A2 风机频率反馈（HZ）', 'A3 室外湿球温度（℃）', 'A4 冷却塔逼近度（℃）'], ['420', '38', '27.5', '4.8']);
+        } else if (tm.value === 'terminal_pressure_diff') {
+          setDefaultAlgo('svr');
+          tbody.innerHTML = [
+            { id: 'A1', name: '主管供回水压差', type: '动态特征', min: '0', max: '1.6', epsilon: '0.03', monotonicity: ['正相关', '负相关', '不相关'], layers: '3' },
+            { id: 'A2', name: '冷冻水总流量', type: '动态特征', min: '0', max: '1200', epsilon: '20', monotonicity: ['负相关', '正相关', '不相关'], layers: '3' },
+            { id: 'A3', name: '末端最不利压差（预测）', type: '预测参数', min: '0', max: '1.6', epsilon: '0.03', monotonicity: ['不相关'], layers: '3' }
+          ].map(paramRowHtml).join('');
+          syncStdPointTable(['A1 主管供回水压差（bar）', 'A2 冷冻水总流量（m³/h）', 'A3 末端最不利压差（bar）'], ['0.82', '680', '0.35']);
+        } else {
+          tbody.innerHTML = [
+            { id: 'A1', name: '频率反馈', type: '动态特征', min: '8', max: '50', epsilon: '3', monotonicity: ['正相关', '负相关', '不相关'], layers: '1' },
+            { id: 'A2', name: '流量反馈', type: '动态特征', min: '0', max: '260', epsilon: '5', monotonicity: ['正相关', '负相关', '不相关'], layers: '3' },
+            { id: 'A3', name: '水泵功率（预测）', type: '预测参数', min: '0', max: '120', epsilon: '5', monotonicity: ['不相关'], layers: '3' }
+          ].map(paramRowHtml).join('');
+          syncStdPointTable(['A1 频率反馈（HZ）', 'A2 流量反馈（m³/h）', 'A3 水泵功率（KW）'], ['35', '145', '12.5']);
+        }
+        if (document.getElementById('advancedAlgoToggle') && document.getElementById('advancedAlgoToggle').checked) syncAlgoBlocks();
+        else syncModelStructureSummary();
+        updateFormulaDepLabel();
+      }
+
       document.querySelectorAll('input[name="algo"]').forEach(function (r) {
         r.addEventListener('change', syncAlgoBlocks);
       });
       document.querySelectorAll('input[name="scope"]').forEach(function (r) {
         r.addEventListener('change', syncScope);
       });
+      var advancedAlgoToggle = document.getElementById('advancedAlgoToggle');
+      if (advancedAlgoToggle) advancedAlgoToggle.addEventListener('change', syncAdvancedArea);
+
+      function clearStaticValidation() {
+        document.querySelectorAll('.field.is-invalid').forEach(function (field) {
+          field.classList.remove('is-invalid');
+        });
+        var tip = document.getElementById('staticValidateTip');
+        if (tip) {
+          tip.classList.remove('show');
+          tip.textContent = '';
+        }
+      }
+
+      function getActiveStaticGroup() {
+        return Array.prototype.find.call(
+          document.querySelectorAll('#staticPump, #staticChiller, #staticCoolingTower, #staticTerminalPressure'),
+          function (el) { return !el.classList.contains('hidden'); }
+        );
+      }
+
+      function isMissingStaticValue(text) {
+        var value = (text || '').replace(/（[^）]*）/g, '').trim();
+        return !value || value === '—' || value === '-' || value === '未配置' || value === '缺失';
+      }
+
+      function getStaticFieldName(field) {
+        var label = field.querySelector('.field-label');
+        if (!label) return '未命名静态属性';
+        var clone = label.cloneNode(true);
+        clone.querySelectorAll('.cell-id, .req').forEach(function (el) { el.remove(); });
+        return clone.textContent.replace(/【[^】]*】/g, '').trim() || '未命名静态属性';
+      }
+
+      function validateStaticAttrs() {
+        clearStaticValidation();
+        var group = getActiveStaticGroup();
+        if (!group) return true;
+        var missing = [];
+        group.querySelectorAll('.field').forEach(function (field) {
+          var valueEl = field.querySelector('.readonly-value');
+          if (!valueEl) return;
+          if (isMissingStaticValue(valueEl.textContent)) {
+            field.classList.add('is-invalid');
+            missing.push(getStaticFieldName(field));
+          }
+        });
+        if (!missing.length) return true;
+        var tip = document.getElementById('staticValidateTip');
+        var message = '创建不成功：以下静态属性缺少取值，请到对应设备或设备组对象中维护后再创建：' + missing.join('、');
+        if (tip) {
+          tip.textContent = message;
+          tip.classList.add('show');
+          tip.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        showToast('创建不成功：静态属性缺失');
+        return false;
+      }
+
+      function syncStaticAttrs() {
+        var tm = document.getElementById('thingModel');
+        var pump = document.getElementById('staticPump');
+        var chiller = document.getElementById('staticChiller');
+        var coolingTower = document.getElementById('staticCoolingTower');
+        var terminalPressure = document.getElementById('staticTerminalPressure');
+        if (!tm || !pump || !chiller || !coolingTower || !terminalPressure) return;
+        var isChiller = tm.value === 'chiller';
+        var isCoolingTower = tm.value === 'cooling_tower_approach';
+        var isTerminalPressure = tm.value === 'terminal_pressure_diff';
+        chiller.classList.toggle('hidden', !isChiller);
+        coolingTower.classList.toggle('hidden', !isCoolingTower);
+        terminalPressure.classList.toggle('hidden', !isTerminalPressure);
+        pump.classList.toggle('hidden', isChiller || isCoolingTower || isTerminalPressure);
+        clearStaticValidation();
+      }
       document.getElementById('thingModel').addEventListener('change', function () {
         syncThingModelAlgoGate();
+        syncStaticAttrs();
+        syncModelExample();
       });
 
       syncThingModelAlgoGate();
+      syncStaticAttrs();
       syncAlgoBlocks();
+      syncAdvancedArea();
       syncScope();
+      syncModelExample();
       renumberParamIds();
 
       document.getElementById('paramBody').addEventListener('change', function (e) {
@@ -1200,7 +1726,8 @@
         }
       });
       document.getElementById('btnSave').addEventListener('click', function () {
-        showToast('已保存（原型占位）');
+        if (!validateStaticAttrs()) return;
+        showToast('已保存预测模型服务模板（机理 + 混合增强）');
       });
 
       document.getElementById('btnAddParam').addEventListener('click', function () {

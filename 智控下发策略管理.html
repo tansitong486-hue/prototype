@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>智控下发策略</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-dark: #17358A;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --danger: #DC2626;
+      --success: #16A34A;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button { border: none; background: none; font: inherit; }
+
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main { flex: 1; min-width: 0; overflow-y: auto; background: var(--bg-body); }
+    .page-shell { padding: 18px 20px 24px; }
+
+    .page-card {
+      min-height: calc(100vh - 96px);
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .page-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 18px 12px;
+    }
+
+    .page-title {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .page-tools {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .search-field {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      height: 34px;
+      min-width: 300px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--text-secondary);
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .search-field:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.12);
+    }
+
+    .search-field svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+      opacity: .75;
+      flex-shrink: 0;
+    }
+
+    .search-input {
+      border: none;
+      outline: none;
+      font-size: 12px;
+      width: 100%;
+      color: var(--text-primary);
+      background: transparent;
+    }
+
+    .search-input::placeholder { color: var(--text-hint); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 34px;
+      padding: 0 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .btn-primary {
+      color: #fff;
+      background: var(--primary);
+    }
+
+    .btn-primary:hover { background: var(--primary-dark); }
+
+    .table-wrap {
+      padding: 0 18px;
+      overflow-x: auto;
+    }
+
+    .data-table {
+      width: 100%;
+      min-width: 1040px;
+      border-collapse: collapse;
+    }
+
+    .data-table thead th {
+      padding: 12px 8px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 13px 8px;
+      font-size: 13px;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-light);
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover { background: #FBFCFE; }
+
+    .status-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #F1F5F9;
+      color: var(--text-secondary);
+    }
+
+    .status-tag.referenced {
+      background: #ECFDF3;
+      color: var(--success);
+    }
+
+    .actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 18px;
+      white-space: nowrap;
+    }
+
+    .action-link {
+      font-size: 13px;
+      cursor: pointer;
+      color: #1890FF;
+      transition: opacity var(--transition);
+    }
+
+    .action-link:hover { opacity: 0.72; }
+    .action-link.delete { color: var(--danger); }
+    .action-link.disabled {
+      color: #CBD5E1;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .page-foot {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px 18px;
+      min-height: 56px;
+    }
+
+    .pagination-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-left: auto;
+    }
+
+    .pagination-total {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .page-size {
+      height: 32px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0 32px 0 10px;
+      color: var(--text-primary);
+      font-size: 12px;
+      background: #fff;
+    }
+
+    .pagination {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .page-item,
+    .page-arrow {
+      min-width: 32px;
+      height: 32px;
+      padding: 0 8px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .page-item.active {
+      color: #fff;
+      border-color: var(--primary);
+      background: var(--primary);
+    }
+
+    .page-arrow.disabled {
+      color: #CBD5E1;
+      cursor: not-allowed;
+      background: #F8FAFC;
+    }
+
+    .empty-state {
+      display: none;
+      padding: 72px 0;
+      text-align: center;
+      color: var(--text-hint);
+      font-size: 13px;
+    }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      min-width: 180px;
+      max-width: 320px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.92);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.6;
+      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.28);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: all .25s ease;
+      z-index: 260;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 900px) {
+      .page-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .page-tools,
+      .search-field {
+        width: 100%;
+      }
+
+      .pagination-wrap {
+        align-items: flex-end;
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+        <div class="page-shell">
+          <section class="page-card">
+            <div class="page-head">
+              <div class="page-title">智控下发策略</div>
+              <div class="page-tools">
+                <label class="search-field">
+                  <svg viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M6.5 1.5a5 5 0 1 0 3.1 8.9l3.5 3.5a1 1 0 0 0 1.4-1.4l-3.5-3.5a5 5 0 0 0-4.5-7.5zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/>
+                  </svg>
+                  <input class="search-input" id="searchInput" type="text" placeholder="下发策略名称">
+                </label>
+                <button class="btn btn-primary" id="createBtn">添加</button>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>下发策略</th>
+                    <th>创建时间</th>
+                    <th>下发模式</th>
+                    <th>策略状态</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="strategyTbody">
+                  <tr data-name="末端手动下发">
+                    <td>末端手动下发</td>
+                    <td>2026-06-02 14:34:21</td>
+                    <td>手动</td>
+                    <td><span class="status-tag referenced">被引用</span></td>
+                    <td>
+                      <div class="actions">
+                        <span class="action-link" data-action="view">查看</span>
+                        <span class="action-link" data-action="edit">编辑</span>
+                        <span class="action-link delete disabled" data-action="delete">删除</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr data-name="手动下发">
+                    <td>手动下发</td>
+                    <td>2026-05-25 17:31:07</td>
+                    <td>手动</td>
+                    <td><span class="status-tag referenced">被引用</span></td>
+                    <td>
+                      <div class="actions">
+                        <span class="action-link" data-action="view">查看</span>
+                        <span class="action-link" data-action="edit">编辑</span>
+                        <span class="action-link delete disabled" data-action="delete">删除</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr data-name="ttt1">
+                    <td>ttt1</td>
+                    <td>2026-05-14 16:45:41</td>
+                    <td>自动</td>
+                    <td><span class="status-tag">已生成</span></td>
+                    <td>
+                      <div class="actions">
+                        <span class="action-link" data-action="view">查看</span>
+                        <span class="action-link" data-action="edit">编辑</span>
+                        <span class="action-link delete" data-action="delete">删除</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr data-name="安全策略默认下发">
+                    <td>安全策略默认下发</td>
+                    <td>2026-05-14 16:00:14</td>
+                    <td>自动</td>
+                    <td><span class="status-tag referenced">被引用</span></td>
+                    <td>
+                      <div class="actions">
+                        <span class="action-link" data-action="view">查看</span>
+                        <span class="action-link" data-action="edit">编辑</span>
+                        <span class="action-link delete disabled" data-action="delete">删除</span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="empty-state" id="emptyState">暂无匹配的下发策略</div>
+            </div>
+
+            <div class="page-foot">
+              <div class="pagination-total" id="totalText">共 4 条</div>
+              <div class="pagination-wrap">
+                <select class="page-size" aria-label="每页条数">
+                  <option>20条/页</option>
+                </select>
+                <div class="pagination">
+                  <span class="page-arrow disabled">‹</span>
+                  <span class="page-item active">1</span>
+                  <span class="page-arrow disabled">›</span>
+                  <span class="pagination-total">前往</span>
+                  <span class="page-item">1</span>
+                  <span class="pagination-total">页</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function () {
+      var toast = document.getElementById('toast');
+      var toastTimer = null;
+      var tbody = document.getElementById('strategyTbody');
+      var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () {
+          toast.classList.remove('show');
+        }, 1800);
+      }
+
+      function goForm(mode, name) {
+        var query = '?mode=' + encodeURIComponent(mode);
+        if (name) query += '&name=' + encodeURIComponent(name);
+        window.location.assign(encodeURI('创建-编辑智控下发策略.html') + query);
+      }
+
+      document.getElementById('createBtn').addEventListener('click', function () {
+        goForm('create');
+      });
+
+      document.querySelectorAll('.action-link').forEach(function (item) {
+        item.addEventListener('click', function () {
+          if (item.classList.contains('disabled')) return;
+          var action = item.getAttribute('data-action');
+          var row = item.closest('tr');
+          var name = row ? row.getAttribute('data-name') : '';
+
+          if (action === 'view' || action === 'edit') {
+            goForm(action, name);
+          } else {
+            showToast('删除：' + name);
+          }
+        });
+      });
+
+      document.getElementById('searchInput').addEventListener('input', function (event) {
+        var keyword = event.target.value.trim();
+        var visibleCount = 0;
+        rows.forEach(function (row) {
+          var match = !keyword || row.getAttribute('data-name').indexOf(keyword) !== -1;
+          row.style.display = match ? '' : 'none';
+          if (match) visibleCount += 1;
+        });
+        document.getElementById('emptyState').style.display = visibleCount ? 'none' : 'block';
+        document.getElementById('totalText').textContent = '共 ' + visibleCount + ' 条';
+      });
+    })();
+  </script>
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="智控下发策略"></script>
+</body>
+</html>

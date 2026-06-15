@@ -280,6 +280,65 @@
       color: var(--text-hint);
     }
 
+    .quick-filter-check {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 32px;
+      padding: 0 2px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #334155;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .quick-filter-check-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .quick-filter-box {
+      display: inline-grid;
+      place-content: center;
+      flex-shrink: 0;
+      width: 14px;
+      height: 14px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .quick-filter-box::after {
+      content: "";
+      width: 7px;
+      height: 4px;
+      border-left: 2px solid #fff;
+      border-bottom: 2px solid #fff;
+      transform: rotate(-45deg) scale(0);
+      transform-origin: center;
+      transition: transform var(--transition);
+    }
+
+    .quick-filter-check-input:checked + .quick-filter-box {
+      background: #24B35B;
+      border-color: #24B35B;
+    }
+
+    .quick-filter-check-input:checked + .quick-filter-box::after {
+      transform: rotate(-45deg) scale(1);
+    }
+
+    .quick-filter-check-input:focus-visible + .quick-filter-box {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(36, 179, 91, 0.18);
+    }
+
     .table-scroll {
       overflow-x: auto;
     }
@@ -340,6 +399,29 @@
 
     .pred-ok { color: #52C41A; font-weight: 600; }
     .pred-bad { color: #CF1322; font-weight: 600; }
+    .confidence-pill {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .confidence-pill.high { background: #F6FFED; color: #389E0D; border: 1px solid #B7EB8F; }
+    .confidence-pill.low { background: #F1F5F9; color: #475569; border: 1px solid #E2E8F0; }
+    .confidence-summary {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-light);
+      background: #FAFAFA;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
 
     tr.row-hidden { display: none; }
 
@@ -431,6 +513,25 @@
             <h1 class="page-heading">仿真验证</h1>
           </div>
 
+          <div class="anno anno-version-header" data-version="v2.3">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v2.3</p>
+              <p><b>更新日期：</b>2026-06-15</p>
+              <p><b>变更概述：</b>仿真验证结果按行增加置信等级，仅展示高/低两级；顶部统计本次校验高置信和低置信数量，便于判断低置信模型是否需要人工复核。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-field" data-version="v2.3">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.3</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>仿真验证结果表 · 置信等级</p>
+              <p>置信等级来自预测模型统一工况分箱：样本数充足为高置信，样本不足或低覆盖为低置信；本页不展示第三等级。</p>
+            </div>
+          </div>
+
           <div class="banner-tip" role="region" aria-label="提示">
             <svg class="banner-tip-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
@@ -459,6 +560,11 @@
           </div>
 
           <section class="data-card" aria-label="校验数据">
+            <div class="confidence-summary">
+              <span>本次仿真置信统计：</span>
+              <span class="confidence-pill high">高置信 9 项</span>
+              <span class="confidence-pill low">低置信 3 项</span>
+            </div>
             <div class="filter-row">
               <select class="filter-select" id="filterSelect" aria-label="筛选">
                 <option value="">全部对象</option>
@@ -471,6 +577,11 @@
                 </svg>
                 <input class="search-input" type="search" id="metricSearch" placeholder="指标名称" aria-label="按指标名称搜索">
               </label>
+              <label class="quick-filter-check">
+                <input class="quick-filter-check-input" type="checkbox" id="badResultFilter">
+                <span class="quick-filter-box" aria-hidden="true"></span>
+                <span>只看未达标</span>
+              </label>
             </div>
 
             <div class="table-scroll">
@@ -481,13 +592,14 @@
                     <th>指标名称</th>
                     <th>当前实际值</th>
                     <th>模拟预测值</th>
+                    <th>置信等级</th>
                     <th>预测偏差</th>
                     <th>预测结果</th>
                   </tr>
                 </thead>
                 <tbody id="tableBody" class="tbody-data">
                   <tr id="emptyRow" class="row-hidden">
-                    <td class="empty-wrap" colspan="6">
+                    <td class="empty-wrap" colspan="7">
                       <div class="empty-illu" aria-hidden="true">
                         <svg viewBox="0 0 120 100" width="120" height="100" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <ellipse cx="60" cy="88" rx="40" ry="6" fill="#E8E8E8"/>
@@ -622,13 +734,33 @@
         toastTimer = setTimeout(function () { toast.classList.remove('show') }, 2200)
       }
 
+      let badOnly = false
+      const syncBadFilterButton = function () {
+        G('badResultFilter').checked = badOnly
+      }
+
       G('btnRevalidate').addEventListener('click', function () {
         G('filterSelect').value = ''
         G('metricSearch').value = ''
-        document.querySelectorAll('tr.data-row').forEach(function (r) { r.classList.remove('row-hidden') })
-        G('emptyRow').classList.add('row-hidden')
+        badOnly = false
+        syncBadFilterButton()
+        applyFilters()
         showToast('已重新校验（示意，列表已重置为全部明细）')
       })
+
+      const hydrateConfidenceColumn = function () {
+        const lows = new Set(['系统总电功率', '冷冻水总管回水温度（℃）', '冷水主机功率（KW）'])
+        document.querySelectorAll('tr.data-row').forEach(function (row) {
+          if (row.querySelector('.confidence-pill')) return
+          const metric = row.getAttribute('data-metric') || ''
+          const low = lows.has(metric)
+          const td = document.createElement('td')
+          td.innerHTML = '<span class="confidence-pill ' + (low ? 'low' : 'high') + '">' + (low ? '低置信' : '高置信') + '</span>'
+          // 置信度列置于「模拟预测值」(index 3) 与「预测偏差」(index 4) 之间
+          row.insertBefore(td, row.children[4])
+        })
+      }
+      hydrateConfidenceColumn()
 
       // ── 筛选 / 搜索 ──
       const objectMatches = function (objAttr, filterVal) {
@@ -647,7 +779,8 @@
         document.querySelectorAll('tr.data-row').forEach(function (row) {
           const obj = row.getAttribute('data-object') || ''
           const metric = (row.getAttribute('data-metric') || '').toLowerCase()
-          const show = objectMatches(obj, filterVal) && (!q || metric.indexOf(q) !== -1)
+          const resultBad = !!row.querySelector('.pred-bad')
+          const show = objectMatches(obj, filterVal) && (!q || metric.indexOf(q) !== -1) && (!badOnly || resultBad)
           row.classList.toggle('row-hidden', !show)
           if (show) visible += 1
         })
@@ -656,7 +789,12 @@
 
       G('filterSelect').addEventListener('change', applyFilters)
       G('metricSearch').addEventListener('input', applyFilters)
+      G('badResultFilter').addEventListener('change', function (event) {
+        badOnly = event.target.checked
+        applyFilters()
+      })
 
+      syncBadFilterButton()
       applyFilters()
     })()
   </script>

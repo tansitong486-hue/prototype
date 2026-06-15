@@ -28,6 +28,8 @@
       --shadow-sm: 0 1px 2px rgba(31, 37, 77, 0.08);
       --shadow-card: 0 2px 8px rgba(31, 37, 77, 0.08);
       --transition: .22s cubic-bezier(.4, 0, .2, 1);
+      --sidebar-width: 210px;
+      --fixed-action-height: 65px;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -85,7 +87,7 @@
       margin-top: 2px;
     }
 
-    .content-body { padding: 12px 20px 24px; }
+    .content-body { padding: 12px 20px calc(var(--fixed-action-height) + 24px); }
 
     .section-card {
       background: var(--bg-card);
@@ -140,6 +142,51 @@
     }
 
     .section-body { padding: 18px; }
+
+    .boundary-card .section-head {
+      border-bottom: none;
+      padding-bottom: 4px;
+    }
+
+    .boundary-card .section-body {
+      padding-top: 0;
+    }
+
+    .boundary-card .section-title {
+      font-size: 14px;
+    }
+
+    .boundary-alert {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 42px;
+      padding: 10px 16px;
+      border-radius: 4px;
+      background: #FFF4E5;
+      color: #FA8C16;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .boundary-alert-icon {
+      flex: 0 0 auto;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #FA8C16;
+      color: #FFFFFF;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .boundary-card .table-wrap {
+      margin-top: 12px;
+    }
 
     .note-block {
       background: var(--bg-body);
@@ -208,7 +255,7 @@
       border-collapse: collapse;
     }
 
-    .predict-table { min-width: 1500px; }
+    .predict-table { min-width: 1680px; }
 
     .data-table .cell-num {
       text-align: right;
@@ -361,6 +408,56 @@
       color: var(--danger);
       background: var(--danger-soft);
     }
+    .runtime-model {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 0 9px;
+      border-radius: 999px;
+      background: var(--primary-soft);
+      color: var(--primary-dark);
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .runtime-model-wrap {
+      display: grid;
+      gap: 4px;
+      align-items: start;
+    }
+    .runtime-selected {
+      font-size: 12px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+    .runtime-evidence {
+      font-size: 12px;
+      line-height: 1.55;
+      color: var(--text-secondary);
+      min-width: 130px;
+    }
+    .runtime-evidence b { color: var(--text-primary); }
+
+    .confidence-tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 0 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .confidence-tag.high {
+      color: #2A6E0F;
+      background: var(--success-soft);
+    }
+
+    .confidence-tag.low {
+      color: #9A5B00;
+      background: #FFF4D6;
+    }
 
     .failure-text {
       color: var(--danger);
@@ -376,12 +473,25 @@
     }
 
     .action-bar {
+      position: fixed;
+      left: var(--sidebar-width);
+      right: 0;
+      bottom: 0;
+      z-index: 180;
       display: flex;
       justify-content: flex-end;
       align-items: center;
       gap: 10px;
-      padding: 16px 0 8px;
+      min-height: var(--fixed-action-height);
+      padding: 14px 24px;
       flex-wrap: wrap;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border-light);
+      box-shadow: 0 -6px 18px rgba(15, 23, 42, 0.06);
+    }
+
+    html:has(.sidebar--collapsed) .action-bar {
+      left: 64px;
     }
 
     .module-checks {
@@ -468,6 +578,10 @@
       .section-head.with-actions { align-items: flex-start; flex-direction: column; }
       .predict-summary { align-items: flex-start; flex-direction: column; }
       .summary-counts { justify-content: flex-start; }
+      .action-bar {
+        left: 0;
+        padding: 12px 16px;
+      }
     }
   </style>
   <link rel="stylesheet" href="annotation-styles.css">
@@ -500,6 +614,16 @@
               <p><b>更新日期：</b>2026-06-09</p>
               <p><b>变更概述：</b>在 <b>v1.8</b> 基础上，<b>v2.2</b> 对"预测对象与预测参数"区块做以下调整：① "模型选择规则"新增「多工况泛化优先」（基于 Max-bin RMSE，即各工况区间中最差 RMSE 最低的模型），并将其设为所有行的默认选中项；② 所有自动策略叠加「实时偏差健康检查」——选出模型后若实时偏差 &gt; 15%，仿真结果页标注告警但不阻断；③ 点击「预测」后按模型逐行回显结果，部分模型失败时不阻断成功模型展示，失败原因仅在下方表格行内展示。</p>
               <p><b>本页说明：</b>查看本次变更请筛选 <code>v2.2</code>。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-version-header" data-version="v2.3">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v2.3</p>
+              <p><b>更新日期：</b>2026-06-15</p>
+              <p><b>变更概述：</b>不新增模型选择规则选项；「多工况泛化优先」改为运行时动态选模，模型名称列展示运行时动态选择和当前选中模型，新增「选择依据」列回显命中分箱、样本数、区间 RMSE 与回退原因；选择「自定义」时才切换为模型下拉选择器。</p>
+              <p><b>本页说明：</b>查看运行时动态选模规则请筛选 <code>v2.3</code>。</p>
             </div>
           </div>
 
@@ -677,11 +801,11 @@
               <p><b>关联模块：</b>预测对象与预测参数 — 模型选择规则</p>
               <p><b>v2.2 变更：</b>"模型选择规则"下拉新增第 4 个选项「多工况泛化优先」，<b>并将其设为所有行的默认选中项</b>（新建仿真模型时即默认此规则）。完整选项列表及含义如下：</p>
               <table class="anno-table">
-                <thead><tr><th>选项</th><th>含义</th><th>选择依据</th><th>模型名称列行为</th></tr></thead>
+                <thead><tr><th>选项</th><th>含义</th><th>自动策略依据</th><th>模型名称列行为</th></tr></thead>
                 <tbody>
-                  <tr><td>训练时间优先</td><td>选最近一次训练完成的模型</td><td>训练完成时间</td><td>自动填入，可手动覆盖</td></tr>
-                  <tr><td>RMSE 优先</td><td>选训练评估全局 RMSE 最低的模型</td><td>全局 RMSE</td><td>自动填入，可手动覆盖</td></tr>
-                  <tr><td><b>多工况泛化优先（默认）</b></td><td>选 Max-bin RMSE 最低的模型，即在最薄弱工况区间表现最好的模型</td><td>Max-bin RMSE</td><td>自动填入，可手动覆盖</td></tr>
+                  <tr><td>训练时间优先</td><td>选最近一次训练完成的模型</td><td>训练完成时间</td><td>直接展示系统命中的模型</td></tr>
+                  <tr><td>RMSE 优先</td><td>选训练评估全局 RMSE 最低的模型</td><td>全局 RMSE</td><td>直接展示系统命中的模型</td></tr>
+                  <tr><td><b>多工况泛化优先（默认）</b></td><td>选 Max-bin RMSE 最低的模型，即在最薄弱工况区间表现最好的模型</td><td>Max-bin RMSE</td><td>直接展示系统命中的模型</td></tr>
                   <tr><td>自定义</td><td>用户手动从候选模型中指定</td><td>—</td><td>下拉可选</td></tr>
                 </tbody>
               </table>
@@ -692,7 +816,7 @@
                 <li><b>单次仿真</b> — 仿真启动时评估一次，选定后整轮仿真不再重选。</li>
                 <li><b>寻优场景</b> — 寻优启动时整体评估一次，该轮寻优内所有仿真迭代共用此次评估结果。</li>
               </ul>
-              <p><b>交互联动：</b>选中前三种自动策略时，模型名称列自动填入对应最优模型名称，用户可手动覆盖；选中「自定义」时恢复为空白下拉供手动选择。当前演示数据中所有行均默认选中「多工况泛化优先」。</p>
+              <p><b>交互联动：</b>选中前三种自动策略时，模型名称列直接展示系统命中的模型；选中「自定义」时切换为空白下拉选择器，供用户手动选择候选模型。当前演示数据中所有行均默认选中「多工况泛化优先」。</p>
             </div>
           </div>
 
@@ -711,13 +835,32 @@
             </div>
           </div>
 
+          <div class="anno anno-field" data-version="v2.3">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.3</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>预测对象与预测参数 — 多工况泛化优先</p>
+              <table class="anno-table">
+                <thead><tr><th>字段/状态</th><th>规则</th></tr></thead>
+                <tbody>
+                  <tr><td>模型选择规则</td><td>保留原选项「多工况泛化优先」，不新增规则；与「RMSE 优先」「训练时间优先」同属自动策略。</td></tr>
+                  <tr><td>模型名称</td><td>多工况泛化优先下展示「运行时动态选择」与当前选中模型；选择「自定义」时才变为下拉选择器，由用户手动指定模型。</td></tr>
+                  <tr><td>选择依据</td><td>回显当前命中工况分箱、样本数、区间 RMSE 和最终选择依据；当前分箱样本不足时展示回退原因。</td></tr>
+                  <tr><td>结果回显</td><td>后置结果列保留模型置信度与失败原因；不新增新的模型选择规则。</td></tr>
+                  <tr><td>模型置信度</td><td>按当前命中模型展示高置信度或低置信度。</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           <div class="anno anno-data" data-version="v1.0">
             <span class="anno-tag">数据逻辑</span>
             <span class="anno-version">v1.0</span>
             <span class="anno-source">引用自古典原型</span>
             <div class="anno-body">
               <p><b>关联模块：</b>预测对象与预测参数</p>
-              <p>根据所选仿真模型对象，动态展示对应节点下所有预测对象及预测参数。表中展示模型选择规则、最新实际值、最新预测值、预测偏差、模型名称以及硬边界上下限；当前页以古典原型中的 8 条代表性数据做静态演示。</p>
+              <p>根据所选仿真模型对象，动态展示对应节点下所有预测对象及预测参数。表中展示模型选择规则、模型名称、选择依据、最新实际值、最新预测值、预测偏差、模型置信度和失败原因；当前页以古典原型中的 8 条代表性数据做静态演示。</p>
             </div>
           </div>
 
@@ -748,21 +891,23 @@
                       <th>预测参数</th>
                       <th>模型选择规则</th>
                       <th>模型名称</th>
+                      <th>选择依据</th>
                       <th>最新实际值</th>
                       <th>最新预测值</th>
                       <th>预测偏差</th>
                       <th>预测状态</th>
+                      <th>模型置信度</th>
                       <th>失败原因</th>
                     </tr>
                   </thead>
                   <tbody id="predictTableBody">
-                    <tr data-predict-result="success" data-predict-value="122.87m³/h" data-predict-delta="0.36m³/h">
+                    <tr data-predict-result="success" data-predict-value="122.87m³/h" data-predict-delta="0.36m³/h" data-auto-model="冷冻泵流量泛化模型 V3">
                       <td>冷冻泵1</td>
                       <td>流量</td>
                       <td>
                         <select class="field-select tight rule-select" aria-label="冷冻泵1-规则">
                           <option>训练时间优先</option>
-                          <option>RMSE优先</option>
+                          <option>RMSE 优先</option>
                           <option selected>多工况泛化优先</option>
                           <option>自定义</option>
                         </select>
@@ -774,19 +919,21 @@
                           <option>美的E3005型号--AI模型</option>
                         </select>
                       </td>
+                      <td class="runtime-evidence"></td>
                       <td class="cell-num">123.23m³/h</td>
                       <td class="cell-num predict-value">122.87m³/h</td>
                       <td class="cell-num predict-delta">0.36m³/h</td>
                       <td><span class="predict-tag success">预测成功</span></td>
+                      <td><span class="confidence-tag high">高置信度</span></td>
                       <td class="failure-text cell-muted">—</td>
                     </tr>
-                    <tr data-predict-result="fail" data-predict-value="" data-predict-delta="" data-failure="模型服务超时，30s 内未返回预测结果">
+                    <tr data-predict-result="fail" data-predict-value="" data-predict-delta="" data-failure="模型服务超时，30s 内未返回预测结果" data-auto-model="主机功率泛化模型 V2">
                       <td>冷水主机1</td>
                       <td>功率</td>
                       <td>
                         <select class="field-select tight rule-select" aria-label="冷水主机1-规则">
                           <option>训练时间优先</option>
-                          <option>RMSE优先</option>
+                          <option>RMSE 优先</option>
                           <option selected>多工况泛化优先</option>
                           <option>自定义</option>
                         </select>
@@ -798,19 +945,21 @@
                           <option>美的E3005功率模型（AI）</option>
                         </select>
                       </td>
+                      <td class="runtime-evidence"></td>
                       <td class="cell-num">9.45kW</td>
                       <td class="cell-num predict-value cell-muted">—</td>
                       <td class="cell-num predict-delta cell-muted">—</td>
                       <td><span class="predict-tag fail">预测失败</span></td>
+                      <td><span class="confidence-tag low">低置信度</span></td>
                       <td class="failure-text">模型服务超时，30s 内未返回预测结果</td>
                     </tr>
-                    <tr data-predict-result="success" data-predict-value="2.91℃" data-predict-delta="0.06℃">
+                    <tr data-predict-result="success" data-predict-value="2.91℃" data-predict-delta="0.06℃" data-auto-model="板换温差预测模型 V1">
                       <td>板换1</td>
                       <td>换热温差</td>
                       <td>
                         <select class="field-select tight rule-select" aria-label="板换1-规则">
                           <option>训练时间优先</option>
-                          <option>RMSE优先</option>
+                          <option>RMSE 优先</option>
                           <option selected>多工况泛化优先</option>
                           <option>自定义</option>
                         </select>
@@ -822,19 +971,21 @@
                           <option>美的E3005型号--AI模型</option>
                         </select>
                       </td>
+                      <td class="runtime-evidence"></td>
                       <td class="cell-num">2.85℃</td>
                       <td class="cell-num predict-value">2.91℃</td>
                       <td class="cell-num predict-delta">0.06℃</td>
                       <td><span class="predict-tag success">预测成功</span></td>
+                      <td><span class="confidence-tag high">高置信度</span></td>
                       <td class="failure-text cell-muted">—</td>
                     </tr>
-                    <tr data-predict-result="success" data-predict-value="123.05m³/h" data-predict-delta="0.18m³/h">
+                    <tr data-predict-result="success" data-predict-value="123.05m³/h" data-predict-delta="0.18m³/h" data-auto-model="冷却泵流量泛化模型 V3">
                       <td>冷却泵1</td>
                       <td>流量</td>
                       <td>
                         <select class="field-select tight rule-select" aria-label="冷却泵1-规则">
                           <option>训练时间优先</option>
-                          <option>RMSE优先</option>
+                          <option>RMSE 优先</option>
                           <option selected>多工况泛化优先</option>
                           <option>自定义</option>
                         </select>
@@ -846,19 +997,21 @@
                           <option>美的E3005型号--AI模型</option>
                         </select>
                       </td>
+                      <td class="runtime-evidence"></td>
                       <td class="cell-num">123.23m³/h</td>
                       <td class="cell-num predict-value">123.05m³/h</td>
                       <td class="cell-num predict-delta">0.18m³/h</td>
                       <td><span class="predict-tag success">预测成功</span></td>
+                      <td><span class="confidence-tag high">高置信度</span></td>
                       <td class="failure-text cell-muted">—</td>
                     </tr>
-                    <tr data-predict-result="success" data-predict-value="3.08℃" data-predict-delta="0.04℃">
+                    <tr data-predict-result="success" data-predict-value="3.08℃" data-predict-delta="0.04℃" data-auto-model="冷却塔逼近度模型 V4">
                       <td>冷却塔1</td>
                       <td>逼近度</td>
                       <td>
                         <select class="field-select tight rule-select" aria-label="冷却塔1-规则">
                           <option>训练时间优先</option>
-                          <option>RMSE优先</option>
+                          <option>RMSE 优先</option>
                           <option selected>多工况泛化优先</option>
                           <option>自定义</option>
                         </select>
@@ -870,19 +1023,21 @@
                           <option>美的E3005型号--AI模型</option>
                         </select>
                       </td>
+                      <td class="runtime-evidence"></td>
                       <td class="cell-num">3.12℃</td>
                       <td class="cell-num predict-value">3.08℃</td>
                       <td class="cell-num predict-delta">0.04℃</td>
                       <td><span class="predict-tag success">预测成功</span></td>
+                      <td><span class="confidence-tag low">低置信度</span></td>
                       <td class="failure-text cell-muted">—</td>
                     </tr>
-                    <tr data-predict-result="fail" data-predict-value="" data-predict-delta="" data-failure="实时输入缺失：冷冻侧供回水压差未取到最新值">
+                    <tr data-predict-result="fail" data-predict-value="" data-predict-delta="" data-failure="实时输入缺失：冷冻侧供回水压差未取到最新值" data-auto-model="制冷单元压差模型 V2">
                       <td>制冷单元1</td>
                       <td>冷冻侧压差</td>
                       <td>
                         <select class="field-select tight rule-select" aria-label="制冷单元1-规则">
                           <option>训练时间优先</option>
-                          <option>RMSE优先</option>
+                          <option>RMSE 优先</option>
                           <option selected>多工况泛化优先</option>
                           <option>自定义</option>
                         </select>
@@ -894,19 +1049,21 @@
                           <option>美的E3005型号--AI模型</option>
                         </select>
                       </td>
+                      <td class="runtime-evidence"></td>
                       <td class="cell-num">123.21kPa</td>
                       <td class="cell-num predict-value cell-muted">—</td>
                       <td class="cell-num predict-delta cell-muted">—</td>
                       <td><span class="predict-tag fail">预测失败</span></td>
+                      <td><span class="confidence-tag low">低置信度</span></td>
                       <td class="failure-text">实时输入缺失：冷冻侧供回水压差未取到最新值</td>
                     </tr>
-                    <tr data-predict-result="success" data-predict-value="123.54kPa" data-predict-delta="0.33kPa">
+                    <tr data-predict-result="success" data-predict-value="123.54kPa" data-predict-delta="0.33kPa" data-auto-model="冷却侧压差泛化模型 V2">
                       <td>冷却塔组1</td>
                       <td>冷却侧压差</td>
                       <td>
                         <select class="field-select tight rule-select" aria-label="冷却塔组1-规则">
                           <option>训练时间优先</option>
-                          <option>RMSE优先</option>
+                          <option>RMSE 优先</option>
                           <option selected>多工况泛化优先</option>
                           <option>自定义</option>
                         </select>
@@ -918,19 +1075,21 @@
                           <option>美的E3005型号--AI模型</option>
                         </select>
                       </td>
+                      <td class="runtime-evidence"></td>
                       <td class="cell-num">123.21kPa</td>
                       <td class="cell-num predict-value">123.54kPa</td>
                       <td class="cell-num predict-delta">0.33kPa</td>
                       <td><span class="predict-tag success">预测成功</span></td>
+                      <td><span class="confidence-tag low">低置信度</span></td>
                       <td class="failure-text cell-muted">—</td>
                     </tr>
-                    <tr data-predict-result="fail" data-predict-value="" data-predict-delta="" data-failure="未选择模型，请先在模型名称列选择可用模型">
+                    <tr data-predict-result="fail" data-predict-value="" data-predict-delta="" data-failure="未选择模型，请先在模型名称列选择可用模型" data-auto-model="系统主管压差模型 V1">
                       <td>水冷冷水系统</td>
                       <td>冷冻水主管压差</td>
                       <td>
                         <select class="field-select tight rule-select" aria-label="水冷冷水系统-规则">
                           <option>训练时间优先</option>
-                          <option>RMSE优先</option>
+                          <option>RMSE 优先</option>
                           <option selected>多工况泛化优先</option>
                           <option>自定义</option>
                         </select>
@@ -942,10 +1101,12 @@
                           <option>美的E3005型号--AI模型</option>
                         </select>
                       </td>
+                      <td class="runtime-evidence"></td>
                       <td class="cell-num">0.82bar</td>
                       <td class="cell-num predict-value cell-muted">—</td>
                       <td class="cell-num predict-delta cell-muted">—</td>
                       <td><span class="predict-tag fail">预测失败</span></td>
+                      <td><span class="confidence-tag low">低置信度</span></td>
                       <td class="failure-text">未选择模型，请先在模型名称列选择可用模型</td>
                     </tr>
                   </tbody>
@@ -973,18 +1134,15 @@
             </div>
           </div>
 
-          <section class="section-card">
+          <section class="section-card boundary-card">
             <div class="section-head">
-              <span class="step-num">4</span>
               <span class="section-title">仿真安全边界配置</span>
             </div>
             <div class="section-body">
-              <p class="note-block">
-                通过设定各参数预测偏差最大值，来确保仿真模型安全可靠。当预测偏差超过了边界，将自动终止仿真模型流程。
-              </p>
-              <p class="note-block note-block-sub">
-                下方动态展示选定的水冷冷水系统下，仿真模型中所有的输出参数。
-              </p>
+              <div class="boundary-alert">
+                <span class="boundary-alert-icon">!</span>
+                <span>通过设定各参数预测偏差最大值，来确保仿真模型安全可靠。当预测偏差超过了边界，将自动终止仿真模型流程。</span>
+              </div>
               <div class="table-wrap">
                 <table class="data-table" style="min-width: 720px;">
                   <thead>
@@ -1158,22 +1316,7 @@
         window.location.assign('仿真校验.html')
       })
 
-      document.querySelectorAll('.rule-select').forEach(function (sel) {
-        sel.addEventListener('change', function () {
-          var row = this.closest('tr')
-          var modelSelect = row.querySelector('.model-select')
-          if (!modelSelect) return
-          if (this.value === '自定义') {
-            modelSelect.selectedIndex = 0
-          } else {
-            var opts = Array.prototype.slice.call(modelSelect.options)
-            var firstModelIndex = opts.findIndex(function (opt) { return opt.value !== '' })
-            modelSelect.selectedIndex = firstModelIndex > -1 ? firstModelIndex : 0
-          }
-          modelSelect.dispatchEvent(new Event('change'))
-        })
-      })
-
+      const predictTableBody = document.getElementById('predictTableBody')
       const predictRows = Array.prototype.slice.call(document.querySelectorAll('#predictTableBody tr'))
       const btnPredict = document.getElementById('btnPredict')
       const predictSummary = document.getElementById('predictSummary')
@@ -1182,13 +1325,118 @@
       const cntPredictSuccess = document.getElementById('cntPredictSuccess')
       const cntPredictFail = document.getElementById('cntPredictFail')
 
+      const modelOptionsByRow = new WeakMap()
+      predictRows.forEach(function (row) {
+        var select = row.querySelector('.model-select')
+        var options = select ? Array.prototype.slice.call(select.options).map(function (opt) {
+          return { value: opt.value, text: opt.textContent, selected: opt.selected }
+        }) : []
+        modelOptionsByRow.set(row, options)
+      })
+
+      const getAutoModelName = function (row, rule) {
+        var autoModels = {
+          '训练时间优先': row.dataset.modelLatest,
+          'RMSE 优先': row.dataset.modelRmse,
+          '多工况泛化优先': row.dataset.modelGeneral
+        }
+        return autoModels[rule] || row.dataset.autoModel || ''
+      }
+
+      const runtimeEvidenceTemplates = [
+        { bin: 'F04', sample: '86', rmse: '0.42', basis: '当前分箱 RMSE 最低' },
+        { bin: 'F07', sample: '12', rmse: '—', basis: '当前分箱样本不足，回退 Max-bin RMSE' },
+        { bin: 'F03', sample: '64', rmse: '0.08', basis: '当前分箱 RMSE 最低' },
+        { bin: 'F04', sample: '82', rmse: '0.39', basis: '当前分箱 RMSE 最低' },
+        { bin: 'F09', sample: '8', rmse: '—', basis: '当前分箱样本不足，回退 Max-bin RMSE' },
+        { bin: 'F02', sample: '0', rmse: '—', basis: '当前输入缺失，未执行选模' },
+        { bin: 'F05', sample: '18', rmse: '—', basis: '样本未达标，回退全局 RMSE' },
+        { bin: 'F01', sample: '0', rmse: '—', basis: '适用范围内候选模型不可用' }
+      ]
+
+      predictRows.forEach(function (row, idx) {
+        var item = runtimeEvidenceTemplates[idx] || runtimeEvidenceTemplates[0]
+        row.dataset.modelGeneral = row.dataset.modelGeneral || row.dataset.autoModel || ''
+        row.dataset.modelLatest = row.dataset.modelLatest || row.dataset.autoModel || ''
+        row.dataset.modelRmse = row.dataset.modelRmse || row.dataset.autoModel || ''
+        row.dataset.runtimeBin = item.bin
+        row.dataset.runtimeSample = item.sample
+        row.dataset.runtimeRmse = item.rmse
+        row.dataset.runtimeBasis = item.basis
+      })
+
+      const createModelSelect = function (row) {
+        var select = document.createElement('select')
+        var objectCell = row.children[0]
+        var customModel = row.dataset.customModel || ''
+        select.className = 'field-select tight model-select'
+        select.setAttribute('aria-label', (objectCell ? objectCell.textContent : '预测对象') + '-模型')
+        ;(modelOptionsByRow.get(row) || []).forEach(function (item) {
+          var option = document.createElement('option')
+          option.value = item.value
+          option.textContent = item.text
+          if (item.value === customModel) option.selected = true
+          select.appendChild(option)
+        })
+        if (!customModel) select.selectedIndex = 0
+        return select
+      }
+
+      const renderModelCell = function (row) {
+        var ruleSelect = row.querySelector('.rule-select')
+        var modelCell = row.children[3]
+        var evidenceCell = row.children[4]
+        if (!ruleSelect || !modelCell) return
+        if (ruleSelect.value === '自定义') {
+          modelCell.replaceChildren(createModelSelect(row))
+          if (evidenceCell) evidenceCell.innerHTML = '<b>人工指定</b><br>不执行自动选模'
+          return
+        }
+        var modelName = getAutoModelName(row, ruleSelect.value) || '未匹配模型'
+        if (ruleSelect.value === '多工况泛化优先') {
+          var wrap = document.createElement('div')
+          wrap.className = 'runtime-model-wrap'
+          var label = document.createElement('span')
+          label.className = 'runtime-model'
+          label.textContent = '运行时动态选择'
+          var selected = document.createElement('span')
+          selected.className = 'runtime-selected'
+          selected.textContent = '当前选中：' + modelName
+          wrap.appendChild(label)
+          wrap.appendChild(selected)
+          modelCell.replaceChildren(wrap)
+          if (evidenceCell) {
+            evidenceCell.innerHTML = '<b>分箱 ' + row.dataset.runtimeBin + '</b><br>样本 ' + row.dataset.runtimeSample + ' · 区间 RMSE ' + row.dataset.runtimeRmse + '<br>' + row.dataset.runtimeBasis
+          }
+        } else {
+          var modelText = document.createElement('span')
+          modelText.className = 'runtime-model'
+          modelText.textContent = modelName
+          modelCell.replaceChildren(modelText)
+          if (evidenceCell) evidenceCell.innerHTML = '<b>' + ruleSelect.value + '</b><br>按配置规则自动选中'
+        }
+      }
+
+      const renderAllModelCells = function () {
+        predictRows.forEach(renderModelCell)
+      }
+
+      document.querySelectorAll('.rule-select').forEach(function (sel) {
+        sel.addEventListener('change', function () {
+          var row = this.closest('tr')
+          if (!row) return
+          if (this.value === '自定义') row.dataset.customModel = ''
+          renderModelCell(row)
+        })
+      })
+
       const setCellMuted = function (cell, muted) {
         if (!cell) return
         cell.classList.toggle('cell-muted', muted)
       }
 
       const setPredictTag = function (row, state) {
-        var statusCell = row.querySelectorAll('td')[7]
+        var statusCell = row.querySelectorAll('td')[8]
         if (!statusCell) return
         var textMap = { running: '预测中', success: '预测成功', fail: '预测失败', idle: '未预测' }
         statusCell.innerHTML = '<span class="predict-tag ' + state + '">' + textMap[state] + '</span>'
@@ -1257,23 +1505,27 @@
         setSummary('running', 0, 0)
       }
 
-      document.querySelectorAll('.model-select').forEach(function (sel) {
-        sel.addEventListener('change', function () {
-          var row = this.closest('tr')
-          if (!row || !(row.dataset.failure || '').includes('未选择模型')) return
-          if (this.value) {
-            row.dataset.predictResult = 'success'
-            row.dataset.predictValue = '0.84bar'
-            row.dataset.predictDelta = '0.02bar'
-            row.dataset.failure = ''
-          } else {
-            row.dataset.predictResult = 'fail'
-            row.dataset.predictValue = ''
-            row.dataset.predictDelta = ''
-            row.dataset.failure = '未选择模型，请先在模型名称列选择可用模型'
-          }
-          renderPredictionResults()
-        })
+      predictTableBody.addEventListener('change', function (event) {
+        var target = event.target
+        if (!target.classList || !target.classList.contains('model-select')) return
+        var row = target.closest('tr')
+        if (!row) return
+        row.dataset.customModel = target.value || ''
+        var failureText = row.dataset.failure || ''
+        var canResolveByModel = failureText.includes('未选择模型') || failureText.includes('候选模型')
+        if (!canResolveByModel) return
+        if (target.value) {
+          row.dataset.predictResult = 'success'
+          row.dataset.predictValue = '0.84bar'
+          row.dataset.predictDelta = '0.02bar'
+          row.dataset.failure = ''
+        } else {
+          row.dataset.predictResult = 'fail'
+          row.dataset.predictValue = ''
+          row.dataset.predictDelta = ''
+          row.dataset.failure = '未选择模型，请先在模型名称列选择可用模型'
+        }
+        renderPredictionResults()
       })
 
       btnPredict.addEventListener('click', function () {
@@ -1288,6 +1540,11 @@
         }, 1200)
       })
 
+      var lastRuntimeRow = predictRows[predictRows.length - 1]
+      if (lastRuntimeRow && (lastRuntimeRow.dataset.failure || '').includes('未选择模型')) {
+        lastRuntimeRow.dataset.failure = '适用范围内候选模型均不可用，请检查预测模型服务状态'
+      }
+      renderAllModelCells()
       renderPredictionResults()
 
       var modPressure = document.getElementById('modPressure')

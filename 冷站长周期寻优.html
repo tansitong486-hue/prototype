@@ -191,6 +191,14 @@
     }
     .data-table tr:hover td { background:#FAFCFF; }
     .cell-muted { color:var(--text-hint); font-size:11px; }
+    .confidence-pill {
+      display:inline-flex; align-items:center; justify-content:center;
+      padding:2px 8px; border-radius:999px; font-size:11px; font-weight:700;
+      white-space:nowrap;
+    }
+    .confidence-pill.high { background:#ECFDF3; color:#15803D; }
+    .confidence-pill.low { background:#F1F5F9; color:#475569; }
+    .energy-cell { font-variant-numeric:tabular-nums; }
     .td-category {
       font-size:12px; font-weight:700; color:var(--text-primary);
       background:#F8FAFC; text-align:center; border-right:1px solid var(--border);
@@ -383,6 +391,20 @@
     <div id="app-sidebar"></div>
     <div class="main">
 
+      <div class="anno-filter-bar" id="annoFilterBar">
+        <span class="anno-filter-label">批注版本：</span>
+        <div class="anno-filter-tags" id="annoFilterTags"></div>
+      </div>
+
+      <div class="anno anno-version-header" data-version="v2.3">
+        <span class="anno-tag">版本信息</span>
+        <div class="anno-body">
+          <p><b>当前版本：</b>v2.3</p>
+          <p><b>更新日期：</b>2026-06-15</p>
+          <p><b>变更概述：</b>长周期寻优明细首行展示置信等级，置信度分组不再展示能耗行；规则配置新增「低置信保守度 γ(低)」滑块，低置信时段按保守系数参与排序。</p>
+        </div>
+      </div>
+
       <div class="anno anno-version-header" data-version="v2.0">
         <span class="anno-tag">版本信息</span>
         <div class="anno-body">
@@ -404,7 +426,7 @@
           <div class="selector">1号冷站 <span class="arrow-down">▾</span></div>
         </div>
         <div class="page-header-nav">
-          <div class="page-nav-item" onclick="window.location.assign(encodeURI('冷站柔性调优.html'))">冷站柔性调优</div>
+          <div class="page-nav-item" onclick="window.location.assign(encodeURI('冷站柔性调优.html'))">冷站柔性寻优</div>
           <div class="page-nav-item" onclick="window.location.assign(encodeURI('冷站全局寻优.html'))">冷站全局寻优</div>
           <div class="page-nav-item active">冷站长周期寻优</div>
         </div>
@@ -522,6 +544,16 @@
           <div class="anno-body">
             <p><b>关联模块：</b>寻优明细表</p>
             <p>表格行方向为参数维度（分类 + 参数名称），列方向为逐小时时间戳。风冷冷水系统分类包含：实时制冷量、室外干球温度、制冷系统能效 COP、总功率；可调设备保留风冷冷水机组与冷冻水泵，冷却水泵、冷却塔、板换等冷却侧设备不展示。数据由后端「最新寻优记录」接口驱动，此处为静态占位数据。</p>
+          </div>
+        </div>
+
+        <div class="anno anno-data" data-version="v2.3">
+          <span class="anno-tag">数据逻辑</span>
+          <span class="anno-version">v2.3</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>寻优明细表 — 逐时段置信等级</p>
+            <p>长周期寻优按时段分别取仿真求解链路的最低置信等级；低置信时段不直接淘汰，按规则配置中的 γ(低) 折算后参与排序。明细表首行展示置信等级，置信度分组不再展示原始能耗和 γ 修正后能耗。</p>
           </div>
         </div>
 
@@ -708,20 +740,21 @@
         <span class="pref-recommend-toast" id="lSmartToast"></span>
       </div>
       <p style="font-size:11.5px;color:var(--text-secondary);line-height:1.5;margin:-6px 0 14px;">
-        在省电基础上，用三个滑块调节偏好强度；值为 0 时退化为仅最小功率模式。
+        在省电基础上，用 λ 调节安全/切换/平稳偏好；低置信时段额外用 γ(低) 做保守降权。
       </p>
 
-      <div class="anno anno-req" data-version="v1.8" style="margin-bottom:16px;">
+      <div class="anno anno-req" data-version="v2.3" style="margin-bottom:16px;">
         <span class="anno-tag">需求说明</span>
         <div class="anno-body">
-          <p><b>关联模块：</b>冷站长周期寻优规则配置 —「寻优目标偏好」（v1.8 新增）</p>
-          <p>多目标加权寻优配置，对应目标函数 J = P_norm + λ₁·C_safety + λ₂·C_switch + λ₃·C_swing。</p>
+          <p><b>关联模块：</b>冷站长周期寻优规则配置 —「寻优目标偏好」</p>
+          <p>多目标加权寻优配置对应目标函数 J' = P_norm × (1 + γ(置信等级)) + min(λ₁·C_safety + λ₂·C_switch + λ₃·C_swing, C_max)。</p>
           <ul>
             <li><b>安全余量偏好（λ₁）：</b>0.00～0.50，默认 0.10；越大寻优结果越远离安全硬边界。</li>
             <li><b>设备切换容忍度（λ₂）：</b>0.00～0.50，默认 0.15；长周期寻优涉及设备启停时序规划，本页<b>可用</b>（柔性寻优页置灰）。</li>
             <li><b>参数平稳偏好（λ₃）：</b>0.00～0.30，默认 0.05；长周期各时段独立求解，不涉及时序平稳性，本页<b>置灰不可用</b>，默认 0（柔性寻优页可调）。</li>
+            <li><b>低置信保守度 γ(低)：</b>0.00～0.10，默认 0.03；低置信时段需额外多省约 γ×100% 的电才会被推荐。</li>
           </ul>
-          <p>三项权重均为 0 时行为与原单目标最小功率等价（向下兼容）。</p>
+          <p>γ(低)=0 且三项权重均为 0 时行为与原单目标最小功率等价（向下兼容）。</p>
         </div>
       </div>
 
@@ -750,6 +783,15 @@
         <div class="pref-slider-default-cap">长周期寻优各时段独立求解，不涉及时序平稳性；柔性寻优中可调</div>
         <input type="range" class="range-pref" id="lPrefL3" min="0" max="0.3" step="0.01" value="0" disabled aria-label="参数平稳偏好">
         <div class="pref-slider-meta"><span>当前值</span><span class="pref-val" id="lPrefL3Val">0.00</span></div>
+      </div>
+
+      <div class="form-group pref-slider-group">
+        <div class="form-label">低置信保守度（γ低）</div>
+        <div class="pref-slider-end-labels"><span>不额外保守</span><span>低置信更难推荐</span></div>
+        <div class="pref-slider-ticks"><span>0.00</span><span>0.03</span><span>0.06</span><span>0.10</span></div>
+        <div class="pref-slider-default-cap">当前设置：低置信时段需额外多省约 <span id="lGammaLowPct">3%</span> 的电才会被推荐</div>
+        <input type="range" class="range-pref" id="lGammaLow" min="0" max="0.1" step="0.01" value="0.03" aria-label="低置信保守度">
+        <div class="pref-slider-meta"><span>当前值</span><span class="pref-val" id="lGammaLowVal">0.03</span></div>
       </div>
 
     </div><!-- /mpane-planConfig -->
@@ -917,6 +959,15 @@
 
   // 寻优明细表 - 行为参数，列为时间戳
   var tableData = [
+    { category: '置信度', rowspan: 1, param: '置信等级', vals: [
+      '<span class="confidence-pill high">高置信</span>',
+      '<span class="confidence-pill low">低置信</span>',
+      '<span class="confidence-pill low">低置信</span>',
+      '<span class="confidence-pill high">高置信</span>',
+      '<span class="confidence-pill high">高置信</span>',
+      '<span class="confidence-pill low">低置信</span>',
+      '<span class="confidence-pill high">高置信</span>'
+    ]},
     { category: '风冷冷水系统', rowspan: 4, param: '实时制冷量', vals: ['3960.13 kW','3887.05 kW','3947.91 kW','3932.21 kW','3898.09 kW','3946.73 kW','3971.36 kW'] },
     { category: null, param: '室外干球温度', vals: ['18.06','17.22','16.62','15.32','14.27','14.51','15.76'] },
     { category: null, param: '制冷系统能效(COP)', vals: ['11.43','4.31','4.16','6.48','5.39','8.48','5.52'] },
@@ -942,7 +993,7 @@
       html += '<td class="td-category" rowspan="' + row.rowspan + '">' + row.category + '</td>';
     }
     html += '<td class="td-param">' + row.param + '</td>';
-    row.vals.forEach(function(v) { html += '<td>' + v + '</td>'; });
+    row.vals.forEach(function(v) { html += '<td class="energy-cell">' + v + '</td>'; });
     html += '</tr>';
   });
   tbody.innerHTML = html;
@@ -985,12 +1036,17 @@
   [
     { id: 'lPrefL1', valId: 'lPrefL1Val' },
     { id: 'lPrefL2', valId: 'lPrefL2Val' },
+    { id: 'lGammaLow', valId: 'lGammaLowVal', pctId: 'lGammaLowPct' },
   ].forEach(function (s) {
     var el = document.getElementById(s.id);
     var vEl = document.getElementById(s.valId);
     if (!el || !vEl) return;
     el.addEventListener('input', function () {
       vEl.textContent = parseFloat(this.value).toFixed(2);
+      if (s.pctId) {
+        var pct = document.getElementById(s.pctId);
+        if (pct) pct.textContent = Math.round(parseFloat(this.value) * 100) + '%';
+      }
     });
   });
 
@@ -998,13 +1054,17 @@
   window.smartRecommendLong = function (btn) {
     btn.classList.add('loading');
     setTimeout(function () {
-      var recommended = { lPrefL1: 0.18, lPrefL2: 0.22 };
+      var recommended = { lPrefL1: 0.18, lPrefL2: 0.22, lGammaLow: 0.03 };
       Object.keys(recommended).forEach(function (id) {
         var slider = document.getElementById(id);
         var valEl = document.getElementById(id + 'Val');
         if (!slider || !valEl) return;
         slider.value = recommended[id];
         valEl.textContent = recommended[id].toFixed(2);
+        if (id === 'lGammaLow') {
+          var pct = document.getElementById('lGammaLowPct');
+          if (pct) pct.textContent = Math.round(recommended[id] * 100) + '%';
+        }
       });
       btn.classList.remove('loading');
       var toast = document.getElementById('lSmartToast');
@@ -1028,10 +1088,6 @@
 </script>
 
 <button class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
-<div class="anno-filter-bar" id="annoFilterBar">
-  <span class="anno-filter-label">批注版本：</span>
-  <div class="anno-filter-tags" id="annoFilterTags"></div>
-</div>
 <script>
 function initAnnoVersionFilter() {
   var tags = document.getElementById('annoFilterTags');

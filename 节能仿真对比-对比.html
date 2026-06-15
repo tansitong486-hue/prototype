@@ -3,247 +3,431 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>节能仿真对比 · 仿真对比</title>
+  <title>冷站仿真对比 · 仿真对比</title>
   <style>
     :root {
-      --primary: #1E40AF;
-      --primary-light: #EEF4FF;
-      --primary-dark: #17358A;
-      --success: #16A34A;
-      --success-light: #F0FDF4;
-      --warning: #D97706;
-      --warning-light: #FFF7ED;
-      --danger: #DC2626;
-      --danger-light: #FEF2F2;
-      --text-primary: #0F172A;
-      --text-secondary: #475569;
-      --text-hint: #94A3B8;
-      --border: #D8E1EB;
-      --border-light: #EAF0F6;
-      --bg-body: #F6F8FB;
+      --primary: #1E73F8;
+      --primary-light: #EAF3FF;
+      --primary-dark: #155FCC;
+      --success: #18B84F;
+      --success-light: #EAF9EF;
+      --danger: #F04438;
+      --danger-light: #FFF1F0;
+      --purple: #8B5CF6;
+      --pink: #EC5BC8;
+      --teal: #35C7C2;
+      --text-primary: #17233D;
+      --text-secondary: #4E5969;
+      --text-hint: #86909C;
+      --border: #E5EAF2;
+      --border-strong: #D5DCE8;
+      --bg-body: #F3F6FA;
       --bg-card: #FFFFFF;
-      --radius: 8px;
-      --radius-lg: 12px;
-      --shadow-sm: 0 1px 2px rgba(15,23,42,.04);
-      --shadow-card: 0 2px 8px rgba(15,23,42,.06);
-      --transition: .2s cubic-bezier(.4,0,.2,1);
+      --bg-head: #F7F9FC;
+      --radius: 6px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, .04);
+      --transition: .18s ease;
     }
-    * { margin:0; padding:0; box-sizing:border-box; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { height: 100%; }
     body {
+      height: 100%;
+      overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-      font-size:14px; color:var(--text-primary); background:var(--bg-body);
-      -webkit-font-smoothing:antialiased;
+      font-size: 13px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
     }
-    a { text-decoration:none; color:inherit; }
-    button { border:none; background:none; font:inherit; cursor:pointer; }
-    ::-webkit-scrollbar { width:6px; height:6px; }
-    ::-webkit-scrollbar-track { background:transparent; }
-    ::-webkit-scrollbar-thumb { background:rgba(0,0,0,.12); border-radius:3px; }
-    ::-webkit-scrollbar-thumb:hover { background:rgba(0,0,0,.2); }
+    a { color: inherit; text-decoration: none; }
+    button { border: 0; background: none; font: inherit; cursor: pointer; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(23, 35, 61, .18); border-radius: 3px; }
 
-    /* ── Shell ────────────────────────────────────── */
-    html { height:100%; }
-    html body { height:100%; overflow:hidden; }
-    .layout { height:100%; display:flex; flex-direction:column; overflow:hidden; }
-    .body-wrap { flex:1 1 0; display:flex; min-height:0; overflow:hidden; }
-    .main { flex:1 1 0; min-width:0; min-height:0; overflow-y:auto; background:var(--bg-body); display:flex; flex-direction:column; }
+    .layout { height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+    .body-wrap { flex: 1 1 0; display: flex; min-height: 0; overflow: hidden; }
+    .main { flex: 1 1 0; min-width: 0; min-height: 0; overflow-y: auto; background: var(--bg-body); display: flex; flex-direction: column; }
 
-    /* ── Sub-header ───────────────────────────────── */
-    .page-sub-header {
-      background:var(--bg-card); border-bottom:1px solid var(--border-light);
-      padding:0 24px; display:flex; align-items:stretch; min-height:48px; flex-shrink:0;
-      box-shadow:var(--shadow-sm);
+    .page-shell { padding: 12px 14px 72px; min-width: 1040px; flex: 1; }
+    .station-strip {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      height: 36px;
+      padding: 0 12px;
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow-x: auto;
+      white-space: nowrap;
     }
-    .page-sub-left { display:flex; align-items:center; gap:10px; }
-    .page-title { font-size:14px; font-weight:600; color:var(--text-primary); }
-    .page-sub-divider { width:1px; height:16px; background:var(--border); }
-    .page-sub-right { display:flex; align-items:stretch; margin-left:auto; }
+    .station-tab {
+      height: 36px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 10px;
+      color: var(--text-primary);
+      border-bottom: 2px solid transparent;
+      font-size: 13px;
+      font-weight: 500;
+      transition: color var(--transition), border-color var(--transition);
+    }
+    .station-tab:hover,
+    .station-tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      font-weight: 600;
+    }
 
-    .station-tab { display:flex; align-items:center; gap:2px; }
-    .station-tab-item {
-      display:flex; align-items:center; padding:0 16px;
-      font-size:13px; font-weight:500; color:var(--text-secondary);
-      cursor:pointer; border-bottom:2px solid transparent;
-      transition:color var(--transition), border-color var(--transition);
-      margin-bottom:-1px; height:100%;
+    .workbench {
+      margin-top: 12px;
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      min-height: calc(100vh - 176px);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
-    .station-tab-item:hover { color:var(--primary); }
-    .station-tab-item.active { color:var(--primary); font-weight:600; border-bottom-color:var(--primary); }
+    .step-wrap {
+      padding: 18px 20px 6px;
+      display: flex;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .stepper { display: flex; align-items: flex-start; }
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      min-width: 112px;
+      color: var(--text-hint);
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .step-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #FFFFFF;
+      border: 1px solid #AAB4C5;
+      color: #6B778C;
+      font-size: 11px;
+      line-height: 1;
+      font-weight: 700;
+    }
+    .step.done { color: var(--text-primary); }
+    .step.done .step-dot { background: #FFFFFF; border-color: #5CD47B; color: var(--success); }
+    .step.active { color: var(--primary); font-weight: 700; }
+    .step.active .step-dot { background: var(--primary); border-color: var(--primary); color: #FFFFFF; }
+    .step-line {
+      width: 220px;
+      height: 2px;
+      margin: 8px -26px 0;
+      background: var(--success);
+    }
 
-    /* ── Step bar ─────────────────────────────────── */
-    .step-bar-wrap { padding:20px 24px 0; display:flex; justify-content:center; }
-    .step-bar { display:flex; align-items:center; }
-    .step-item { display:flex; align-items:center; gap:9px; }
-    .step-circle {
-      width:26px; height:26px; border-radius:50%;
-      display:flex; align-items:center; justify-content:center;
-      font-size:12px; font-weight:700;
-      border:2px solid var(--border); color:var(--text-hint); background:#fff;
-      flex-shrink:0; transition:all .3s;
+    .content-area {
+      padding: 0 14px 18px;
+      flex: 1;
+      overflow: auto;
     }
-    .step-label { font-size:13px; font-weight:500; color:var(--text-hint); white-space:nowrap; }
-    .step-item.active .step-circle { background:var(--primary); border-color:var(--primary); color:#fff; box-shadow:0 0 0 3px rgba(30,64,175,.15); }
-    .step-item.active .step-label { color:var(--primary); font-weight:600; }
-    .step-item.done .step-circle { background:var(--success); border-color:var(--success); color:#fff; }
-    .step-item.done .step-label { color:var(--success); }
-    .step-connector { flex:0 0 72px; height:2px; background:var(--border); margin:0 8px; border-radius:1px; }
-    .step-connector.done { background:var(--success); }
+    .chart-panel {
+      min-height: 224px;
+      position: relative;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+      padding: 6px 22px 16px 36px;
+    }
+    .chart-title {
+      position: absolute;
+      top: 24px;
+      left: 0;
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+    .legend {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      height: 24px;
+      align-items: center;
+      color: var(--text-secondary);
+      font-size: 11px;
+    }
+    .legend-item { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+    .legend-bar { width: 18px; height: 8px; border-radius: 2px; display: inline-block; }
+    .legend-line {
+      width: 20px;
+      height: 0;
+      border-top: 2px solid;
+      position: relative;
+      display: inline-block;
+    }
+    .legend-line::after {
+      content: '';
+      position: absolute;
+      left: 8px;
+      top: -4px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      border: 2px solid currentColor;
+      background: #FFFFFF;
+    }
+    .plot {
+      height: 174px;
+      position: relative;
+      border-bottom: 1px solid #AEB8C7;
+      background:
+        linear-gradient(to top, transparent 0, transparent calc(20% - 1px), #E9EEF6 calc(20% - 1px), #E9EEF6 20%, transparent 20%, transparent calc(40% - 1px), #E9EEF6 calc(40% - 1px), #E9EEF6 40%, transparent 40%, transparent calc(60% - 1px), #E9EEF6 calc(60% - 1px), #E9EEF6 60%, transparent 60%, transparent calc(80% - 1px), #E9EEF6 calc(80% - 1px), #E9EEF6 80%, transparent 80%);
+    }
+    .y-labels,
+    .y-labels-right {
+      position: absolute;
+      top: 0;
+      height: 174px;
+      width: 36px;
+      display: flex;
+      flex-direction: column-reverse;
+      justify-content: space-between;
+      color: var(--text-hint);
+      font-size: 11px;
+      line-height: 1;
+    }
+    .y-labels { left: -34px; text-align: right; }
+    .y-labels-right { right: -24px; text-align: left; width: 22px; }
+    .bar-group {
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      width: 78px;
+      height: 100%;
+      transform: translateX(-50%);
+    }
+    .bar {
+      position: absolute;
+      bottom: 0;
+      width: 20px;
+      border-radius: 3px 3px 0 0;
+    }
+    .bar.normal { left: 16px; height: 98%; background: var(--primary); }
+    .bar.saving { left: 42px; height: 98%; background: var(--teal); }
+    .x-label {
+      position: absolute;
+      left: 50%;
+      bottom: -20px;
+      transform: translateX(-50%);
+      color: var(--text-secondary);
+      font-size: 11px;
+    }
+    .cop-line {
+      position: absolute;
+      left: calc(50% - 34px);
+      bottom: 82%;
+      width: 68px;
+      height: 0;
+      border-top: 2px solid var(--purple);
+    }
+    .cop-line.saving { bottom: 83%; border-color: var(--pink); }
+    .cop-line::before,
+    .cop-line::after {
+      content: '';
+      position: absolute;
+      top: -5px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      border: 2px solid currentColor;
+      color: inherit;
+    }
+    .cop-line::before { left: 0; }
+    .cop-line::after { right: 0; }
 
-    /* ── Content ──────────────────────────────────── */
-    .content-wrap { padding:16px 24px 72px; flex:1; }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+    .select-small,
+    .search {
+      height: 30px;
+      border: 1px solid var(--border-strong);
+      border-radius: 4px;
+      background: #FFFFFF;
+      display: flex;
+      align-items: center;
+      color: var(--text-primary);
+    }
+    .select-small { min-width: 136px; padding: 0 10px; justify-content: space-between; }
+    .search {
+      width: 232px;
+      border-radius: 16px;
+      color: var(--text-hint);
+      padding: 0 12px;
+      gap: 6px;
+    }
+    .search input {
+      border: 0;
+      outline: 0;
+      min-width: 0;
+      width: 100%;
+      font: inherit;
+      color: var(--text-primary);
+      background: transparent;
+    }
+    .search input::placeholder { color: var(--text-hint); }
 
-    /* ── KPI strip ────────────────────────────────── */
-    .kpi-strip {
-      display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px;
+    .metric-strip {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #FFFFFF;
+      margin-bottom: 10px;
+      overflow: hidden;
     }
-    .kpi-card {
-      background:var(--bg-card); border:1px solid var(--border-light);
-      border-radius:var(--radius-lg); padding:14px 16px;
-      box-shadow:var(--shadow-card);
+    .metric {
+      min-height: 66px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 18px;
+      border-right: 1px solid var(--border);
     }
-    .kpi-label { font-size:11.5px; color:var(--text-hint); font-weight:500; margin-bottom:6px; }
-    .kpi-val { font-size:19px; font-weight:800; color:var(--text-primary); line-height:1.2; }
-    .kpi-val.success { color:var(--success); }
-    .kpi-sub { font-size:11px; color:var(--text-secondary); margin-top:5px; }
-    .kpi-tags { display:flex; align-items:center; gap:6px; margin-top:6px; }
-    .tag-pass {
-      display:inline-flex; align-items:center; gap:3px;
-      font-size:11px; font-weight:600; color:var(--success);
-      background:var(--success-light); padding:2px 8px; border-radius:4px;
+    .metric:last-child { border-right: 0; }
+    .metric-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFFFFF;
+      font-size: 16px;
+      font-weight: 700;
+      flex-shrink: 0;
     }
-    .tag-fail {
-      display:inline-flex; align-items:center; gap:3px;
-      font-size:11px; font-weight:600; color:var(--danger);
-      background:var(--danger-light); padding:2px 8px; border-radius:4px;
-    }
-    .kpi-saving-bar {
-      margin-top:10px; height:6px; background:#E2F4E7; border-radius:3px; overflow:hidden;
-    }
-    .kpi-saving-fill { height:100%; background:var(--success); border-radius:3px; transition:width .8s ease; }
+    .metric-label { color: var(--text-secondary); font-size: 12px; margin-bottom: 4px; }
+    .metric-value { color: var(--text-primary); font-weight: 800; font-size: 15px; line-height: 1.1; }
 
-    /* ── Condition row ────────────────────────────── */
-    .cond-row { display:flex; align-items:center; gap:8px; margin-bottom:14px; }
-    .cond-row-label { font-size:12.5px; font-weight:600; color:var(--text-secondary); }
-    .select-fake {
-      display:inline-flex; align-items:center; gap:6px;
-      border:1px solid var(--border); border-radius:6px; padding:6px 11px;
-      background:#fff; cursor:pointer; font-size:13px; color:var(--text-primary);
-      transition:border-color .2s;
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 12px;
+      color: var(--text-primary);
     }
-    .select-fake:hover { border-color:var(--primary); }
-    .select-fake .arrow { font-size:10px; color:var(--text-hint); }
-    .nav-btn {
-      display:inline-flex; align-items:center; justify-content:center;
-      width:28px; height:28px; border-radius:6px;
-      border:1px solid var(--border); background:#fff; cursor:pointer;
-      font-size:13px; color:var(--text-secondary); transition:all .15s;
+    .data-table th {
+      height: 34px;
+      padding: 0 10px;
+      background: #FFFFFF;
+      color: var(--text-primary);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      font-weight: 700;
+      white-space: nowrap;
     }
-    .nav-btn:hover { border-color:var(--primary); color:var(--primary); background:var(--primary-light); }
+    .data-table td {
+      min-height: 34px;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+    .data-table tbody tr:hover td { background: #FAFCFF; }
+    .obj-cell { color: var(--text-primary); font-weight: 600; }
+    .pass { color: var(--success); font-weight: 700; white-space: nowrap; }
+    .fail { color: var(--danger); font-weight: 700; }
+    .confidence-pair {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .confidence-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 52px;
+      height: 22px;
+      padding: 0 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .confidence-pill.high {
+      color: #0F8A3A;
+      background: #EAF9EF;
+      border: 1px solid rgba(24, 184, 79, .24);
+    }
+    .confidence-pill.low {
+      color: #5B6678;
+      background: #F1F3F6;
+      border: 1px solid #DDE3EA;
+    }
+    .low-note {
+      color: #86909C;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .metric-confidence-value {
+      color: var(--text-primary);
+      font-weight: 800;
+      font-size: 15px;
+      line-height: 1.1;
+      white-space: nowrap;
+    }
 
-    /* ── Compare grid ─────────────────────────────── */
-    .compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-
-    /* ── Compare card ─────────────────────────────── */
-    .cmp-card {
-      background:var(--bg-card); border:1px solid var(--border-light);
-      border-radius:var(--radius-lg); box-shadow:var(--shadow-card); overflow:hidden;
-    }
-    .cmp-card-head {
-      padding:13px 16px 12px; border-bottom:1px solid var(--border-light);
-      display:flex; align-items:center; gap:10px;
-    }
-    .cmp-card-title { font-size:13px; font-weight:700; color:var(--text-primary); flex:1; }
-    .badge {
-      font-size:11px; font-weight:600; padding:3px 9px; border-radius:5px;
-    }
-    .badge-normal { background:#F1F5F9; color:var(--text-secondary); }
-    .badge-saving { background:var(--primary-light); color:var(--primary); }
-
-    /* ── System KPI block ─────────────────────────── */
-    .sys-block {
-      margin:14px 16px; padding:12px 14px;
-      background:#F8FAFC; border-radius:var(--radius);
-      border:1px solid var(--border-light);
-    }
-    .sys-block.saving-variant {
-      background:linear-gradient(135deg,#EEF4FF 0%,#F0FDF4 100%);
-      border-color:rgba(30,64,175,.12);
-    }
-    .sys-block-title {
-      font-size:11.5px; font-weight:600; color:var(--text-secondary);
-      margin-bottom:10px; display:flex; align-items:center; gap:6px;
-    }
-    .sys-block-title .bar { width:3px; height:12px; background:var(--primary); border-radius:2px; flex-shrink:0; }
-    .sys-block.saving-variant .sys-block-title .bar { background:var(--success); }
-    .sys-kpi-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-    .sys-kpi-item .k { font-size:11px; color:var(--text-hint); margin-bottom:2px; }
-    .sys-kpi-item .v { font-size:15px; font-weight:700; color:var(--text-primary); }
-    .sys-kpi-item .v.up { color:var(--success); }
-
-    /* ── Device tree ──────────────────────────────── */
-    .device-section { padding:0 16px 0; }
-    .device-node {
-      border:1px solid var(--border-light); border-radius:var(--radius);
-      margin-bottom:8px; overflow:hidden;
-    }
-    .device-node-head {
-      display:flex; align-items:center; gap:8px;
-      padding:9px 12px; cursor:pointer;
-      background:#F8FAFC; transition:background .15s; user-select:none;
-    }
-    .device-node-head:hover { background:#EEF4FF; }
-    .device-node-title { font-size:12.5px; font-weight:600; color:var(--text-primary); flex:1; }
-    .chevron { font-size:10px; color:var(--text-hint); transition:transform .2s; }
-    .device-node.collapsed .chevron { transform:rotate(-90deg); }
-    .device-node-body { border-top:1px solid var(--border-light); }
-    .device-node.collapsed .device-node-body { display:none; }
-    .param-row {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:8px 12px; border-bottom:1px solid var(--border-light); font-size:12.5px;
-    }
-    .param-row:last-child { border-bottom:none; }
-    .param-name { color:var(--text-secondary); }
-    .param-val { font-weight:600; color:var(--text-primary); }
-
-    /* ── Validation ───────────────────────────────── */
-    .valid-section {
-      margin:12px 16px 16px; border:1px solid var(--border-light);
-      border-radius:var(--radius); overflow:hidden;
-    }
-    .valid-head {
-      padding:9px 12px; background:#F8FAFC;
-      font-size:12px; font-weight:700; color:var(--text-primary);
-      border-bottom:1px solid var(--border-light);
-      display:flex; align-items:center; gap:6px;
-    }
-    .valid-row {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:7px 12px; border-bottom:1px solid var(--border-light); font-size:12px;
-    }
-    .valid-row:last-child { border-bottom:none; }
-    .valid-param { color:var(--text-secondary); flex:1; }
-
-    /* ── Buttons ──────────────────────────────────── */
-    .btn {
-      display:inline-flex; align-items:center; gap:6px;
-      padding:7px 14px; border-radius:7px; border:1px solid var(--border);
-      font-size:12.5px; font-weight:500; background:#fff;
-      cursor:pointer; transition:all .2s; color:var(--text-secondary); white-space:nowrap;
-    }
-    .btn:hover { border-color:#B8C6D8; color:var(--primary); background:#F6FAFF; }
-    .btn svg { width:14px; height:14px; flex-shrink:0; }
-    .btn-primary {
-      background:var(--primary); color:#fff; border-color:var(--primary);
-      font-size:13px; padding:9px 28px; font-weight:600;
-    }
-    .btn-primary:hover { background:var(--primary-dark); border-color:var(--primary-dark); }
-
-    /* ── Action bar ───────────────────────────────── */
     .action-bar {
-      position:sticky; bottom:0; z-index:10;
-      background:var(--bg-card); border-top:1px solid var(--border-light);
-      padding:12px 24px; display:flex; align-items:center; justify-content:space-between;
-      box-shadow:0 -3px 10px rgba(15,23,42,.05);
+      position: fixed;
+      bottom: 0;
+      left: 210px;
+      right: 0;
+      z-index: 10;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 12px 14px;
+      background: #FFFFFF;
+      border-top: 1px solid var(--border);
+      box-shadow: 0 -2px 8px rgba(15, 23, 42, .04);
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 34px;
+      min-width: 82px;
+      padding: 0 20px;
+      border: 1px solid var(--primary);
+      border-radius: 18px;
+      color: var(--primary);
+      background: #FFFFFF;
+      font-size: 13px;
+      font-weight: 700;
+      transition: background var(--transition), border-color var(--transition), color var(--transition);
+      white-space: nowrap;
+    }
+    .btn:hover { background: var(--primary-light); }
+    .btn-primary { border-color: var(--primary); background: var(--primary); color: #FFFFFF; }
+    .btn-primary:hover { background: var(--primary-dark); color: #FFFFFF; }
+
+    @media (max-width: 1180px) {
+      .page-shell { min-width: 960px; }
+      .step-line { width: 170px; }
+      .metric { padding: 10px 12px; }
     }
   </style>
 </head>
@@ -252,272 +436,178 @@
   <div id="app-header"></div>
   <div class="body-wrap">
     <div id="app-sidebar"></div>
-    <div class="main">
+    <main class="main">
+      <div class="page-shell">
+        <div class="station-strip" aria-label="冷站系统">
+          <button class="station-tab">3#数据中心水冷冷水系统</button>
+          <button class="station-tab active">A路冷水系统</button>
+          <button class="station-tab">B路风冷冷水系统</button>
+          <button class="station-tab">C路冷水系统</button>
+          <button class="station-tab">G1栋A路冷水系统</button>
+          <button class="station-tab">G1栋B路冷水系统</button>
+        </div>
 
-      <!-- Sub-header -->
-      <div class="page-sub-header">
-        <div class="page-sub-left">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" style="flex-shrink:0">
-            <path d="M12 2v20M17 5l-5 5-5-5M17 19l-5-5-5 5M2 12h20M5 7l5 5-5 5M19 7l-5 5 5 5"/>
-          </svg>
-          <span class="page-title">冷站仿真对比</span>
-          <div class="page-sub-divider"></div>
-          <span style="font-size:12px;color:var(--text-hint);">常规策略 vs AI节能策略 · 预测结果对比</span>
-        </div>
-        <div class="page-sub-right">
-          <div class="station-tab">
-            <div class="station-tab-item active" onclick="switchStation(this)">1号冷站</div>
-            <div class="station-tab-item" onclick="switchStation(this)">2号冷站</div>
+        <section class="workbench" aria-label="冷站仿真对比-仿真对比">
+          <div class="step-wrap">
+            <div class="stepper">
+              <div class="step done">
+                <span class="step-dot">✓</span>
+                <span>仿真设定</span>
+              </div>
+              <span class="step-line"></span>
+              <div class="step active">
+                <span class="step-dot">2</span>
+                <span>仿真对比</span>
+              </div>
+            </div>
           </div>
-        </div>
+
+          <div class="content-area">
+            <section class="chart-panel" aria-label="工况对比图表">
+              <div class="chart-title">功率(KW)</div>
+              <div class="legend">
+                <span class="legend-item"><i class="legend-bar" style="background: var(--primary);"></i>常规策略总功率</span>
+                <span class="legend-item"><i class="legend-bar" style="background: var(--teal);"></i>节能策略总功率</span>
+                <span class="legend-item" style="color: var(--purple);"><i class="legend-line"></i>常规策略COP</span>
+                <span class="legend-item" style="color: var(--pink);"><i class="legend-line"></i>节能策略COP</span>
+              </div>
+              <div class="plot">
+                <div class="y-labels"><span>0</span><span>200</span><span>400</span><span>600</span><span>800</span><span>1,000</span></div>
+                <div class="y-labels-right"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+                <div class="bar-group">
+                  <span class="bar normal"></span>
+                  <span class="bar saving"></span>
+                  <span class="x-label">工况1</span>
+                </div>
+                <span class="cop-line" style="color: var(--purple);"></span>
+                <span class="cop-line saving" style="color: var(--pink);"></span>
+              </div>
+            </section>
+
+            <div class="toolbar">
+              <div class="select-small"><span>工况1</span><span>⌄</span></div>
+              <label class="search">
+                <span>⌕</span>
+                <input id="tableSearch" type="search" placeholder="对象名称、变量名称搜索">
+              </label>
+            </div>
+
+            <section class="metric-strip" aria-label="仿真摘要">
+              <div class="metric">
+                <span class="metric-icon" style="background: var(--primary);">↗</span>
+                <div>
+                  <div class="metric-label">系统能效(COP)</div>
+                  <div class="metric-value">4.79 / 4.79</div>
+                </div>
+              </div>
+              <div class="metric">
+                <span class="metric-icon" style="background: var(--teal);">⚡</span>
+                <div>
+                  <div class="metric-label">系统总功率(KW)</div>
+                  <div class="metric-value">978.29 / 978.29</div>
+                </div>
+              </div>
+              <div class="metric">
+                <span class="metric-icon" style="background: var(--purple);">□</span>
+                <div>
+                  <div class="metric-label">校验结果</div>
+                  <div class="metric-value">不达标 / 不达标</div>
+                </div>
+              </div>
+              <div class="metric">
+                <span class="metric-icon" style="background: #8B95A5;">信</span>
+                <div>
+                  <div class="metric-label">置信度</div>
+                  <div class="metric-confidence-value">低置信 / 低置信</div>
+                </div>
+              </div>
+              <div class="metric">
+                <span class="metric-icon" style="background: var(--pink);">%</span>
+                <div>
+                  <div class="metric-label">节能率</div>
+                  <div class="metric-value">0.00%</div>
+                </div>
+              </div>
+            </section>
+
+            <table class="data-table" id="compareTable">
+              <thead>
+                <tr>
+                  <th style="width: 12%;">对象</th>
+                  <th style="width: 13%;">变量名称</th>
+                  <th style="width: 12%;">常规策略预测</th>
+                  <th style="width: 9%;">常规置信度</th>
+                  <th style="width: 16%;">常规策略校验</th>
+                  <th style="width: 12%;">节能策略预测</th>
+                  <th style="width: 9%;">节能置信度</th>
+                  <th style="width: 17%;">节能策略校验</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td class="obj-cell">A路冷水系统</td><td>冷冻水供回水温差</td><td>5.97 ℃</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td><td>5.97 ℃</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td></tr>
+                <tr><td></td><td>二次泵运行数量</td><td>2.00</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td><td>2.00</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td></tr>
+                <tr><td></td><td>最不利压差</td><td>2.19 bar</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td><td>2.19 bar</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td></tr>
+                <tr><td></td><td>二次泵平均频率</td><td>47.70 Hz</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td><td>47.70 Hz</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td></tr>
+                <tr><td></td><td>冷冻水总管回水温度</td><td>17.87 ℃</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td><td>17.87 ℃</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td></tr>
+                <tr><td></td><td>制冷系统能效（COP)</td><td>4.79</td><td><span class="confidence-pill low">低置信</span></td><td class="pass">达标</td><td>4.79</td><td><span class="confidence-pill low">低置信</span></td><td class="pass">达标</td></tr>
+                <tr><td></td><td>冷冻水总管流量</td><td>674.14 m3/h</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td><td>674.14 m3/h</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td></tr>
+                <tr><td></td><td>实时制冷量</td><td>4681.65 kW</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td><td>4681.65 kW</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td></tr>
+                <tr><td></td><td>总功率</td><td>978.29 kW</td><td><span class="confidence-pill low">低置信</span></td><td class="pass">达标</td><td>978.29 kW</td><td><span class="confidence-pill low">低置信</span></td><td class="pass">达标</td></tr>
+                <tr><td></td><td>室外湿球温度</td><td>23.90 ℃</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td><td>23.90 ℃</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td></tr>
+                <tr><td class="obj-cell">冷冻水泵 PCWP-01-01</td><td>有功功率</td><td>48.77 kW</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td><td>48.77 kW</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td></tr>
+                <tr><td></td><td>运行状态</td><td>1.00</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td><td>1.00</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td></tr>
+                <tr><td></td><td>频率反馈</td><td>47.70</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td><td>47.70</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td></tr>
+                <tr><td></td><td>流量</td><td>325.11</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td><td>325.11</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td></tr>
+                <tr><td class="obj-cell">冷却塔 CT-01-02</td><td>冷却水流量</td><td>233.96 m3/h</td><td><span class="confidence-pill low">低置信</span></td><td class="fail">不达标 <span class="low-note">（数据积累中）</span><br>冷却塔 CT-01-02/冷却水流量/m3/h 值 233.9560 超出边界范围 [720.0000, 1440.0000]</td><td>233.96 m3/h</td><td><span class="confidence-pill low">低置信</span></td><td class="fail">不达标 <span class="low-note">（数据积累中）</span><br>冷却塔 CT-01-02/冷却水流量/m3/h 值 233.9560 超出边界范围 [720.0000, 1440.0000]</td></tr>
+                <tr><td></td><td>风机开机数</td><td>1.00</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td><td>1.00</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td></tr>
+                <tr><td class="obj-cell">冷却塔 CT-01-01</td><td>冷却水流量</td><td>233.85 m3/h</td><td><span class="confidence-pill low">低置信</span></td><td class="fail">不达标 <span class="low-note">（数据积累中）</span><br>冷却塔 CT-01-01/冷却水流量/m3/h 值 233.8464 超出边界范围 [720.0000, 1440.0000]</td><td>233.85 m3/h</td><td><span class="confidence-pill low">低置信</span></td><td class="fail">不达标 <span class="low-note">（数据积累中）</span><br>冷却塔 CT-01-01/冷却水流量/m3/h 值 233.8464 超出边界范围 [720.0000, 1440.0000]</td></tr>
+                <tr><td></td><td>频率反馈</td><td>48.90</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td><td>48.90</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td></tr>
+                <tr><td class="obj-cell">冷却水泵 CP-01-01</td><td>流量</td><td>233.82</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td><td>233.82</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td></tr>
+                <tr><td></td><td>频率反馈</td><td>47.10</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td><td>47.10</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td></tr>
+                <tr><td class="obj-cell">1#二次泵</td><td>流量</td><td>456.20</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td><td>456.20</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td></tr>
+                <tr><td></td><td>有功功率</td><td>32.86 kW</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td><td>32.86 kW</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td></tr>
+                <tr><td class="obj-cell">A路01#制冷单元</td><td>冷冻水流量</td><td>325.11 m3/h</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td><td>325.11 m3/h</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td></tr>
+                <tr><td></td><td>冷却水流量</td><td>233.82 m3/h</td><td><span class="confidence-pill low">低置信</span></td><td class="fail">不达标 <span class="low-note">（数据积累中）</span><br>A路01#制冷单元/冷却水流量/m3/h 值 233.8176 超出边界范围 [349.3200, +∞)</td><td>233.82 m3/h</td><td><span class="confidence-pill low">低置信</span></td><td class="fail">不达标 <span class="low-note">（数据积累中）</span><br>A路01#制冷单元/冷却水流量/m3/h 值 233.8176 超出边界范围 [349.3200, +∞)</td></tr>
+                <tr><td></td><td>冷水主机负载率</td><td>64.21 %</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td><td>64.21 %</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td></tr>
+                <tr><td class="obj-cell">A路02#制冷单元</td><td>实时制冷量</td><td>2423.92 kW</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td><td>2423.92 kW</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td></tr>
+                <tr><td></td><td>冷却水流量</td><td>233.84 m3/h</td><td><span class="confidence-pill low">低置信</span></td><td class="fail">不达标 <span class="low-note">（数据积累中）</span><br>A路02#制冷单元/冷却水流量/m3/h 值 233.8382 超出边界范围 [349.3200, +∞)</td><td>233.84 m3/h</td><td><span class="confidence-pill low">低置信</span></td><td class="fail">不达标 <span class="low-note">（数据积累中）</span><br>A路02#制冷单元/冷却水流量/m3/h 值 233.8382 超出边界范围 [349.3200, +∞)</td></tr>
+                <tr><td class="obj-cell">并联冷却塔管路_2</td><td>冷却水温差</td><td>10.05 ℃</td><td><span class="confidence-pill low">低置信</span></td><td class="fail">不达标 <span class="low-note">（数据积累中）</span><br>并联冷却塔管路_2/冷却水温差/℃ 值 10.0516 超出边界范围 (-∞, 10.0000]</td><td>10.05 ℃</td><td><span class="confidence-pill low">低置信</span></td><td class="fail">不达标 <span class="low-note">（数据积累中）</span><br>并联冷却塔管路_2/冷却水温差/℃ 值 10.0516 超出边界范围 (-∞, 10.0000]</td></tr>
+                <tr><td></td><td>冷却水总管出塔温度</td><td>28.54 ℃</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td><td>28.54 ℃</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td></tr>
+                <tr><td class="obj-cell">并联二次水泵管路_1</td><td>旁通流量</td><td>-238.24 m³/h</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td><td>-238.24 m³/h</td><td><span class="confidence-pill high">高置信</span></td><td class="pass">达标</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
       </div>
 
-      <!-- Step bar -->
-      <div class="step-bar-wrap">
-        <div class="step-bar">
-          <div class="step-item done">
-            <div class="step-circle">✓</div>
-            <span class="step-label">仿真设定</span>
-          </div>
-          <div class="step-connector done"></div>
-          <div class="step-item active">
-            <div class="step-circle">2</div>
-            <span class="step-label">仿真对比</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Content -->
-      <div class="content-wrap">
-
-        <!-- KPI strip -->
-        <div class="kpi-strip">
-          <div class="kpi-card">
-            <div class="kpi-label">系统能效（COP）</div>
-            <div class="kpi-val">4.25 / 5.23</div>
-            <div class="kpi-sub">常规 / 节能</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">系统总功率（KW）</div>
-            <div class="kpi-val">237.26 / 213.45</div>
-            <div class="kpi-sub">常规 / 节能</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">安全边界校验</div>
-            <div class="kpi-tags">
-              <span class="tag-fail">✕ 常规未达标</span>
-              <span class="tag-pass">✓ 节能达标</span>
-            </div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">预计节能率</div>
-            <div class="kpi-val success">12.2%</div>
-            <div class="kpi-saving-bar">
-              <div class="kpi-saving-fill" id="savingBar" style="width:0%"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Condition row -->
-        <div class="cond-row">
-          <span class="cond-row-label">当前工况：</span>
-          <div class="select-fake">工况1 <span class="arrow">▾</span></div>
-          <button class="nav-btn" title="上一工况">‹</button>
-          <button class="nav-btn" title="下一工况">›</button>
-          <span style="font-size:12px;color:var(--text-hint);margin-left:4px;">共 2 个工况</span>
-        </div>
-
-        <!-- Compare columns -->
-        <div class="compare-grid">
-
-          <!-- ── 常规策略 ── -->
-          <div class="cmp-card">
-            <div class="cmp-card-head">
-              <span class="cmp-card-title">常规策略预测</span>
-              <span class="badge badge-normal">基准</span>
-            </div>
-
-            <div class="sys-block">
-              <div class="sys-block-title">
-                <span class="bar"></span>金华制冷系统 · 1号集成冷站
-              </div>
-              <div class="sys-kpi-grid">
-                <div class="sys-kpi-item">
-                  <div class="k">系统能效（COP）</div>
-                  <div class="v">4.25</div>
-                </div>
-                <div class="sys-kpi-item">
-                  <div class="k">系统总电功率</div>
-                  <div class="v">79.12 KW</div>
-                </div>
-                <div class="sys-kpi-item">
-                  <div class="k">总供冷量</div>
-                  <div class="v">1279.12 KW</div>
-                </div>
-                <div class="sys-kpi-item">
-                  <div class="k">冷冻水回水温度</div>
-                  <div class="v">19.34℃</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="device-section">
-              <div class="device-node" id="n-pump">
-                <div class="device-node-head" onclick="toggle('n-pump')">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/></svg>
-                  <span class="device-node-title">1号集成冷站 · 冷冻泵模块</span>
-                  <span class="chevron">▾</span>
-                </div>
-                <div class="device-node-body">
-                  <div class="param-row"><span class="param-name">冷冻水流量（m³/h）</span><span class="param-val">123.23</span></div>
-                  <div class="param-row"><span class="param-name">冷水主机功率（KW）</span><span class="param-val">79.12 KW</span></div>
-                  <div class="param-row"><span class="param-name">冷冻水总管供水温度</span><span class="param-val">12.34℃</span></div>
-                  <div class="param-row"><span class="param-name">冷冻泵模块总功率</span><span class="param-val">9.45 kW</span></div>
-                </div>
-              </div>
-              <div class="device-node" id="n-chiller">
-                <div class="device-node-head" onclick="toggle('n-chiller')">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/></svg>
-                  <span class="device-node-title">1号集成冷站 · 1#主机</span>
-                  <span class="chevron">▾</span>
-                </div>
-                <div class="device-node-body">
-                  <div class="param-row"><span class="param-name">系统能效（COP）</span><span class="param-val">4.25</span></div>
-                  <div class="param-row"><span class="param-name">冷冻水总管供水温度</span><span class="param-val">12.34℃</span></div>
-                  <div class="param-row"><span class="param-name">冷冻水总管回水温度</span><span class="param-val">19.34℃</span></div>
-                </div>
-              </div>
-            </div>
-
-            <div class="valid-section">
-              <div class="valid-head">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                常规策略安全边界校验
-              </div>
-              <div class="valid-row"><span class="valid-param">冷冻出水温度设定</span><span class="tag-pass">✓ 达标</span></div>
-              <div class="valid-row"><span class="valid-param">冷冻水总管供水温度</span><span class="tag-fail">✕ 超过偏差值 3</span></div>
-              <div class="valid-row"><span class="valid-param">冷冻水总管回水温度</span><span class="tag-pass">✓ 达标</span></div>
-              <div class="valid-row"><span class="valid-param">冷冻泵频率</span><span class="tag-fail">✕ 超出上限值 25</span></div>
-              <div class="valid-row"><span class="valid-param">冷却泵频率</span><span class="tag-fail">✕ 超出下限值 25</span></div>
-              <div class="valid-row"><span class="valid-param">冷却塔风机</span><span class="tag-pass">✓ 达标</span></div>
-              <div class="valid-row"><span class="valid-param">系统能效 COP</span><span class="tag-pass">✓ 达标</span></div>
-            </div>
-          </div>
-
-          <!-- ── AI节能策略 ── -->
-          <div class="cmp-card">
-            <div class="cmp-card-head">
-              <span class="cmp-card-title">AI节能策略预测</span>
-              <span class="badge badge-saving">AI节能</span>
-            </div>
-
-            <div class="sys-block saving-variant">
-              <div class="sys-block-title">
-                <span class="bar"></span>金华制冷系统 · 1号集成冷站
-              </div>
-              <div class="sys-kpi-grid">
-                <div class="sys-kpi-item">
-                  <div class="k">系统能效（COP）</div>
-                  <div class="v up">5.23</div>
-                </div>
-                <div class="sys-kpi-item">
-                  <div class="k">系统总电功率</div>
-                  <div class="v">69.42 KW</div>
-                </div>
-                <div class="sys-kpi-item">
-                  <div class="k">总供冷量</div>
-                  <div class="v">1279.12 KW</div>
-                </div>
-                <div class="sys-kpi-item">
-                  <div class="k">冷冻水回水温度</div>
-                  <div class="v">18.76℃</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="device-section">
-              <div class="device-node" id="s-pump">
-                <div class="device-node-head" onclick="toggle('s-pump')">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/></svg>
-                  <span class="device-node-title">1号集成冷站 · 冷冻泵模块</span>
-                  <span class="chevron">▾</span>
-                </div>
-                <div class="device-node-body">
-                  <div class="param-row"><span class="param-name">冷冻水流量（m³/h）</span><span class="param-val">123.23</span></div>
-                  <div class="param-row"><span class="param-name">冷水主机功率（KW）</span><span class="param-val" style="color:var(--success);">69.42 KW</span></div>
-                  <div class="param-row"><span class="param-name">冷冻水总管供水温度</span><span class="param-val">11.45℃</span></div>
-                  <div class="param-row"><span class="param-name">冷冻泵模块总功率</span><span class="param-val" style="color:var(--success);">8.12 kW</span></div>
-                </div>
-              </div>
-              <div class="device-node" id="s-chiller">
-                <div class="device-node-head" onclick="toggle('s-chiller')">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/></svg>
-                  <span class="device-node-title">1号集成冷站 · 1#主机</span>
-                  <span class="chevron">▾</span>
-                </div>
-                <div class="device-node-body">
-                  <div class="param-row"><span class="param-name">系统能效（COP）</span><span class="param-val" style="color:var(--success);">5.23</span></div>
-                  <div class="param-row"><span class="param-name">冷冻水总管供水温度</span><span class="param-val">11.45℃</span></div>
-                  <div class="param-row"><span class="param-name">冷冻水总管回水温度</span><span class="param-val">18.76℃</span></div>
-                </div>
-              </div>
-            </div>
-
-            <div class="valid-section" style="border-color:rgba(22,163,74,.15);">
-              <div class="valid-head" style="background:var(--success-light);border-color:rgba(22,163,74,.15);">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                节能策略安全边界校验
-              </div>
-              <div class="valid-row"><span class="valid-param">冷冻出水温度设定</span><span class="tag-pass">✓ 达标</span></div>
-              <div class="valid-row"><span class="valid-param">冷冻水总管供水温度</span><span class="tag-pass">✓ 达标</span></div>
-              <div class="valid-row"><span class="valid-param">冷冻水总管回水温度</span><span class="tag-pass">✓ 达标</span></div>
-              <div class="valid-row"><span class="valid-param">冷冻泵频率</span><span class="tag-pass">✓ 达标</span></div>
-              <div class="valid-row"><span class="valid-param">冷却泵频率</span><span class="tag-pass">✓ 达标</span></div>
-              <div class="valid-row"><span class="valid-param">冷却塔风机</span><span class="tag-pass">✓ 达标</span></div>
-              <div class="valid-row"><span class="valid-param">系统能效 COP</span><span class="tag-pass">✓ 达标</span></div>
-            </div>
-          </div>
-
-        </div><!-- /compare-grid -->
-      </div><!-- /content-wrap -->
-
-      <!-- Action bar -->
       <div class="action-bar">
-        <button class="btn" onclick="goBack()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-          返回设定
-        </button>
-        <button class="btn btn-primary" onclick="goBack()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
-          重新仿真
-        </button>
+        <button class="btn btn-primary" type="button" onclick="goBack()">上一步</button>
       </div>
-
-    </div><!-- /main -->
-  </div><!-- /body-wrap -->
-</div><!-- /layout -->
+    </main>
+  </div>
+</div>
 
 <script>
-  const switchStation = el => {
-    el.closest('.station-tab').querySelectorAll('.station-tab-item').forEach(t => t.classList.remove('active'))
-    el.classList.add('active')
+  document.querySelectorAll('.station-tab').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      document.querySelectorAll('.station-tab').forEach(function (item) { item.classList.remove('active'); });
+      tab.classList.add('active');
+    });
+  });
+
+  var search = document.getElementById('tableSearch');
+  if (search) {
+    search.addEventListener('input', function () {
+      var keyword = search.value.trim().toLowerCase();
+      document.querySelectorAll('#compareTable tbody tr').forEach(function (row) {
+        row.style.display = !keyword || row.textContent.toLowerCase().includes(keyword) ? '' : 'none';
+      });
+    });
   }
 
-  const toggle = id => {
-    document.getElementById(id).classList.toggle('collapsed')
+  function goBack() {
+    window.location.href = '节能仿真对比-设定.html';
   }
-
-  const goBack = () => {
-    window.location.href = '节能仿真对比-设定.html'
-  }
-
-  // animate saving bar on load
-  window.addEventListener('load', () => {
-    setTimeout(() => {
-      const bar = document.getElementById('savingBar')
-      if (bar) bar.style.width = '12.2%'
-    }, 400)
-  })
 </script>
 
 <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="冷站仿真对比"></script>
