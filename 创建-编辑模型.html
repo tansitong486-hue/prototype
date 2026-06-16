@@ -365,11 +365,8 @@
     }
     .slot-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: 1fr;
       gap: 14px;
-    }
-    @media (max-width: 900px) {
-      .slot-grid { grid-template-columns: 1fr; }
     }
     .slot-card {
       border: 1px solid var(--border-light);
@@ -405,7 +402,27 @@
       white-space: nowrap;
     }
     .slot-badge.locked { background: #E2E8F0; color: #475569; }
+    .slot-badge.custom { background: #DBEAFE; color: #1D4ED8; }
+    .slot-card.is-advanced { border-color: var(--primary); }
     .slot-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.65; }
+    .advanced-toggle-inner {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      padding-top: 10px;
+      border-top: 1px dashed var(--border);
+      width: 100%;
+      cursor: pointer;
+    }
+    .card-inner-form {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px 16px;
+      padding: 4px 0 2px;
+    }
     .slot-meta {
       display: grid;
       gap: 6px;
@@ -776,6 +793,21 @@
               </ul>
             </div>
           </div>
+          <div class="anno anno-ux" data-version="v2.3">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v2.3</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>模型参数表 · 删除权限</p>
+              <table class="anno-table">
+                <thead><tr><th>参数来源</th><th>操作列展示</th><th>说明</th></tr></thead>
+                <tbody>
+                  <tr><td>系统内置参数（随模型分类自动生成）</td><td>显示"内置"，不提供删除入口</td><td>由模型类别槽位模板固定下发，删除会导致模型不可用，不允许移除</td></tr>
+                  <tr><td>用户手动新增参数</td><td>显示"删除"链接，可操作</td><td>用户自行追加的参数，可随时删除；删除后标识符自动重排</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
           <div class="anno anno-state" data-version="v1.0">
             <span class="anno-tag">状态说明</span>
             <span class="anno-version">v1.0</span>
@@ -819,7 +851,7 @@
                       <td class="col-steady-threshold"><input class="cell-input param-steady-threshold" type="number" step="any" value="3" placeholder="可不填" title="第三层极差阈值 ε，单位 HZ；默认见方案第六章 §3.1"></td>
                       <td><select class="cell-select"><option>正相关</option><option>负相关</option><option>不相关</option></select></td>
                       <td><input class="cell-input" type="number" value="1" min="1" max="10"></td>
-                      <td><span class="action-link danger" data-del-row>删除</span></td>
+                      <td><span style="color:var(--text-hint);font-size:12px;">内置</span></td>
                     </tr>
                     <tr>
                       <td><span class="cell-id" aria-label="参数标识符">A2</span></td>
@@ -830,7 +862,7 @@
                       <td class="col-steady-threshold"><input class="cell-input param-steady-threshold" type="number" step="any" value="5" placeholder="可不填" title="第三层极差阈值 ε，单位 m³/h"></td>
                       <td><select class="cell-select"><option>正相关</option><option>负相关</option><option>不相关</option></select></td>
                       <td><input class="cell-input" type="number" value="3" min="1" max="10"></td>
-                      <td><span class="action-link danger" data-del-row>删除</span></td>
+                      <td><span style="color:var(--text-hint);font-size:12px;">内置</span></td>
                     </tr>
                     <tr>
                       <td><span class="cell-id" aria-label="参数标识符">A3</span></td>
@@ -841,7 +873,7 @@
                       <td class="col-steady-threshold"><input class="cell-input param-steady-threshold" type="number" step="any" value="5" placeholder="可不填" title="第三层极差阈值 ε，单位 KW；默认见方案第六章 §3.1"></td>
                       <td><select class="cell-select"><option>不相关</option></select></td>
                       <td><input class="cell-input" type="number" value="3" min="1" max="10"></td>
-                      <td><span class="action-link danger" data-del-row>删除</span></td>
+                      <td><span style="color:var(--text-hint);font-size:12px;">内置</span></td>
                     </tr>
                   </tbody>
                 </table>
@@ -1051,37 +1083,51 @@
             </div>
           </div>
 
+          <div class="anno anno-ux" data-version="v2.3">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v2.3</span>
+            <span class="anno-source">产品设计</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>混合增强模型卡片 · 数据预处理</p>
+              <ul>
+                <li><b>归属层：</b>数据预处理属于 L1（混合增强模型）专有配置，机理模型（L0）基于物理方程计算，不依赖历史数据，无预处理环节。</li>
+                <li><b>必填：</b>训练数据均衡为必选字段，不可为空；选项二选一：「数据增强」或「工况分层权重」。</li>
+                <li><b>默认值：</b>新建与编辑均默认选中「工况分层权重」。</li>
+                <li><b>始终存在：</b>无论是否开启高级模式，混合增强模型都需要该配置，直接展示在卡片内，不折叠。</li>
+              </ul>
+            </div>
+          </div>
+
           <section class="section-card">
-            <div class="section-head">模型结构</div>
+            <div class="section-head">模型选择</div>
             <div class="section-body">
               <div class="slot-grid">
                 <div class="slot-card is-required">
                   <div class="slot-head">
                     <div class="slot-title">机理模型</div>
+                    <span class="slot-badge locked">内置</span>
                   </div>
-                  <div class="capability-summary" id="basicSummary">
-                    <div class="summary-row"><span>能力定位</span><b>内置机理能力</b></div>
-                    <div class="summary-row"><span>服务作用</span><b>全工况可用，低置信工况兜底</b></div>
-                    <div class="summary-row"><span>依赖输入</span><b>模型参数表中的动态特征、设备静态属性</b></div>
-                    <div class="summary-row"><span>校验结论</span><b>物理边界校验已启用</b></div>
-                  </div>
+                  <div class="slot-desc" id="basicSummary">兜底保障模型，基于设备物理规律计算，无需历史数据，在数据不足时自动生效，保证预测不中断。</div>
                 </div>
-                <div class="slot-card">
+                <div class="slot-card" id="standardCard">
                   <div class="slot-head">
                     <div class="slot-title">混合增强模型</div>
+                    <span class="slot-badge locked" id="standardBadge">内置</span>
                   </div>
-                  <div class="capability-summary" id="standardSummary">
-                    <div class="summary-row"><span>能力定位</span><b>混合增强能力</b></div>
-                    <div class="summary-row"><span>服务作用</span><b>高置信工况优先出值</b></div>
-                    <div class="summary-row"><span>依赖输入</span><b>模型参数表中的动态特征、静态属性、统一工况分箱</b></div>
-                    <div class="summary-row"><span>校验结论</span><b>训练质量、分箱置信、边界校验已启用</b></div>
+                  <div class="slot-desc" id="standardSummary">主力预测模型，结合现场历史数据持续校准，精度更高，日常预测默认使用本模型。</div>
+                  <div class="card-inner-form" style="border-top:1px dashed var(--border);padding-top:10px;">
+                    <div class="field">
+                      <label class="field-label"><span class="req">*</span>训练数据均衡</label>
+                      <select class="field-select">
+                        <option>数据增强</option>
+                        <option selected>工况分层权重</option>
+                      </select>
+                    </div>
                   </div>
-                </div>
-              </div>
-              <label class="advanced-toggle">
-                <input type="checkbox" id="advancedAlgoToggle"> <span id="advancedAlgoLabel">高级模式：混合增强模型改用数理算法</span>
-              </label>
-              <div id="advancedAlgoArea" class="hidden">
+                  <label class="advanced-toggle-inner">
+                    <input type="checkbox" id="advancedAlgoToggle"> <span id="advancedAlgoLabel">高级模式：改用数理算法</span>
+                  </label>
+                  <div id="advancedAlgoArea" class="hidden">
               <div class="field full">
                 <label class="field-label"><span class="req">*</span>数理算法选择</label>
                 <div class="radio-row" id="algoRow">
@@ -1328,6 +1374,8 @@
                   </div>
                 </div>
               </div>
+                  </div>
+                </div>
               </div>
             </div>
           </section>
@@ -1412,9 +1460,17 @@
       function syncAdvancedArea() {
         var toggle = document.getElementById('advancedAlgoToggle');
         var area = document.getElementById('advancedAlgoArea');
+        var card = document.getElementById('standardCard');
+        var badge = document.getElementById('standardBadge');
         if (!toggle || !area) return;
         area.classList.toggle('hidden', !toggle.checked);
+        if (card) card.classList.toggle('is-advanced', toggle.checked);
+        if (badge) {
+          badge.className = toggle.checked ? 'slot-badge custom' : 'slot-badge locked';
+          badge.textContent = toggle.checked ? '已自定义' : '内置';
+        }
         if (toggle.checked) syncAlgoBlocks();
+        syncModelStructureSummary();
       }
 
       function syncThingModelAlgoGate() {
@@ -1555,30 +1611,12 @@
       }
 
       function syncModelStructureSummary() {
-        var basicSummary = document.getElementById('basicSummary');
         var standardSummary = document.getElementById('standardSummary');
-        if (!basicSummary || !standardSummary) return;
-        renderCapabilitySummary(basicSummary, [
-          { label: '能力定位', value: '内置机理能力' },
-          { label: '服务作用', value: '全工况可用，低置信工况兜底' },
-          { label: '依赖输入', value: '模型参数表中的动态特征、设备静态属性' },
-          { label: '校验结论', value: '物理边界校验已启用' }
-        ]);
+        if (!standardSummary) return;
         if (isMathDefaultModel()) {
-          renderCapabilitySummary(standardSummary, [
-            { label: '能力定位', value: '数理算法增强能力' },
-            { label: '当前算法', value: getSelectedAlgoLabel() },
-            { label: '服务作用', value: '高置信工况优先出值' },
-            { label: '依赖输入', value: '模型参数表中的动态特征、静态属性、统一工况分箱' },
-            { label: '校验结论', value: '训练质量、分箱置信、边界校验已启用' }
-          ]);
+          standardSummary.textContent = '主力预测模型，当前算法：' + getSelectedAlgoLabel() + '。低置信工况自动由机理模型兜底。';
         } else {
-          renderCapabilitySummary(standardSummary, [
-            { label: '能力定位', value: '混合增强能力' },
-            { label: '服务作用', value: '高置信工况优先出值' },
-            { label: '依赖输入', value: '模型参数表中的动态特征、静态属性、统一工况分箱' },
-            { label: '校验结论', value: '训练质量、分箱置信、边界校验已启用' }
-          ]);
+          standardSummary.textContent = '主力预测模型，结合现场历史数据持续校准，精度更高，日常预测默认使用本模型。';
         }
         syncAdvancedLabel();
       }

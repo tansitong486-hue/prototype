@@ -13,6 +13,7 @@
       --success-light: #F0FDF4;
       --warning: #D97706;
       --danger: #DC2626;
+      --danger-light: #FEF2F2;
       --orange: #EA580C;
       --text-primary: #0F172A;
       --text-secondary: #475569;
@@ -177,6 +178,7 @@
     }
     .nav-btn:hover { border-color:var(--primary); color:var(--primary); }
     .rb-spacer { flex:1; }
+    .record-bar .round-confidence { margin-left:8px; }
 
     /* ── 正文 ── */
     .content { padding:10px 16px 16px; }
@@ -247,47 +249,100 @@
     .confidence-pill.low { background:#F1F5F9; color:#475569; }
     .energy-cell { white-space:nowrap; font-variant-numeric:tabular-nums; }
 
-    /* ── 寻优明细卡 ── */
-    .detail-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); overflow:hidden; }
-    .detail-card-head {
-      display:flex; align-items:center; gap:6px; padding:8px 14px;
-      border-bottom:1px solid var(--border-light); cursor:pointer; user-select:none;
+    /* ── 寻优记录组件：对齐冷站柔性寻优 ── */
+    .record-section { margin-top:10px; }
+    .filter-bar {
+      display:flex; align-items:center; gap:8px; margin-bottom:12px;
+      flex-wrap:nowrap; padding:9px 12px; overflow-x:auto;
+      background:var(--bg-card); border-radius:10px;
+      box-shadow:none; border:1px solid var(--border);
     }
-    .detail-card-head:hover { background:#FAFCFF; }
-    .detail-arrow { font-size:10px; color:var(--text-hint); transition:transform .2s; }
-    .detail-arrow.open { transform:rotate(0deg); }
-    .detail-arrow.closed { transform:rotate(-90deg); }
-
-    .var-toolbar {
-      display:flex; align-items:center; gap:8px; padding:7px 14px;
-      border-bottom:1px solid var(--border-light); flex-wrap:wrap;
+    .filter-label { font-size:12px; color:var(--text-secondary); white-space:nowrap; font-weight:600; }
+    .filter-input, .search-input {
+      padding:5px 10px; border:1px solid var(--border); border-radius:7px;
+      font-size:12px; outline:none; background:#fff; transition:all .2s;
     }
-    .var-toolbar-label { font-size:12px; color:var(--text-secondary); font-weight:500; flex-shrink:0; }
-    .var-tabs { display:flex; gap:4px; flex-wrap:wrap; }
-    .var-tab {
-      display:inline-flex; align-items:center; gap:3px; padding:2px 8px;
-      border-radius:999px; border:1px solid var(--border); cursor:pointer;
-      font-size:11px; font-weight:500; background:#fff; color:var(--text-secondary); transition:all .15s;
+    .filter-input { min-width:120px; }
+    .search-input { min-width:190px; }
+    .filter-input:focus, .search-input:focus {
+      border-color:var(--primary); box-shadow:0 0 0 3px rgba(24,144,255,.08);
     }
-    .var-tab.active { border-color:var(--primary); color:var(--primary); background:var(--primary-light); }
-    .var-tab:hover { border-color:var(--primary); }
-    .vdot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
-    .toolbar-right { display:flex; align-items:center; gap:8px; margin-left:auto; flex-wrap:wrap; }
-    .chk-label { display:flex; align-items:center; gap:4px; font-size:11px; color:var(--text-secondary); cursor:pointer; white-space:nowrap; }
-    .chk-label input { accent-color:var(--primary); }
-    .search-box {
-      padding:3px 8px 3px 28px; border:1px solid var(--border); border-radius:5px;
-      font-size:12px; outline:none; width:190px; background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2394A3B8'%3E%3Cpath fill-rule='evenodd' d='M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z' clip-rule='evenodd'/%3E%3C/svg%3E") 8px center / 13px no-repeat;
-      transition:border-color .15s;
+    .filter-group { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+    .filter-group + .filter-group { margin-left:8px; }
+    .round-confidence {
+      display:inline-flex; align-items:center; gap:6px;
+      padding-left:6px; color:var(--text-secondary); font-size:11.5px;
+      white-space:nowrap;
     }
-    .search-box:focus { border-color:var(--primary); }
-    .search-box::placeholder { color:var(--text-hint); }
-    .link-btn { font-size:11.5px; color:var(--primary); cursor:pointer; white-space:nowrap; }
-    .link-btn:hover { text-decoration:underline; }
-    .chg-down { color:var(--success); font-weight:500; }
-    .chg-up { color:var(--orange); font-weight:500; }
-    .chg-zero { color:var(--text-hint); }
-    .var-name { font-weight:500; }
+    .step-btn {
+      width:20px; height:20px; border:1px solid var(--border); border-radius:6px;
+      background:#fff; cursor:pointer; font-size:12px; line-height:1;
+      display:flex; align-items:center; justify-content:center;
+      color:var(--text-secondary); transition:all .2s; padding:0;
+    }
+    .step-btn:hover { border-color:var(--primary); color:var(--primary); }
+    .var-tag {
+      display:inline-flex; align-items:center; gap:4px;
+      padding:2px 8px; border-radius:6px; font-size:11px; font-weight:600;
+      transition:all .15s; white-space:nowrap; cursor:pointer; line-height:1.6;
+      border:1px solid transparent; user-select:none;
+    }
+    .var-tag.controlled { background:#EFF6FF; color:#2563EB; border-color:#DBEAFE; }
+    .var-tag.optimizing { background:#F0FDF4; color:#16A34A; border-color:#DCFCE7; }
+    .var-tag.unopt { background:#F8FAFC; color:#64748B; border-color:#E2E8F0; }
+    .var-tag.disturbance { background:#FFF7ED; color:#D97706; border-color:#FED7AA; }
+    .filter-group .var-tag { opacity:.5; }
+    .filter-group .var-tag.active { opacity:1; box-shadow:0 0 0 2px currentColor; }
+    .filter-group .var-tag:hover { opacity:.85; }
+    .filter-check {
+      display:inline-flex; align-items:center; gap:5px;
+      font-size:11.5px; color:var(--text-secondary); cursor:pointer;
+      white-space:nowrap; user-select:none; flex-shrink:0;
+    }
+    .filter-check input[type="checkbox"] {
+      width:14px; height:14px; accent-color:var(--success); cursor:pointer;
+    }
+    .data-table-wrap {
+      background:var(--bg-card); border-radius:var(--radius-lg);
+      box-shadow:var(--shadow-sm); overflow-x:auto; border:1px solid var(--border);
+    }
+    .data-table-wrap .data-table { min-width:980px; }
+    .empty-row td {
+      text-align:center; padding:42px 12px !important; color:var(--text-hint);
+      background:#fff;
+    }
+    .obj-name-cell {
+      font-weight:600; font-size:13px; color:var(--text-primary);
+      background:#FBFCFE; vertical-align:middle !important;
+      border-right:2px solid var(--border-light);
+    }
+    .obj-name-inner { display:flex; flex-direction:column; gap:4px; }
+    .obj-tags { display:flex; gap:4px; flex-wrap:wrap; }
+    .obj-status {
+      display:inline-flex; align-items:center; gap:4px;
+      padding:1px 7px; border-radius:20px; font-size:10.5px; font-weight:600;
+    }
+    .obj-status.running { background:var(--success-light); color:var(--success); }
+    .obj-status.stopped { background:var(--danger-light); color:var(--danger); }
+    .obj-status-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+    .obj-status.running .obj-status-dot { background:var(--success); }
+    .obj-status.stopped .obj-status-dot { background:var(--danger); }
+    .obj-fi-tag {
+      display:inline-flex; align-items:center;
+      padding:1px 7px; border-radius:20px; font-size:10.5px; font-weight:600;
+    }
+    .obj-fi-tag.in { background:var(--primary-light); color:var(--primary); }
+    .obj-fi-tag.out { background:#F5F5F5; color:#999; }
+    .var-name-type { font-weight:600; }
+    .var-name-type.controlled { color:#2563EB; }
+    .var-name-type.optimizing { color:#16A34A; }
+    .var-name-type.unopt { color:#64748B; }
+    .var-name-type.disturbance { color:#D97706; }
+    .change-cell { font-weight:500; }
+    .change-positive { color:var(--success); font-weight:600; }
+    .change-negative { color:var(--danger); font-weight:600; }
+    .change-none { color:var(--text-hint); }
+    .obj-separator td { height:2px; padding:0; background:var(--bg-body); border:none; }
 
     /* ── 规则配置弹窗 ── */
     .modal-mask {
@@ -501,7 +556,7 @@
         <div class="anno-body">
           <p><b>当前版本：</b>v2.3</p>
           <p><b>更新日期：</b>2026-06-15</p>
-          <p><b>变更概述：</b>全局寻优建议接入置信结果：置信为「轮」级属性，仅在寻优策略卡片的最新寻优时间后展示本轮徽标（变量明细表不逐行加列，卡片不展示具体能耗修正文案）；规则配置新增「低置信保守度 γ(低)」滑块，低置信策略按保守系数参与排序。低置信徽标统一为灰色（不用警示色）。</p>
+          <p><b>变更概述：</b>全局寻优建议接入置信结果：置信为「轮」级属性，在寻优策略卡片的最新寻优时间、寻优记录导航和当前寻优记录轮次旁展示本轮徽标（变量明细表不逐行加列，卡片不展示具体能耗修正文案）；下方寻优记录组件对齐冷站柔性寻优；规则配置新增「低置信保守度 γ(低)」滑块，低置信策略按保守系数参与排序。低置信徽标统一为灰色（不用警示色）。</p>
         </div>
       </div>
 
@@ -552,7 +607,7 @@
               </div>
               <div class="status-item">
                 <span class="label">最新寻优时间</span>
-                <span class="value confidence-value">2026-06-11 14:20:44 <span class="confidence-pill low">低置信</span></span>
+                <span class="value confidence-value">2026-06-11 14:20:44 <span class="confidence-pill low">数据积累中</span></span>
               </div>
               <div class="status-item">
                 <span class="label">当前安全边界</span>
@@ -644,6 +699,7 @@
         <span class="nav-btn" title="上一条">◀</span>
         <input class="time-input" type="time" value="08:57" step="1" style="width:90px;">
         <span class="nav-btn" title="下一条">▶</span>
+        <span class="round-confidence">当前轮次 <span class="confidence-pill low">数据积累中</span></span>
         <div class="rb-spacer"></div>
         <button class="btn" id="btnRefresh">
           <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
@@ -743,64 +799,69 @@
           </div>
         </div>
 
-        <!-- ── 寻优明细 ── -->
-        <div class="detail-card">
-          <div class="detail-card-head" onclick="toggleDetail()">
-            <span class="collapse-arrow" id="detailArrow">▼</span>
-            <span style="font-size:13px;font-weight:700;">寻优明细</span>
+        <!-- ── 寻优记录：对齐冷站柔性寻优组件 ── -->
+        <div class="record-section">
+          <div class="filter-bar">
+            <div class="filter-group">
+              <span class="filter-label">时间：</span>
+              <input type="date" class="filter-input" value="2025-12-25">
+              <button class="step-btn" title="上一条">‹</button>
+              <button class="step-btn" title="下一条">›</button>
+              <input type="time" class="filter-input" value="08:57:00" step="1">
+              <button class="step-btn" title="上一条">‹</button>
+              <button class="step-btn" title="下一条">›</button>
+              <span class="round-confidence">当前轮次 <span class="confidence-pill low">数据积累中</span></span>
+            </div>
+            <div class="filter-group" id="varTypeFilter">
+              <span class="filter-label">变量分类：</span>
+              <span class="var-tag active" data-filter="all" style="background:#F0F0F0;color:#333;border-color:#D9D9D9;">全部</span>
+              <span class="var-tag controlled" data-filter="controlled">被控变量</span>
+              <span class="var-tag optimizing" data-filter="optimizing">控制变量（寻优中）</span>
+              <span class="var-tag unopt" data-filter="unopt">控制变量（未寻优）</span>
+              <span class="var-tag disturbance" data-filter="disturbance">扰动变量</span>
+            </div>
+            <label class="filter-check">
+              <input type="checkbox" id="hideOffDevice">
+              <span>隐藏停机/投出设备</span>
+            </label>
+            <div class="filter-group" style="margin-left:auto;">
+              <span class="filter-label">Q</span>
+              <input type="text" class="search-input" id="recordSearch" placeholder="对象名称、变量名称搜索">
+            </div>
           </div>
 
-          <div id="detailBody">
-
-            <div class="anno anno-req" data-version="v1.3">
-              <span class="anno-tag">需求说明</span>
-              <div class="anno-body">
-                <p><b>关联模块：</b>寻优明细</p>
-                <p>按变量分类 Tab 筛选；「仅展示大机对设备」勾选后只展示主机系统变量；支持关键字搜索；「历史数据」跳转该变量历史趋势页。变量名着色与分类一致。</p>
-              </div>
+          <div class="anno anno-req" data-version="v1.3">
+            <span class="anno-tag">需求说明</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>寻优记录</p>
+              <p>按变量分类筛选；可隐藏停机/投出设备；支持对象名称、变量名称搜索；「历史趋势」跳转该变量历史趋势页。组件结构与冷站柔性寻优保持一致。</p>
             </div>
+          </div>
 
-            <div class="anno anno-data" data-version="v2.3">
-              <span class="anno-tag">数据逻辑</span>
-              <span class="anno-version">v2.3</span>
-              <span class="anno-source">需求文档</span>
-              <div class="anno-body">
-                <p><b>关联模块：</b>寻优明细 — 置信与 γ 修正能耗</p>
-                <p>置信等级取本次全局寻优仿真求解链路的最低置信等级。低置信不直接淘汰，按规则配置中的 γ(低) 将原始能耗折算后参与排序，并在结果中同时展示原始值与修正后值。</p>
-              </div>
+          <div class="anno anno-data" data-version="v2.3">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.3</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>寻优策略卡片与寻优记录轮次置信度</p>
+              <p>置信度为一轮寻优结果的整体属性，按本轮仿真求解链路最低置信等级展示；因此仅在“最新寻优时间”和当前寻优记录轮次旁展示，不在变量明细表逐行新增列。</p>
             </div>
+          </div>
 
-            <div class="var-toolbar">
-              <span class="var-toolbar-label">变量分类：</span>
-              <div class="var-tabs" id="varTabs">
-                <div class="var-tab active" data-type="all">全部</div>
-                <div class="var-tab" data-type="ctrl-opt"><span class="vdot" style="background:#F59A23;"></span>被控变量/寻优</div>
-                <div class="var-tab" data-type="disturb"><span class="vdot" style="background:#52C41A;"></span>扰动变量</div>
-                <div class="var-tab" data-type="ctrl"><span class="vdot" style="background:#1890FF;"></span>被控变量</div>
-                <div class="var-tab" data-type="unit"><span class="vdot" style="background:#8B5CF6;"></span>机组变量</div>
-                <div class="var-tab" data-type="state"><span class="vdot" style="background:#94A3B8;"></span>状态变量</div>
-              </div>
-              <div class="toolbar-right">
-                <label class="chk-label"><input type="checkbox" id="bigOnly"> 仅展示大机对设备</label>
-                <input class="search-box" type="text" id="varSearch" placeholder="请输入参数名称或关键字搜索">
-              </div>
-            </div>
-
-            <div style="overflow-x:auto;">
-              <table class="data-table" style="min-width:980px;">
-                <thead>
-                  <tr>
-                    <th>对象名称</th>
-                    <th>变量名称</th>
-                    <th>实际值</th>
-                    <th>AI 寻优值</th>
-                    <th>寻优变化</th>
-                    <th style="width:64px;">操作</th>
-                  </tr>
-                </thead>
-                <tbody id="detailTbody"></tbody>
-              </table>
-            </div>
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width:140px;">对象名称</th>
+                  <th style="width:220px;">变量名称</th>
+                  <th style="width:90px;">实际值</th>
+                  <th style="width:90px;">AI寻优值</th>
+                  <th style="width:90px;">寻优变化</th>
+                  <th style="width:70px;">操作</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody"></tbody>
+            </table>
           </div>
         </div>
 
@@ -837,85 +898,117 @@
   });
   document.getElementById('strategyBody').innerHTML = sHtml;
 
-  /* ═══ 寻优明细 ═══ */
-  var typeColors = {
-    'ctrl-opt': '#F59A23',
-    'disturb':  '#52C41A',
-    'ctrl':     '#1890FF',
-    'unit':     '#8B5CF6',
-    'state':    '#94A3B8'
-  };
-
-  var detailData = [
-    { obj:'风冷冷水系统', name:'冷冻泵运行台数量',       type:'ctrl-opt', isBig:false, actual:2.00,    opt:2.00,   chg:0.00   },
-    { obj:'',             name:'冷冻水供回水温差',         type:'ctrl-opt', isBig:false, actual:6.75,    opt:6.71,   chg:-0.04  },
-    { obj:'',             name:'冷冻水管管段压差供回压差', type:'ctrl-opt', isBig:false, actual:0.80,    opt:0.80,   chg:+0.10  },
-    { obj:'',             name:'冷冻水管道蓄冷水温度',     type:'ctrl-opt', isBig:false, actual:16.45,   opt:16.00,  chg:-0.45  },
-    { obj:'',             name:'冷冻水管道回水温度',       type:'ctrl-opt', isBig:false, actual:22.60,   opt:22.11,  chg:-0.49  },
-    { obj:'风冷冷水系统', name:'冷冻水系统流量',           type:'ctrl',     isBig:false, actual:543.81,  opt:543.10, chg:-1.71  },
-    { obj:'',             name:'冷冻水管道消耗能量',       type:'ctrl-opt', isBig:false, actual:0.00,    opt:0.00,   chg:0.00   },
-    { obj:'风冷冷水系统', name:'系统能效（COP）',         type:'ctrl',     isBig:true,  actual:8.93,    opt:9.63,   chg:+0.70  },
-    { obj:'',             name:'系统总供冷量',             type:'disturb',  isBig:true,  actual:336.26,  opt:326.26, chg:-10.00 },
-    { obj:'',             name:'系统总电功率',             type:'ctrl',     isBig:true,  actual:435.85,  opt:400.67, chg:-35.18 },
-    { obj:'',             name:'室外干球温度',             type:'disturb',  isBig:true,  actual:15.34,   opt:15.34,  chg:0.00   },
-    { obj:'',             name:'冷冻水总管供水温度（℃）', type:'ctrl-opt', isBig:true,  actual:15.34,   opt:15.10,  chg:-0.24  },
-    { obj:'',             name:'冷冻水总管回水温度（℃）', type:'ctrl-opt', isBig:true,  actual:22.60,   opt:22.11,  chg:-0.49  },
+  /* ═══ 寻优记录：对齐冷站柔性寻优组件 ═══ */
+  var recordData = [
+    {
+      name:'风冷冷水系统',
+      status:'running',
+      statusText:'运行中',
+      fi:'in',
+      fiText:'投入',
+      variables:[
+        { name:'冷冻泵运行台数量',       type:'optimizing', actual:'2.00',   ai:'2.00',   change:'无变化' },
+        { name:'冷冻水供回水温差',       type:'optimizing', actual:'6.75',   ai:'6.71',   change:'-0.04' },
+        { name:'冷冻水管管段压差供回压差', type:'optimizing', actual:'0.80',   ai:'0.80',   change:'+0.10' },
+        { name:'冷冻水管道蓄冷水温度',   type:'optimizing', actual:'16.45',  ai:'16.00',  change:'-0.45' },
+        { name:'冷冻水管道回水温度',     type:'optimizing', actual:'22.60',  ai:'22.11',  change:'-0.49' },
+        { name:'冷冻水管道消耗能量',     type:'optimizing', actual:'0.00',   ai:'0.00',   change:'无变化' },
+        { name:'冷冻水总管供水温度（℃）', type:'optimizing', actual:'15.34',  ai:'15.10',  change:'-0.24' },
+        { name:'冷冻水总管回水温度（℃）', type:'optimizing', actual:'22.60',  ai:'22.11',  change:'-0.49' },
+      ]
+    },
+    {
+      name:'系统关键指标',
+      status:'running',
+      statusText:'运行中',
+      fi:'in',
+      fiText:'投入',
+      variables:[
+        { name:'冷冻水系统流量', type:'controlled', actual:'543.81', ai:'543.10', change:'-1.71' },
+        { name:'系统能效（COP）', type:'controlled', actual:'8.93',   ai:'9.63',   change:'+0.70' },
+        { name:'系统总电功率',   type:'controlled', actual:'435.85', ai:'400.67', change:'-35.18' },
+      ]
+    },
+    {
+      name:'外部扰动',
+      status:'running',
+      statusText:'运行中',
+      fi:'in',
+      fiText:'投入',
+      variables:[
+        { name:'系统总供冷量', type:'disturbance', actual:'336.26', ai:'326.26', change:'-10.00' },
+        { name:'室外干球温度', type:'disturbance', actual:'15.34',  ai:'15.34',  change:'无变化' },
+      ]
+    }
   ];
 
-  var activeType = 'all';
-
-  function renderDetail(rows) {
-    document.getElementById('detailTbody').innerHTML = rows.map(function (r) {
-      var c = r.chg;
-      var arrow = '', cls = 'chg-zero';
-      if (c < 0)      { arrow = '↓'; cls = 'chg-down'; }
-      else if (c > 0)  { arrow = '↑'; cls = 'chg-up';   }
-      var cStr = Math.abs(c).toFixed(2);
-      var nameColor = typeColors[r.type] || 'inherit';
-      return '<tr>' +
-        '<td style="color:var(--text-secondary);">' + r.obj + '</td>' +
-        '<td class="var-name" style="color:' + nameColor + ';">' + r.name + '</td>' +
-        '<td>' + r.actual.toFixed(2) + '</td>' +
-        '<td class="opt-cell">' + r.opt.toFixed(2) + '</td>' +
-        '<td class="' + cls + '">' + arrow + ' ' + cStr + '</td>' +
-        '<td><span class="link-btn">历史数据</span></td>' +
-        '</tr>';
-    }).join('');
+  function getActiveVarFilter() {
+    var el = document.querySelector('#varTypeFilter .var-tag.active');
+    return el ? el.dataset.filter : 'all';
   }
 
-  function applyFilter() {
-    var kw = document.getElementById('varSearch').value.trim().toLowerCase();
-    var bigOnly = document.getElementById('bigOnly').checked;
-    var rows = detailData.filter(function (r) {
-      if (activeType !== 'all' && r.type !== activeType) return false;
-      if (bigOnly && !r.isBig) return false;
-      if (kw && r.name.toLowerCase().indexOf(kw) < 0 && r.obj.toLowerCase().indexOf(kw) < 0) return false;
-      return true;
+  function renderTable() {
+    var tbody = document.getElementById('tableBody');
+    var hideOff = document.getElementById('hideOffDevice').checked;
+    var typeFilter = getActiveVarFilter();
+    var kw = document.getElementById('recordSearch').value.trim().toLowerCase();
+    var html = '';
+    var visibleIdx = 0;
+
+    recordData.forEach(function (obj) {
+      if (hideOff && (obj.status === 'stopped' || obj.fi === 'out')) return;
+      var objectMatched = kw && obj.name.toLowerCase().indexOf(kw) >= 0;
+      var filteredVars = obj.variables.filter(function (v) {
+        if (typeFilter !== 'all' && v.type !== typeFilter) return false;
+        if (!kw || objectMatched) return true;
+        return v.name.toLowerCase().indexOf(kw) >= 0;
+      });
+      if (filteredVars.length === 0) return;
+      if (visibleIdx > 0) {
+        html += '<tr class="obj-separator"><td colspan="6"></td></tr>';
+      }
+      visibleIdx++;
+      filteredVars.forEach(function (v, i) {
+        var isPositive = v.change.indexOf('+') === 0;
+        var isNegative = v.change.indexOf('-') === 0;
+        var changeClass = v.change === '无变化' ? 'change-none' : (isPositive ? 'change-positive' : (isNegative ? 'change-negative' : 'change-none'));
+        html += '<tr>';
+        if (i === 0) {
+          html += '<td class="obj-name-cell" rowspan="' + filteredVars.length + '">' +
+            '<div class="obj-name-inner">' +
+              '<div style="font-size:14px;font-weight:600;">' + obj.name + '</div>' +
+              '<div class="obj-tags">' +
+                '<span class="obj-status ' + obj.status + '"><span class="obj-status-dot"></span>' + obj.statusText + '</span>' +
+                '<span class="obj-fi-tag ' + obj.fi + '">' + obj.fiText + '</span>' +
+              '</div>' +
+            '</div>' +
+          '</td>';
+        }
+        html += '<td><span class="var-name-type ' + v.type + '">' + v.name + '</span></td>';
+        html += '<td>' + v.actual + '</td>';
+        html += '<td style="font-weight:500;">' + v.ai + '</td>';
+        html += '<td class="change-cell ' + changeClass + '">' + v.change + '</td>';
+        html += '<td><span class="link-btn">历史趋势</span></td>';
+        html += '</tr>';
+      });
     });
-    renderDetail(rows);
+
+    tbody.innerHTML = html || '<tr class="empty-row"><td colspan="6">暂无数据</td></tr>';
   }
 
-  renderDetail(detailData);
+  renderTable();
 
-  document.getElementById('varTabs').addEventListener('click', function (e) {
-    var tab = e.target.closest('.var-tab');
-    if (!tab) return;
-    document.querySelectorAll('.var-tab').forEach(function (t) { t.classList.remove('active'); });
-    tab.classList.add('active');
-    activeType = tab.dataset.type;
-    applyFilter();
+  document.getElementById('hideOffDevice').addEventListener('change', renderTable);
+  document.getElementById('recordSearch').addEventListener('input', renderTable);
+  document.querySelectorAll('#varTypeFilter .var-tag').forEach(function (tag) {
+    tag.addEventListener('click', function () {
+      document.querySelectorAll('#varTypeFilter .var-tag').forEach(function (t) { t.classList.remove('active'); });
+      tag.classList.add('active');
+      renderTable();
+    });
   });
-  document.getElementById('varSearch').addEventListener('input', applyFilter);
-  document.getElementById('bigOnly').addEventListener('change', applyFilter);
 
   /* ═══ 折叠/展开 ═══ */
-  window.toggleDetail = function () {
-    var body = document.getElementById('detailBody');
-    var arrow = document.getElementById('detailArrow');
-    var vis = body.style.display !== 'none';
-    body.style.display = vis ? 'none' : '';
-    arrow.textContent = vis ? '▶' : '▼';
-  };
   window.toggleSection = function (id) {
     var wrap = document.getElementById(id + 'Wrap');
     var arrow = document.getElementById(id + 'Arrow');

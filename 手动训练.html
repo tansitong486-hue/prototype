@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>手动训练</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-dark: #17358A;
+      --primary-light: #EEF4FF;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --danger: #DC2626;
+      --success: #16A34A;
+      --warning: #D97706;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button { border: none; background: none; font: inherit; cursor: pointer; }
+
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main { flex: 1; min-width: 0; overflow-y: auto; background: var(--bg-body); }
+    .page-shell { padding: 16px 20px 32px; max-width: 1400px; margin: 0 auto; }
+
+    /* page head */
+    .page-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .page-title { font-size: 18px; font-weight: 700; color: var(--text-primary); }
+
+    /* breadcrumb */
+    .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-hint); margin-bottom: 12px; }
+    .breadcrumb a { color: var(--text-secondary); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--primary); }
+    .breadcrumb .sep { color: var(--border); }
+    .breadcrumb .cur { color: var(--text-primary); font-weight: 600; }
+
+    /* section card */
+    .section-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .section-head {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-light);
+      background: #F8FAFC;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-head::before {
+      content: '';
+      width: 3px;
+      height: 14px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+    .section-body { padding: 18px; }
+
+    /* form layout */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px 28px;
+    }
+    .form-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px 28px;
+    }
+    @media (max-width: 900px) {
+      .form-grid, .form-grid-3 { grid-template-columns: 1fr; }
+    }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field.full { grid-column: 1 / -1; }
+    .field-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+    .field-label .req { color: var(--danger); }
+    .field-control, .field-select, .field-textarea {
+      width: 100%; max-width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font: inherit; font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-card);
+      transition: border-color var(--transition);
+      outline: none;
+    }
+    .field-control:focus, .field-select:focus { border-color: var(--primary); }
+    .field-control[readonly], .field-select:disabled {
+      background: #F8FAFC; color: var(--text-secondary); cursor: default;
+    }
+    .field-hint { font-size: 12px; color: var(--text-hint); line-height: 1.5; }
+
+    /* readonly value */
+    .readonly-val {
+      padding: 8px 12px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      background: #F8FAFC;
+      font-size: 14px;
+      color: var(--text-secondary);
+      min-height: 36px;
+      line-height: 1.5;
+    }
+    .readonly-tag {
+      display: inline-block;
+      font-size: 11px;
+      padding: 1px 7px;
+      border-radius: 999px;
+      background: #FEF3C7;
+      color: #92400E;
+      font-weight: 600;
+      margin-left: 6px;
+    }
+
+    /* date range picker */
+    .date-range-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .date-range-wrap input[type="date"] {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font: inherit;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-card);
+      outline: none;
+      transition: border-color var(--transition);
+    }
+    .date-range-wrap input[type="date"]:focus { border-color: var(--primary); }
+    .date-range-sep { color: var(--text-hint); font-size: 13px; white-space: nowrap; flex-shrink: 0; }
+
+    /* radio */
+    .radio-row { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+    .radio-opt { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+    .radio-opt input[type="radio"] { accent-color: var(--primary); }
+
+    /* scope tabs */
+    .scope-tabs { display: inline-flex; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .scope-tab { padding: 6px 16px; font-size: 13px; cursor: pointer; border: none; background: none; font: inherit; color: var(--text-secondary); transition: var(--transition); }
+    .scope-tab.active { background: var(--primary); color: #fff; font-weight: 600; }
+
+    /* instance select */
+    .instance-select-wrap { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .instance-list { max-height: 120px; overflow-y: auto; }
+    .instance-item { display: flex; align-items: center; gap: 8px; padding: 7px 12px; font-size: 13px; cursor: pointer; border-bottom: 1px solid var(--border-light); transition: background var(--transition); }
+    .instance-item:last-child { border-bottom: none; }
+    .instance-item:hover { background: var(--primary-light); }
+    .instance-item input[type="checkbox"] { accent-color: var(--primary); flex-shrink: 0; }
+    .instance-item.checked { background: var(--primary-light); }
+
+    /* table */
+    .table-wrap { overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .data-table th {
+      background: #F8FAFC; padding: 9px 12px; text-align: left;
+      border-bottom: 1px solid var(--border); font-weight: 600;
+      color: var(--text-secondary); white-space: nowrap; font-size: 12px;
+    }
+    .data-table td { padding: 8px 12px; border-bottom: 1px solid var(--border-light); color: var(--text-primary); }
+    .data-table tbody tr:last-child td { border-bottom: none; }
+    .data-table tbody tr:hover td { background: #FAFBFF; }
+    .cell-id { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 22px; border-radius: 4px; background: var(--primary-light); color: var(--primary); font-size: 12px; font-weight: 700; }
+    .cell-input { width: 100%; padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font: inherit; font-size: 13px; outline: none; background: var(--bg-card); }
+    .cell-input:focus { border-color: var(--primary); }
+    .cell-select { padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font: inherit; font-size: 13px; background: var(--bg-card); outline: none; }
+    .tbl-actions { display: flex; gap: 8px; margin-bottom: 10px; justify-content: flex-end; }
+    .action-link { color: var(--primary); font-size: 12px; cursor: pointer; }
+    .action-link:hover { text-decoration: underline; }
+    .action-link.danger { color: var(--danger); }
+
+    /* static attrs */
+    .static-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px 20px; }
+    @media (max-width: 900px) { .static-grid { grid-template-columns: repeat(2, 1fr); } }
+    .static-item { display: flex; flex-direction: column; gap: 3px; }
+    .static-label { font-size: 11px; color: var(--text-hint); font-weight: 600; text-transform: uppercase; letter-spacing: .3px; }
+    .static-val { font-size: 14px; color: var(--text-primary); font-weight: 500; }
+    .static-val .unit { font-size: 12px; color: var(--text-hint); margin-left: 2px; font-weight: 400; }
+    .static-warn { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #B45309; background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 6px; padding: 2px 8px; }
+
+    /* model slots (v2.3) */
+    .slot-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+    .slot-card {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      background: #FBFDFF;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .slot-card.is-required { border-color: rgba(30, 64, 175, 0.25); background: var(--primary-light); }
+    .slot-card.is-advanced { border-color: var(--primary); }
+    .slot-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .slot-title { font-size: 14px; font-weight: 700; }
+    .slot-badge {
+      display: inline-flex; align-items: center;
+      height: 22px; padding: 0 9px;
+      border-radius: 999px;
+      font-size: 12px; font-weight: 700; white-space: nowrap;
+    }
+    .slot-badge.locked { background: #E2E8F0; color: #475569; }
+    .slot-badge.custom { background: #DBEAFE; color: #1D4ED8; }
+    .slot-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.65; }
+
+    /* advanced toggle inside card */
+    .advanced-toggle-inner {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 600; color: var(--text-primary);
+      padding-top: 10px; border-top: 1px dashed var(--border);
+      width: 100%; cursor: pointer;
+    }
+    .card-inner-form {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px 16px;
+      padding: 2px 0;
+    }
+
+    /* algo area */
+    .algo-tune-block { margin-top: 12px; padding-top: 14px; border-top: 1px solid var(--border-light); }
+    .sub-section-head {
+      font-size: 13px; font-weight: 700; color: var(--text-primary);
+      margin: 0 0 12px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .sub-section-head::before {
+      content: ''; width: 3px; height: 12px;
+      background: var(--primary); border-radius: 2px; flex-shrink: 0;
+    }
+
+    /* buttons */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 6px; padding: 8px 20px; border-radius: var(--radius);
+      font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+      transition: var(--transition); border: none; white-space: nowrap;
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-default { background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); }
+    .btn-default:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-sm { padding: 5px 12px; font-size: 13px; }
+    .foot-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-light); }
+
+    /* toast */
+    .toast {
+      position: fixed; right: 24px; bottom: 24px;
+      min-width: 180px; max-width: 360px; padding: 12px 14px;
+      background: #1E293B; color: #fff; border-radius: var(--radius);
+      font-size: 14px; line-height: 1.5;
+      box-shadow: 0 8px 24px rgba(0,0,0,.18);
+      z-index: 9999; opacity: 0; transform: translateY(10px);
+      transition: opacity .22s, transform .22s; pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: none; }
+
+    /* hidden */
+    .hidden { display: none !important; }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+</head>
+<body>
+<div class="layout">
+  <div id="app-header"></div>
+  <div class="body-wrap">
+    <div id="app-sidebar"></div>
+    <main class="main">
+      <div class="anno-filter-bar" id="annoFilterBar">
+        <span class="anno-filter-label">批注版本：</span>
+        <div class="anno-filter-tags" id="annoFilterTags"></div>
+      </div>
+
+      <div class="page-shell">
+
+        <!-- ===== 版本信息批注 ===== -->
+        <div class="anno anno-version-header" data-version="v2.3">
+          <span class="anno-tag">版本信息</span>
+          <div class="anno-body">
+            <p><b>当前版本：</b>v2.3</p>
+            <p><b>更新日期：</b>2026-06-16</p>
+            <p><b>本页说明：</b>手动训练表单页（对应真实系统路由 <code>/model/training/{id}</code>）。本页仅负责"配置一次训练任务并提交"，不包含自学习/自动训练参数（该配置在创建/编辑模型页维护）。</p>
+            <p><b>v2.3 核心改动：</b>①原"算法选择"区块（单一 radio 列表）整体替换为"模型选择"两槽位卡片（机理模型 + 混合增强模型）；②算法列表移入混合增强模型的高级模式；③"冷却塔逼近度灰箱（Merkel）"从算法列表移除；④训练数据均衡从页面底部移入混合增强模型卡片，作为 L1 专属必填配置。</p>
+          </div>
+        </div>
+
+        <!-- 面包屑 + 页标题 -->
+        <div class="breadcrumb">
+          <a href="机理模型训练.html">机理模型训练</a>
+          <span class="sep">›</span>
+          <span class="cur">手动训练</span>
+        </div>
+        <div class="page-head">
+          <h1 class="page-title">手动训练</h1>
+        </div>
+
+        <!-- ===== 1. 基础信息（只读）===== -->
+        <div class="anno anno-field" data-version="v2.3">
+          <span class="anno-tag">字段说明</span>
+          <span class="anno-version">v2.3</span>
+          <span class="anno-source">需求文档 § 9.2</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>基础信息（只读展示）</p>
+            <ul>
+              <li>模型名称、模型分类、模型描述从已有模型配置读取，手动训练页全部只读，不允许修改；需修改须从「编辑模型」入口进入。</li>
+            </ul>
+          </div>
+        </div>
+
+        <section class="section-card">
+          <div class="section-head">基础信息</div>
+          <div class="section-body">
+            <div class="form-grid">
+              <div class="field">
+                <label class="field-label">模型名称 <span class="readonly-tag">只读</span></label>
+                <div class="readonly-val">四号冷却水泵-有功功率预测模型</div>
+              </div>
+              <div class="field">
+                <label class="field-label">模型分类 <span class="readonly-tag">只读</span></label>
+                <div class="readonly-val">水泵功率预测模型</div>
+              </div>
+              <div class="field full">
+                <label class="field-label">模型描述 <span class="readonly-tag">只读</span></label>
+                <div class="readonly-val">预测四号冷却水泵在不同工况下的有功功率输出，用于系统能耗优化计算。</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== 2. 训练范围 ===== -->
+        <div class="anno anno-ux" data-version="v2.3">
+          <span class="anno-tag">交互说明</span>
+          <span class="anno-version">v2.3</span>
+          <span class="anno-source">真实系统对齐</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>训练范围</p>
+            <table class="anno-table">
+              <thead><tr><th>字段</th><th>说明</th></tr></thead>
+              <tbody>
+                <tr><td>训练对象范围</td><td>相同型号实例：同一型号的设备共享模型训练，适合型号标准化程度高的设备。独立实例：单设备独立训练，适合个体差异较大的场景。</td></tr>
+                <tr><td>实例选择</td><td>切换范围类型后，实例列表按规则过滤展示；至少选择一个实例，否则无法提交训练。</td></tr>
+                <tr><td>训练日期范围</td><td>必填，选择本次训练的数据时间窗口；结束日期默认为当天，起始日期由用户设置；日期范围越长训练样本越多，但训练时间也越长。</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <section class="section-card">
+          <div class="section-head">训练范围</div>
+          <div class="section-body">
+            <div class="form-grid">
+              <div class="field">
+                <label class="field-label"><span class="req">*</span>训练对象范围</label>
+                <div class="scope-tabs">
+                  <button class="scope-tab active" id="scopeSameModel">相同型号实例</button>
+                  <button class="scope-tab" id="scopeIndependent">独立实例</button>
+                </div>
+              </div>
+              <div class="field">
+                <label class="field-label"><span class="req">*</span>训练日期范围</label>
+                <div class="date-range-wrap">
+                  <input type="date" id="dateStart" value="2025-06-01">
+                  <span class="date-range-sep">—</span>
+                  <input type="date" id="dateEnd" value="2026-06-16">
+                </div>
+              </div>
+              <div class="field full">
+                <label class="field-label"><span class="req">*</span>实例选择</label>
+                <div class="instance-select-wrap">
+                  <div class="instance-list" id="instanceList">
+                    <label class="instance-item checked">
+                      <input type="checkbox" checked> 四号冷却水泵
+                    </label>
+                    <label class="instance-item checked">
+                      <input type="checkbox" checked> 三号冷却水泵
+                    </label>
+                    <label class="instance-item">
+                      <input type="checkbox"> 二号冷却水泵
+                    </label>
+                    <label class="instance-item">
+                      <input type="checkbox"> 一号冷却水泵
+                    </label>
+                  </div>
+                </div>
+                <span class="field-hint" id="instanceHint">已选 2 个实例</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== 3. 静态属性 ===== -->
+        <div class="anno anno-field" data-version="v2.3">
+          <span class="anno-tag">字段说明</span>
+          <span class="anno-version">v2.3</span>
+          <span class="anno-source">需求文档 § 需求 1 & § 9.2</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>静态属性（铭牌/设计参数，只读）</p>
+            <ul>
+              <li>属性值从底层设备或设备组对象读取，本页只展示，不提供编辑、补录或来源配置入口。</li>
+              <li>提交训练前须校验所有必填静态属性有值；任一为空则提交失败，并在此区域标红提示缺失项。</li>
+              <li>缺失时引导用户回对应设备或设备组对象维护，不在训练页修正。</li>
+            </ul>
+          </div>
+        </div>
+
+        <section class="section-card">
+          <div class="section-head">静态属性（铭牌/设计参数）</div>
+          <div class="section-body">
+            <div class="static-grid">
+              <div class="static-item">
+                <span class="static-label">额定功率</span>
+                <span class="static-val">132<span class="unit">kW</span></span>
+              </div>
+              <div class="static-item">
+                <span class="static-label">额定流量</span>
+                <span class="static-val">850<span class="unit">m³/h</span></span>
+              </div>
+              <div class="static-item">
+                <span class="static-label">额定扬程</span>
+                <span class="static-val">32<span class="unit">m</span></span>
+              </div>
+              <div class="static-item">
+                <span class="static-label">额定转速</span>
+                <span class="static-val">1480<span class="unit">r/min</span></span>
+              </div>
+              <div class="static-item">
+                <span class="static-label">额定频率</span>
+                <span class="static-val">50<span class="unit">Hz</span></span>
+              </div>
+              <div class="static-item">
+                <span class="static-label">设备类型</span>
+                <span class="static-val">变频水泵</span>
+              </div>
+              <div class="static-item">
+                <span class="static-label">叶轮直径</span>
+                <span class="static-val">320<span class="unit">mm</span></span>
+              </div>
+              <div class="static-item">
+                <span class="static-label">额定 COP</span>
+                <span class="static-val">—<span class="unit"></span></span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== 4. 模型参数 ===== -->
+        <div class="anno anno-field" data-version="v2.3">
+          <span class="anno-tag">字段说明</span>
+          <span class="anno-version">v2.3</span>
+          <span class="anno-source">需求文档 § 9.2 + 评审新增</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>模型参数表</p>
+            <table class="anno-table">
+              <thead><tr><th>参数来源</th><th>操作列展示</th><th>说明</th></tr></thead>
+              <tbody>
+                <tr><td>系统内置参数（槽位模板固定下发）</td><td>显示"内置"，不提供删除入口</td><td>删除会导致模型不可用，不允许移除</td></tr>
+                <tr><td>用户手动新增参数</td><td>显示"删除"链接，可操作</td><td>用户追加的参数，可随时删除；删除后标识符自动重排</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <section class="section-card">
+          <div class="section-head">模型参数</div>
+          <div class="section-body">
+            <div class="tbl-actions">
+              <button class="btn btn-default btn-sm" onclick="showToast('新增参数行')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                新增参数
+              </button>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>标识符</th><th>参数名称</th><th>参数类型</th>
+                    <th>最小值</th><th>最大值</th><th>稳态阈值 ε</th>
+                    <th>单调性</th><th>分层数</th><th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="cell-id">A1</span></td>
+                    <td>频率反馈</td>
+                    <td><select class="cell-select"><option selected>动态特征</option><option>预测参数</option></select></td>
+                    <td><input class="cell-input" value="8" style="width:58px;"></td>
+                    <td><input class="cell-input" value="50" style="width:58px;"></td>
+                    <td><input class="cell-input" type="number" value="3" placeholder="可不填" style="width:68px;"></td>
+                    <td><select class="cell-select"><option>正相关</option><option>负相关</option><option>不相关</option></select></td>
+                    <td><input class="cell-input" type="number" value="3" min="1" max="10" style="width:48px;"></td>
+                    <td><span style="color:var(--text-hint);font-size:12px;">内置</span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="cell-id">A2</span></td>
+                    <td>流量反馈</td>
+                    <td><select class="cell-select"><option selected>动态特征</option><option>预测参数</option></select></td>
+                    <td><input class="cell-input" value="145" style="width:58px;"></td>
+                    <td><input class="cell-input" value="850" style="width:58px;"></td>
+                    <td><input class="cell-input" type="number" value="8" placeholder="可不填" style="width:68px;"></td>
+                    <td><select class="cell-select"><option>正相关</option><option selected>负相关</option><option>不相关</option></select></td>
+                    <td><input class="cell-input" type="number" value="3" min="1" max="10" style="width:48px;"></td>
+                    <td><span style="color:var(--text-hint);font-size:12px;">内置</span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="cell-id">A3</span></td>
+                    <td>水泵功率（预测）</td>
+                    <td><select class="cell-select"><option>动态特征</option><option selected>预测参数</option></select></td>
+                    <td><input class="cell-input" value="0" style="width:58px;"></td>
+                    <td><input class="cell-input" value="120" style="width:58px;"></td>
+                    <td><input class="cell-input" type="number" value="5" placeholder="可不填" style="width:68px;"></td>
+                    <td><select class="cell-select"><option>正相关</option><option>负相关</option><option selected>不相关</option></select></td>
+                    <td><input class="cell-input" type="number" value="3" min="1" max="10" style="width:48px;"></td>
+                    <td><span style="color:var(--text-hint);font-size:12px;">内置</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== 5. 标准工况数据 ===== -->
+        <div class="anno anno-field" data-version="v2.3">
+          <span class="anno-tag">字段说明</span>
+          <span class="anno-version">v2.3</span>
+          <span class="anno-source">真实系统对齐</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>标准工况数据</p>
+            <ul>
+              <li>用于机理模型参数辨识的参考工况点，每行为一个标准工况组合。</li>
+              <li>支持手动新增和批量导入（全量覆盖），导出为 Excel。</li>
+              <li>标准工况数据为空时机理模型仍可保底出值，但辨识精度降低。</li>
+            </ul>
+          </div>
+        </div>
+
+        <section class="section-card">
+          <div class="section-head">标准工况数据</div>
+          <div class="section-body">
+            <div class="tbl-actions">
+              <button class="btn btn-default btn-sm" onclick="showToast('新增工况行')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                添加
+              </button>
+              <button class="btn btn-default btn-sm" onclick="showToast('批量导入工况数据')">导入</button>
+              <button class="btn btn-default btn-sm" onclick="showToast('导出工况数据')">导出</button>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>序号</th>
+                    <th>A1 频率反馈（Hz）</th>
+                    <th>A2 流量反馈（m³/h）</th>
+                    <th>A3 水泵功率（kW）</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>1</td>
+                    <td><input class="cell-input" value="35" style="width:80px;"></td>
+                    <td><input class="cell-input" value="420" style="width:80px;"></td>
+                    <td><input class="cell-input" value="52.4" style="width:80px;"></td>
+                    <td><span class="action-link danger" onclick="showToast('删除该行')">删除</span></td>
+                  </tr>
+                  <tr>
+                    <td>2</td>
+                    <td><input class="cell-input" value="42" style="width:80px;"></td>
+                    <td><input class="cell-input" value="540" style="width:80px;"></td>
+                    <td><input class="cell-input" value="71.2" style="width:80px;"></td>
+                    <td><span class="action-link danger" onclick="showToast('删除该行')">删除</span></td>
+                  </tr>
+                  <tr>
+                    <td>3</td>
+                    <td><input class="cell-input" value="50" style="width:80px;"></td>
+                    <td><input class="cell-input" value="680" style="width:80px;"></td>
+                    <td><input class="cell-input" value="94.8" style="width:80px;"></td>
+                    <td><span class="action-link danger" onclick="showToast('删除该行')">删除</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== 6. 模型选择（v2.3 核心改动）===== -->
+        <div class="anno anno-ux" data-version="v2.3">
+          <span class="anno-tag">交互说明</span>
+          <span class="anno-version">v2.3</span>
+          <span class="anno-source">需求文档 § 9.1 & § 9.2</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>模型选择（v2.3 核心改动，替换原"算法选择"区块）</p>
+            <table class="anno-table">
+              <thead><tr><th>改动点</th><th>旧（真实系统当前）</th><th>新（v2.3）</th></tr></thead>
+              <tbody>
+                <tr><td>区块名称</td><td>算法选择</td><td>模型选择</td></tr>
+                <tr><td>区块形式</td><td>9 个 radio 平铺（含 Merkel）</td><td>机理模型 + 混合增强模型 两槽位卡片</td></tr>
+                <tr><td>Merkel 选项</td><td>列表中存在"冷却塔逼近度灰箱(merkel)"</td><td>已移除——它是机理槽位缺省形态，非数理算法，混入列表造成分类混乱</td></tr>
+                <tr><td>训练数据均衡</td><td>页面最底部独立字段</td><td>移入混合增强模型卡片，作为 L1 专属必填项</td></tr>
+                <tr><td>算法调参</td><td>选中算法后在主区域展开</td><td>移入混合增强模型高级模式展开区内</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="anno anno-field" data-version="v2.3">
+          <span class="anno-tag">字段说明</span>
+          <span class="anno-version">v2.3</span>
+          <span class="anno-source">需求文档 § 9.1</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>机理模型槽位（L0）</p>
+            <ul>
+              <li>所有模型服务必有，固定只读，不可删除、不可编辑；零数据可用，承担冷启动与低置信兜底。</li>
+              <li>前端只展示能力定位，不展示公式原文、系数或内部计算关系。</li>
+            </ul>
+            <p style="margin-top:8px;"><b>关联模块：</b>混合增强模型槽位（L1）</p>
+            <ul>
+              <li>缺省形态为该模型类别的机理增强（机理骨架 + 数据辨识）；高级模式可切换为数理算法。</li>
+              <li><b>训练数据均衡（L1 专属，必填）：</b>二选一，数据增强 / 工况分层权重，新建/编辑默认选"工况分层权重"。</li>
+              <li><b>高级模式算法列表（v2.3）：</b>8 个数理算法，"冷却塔逼近度灰箱（Merkel）"已移除；切回机理增强 = 收起高级模式，不在列表中操作。</li>
+              <li><b>置信路由差异：</b>混合增强槽位为数理算法时，低置信工况直接由机理模型兜底；混合增强为机理增强时，低置信工况使用 L1 但不叠加残差修正。</li>
+            </ul>
+          </div>
+        </div>
+
+        <section class="section-card">
+          <div class="section-head">模型选择</div>
+          <div class="section-body">
+            <div class="slot-grid">
+
+              <!-- 机理模型槽位 -->
+              <div class="slot-card is-required">
+                <div class="slot-head">
+                  <div class="slot-title">机理模型</div>
+                  <span class="slot-badge locked">内置</span>
+                </div>
+                <div class="slot-desc">兜底保障模型，基于设备物理规律计算，无需历史数据，在数据不足时自动生效，保证预测不中断。</div>
+              </div>
+
+              <!-- 混合增强模型槽位 -->
+              <div class="slot-card" id="standardCard">
+                <div class="slot-head">
+                  <div class="slot-title">混合增强模型</div>
+                  <span class="slot-badge locked" id="standardBadge">内置</span>
+                </div>
+                <div class="slot-desc" id="standardSummary">主力预测模型，结合现场历史数据持续校准，精度更高，日常预测默认使用本模型。</div>
+
+                <!-- 训练数据均衡（L1 专属必填）-->
+                <div class="card-inner-form" style="border-top:1px dashed var(--border);padding-top:10px;">
+                  <div class="field">
+                    <label class="field-label"><span class="req">*</span>训练数据均衡</label>
+                    <select class="field-select">
+                      <option>数据增强</option>
+                      <option selected>工况分层权重</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- 高级模式切换 -->
+                <label class="advanced-toggle-inner">
+                  <input type="checkbox" id="advancedAlgoToggle">
+                  <span id="advancedAlgoLabel">高级模式：改用数理算法</span>
+                </label>
+
+                <!-- 高级模式展开区 -->
+                <div id="advancedAlgoArea" class="hidden">
+                  <div class="field full" style="margin-top:4px;">
+                    <label class="field-label"><span class="req">*</span>数理算法选择</label>
+                    <div class="radio-row" id="algoRow">
+                      <label class="radio-opt"><input type="radio" name="algo" value="monotonic_nn"> 单调性神经网络</label>
+                      <label class="radio-opt"><input type="radio" name="algo" value="gbrt"> 梯度提升</label>
+                      <label class="radio-opt"><input type="radio" name="algo" value="knn"> K近邻回归</label>
+                      <label class="radio-opt"><input type="radio" name="algo" value="linear"> 线性回归</label>
+                      <label class="radio-opt"><input type="radio" name="algo" value="poly"> 多项式回归</label>
+                      <label class="radio-opt"><input type="radio" name="algo" value="rf"> 随机森林</label>
+                      <label class="radio-opt"><input type="radio" name="algo" value="svr" checked> 支持向量回归</label>
+                      <label class="radio-opt"><input type="radio" name="algo" value="xgboost"> 极致梯度提升</label>
+                    </div>
+                    <p class="field-hint">仅含数理算法（8 种）；低置信工况直接由机理模型兜底。取消勾选高级模式即可切回机理增强。</p>
+                  </div>
+
+                  <!-- SVR 调参（默认）-->
+                  <div id="blockTuneSvr" class="algo-tune-block">
+                    <div class="sub-section-head"><span class="req">*</span>模型调参（支持向量回归）</div>
+                    <div class="form-grid">
+                      <div class="field"><label class="field-label"><span class="req">*</span>核函数</label><select class="field-select"><option selected>rbf</option><option>linear</option><option>poly</option><option>sigmoid</option></select></div>
+                      <div class="field"><label class="field-label"><span class="req">*</span>正则化系数 C</label><input class="field-control" type="number" value="1.0" step="0.1" min="0.01"></div>
+                      <div class="field"><label class="field-label"><span class="req">*</span>Epsilon</label><input class="field-control" type="number" value="0.1" step="0.01" min="0"></div>
+                      <div class="field"><label class="field-label"><span class="req">*</span>Gamma</label><select class="field-select"><option selected>scale</option><option>auto</option></select></div>
+                    </div>
+                  </div>
+
+                  <!-- NN 调参 -->
+                  <div id="blockNn" class="algo-tune-block hidden">
+                    <div class="sub-section-head"><span class="req">*</span>模型调参（单调性神经网络）</div>
+                    <div class="form-grid">
+                      <div class="field"><label class="field-label"><span class="req">*</span>激活函数</label><select class="field-select"><option selected>elu</option><option>relu</option><option>tanh</option></select></div>
+                      <div class="field"><label class="field-label"><span class="req">*</span>学习率</label><input class="field-control" type="number" value="0.001" step="0.0001"></div>
+                      <div class="field"><label class="field-label"><span class="req">*</span>Batch Size</label><input class="field-control" type="number" value="1024"></div>
+                      <div class="field"><label class="field-label"><span class="req">*</span>最大 epoch</label><input class="field-control" type="number" value="200"></div>
+                    </div>
+                  </div>
+
+                  <!-- 线性回归 公式 -->
+                  <div id="blockFormula" class="algo-tune-block hidden">
+                    <div class="sub-section-head"><span class="req">*</span>公式配置</div>
+                    <div class="field full">
+                      <label class="field-label" id="formulaDepLabel">A3 =</label>
+                      <textarea class="field-control" rows="3" style="font-family:ui-monospace,monospace;font-size:13px;">a * A1 + b * A2 + c</textarea>
+                    </div>
+                    <p class="field-hint" style="margin-top:6px;">① 拟合系数用 a、b、c、d、e、f 表示；② 因变量使用模型参数标识符。</p>
+                  </div>
+
+                  <!-- 通用调参（GBRT / KNN / Poly / RF / XGBoost）-->
+                  <div id="blockTuneGeneral" class="algo-tune-block hidden">
+                    <div class="sub-section-head"><span class="req">*</span>模型调参</div>
+                    <div class="form-grid">
+                      <div class="field"><label class="field-label"><span class="req">*</span>树的数量</label><input class="field-control" type="number" value="100"></div>
+                      <div class="field"><label class="field-label"><span class="req">*</span>最大深度</label><input class="field-control" type="number" value="5"></div>
+                      <div class="field"><label class="field-label"><span class="req">*</span>学习率</label><input class="field-control" type="number" value="0.1" step="0.01"></div>
+                      <div class="field"><label class="field-label"><span class="req">*</span>样本采样比例</label><input class="field-control" type="number" value="0.8" step="0.1"></div>
+                    </div>
+                  </div>
+                </div><!-- /advancedAlgoArea -->
+              </div><!-- /standardCard -->
+            </div><!-- /slot-grid -->
+          </div>
+        </section>
+
+        <!-- ===== 底部操作 ===== -->
+        <div class="foot-actions">
+          <button class="btn btn-default" onclick="history.back()">取 消</button>
+          <button class="btn btn-primary" onclick="handleStartTrain()">开始训练</button>
+        </div>
+
+      </div><!-- /page-shell -->
+    </main>
+  </div><!-- /body-wrap -->
+</div><!-- /layout -->
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<button type="button" class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+
+<script>
+  /* ---- toast ---- */
+  var toastTimer;
+  function showToast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove('show'); }, 2200);
+  }
+
+  /* ---- scope tabs ---- */
+  document.querySelectorAll('.scope-tab').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      document.querySelectorAll('.scope-tab').forEach(function (t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+    });
+  });
+
+  /* ---- instance checkboxes ---- */
+  document.querySelectorAll('#instanceList input[type="checkbox"]').forEach(function (cb) {
+    cb.addEventListener('change', function () {
+      var item = cb.closest('.instance-item');
+      item.classList.toggle('checked', cb.checked);
+      var count = document.querySelectorAll('#instanceList input:checked').length;
+      document.getElementById('instanceHint').textContent = '已选 ' + count + ' 个实例';
+    });
+  });
+
+  /* ---- date validation ---- */
+  document.getElementById('dateStart').addEventListener('change', function () {
+    var end = document.getElementById('dateEnd');
+    if (this.value > end.value) end.value = this.value;
+  });
+
+  /* ---- advanced algo toggle ---- */
+  var ALGO_BLOCKS = {
+    monotonic_nn: 'blockNn',
+    gbrt: 'blockTuneGeneral',
+    knn: 'blockTuneGeneral',
+    linear: 'blockFormula',
+    poly: 'blockTuneGeneral',
+    rf: 'blockTuneGeneral',
+    svr: 'blockTuneSvr',
+    xgboost: 'blockTuneGeneral'
+  };
+  var ALGO_LABELS = {
+    monotonic_nn: '单调性神经网络', gbrt: '梯度提升', knn: 'K近邻回归',
+    linear: '线性回归', poly: '多项式回归', rf: '随机森林',
+    svr: '支持向量回归', xgboost: '极致梯度提升'
+  };
+
+  function syncAlgoBlocks() {
+    var sel = document.querySelector('input[name="algo"]:checked');
+    var val = sel ? sel.value : 'svr';
+    ['blockNn', 'blockFormula', 'blockTuneSvr', 'blockTuneGeneral'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.classList.add('hidden');
+    });
+    var target = ALGO_BLOCKS[val];
+    if (target) { var el = document.getElementById(target); if (el) el.classList.remove('hidden'); }
+    document.getElementById('standardSummary').textContent =
+      '主力预测模型，当前算法：' + (ALGO_LABELS[val] || val) + '。低置信工况自动由机理模型兜底。';
+  }
+
+  document.querySelectorAll('input[name="algo"]').forEach(function (r) {
+    r.addEventListener('change', syncAlgoBlocks);
+  });
+
+  var advToggle = document.getElementById('advancedAlgoToggle');
+  advToggle.addEventListener('change', function () {
+    var area = document.getElementById('advancedAlgoArea');
+    var card = document.getElementById('standardCard');
+    var badge = document.getElementById('standardBadge');
+    var on = advToggle.checked;
+    area.classList.toggle('hidden', !on);
+    card.classList.toggle('is-advanced', on);
+    badge.className = on ? 'slot-badge custom' : 'slot-badge locked';
+    badge.textContent = on ? '已自定义' : '内置';
+    if (on) {
+      syncAlgoBlocks();
+    } else {
+      document.getElementById('standardSummary').textContent =
+        '主力预测模型，结合现场历史数据持续校准，精度更高，日常预测默认使用本模型。';
+    }
+  });
+
+  /* ---- start train ---- */
+  function handleStartTrain() {
+    var checked = document.querySelectorAll('#instanceList input:checked').length;
+    if (checked === 0) { showToast('请至少选择一个训练实例'); return; }
+    var start = document.getElementById('dateStart').value;
+    var end = document.getElementById('dateEnd').value;
+    if (!start || !end) { showToast('请填写训练日期范围'); return; }
+    showToast('训练任务提交中…');
+    setTimeout(function () {
+      showToast('✓ 训练任务已提交，可在训练列表查看进度');
+    }, 1500);
+  }
+
+  /* ---- anno version filter ---- */
+  function initAnnoVersionFilter() {
+    var bar = document.getElementById('annoFilterBar');
+    var tags = document.getElementById('annoFilterTags');
+    if (!document.body.classList.contains('annotation-mode')) return;
+    var annos = document.querySelectorAll('.anno[data-version]');
+    var versions = [];
+    annos.forEach(function (a) {
+      var v = a.getAttribute('data-version');
+      if (v && versions.indexOf(v) === -1) versions.push(v);
+    });
+    versions.sort(function (a, b) {
+      var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+      var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+      for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+        if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+      }
+      return 0;
+    });
+    tags.innerHTML = '';
+    var allBtn = document.createElement('span');
+    allBtn.className = 'anno-filter-tag';
+    allBtn.textContent = '全部';
+    allBtn.onclick = function () { filterAnno('all', versions[0]); setActive(this); };
+    tags.appendChild(allBtn);
+    versions.forEach(function (v) {
+      var btn = document.createElement('span');
+      btn.className = 'anno-filter-tag';
+      btn.textContent = v;
+      btn.onclick = function () { filterAnno(v, versions[0]); setActive(this); };
+      tags.appendChild(btn);
+    });
+    if (versions.length > 0) { filterAnno('all', versions[0]); allBtn.classList.add('active'); }
+  }
+  function filterAnno(version, latest) {
+    document.querySelectorAll('.anno[data-version]').forEach(function (a) {
+      var v = a.getAttribute('data-version');
+      if (version === 'all') {
+        a.style.display = '';
+        a.style.opacity = (v === latest) ? '1' : '0.6';
+      } else {
+        a.style.display = (v === version) ? '' : 'none';
+        a.style.opacity = '1';
+      }
+    });
+  }
+  function setActive(el) {
+    el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function (t) { t.classList.remove('active'); });
+    el.classList.add('active');
+  }
+</script>
+<script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="机理模型训练"></script>
+</body>
+</html>
