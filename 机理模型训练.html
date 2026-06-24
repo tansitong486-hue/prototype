@@ -621,6 +621,21 @@
       color: #D97706;
       font-weight: 500;
     }
+    .sync-miss-block {
+      display: block;
+      margin-top: 3px;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .sync-miss-hard { color: #D97706; }
+    .sync-fix-link {
+      color: var(--primary);
+      cursor: pointer;
+      margin-left: 6px;
+      font-weight: 500;
+      pointer-events: auto;
+    }
+    .sync-fix-link:hover { text-decoration: underline; }
     .sync-empty-state {
       color: var(--text-hint);
       font-size: 13px;
@@ -963,6 +978,15 @@
               <p><b>当前版本：</b>v1.8</p>
               <p><b>更新日期：</b>2026-04-07</p>
               <p><b>变更概述：</b>v1.8 重构「模型同步」弹窗交互：① 待新增模型改为按「设备实例 / 预测类型」折叠分组展示，替代原平铺列表；② 每组内改为单选算法（radio），同组不可多选；③ 各算法选项增加「推荐」标签（规则：冷却塔/水泵功率→线性回归；冷水主机功率→单调性神经网络；流量/压差→支持向量回归；冷却塔逼近度→灰箱Merkel；板换温差→单调性神经网络）；④ 弹窗新增右侧「已选模型」面板，实时展示已选条目，支持单条移除；⑤ 弹窗宽度由 680px 扩至 860px 以容纳分栏布局；⑥ 底部去除「全选」，改为已选数量文字 + 取消/确定。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-version-header" data-version="v2.3">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v2.3</p>
+              <p><b>更新日期：</b>2026-06-24</p>
+              <p><b>变更概述：</b>优化「模型同步」静态属性校验交互（对齐 v2.3 需求 §1.2.5 与验收用例 20）：① 静态属性全部必填，缺任一即阻断同步、不可勾选，不做缺省/估算兜底，避免缺失情况；② 缺失提示精确到"设备实例·属性名"，不再只写"缺失静态属性"；③ 聚合/管路类跨设备依赖按所属子设备分别列出（如制冷单元压差缺「1号冷水主机·额定冷冻水压降」「1号板换·额定冷冻水流量」），每条缺失提供"去补齐 ›"跳转至对应对象维护页。</p>
             </div>
           </div>
 
@@ -1759,7 +1783,7 @@
           <div class="anno-body">
             <p><b>关联模块：</b>模型同步弹窗；入口：页面工具栏「模型同步」按钮。</p>
             <ul>
-              <li><b>服务勾选：</b>待同步服务平铺展示，每行展示「设备实例 / 预测类型」。静态属性完整的服务可勾选；静态属性缺失的服务置灰、不可勾选，并在行内提示缺失项。</li>
+              <li><b>服务勾选：</b>待同步服务平铺展示，每行展示「设备实例 / 预测类型」。静态属性全部录入的服务可勾选；缺任一静态属性的服务置灰、不可勾选，并在行内精确提示缺失的设备实例·属性名。</li>
               <li><b>已选数量：</b>底部实时展示已选择服务数量；仅统计可同步且已勾选的服务。</li>
               <li><b>确定：</b>至少选择 1 个服务后可点；批量创建固定“机理模型 + 混合增强模型”两槽位模板，不可重复提交。未选任何服务时「确定」置灰。</li>
               <li><b>取消：</b>关闭弹窗，不提交；再次打开时重置为初始状态。</li>
@@ -1774,7 +1798,8 @@
             <p><b>关联模块：</b>模型同步 — 服务模板规则</p>
               <ul>
                 <li><b>列表来源：</b>依据节点树选中的设备实例 + 系统预定义预测参数类型生成；同一「设备实例 / 预测类型」已存在模型服务时不重复创建。</li>
-                <li><b>静态属性校验：</b>同步前校验当前对象创建该预测模型服务所需的核心静态属性；缺失任一必需属性时，该服务不进入可提交范围。</li>
+                <li><b>静态属性校验：</b>创建该预测模型服务所需的静态属性<b>全部必填</b>；缺任一属性时该服务不进入可提交范围，避免缺失情况，不做缺省/估算兜底。</li>
+                <li><b>跨设备缺失归因：</b>聚合/管路类模型（如制冷单元压差取主机+板换额定属性）的缺失须<b>按所属子设备分别列出</b>具体实例与属性，每条缺失提供"去补齐"跳转入口直达对应设备/设备组对象维护页。</li>
                 <li><b>模板来源：</b>由模型类别自动派生固定两槽位：机理模型固定只读；混合增强模型默认机理模型，无机理公式类别默认 SVR。</li>
                 <li><b>新增命名规则：</b>{设备实例}–{预测类型}预测模型；数据集起始日取弹窗所选「数据集开始日期」。</li>
             </ul>
@@ -1789,7 +1814,7 @@
             <ul>
               <li><b>数据集开始日期：</b>必填，默认当天；作为同步后混合增强模型首次训练/数据窗口的默认起始日期。</li>
               <li><b>待同步列表：</b>每行展示「设备实例 / 预测类型」，勾选后高亮；不再使用折叠分组和右侧已选面板。</li>
-              <li><b>静态属性提示：</b>核心静态属性缺失时在对应服务行内展示缺失属性；该行复选框禁用、整行置灰，用户需先回到底层设备或设备组对象补齐静态属性后再同步。</li>
+              <li><b>静态属性提示：</b>缺任一静态属性在行内以"设备实例·属性名"逐条精确提示并附"去补齐 ›"跳转，复选框禁用、整行置灰。跨设备依赖按子设备分组展示，让用户看清需维护的对象数量。</li>
             </ul>
           </div>
         </div>
@@ -1806,7 +1831,7 @@
 
         <div class="sync-hint">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
-          勾选静态属性完整的设备预测服务；缺失静态属性的服务不可同步，需补齐后再操作
+          静态属性须全部录入；缺任一属性的服务不可同步，点"去补齐"跳转维护，补齐后再勾选
         </div>
 
         <div class="sync-service-list" id="syncGroupContainer"></div>
@@ -1990,8 +2015,10 @@
           if (type.indexOf('压差') !== -1 || type.indexOf('最不利') !== -1) return '机理模型（固定只读） + 混合增强模型（默认 SVR）';
           return '机理模型（固定只读） + 混合增强模型（机理模型）';
         }
-        function mkGroup(id, instance, type, missingAttrs) {
-          return { id: id, instance: instance, type: type, template: getTemplate(type), missingAttrs: missingAttrs || '' };
+        // missing 每项：{ device:'设备实例', attr:'属性名' }
+        // 所有静态属性均为必填，缺任一即阻断同步（不可勾选），并精确归因到「设备实例·属性」+ 提供去补齐跳转
+        function mkGroup(id, instance, type, missing) {
+          return { id: id, instance: instance, type: type, template: getTemplate(type), missing: missing || [] };
         }
         var GROUPS = [
           mkGroup('ck1-flow',  '一号冷却水泵', '流量'),
@@ -2003,7 +2030,8 @@
           mkGroup('ck4-flow',  '四号冷却水泵', '流量'),
           mkGroup('ck4-pwr',   '四号冷却水泵', '功率'),
           mkGroup('ct1-pwr',   '冷却塔', '功率'),
-          mkGroup('ct1-app',   '冷却塔', '逼近度', '缺失静态属性：设计湿球温度'),
+          // 缺失示例：设计湿球温度未录入 → 阻断、需补齐
+          mkGroup('ct1-app',   '冷却塔', '逼近度', [{ device: '冷却塔', attr: '设计湿球温度' }]),
           mkGroup('chiller-pwr','冷水主机',  '功率'),
           mkGroup('chw-pump-flow', '冷冻水泵', '流量'),
           mkGroup('chw-pump-pwr',  '冷冻水泵', '功率'),
@@ -2012,10 +2040,14 @@
           mkGroup('sec2-flow', '二号二次泵', '流量'),
           mkGroup('sec2-pwr',  '二号二次泵', '功率'),
           mkGroup('end-dp-sec', '末端（二次泵版）', '最不利压差'),
-          mkGroup('unit-chw-dp',  '制冷单元', '冷冻侧压差'),
+          // 跨设备缺失示例：制冷单元压差拉取主机+板换的额定属性
+          mkGroup('unit-chw-dp',  '制冷单元', '冷冻侧压差', [
+            { device: '1号冷水主机', attr: '额定冷冻水压降' },
+            { device: '1号板换', attr: '额定冷冻水流量' }
+          ]),
           mkGroup('unit-cw-dp',   '制冷单元', '冷却侧压差'),
           mkGroup('phe-dt',   '板换',  '温差'),
-          mkGroup('end-dp',   '末端', '最不利压差', '缺失静态属性：管路设计压差'),
+          mkGroup('end-dp',   '末端', '最不利压差', [{ device: '末端冷水系统', attr: '管路设计压差' }]),
         ];
 
         var selected = {}; // { serviceId: true }
@@ -2025,15 +2057,26 @@
 
         // 渲染待同步服务列表
         GROUPS.forEach(function (g) {
-          var disabled = !!g.missingAttrs;
+          var disabled = g.missing.length > 0;
           var label = document.createElement('label');
           label.className = 'sync-service-item' + (disabled ? ' is-disabled' : '');
           label.setAttribute('data-gid', g.id);
+
+          var missHtml = '';
+          if (g.missing.length) {
+            missHtml = '<span class="sync-miss-block sync-miss-hard">缺静态属性，需先补齐：' +
+              g.missing.map(function (m) {
+                return '<br>· ' + m.device + ' · ' + m.attr +
+                  '<a class="sync-fix-link" data-dev="' + m.device + '">去补齐 ›</a>';
+              }).join('') +
+              '</span>';
+          }
+
           label.innerHTML =
             '<input type="checkbox" value="' + g.id + '"' + (disabled ? ' disabled aria-disabled="true"' : '') + '>' +
             '<span class="sync-service-main">' +
               '<span class="sync-service-title">' + g.instance + ' / ' + g.type + '预测</span>' +
-              (g.missingAttrs ? '<span class="sync-service-template sync-service-missing">' + g.missingAttrs + '，请先到设备/设备组对象补齐后再同步</span>' : '') +
+              missHtml +
             '</span>';
 
           var checkbox = label.querySelector('input[type="checkbox"]');
@@ -2046,6 +2089,15 @@
           });
 
           container.appendChild(label);
+        });
+
+        // 「去补齐」跳转：定位到对应设备/设备组对象的静态属性维护页（占位）
+        container.addEventListener('click', function (e) {
+          var link = e.target.closest('.sync-fix-link');
+          if (!link) return;
+          e.preventDefault();
+          e.stopPropagation();
+          showToast('跳转到「' + link.getAttribute('data-dev') + '」对象的静态属性维护页（占位，补齐后返回继续同步）');
         });
 
         // 验收21：当前节点下所有「设备实例 / 预测类型」均已有模型服务时的空态

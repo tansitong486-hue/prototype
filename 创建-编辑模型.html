@@ -147,6 +147,35 @@
       background: #FEF2F2;
       color: var(--danger);
     }
+    /* 跨设备静态属性来源分组 */
+    .cross-dev-section { margin-bottom: 16px; }
+    .cross-dev-section:last-child { margin-bottom: 0; }
+    .cross-dev-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 10px;
+      padding: 7px 12px;
+      background: var(--primary-light);
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary-dark);
+    }
+    .cross-dev-head .dev-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--primary);
+      flex-shrink: 0;
+    }
+    .static-fix-link {
+      display: inline-block;
+      margin-top: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--primary);
+      cursor: pointer;
+    }
+    .static-fix-link:hover { text-decoration: underline; }
     .static-validate-tip {
       display: none;
       margin-top: 12px;
@@ -586,6 +615,7 @@
                     <option value="chiller">冷水主机</option>
                     <option value="cooling_tower_approach">冷却塔逼近度预测</option>
                     <option value="terminal_pressure_diff">末端最不利压差预测</option>
+                    <option value="unit_chw_pressure_diff">制冷单元冷冻侧压差预测（跨设备）</option>
                   </select>
                   <p class="field-hint field-hint-annoonly">必选，单选；编辑时不可修改（古典稿「物模型」语义，本页称模型分类）</p>
                 </div>
@@ -671,7 +701,10 @@
                 <tbody>
                   <tr><td>来源口径</td><td>静态属性本质属于设备或设备组对象，本页只读取并展示属性值。</td></tr>
                   <tr><td>创建校验</td><td>当前模型分类涉及的所有静态属性都必须有值；任一静态属性为空、未配置或缺失时，创建不成功，并在本区提示缺失项。</td></tr>
-                  <tr><td>缺省/估算</td><td>设计湿球、冷机额定工况、冷却塔额定风量、板换选型单等允许按需求文档缺省或估算兜底；缺省/估算结果视为有值，但需在模型服务中只读标记。</td></tr>
+                  <tr><td>全部必填</td><td>当前模型分类涉及的<b>所有静态属性一律必填</b>，缺任一即创建/保存不成功，<b>不做缺省或估算兜底</b>，避免缺失情况；设计湿球、冷机额定工况、冷却塔额定风量、板换选型单等同样必填，需在底层设备或设备组对象录入确定值。</td></tr>
+                  <tr><td>跨设备来源</td><td>聚合/管路类模型（如制冷单元压差取主机+板换额定属性）的静态属性来自多个底层设备实例；本区按<b>来源设备实例分组</b>展示，缺失时精确提示"设备实例·属性名"并提供"去补齐"跳转至对应对象维护页。</td></tr>
+                  <tr><td>多实例取值</td><td>训练范围为<b>相同型号实例</b>（一个型号可含多个实例）时，静态属性<b>默认取该型号下任一实例</b>读取，同型号铭牌/设计参数视为一致；独立实例则取所选实例。</td></tr>
+                  <tr><td>v2.3 新增字段</td><td>冷机机型（压缩机类型/调节方式）、冷却塔设计点（设计湿球/进出塔水温）、板换额定四温度等为 v2.3 新增静态属性，均必填；界面仅只读展示属性值，"新增"标识与相关规则统一在本批注说明，不在字段旁常驻标注。</td></tr>
                   <tr><td>编辑边界</td><td>本页不提供静态属性编辑、补录或来源选择；缺失或需修正时，引导用户回到对应设备或设备组对象维护。</td></tr>
                 </tbody>
               </table>
@@ -705,19 +738,19 @@
                   <div class="readonly-value">215 kW</div>
                 </div>
                 <div class="field">
-                  <label class="field-label with-id"><span class="cell-id">S3</span><span>额定冷冻水出水温度</span></label>
-                  <div class="readonly-value">7 ℃ <span style="color:var(--text-secondary);font-size:12px;">（缺省）</span></div>
+                  <label class="field-label with-id"><span class="cell-id">S3</span><span><span class="req">*</span>额定冷冻水出水温度</span></label>
+                  <div class="readonly-value">7 ℃</div>
                 </div>
                 <div class="field">
-                  <label class="field-label with-id"><span class="cell-id">S4</span><span>额定冷却水进水温度</span></label>
-                  <div class="readonly-value">30 ℃ <span style="color:var(--text-secondary);font-size:12px;">（缺省）</span></div>
+                  <label class="field-label with-id"><span class="cell-id">S4</span><span><span class="req">*</span>额定冷却水进水温度</span></label>
+                  <div class="readonly-value">30 ℃</div>
                 </div>
                 <div class="field">
-                  <label class="field-label with-id"><span class="cell-id">S5</span><span>压缩机类型 <span style="color:#1E40AF;font-size:11px;">【v2.3 新增·机型】</span></span></label>
+                  <label class="field-label with-id"><span class="cell-id">S5</span><span><span class="req">*</span>压缩机类型</span></label>
                   <div class="readonly-value">离心式</div>
                 </div>
                 <div class="field">
-                  <label class="field-label with-id"><span class="cell-id">S6</span><span>调节方式 <span style="color:#1E40AF;font-size:11px;">【v2.3 新增·机型】</span></span></label>
+                  <label class="field-label with-id"><span class="cell-id">S6</span><span><span class="req">*</span>调节方式</span></label>
                   <div class="readonly-value">变频</div>
                 </div>
               </div>
@@ -735,11 +768,11 @@
                   <div class="readonly-value">5 ℃</div>
                 </div>
                 <div class="field">
-                  <label class="field-label with-id"><span class="cell-id">S4</span><span>设计湿球温度</span></label>
+                  <label class="field-label with-id"><span class="cell-id">S4</span><span><span class="req">*</span>设计湿球温度</span></label>
                   <div class="readonly-value">28 ℃</div>
                 </div>
                 <div class="field">
-                  <label class="field-label with-id"><span class="cell-id">S5</span><span>额定风量</span></label>
+                  <label class="field-label with-id"><span class="cell-id">S5</span><span><span class="req">*</span>额定风量</span></label>
                   <div class="readonly-value">180000 m³/h</div>
                 </div>
               </div>
@@ -755,6 +788,44 @@
                 <div class="field">
                   <label class="field-label with-id"><span class="cell-id">S3</span><span><span class="req">*</span>设计总流量</span></label>
                   <div class="readonly-value">980 m³/h</div>
+                </div>
+              </div>
+              <div class="hidden" id="staticUnit">
+                <div class="cross-dev-section">
+                  <div class="cross-dev-head"><span class="dev-dot"></span>来源设备：1号冷水主机</div>
+                  <div class="form-grid">
+                    <div class="field" data-device="1号冷水主机">
+                      <label class="field-label with-id"><span class="cell-id">S1</span><span><span class="req">*</span>额定冷冻水压降</span></label>
+                      <div class="readonly-value">0.05 bar</div>
+                    </div>
+                    <div class="field" data-device="1号冷水主机">
+                      <label class="field-label with-id"><span class="cell-id">S2</span><span><span class="req">*</span>额定冷冻水流量</span></label>
+                      <div class="readonly-value">220 m³/h</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="cross-dev-section">
+                  <div class="cross-dev-head"><span class="dev-dot"></span>来源设备：1号板式换热器</div>
+                  <div class="form-grid">
+                    <div class="field" data-device="1号板式换热器">
+                      <label class="field-label with-id"><span class="cell-id">S3</span><span><span class="req">*</span>额定冷冻水压降</span></label>
+                      <div class="readonly-value">0.08 bar</div>
+                    </div>
+                    <div class="field" data-device="1号板式换热器">
+                      <label class="field-label with-id"><span class="cell-id">S4</span><span><span class="req">*</span>额定冷冻水流量</span></label>
+                      <div class="readonly-value empty">未配置</div>
+                      <a class="static-fix-link" data-dev="1号板式换热器">去补齐 ›</a>
+                    </div>
+                  </div>
+                </div>
+                <div class="cross-dev-section">
+                  <div class="cross-dev-head"><span class="dev-dot"></span>本对象：制冷单元</div>
+                  <div class="form-grid">
+                    <div class="field" data-device="制冷单元">
+                      <label class="field-label with-id"><span class="cell-id">S5</span><span><span class="req">*</span>额定总流量</span></label>
+                      <div class="readonly-value">980 m³/h</div>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div class="static-validate-tip" id="staticValidateTip"></div>
@@ -1676,7 +1747,7 @@
 
       function getActiveStaticGroup() {
         return Array.prototype.find.call(
-          document.querySelectorAll('#staticPump, #staticChiller, #staticCoolingTower, #staticTerminalPressure'),
+          document.querySelectorAll('#staticPump, #staticChiller, #staticCoolingTower, #staticTerminalPressure, #staticUnit'),
           function (el) { return !el.classList.contains('hidden'); }
         );
       }
@@ -1704,7 +1775,9 @@
           if (!valueEl) return;
           if (isMissingStaticValue(valueEl.textContent)) {
             field.classList.add('is-invalid');
-            missing.push(getStaticFieldName(field));
+            var name = getStaticFieldName(field);
+            var dev = field.getAttribute('data-device');
+            missing.push(dev ? (dev + ' · ' + name) : name);
           }
         });
         if (!missing.length) return true;
@@ -1725,20 +1798,31 @@
         var chiller = document.getElementById('staticChiller');
         var coolingTower = document.getElementById('staticCoolingTower');
         var terminalPressure = document.getElementById('staticTerminalPressure');
-        if (!tm || !pump || !chiller || !coolingTower || !terminalPressure) return;
+        var unit = document.getElementById('staticUnit');
+        if (!tm || !pump || !chiller || !coolingTower || !terminalPressure || !unit) return;
         var isChiller = tm.value === 'chiller';
         var isCoolingTower = tm.value === 'cooling_tower_approach';
         var isTerminalPressure = tm.value === 'terminal_pressure_diff';
+        var isUnit = tm.value === 'unit_chw_pressure_diff';
         chiller.classList.toggle('hidden', !isChiller);
         coolingTower.classList.toggle('hidden', !isCoolingTower);
         terminalPressure.classList.toggle('hidden', !isTerminalPressure);
-        pump.classList.toggle('hidden', isChiller || isCoolingTower || isTerminalPressure);
+        unit.classList.toggle('hidden', !isUnit);
+        pump.classList.toggle('hidden', isChiller || isCoolingTower || isTerminalPressure || isUnit);
         clearStaticValidation();
       }
       document.getElementById('thingModel').addEventListener('change', function () {
         syncThingModelAlgoGate();
         syncStaticAttrs();
         syncModelExample();
+      });
+
+      // 跨设备静态属性「去补齐」：跳转到对应底层设备对象的静态属性维护页（占位）
+      document.addEventListener('click', function (e) {
+        var link = e.target.closest('.static-fix-link');
+        if (!link) return;
+        e.preventDefault();
+        showToast('跳转到「' + link.getAttribute('data-dev') + '」对象的静态属性维护页（占位，补齐后返回继续创建）');
       });
 
       syncThingModelAlgoGate();
