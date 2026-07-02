@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>多工况探索 - 策略制定</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-light: #EEF4FF;
+      --primary-dark: #17358A;
+      --success: #16A34A;
+      --success-light: #F0FDF4;
+      --warning: #D97706;
+      --warning-light: #FFF7ED;
+      --danger: #DC2626;
+      --danger-light: #FEF2F2;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --sidebar-bg: #071B2E;
+      --header-bg: #071B2E;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { text-decoration: none; color: inherit; }
+    button { border: none; background: none; font: inherit; cursor: pointer; }
+
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main { flex: 1; min-width: 0; overflow-y: auto; background: var(--bg-body); }
+
+    /* ---------- 面包屑 ---------- */
+    .breadcrumb {
+      padding: 10px 24px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-light);
+    }
+    .breadcrumb a { color: var(--text-secondary); }
+    .breadcrumb a:hover { color: var(--primary); }
+    .breadcrumb .sep { margin: 0 6px; color: var(--text-hint); }
+    .breadcrumb .current { color: var(--text-primary); }
+
+    .content-body { padding: 16px 24px 60px; max-width: 1320px; }
+
+    /* ---------- 页面标题 ---------- */
+    .page-title-row { margin-bottom: 16px; }
+    .page-title {
+      font-size: 20px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .strategy-name-input {
+      font-size: 15px;
+      font-weight: 600;
+      padding: 7px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      min-width: 260px;
+      outline: none;
+      background: #fff;
+      color: var(--primary-dark);
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .strategy-name-input:focus-visible {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.12);
+    }
+    .strategy-name-input::placeholder { color: var(--text-hint); font-weight: 400; }
+    .strategy-name-input[disabled] {
+      background: #F8FAFC;
+      color: var(--text-hint);
+      border-color: var(--border-light);
+      cursor: not-allowed;
+    }
+
+    /* ---------- 只读查看提示条 ---------- */
+    .view-banner {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 16px;
+      padding: 11px 16px;
+      border-radius: var(--radius);
+      background: var(--primary-light);
+      border: 1px solid rgba(30, 64, 175, .22);
+      color: var(--primary-dark);
+      font-size: 13px;
+    }
+    .view-banner .view-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px 10px;
+      border-radius: 999px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* ---------- 分区卡片 ---------- */
+    .section-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .section-head {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-light);
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .section-head-main {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .step-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .section-title { font-size: 15px; font-weight: 700; }
+    .section-subtitle { font-size: 12px; color: var(--text-hint); font-weight: 400; margin-left: 4px; }
+    .section-body { padding: 18px; }
+
+    /* ---------- 开机组合勾选 ---------- */
+    .device-combo-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .device-group {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      background: #FBFCFE;
+    }
+    .device-group-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .device-checks { display: flex; flex-direction: column; gap: 8px; }
+    .device-check { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
+    .device-check input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--primary); cursor: pointer; }
+
+    .form-row-2col {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px 24px;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .field-label { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .field-label .required { color: var(--danger); margin-left: 2px; }
+
+    .field-control, .field-select {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      background: #fff;
+      outline: none;
+      width: 100%;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .field-select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%2394A3B8' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 32px;
+    }
+    .field-control:focus-visible, .field-select:focus-visible {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.12);
+    }
+    .field-control[disabled], .field-select[disabled] {
+      background: #F8FAFC;
+      color: var(--text-hint);
+      cursor: not-allowed;
+    }
+
+    /* ---------- 表格通用 ---------- */
+    .table-wrap { overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; min-width: 720px; }
+    .data-table.baseline-table { min-width: 980px; }
+    .data-table.schedule-table { min-width: 1160px; }
+    .data-table thead th {
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .data-table tbody td {
+      padding: 9px 12px;
+      font-size: 12.5px;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+    }
+    .data-table tbody tr:hover { background: #FAFCFF; }
+    .schedule-row.batch-start td { border-top: 2px solid var(--border); }
+
+    .table-input {
+      width: 76px;
+      padding: 6px 8px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12.5px;
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .table-input:focus-visible {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.1);
+    }
+    .unit-cell { display: inline-flex; align-items: center; gap: 6px; }
+    .unit-suffix { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+
+    .field-hint { font-size: 11.5px; color: var(--text-hint); margin-top: 4px; line-height: 1.5; }
+    /* 校验/规则类说明：仅批注模式展示；原型模式界面保持干净 */
+    body:not(.annotation-mode) .field-hint.field-hint-annoonly { display: none !important; }
+
+    .type-cell-name { font-weight: 600; white-space: nowrap; }
+    .apply-scope { font-size: 11.5px; color: var(--text-hint); margin-top: 3px; line-height: 1.5; }
+
+    .direction-tag { font-size: 12.5px; font-weight: 700; white-space: nowrap; }
+    .direction-tag.up::before { content: '↑ '; }
+    .direction-tag.down::before { content: '↓ '; }
+    .direction-tag.up { color: #16A34A; }
+    .direction-tag.down { color: #D97706; }
+
+    .status-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #F1F5F9;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+    .status-tag.pending { background: #F1F5F9; color: var(--text-hint); }
+    .status-tag.pass { background: var(--success-light); color: var(--success); }
+    .status-tag.danger { background: var(--danger-light); color: var(--danger); }
+
+    input[type="checkbox"] { accent-color: var(--primary); cursor: pointer; }
+    input[disabled], select[disabled], .table-input[disabled] {
+      background: #F8FAFC !important;
+      color: var(--text-hint) !important;
+      cursor: not-allowed !important;
+      opacity: .8;
+    }
+    input[type="checkbox"][disabled] { cursor: not-allowed; opacity: .55; }
+
+    /* ---------- 生成排程操作行 ---------- */
+    .section-actions-row { display: flex; align-items: center; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+    .hint-inline { font-size: 12px; color: var(--text-hint); }
+
+    /* ---------- 说明卡 ---------- */
+    .note-block {
+      background: var(--bg-body);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 14px;
+    }
+    .note-block b { color: var(--text-primary); }
+
+    /* ---------- 排程清单 ---------- */
+    .schedule-summary {
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      font-size: 13px;
+      margin-bottom: 12px;
+      line-height: 1.6;
+    }
+    .table-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .action-bar { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 0 4px; align-items: center; }
+    .empty-state {
+      padding: 36px 0;
+      text-align: center;
+      color: var(--text-hint);
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    /* ---------- 按钮 ---------- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 36px;
+      padding: 0 20px;
+      border-radius: var(--radius);
+      transition: all var(--transition);
+      white-space: nowrap;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .btn-primary { color: #fff; background: var(--primary); }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-primary[disabled] {
+      background: #CBD5E1 !important;
+      color: #fff !important;
+      cursor: not-allowed !important;
+      opacity: 1;
+    }
+    .btn-ghost { border: 1px solid var(--border); color: var(--text-secondary); background: #fff; }
+    .btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-ghost[disabled] { color: var(--text-hint) !important; border-color: var(--border-light) !important; cursor: not-allowed !important; }
+    .btn-danger { color: var(--danger); border: 1px solid #FECACA; background: #FFF7F7; }
+    .btn-danger:hover { background: #FFF1F1; border-color: #FCA5A5; }
+    .btn-sm { height: 28px; padding: 0 12px; font-size: 12px; }
+    .btn[disabled] { pointer-events: none; }
+
+    /* ---------- toast ---------- */
+    .toast {
+      position: fixed; right: 24px; bottom: 24px;
+      min-width: 200px; max-width: 340px;
+      padding: 12px 14px; border-radius: 10px;
+      background: rgba(15, 23, 42, 0.92); color: #fff;
+      font-size: 12.5px; line-height: 1.6;
+      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.28);
+      opacity: 0; transform: translateY(12px); pointer-events: none;
+      transition: all .25s ease; z-index: 1200;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 1100px) {
+      .device-combo-grid { grid-template-columns: repeat(2, 1fr); }
+      .form-row-2col { grid-template-columns: 1fr; }
+    }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <div class="main">
+        <div class="anno-filter-bar" id="annoFilterBar">
+          <span class="anno-filter-label">批注版本：</span>
+          <div class="anno-filter-tags" id="annoFilterTags"></div>
+        </div>
+
+        <div class="breadcrumb">
+          <a href="多工况探索-列表.html">多工况探索</a>
+          <span class="sep">/</span>
+          <span class="current">策略制定</span>
+        </div>
+
+        <div class="content-body">
+
+          <div class="anno anno-version-header" data-version="v2.4">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v2.4</p>
+              <p><b>更新日期：</b>2026-07-02</p>
+              <p><b>变更概述：</b>「多工况探索」为 v2.4 新增独立功能模块（主动激励 · 多工况探索），本页为该模块阶段一"策略制定"工作台的首个版本。评审修订：基准线与排程按设备类型统一设定、去除范围二次确认与冻结环节、历史回溯改为生成时自动排除。</p>
+              <p><b>本页说明：</b>本页面向实施人员，用于离线编排一次探索策略：① 确定开机组合与绑定 → ② 按设备类型手动录入基准线 → ③ 配置补偿步长生成排程（生成时自动排除历史已覆盖工况点）→ ④ 审核勾选排程清单并保存草稿。全程不下发、不动设备，只产出一份排程表；排程生成并保存后可跳转执行监控页发起执行。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-req" data-version="v2.4">
+            <span class="anno-tag">需求说明</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>多工况探索 — 策略制定（阶段一）</p>
+              <p>「多工况探索」是 v2.4 新增的独立功能模块，目标是在受控、安全前提下主动驱动冷站走到被动运行走不到的稀缺工况，为模型训练补充样本。模块内分三阶段：<b>策略制定</b>（本页，离线编排，不下发不动设备）→<b>执行</b>（按已生成并保存的排程连续下发 + 在线判稳归档）→<b>验证</b>（训练完成后对比预测值与实测值，不入库）。策略归属创建时选定的具体系统实例（本页演示：3#数据中心水冷冷水系统），本页只读展示。</p>
+              <p><b>本页覆盖：</b>确定开机组合与绑定安全边界/仿真实例、按设备类型（物模型）手动录入基准线并做边界校验、配置补偿步长生成排程（生成时按历史回溯自动排除已覆盖点）、排程清单审核勾选与保存草稿。</p>
+              <p><b>本期不覆盖：</b>设备开关机 / 加减机探索；基准线自动求解；执行下发与在线判稳（见执行监控页）；验证对比展示（见验证对比页）。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-state" data-version="v2.4">
+            <span class="anno-tag">状态说明</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source">产品推断</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>整页状态（策略制定工作台）</p>
+              <ul>
+                <li><b>新建态（默认，无 URL 参数）：</b>① 开机组合按常见组合默认勾选；② 基准值留空待录入；④ 排程清单区展示"尚未生成排程"空态；"生成排程"按钮置灰（门控条件：②全部行基准值通过边界校验）。</li>
+                <li><b>已生成态：</b>② 全部行基准值录入且边界校验通过后，"生成排程"按钮可点击；点击后系统自动完成历史回溯排除，④ 排程清单区展开展示排程结果（历史已覆盖点不出现在清单中）。可点"保存草稿"保存，草稿可随时回来继续编辑。</li>
+                <li><b>只读查看态（本页演示：URL 加 <code>?mode=view</code>）：</b>顶部出现"当前为只读查看模式"提示条；① ② ③ ④ 全部输入控件置灰禁用；④ 按钮区仅保留"发起执行"按钮，跳转执行监控页。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="anno anno-ux" data-version="v2.4">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source">产品推断</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>整页框架 — 面包屑与标题</p>
+              <ul>
+                <li><b>入口：</b>「多工况探索」列表页点击"新建探索策略"确认后进入本页新建态；点击某条草稿的"制定"同样进入本页（继续编辑）；点击列表页"查看排程（只读）"以 <code>?mode=view</code> 进入本页只读查看态。</li>
+                <li><b>面包屑：</b>点击"多工况探索"返回列表页 <code>多工况探索-列表.html</code>。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="view-banner" id="viewBanner">
+            <span class="view-badge">只读</span>
+            <span id="viewBannerText">当前为只读查看模式</span>
+          </div>
+
+          <div class="page-title-row">
+            <div class="page-title">
+              策略制定 -
+              <input type="text" class="strategy-name-input" id="strategyNameInput" placeholder="请输入策略名称，如「冷冻泵变频探索-2026Q3」">
+            </div>
+          </div>
+
+          <div class="anno anno-field" data-version="v2.4">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source">产品推断</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>页面标题 — 策略名称</p>
+              <table class="anno-table">
+                <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>校验规则</th><th>默认值</th><th>备注</th></tr></thead>
+                <tbody>
+                  <tr><td>策略名称</td><td>文本输入（内嵌于标题）</td><td>是</td><td>非空；建议体现探索对象 + 时间，便于列表检索</td><td>新建为空，占位"请输入策略名称，如「冷冻泵变频探索-2026Q3」"</td><td>草稿态可修改，发起执行后随排程一并锁定（来源：产品推断）；本页 <code>?mode=view</code> 演示态展示为只读"冷冻泵变频探索-2026Q3"，对应列表页同名策略记录</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- ============ ① 开机组合与绑定 ============ -->
+          <section class="section-card" id="sectionCombo">
+            <div class="section-head">
+              <div class="section-head-main">
+                <span class="step-num">1</span>
+                <span class="section-title">开机组合与绑定</span>
+                <span class="section-subtitle">锁定当前开机设备，只探模拟量，不探开关机</span>
+              </div>
+            </div>
+            <div class="section-body">
+              <div class="form-row-2col" style="margin-bottom:18px;">
+                <div class="form-group">
+                  <label class="field-label">所属系统实例</label>
+                  <input type="text" class="field-control" id="systemInstanceInput" value="3#数据中心水冷冷水系统" disabled>
+                  <p class="field-hint">创建策略时已选定，此处只读展示，不可修改</p>
+                </div>
+              </div>
+              <div class="device-combo-grid">
+                <div class="device-group">
+                  <div class="device-group-title">冷水主机</div>
+                  <div class="device-checks">
+                    <label class="device-check"><input type="checkbox" checked data-device="1号冷水主机" data-type="chiller">1号冷水主机</label>
+                    <label class="device-check"><input type="checkbox" checked data-device="2号冷水主机" data-type="chiller">2号冷水主机</label>
+                    <label class="device-check"><input type="checkbox" data-device="3号冷水主机" data-type="chiller">3号冷水主机</label>
+                  </div>
+                </div>
+                <div class="device-group">
+                  <div class="device-group-title">冷冻泵</div>
+                  <div class="device-checks">
+                    <label class="device-check"><input type="checkbox" checked data-device="1号冷冻泵" data-type="chwp">1号冷冻泵</label>
+                    <label class="device-check"><input type="checkbox" checked data-device="2号冷冻泵" data-type="chwp">2号冷冻泵</label>
+                    <label class="device-check"><input type="checkbox" checked data-device="3号冷冻泵" data-type="chwp">3号冷冻泵</label>
+                    <label class="device-check"><input type="checkbox" data-device="4号冷冻泵" data-type="chwp">4号冷冻泵</label>
+                  </div>
+                </div>
+                <div class="device-group">
+                  <div class="device-group-title">冷却泵</div>
+                  <div class="device-checks">
+                    <label class="device-check"><input type="checkbox" checked data-device="1号冷却泵" data-type="cwp">1号冷却泵</label>
+                    <label class="device-check"><input type="checkbox" checked data-device="2号冷却泵" data-type="cwp">2号冷却泵</label>
+                    <label class="device-check"><input type="checkbox" data-device="3号冷却泵" data-type="cwp">3号冷却泵</label>
+                  </div>
+                </div>
+                <div class="device-group">
+                  <div class="device-group-title">冷却塔</div>
+                  <div class="device-checks">
+                    <label class="device-check"><input type="checkbox" checked data-device="1号冷却塔" data-type="ct">1号冷却塔</label>
+                    <label class="device-check"><input type="checkbox" checked data-device="2号冷却塔" data-type="ct">2号冷却塔</label>
+                    <label class="device-check"><input type="checkbox" data-device="3号冷却塔" data-type="ct">3号冷却塔</label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-row-2col">
+                <div class="form-group">
+                  <label class="field-label">绑定安全边界<span class="required">*</span></label>
+                  <select class="field-select" id="boundarySelect">
+                    <option value="">请选择</option>
+                    <option>安全策略1</option>
+                    <option selected>正常策略2</option>
+                    <option>正常策略3</option>
+                    <option>正常策略4</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="field-label">绑定实时仿真实例<span class="required">*</span></label>
+                  <select class="field-select" id="simSelect">
+                    <option value="">请选择</option>
+                    <option>1号集成冷站仿真</option>
+                    <option>2号集成冷站仿真</option>
+                    <option>3号集成冷站仿真</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="anno anno-field" data-version="v2.4">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>① 开机组合与绑定</p>
+              <table class="anno-table">
+                <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>校验规则</th><th>默认值</th><th>备注</th></tr></thead>
+                <tbody>
+                  <tr><td>所属系统实例</td><td>只读文本</td><td>—</td><td>创建策略时已选定，本页不可修改</td><td>本页演示："3#数据中心水冷冷水系统"</td><td>策略归属具体系统实例；开机组合、基准线、排程均在该系统实例范围内取数与下发</td></tr>
+                  <tr><td>设备开机组合（冷水主机 / 冷冻泵 / 冷却泵 / 冷却塔）</td><td>Checkbox 多选</td><td>是（至少 1 台）</td><td>至少勾选 1 台设备方可继续录入基准线</td><td>按当前实际开机设备预勾选（本页演示：1/2号冷水主机、1/2/3号冷冻泵、1/2号冷却泵、1/2号冷却塔，共 9 台）</td><td>开机组合快照仍是实例级，保存后写入策略快照 <code>device_combo</code>，执行期用于一致性校验（漂移即中止，见需求 8.5）</td></tr>
+                  <tr><td>绑定安全边界</td><td>下拉单选</td><td>是</td><td>需为已生成的安全边界策略；仅列出与本策略系统类型匹配的边界</td><td>空（本页演示默认"正常策略2"）</td><td>决定②基准线边界校验与探索范围默认值的取值来源，选项对齐「安全边界」列表页已有名称</td></tr>
+                  <tr><td>绑定实时仿真实例</td><td>下拉单选</td><td>是</td><td>需为已建模完成的仿真实例</td><td>空（本页演示默认"1号集成冷站仿真"）</td><td>执行期每步判稳后查询该实例最新结果归档；验证期查询同一实例做预测 vs 实测对比</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="anno anno-ux" data-version="v2.4">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>① 开机组合与绑定</p>
+              <p>开机组合将作为后续基准线、排程、执行一致性校验的锚点：勾选的设备类型决定②基准线录入表格覆盖的类型行，勾选的具体实例决定各类型行的"应用实例"范围；排程保存后该组合被固化为快照，执行前会校验"当前实际开机组合 == 策略快照"，不一致则拦截执行（见执行监控页）。</p>
+              <ul>
+                <li>未勾选任何设备时，②基准线表格无对应行，无法完成后续步骤（本页演示默认已按常见组合预勾选 9 台设备）。</li>
+                <li>"绑定安全边界""绑定实时仿真实例"均为必选下拉；草稿态下可随时重新勾选设备或重新绑定，发起执行后随排程一并锁定（来源：产品推断）。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="anno anno-edge" data-version="v2.4">
+            <span class="anno-tag">边界与异常</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>① 开机组合与绑定</p>
+              <ul>
+                <li>开机组合仅允许勾选运行中设备的模拟量控制点，不涉及开关机 / 加减机探索（需求 2.3 原则 1：缩范围）。</li>
+                <li>草稿态下可随时调整开机组合、重新绑定安全边界 / 仿真实例，草稿可反复编辑；发起执行后排程锁定，组合与绑定不可再修改（后半句来源：产品推断）。</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- ============ ② 基准线录入 ============ -->
+          <section class="section-card" id="sectionBaseline">
+            <div class="section-head">
+              <div class="section-head-main">
+                <span class="step-num">2</span>
+                <span class="section-title">基准线录入</span>
+                <span class="section-subtitle">按设备类型（物模型）统一设定安全基准值，同类型开机实例同时下发相同设定值</span>
+              </div>
+            </div>
+            <div class="section-body">
+              <div class="table-wrap">
+                <table class="data-table baseline-table">
+                  <thead>
+                    <tr>
+                      <th>设备类型</th>
+                      <th>控制变量</th>
+                      <th>基准值</th>
+                      <th>边界校验</th>
+                      <th>探索方向</th>
+                      <th>探索范围下限</th>
+                      <th>探索范围上限</th>
+                    </tr>
+                  </thead>
+                  <tbody id="baselineTbody">
+                    <tr class="baseline-row" data-device-type="chwp" data-type-name="冷冻泵" data-bound-min="30.00" data-bound-max="38.00">
+                      <td>
+                        <div class="type-cell-name">冷冻泵</div>
+                        <div class="apply-scope" data-scope-type="chwp">应用于已开机的 1号、2号、3号</div>
+                      </td>
+                      <td>频率</td>
+                      <td>
+                        <div class="unit-cell">
+                          <input type="number" class="table-input baseline-input" step="0.01" placeholder="保留2位小数">
+                          <span class="unit-suffix">Hz</span>
+                        </div>
+                        <p class="field-hint field-hint-annoonly">须落在安全边界（硬∩软）内，保留 2 位小数，四舍五入；按设备类型统一设定，同类型所有开机实例同时下发同一频率</p>
+                      </td>
+                      <td><span class="status-tag pending">待录入</span></td>
+                      <td><span class="direction-tag up">往上</span></td>
+                      <td><input type="number" class="table-input range-min-input" step="0.01" value="30.00"></td>
+                      <td><input type="number" class="table-input range-max-input" step="0.01" value="38.00"></td>
+                    </tr>
+                    <tr class="baseline-row" data-device-type="cwp" data-type-name="冷却泵" data-bound-min="32.00" data-bound-max="38.00">
+                      <td>
+                        <div class="type-cell-name">冷却泵</div>
+                        <div class="apply-scope" data-scope-type="cwp">应用于已开机的 1号、2号</div>
+                      </td>
+                      <td>频率</td>
+                      <td>
+                        <div class="unit-cell">
+                          <input type="number" class="table-input baseline-input" step="0.01" placeholder="保留2位小数">
+                          <span class="unit-suffix">Hz</span>
+                        </div>
+                      </td>
+                      <td><span class="status-tag pending">待录入</span></td>
+                      <td><span class="direction-tag up">往上</span></td>
+                      <td><input type="number" class="table-input range-min-input" step="0.01" value="32.00"></td>
+                      <td><input type="number" class="table-input range-max-input" step="0.01" value="38.00"></td>
+                    </tr>
+                    <tr class="baseline-row" data-device-type="ct" data-type-name="冷却塔" data-bound-min="28.00" data-bound-max="34.00">
+                      <td>
+                        <div class="type-cell-name">冷却塔</div>
+                        <div class="apply-scope" data-scope-type="ct">应用于已开机的 1号、2号</div>
+                      </td>
+                      <td>风机频率</td>
+                      <td>
+                        <div class="unit-cell">
+                          <input type="number" class="table-input baseline-input" step="0.01" placeholder="保留2位小数">
+                          <span class="unit-suffix">Hz</span>
+                        </div>
+                        <p class="field-hint field-hint-annoonly">须落在安全边界（硬∩软）内，保留 2 位小数，四舍五入；往上探在冷凝侧温差保护场景下有例外（见需求六章），本页仅展示方向</p>
+                      </td>
+                      <td><span class="status-tag pending">待录入</span></td>
+                      <td><span class="direction-tag up">往上</span></td>
+                      <td><input type="number" class="table-input range-min-input" step="0.01" value="28.00"></td>
+                      <td><input type="number" class="table-input range-max-input" step="0.01" value="34.00"></td>
+                    </tr>
+                    <tr class="baseline-row" data-device-type="chiller" data-type-name="冷水主机" data-bound-min="7.50" data-bound-max="9.00">
+                      <td>
+                        <div class="type-cell-name">冷水主机</div>
+                        <div class="apply-scope" data-scope-type="chiller">应用于已开机的 1号、2号</div>
+                      </td>
+                      <td>出水温度设定</td>
+                      <td>
+                        <div class="unit-cell">
+                          <input type="number" class="table-input baseline-input" step="0.01" placeholder="保留2位小数">
+                          <span class="unit-suffix">℃</span>
+                        </div>
+                        <p class="field-hint field-hint-annoonly">须落在安全边界（硬∩软）内，保留 2 位小数，四舍五入</p>
+                      </td>
+                      <td><span class="status-tag pending">待录入</span></td>
+                      <td><span class="direction-tag down">往下</span></td>
+                      <td><input type="number" class="table-input range-min-input" step="0.01" value="7.50"></td>
+                      <td><input type="number" class="table-input range-max-input" step="0.01" value="9.00"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <div class="anno anno-field" data-version="v2.4">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>② 基准线录入（按设备类型统一设定，不按设备实例逐台设置；来源：需求文档 7.3 口径 + 评审确认）</p>
+              <table class="anno-table">
+                <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>校验规则</th><th>默认值</th><th>备注</th></tr></thead>
+                <tbody>
+                  <tr><td>设备类型（含应用实例说明）</td><td>只读文本</td><td>—</td><td>—</td><td>按①勾选设备涉及的设备类型（物模型）生成一行，固定 4 类：冷冻泵 / 冷却泵 / 冷却塔 / 冷水主机</td><td>类型名下方注明应用范围（如"冷冻泵 · 应用于已开机的 1号、2号、3号"），随①区勾选实时联动刷新</td></tr>
+                  <tr><td>控制变量</td><td>只读文本</td><td>—</td><td>—</td><td>按探索对象口径表（需求六）匹配</td><td>冷水主机 → 出水温度设定；冷冻泵/冷却泵 → 频率；冷却塔 → 风机频率</td></tr>
+                  <tr><td>基准值</td><td>数字输入</td><td>是</td><td>须落在安全边界（硬∩软）内，保留 2 位小数（四舍五入）；越界不可生成排程</td><td>空，占位提示"保留2位小数"</td><td>按设备类型统一设定，同类型所有开机实例同时下发相同设定值（例：开机了 1号、2号冷冻泵，则对两台同时下发同一频率）；用户手动输入，不做自动求解；探索起点（泵/塔为频率下侧起点，主机为出水温度上侧起点，见需求 7.2）</td></tr>
+                  <tr><td>边界校验状态</td><td>只读状态标签</td><td>—</td><td>基准值为空显示"待录入"；落在边界内显示"通过"；超出显示"越界"</td><td>待录入</td><td>输入即实时校验，无需额外点击"校验"；任意一行"越界"或"待录入"时③"生成排程"按钮置灰</td></tr>
+                  <tr><td>探索方向</td><td>只读标签</td><td>—</td><td>—</td><td>按设备类型固定（需求六）：泵/塔往上，主机出水温度往下</td><td>冷却塔往上探在冷凝侧温差保护场景下有例外，属执行期监测（需求 8.5），本页仅展示方向</td></tr>
+                  <tr><td>探索范围下限 / 上限</td><td>数字输入</td><td>是</td><td>默认 = 安全边界侧限值；可编辑，仍须落在安全边界内；无需二次确认</td><td>取绑定安全边界对应变量的软边界侧限值</td><td>往上方向：下限=基准值、上限=边界上限；往下方向：下限=边界下限、上限=基准值（需求 7.2）；本页默认值为简化演示，不随基准值实时联动重算，实际以后端为准</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="anno anno-data" data-version="v2.4">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>② 基准线录入</p>
+              <ul>
+                <li><b>行来源：</b>表格行 = ①中已勾选开机设备涉及的设备类型（物模型）× 其对应控制变量（按需求六口径表匹配），按类型一行，不按设备实例逐台生成行；每行"应用实例"说明随①区勾选联动刷新。</li>
+                <li><b>边界校验实时联动：</b>基准值输入后立即与该行安全边界比对，实时刷新"边界校验状态"标签，无需点击额外的"校验"按钮。</li>
+                <li><b>与③④的联动：</b>本表所有行基准值均通过边界校验，才会解锁③"生成排程"按钮（探索范围默认取安全边界、可编辑，无需二次确认）；点击生成排程后 ④ 区域展开展示排程结果。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="anno anno-edge" data-version="v2.4">
+            <span class="anno-tag">边界与异常</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>② 基准线录入</p>
+              <ul>
+                <li>基准值越界（超出安全边界硬∩软范围）：该行边界校验状态标红显示"越界"，基准值越界不可生成排程，直至改回边界内数值。</li>
+                <li>探索范围下限 / 上限被编辑为超出安全边界侧限值：需求文档要求"仍须在边界内"，本页以人工审核约束为准，评审时建议确认是否需要前端强拦截。</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- ============ ③ 补偿步长与生成排程 ============ -->
+          <section class="section-card" id="sectionCompensation">
+            <div class="section-head">
+              <div class="section-head-main">
+                <span class="step-num">3</span>
+                <span class="section-title">补偿步长与生成排程</span>
+                <span class="section-subtitle">按设备类型配置默认步长，逐级生成排程</span>
+              </div>
+            </div>
+            <div class="section-body">
+              <div class="table-wrap">
+                <table class="data-table" style="min-width:520px;">
+                  <thead>
+                    <tr><th>设备类型</th><th>控制量</th><th>默认补偿步长</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>冷冻泵 / 二次泵</td>
+                      <td>频率</td>
+                      <td><div class="unit-cell"><input type="number" class="table-input" id="stepChwp" step="0.1" value="2.00"><span class="unit-suffix">Hz</span></div></td>
+                    </tr>
+                    <tr>
+                      <td>冷却泵</td>
+                      <td>频率</td>
+                      <td><div class="unit-cell"><input type="number" class="table-input" id="stepCwp" step="0.1" value="2.00"><span class="unit-suffix">Hz</span></div></td>
+                    </tr>
+                    <tr>
+                      <td>冷却塔</td>
+                      <td>风机频率</td>
+                      <td><div class="unit-cell"><input type="number" class="table-input" id="stepCt" step="0.1" value="2.00"><span class="unit-suffix">Hz</span></div></td>
+                    </tr>
+                    <tr>
+                      <td>冷水主机</td>
+                      <td>出水温度设定</td>
+                      <td><div class="unit-cell"><input type="number" class="table-input" id="stepChiller" step="0.1" value="0.50"><span class="unit-suffix">℃</span></div></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="section-actions-row">
+                <button class="btn btn-primary" id="btnGenerateSchedule" disabled>生成排程</button>
+                <span class="hint-inline" id="generateHint">请先在②完成全部行的基准值录入且边界校验通过</span>
+              </div>
+            </div>
+          </section>
+
+          <div class="anno anno-field" data-version="v2.4">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>③ 补偿步长与生成排程</p>
+              <table class="anno-table">
+                <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>校验规则</th><th>默认值</th><th>备注</th></tr></thead>
+                <tbody>
+                  <tr><td>默认补偿步长（冷冻泵/二次泵、冷却泵、冷却塔、冷水主机 4 行）</td><td>数字输入，按设备类型</td><td>是</td><td>须为正数；生成排程前可调整</td><td>冷冻泵/二次泵 2Hz；冷却泵 2Hz；冷却塔 2Hz；冷水主机 0.5℃</td><td>补偿步长按设备类型配置，不要求逐台设备单独设置；同类型下所有被探变量共用该步长（需求 7.3）</td></tr>
+                </tbody>
+              </table>
+              <p><b>生成排程按钮：</b>②全部行完成基准值录入且边界校验通过前置灰不可点击；满足条件后点击将自动完成历史回溯排除并展开 ④ 排程清单区域。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-ux" data-version="v2.4">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>③ 补偿步长与生成排程</p>
+              <ul>
+                <li><b>置灰条件：</b>②基准线表格中任意一行未完成基准值录入 / 边界校验未通过，"生成排程"按钮均保持置灰，右侧提示文案说明原因。</li>
+                <li><b>点击后：</b>系统从各类型行基准值按对应步长，在探索范围内逐级生成工况点（往上方向递增、往下方向递减），并<b>自动完成历史回溯排除</b>——被历史覆盖（近 90 天邻域窗口内稳态样本 n≥20）的工况点不出现在清单里，仅在④汇总条显示"已自动排除 N 个历史已覆盖工况点"；随后展开 ④ 排程清单。草稿态下允许反复调整①②③后重新点击生成，覆盖刷新排程（本页 Demo 展示同一份预置排程结果）。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="anno anno-data" data-version="v2.4">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>④ 排程清单 — 历史回溯自动排除规则（生成排程时后台自动执行，界面不常显）</p>
+              <ul>
+                <li><b>取数：</b>对每个排程点，查被探变量对应测点近 T = 90 天历史数据（项目级可配）。</li>
+                <li><b>邻域窗口：</b>以排程点目标值 v 为中心，取 v ± 半个补偿步长为邻域窗口（如步长 2Hz、目标 34Hz → 窗口 [33,35)，各点窗口互不重叠、无缝覆盖）。</li>
+                <li><b>稳态过滤：</b>窗口内仅统计稳态样本（复用三层预处理稳态筛选口径）。</li>
+                <li><b>判定与排除：</b>窗口内稳态样本数 n ≥ N_hist = 20 → 判"已覆盖"，该工况点在生成排程时被自动排除，<b>不出现在④排程清单中</b>，仅计入汇总条"已自动排除 N 个历史已覆盖工况点"；n &lt; 20 → 判"空白/稀疏"，保留进清单。</li>
+                <li><b>人工复核：</b>④排程清单每行展示历史样本 n 值（保留的点均为 n&lt;20 的稀疏点），供审核复核。</li>
+                <li>T、N_hist 均支持项目级配置覆盖，不叠加开机组合一致性过滤。</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- ============ ④ 排程清单与保存 ============ -->
+          <section class="section-card" id="sectionSchedule">
+            <div class="section-head">
+              <div class="section-head-main">
+                <span class="step-num">4</span>
+                <span class="section-title">排程清单与保存</span>
+                <span class="section-subtitle">按设备类型审核勾选工况点，保存草稿后可发起执行</span>
+              </div>
+            </div>
+            <div class="section-body">
+              <div class="empty-state" id="scheduleEmptyState">
+                尚未生成排程。请先完成②基准线录入与③补偿步长配置，点击"生成排程"后在此查看排程清单。
+              </div>
+              <div id="scheduleContent" style="display:none;" data-excluded-count="4">
+                <div class="schedule-summary" id="scheduleSummary">共 <b>9</b> 步，预计总时长 <b>225 分钟（约 3.8 小时）</b>，已自动排除 <b>4</b> 个历史已覆盖工况点；拟执行 <b>9</b> 步</div>
+                <div class="table-toolbar">
+                  <button class="btn btn-ghost btn-sm" id="btnSelectAll">全选</button>
+                  <button class="btn btn-ghost btn-sm" id="btnSelectNone">清空勾选</button>
+                </div>
+                <div class="table-wrap">
+                  <table class="data-table schedule-table" id="scheduleTable">
+                    <thead>
+                      <tr>
+                        <th></th>
+                        <th>探索批次 / 测试内容</th>
+                        <th>被探对象 / 控制变量</th>
+                        <th>批次内序号</th>
+                        <th>目标设定值</th>
+                        <th>补偿 / 步长</th>
+                        <th>历史样本 n 值</th>
+                        <th>安全边界校验</th>
+                        <th>稳态等待条件</th>
+                        <th>单步预计时长</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr class="schedule-row batch-start" data-duration-min="25">
+                        <td><input type="checkbox" class="schedule-checkbox" checked></td>
+                        <td>冷冻泵变频探索</td>
+                        <td>冷冻泵（1号、2号、3号 同时下发）/ 频率</td>
+                        <td>1</td>
+                        <td>36.00 Hz</td>
+                        <td>+2.00 Hz</td>
+                        <td><span class="status-tag">n=8</span></td>
+                        <td><span class="status-tag pass">通过</span></td>
+                        <td>停留≥15min且温度稳定</td>
+                        <td>25 min</td>
+                      </tr>
+                      <tr class="schedule-row" data-duration-min="25">
+                        <td><input type="checkbox" class="schedule-checkbox" checked></td>
+                        <td>冷冻泵变频探索</td>
+                        <td>冷冻泵（1号、2号、3号 同时下发）/ 频率</td>
+                        <td>2</td>
+                        <td>38.00 Hz</td>
+                        <td>+2.00 Hz</td>
+                        <td><span class="status-tag">n=3</span></td>
+                        <td><span class="status-tag pass">通过</span></td>
+                        <td>停留≥15min且温度稳定</td>
+                        <td>25 min</td>
+                      </tr>
+                      <tr class="schedule-row batch-start" data-duration-min="25">
+                        <td><input type="checkbox" class="schedule-checkbox" checked></td>
+                        <td>冷却泵变频探索</td>
+                        <td>冷却泵（1号、2号 同时下发）/ 频率</td>
+                        <td>1</td>
+                        <td>34.00 Hz</td>
+                        <td>+2.00 Hz</td>
+                        <td><span class="status-tag">n=12</span></td>
+                        <td><span class="status-tag pass">通过</span></td>
+                        <td>停留≥15min且温度稳定</td>
+                        <td>25 min</td>
+                      </tr>
+                      <tr class="schedule-row" data-duration-min="25">
+                        <td><input type="checkbox" class="schedule-checkbox" checked></td>
+                        <td>冷却泵变频探索</td>
+                        <td>冷却泵（1号、2号 同时下发）/ 频率</td>
+                        <td>2</td>
+                        <td>36.00 Hz</td>
+                        <td>+2.00 Hz</td>
+                        <td><span class="status-tag">n=5</span></td>
+                        <td><span class="status-tag pass">通过</span></td>
+                        <td>停留≥15min且温度稳定</td>
+                        <td>25 min</td>
+                      </tr>
+                      <tr class="schedule-row" data-duration-min="25">
+                        <td><input type="checkbox" class="schedule-checkbox" checked></td>
+                        <td>冷却泵变频探索</td>
+                        <td>冷却泵（1号、2号 同时下发）/ 频率</td>
+                        <td>3</td>
+                        <td>38.00 Hz</td>
+                        <td>+2.00 Hz</td>
+                        <td><span class="status-tag">n=0</span></td>
+                        <td><span class="status-tag pass">通过</span></td>
+                        <td>停留≥15min且温度稳定</td>
+                        <td>25 min</td>
+                      </tr>
+                      <tr class="schedule-row batch-start" data-duration-min="25">
+                        <td><input type="checkbox" class="schedule-checkbox" checked></td>
+                        <td>冷却塔变频探索</td>
+                        <td>冷却塔（1号、2号 同时下发）/ 风机频率</td>
+                        <td>1</td>
+                        <td>32.00 Hz</td>
+                        <td>+2.00 Hz</td>
+                        <td><span class="status-tag">n=15</span></td>
+                        <td><span class="status-tag pass">通过</span></td>
+                        <td>停留≥15min且温度稳定</td>
+                        <td>25 min</td>
+                      </tr>
+                      <tr class="schedule-row" data-duration-min="25">
+                        <td><input type="checkbox" class="schedule-checkbox" checked></td>
+                        <td>冷却塔变频探索</td>
+                        <td>冷却塔（1号、2号 同时下发）/ 风机频率</td>
+                        <td>2</td>
+                        <td>34.00 Hz</td>
+                        <td>+2.00 Hz</td>
+                        <td><span class="status-tag">n=6</span></td>
+                        <td><span class="status-tag pass">通过</span></td>
+                        <td>停留≥15min且温度稳定</td>
+                        <td>25 min</td>
+                      </tr>
+                      <tr class="schedule-row batch-start" data-duration-min="25">
+                        <td><input type="checkbox" class="schedule-checkbox" checked></td>
+                        <td>冷水主机出水温度探索</td>
+                        <td>冷水主机（1号、2号 同时下发）/ 出水温度设定</td>
+                        <td>1</td>
+                        <td>8.50 ℃</td>
+                        <td>-0.50 ℃</td>
+                        <td><span class="status-tag">n=18</span></td>
+                        <td><span class="status-tag pass">通过</span></td>
+                        <td>停留≥15min且温度稳定</td>
+                        <td>25 min</td>
+                      </tr>
+                      <tr class="schedule-row" data-duration-min="25">
+                        <td><input type="checkbox" class="schedule-checkbox" checked></td>
+                        <td>冷水主机出水温度探索</td>
+                        <td>冷水主机（1号、2号 同时下发）/ 出水温度设定</td>
+                        <td>2</td>
+                        <td>8.00 ℃</td>
+                        <td>-0.50 ℃</td>
+                        <td><span class="status-tag">n=9</span></td>
+                        <td><span class="status-tag pass">通过</span></td>
+                        <td>停留≥15min且温度稳定</td>
+                        <td>25 min</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="action-bar">
+                  <button class="btn btn-ghost" id="btnSaveDraft">保存草稿</button>
+                  <button class="btn btn-primary" id="btnGotoExec" onclick="location.href='多工况探索-执行监控.html'">发起执行 →</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="anno anno-field" data-version="v2.4">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>④ 排程清单与保存</p>
+              <table class="anno-table">
+                <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>校验规则</th><th>默认值</th><th>备注</th></tr></thead>
+                <tbody>
+                  <tr><td>勾选框</td><td>Checkbox</td><td>—</td><td>—</td><td>清单内全部行默认勾选（历史已覆盖点已在生成时自动排除，不出现在清单里）</td><td>用户可取消勾选本次不执行的点，勾选状态随保存草稿留存</td></tr>
+                  <tr><td>探索批次 / 测试内容</td><td>只读文本</td><td>—</td><td>—</td><td>按设备类型分批（如"冷冻泵变频探索"）</td><td>同批次内按序号连续单变量步进，扫完一批次再扫下一批次</td></tr>
+                  <tr><td>被探对象 / 控制变量</td><td>只读文本</td><td>—</td><td>—</td><td>按设备类型写，并注明同时下发的开机实例（如"冷冻泵（1号、2号、3号 同时下发）/ 频率"）</td><td>同类型所有开机实例同时下发相同设定值，不逐台单独排步</td></tr>
+                  <tr><td>批次内序号</td><td>只读数字</td><td>—</td><td>—</td><td>批次内从 1 递增</td><td>对应"批次内第 n 步"</td></tr>
+                  <tr><td>目标设定值</td><td>只读数字</td><td>—</td><td>—</td><td>基准值 + 累计补偿</td><td>如"34.00 Hz""8.50 ℃"；按设备类型统一，一步对同类型全部开机实例生效</td></tr>
+                  <tr><td>补偿 / 步长</td><td>只读数字</td><td>—</td><td>—</td><td>取③对应设备类型步长</td><td>往上方向为正、往下方向为负</td></tr>
+                  <tr><td>历史样本 n 值</td><td>只读数字标签</td><td>—</td><td>—</td><td>如"n=5"</td><td>保留进清单的点均为 n&lt;20 的空白/稀疏点，展示 n 值供审核复核；排除规则见上方数据逻辑批注</td></tr>
+                  <tr><td>安全边界校验</td><td>只读状态标签</td><td>—</td><td>通过 / 越界</td><td>通过（生成逻辑保证不越界）</td><td>若因边界配置变更等原因出现"越界"，该行不建议勾选执行，需回到②③调整后重新生成</td></tr>
+                  <tr><td>稳态等待条件</td><td>只读文本</td><td>—</td><td>—</td><td>"停留≥15min且温度稳定"</td><td>对应需求 8.3 在线判稳的最小停留时长</td></tr>
+                  <tr><td>单步预计时长</td><td>只读数字</td><td>—</td><td>—</td><td>25 分钟 / 步（示意）</td><td>汇总为批次 / 总预计执行时长，展示于表格上方汇总条</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="anno anno-ux" data-version="v2.4">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>④ 排程清单与保存</p>
+              <ul>
+                <li><b>全选：</b>勾选清单内全部行。</li>
+                <li><b>清空勾选：</b>取消清单内全部勾选，便于反向少量勾选。</li>
+                <li><b>保存草稿：</b>点击后保存当前排程与勾选状态，toast 提示"已保存草稿，可随时回来继续编辑或发起执行"；草稿可反复编辑。</li>
+                <li><b>发起执行：</b>跳转 <code>多工况探索-执行监控.html</code>；前提是排程已生成并保存，能否执行只看这一条件。发起执行后排程锁定，不可再修改（来源：产品推断）。</li>
+                <li>草稿态下可反复调整①②③后重新生成排程（④刷新），发起执行前均可修改。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="anno anno-data" data-version="v2.4">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>④ 排程清单与保存 — 汇总条</p>
+              <p>"共 N 步" = 排程清单总行数（历史已覆盖点不计入，已在生成时排除）；"已自动排除 M 个历史已覆盖工况点" = 生成排程时被自动排除的点数（固定值，不随勾选变化）；"预计总时长"与"拟执行 K 步" = 当前已勾选（拟执行）行的数量与"单步预计时长"累加，随勾选状态变化实时重算。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-edge" data-version="v2.4">
+            <span class="anno-tag">边界与异常</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>④ 排程清单与保存</p>
+              <ul>
+                <li>②中任一行基准值越界或未录入，均不可生成排程；基准值越界不可生成排程。</li>
+                <li>排程清单中若存在"安全边界校验 = 越界"的行，需回到②③修正后重新生成，不建议强行勾选执行。</li>
+                <li>草稿可反复编辑，发起执行后排程锁定，不可再修改；如需调整需发起新的策略草稿（后半句来源：产品推断）。</li>
+                <li>"发起执行"仅在排程已生成并保存后可用，重复点击的幂等处理由执行监控页负责。</li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+  (function () {
+    var toast = document.getElementById('toast');
+    var toastTimer = null;
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 2000);
+    }
+
+    /* ② 应用实例说明随①区勾选联动 */
+    function updateApplyScopes() {
+      document.querySelectorAll('.apply-scope[data-scope-type]').forEach(function (scopeEl) {
+        var type = scopeEl.getAttribute('data-scope-type');
+        var names = [];
+        document.querySelectorAll('.device-check input[data-type="' + type + '"]').forEach(function (cb) {
+          if (cb.checked) names.push(cb.getAttribute('data-device').replace(/冷水主机|冷冻泵|冷却泵|冷却塔/, ''));
+        });
+        scopeEl.textContent = names.length
+          ? '应用于已开机的 ' + names.join('、')
+          : '该类型暂无已开机设备';
+      });
+    }
+    document.querySelectorAll('.device-check input[type="checkbox"]').forEach(function (cb) {
+      cb.addEventListener('change', updateApplyScopes);
+    });
+    updateApplyScopes();
+
+    function validateBaselineRow(row) {
+      var input = row.querySelector('.baseline-input');
+      var statusEl = row.querySelector('.status-tag');
+      var val = parseFloat(input.value);
+      if (input.value === '' || isNaN(val)) {
+        statusEl.className = 'status-tag pending';
+        statusEl.textContent = '待录入';
+        return;
+      }
+      var min = parseFloat(row.getAttribute('data-bound-min'));
+      var max = parseFloat(row.getAttribute('data-bound-max'));
+      if (val >= min && val <= max) {
+        statusEl.className = 'status-tag pass';
+        statusEl.textContent = '通过';
+      } else {
+        statusEl.className = 'status-tag danger';
+        statusEl.textContent = '越界';
+      }
+    }
+
+    /* 门控：②全部行基准值均通过边界校验，才可生成排程 */
+    function updateGenerateButtonState() {
+      var rows = document.querySelectorAll('.baseline-row');
+      var allOk = rows.length > 0;
+      rows.forEach(function (row) {
+        var statusEl = row.querySelector('.status-tag');
+        if (!statusEl.classList.contains('pass')) allOk = false;
+      });
+      var btn = document.getElementById('btnGenerateSchedule');
+      var hint = document.getElementById('generateHint');
+      if (!btn.hasAttribute('data-view-mode')) {
+        btn.disabled = !allOk;
+      }
+      hint.style.display = allOk ? 'none' : 'inline';
+    }
+
+    document.querySelectorAll('.baseline-input').forEach(function (input) {
+      input.addEventListener('input', function () {
+        validateBaselineRow(input.closest('.baseline-row'));
+        updateGenerateButtonState();
+      });
+    });
+    document.querySelectorAll('.baseline-row').forEach(validateBaselineRow);
+    updateGenerateButtonState();
+
+    function updateScheduleSummary() {
+      var rows = document.querySelectorAll('.schedule-row');
+      var total = rows.length;
+      var excludedCount = parseInt(document.getElementById('scheduleContent').getAttribute('data-excluded-count'), 10) || 0;
+      var minutes = 0, selectedCount = 0;
+      rows.forEach(function (row) {
+        var cb = row.querySelector('.schedule-checkbox');
+        if (cb.checked) {
+          selectedCount++;
+          minutes += parseInt(row.getAttribute('data-duration-min'), 10) || 0;
+        }
+      });
+      var hours = (minutes / 60).toFixed(1);
+      document.getElementById('scheduleSummary').innerHTML =
+        '共 <b>' + total + '</b> 步，预计总时长 <b>' + minutes + ' 分钟（约 ' + hours + ' 小时）</b>，已自动排除 <b>' + excludedCount + '</b> 个历史已覆盖工况点；拟执行 <b>' + selectedCount + '</b> 步';
+    }
+    document.querySelectorAll('.schedule-checkbox').forEach(function (cb) {
+      cb.addEventListener('change', updateScheduleSummary);
+    });
+
+    document.getElementById('btnGenerateSchedule').addEventListener('click', function () {
+      document.getElementById('scheduleEmptyState').style.display = 'none';
+      document.getElementById('scheduleContent').style.display = '';
+      updateScheduleSummary();
+      var excludedCount = parseInt(document.getElementById('scheduleContent').getAttribute('data-excluded-count'), 10) || 0;
+      showToast('已生成排程，已自动排除 ' + excludedCount + ' 个历史已覆盖工况点');
+      document.getElementById('sectionSchedule').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    document.getElementById('btnSelectAll').addEventListener('click', function () {
+      document.querySelectorAll('.schedule-checkbox').forEach(function (cb) { cb.checked = true; });
+      updateScheduleSummary();
+    });
+    document.getElementById('btnSelectNone').addEventListener('click', function () {
+      document.querySelectorAll('.schedule-checkbox').forEach(function (cb) { cb.checked = false; });
+      updateScheduleSummary();
+    });
+
+    document.getElementById('btnSaveDraft').addEventListener('click', function () {
+      showToast('已保存草稿，可随时回来继续编辑或发起执行');
+    });
+
+    /* 只读查看态（?mode=view）：仅演示查看排程，不可编辑 */
+    function applyViewMode() {
+      document.getElementById('viewBanner').style.display = 'flex';
+      document.getElementById('scheduleEmptyState').style.display = 'none';
+      document.getElementById('scheduleContent').style.display = '';
+      document.getElementById('strategyNameInput').disabled = true;
+      document.querySelectorAll('.section-body input, .section-body select, .section-body button').forEach(function (el) {
+        el.disabled = true;
+      });
+      var genBtn = document.getElementById('btnGenerateSchedule');
+      genBtn.setAttribute('data-view-mode', '1');
+      genBtn.style.display = 'none';
+      document.getElementById('btnSaveDraft').style.display = 'none';
+      var gotoBtn = document.getElementById('btnGotoExec');
+      gotoBtn.disabled = false;
+    }
+
+    function initViewMode() {
+      var demoBaseline = { chwp: '30.00', cwp: '32.00', ct: '28.00', chiller: '9.00' };
+      document.getElementById('strategyNameInput').value = '冷冻泵变频探索-2026Q3';
+      document.getElementById('boundarySelect').value = '正常策略2';
+      document.getElementById('simSelect').value = '1号集成冷站仿真';
+      document.querySelectorAll('.baseline-row').forEach(function (row) {
+        var type = row.getAttribute('data-device-type');
+        var input = row.querySelector('.baseline-input');
+        input.value = demoBaseline[type] || '';
+        validateBaselineRow(row);
+      });
+      updateGenerateButtonState();
+      updateScheduleSummary();
+      applyViewMode();
+    }
+
+    var params = new URLSearchParams(location.search);
+    if (params.get('mode') === 'view') {
+      initViewMode();
+    }
+  })();
+  </script>
+
+  <button class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="多工况探索"></script>
+  <script>
+  function initAnnoVersionFilter() {
+    var bar = document.getElementById('annoFilterBar');
+    var tags = document.getElementById('annoFilterTags');
+    if (!document.body.classList.contains('annotation-mode')) return;
+    var annos = document.querySelectorAll('.anno[data-version]');
+    var versions = [];
+    annos.forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (v && versions.indexOf(v) === -1) versions.push(v);
+    });
+    versions.sort(function(a, b) {
+      var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+      var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+      for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+        if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+      }
+      return 0;
+    });
+    tags.innerHTML = '';
+    var allBtn = document.createElement('span');
+    allBtn.className = 'anno-filter-tag active';
+    allBtn.textContent = '全部';
+    allBtn.onclick = function() { filterAnno('all', versions[0]); setActive(this); };
+    tags.appendChild(allBtn);
+    versions.forEach(function(v) {
+      var btn = document.createElement('span');
+      btn.className = 'anno-filter-tag';
+      btn.textContent = v;
+      btn.onclick = function() { filterAnno(v, versions[0]); setActive(this); };
+      tags.appendChild(btn);
+    });
+    if (versions.length > 0) filterAnno('all', versions[0]);
+  }
+  function filterAnno(version, latest) {
+    document.querySelectorAll('.anno[data-version]').forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (version === 'all') {
+        a.style.display = '';
+        a.style.opacity = (v === latest) ? '1' : '0.6';
+      } else {
+        a.style.display = (v === version) ? '' : 'none';
+        a.style.opacity = '1';
+      }
+    });
+  }
+  function setActive(el) {
+    el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function(t) { t.classList.remove('active'); });
+    el.classList.add('active');
+  }
+  </script>
+</body>
+</html>

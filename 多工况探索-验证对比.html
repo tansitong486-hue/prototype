@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>验证对比 - 多工况探索</title>
+  <link rel="stylesheet" href="annotation-styles.css">
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --text-primary: #262626;
+      --text-secondary: #595959;
+      --text-hint: #8C8C8C;
+      --border: #D9D9D9;
+      --border-light: #F0F0F0;
+      --bg-body: #F5F5F5;
+      --bg-card: #FFFFFF;
+      --tip-bg: #FFFBE6;
+      --tip-border: #FFE58F;
+      --green-btn: #52C41A;
+      --radius: 6px;
+      --radius-lg: 8px;
+      --transition: .2s ease;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { text-decoration: none; color: inherit; }
+    button { border: none; background: none; font: inherit; cursor: pointer; }
+
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main {
+      flex: 1;
+      min-width: 0;
+      overflow-y: auto;
+      background: var(--bg-body);
+    }
+
+    .content-wrap {
+      padding: 16px 20px 24px;
+      max-width: 100%;
+    }
+
+    /* 面包屑 */
+    .breadcrumb {
+      font-size: 13px;
+      color: var(--text-hint);
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .breadcrumb a {
+      color: var(--text-secondary);
+      transition: color var(--transition);
+    }
+
+    .breadcrumb a:hover { color: var(--primary); }
+
+    .breadcrumb-sep {
+      margin: 0 8px;
+      color: var(--text-hint);
+    }
+
+    .breadcrumb-current {
+      color: var(--text-primary);
+    }
+
+    /* 页标题 */
+    .page-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .back-ico {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      color: var(--text-secondary);
+      border-radius: var(--radius);
+      transition: background var(--transition), color var(--transition);
+    }
+
+    .back-ico:hover {
+      background: rgba(0, 0, 0, 0.04);
+      color: var(--primary);
+    }
+
+    .page-heading {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    /* 策略概览信息条 */
+    .strategy-meta-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px 28px;
+      padding: 14px 18px;
+      margin-bottom: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+    }
+
+    .strategy-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .strategy-meta-label {
+      color: var(--text-hint);
+    }
+
+    .strategy-meta-value {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .strategy-status-pill {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .strategy-status-pill.done {
+      background: #F6FFED;
+      color: #389E0D;
+      border: 1px solid #B7EB8F;
+    }
+
+    /* 黄色提示 */
+    .banner-tip {
+      display: flex;
+      gap: 12px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      background: var(--tip-bg);
+      border: 1px solid var(--tip-border);
+      border-radius: var(--radius-lg);
+      align-items: flex-start;
+    }
+
+    .banner-tip-ico {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      margin-top: 2px;
+      color: #1890FF;
+    }
+
+    .banner-tip-body { min-width: 0; }
+
+    .banner-tip-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .banner-tip-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .banner-tip-text p + p { margin-top: 8px; }
+
+    /* 绿色成功条（训练衔接状态） */
+    .banner-success {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      background: #F6FFED;
+      border: 1px solid #B7EB8F;
+      border-radius: var(--radius-lg);
+      flex-wrap: wrap;
+    }
+
+    .banner-msg-left {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .banner-success-ico {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      color: #52C41A;
+      margin-top: 2px;
+    }
+
+    .banner-success-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #389E0D;
+      margin-bottom: 4px;
+    }
+
+    .banner-success-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .training-link {
+      flex-shrink: 0;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary);
+      white-space: nowrap;
+    }
+
+    .training-link:hover { text-decoration: underline; }
+
+    /* 白卡片 */
+    .data-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .card-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-light);
+      flex-wrap: wrap;
+    }
+
+    .card-toolbar-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .card-toolbar-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    /* 发起验证按钮（主操作） */
+    .btn-verify {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 32px;
+      padding: 0 16px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #fff;
+      background: var(--primary);
+      border: 1px solid var(--primary);
+      border-radius: var(--radius);
+      transition: opacity var(--transition), box-shadow var(--transition);
+    }
+
+    .btn-verify:hover { opacity: 0.88; }
+
+    .btn-verify:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.18);
+    }
+
+    .btn-verify:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .btn-verify svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    .btn-verify.is-loading svg { animation: btnSpin .9s linear infinite; }
+
+    @keyframes btnSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .table-scroll {
+      position: relative;
+      overflow-x: auto;
+    }
+
+    .data-table {
+      width: 100%;
+      min-width: 880px;
+      border-collapse: collapse;
+    }
+
+    .data-table thead th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #FAFAFA;
+      border-bottom: 1px solid var(--border-light);
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 12px 16px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+    }
+
+    .tbody-data tr:hover { background: #FAFAFA; }
+
+    /* 归档明细表：radio 选择行 */
+    .archive-row { cursor: pointer; }
+
+    .archive-row.selected { background: #F0F5FF; }
+
+    .archive-row.selected:hover { background: #F0F5FF; }
+
+    .archive-radio {
+      width: 15px;
+      height: 15px;
+      accent-color: var(--primary);
+      cursor: pointer;
+      vertical-align: middle;
+    }
+
+    .verify-status-pill {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .verify-status-pill.pending {
+      background: #FAFAFA;
+      color: var(--text-hint);
+      border: 1px solid var(--border);
+    }
+
+    .verify-status-pill.verified {
+      background: #E6F4FF;
+      color: #0958D9;
+      border: 1px solid #91CAFF;
+    }
+
+    .col-object {
+      vertical-align: top;
+      white-space: normal;
+      line-height: 1.5;
+      max-width: 180px;
+    }
+
+    /* 偏差列：只区分方向，不做达标判色 */
+    .diff-cell {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .diff-arrow {
+      width: 10px;
+      height: 10px;
+      flex-shrink: 0;
+      color: var(--text-hint);
+    }
+
+    .diff-arrow.down { transform: rotate(180deg); }
+
+    /* 对比表底部注 */
+    .table-footnote {
+      padding: 10px 18px;
+      font-size: 12px;
+      color: var(--text-hint);
+      background: #FAFAFA;
+      border-top: 1px solid var(--border-light);
+    }
+
+    /* 验证中遮罩 */
+    .verify-loading {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.92);
+      z-index: 5;
+    }
+
+    .verify-loading.show { display: flex; }
+
+    .verify-loading-spinner {
+      width: 26px;
+      height: 26px;
+      border: 3px solid var(--border-light);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: btnSpin 0.8s linear infinite;
+    }
+
+    .verify-loading-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      background: rgba(0, 0, 0, 0.78);
+      color: #fff;
+      font-size: 13px;
+      opacity: 0;
+      transform: translateY(8px);
+      pointer-events: none;
+      transition: all .22s ease;
+      z-index: 300;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 768px) {
+      .banner-success { align-items: flex-start; }
+      .card-toolbar { align-items: flex-start; }
+      .btn-verify { width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+        <div class="anno-filter-bar" id="annoFilterBar">
+          <span class="anno-filter-label">批注版本：</span>
+          <div class="anno-filter-tags" id="annoFilterTags"></div>
+        </div>
+        <div class="content-wrap">
+          <nav class="breadcrumb" aria-label="面包屑">
+            <a href="多工况探索-列表.html">多工况探索</a>
+            <span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">验证对比</span>
+          </nav>
+
+          <div class="page-title-row">
+            <a href="多工况探索-列表.html" class="back-ico" aria-label="返回多工况探索列表">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M15 18l-6-6 6-6"/>
+              </svg>
+            </a>
+            <h1 class="page-heading">验证对比 - 冷却塔风机频率探索-2026Q2</h1>
+          </div>
+
+          <div class="anno anno-version-header" data-version="v2.4">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v2.4</p>
+              <p><b>更新日期：</b>2026-06-20</p>
+              <p><b>变更概述：</b>评审修订：验证改为针对执行期归档快照逐工况点发起实时仿真比对，替代原先的整体最新结果查询。</p>
+              <p><b>本页说明：</b>本页为「多工况探索」模块阶段三·验证视图：从执行期产生的归档工况点中选择一个快照，发起一次实时仿真，比对训练前后模型预测值相对实测值的偏差。入口：多工况探索列表页 → 选择「已完成 / 已中止」的策略 →「验证对比」。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-req" data-version="v2.4">
+            <span class="anno-tag">需求说明</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>页面范围（对应需求 §九 阶段三·验证，按评审意见修订）：</b></p>
+              <ul>
+                <li><b>验证 = 基于归档快照的逐工况点比对</b>：执行阶段每个工况点判稳后已保存一份归档快照（对整个水冷系统走一次实时仿真校验的全参数存档，含各对象/指标的当前实际值 + 当时旧模型的模拟预测值）。模块外训练完成后，用户从归档工况点明细中选择某个工况点发起验证，系统针对该快照的工况上下文再调用一次实时仿真（新模型），得到本次预测值。</li>
+                <li><b>三方比对</b>：归档实测值（真值基准）vs 归档预测值（训练前旧模型）vs 本次验证预测值（训练后新模型），并分别给出新旧模型相对实测值的偏差，体现训练后精度改善。</li>
+                <li><b>不做回流重训</b>：重训在既有「机理模型训练」能力中完成（手动重训或自学习自动触发），属模块外过程（§9.3）；本页只提供训练完成后的验证入口，以及训练未完成时的跳转引导。</li>
+                <li><b>不做验证结果入库</b>：验证结果仅在线展示，不建表、不落库（§9.2；§十三 范围边界表「验证结果入库」一行）。</li>
+                <li><b>不设收敛判定标准</b>：本页不做"达标/未达标"或置信等级判断，验证动作不驱动探索策略的状态流转（草稿 / 执行中 / 已完成 / 已中止均不受本页影响）。「已完成 / 已中止」的策略均可对已有归档快照发起验证——已中止是终态，不影响验证入口。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="strategy-meta-bar">
+            <div class="strategy-meta-item">
+              <span class="strategy-meta-label">所属系统</span>
+              <span class="strategy-meta-value">A路冷水系统</span>
+            </div>
+            <div class="strategy-meta-item">
+              <span class="strategy-meta-label">状态</span>
+              <span class="strategy-status-pill done">已完成</span>
+            </div>
+            <div class="strategy-meta-item">
+              <span class="strategy-meta-label">绑定仿真实例</span>
+              <span class="strategy-meta-value">1号集成冷站仿真</span>
+            </div>
+            <div class="strategy-meta-item">
+              <span class="strategy-meta-label">完成时间</span>
+              <span class="strategy-meta-value">2026-04-05</span>
+            </div>
+          </div>
+
+          <div class="banner-tip" role="region" aria-label="提示">
+            <svg class="banner-tip-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+            </svg>
+            <div class="banner-tip-body">
+              <div class="banner-tip-title">提示</div>
+              <div class="banner-tip-text">
+                <p>1、探索执行时，每个工况点运行平稳后，系统都自动保存了一份「快照」：记录当时整个冷站各项参数的实际值，以及当时模型算出的预测值。</p>
+                <p>2、模型训练完成后，在下方列表选一个工况点、点「发起验证」：系统会用训练后的新模型把这个工况重新算一遍，和快照里的实际值、训练前的预测值放在一起对比——预测值越接近实际值，说明训练后模型越准。</p>
+                <p>3、对比结果只在本页查看，不会保存，也不影响策略状态；本页只展示数值和偏差，不做"合格 / 不合格"的判定。</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="anno anno-ux" data-version="v2.4">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>模块外训练衔接状态区（对应需求 9.3）</p>
+              <ul>
+                <li>本区域只做状态展示与跳转引导，<b>不在本模块内发起或执行训练</b>——回流重训动作在「机理模型训练」页完成（手动重训），或由自学习自动触发，与本模块无功能耦合。</li>
+                <li>训练已完成时（如下方演示）：展示绿色成功态 + 完成时间，表示新模型已生效于绑定仿真实例，此时方可对归档快照发起验证；右侧「查看训练记录」为可选跳转，非必须操作。</li>
+                <li>训练未完成时：展示引导态，「发起验证」按钮置灰，详见下方状态说明批注。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="anno anno-state" data-version="v2.4">
+            <span class="anno-tag">状态说明</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source">产品推断</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>训练衔接状态 / 验证加载 / 空态（本页默认演示"训练已完成 + 有归档快照"，以下状态不在默认演示中渲染，仅作规则说明）</p>
+              <ul>
+                <li><b>训练未完成态：</b>该策略绑定仿真实例尚未应用重训后的新模型时，状态条展示中性引导态（蓝色信息态，非红色错误态——训练未完成是正常过程）：标题"训练尚未完成"，说明"请等待「机理模型训练」完成本策略样本的重训（或等待自学习自动完成）后再发起验证"，提供「前往机理模型训练」按钮跳转 <code>机理模型训练.html</code>；此时归档明细列表照常展示，但「发起验证」按钮置灰不可点，避免用旧模型做无意义的比对。</li>
+                <li><b>验证加载态：</b>点击「发起验证」后，按钮置灰显示"验证中…"，对比表区域覆盖半透明遮罩 + 加载动效（针对选中快照调用实时仿真需要数秒），期间不可重复点击、不可切换选中工况点。</li>
+                <li><b>验证失败：</b>实时仿真调用超时/异常时，遮罩替换为失败提示 +「重试」按钮；保留上一次已展示的对比结果，不清空。</li>
+                <li><b>尚无归档快照的空态：</b>若该策略执行期未产生任何归档工况点（如执行即被中止），本页归档明细列表展示空态插画 + "该策略暂无归档工况点"文案，「发起验证」按钮置灰，对比表区域不渲染。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="banner-success" role="status">
+            <div class="banner-msg-left">
+              <svg class="banner-success-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+              <div>
+                <div class="banner-success-title">训练已完成</div>
+                <div class="banner-success-desc">2026-06-20 完成 · 新模型已在「1号集成冷站仿真」上生效，可在下方选择工况点，验证训练后预测是否更准</div>
+              </div>
+            </div>
+            <a class="training-link" href="机理模型训练.html">查看训练记录 →</a>
+          </div>
+
+          <div class="anno anno-data" data-version="v2.4">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>归档工况点明细列表</p>
+              <ul>
+                <li><b>数据来源：</b>执行运行的每步归档表（需求 §4.1 表⑤ <code>exploration_step_archive</code>）——执行阶段每个工况点在线判稳后，系统查询绑定仿真实例的最新结果整体存档（<code>sim_snapshot</code>，含全系统各对象/指标的"当前实际值 + 模拟预测值"）。本列表按归档时间正序列出该策略下全部归档工况点。</li>
+                <li><b>被探对象口径：</b>探索按设备类型同时下发，同类型运行中设备（如 1号、2号冷却塔）在同一工况点收到相同目标值，故被探对象按设备类型展示并注明同时下发的设备实例。</li>
+                <li><b>归档快照参数数：</b>该快照内保存的对象/指标条目数，来自全系统实时仿真返回体，用于提示快照是"全系统级"存档而非仅被探变量。</li>
+                <li><b>验证状态：</b>前端会话内标记——"未验证 / 本次已验证"仅表示本次打开页面后是否对该工况点发起过验证，不落库、不跨会话保留。</li>
+              </ul>
+            </div>
+          </div>
+
+          <section class="data-card" aria-label="归档工况点明细">
+            <div class="card-toolbar">
+              <div>
+                <div class="card-toolbar-title">归档工况点明细</div>
+                <div class="card-toolbar-desc">执行期共归档 <b>4</b> 个工况点 · 选择一个工况点后发起验证</div>
+              </div>
+              <button type="button" class="btn-verify" id="btnVerify">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                <span id="btnVerifyText">发起验证</span>
+              </button>
+            </div>
+
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width:48px;">选择</th>
+                    <th>探索批次</th>
+                    <th>被探对象 / 控制变量</th>
+                    <th>工况点目标值</th>
+                    <th>归档时间</th>
+                    <th>归档快照参数数</th>
+                    <th>验证状态</th>
+                  </tr>
+                </thead>
+                <tbody class="tbody-data" id="archiveTbody">
+                  <tr class="archive-row" data-point="p30">
+                    <td><input type="radio" class="archive-radio" name="archivePoint" value="p30" aria-label="选择 30Hz 工况点"></td>
+                    <td>冷却塔风机频率探索</td>
+                    <td>冷却塔（1号、2号 同时下发）· 风机频率</td>
+                    <td>30.00 Hz</td>
+                    <td>2026-04-03 14:20</td>
+                    <td>126 项</td>
+                    <td><span class="verify-status-pill pending" data-status>未验证</span></td>
+                  </tr>
+                  <tr class="archive-row" data-point="p32">
+                    <td><input type="radio" class="archive-radio" name="archivePoint" value="p32" aria-label="选择 32Hz 工况点"></td>
+                    <td>冷却塔风机频率探索</td>
+                    <td>冷却塔（1号、2号 同时下发）· 风机频率</td>
+                    <td>32.00 Hz</td>
+                    <td>2026-04-03 16:05</td>
+                    <td>126 项</td>
+                    <td><span class="verify-status-pill pending" data-status>未验证</span></td>
+                  </tr>
+                  <tr class="archive-row selected" data-point="p34">
+                    <td><input type="radio" class="archive-radio" name="archivePoint" value="p34" checked aria-label="选择 34Hz 工况点"></td>
+                    <td>冷却塔风机频率探索</td>
+                    <td>冷却塔（1号、2号 同时下发）· 风机频率</td>
+                    <td>34.00 Hz</td>
+                    <td>2026-04-04 09:40</td>
+                    <td>126 项</td>
+                    <td><span class="verify-status-pill verified" data-status>本次已验证</span></td>
+                  </tr>
+                  <tr class="archive-row" data-point="p36">
+                    <td><input type="radio" class="archive-radio" name="archivePoint" value="p36" aria-label="选择 36Hz 工况点"></td>
+                    <td>冷却塔风机频率探索</td>
+                    <td>冷却塔（1号、2号 同时下发）· 风机频率</td>
+                    <td>36.00 Hz</td>
+                    <td>2026-04-04 11:55</td>
+                    <td>124 项</td>
+                    <td><span class="verify-status-pill pending" data-status>未验证</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <div class="anno anno-ux" data-version="v2.4">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>归档工况点明细 —「发起验证」按钮与选择交互</p>
+              <ul>
+                <li><b>「发起验证」点击语义：</b>针对选中归档快照的工况上下文再调用一次实时仿真（训练后新模型），得到本次预测值——<b>不触发下发、不动设备、不影响任务状态</b>；与执行阶段的归档动作使用同一仿真实例，只是这次是训练后的新模型在算。</li>
+                <li><b>radio 单选切换：</b>点击行任意位置或 radio 均可切换选中工况点（一次只能选一个）；切换仅改变选中态，不自动发起验证，须点击「发起验证」才触发比对；验证加载期间禁止切换。</li>
+                <li><b>验证状态列联动：</b>某工况点验证完成后，其"验证状态"由"未验证"变为"本次已验证"，同时下方对比表标题与内容切换为该工况点的三方比对结果。</li>
+                <li><b>与《仿真校验》页"重新校验"的区别：</b>该页是对当前实时运行状态发起校验；本页是对<b>历史归档工况点</b>的上下文发起验证，比对基准是归档时刻的实测值，两者入口与语义不同。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="anno anno-edge" data-version="v2.4">
+            <span class="anno-tag">边界与异常</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source">产品推断</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>验证行为边界</p>
+              <ul>
+                <li><b>不判定：</b>本页不做"达标/未达标"判定、不做置信等级分级、不设收敛判定标准；偏差列统一用中性色 + 正负号表达方向，不用红/绿判色（该配色隐含"合格/不合格"语义，评审与开发时不要把《仿真校验》页的判定逻辑带入本页）。</li>
+                <li><b>不入库：</b>本次验证预测值与偏差仅在线展示，不写入归档表或任何新表；刷新页面后本次验证结果不保留。</li>
+                <li><b>多次验证覆盖展示：</b>同一工况点重复点击「发起验证」，仅用最新一次结果刷新对比表展示，不保留历史验证记录、不做多次结果对比。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="anno anno-data" data-version="v2.4">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>验证对比表 —— 三列取值口径（§九 + 评审确认）</p>
+              <ul>
+                <li><b>归档实测值：</b>取自选中归档快照（<code>sim_snapshot</code>）中的"当前实际值"，即该工况点判稳时刻的真实运行数据，作为比对的真值基准。</li>
+                <li><b>归档预测值（训练前）：</b>取自同一快照中的"模拟预测值"，即归档时刻旧模型（训练前）对该工况的预测。</li>
+                <li><b>本次预测值（训练后）：</b>点击「发起验证」后，系统针对该快照的工况上下文再调用一次实时仿真（新模型已生效于绑定仿真实例"1号集成冷站仿真"）返回的预测值。</li>
+                <li><b>训练前偏差 / 训练后偏差：</b>分别 = 归档预测值 − 归档实测值、本次预测值 − 归档实测值；同一真值基准下两列偏差直接可比，训练后偏差收窄即说明补样重训对该工况段的精度改善（尤其被探的冷却塔高频段相关指标）。</li>
+                <li><b>展示范围：</b>快照为全系统存档（100+ 参数），页面默认展示与被探变量强相关的代表性对象/指标节选，完整参数可滚动/展开查看（原型仅演示节选）。</li>
+              </ul>
+            </div>
+          </div>
+
+          <section class="data-card" aria-label="验证对比结果">
+            <div class="card-toolbar">
+              <div>
+                <div class="card-toolbar-title" id="compareTitle">验证对比 — 工况点：冷却塔风机频率 34Hz · 归档于 2026-04-04 09:40</div>
+                <div class="card-toolbar-desc">比对基准：归档实测值 · 本次验证：<span id="verifyTime">2026-06-20 15:02</span>（训练后新模型）</div>
+              </div>
+            </div>
+
+            <div class="table-scroll">
+              <div class="verify-loading" id="verifyLoading">
+                <div class="verify-loading-spinner" aria-hidden="true"></div>
+                <div class="verify-loading-text">正在用训练后的新模型重新计算该工况点，请稍候…</div>
+              </div>
+              <table class="data-table" style="min-width:1000px;">
+                <thead>
+                  <tr>
+                    <th>对象</th>
+                    <th>指标名称</th>
+                    <th>归档实测值</th>
+                    <th>归档预测值（训练前）</th>
+                    <th>本次预测值（训练后）</th>
+                    <th>训练前偏差</th>
+                    <th>训练后偏差</th>
+                  </tr>
+                </thead>
+                <tbody class="tbody-data" id="compareTbody"></tbody>
+              </table>
+            </div>
+            <div class="table-footnote">完整对比包含全系统 100+ 项参数，此处仅节选演示；偏差 = 预测值 − 实际值，偏差越小说明预测越准，本页不做合格与否的判定。</div>
+          </section>
+
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (function () {
+      const G = function (id) { return document.getElementById(id) }
+
+      const toast = G('toast')
+      let toastTimer = null
+      const showToast = function (msg) {
+        toast.textContent = msg
+        toast.classList.add('show')
+        clearTimeout(toastTimer)
+        toastTimer = setTimeout(function () { toast.classList.remove('show') }, 2600)
+      }
+
+      const pad = function (n) { return n < 10 ? '0' + n : '' + n }
+      const formatNow = function () {
+        const d = new Date()
+        return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes())
+      }
+
+      /* 各归档工况点的演示数据：行 = [对象, 指标, 归档实测值, 归档预测值(训练前), 本次预测值(训练后), 训练前偏差, 训练后偏差] */
+      const POINTS = {
+        p30: {
+          label: '冷却塔风机频率 30Hz', archivedAt: '2026-04-03 14:20',
+          rows: [
+            ['A路冷水系统', '系统能效（COP）', '5.41', '5.12', '5.36', '-0.29', '-0.05'],
+            ['A路冷水系统', '系统总电功率（kW）', '82.60 kW', '85.30 kW', '83.15 kW', '+2.70 kW', '+0.55 kW'],
+            ['A路冷水系统', '冷冻水供水温度（℃）', '7.20℃', '7.58℃', '7.27℃', '+0.38℃', '+0.07℃'],
+            ['A路冷水系统', '冷冻水回水温度（℃）', '12.31℃', '12.79℃', '12.41℃', '+0.48℃', '+0.10℃'],
+            ['1号冷却塔', '风机频率（Hz）', '29.88 Hz', '31.02 Hz', '30.03 Hz', '+1.14 Hz', '+0.15 Hz'],
+            ['1号冷却塔', '出水温度（℃）', '30.92℃', '32.45℃', '31.10℃', '+1.53℃', '+0.18℃'],
+            ['1号冷水主机', '冷凝器进水温度（℃）', '31.05℃', '32.24℃', '31.21℃', '+1.19℃', '+0.16℃']
+          ]
+        },
+        p32: {
+          label: '冷却塔风机频率 32Hz', archivedAt: '2026-04-03 16:05',
+          rows: [
+            ['A路冷水系统', '系统能效（COP）', '5.55', '5.28', '5.50', '-0.27', '-0.05'],
+            ['A路冷水系统', '系统总电功率（kW）', '80.40 kW', '83.02 kW', '80.94 kW', '+2.62 kW', '+0.54 kW'],
+            ['A路冷水系统', '冷冻水供水温度（℃）', '7.16℃', '7.52℃', '7.22℃', '+0.36℃', '+0.06℃'],
+            ['A路冷水系统', '冷冻水回水温度（℃）', '12.18℃', '12.64℃', '12.27℃', '+0.46℃', '+0.09℃'],
+            ['1号冷却塔', '风机频率（Hz）', '31.90 Hz', '33.12 Hz', '32.06 Hz', '+1.22 Hz', '+0.16 Hz'],
+            ['1号冷却塔', '出水温度（℃）', '30.35℃', '31.86℃', '30.51℃', '+1.51℃', '+0.16℃'],
+            ['1号冷水主机', '冷凝器进水温度（℃）', '30.55℃', '31.72℃', '30.72℃', '+1.17℃', '+0.17℃']
+          ]
+        },
+        p34: {
+          label: '冷却塔风机频率 34Hz', archivedAt: '2026-04-04 09:40',
+          rows: [
+            ['A路冷水系统', '系统能效（COP）', '5.68', '5.42', '5.63', '-0.26', '-0.05'],
+            ['A路冷水系统', '系统总电功率（kW）', '78.40 kW', '80.95 kW', '78.92 kW', '+2.55 kW', '+0.52 kW'],
+            ['A路冷水系统', '冷冻水供水温度（℃）', '7.12℃', '7.46℃', '7.18℃', '+0.34℃', '+0.06℃'],
+            ['A路冷水系统', '冷冻水回水温度（℃）', '12.05℃', '12.51℃', '12.14℃', '+0.46℃', '+0.09℃'],
+            ['1号冷却塔', '风机频率（Hz）', '33.92 Hz', '35.10 Hz', '34.08 Hz', '+1.18 Hz', '+0.16 Hz'],
+            ['1号冷却塔', '出水温度（℃）', '29.85℃', '31.42℃', '30.02℃', '+1.57℃', '+0.17℃'],
+            ['1号冷水主机', '冷凝器进水温度（℃）', '30.10℃', '31.35℃', '30.28℃', '+1.25℃', '+0.18℃']
+          ]
+        },
+        p36: {
+          label: '冷却塔风机频率 36Hz', archivedAt: '2026-04-04 11:55',
+          rows: [
+            ['A路冷水系统', '系统能效（COP）', '5.74', '5.39', '5.68', '-0.35', '-0.06'],
+            ['A路冷水系统', '系统总电功率（kW）', '77.10 kW', '79.90 kW', '77.70 kW', '+2.80 kW', '+0.60 kW'],
+            ['A路冷水系统', '冷冻水供水温度（℃）', '7.08℃', '7.44℃', '7.15℃', '+0.36℃', '+0.07℃'],
+            ['A路冷水系统', '冷冻水回水温度（℃）', '11.92℃', '12.42℃', '12.02℃', '+0.50℃', '+0.10℃'],
+            ['1号冷却塔', '风机频率（Hz）', '35.86 Hz', '37.21 Hz', '36.04 Hz', '+1.35 Hz', '+0.18 Hz'],
+            ['1号冷却塔', '出水温度（℃）', '29.31℃', '31.05℃', '29.50℃', '+1.74℃', '+0.19℃'],
+            ['1号冷水主机', '冷凝器进水温度（℃）', '29.72℃', '31.08℃', '29.92℃', '+1.36℃', '+0.20℃']
+          ]
+        }
+      }
+
+      const diffCell = function (text) {
+        const down = text.charAt(0) === '-'
+        return '<span class="diff-cell">' +
+          '<svg class="diff-arrow' + (down ? ' down' : '') + '" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M6 2l4 5H2z"/></svg>' +
+          text + '</span>'
+      }
+
+      const renderCompare = function (key) {
+        const p = POINTS[key]
+        G('compareTitle').textContent = '验证对比 — 工况点：' + p.label + ' · 归档于 ' + p.archivedAt
+        G('compareTbody').innerHTML = p.rows.map(function (r) {
+          return '<tr>' +
+            '<td class="col-object">' + r[0] + '</td>' +
+            '<td>' + r[1] + '</td>' +
+            '<td>' + r[2] + '</td>' +
+            '<td>' + r[3] + '</td>' +
+            '<td>' + r[4] + '</td>' +
+            '<td>' + diffCell(r[5]) + '</td>' +
+            '<td>' + diffCell(r[6]) + '</td>' +
+            '</tr>'
+        }).join('')
+      }
+
+      /* 初始：默认选中 34Hz 且已完成一次验证演示 */
+      renderCompare('p34')
+
+      const btn = G('btnVerify')
+      const btnText = G('btnVerifyText')
+      const loading = G('verifyLoading')
+      let isLoading = false
+
+      const getSelected = function () {
+        const checked = document.querySelector('input[name="archivePoint"]:checked')
+        return checked ? checked.value : null
+      }
+
+      /* radio 单选：点行任意位置也可切换；加载中禁止切换 */
+      document.querySelectorAll('#archiveTbody .archive-row').forEach(function (row) {
+        row.addEventListener('click', function (e) {
+          if (isLoading) { e.preventDefault(); return }
+          const radio = row.querySelector('.archive-radio')
+          radio.checked = true
+          document.querySelectorAll('#archiveTbody .archive-row').forEach(function (r) {
+            r.classList.toggle('selected', r === row)
+          })
+        })
+      })
+
+      btn.addEventListener('click', function () {
+        if (isLoading) return
+        const key = getSelected()
+        if (!key) { showToast('请先选择一个归档工况点'); return }
+        isLoading = true
+        btn.disabled = true
+        btn.classList.add('is-loading')
+        btnText.textContent = '验证中…'
+        loading.classList.add('show')
+
+        setTimeout(function () {
+          loading.classList.remove('show')
+          btn.disabled = false
+          btn.classList.remove('is-loading')
+          btnText.textContent = '发起验证'
+          isLoading = false
+
+          renderCompare(key)
+          G('verifyTime').textContent = formatNow()
+
+          const statusPill = document.querySelector('.archive-row[data-point="' + key + '"] [data-status]')
+          statusPill.textContent = '本次已验证'
+          statusPill.classList.remove('pending')
+          statusPill.classList.add('verified')
+
+          showToast('已完成验证：' + POINTS[key].label + ' 工况点，下方对比结果已刷新（结果仅本页查看，不会保存）')
+        }, 900)
+      })
+    })()
+  </script>
+
+  <button class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+
+  <script>
+  function initAnnoVersionFilter() {
+    var tags = document.getElementById('annoFilterTags');
+    if (!document.body.classList.contains('annotation-mode')) return;
+    var annos = document.querySelectorAll('.anno[data-version]');
+    var versions = [];
+    annos.forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (v && versions.indexOf(v) === -1) versions.push(v);
+    });
+    versions.sort(function(a, b) {
+      var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+      var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+      for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+        if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+      }
+      return 0;
+    });
+    tags.innerHTML = '';
+    var allBtn = document.createElement('span');
+    allBtn.className = 'anno-filter-tag active';
+    allBtn.textContent = '全部';
+    allBtn.onclick = function() { filterAnno('all', versions[0]); setActive(this); };
+    tags.appendChild(allBtn);
+    versions.forEach(function(v) {
+      var btn = document.createElement('span');
+      btn.className = 'anno-filter-tag';
+      btn.textContent = v;
+      btn.onclick = function() { filterAnno(v, versions[0]); setActive(this); };
+      tags.appendChild(btn);
+    });
+    if (versions.length > 0) filterAnno('all', versions[0]);
+  }
+  function filterAnno(version, latest) {
+    document.querySelectorAll('.anno[data-version]').forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (version === 'all') {
+        a.style.display = '';
+        a.style.opacity = (v === latest) ? '1' : '0.6';
+      } else {
+        a.style.display = (v === version) ? '' : 'none';
+        a.style.opacity = '1';
+      }
+    });
+  }
+  function setActive(el) {
+    el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function(t) { t.classList.remove('active'); });
+    el.classList.add('active');
+  }
+  </script>
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="多工况探索"></script>
+</body>
+</html>

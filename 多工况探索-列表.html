@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>多工况探索 - 列表</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-dark: #17358A;
+      --success: #16A34A;
+      --success-light: #F0FDF4;
+      --warning: #D97706;
+      --warning-light: #FFF7ED;
+      --danger: #DC2626;
+      --danger-light: #FEF2F2;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --sidebar-bg: #071B2E;
+      --header-bg: #071B2E;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button { border: none; background: none; font: inherit; }
+
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main { flex: 1; min-width: 0; overflow-y: auto; background: var(--bg-body); }
+    .page-shell { padding: 18px 20px 24px; }
+
+    .page-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .page-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px 10px;
+    }
+
+    .page-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.4;
+    }
+
+    .page-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 0 18px 16px;
+      flex-wrap: wrap;
+    }
+
+    .page-toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .page-toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .search-field {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      height: 34px;
+      padding: 0 12px;
+      min-width: 240px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text-secondary);
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .search-field:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.12);
+    }
+
+    .search-field svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+      opacity: .75;
+      flex-shrink: 0;
+    }
+
+    .search-input {
+      border: none;
+      outline: none;
+      font-size: 12px;
+      width: 100%;
+      color: var(--text-primary);
+      background: transparent;
+    }
+
+    .search-input::placeholder {
+      color: var(--text-hint);
+    }
+
+    .filter-select {
+      height: 34px;
+      padding: 0 30px 0 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background-color: #fff;
+      font-size: 12px;
+      color: var(--text-secondary);
+      outline: none;
+      appearance: none;
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%2394A3B8' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .filter-select:focus-visible {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.12);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 34px;
+      padding: 0 14px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .btn-primary {
+      color: #fff;
+      background: var(--primary);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-default {
+      background: #fff;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+
+    .btn-default:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    .data-table {
+      width: 100%;
+      min-width: 1180px;
+      border-collapse: collapse;
+    }
+
+    .data-table thead th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 14px 16px;
+      font-size: 13px;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-light);
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+
+    .data-table tbody td.status-cell {
+      white-space: normal;
+    }
+
+    .data-table tbody tr:hover {
+      background: #FBFCFE;
+    }
+
+    .data-table tbody tr.row-empty:hover {
+      background: transparent;
+    }
+
+    .status-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #F1F5F9;
+      color: var(--text-secondary);
+    }
+
+    .status-tag.draft {
+      background: #F1F5F9;
+      color: var(--text-secondary);
+    }
+
+    .status-tag.running {
+      background: var(--warning-light);
+      color: var(--warning);
+    }
+
+    .status-tag.done {
+      background: var(--success-light);
+      color: var(--success);
+    }
+
+    .status-tag.aborted {
+      background: var(--danger-light);
+      color: var(--danger);
+    }
+
+    .status-sub {
+      margin-top: 4px;
+      font-size: 11px;
+      color: var(--text-hint);
+      line-height: 1.5;
+    }
+
+    .actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      white-space: nowrap;
+    }
+
+    .action-link {
+      font-size: 13px;
+      cursor: pointer;
+      color: #1890FF;
+      transition: opacity var(--transition);
+    }
+
+    .action-link:hover {
+      opacity: 0.72;
+    }
+
+    .action-link.delete {
+      color: var(--danger);
+    }
+
+    .page-foot {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px;
+    }
+
+    .page-note {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.75;
+    }
+
+    .pagination-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+    }
+
+    .pagination-total {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .pagination {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .page-item,
+    .page-arrow {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .page-item:hover,
+    .page-arrow:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .page-item.active {
+      color: #fff;
+      border-color: var(--primary);
+      background: var(--primary);
+    }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      min-width: 180px;
+      max-width: 320px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.92);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.6;
+      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.28);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: all .25s ease;
+      z-index: 260;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100000;
+      padding: 24px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    body.modal-open {
+      overflow: hidden;
+    }
+
+    .modal {
+      position: relative;
+      background: #fff;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18), var(--shadow-card);
+      max-width: 480px;
+      width: 100%;
+      max-height: min(90vh, 640px);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      animation: modal-in .22s var(--transition);
+    }
+
+    @keyframes modal-in {
+      from { opacity: 0; transform: translateY(8px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .modal-head {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      color: var(--text-hint);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .modal-close:hover {
+      background: #F1F5F9;
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      padding: 18px 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .modal-foot {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .form-row {
+      margin-bottom: 14px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .form-label .req {
+      color: var(--danger);
+      margin-right: 2px;
+    }
+
+    .input-text {
+      width: 100%;
+      height: 34px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      color: var(--text-primary);
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .input-text:focus-visible {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.15);
+    }
+
+    .hint-block {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      padding: 10px 12px;
+      background: #F8FAFC;
+      border-radius: var(--radius);
+      margin-top: 4px;
+    }
+
+    @media (max-width: 900px) {
+      .page-head,
+      .page-toolbar,
+      .page-foot {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .page-toolbar-left,
+      .page-toolbar-right {
+        width: 100%;
+      }
+
+      .search-field {
+        width: 100%;
+      }
+
+      .pagination-wrap {
+        align-items: flex-start;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+        <div class="anno-filter-bar" id="annoFilterBar">
+          <span class="anno-filter-label">批注版本：</span>
+          <div class="anno-filter-tags" id="annoFilterTags"></div>
+        </div>
+        <div class="page-shell">
+          <div class="anno anno-version-header" data-version="v2.4">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v2.4</p>
+              <p><b>更新日期：</b>2026-07-02</p>
+              <p><b>变更概述：</b>新增独立模块「多工况探索」，作为策略制定/执行/验证三阶段的统一入口。评审修订：去除冻结与续跑概念、新建须选系统实例。</p>
+              <p><b>本页说明：</b>本页是「多工况探索」模块的策略列表与生命周期管理入口，支持按策略名称搜索、按状态筛选、新建探索策略（须选择具体系统实例）；表格按状态显示对应操作入口，串联策略制定、执行监控、验证对比三个子页。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-req" data-version="v2.4">
+            <span class="anno-tag">需求说明</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>页面级验收要点（引用需求 §5.3 生命周期状态机、§11 需求清单 #1）：</b></p>
+              <ul>
+                <li>策略状态只有四个：草稿 / 执行中 / 已完成 / 已中止；策略制定的产物通过「保存草稿」保存，<b>能否进入执行只看"排程已生成并保存"</b>——排程已生成并保存的草稿方可执行，未生成排程的草稿只能继续制定或删除。</li>
+                <li><b>"验证"不是状态</b>：已完成、已中止的策略均可随时发起验证查询，操作列需分别为这两种状态提供"验证"入口。</li>
+                <li>草稿态是唯一允许"制定"（继续编辑排程）与"删除"的状态；进入执行中及之后不再允许回到制定环节；<b>已中止是终态</b>，不提供任何重新执行入口，仅可验证与查看排程。</li>
+                <li>每条策略归属一个具体系统实例（水冷冷水系统对象），新建时必选且创建后不可改；开机组合、基准线与排程均锚定该系统实例（需求 §7.1）。</li>
+                <li>本页是模块唯一入口，需可跳转到策略制定、执行监控、验证对比三个子页，不额外新增其他入口。</li>
+              </ul>
+            </div>
+          </div>
+
+          <section class="page-card">
+            <div class="page-head">
+              <div class="page-title">多工况探索</div>
+            </div>
+
+            <div class="page-toolbar">
+              <div class="page-toolbar-left">
+                <label class="search-field">
+                  <svg viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M6.5 1.5a5 5 0 1 0 3.1 8.9l3.5 3.5a1 1 0 0 0 1.4-1.4l-3.5-3.5a5 5 0 0 0-4.5-7.5zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/>
+                  </svg>
+                  <input class="search-input" type="text" id="searchInput" placeholder="搜索策略名称">
+                </label>
+                <select class="filter-select" id="statusFilter" aria-label="按状态筛选">
+                  <option value="all" selected>全部</option>
+                  <option value="draft">草稿</option>
+                  <option value="running">执行中</option>
+                  <option value="done">已完成</option>
+                  <option value="aborted">已中止</option>
+                </select>
+              </div>
+              <div class="page-toolbar-right">
+                <button type="button" class="btn btn-primary" id="createBtn">新建探索策略</button>
+              </div>
+            </div>
+
+            <div class="anno anno-field" data-version="v2.4">
+              <span class="anno-tag">字段说明</span>
+              <span class="anno-version">v2.4</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>列表工具栏（搜索 + 状态筛选 + 新建）</p>
+                <table class="anno-table">
+                  <thead>
+                    <tr><th>控件</th><th>类型</th><th>说明</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>搜索输入框</td><td>文本</td><td>按"策略名称"模糊匹配，对应 <code>exploration_strategy.strategy_name</code>（需求 §4.1①）</td></tr>
+                    <tr><td>状态筛选下拉</td><td>单选下拉</td><td>可选项：全部 / 草稿 / 执行中 / 已完成 / 已中止，四态定义见需求 §5.3</td></tr>
+                    <tr><td>新建探索策略按钮</td><td>主操作</td><td>点击打开新建弹窗（须选择系统实例并填写策略名称），创建后进入策略制定阶段</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="anno anno-ux" data-version="v2.4">
+              <span class="anno-tag">交互说明</span>
+              <span class="anno-version">v2.4</span>
+              <span class="anno-source">产品推断</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>列表工具栏</p>
+                <ul>
+                  <li><b>搜索：</b>输入即实时过滤，无需回车；清空输入框恢复展示（当前状态筛选范围内的）全部策略。</li>
+                  <li><b>状态筛选：</b>切换下拉选项后立即刷新表格，与搜索关键字取交集。</li>
+                  <li><b>新建：</b>点击「新建探索策略」打开弹窗；确认后跳转策略制定页开始编排；取消不产生数据变化。</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="anno anno-data" data-version="v2.4">
+              <span class="anno-tag">数据逻辑</span>
+              <span class="anno-version">v2.4</span>
+              <span class="anno-source">产品推断</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>工具栏查询</p>
+                <ul>
+                  <li><b>查询条件：</b>"策略名称模糊匹配" 且 "状态精确匹配"，两个条件为"且"关系。</li>
+                  <li><b>空条件：</b>关键字为空、状态为"全部"时展示当前页全部策略。</li>
+                  <li><b>刷新方式：</b>本原型为本地过滤演示，不重新请求接口；真实环境下应为服务端分页查询。</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>策略名称</th>
+                    <th>所属系统</th>
+                    <th>开机组合摘要</th>
+                    <th>绑定仿真实例</th>
+                    <th>状态</th>
+                    <th>创建人</th>
+                    <th>创建时间</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="strategyTableBody">
+                  <tr data-name="冷冻泵变频探索-2026Q3" data-status="running">
+                    <td>冷冻泵变频探索-2026Q3</td>
+                    <td>3#数据中心水冷冷水系统</td>
+                    <td>2 主机 / 3 冷冻泵 / 2 冷却泵 / 2 冷却塔</td>
+                    <td>1号集成冷站仿真</td>
+                    <td class="status-cell"><span class="status-tag running">执行中</span></td>
+                    <td>王工</td>
+                    <td>2026-06-10</td>
+                    <td>
+                      <div class="actions">
+                        <span class="action-link" data-action="monitor">监控</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr data-name="冷却塔风机频率探索-2026Q2" data-status="done">
+                    <td>冷却塔风机频率探索-2026Q2</td>
+                    <td>A路冷水系统</td>
+                    <td>2 主机 / 2 冷冻泵 / 3 冷却泵 / 2 冷却塔</td>
+                    <td>1号集成冷站仿真</td>
+                    <td class="status-cell"><span class="status-tag done">已完成</span></td>
+                    <td>王工</td>
+                    <td>2026-03-20</td>
+                    <td>
+                      <div class="actions">
+                        <span class="action-link" data-action="verify">验证</span>
+                        <span class="action-link" data-action="view-schedule">查看排程</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr data-name="冷却泵频率探索-筹备中" data-status="draft">
+                    <td>冷却泵频率探索-筹备中</td>
+                    <td>C路冷水系统</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td class="status-cell">
+                      <span class="status-tag draft">草稿</span>
+                      <div class="status-sub">排程未生成，暂不可执行</div>
+                    </td>
+                    <td>赵工</td>
+                    <td>2026-06-25</td>
+                    <td>
+                      <div class="actions">
+                        <span class="action-link" data-action="edit-plan">制定</span>
+                        <span class="action-link delete" data-action="delete">删除</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr data-name="主机出水温度探索-2026Q1" data-status="aborted">
+                    <td>主机出水温度探索-2026Q1</td>
+                    <td>G1栋A路冷水系统</td>
+                    <td>1 主机 / 2 冷冻泵 / 2 冷却泵 / 2 冷却塔</td>
+                    <td>1号集成冷站仿真</td>
+                    <td class="status-cell">
+                      <span class="status-tag aborted">已中止</span>
+                      <div class="status-sub">中止原因：运行期校验命中"开机组合漂移"</div>
+                    </td>
+                    <td>李工</td>
+                    <td>2026-01-15</td>
+                    <td>
+                      <div class="actions">
+                        <span class="action-link" data-action="verify">验证</span>
+                        <span class="action-link" data-action="view-schedule">查看排程</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr id="emptyRow" class="row-empty" style="display:none;">
+                    <td colspan="8" style="text-align:center; padding:56px 20px; color:var(--text-hint); white-space:normal;">
+                      暂无匹配的探索策略，试试调整搜索关键字或状态筛选，或
+                      <span class="action-link" id="emptyCreateLink">新建探索策略</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="anno anno-field" data-version="v2.4">
+              <span class="anno-tag">字段说明</span>
+              <span class="anno-version">v2.4</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>探索策略列表主表格</p>
+                <table class="anno-table">
+                  <thead>
+                    <tr><th>列名</th><th>类型</th><th>说明</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>策略名称</td><td>String</td><td>对应 <code>strategy_name</code>（需求 §4.1①）</td></tr>
+                    <tr><td>所属系统</td><td>String</td><td>策略归属的具体系统实例（水冷冷水系统对象），新建时必选、创建后不可改；开机组合与排程均锚定该系统（需求 §7.1）</td></tr>
+                    <tr><td>开机组合摘要</td><td>String（摘要）</td><td>对应 <code>device_combo</code> 开机组合快照的摘要展示（需求 §4.1①、§7.1）；草稿态尚未完成"确定开机组合"步骤时显示"—"。开机组合按设备类型（物模型）设定，同类型所有开机实例同时下发相同设定值</td></tr>
+                    <tr><td>绑定仿真实例</td><td>String</td><td>对应 <code>sim_id</code>（需求 §4.1①、§7.1）；执行期每步归档与验证期对比查询均基于此实例</td></tr>
+                    <tr><td>状态</td><td>Enum</td><td>草稿 / 执行中 / 已完成 / 已中止，四态定义见需求 §5.3；只反映任务生命周期阶段。草稿态下能否执行只看"排程已生成并保存"，未生成排程的草稿在状态下方以副文案提示"排程未生成，暂不可执行"</td></tr>
+                    <tr><td>创建人</td><td>String</td><td>对应 <code>created_by</code>（需求 §4.1①）</td></tr>
+                    <tr><td>创建时间</td><td>Datetime</td><td>对应 <code>created_at</code></td></tr>
+                    <tr><td>操作</td><td>Action</td><td>按"状态 × 排程是否已生成并保存"显隐，见下方数据逻辑批注</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="anno anno-data" data-version="v2.4">
+              <span class="anno-tag">数据逻辑</span>
+              <span class="anno-version">v2.4</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>探索策略列表主表格与操作列</p>
+                <ul>
+                  <li><b>排序规则：</b>按创建时间倒序排列。</li>
+                  <li><b>分页规则：</b>20 条/页（本页为静态演示）。</li>
+                  <li><b>状态口径：</b>状态机只有四态（需求 §5.3）；策略制定的产物通过「保存草稿」保存，草稿态下能否进入执行只看"排程已生成并保存"；已中止是终态，不提供重新执行入口。</li>
+                </ul>
+                <p><b>操作列显隐矩阵（状态 × 排程是否已生成并保存，依据需求 §5.2/§5.3/§4.1①）：</b></p>
+                <table class="anno-table">
+                  <thead>
+                    <tr><th>状态</th><th>排程情况</th><th>可用操作</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>草稿</td><td>排程未生成</td><td>制定 / 删除（"执行"入口不展示）</td></tr>
+                    <tr><td>草稿</td><td>排程已生成并保存，尚未开跑</td><td>制定 / 执行 / 删除</td></tr>
+                    <tr><td>执行中</td><td>排程已生成并保存（恒成立）</td><td>监控</td></tr>
+                    <tr><td>已完成</td><td>排程已生成并保存（恒成立）</td><td>验证 / 查看排程</td></tr>
+                    <tr><td>已中止</td><td>排程已生成并保存（恒成立）</td><td>验证 / 查看排程（终态，仅可回溯）</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="anno anno-ux" data-version="v2.4">
+              <span class="anno-tag">交互说明</span>
+              <span class="anno-version">v2.4</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>表格行操作列</p>
+                <ul>
+                  <li><b>制定：</b>跳转多工况探索-策略制定.html，继续编辑该草稿的开机组合/基准线/排程（对应需求 §3.1 U1 策略制定工作台）。</li>
+                  <li><b>查看排程：</b>跳转多工况探索-策略制定.html?mode=view，只读查看已保存的排程内容。</li>
+                  <li><b>执行：</b>跳转多工况探索-执行监控.html，进入执行前置校验（需求 §8.1）；前提是排程已生成并保存，未生成排程的草稿不展示该入口（本页演示数据中"冷却泵频率探索-筹备中"即此情况，仅显示 制定/删除）。</li>
+                  <li><b>监控：</b>跳转多工况探索-执行监控.html，查看执行中任务的实时进度（对应需求 §3.1 U2 执行监控台）。</li>
+                  <li><b>验证：</b>跳转多工况探索-验证对比.html，查询预测值 vs 实测值在线偏差（对应需求 §3.1 U3 验证对比视图、§9）。</li>
+                  <li><b>删除：</b>二次确认后从列表移除（示意）。</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="anno anno-state" data-version="v2.4">
+              <span class="anno-tag">状态说明</span>
+              <span class="anno-version">v2.4</span>
+              <span class="anno-source">产品推断</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>表格区域</p>
+                <ul>
+                  <li><b>默认态：</b>展示当前页策略列表（本原型静态展示 4 条示例，覆盖四态，其中草稿示例为"排程未生成"情况）。</li>
+                  <li><b>空态：</b>搜索或筛选后无匹配数据时，表格区域展示"暂无匹配的探索策略"，并引导「新建探索策略」。</li>
+                  <li><b>加载态：</b>真实环境下应展示骨架屏；本原型为静态数据，不模拟网络延迟。</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="anno anno-edge" data-version="v2.4">
+              <span class="anno-tag">边界与异常</span>
+              <span class="anno-version">v2.4</span>
+              <span class="anno-source">产品推断</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>表格操作列（删除相关）</p>
+                <ul>
+                  <li><b>删除限制：</b>仅"草稿"状态提供删除入口（无论排程是否已生成并保存）；<b>执行中的策略不可删除</b>，避免正在执行的任务被误删导致下发/归档链路悬空；已完成、已中止的策略同样不提供删除入口，以保留执行留痕与归档记录（产品推断，需求未直接提及，符合状态机与可追溯性约束；评审时建议与团队确认"已中止"策略是否需要单独的清理/归档机制）。</li>
+                  <li><b>删除二次确认：</b>点击删除后弹出确认提示，确认后从列表移除并 Toast 提示"已删除"；取消不产生变化。</li>
+                  <li><b>搜索无匹配：</b>关键字与筛选条件不限制字数，无匹配结果时展示空态，不报错。</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="page-foot">
+              <div class="page-note">
+                <div>排序：按照创建时间倒序排列</div>
+                <div>分页：20条/页</div>
+              </div>
+              <div class="pagination-wrap">
+                <div class="pagination-total">总共 4 个项目</div>
+                <div class="pagination">
+                  <span class="page-arrow" data-page="prev">‹</span>
+                  <span class="page-item active">1</span>
+                  <span class="page-arrow" data-page="next">›</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modalCreate" aria-hidden="true">
+    <div class="modal" role="dialog" aria-labelledby="createModalTitle">
+      <div class="modal-head">
+        <div class="modal-title" id="createModalTitle">新建探索策略</div>
+        <button type="button" class="modal-close" data-close aria-label="关闭">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="anno anno-field" data-version="v2.4">
+          <span class="anno-tag">字段说明</span>
+          <span class="anno-version">v2.4</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>新建探索策略弹窗；入口：列表工具栏「新建探索策略」按钮</p>
+            <table class="anno-table">
+              <thead>
+                <tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>系统实例（水冷冷水系统）</td><td>单选下拉</td><td>是</td><td>策略归属的具体系统实例，选项只列水冷冷水系统对象、与真实系统冷站页签对齐（3#数据中心水冷冷水系统 / A路冷水系统 / C路冷水系统 / G1栋A路冷水系统 / G1栋B路冷水系统）；创建后不可改——需求 §7.1 开机组合锚定的是具体冷站系统</td></tr>
+                <tr><td>策略名称</td><td>文本输入</td><td>是</td><td>对应 <code>exploration_strategy.strategy_name</code>（需求 §4.1①）；创建后仍可在策略制定页继续修改</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="anno anno-ux" data-version="v2.4">
+          <span class="anno-tag">交互说明</span>
+          <span class="anno-version">v2.4</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>新建探索策略弹窗</p>
+            <ul>
+              <li><b>确定：</b>依次校验"系统实例已选择"与"策略名称非空"，通过后创建策略草稿并进入"策略制定"阶段（需求 §2.1 阶段一），跳转多工况探索-策略制定.html，由用户继续完成开机组合、基准线与排程编排；未选择系统实例或名称为空时给出提示，不跳转。</li>
+              <li><b>取消/关闭：</b>不创建策略，直接关闭弹窗。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="anno anno-edge" data-version="v2.4">
+          <span class="anno-tag">边界与异常</span>
+          <span class="anno-version">v2.4</span>
+          <span class="anno-source">待确认</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>新建探索策略弹窗</p>
+            <ul>
+              <li><b>名称长度与去重：</b>需求文档未明确策略名称的字数上限、是否允许与已有策略重名；本原型未做强校验，仅要求非空。建议评审时与团队确认具体规则（如参考同类实体惯例：1~50 字、同项目下不可重名）。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label" for="newSystemInstance"><span class="req">*</span>系统实例（水冷冷水系统）</label>
+          <select class="filter-select" style="width:100%; height:34px;" id="newSystemInstance">
+            <option value="" selected>请选择系统实例</option>
+            <option value="3#数据中心水冷冷水系统">3#数据中心水冷冷水系统</option>
+            <option value="A路冷水系统">A路冷水系统</option>
+            <option value="C路冷水系统">C路冷水系统</option>
+            <option value="G1栋A路冷水系统">G1栋A路冷水系统</option>
+            <option value="G1栋B路冷水系统">G1栋B路冷水系统</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label class="form-label" for="newStrategyName"><span class="req">*</span>策略名称</label>
+          <input class="input-text" type="text" id="newStrategyName" placeholder="请输入策略名称，如「冷冻泵变频探索-2026Q3」">
+        </div>
+        <div class="hint-block">创建后进入策略制定，完成开机组合、基准线与排程编排；系统实例创建后不可修改。</div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-default" data-close>取 消</button>
+        <button type="button" class="btn btn-primary" id="btnConfirmCreate">确 定</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function () {
+      var toast = document.getElementById('toast');
+      var toastTimer = null;
+
+      function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 1800);
+      }
+
+      var ACTION_URLS = {
+        'edit-plan': '多工况探索-策略制定.html',
+        'view-schedule': '多工况探索-策略制定.html?mode=view',
+        'execute': '多工况探索-执行监控.html',
+        'monitor': '多工况探索-执行监控.html',
+        'verify': '多工况探索-验证对比.html'
+      };
+
+      var searchInput = document.getElementById('searchInput');
+      var statusFilter = document.getElementById('statusFilter');
+      var emptyRow = document.getElementById('emptyRow');
+
+      function applyFilter() {
+        var kw = searchInput.value.trim();
+        var st = statusFilter.value;
+        var rows = document.querySelectorAll('#strategyTableBody tr[data-name]');
+        var visible = 0;
+        rows.forEach(function (row) {
+          var name = row.getAttribute('data-name');
+          var status = row.getAttribute('data-status');
+          var matchName = !kw || name.indexOf(kw) > -1;
+          var matchStatus = st === 'all' || st === status;
+          var show = matchName && matchStatus;
+          row.style.display = show ? '' : 'none';
+          if (show) visible++;
+        });
+        emptyRow.style.display = visible === 0 ? '' : 'none';
+      }
+
+      searchInput.addEventListener('input', applyFilter);
+      statusFilter.addEventListener('change', applyFilter);
+
+      var modal = document.getElementById('modalCreate');
+      var nameInput = document.getElementById('newStrategyName');
+      var systemSelect = document.getElementById('newSystemInstance');
+
+      function openModal() {
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+        systemSelect.value = '';
+        nameInput.value = '';
+        systemSelect.focus();
+      }
+
+      function closeModal() {
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+      }
+
+      document.getElementById('createBtn').addEventListener('click', openModal);
+      document.getElementById('emptyCreateLink').addEventListener('click', openModal);
+
+      modal.querySelectorAll('[data-close]').forEach(function (btn) {
+        btn.addEventListener('click', closeModal);
+      });
+      modal.addEventListener('click', function (e) {
+        if (e.target === modal) closeModal();
+      });
+
+      document.getElementById('btnConfirmCreate').addEventListener('click', function () {
+        if (!systemSelect.value) {
+          showToast('请先选择系统实例');
+          systemSelect.focus();
+          return;
+        }
+        var name = nameInput.value.trim();
+        if (!name) {
+          showToast('请先输入策略名称');
+          nameInput.focus();
+          return;
+        }
+        window.location.href = '多工况探索-策略制定.html';
+      });
+
+      document.querySelectorAll('.action-link[data-action]').forEach(function (link) {
+        link.addEventListener('click', function () {
+          var action = link.getAttribute('data-action');
+          var row = link.closest('tr');
+          var name = row ? row.getAttribute('data-name') : '';
+
+          if (action === 'delete') {
+            if (window.confirm('确认删除探索策略「' + name + '」？删除后不可恢复。')) {
+              row.parentNode.removeChild(row);
+              showToast('已删除：' + name);
+              applyFilter();
+            }
+            return;
+          }
+
+          var url = ACTION_URLS[action];
+          if (url) window.location.href = url;
+        });
+      });
+
+      document.querySelectorAll('.page-item, .page-arrow').forEach(function (item) {
+        item.addEventListener('click', function () {
+          showToast('分页为静态示意');
+        });
+      });
+    })();
+  </script>
+
+  <button type="button" class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+  <script>
+  function initAnnoVersionFilter() {
+    var bar = document.getElementById('annoFilterBar');
+    var tags = document.getElementById('annoFilterTags');
+    if (!document.body.classList.contains('annotation-mode')) return;
+    var annos = document.querySelectorAll('.anno[data-version]');
+    var versions = [];
+    annos.forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (v && versions.indexOf(v) === -1) versions.push(v);
+    });
+    versions.sort(function(a, b) {
+      var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+      var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+      for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+        if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+      }
+      return 0;
+    });
+    tags.innerHTML = '';
+    var allBtn = document.createElement('span');
+    allBtn.className = 'anno-filter-tag active';
+    allBtn.textContent = '全部';
+    allBtn.onclick = function() { filterAnno('all', versions[0]); setActive(this); };
+    tags.appendChild(allBtn);
+    versions.forEach(function(v) {
+      var btn = document.createElement('span');
+      btn.className = 'anno-filter-tag';
+      btn.textContent = v;
+      btn.onclick = function() { filterAnno(v, versions[0]); setActive(this); };
+      tags.appendChild(btn);
+    });
+    if (versions.length > 0) filterAnno('all', versions[0]);
+  }
+  function filterAnno(version, latest) {
+    document.querySelectorAll('.anno[data-version]').forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (version === 'all') {
+        a.style.display = '';
+        a.style.opacity = (v === latest) ? '1' : '0.6';
+      } else {
+        a.style.display = (v === version) ? '' : 'none';
+        a.style.opacity = '1';
+      }
+    });
+  }
+  function setActive(el) {
+    el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function(t) { t.classList.remove('active'); });
+    el.classList.add('active');
+  }
+  </script>
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="多工况探索"></script>
+</body>
+</html>
