@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>能效视图</title>
+  <title>能耗模型管理</title>
   <style>
     :root {
       --primary: #1E40AF;
@@ -36,6 +36,8 @@
     }
 
     button { border: none; background: none; font: inherit; cursor: pointer; }
+
+    [hidden] { display: none !important; }
 
     .layout { display: flex; flex-direction: column; min-height: 100vh; }
     .body-wrap { display: flex; flex: 1; min-height: 0; }
@@ -86,11 +88,7 @@
       white-space: nowrap;
     }
 
-    .btn-primary {
-      color: #fff;
-      background: var(--primary);
-    }
-
+    .btn-primary { color: #fff; background: var(--primary); }
     .btn-primary:hover { background: var(--primary-dark); }
 
     .btn-outline {
@@ -98,21 +96,28 @@
       background: #fff;
       border: 1px solid var(--primary);
     }
-
     .btn-outline:hover { background: var(--primary-tint); }
+
+    .btn-ghost {
+      color: var(--text-primary);
+      background: #fff;
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
 
     .btn-danger-outline {
       color: var(--danger);
       background: #fff;
       border: 1px solid var(--danger-border);
     }
-
     .btn-danger-outline:hover { background: #FEF2F2; }
+
+    .btn[disabled] { opacity: .5; cursor: not-allowed; }
 
     /* 左树 + 右详情 */
     .model-split {
       display: flex;
-      min-height: 560px;
+      min-height: 620px;
       border-top: 1px solid var(--border-light);
     }
 
@@ -150,28 +155,23 @@
       flex: 1;
       overflow-y: auto;
       padding: 10px 8px 14px;
+      max-height: 640px;
     }
 
-    .tree-node {
-      font-size: 13px;
-      color: var(--text-secondary);
-      user-select: none;
-    }
+    .tree-node { font-size: 13px; color: var(--text-secondary); user-select: none; }
 
     .tree-row {
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 8px 10px;
+      padding: 7px 10px;
       border-radius: 6px;
       cursor: pointer;
       transition: background var(--transition), color var(--transition);
+      white-space: nowrap;
     }
 
-    .tree-row:hover {
-      background: rgba(30, 64, 175, 0.06);
-      color: var(--text-primary);
-    }
+    .tree-row:hover { background: rgba(30, 64, 175, 0.06); color: var(--text-primary); }
 
     .tree-row.active {
       background: var(--primary-tint);
@@ -184,8 +184,10 @@
       font-size: 10px;
       color: var(--text-hint);
       flex-shrink: 0;
+      text-align: center;
     }
 
+    .tree-label { overflow: hidden; text-overflow: ellipsis; }
     .tree-children { padding-left: 18px; }
 
     .model-detail {
@@ -204,26 +206,88 @@
       min-height: 0;
     }
 
-    .breadcrumb-bar {
-      font-size: 13px;
+    /* 节点视图头：返回 + 节点名 | 物模型 */
+    .node-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    .node-back {
+      width: 26px;
+      height: 26px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
       color: var(--text-secondary);
+      font-size: 16px;
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition);
+    }
+    .node-back:hover { background: var(--primary-tint); color: var(--primary); }
+
+    .node-name { font-weight: 700; color: var(--text-primary); }
+    .node-model-sep { color: var(--border); }
+    .node-model { color: var(--text-hint); font-size: 13px; }
+
+    /* 工程基础信息视图（首页态） */
+    .home-block { max-width: 860px; }
+    .home-block-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .home-node-name { font-size: 15px; font-weight: 700; }
+    .home-section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
       margin-bottom: 12px;
     }
-
-    .breadcrumb-bar strong {
-      color: var(--text-primary);
-      font-weight: 600;
+    .home-section-title::before {
+      content: '';
+      width: 3px;
+      height: 14px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+    .home-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px 40px;
+    }
+    .home-field { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+    .home-field-label { width: 64px; text-align: right; color: var(--text-secondary); flex-shrink: 0; }
+    .home-field-label .req { color: var(--danger); margin-right: 2px; }
+    .home-field input {
+      flex: 1;
+      height: 32px;
+      padding: 0 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      color: var(--text-secondary);
+      background: #F8FAFC;
     }
 
+    /* Tabs */
     .main-tabs {
       display: flex;
       gap: 0;
       border-bottom: 1px solid var(--border-light);
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       flex-wrap: wrap;
     }
 
     .main-tab {
+      display: inline-flex;
+      align-items: center;
       padding: 10px 16px;
       font-size: 14px;
       color: var(--text-secondary);
@@ -244,6 +308,22 @@
       border-bottom-color: var(--primary);
     }
 
+    .tab-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 5px;
+      margin-left: 6px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 600;
+      color: #fff;
+      background: var(--text-hint);
+    }
+    .tab-badge.has { background: var(--primary); }
+
     .tab-panel { display: none; flex: 1; min-height: 0; }
     .tab-panel.active { display: flex; flex-direction: column; }
 
@@ -260,11 +340,7 @@
       background: #FAFBFD;
     }
 
-    /* 测点列表（对齐产品测点列表截图） */
-    .tab-panel#panel-points {
-      min-height: 0;
-    }
-
+    /* 测点列表 */
     .points-toolbar {
       display: flex;
       align-items: center;
@@ -283,16 +359,17 @@
       flex-wrap: wrap;
     }
 
-    .btn-ghost {
-      color: var(--text-primary);
-      background: #fff;
-      border: 1px solid var(--border);
+    .toolbar-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: color var(--transition);
     }
-
-    .btn-ghost:hover {
-      border-color: var(--primary);
-      color: var(--primary);
-    }
+    .toolbar-link:hover { color: var(--primary); }
+    .toolbar-link svg { width: 14px; height: 14px; }
 
     .toolbar-field {
       display: inline-flex;
@@ -302,9 +379,7 @@
       color: var(--text-secondary);
     }
 
-    .toolbar-label {
-      white-space: nowrap;
-    }
+    .toolbar-label { white-space: nowrap; }
 
     .toolbar-select {
       height: 34px;
@@ -325,12 +400,10 @@
       box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.12);
     }
 
-    .toolbar-select-narrow {
-      min-width: 72px;
-    }
+    .toolbar-select-narrow { min-width: 84px; }
 
     .toolbar-search {
-      width: 200px;
+      width: 220px;
       max-width: 42vw;
       height: 34px;
       padding: 0 12px;
@@ -345,44 +418,17 @@
       box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.12);
     }
 
-    .icon-tool-btn {
-      width: 34px;
-      height: 34px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: #fff;
-      color: var(--text-secondary);
-      cursor: pointer;
-      transition: border-color var(--transition), color var(--transition);
-    }
-
-    .icon-tool-btn:hover {
-      border-color: var(--primary);
-      color: var(--primary);
-    }
-
-    .icon-tool-btn svg {
-      width: 18px;
-      height: 18px;
-    }
-
     .points-table-wrap {
       flex: 1;
-      min-height: 280px;
+      min-height: 240px;
       overflow: auto;
       border: 1px solid var(--border-light);
       border-radius: var(--radius);
       background: #fff;
     }
 
-    .data-table {
-      width: 100%;
-      min-width: 1280px;
-      border-collapse: collapse;
-    }
+    .data-table { width: 100%; border-collapse: collapse; }
+    .points-table { min-width: 980px; }
 
     .data-table thead th {
       padding: 12px 14px;
@@ -403,14 +449,9 @@
       vertical-align: middle;
     }
 
-    .data-table tbody tr:hover {
-      background: #FBFCFE;
-    }
+    .data-table tbody tr:hover { background: #FBFCFE; }
 
-    .data-table .col-check {
-      width: 44px;
-      text-align: center;
-    }
+    .data-table .col-check { width: 44px; text-align: center; }
 
     .data-table .col-check input[type="checkbox"] {
       width: 16px;
@@ -419,9 +460,297 @@
       accent-color: var(--primary);
     }
 
-    .data-table .num-cell {
-      font-variant-numeric: tabular-nums;
+    .data-table .num-cell { font-variant-numeric: tabular-nums; }
+
+    .data-table .empty-cell {
+      text-align: center;
+      color: var(--text-hint);
+      padding: 48px 0;
     }
+
+    .sort-icon { color: var(--text-hint); font-size: 9px; margin-left: 4px; }
+
+    .point-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #22C55E;
+      margin-right: 6px;
+      vertical-align: 1px;
+    }
+
+    .src-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      background: #F0FDF4;
+      border: 1px solid #86EFAC;
+      color: #16A34A;
+      font-size: 10px;
+      font-weight: 700;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .src-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 7px;
+      margin-right: 4px;
+      border-radius: 4px;
+      font-size: 11px;
+      color: var(--primary);
+      background: var(--primary-tint);
+      border: 1px solid #C7D8F8;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    .points-actions { display: inline-flex; align-items: center; gap: 12px; white-space: nowrap; }
+
+    .action-link {
+      font-size: 13px;
+      color: var(--primary);
+      cursor: pointer;
+      text-decoration: none;
+      background: none;
+      border: none;
+      padding: 0;
+      font-family: inherit;
+    }
+    .action-link:hover { text-decoration: underline; }
+    .action-link.danger { color: var(--danger); }
+
+    /* 分页条 */
+    .pager-bar {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 10px 2px 0;
+      font-size: 12px;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+    .pager-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    /* 详情信息 */
+    .info-split { display: flex; gap: 16px; flex: 1; min-height: 340px; }
+
+    .info-nav {
+      width: 200px;
+      flex-shrink: 0;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      background: #FAFBFD;
+      padding: 12px 10px;
+      font-size: 13px;
+      overflow-y: auto;
+      max-height: 520px;
+    }
+
+    .info-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-radius: 6px;
+      color: var(--text-secondary);
+      cursor: default;
+    }
+    .info-nav-item.active {
+      background: var(--primary-tint);
+      color: var(--primary);
+      font-weight: 600;
+    }
+    .info-nav-sub {
+      padding: 4px 10px 4px 26px;
+      font-size: 12px;
+      color: var(--text-hint);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .info-body {
+      flex: 1;
+      min-width: 0;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      overflow-y: auto;
+      max-height: 520px;
+    }
+
+    .info-body-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .info-body-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .info-body-title::before {
+      content: '';
+      width: 3px;
+      height: 14px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+    .info-body-actions { display: flex; gap: 8px; }
+    .info-body-actions .btn { height: 28px; padding: 0 12px; }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px 32px;
+    }
+    .info-item { display: flex; gap: 8px; font-size: 13px; padding: 4px 0; min-width: 0; }
+    .info-item-label { width: 148px; flex-shrink: 0; text-align: right; color: var(--text-secondary); }
+    .info-item-value { flex: 1; min-width: 0; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; }
+    .info-item-value.hint { color: var(--text-hint); }
+
+    .info-loc {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--border-light);
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      word-break: break-all;
+    }
+
+    /* 关系拓扑 */
+    .topo-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+
+    .seg {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .seg button {
+      padding: 7px 14px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      background: #fff;
+      border-right: 1px solid var(--border);
+      transition: all var(--transition);
+    }
+    .seg button:last-child { border-right: none; }
+    .seg button.active {
+      background: var(--primary-tint);
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .topo-table-wrap {
+      flex: 1;
+      overflow: auto;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      background: #fff;
+    }
+    .topo-table { min-width: 1080px; }
+
+    .topo-canvas-wrap {
+      flex: 1;
+      min-height: 360px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);
+      overflow: auto;
+      position: relative;
+      padding: 14px;
+    }
+
+    .topo-legend {
+      display: flex;
+      gap: 18px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+    .topo-legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+    .topo-legend .lg i { width: 22px; height: 2px; display: inline-block; }
+    .topo-legend .lg-contain i { background: #2F78F6; }
+    .topo-legend .lg-loc i { background: #16A34A; }
+
+    .topo-svg { display: block; width: 100%; min-width: 640px; height: auto; }
+    .topo-card-rect { fill: #fff; stroke: var(--border); stroke-width: 1.5; }
+    .topo-card-rect.cur { fill: var(--primary-tint); stroke: var(--primary); stroke-width: 2; }
+    .topo-card-title { font-size: 12px; font-weight: 700; fill: var(--text-primary); }
+    .topo-card-model { font-size: 10px; fill: var(--text-hint); }
+    .topo-edge-contain { stroke: #2F78F6; stroke-width: 1.6; fill: none; marker-end: url(#arrowBlue); }
+    .topo-edge-loc { stroke: #16A34A; stroke-width: 1.6; fill: none; marker-end: url(#arrowGreen); }
+    .topo-edge-label { font-size: 10px; font-weight: 600; }
+    .topo-edge-label.contain { fill: #2F78F6; }
+    .topo-edge-label.loc { fill: #16A34A; }
+
+    /* 设备履历 */
+    .history-toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-shrink: 0; }
+
+    /* 能效配置 */
+    .eff-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 15px 16px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      background: #fff;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+    .eff-row-name { font-weight: 500; }
+
+    .meter-block { margin-top: 18px; }
+    .meter-block-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .meter-block-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .meter-block-hint { font-size: 12px; color: var(--text-hint); }
+    .meter-table-wrap {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      overflow: auto;
+      background: #fff;
+    }
+    .meter-table { min-width: 680px; }
 
     .status-ok {
       display: inline-flex;
@@ -435,154 +764,6 @@
       border: 1px solid #B7EB8F;
     }
 
-    .points-actions {
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-      white-space: nowrap;
-    }
-
-    .points-actions .action-link {
-      font-size: 13px;
-      color: var(--primary);
-      cursor: pointer;
-      text-decoration: none;
-      background: none;
-      border: none;
-      padding: 0;
-      font-family: inherit;
-    }
-
-    .points-actions .action-link:hover {
-      text-decoration: underline;
-    }
-
-    /* 关系拓扑画布 */
-    .topo-toolbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 12px;
-      flex-wrap: wrap;
-    }
-
-    .topo-hint {
-      font-size: 12px;
-      color: var(--text-secondary);
-    }
-
-    .topo-zoom {
-      display: flex;
-      gap: 6px;
-    }
-
-    .topo-zoom .btn {
-      width: 34px;
-      padding: 0;
-      border: 1px solid var(--border);
-      background: #fff;
-      color: var(--text-secondary);
-      font-weight: 700;
-    }
-
-    .topo-zoom .btn:hover {
-      border-color: var(--primary);
-      color: var(--primary);
-    }
-
-    .topo-canvas-wrap {
-      flex: 1;
-      min-height: 420px;
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-lg);
-      background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);
-      overflow: auto;
-      position: relative;
-    }
-
-    .topo-svg {
-      display: block;
-      width: 100%;
-      min-width: 720px;
-      height: auto;
-    }
-
-    .topo-line {
-      stroke: #CBD5E1;
-      stroke-width: 2;
-      fill: none;
-    }
-
-    .topo-card {
-      fill: #fff;
-      stroke: var(--border);
-      stroke-width: 1.5;
-    }
-
-    .topo-card.root {
-      fill: var(--primary-tint);
-      stroke: var(--primary);
-      stroke-width: 2;
-    }
-
-    .topo-title {
-      font-size: 13px;
-      font-weight: 700;
-      fill: var(--text-primary);
-    }
-
-    .topo-metric {
-      font-size: 11px;
-      fill: var(--text-secondary);
-    }
-
-    .topo-tag {
-      font-size: 10px;
-      font-weight: 600;
-      fill: var(--primary);
-    }
-
-    .page-note-bar {
-      padding: 10px 18px 14px;
-      font-size: 12px;
-      color: var(--text-secondary);
-      border-top: 1px solid var(--border-light);
-      background: #FAFBFD;
-    }
-
-    /* 计量表具（v2.5） */
-    .meter-block { margin-bottom: 16px; }
-
-    .meter-block-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
-    }
-
-    .meter-block-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-
-    .meter-block-hint {
-      font-size: 12px;
-      color: var(--text-hint);
-    }
-
-    .meter-table-wrap {
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius);
-      overflow: auto;
-      background: #fff;
-    }
-
-    .meter-table { min-width: 680px; }
-
     .status-muted {
       display: inline-flex;
       align-items: center;
@@ -595,6 +776,240 @@
       border: 1px solid var(--border);
     }
 
+    /* 弹窗 */
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      z-index: 220;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-mask[hidden] { display: none; }
+
+    .modal {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+      width: 760px;
+      max-width: 96vw;
+      max-height: 86vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .modal.modal-wide { width: 920px; }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 15px 20px;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .modal-close {
+      width: 26px;
+      height: 26px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      color: var(--text-hint);
+      font-size: 16px;
+    }
+    .modal-close:hover { background: #F1F5F9; color: var(--text-primary); }
+
+    .modal-body { padding: 16px 20px; overflow: auto; flex: 1; min-height: 0; }
+
+    .modal-foot {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 12px 20px 16px;
+      border-top: 1px solid var(--border-light);
+    }
+
+    .metering-table { min-width: 0; }
+    .metering-table td { vertical-align: middle; }
+    .metering-rule-cell { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .metering-rule-cell .toolbar-select { min-width: 168px; }
+    .metering-pick-btn { height: 32px; padding: 0 12px; font-weight: 500; }
+
+    /* 子节点多选（各子节点计量能耗） */
+    .child-select { position: relative; display: inline-block; }
+    .child-select-btn {
+      height: 32px;
+      min-width: 168px;
+      padding: 0 28px 0 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      color: var(--text-hint);
+      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center;
+      text-align: left;
+      cursor: pointer;
+    }
+    .child-select-btn.has-value { color: var(--text-primary); }
+    .child-pop {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      z-index: 320;
+      min-width: 240px;
+      max-height: 220px;
+      overflow-y: auto;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-card);
+      padding: 6px;
+    }
+    .child-pop[hidden] { display: none; }
+    .child-pop label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 8px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .child-pop label:hover { background: #F5F8FD; }
+    .child-pop input[type="checkbox"] { accent-color: var(--primary); }
+    .child-pop .child-pop-empty { padding: 16px 0; text-align: center; color: var(--text-hint); font-size: 12px; }
+
+    /* 启用开关 */
+    .switch {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      width: 56px;
+      height: 24px;
+      border-radius: 999px;
+      background: #CBD5E1;
+      cursor: pointer;
+      transition: background var(--transition);
+    }
+    .switch::after {
+      content: '';
+      position: absolute;
+      left: 3px;
+      top: 3px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.25);
+      transition: left var(--transition);
+    }
+    .switch .switch-text {
+      position: absolute;
+      right: 8px;
+      font-size: 11px;
+      color: #fff;
+      font-weight: 600;
+      user-select: none;
+    }
+    .switch.on { background: var(--primary); }
+    .switch.on::after { left: 35px; }
+    .switch.on .switch-text { right: auto; left: 8px; }
+
+    /* 选择应用范围 */
+    .scope-split { display: flex; gap: 16px; min-height: 340px; }
+    .scope-left { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .scope-right {
+      width: 230px;
+      flex-shrink: 0;
+      border-left: 1px solid var(--border-light);
+      padding-left: 16px;
+      display: flex;
+      flex-direction: column;
+    }
+    .scope-toolbar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .scope-toolbar .toolbar-search { width: 170px; }
+    .scope-table-wrap {
+      flex: 1;
+      min-height: 220px;
+      overflow: auto;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+    }
+    .scope-table { min-width: 0; }
+    .scope-table tr.disabled td { color: var(--text-hint); background: #FAFBFC; }
+    .scope-table tr.disabled .scope-occupied { font-size: 11px; color: var(--text-hint); }
+    .scope-right-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+    .scope-right-head strong { font-weight: 600; }
+    .scope-chips { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+    .scope-chip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 7px 10px;
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+      background: #FAFBFD;
+      font-size: 12px;
+    }
+    .scope-chip button { color: var(--text-hint); font-size: 14px; line-height: 1; }
+    .scope-chip button:hover { color: var(--danger); }
+    .scope-chips-empty { color: var(--text-hint); font-size: 12px; text-align: center; padding: 24px 0; }
+
+    /* 用能定额考核弹窗 */
+    .quota-year-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .quota-year-row .toolbar-select { min-width: 120px; }
+
+    .banner-warn {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      background: #FFFBEB;
+      border: 1px solid #FDE68A;
+      color: #92400E;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .banner-warn::before { content: '⚠'; flex-shrink: 0; }
+
+    .quota-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px 14px;
+      margin-top: 14px;
+    }
+    .quota-cell { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
+    .quota-cell input {
+      flex: 1;
+      min-width: 0;
+      height: 30px;
+      padding: 0 8px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12px;
+    }
+
+    .page-note-bar {
+      padding: 10px 18px 14px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      border-top: 1px solid var(--border-light);
+      background: #FAFBFD;
+    }
+
     @media (max-width: 960px) {
       .model-split { flex-direction: column; }
       .model-tree {
@@ -603,6 +1018,10 @@
         border-bottom: 1px solid var(--border-light);
         max-height: 280px;
       }
+      .info-split { flex-direction: column; }
+      .info-nav { width: 100%; }
+      .scope-split { flex-direction: column; }
+      .scope-right { width: 100%; border-left: none; padding-left: 0; border-top: 1px solid var(--border-light); padding-top: 12px; }
     }
   </style>
   <link rel="stylesheet" href="annotation-styles.css">
@@ -622,8 +1041,17 @@
             <span class="anno-tag">版本信息</span>
             <div class="anno-body">
               <p><b>当前版本：</b>v2.5</p>
-              <p><b>更新日期：</b>2026-07-02</p>
-              <p><b>变更概述：</b>配合「基于计费的能耗明细系统」：① 页头操作区新增「能耗计量方案」入口（对所有计量对象节点可见，跳转 <code>能耗计量方案.html</code>）；② 「详情信息」Tab 新增「计量表具」列表，展示当前对象名下表具（物模型实例）、能源类型、计费方案应用状态，并提供「查看能耗明细」跳转 <code>能耗管理-表具明细.html</code>。既有测点列表、数据质量自检入口、关系拓扑等能力不变。</p>
+              <p><b>更新日期：</b>2026-07-07</p>
+              <p><b>变更概述：</b>按真实系统「运营管理 → 能效管理 → 基础配置 → <b>能耗模型管理</b>」整页重绘（原页面名「能效视图」，文件名保留 <code>能效视图.html</code>）：① 页头按钮随选中节点的物模型类型动态变化（集合 / 资产 / 根节点三套）；② 右侧详情增加「← 返回 + 节点名 | 物模型名」头部，返回后展示工程基础信息视图；③ 六个 Tab（测点列表 / 设备列表 / 详情信息 / 关系拓扑 / 设备履历 / 能效配置）与真实系统一致；④ <b>能耗计量方案与用能定额考核改为「能效配置」Tab 内的配置弹窗</b>（真实系统交互），不再是页头跳转入口；⑤ v2.5 增量「计量表具」列表移至能效配置 Tab 下方并保留「查看能耗明细」跳转。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-version-header" data-version="v1.0">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v1.0</p>
+              <p><b>更新日期：</b>2026-03-26</p>
+              <p><b>变更概述：</b>初版原型（页面名「能效视图」）：左树选节点、右侧多 Tab；进入页面默认展示「测点列表」；工具栏「创建集合」跳转 <code>创建集合-能耗模型.html</code>。v2.5 起整页按真实系统「能耗模型管理」重绘，本版仅留档。</p>
             </div>
           </div>
 
@@ -634,83 +1062,106 @@
             <div class="anno-body">
               <p><b>关联模块：</b>整页 — 对象树与计量拓扑的关系</p>
               <ul>
-                <li><b>对象树即计量对象树：</b>本页左侧对象树（系统 / 设备组 / 设备）就是能耗计量的对象范围；「能耗计量方案」配置的产物是一棵计量拓扑（当前对象 ↔ 下级对象 / 表具），对象的能耗与成本查询时沿该拓扑对表具归档明细做 on-read 聚合（SUM），对象层不单独归档。</li>
-                <li><b>表具归属唯一：</b>一块表具只能归属一个计量对象，不得同时挂到两处拓扑；计量方案配置层强制查重（含「直接选表具」与「选下级对象展开到的表具」之间、不同对象之间），从源头杜绝重复计量。</li>
+                <li><b>对象树即计量对象树：</b>本页左侧对象树（工程 / 项目 / 系统 / 集合 / 设备）就是能耗计量的对象范围；「能耗计量方案」配置的产物是一棵计量拓扑（当前对象 ↔ 下级对象 / 表具），对象的能耗与成本查询时沿该拓扑对表具归档明细做 on-read 聚合（SUM），对象层不单独归档。</li>
+                <li><b>表具归属唯一：</b>一块表具只能归属一个计量对象，不得同时挂到两处拓扑；计量方案配置层强制查重（「选择应用范围」弹窗内已被占用的表具置灰不可选），从源头杜绝重复计量。</li>
                 <li><b>历史随当前拓扑（产品已接受口径）：</b>对象查询始终沿【当前】计量拓扑聚合；表具改绑计量对象后，其全部历史能耗 / 成本随之归到新对象名下、旧对象对应减少。本期不做计量拓扑生效版本。</li>
               </ul>
             </div>
           </div>
 
-          <div class="anno anno-version-header" data-version="v1.0">
-            <span class="anno-tag">版本信息</span>
-            <div class="anno-body">
-              <p><b>当前版本：</b>v1.0</p>
-              <p><b>更新日期：</b>2026-03-26</p>
-              <p><b>变更概述：</b>能效视图（原菜单「拓扑建模」）原型页：主内容区标题与侧栏入口均为「能效视图」；左树选节点、右侧多 Tab；<b>进入页面默认展示「测点列表」</b>；「测点列表」含工具栏与全列表格；「关系拓扑」为能效流示意图；工具栏「创建集合」跳转至 <code>创建集合-能耗模型.html</code>（能耗模型集合创建，侧栏不单独挂菜单）。页面文件名为 <code>能效视图.html</code>。</p>
-            </div>
-          </div>
-
-          <section class="page-card" aria-label="能效视图">
+          <section class="page-card" aria-label="能耗模型管理">
             <div class="anno anno-ux" data-version="v2.5">
               <span class="anno-tag">交互说明</span>
               <span class="anno-version">v2.5</span>
-              <span class="anno-source">需求文档</span>
+              <span class="anno-source">引用自古典原型</span>
               <div class="anno-body">
-                <p><b>关联模块：</b>页头操作区 —「能耗计量方案」入口</p>
+                <p><b>关联模块：</b>页头操作区 — 按钮随节点物模型类型变化（与真实系统一致）</p>
                 <ul>
-                  <li><b>可见范围：</b>凡计量对象节点（系统 / 设备组 / 设备）均展示该入口，不限定单一节点类型；与「数据质量自检」仅特定系统节点展示的口径不同。</li>
-                  <li><b>点击：</b>跳转「能耗计量方案」配置页（<code>能耗计量方案.html</code>），为当前选中计量对象配置计量拓扑：可选下级计量对象（沿本页对象树向下），也可直接选计量表具（物模型实例）；两种方式最终产出同一套计量拓扑。</li>
-                  <li><b>配置产物用途：</b>计量拓扑供对象能耗 / 成本 on-read 聚合查询使用（见页顶 v2.5 数据逻辑批注）。</li>
+                  <li><b>根节点（工程）基础信息视图：</b>「创建集合」「同步管理域」「解除关联」；点节点详情的 ← 返回即回到该视图。</li>
+                  <li><b>集合 / 空间类型节点</b>（数据中心单元、系统集合、制冷单元、并联管路等）：「创建集合」「关联设备」「删除」。删除需二次确认，并校验节点下是否有包含关系的设备或集合对象，若存在则提示「请先删除名下的设备或者集合对象」。</li>
+                  <li><b>水冷冷水系统节点：</b>在集合按钮组之外额外展示「数据质量自检」（v2.1 能力，跳转 <code>数据质量自检.html</code>）。</li>
+                  <li><b>资产（设备）类型节点</b>（冷冻水泵、群控系统等）：仅「解除关联」（古典口径：资产对象的删除改为解除关联）。</li>
+                  <li>点击「创建集合」跳转 <code>创建集合-能耗模型.html</code>；「关联设备」进入双栏选择页（左选择设备树 + 右已选设备，本原型以提示示意）。</li>
                 </ul>
               </div>
             </div>
             <div class="page-head">
-              <h1 class="page-title">能效视图</h1>
-              <div class="page-head-actions">
-                <button type="button" class="btn btn-outline" id="btnMeteringScheme" onclick="location.href='能耗计量方案.html'">能耗计量方案</button>
-                <button type="button" class="btn btn-outline" id="btnQualityCheck" style="display:none;" onclick="location.href='数据质量自检.html'">数据质量自检</button>
-                <button type="button" class="btn btn-primary" id="btnCreateSet">创建集合</button>
-                <button type="button" class="btn btn-outline" id="btnLinkDevice">关联设备</button>
-                <button type="button" class="btn btn-danger-outline" id="btnDelete">删除</button>
-              </div>
+              <h1 class="page-title">能耗模型管理</h1>
+              <div class="page-head-actions" id="headActions"></div>
             </div>
 
             <div class="model-split">
-              <aside class="model-tree" aria-label="组织与模型树">
+              <aside class="model-tree" aria-label="计量对象树">
                 <div class="model-tree-search">
-                  <input type="search" placeholder="请输入关键词" aria-label="树节点搜索" id="treeSearch">
+                  <input type="search" placeholder="请输入关键字" aria-label="树节点搜索" id="treeSearch">
                 </div>
                 <div class="model-tree-scroll">
                   <div class="tree-node" id="treeRoot">
-                    <div class="tree-row" data-expand="gongji">
-                      <span class="tree-chevron" aria-hidden="true">▼</span>
-                      <span>共济科技</span>
+                    <div class="tree-row" data-node="root" data-expand>
+                      <span class="tree-chevron">▼</span>
+                      <span class="tree-label">人保北方信息中心工程</span>
                     </div>
                     <div class="tree-children">
-                      <div class="tree-row" data-expand="dc">
+                      <div class="tree-row" data-node="p39">
+                        <span class="tree-chevron">▸</span>
+                        <span class="tree-label">0_39:人保北方信息中心项目</span>
+                      </div>
+                      <div class="tree-row" data-node="p530">
+                        <span class="tree-chevron">▸</span>
+                        <span class="tree-label">0_530:合肥中行</span>
+                      </div>
+                      <div class="tree-row" data-node="p475" data-expand>
                         <span class="tree-chevron">▼</span>
-                        <span>数据中心</span>
+                        <span class="tree-label">0_475:软POC项目</span>
                       </div>
                       <div class="tree-children">
-                        <div class="tree-row active" data-expand="hm-dc" tabindex="0" role="treeitem" aria-selected="true">
+                        <div class="tree-row" data-node="s476">
+                          <span class="tree-chevron">▸</span>
+                          <span class="tree-label">0_476:IT系统</span>
+                        </div>
+                        <div class="tree-row" data-node="s479">
+                          <span class="tree-chevron">▸</span>
+                          <span class="tree-label">0_479:其他系统</span>
+                        </div>
+                        <div class="tree-row" data-node="s477" data-expand>
                           <span class="tree-chevron">▼</span>
-                          <span>0_842：互盟数据中心</span>
+                          <span class="tree-label">0_477:暖通空调系统</span>
                         </div>
                         <div class="tree-children">
-                          <div class="tree-row" data-expand="hm-cs1">
+                          <div class="tree-row" data-node="s493" data-expand>
                             <span class="tree-chevron">▼</span>
-                            <span>1# 冷站</span>
+                            <span class="tree-label">0_493:3#数据中心水冷冷水系统</span>
                           </div>
                           <div class="tree-children">
-                            <div class="tree-row" data-node="chws" data-node-type="water-cooled" tabindex="0" role="treeitem" aria-selected="false">
-                              <span class="tree-chevron" style="visibility:hidden">▸</span>
-                              <span>水冷冷水系统</span>
+                            <div class="tree-row" data-node="u495"><span class="tree-chevron" style="visibility:hidden">▸</span><span class="tree-label">0_495:制冷单元_1</span></div>
+                            <div class="tree-row" data-node="u496"><span class="tree-chevron" style="visibility:hidden">▸</span><span class="tree-label">0_496:制冷单元_2</span></div>
+                            <div class="tree-row" data-node="u497"><span class="tree-chevron" style="visibility:hidden">▸</span><span class="tree-label">0_497:制冷单元_3</span></div>
+                            <div class="tree-row" data-node="u498"><span class="tree-chevron" style="visibility:hidden">▸</span><span class="tree-label">0_498:制冷单元_4</span></div>
+                            <div class="tree-row" data-node="u499"><span class="tree-chevron" style="visibility:hidden">▸</span><span class="tree-label">0_499:制冷单元_5</span></div>
+                            <div class="tree-row" data-node="pl505"><span class="tree-chevron">▸</span><span class="tree-label">0_505:并联冷冻水泵管路_1</span></div>
+                            <div class="tree-row" data-node="pl506"><span class="tree-chevron">▸</span><span class="tree-label">0_506:并联冷冻水泵管路_2</span></div>
+                            <div class="tree-row" data-node="pl507"><span class="tree-chevron">▸</span><span class="tree-label">0_507:并联冷冻水泵管路_3</span></div>
+                            <div class="tree-row" data-node="pl508" data-expand>
+                              <span class="tree-chevron">▼</span>
+                              <span class="tree-label">0_508:并联冷冻水泵管路_4</span>
                             </div>
+                            <div class="tree-children">
+                              <div class="tree-row" data-node="d473">
+                                <span class="tree-chevron" style="visibility:hidden">▸</span>
+                                <span class="tree-label">0_473:冷冻水泵-CHWP4</span>
+                              </div>
+                            </div>
+                            <div class="tree-row" data-node="pl509"><span class="tree-chevron">▸</span><span class="tree-label">0_509:并联冷冻水泵管路_5</span></div>
+                            <div class="tree-row" data-node="pl510"><span class="tree-chevron">▸</span><span class="tree-label">0_510:并联冷却塔管路_1</span></div>
+                            <div class="tree-row" data-node="pl500"><span class="tree-chevron">▸</span><span class="tree-label">0_500:并联冷却水泵管路_1</span></div>
+                            <div class="tree-row" data-node="pl501"><span class="tree-chevron">▸</span><span class="tree-label">0_501:并联冷却水泵管路_2</span></div>
+                            <div class="tree-row" data-node="u494"><span class="tree-chevron" style="visibility:hidden">▸</span><span class="tree-label">0_494:蓄冷罐组</span></div>
+                            <div class="tree-row" data-node="g486"><span class="tree-chevron" style="visibility:hidden">▸</span><span class="tree-label">0_486:3#数据中心水冷群控系统</span></div>
                           </div>
                         </div>
-                        <div class="tree-row" data-node="other" tabindex="0" role="treeitem" aria-selected="false">
-                          <span class="tree-chevron" style="visibility:hidden">▸</span>
-                          <span>0_901：示例园区</span>
+                        <div class="tree-row" data-node="s478">
+                          <span class="tree-chevron">▸</span>
+                          <span class="tree-label">0_478:电力系统</span>
                         </div>
                       </div>
                     </div>
@@ -719,237 +1170,358 @@
               </aside>
 
               <div class="model-detail">
-                <div class="detail-inner">
-                  <div class="breadcrumb-bar" aria-label="当前节点">
-                    <strong id="crumbName">0_842：互盟数据中心</strong>
-                    <span> · 数据中心单元</span>
+                <!-- 首页态：工程基础信息（真实系统进入页面 / 点返回后的视图） -->
+                <div class="detail-inner" id="homeView" hidden>
+                  <div class="anno anno-ux" data-version="v2.5">
+                    <span class="anno-tag">交互说明</span>
+                    <span class="anno-version">v2.5</span>
+                    <span class="anno-source">产品推断</span>
+                    <div class="anno-body">
+                      <p><b>关联模块：</b>工程基础信息视图（首页态）</p>
+                      <ul>
+                        <li>与真实系统一致：进入页面默认展示工程（根节点）的基础信息；点击左树任一节点进入节点详情视图；节点详情的 ← 返回回到本视图。</li>
+                        <li>「编辑」进入名称 / 描述编辑态（本原型以提示示意）；名称必填。</li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div class="home-block">
+                    <div class="home-block-head">
+                      <span class="home-node-name" id="homeName">人保北方信息中心工程</span>
+                      <button type="button" class="btn btn-outline" id="btnHomeEdit">编辑</button>
+                    </div>
+                    <div class="home-section-title">基础信息</div>
+                    <div class="home-grid">
+                      <div class="home-field">
+                        <span class="home-field-label"><span class="req">*</span>名称</span>
+                        <input type="text" value="人保北方信息中心工程" disabled>
+                      </div>
+                      <div class="home-field">
+                        <span class="home-field-label">描述</span>
+                        <input type="text" value="默认空间视图的根节点" disabled>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 节点详情视图 -->
+                <div class="detail-inner" id="nodeView">
+                  <div class="node-head">
+                    <button type="button" class="node-back" id="btnNodeBack" title="返回" aria-label="返回">←</button>
+                    <strong class="node-name" id="crumbName">0_473:冷冻水泵-CHWP4</strong>
+                    <span class="node-model-sep">|</span>
+                    <span class="node-model" id="crumbModel">冷冻水泵</span>
                   </div>
 
                   <div class="main-tabs" role="tablist" aria-label="节点详情 Tab">
-                    <button type="button" class="main-tab active" role="tab" aria-selected="true" data-tab="points">测点列表</button>
-                    <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="devices">设备列表</button>
+                    <button type="button" class="main-tab active" role="tab" aria-selected="true" data-tab="points">测点列表<span class="tab-badge" id="badgePoints">0</span></button>
+                    <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="devices">设备列表<span class="tab-badge" id="badgeDevices">0</span></button>
                     <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="info">详情信息</button>
                     <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="topology">关系拓扑</button>
                     <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="history">设备履历</button>
                     <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="eff">能效配置</button>
                   </div>
 
+                  <!-- 测点列表 -->
                   <div class="tab-panel active" id="panel-points" role="tabpanel">
+                    <div class="anno anno-ux" data-version="v2.5">
+                      <span class="anno-tag">交互说明</span>
+                      <span class="anno-version">v2.5</span>
+                      <span class="anno-source">产品推断</span>
+                      <div class="anno-body">
+                        <p><b>关联模块：</b>测点列表 Tab（工具栏与列口径对齐真实系统）</p>
+                        <ul>
+                          <li><b>工具栏：</b>批量绑定（需先勾选测点）；测点类型筛选（全部 / 执行点 / 模拟执行点 / 状态执行点 / 读测点 / 遥测点 / 遥信点 / 设置点 / 遥调设置点 / 遥控设置点 / 计算状态 / 告警点）；刷新时间（0.5s / 1s / 5s / 10s / 30s / 1min / 5min，控制当前值自动刷新频率）；关键字搜索（组件名 / 测点ID / 测点名称）+「搜索」按钮；右侧「显示列」配置表格列显隐。</li>
+                          <li><b>表格列：</b>勾选 / 测点ID（可排序）/ 测点名称（可排序）/ 数据源 / 当前值 / 数据时间 / 操作（曲线、编辑）。数据源列展示测点取值来源：直连采集或表达式引用（蓝色标签展示引用的测点 / 取值方式）。</li>
+                          <li>Tab 标题角标展示当前节点测点总数；数据为示意值。</li>
+                        </ul>
+                      </div>
+                    </div>
                     <div class="points-toolbar" aria-label="测点列表工具栏">
                       <div class="points-toolbar-left">
-                        <button type="button" class="btn btn-outline" id="btnBatchBind">批量绑定</button>
-                        <button type="button" class="btn btn-ghost" id="btnBatchUnbind">批量解绑</button>
+                        <button type="button" class="toolbar-link" id="btnBatchBind">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                          批量绑定
+                        </button>
                         <label class="toolbar-field">
                           <span class="toolbar-label">测点类型</span>
                           <select class="toolbar-select" id="pointTypeFilter" aria-label="测点类型">
-                            <option value="">全部</option>
-                            <option value="electric">电量</option>
-                            <option value="power">功率</option>
-                            <option value="eff">能效</option>
-                            <option value="temp">温度</option>
+                            <option value="">请选择</option>
+                            <option>全部</option>
+                            <option>执行点</option>
+                            <option>模拟执行点</option>
+                            <option>状态执行点</option>
+                            <option>读测点</option>
+                            <option>遥测点</option>
+                            <option>遥信点</option>
+                            <option>设置点</option>
+                            <option>遥调设置点</option>
+                            <option>遥控设置点</option>
+                            <option>计算状态</option>
+                            <option>告警点</option>
                           </select>
                         </label>
                         <label class="toolbar-field">
-                          <span class="toolbar-label">刷新间隔</span>
-                          <select class="toolbar-select toolbar-select-narrow" id="refreshInterval" aria-label="刷新间隔">
-                            <option value="1" selected>1s</option>
-                            <option value="3">3s</option>
-                            <option value="5">5s</option>
-                            <option value="0">手动</option>
+                          <span class="toolbar-label">刷新时间</span>
+                          <select class="toolbar-select toolbar-select-narrow" id="refreshInterval" aria-label="刷新时间">
+                            <option>0.5s</option>
+                            <option selected>1s</option>
+                            <option>5s</option>
+                            <option>10s</option>
+                            <option>30s</option>
+                            <option>1min</option>
+                            <option>5min</option>
                           </select>
                         </label>
+                        <input type="search" class="toolbar-search" id="pointSearch" placeholder="组件名/测点ID/测点名称" aria-label="搜索测点" autocomplete="off">
+                        <button type="button" class="btn btn-primary" id="btnPointSearch">搜索</button>
                       </div>
                       <div class="points-toolbar-right">
-                        <input type="search" class="toolbar-search" id="pointSearch" placeholder="请输入关键词" aria-label="搜索测点" autocomplete="off">
-                        <button type="button" class="icon-tool-btn" id="btnColSettings" title="显示列" aria-label="显示列设置">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true">
-                            <rect x="3" y="3" width="7" height="7" rx="1"/>
-                            <rect x="14" y="3" width="7" height="7" rx="1"/>
-                            <rect x="3" y="14" width="7" height="7" rx="1"/>
-                            <rect x="14" y="14" width="7" height="7" rx="1"/>
-                          </svg>
+                        <button type="button" class="btn btn-ghost" id="btnColSettings">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" style="width:15px;height:15px;margin-right:5px" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                          显示列
                         </button>
                       </div>
                     </div>
-                    <div class="table-wrap points-table-wrap">
+                    <div class="points-table-wrap">
                       <table class="data-table points-table" aria-label="测点列表">
                         <thead>
                           <tr>
                             <th class="col-check" scope="col">
                               <input type="checkbox" id="pointCheckAll" aria-label="全选测点" title="全选">
                             </th>
-                            <th scope="col">测点ID</th>
-                            <th scope="col">名称</th>
-                            <th scope="col">数据来源</th>
+                            <th scope="col">测点ID<span class="sort-icon">▲▼</span></th>
+                            <th scope="col">测点名称<span class="sort-icon">▲▼</span></th>
+                            <th scope="col">数据源</th>
                             <th scope="col">当前值</th>
-                            <th scope="col">状态</th>
                             <th scope="col">数据时间</th>
-                            <th scope="col">单位</th>
-                            <th scope="col">状态映射</th>
-                            <th scope="col">告警等级</th>
+                            <th scope="col">操作</th>
+                          </tr>
+                        </thead>
+                        <tbody id="pointsBody"></tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <!-- 设备列表 -->
+                  <div class="tab-panel" id="panel-devices" role="tabpanel" hidden>
+                    <div class="anno anno-state" data-version="v2.5">
+                      <span class="anno-tag">状态说明</span>
+                      <span class="anno-version">v2.5</span>
+                      <span class="anno-source">产品推断</span>
+                      <div class="anno-body">
+                        <p><b>关联模块：</b>设备列表 Tab</p>
+                        <ul>
+                          <li>工具栏提供「批量移动」「批量编辑/绑定」「批量删除」，均需先勾选行。</li>
+                          <li>列：设备名称 / 所属分类 / 所属模型 / 厂家信息 / 上架/部署位置 / 资产描述 / 操作。</li>
+                          <li>无数据时表体展示「没有找到匹配的记录」，分页条展示「共 0 条 · 20条/页」。</li>
+                        </ul>
+                      </div>
+                    </div>
+                    <div class="points-toolbar">
+                      <div class="points-toolbar-left">
+                        <button type="button" class="btn btn-ghost dev-batch">批量移动</button>
+                        <button type="button" class="btn btn-ghost dev-batch">批量编辑/绑定</button>
+                        <button type="button" class="btn btn-danger-outline dev-batch">批量删除</button>
+                      </div>
+                    </div>
+                    <div class="points-table-wrap">
+                      <table class="data-table" aria-label="设备列表" style="min-width:980px">
+                        <thead>
+                          <tr>
+                            <th class="col-check" scope="col"><input type="checkbox" aria-label="全选设备"></th>
+                            <th scope="col">设备名称</th>
+                            <th scope="col">所属分类</th>
+                            <th scope="col">所属模型</th>
+                            <th scope="col">厂家信息</th>
+                            <th scope="col">上架/部署位置</th>
+                            <th scope="col">资产描述</th>
                             <th scope="col">操作</th>
                           </tr>
                         </thead>
                         <tbody>
-                          <tr>
-                            <td class="col-check"><input type="checkbox" class="point-row-check" aria-label="选择测点 MP_DC842_001"></td>
-                            <td class="num-cell">MP_DC842_001</td>
-                            <td>总用电功率</td>
-                            <td>共济科技 / 互盟数据中心</td>
-                            <td class="num-cell">2,856.32</td>
-                            <td><span class="status-ok">正常</span></td>
-                            <td class="num-cell">2026-03-26 14:32:08</td>
-                            <td>kW</td>
-                            <td>正常</td>
-                            <td>—</td>
-                            <td>
-                              <div class="points-actions">
-                                <button type="button" class="action-link">曲线</button>
-                                <button type="button" class="action-link">编辑</button>
-                              </div>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td class="col-check"><input type="checkbox" class="point-row-check" aria-label="选择测点 MP_DC842_002"></td>
-                            <td class="num-cell">MP_DC842_002</td>
-                            <td>PUE</td>
-                            <td>能效计算 / 互盟数据中心</td>
-                            <td class="num-cell">1.42</td>
-                            <td><span class="status-ok">正常</span></td>
-                            <td class="num-cell">2026-03-26 14:32:08</td>
-                            <td>—</td>
-                            <td>正常</td>
-                            <td>—</td>
-                            <td>
-                              <div class="points-actions">
-                                <button type="button" class="action-link">曲线</button>
-                                <button type="button" class="action-link">编辑</button>
-                              </div>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td class="col-check"><input type="checkbox" class="point-row-check" aria-label="选择测点 MP_DC842_003"></td>
-                            <td class="num-cell">MP_DC842_003</td>
-                            <td>IT 负载功率</td>
-                            <td>列头柜汇总 / 机房 A</td>
-                            <td class="num-cell">1,208.65</td>
-                            <td><span class="status-ok">正常</span></td>
-                            <td class="num-cell">2026-03-26 14:32:07</td>
-                            <td>kW</td>
-                            <td>正常</td>
-                            <td>—</td>
-                            <td>
-                              <div class="points-actions">
-                                <button type="button" class="action-link">曲线</button>
-                                <button type="button" class="action-link">编辑</button>
-                              </div>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td class="col-check"><input type="checkbox" class="point-row-check" aria-label="选择测点 MP_DC842_004"></td>
-                            <td class="num-cell">MP_DC842_004</td>
-                            <td>冷站总功率</td>
-                            <td>冷站控制器 / 1# 冷站</td>
-                            <td class="num-cell">1,052.10</td>
-                            <td><span class="status-ok">正常</span></td>
-                            <td class="num-cell">2026-03-26 14:32:07</td>
-                            <td>kW</td>
-                            <td>正常</td>
-                            <td>—</td>
-                            <td>
-                              <div class="points-actions">
-                                <button type="button" class="action-link">曲线</button>
-                                <button type="button" class="action-link">编辑</button>
-                              </div>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td class="col-check"><input type="checkbox" class="point-row-check" aria-label="选择测点 MP_DC842_005"></td>
-                            <td class="num-cell">MP_DC842_005</td>
-                            <td>冷冻水供水温度</td>
-                            <td>传感器 / 末端环路 B</td>
-                            <td class="num-cell">9.8</td>
-                            <td><span class="status-ok">正常</span></td>
-                            <td class="num-cell">2026-03-26 14:32:06</td>
-                            <td>℃</td>
-                            <td>正常</td>
-                            <td>—</td>
-                            <td>
-                              <div class="points-actions">
-                                <button type="button" class="action-link">曲线</button>
-                                <button type="button" class="action-link">编辑</button>
-                              </div>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td class="col-check"><input type="checkbox" class="point-row-check" aria-label="选择测点 MP_DC842_006"></td>
-                            <td class="num-cell">MP_DC842_006</td>
-                            <td>机房进风温度</td>
-                            <td>传感器 / 机房 A</td>
-                            <td class="num-cell">24.6</td>
-                            <td><span class="status-ok">正常</span></td>
-                            <td class="num-cell">2026-03-26 14:32:06</td>
-                            <td>℃</td>
-                            <td>正常</td>
-                            <td>—</td>
-                            <td>
-                              <div class="points-actions">
-                                <button type="button" class="action-link">曲线</button>
-                                <button type="button" class="action-link">编辑</button>
-                              </div>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td class="col-check"><input type="checkbox" class="point-row-check" aria-label="选择测点 MP_DC842_007"></td>
-                            <td class="num-cell">MP_DC842_007</td>
-                            <td>累计用电量（月）</td>
-                            <td>电能表 / 市电进线 1</td>
-                            <td class="num-cell">1,842,560</td>
-                            <td><span class="status-ok">正常</span></td>
-                            <td class="num-cell">2026-03-26 14:31:00</td>
-                            <td>kWh</td>
-                            <td>正常</td>
-                            <td>—</td>
-                            <td>
-                              <div class="points-actions">
-                                <button type="button" class="action-link">曲线</button>
-                                <button type="button" class="action-link">编辑</button>
-                              </div>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td class="col-check"><input type="checkbox" class="point-row-check" aria-label="选择测点 MP_DC842_008"></td>
-                            <td class="num-cell">MP_DC842_008</td>
-                            <td>制冷负载率</td>
-                            <td>能效计算 / 1# 冷站</td>
-                            <td class="num-cell">68.4</td>
-                            <td><span class="status-ok">正常</span></td>
-                            <td class="num-cell">2026-03-26 14:32:08</td>
-                            <td>%</td>
-                            <td>正常</td>
-                            <td>—</td>
-                            <td>
-                              <div class="points-actions">
-                                <button type="button" class="action-link">曲线</button>
-                                <button type="button" class="action-link">编辑</button>
-                              </div>
-                            </td>
-                          </tr>
+                          <tr><td colspan="8" class="empty-cell">没有找到匹配的记录</td></tr>
                         </tbody>
                       </table>
                     </div>
+                    <div class="pager-bar">
+                      <span>共 0 条</span>
+                      <span>20条/页</span>
+                      <span class="pager-num">1</span>
+                      <span>前往 1 页</span>
+                    </div>
                   </div>
-                  <div class="tab-panel" id="panel-devices" role="tabpanel" hidden>
-                    <div class="panel-placeholder">设备列表占位。</div>
-                  </div>
+
+                  <!-- 详情信息 -->
                   <div class="tab-panel" id="panel-info" role="tabpanel" hidden>
+                    <div class="anno anno-data" data-version="v2.5">
+                      <span class="anno-tag">数据逻辑</span>
+                      <span class="anno-version">v2.5</span>
+                      <span class="anno-source">产品推断</span>
+                      <div class="anno-body">
+                        <p><b>关联模块：</b>详情信息 Tab</p>
+                        <ul>
+                          <li>左侧「信息」导航含：基础信息、关联信息（被监测 / 包含于 / 位于 / 有一部分 / 供电等关系条目）、拓扑视图、指令列表。</li>
+                          <li>右侧「基本信息」展示节点物模型定义的静态属性（设备节点为额定参数 / 资产信息 / 位置信息等；集合节点为名称、描述）；「编辑」进入编辑态，「属性策略」配置属性下发策略（本原型以提示示意）。</li>
+                          <li>字段取自物模型静态属性定义，随物模型类型不同而不同；本页以「冷冻水泵」为例。</li>
+                        </ul>
+                      </div>
+                    </div>
+                    <div class="info-split">
+                      <aside class="info-nav" aria-label="信息导航">
+                        <div class="info-nav-item active">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" style="width:14px;height:14px" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
+                          基础信息
+                        </div>
+                        <div class="info-nav-item">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" style="width:14px;height:14px" aria-hidden="true"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M8.5 8.5 15.5 15.5"/></svg>
+                          关联信息
+                        </div>
+                        <div id="infoRelList">
+                          <div class="info-nav-sub">被监测 · 未定义关系</div>
+                          <div class="info-nav-sub">包含于 · 并联冷冻水泵管路_4</div>
+                          <div class="info-nav-sub">位于 · 屋面层</div>
+                          <div class="info-nav-sub">有一部分 · 未定义关系</div>
+                          <div class="info-nav-sub">供电 · 未定义关系</div>
+                        </div>
+                        <div class="info-nav-item">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" style="width:14px;height:14px" aria-hidden="true"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5V13M12 13l-5.5 4M12 13l5.5 4"/></svg>
+                          拓扑视图
+                        </div>
+                        <div class="info-nav-item">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" style="width:14px;height:14px" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+                          指令列表
+                        </div>
+                      </aside>
+                      <div class="info-body">
+                        <div class="info-body-head">
+                          <span class="info-body-title">基本信息</span>
+                          <div class="info-body-actions">
+                            <button type="button" class="btn btn-outline" id="btnAttrPolicy">属性策略</button>
+                            <button type="button" class="btn btn-primary" id="btnInfoEdit">编辑</button>
+                          </div>
+                        </div>
+                        <div class="info-grid" id="infoGrid"></div>
+                        <div class="info-loc" id="infoLoc"></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 关系拓扑 -->
+                  <div class="tab-panel" id="panel-topology" role="tabpanel" hidden>
+                    <div class="anno anno-ux" data-version="v2.5">
+                      <span class="anno-tag">交互说明</span>
+                      <span class="anno-version">v2.5</span>
+                      <span class="anno-source">产品推断</span>
+                      <div class="anno-body">
+                        <p><b>关联模块：</b>关系拓扑 Tab（对齐真实系统的双视图）</p>
+                        <ul>
+                          <li><b>列表视图 / 拓扑视图</b>切换：列表展示当前节点参与的全部关系（名称（源）/ 模型（源）/ 关系名称（源→目标）/ 名称（目标）/ 模型（目标）/ 约束（源→目标）/ 关系属性 / 操作）；拓扑视图以节点卡片 + 有向连线呈现，连线颜色区分关系类型（图例：包含、是..的位置）。</li>
+                          <li><b>新建关系：</b>为当前节点添加与其他对象的关系（选择关系类型 + 目标对象，本原型以提示示意）。</li>
+                          <li><b>删除：</b>删除该条关系记录，需二次确认。</li>
+                        </ul>
+                      </div>
+                    </div>
+                    <div class="topo-head">
+                      <div class="seg" role="group" aria-label="视图切换">
+                        <button type="button" class="active" id="btnTopoList">列表视图</button>
+                        <button type="button" id="btnTopoGraph">拓扑视图</button>
+                      </div>
+                      <button type="button" class="btn btn-primary" id="btnNewRelation">新建关系</button>
+                    </div>
+                    <div class="topo-table-wrap" id="topoListWrap">
+                      <table class="data-table topo-table" aria-label="关系列表">
+                        <thead>
+                          <tr>
+                            <th scope="col">名称（源）</th>
+                            <th scope="col">模型（源）</th>
+                            <th scope="col">关系名称（源→目标）</th>
+                            <th scope="col">名称（目标）</th>
+                            <th scope="col">模型（目标）</th>
+                            <th scope="col">约束（源→目标）</th>
+                            <th scope="col">关系属性</th>
+                            <th scope="col">操作</th>
+                          </tr>
+                        </thead>
+                        <tbody id="topoBody"></tbody>
+                      </table>
+                    </div>
+                    <div class="topo-canvas-wrap" id="topoGraphWrap" hidden>
+                      <div class="topo-legend">
+                        <span class="lg lg-contain"><i></i>包含</span>
+                        <span class="lg lg-loc"><i></i>是..的位置</span>
+                      </div>
+                      <svg class="topo-svg" viewBox="0 0 760 300" xmlns="http://www.w3.org/2000/svg" aria-label="关系拓扑图">
+                        <defs>
+                          <marker id="arrowBlue" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                            <path d="M0 0 L8 4 L0 8 z" fill="#2F78F6"/>
+                          </marker>
+                          <marker id="arrowGreen" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                            <path d="M0 0 L8 4 L0 8 z" fill="#16A34A"/>
+                          </marker>
+                        </defs>
+                        <path class="topo-edge-contain" d="M250 78 C330 78 360 140 428 148" />
+                        <text class="topo-edge-label contain" x="330" y="96">包含</text>
+                        <path class="topo-edge-loc" d="M250 234 C330 234 360 176 428 160" />
+                        <text class="topo-edge-label loc" x="316" y="222">是..的位置</text>
+
+                        <rect class="topo-card-rect" x="70" y="48" width="180" height="58" rx="8" />
+                        <text class="topo-card-model" x="84" y="68" id="topoSrc1Model">并联冷冻水泵管路</text>
+                        <text class="topo-card-title" x="84" y="90" id="topoSrc1Name">并联冷冻水泵管路_4</text>
+
+                        <rect class="topo-card-rect" x="70" y="204" width="180" height="58" rx="8" />
+                        <text class="topo-card-model" x="84" y="224">楼顶</text>
+                        <text class="topo-card-title" x="84" y="246">屋面层</text>
+
+                        <rect class="topo-card-rect cur" x="430" y="124" width="200" height="60" rx="8" />
+                        <text class="topo-card-model" x="446" y="146" id="topoCurModel">冷冻水泵</text>
+                        <text class="topo-card-title" x="446" y="168" id="topoCurName">冷冻水泵-CHWP4</text>
+                      </svg>
+                    </div>
+                  </div>
+
+                  <!-- 设备履历 -->
+                  <div class="tab-panel" id="panel-history" role="tabpanel" hidden>
+                    <div class="history-toolbar">
+                      <div class="seg" role="group" aria-label="时间范围">
+                        <button type="button" class="active">近7日</button>
+                        <button type="button">近10日</button>
+                        <button type="button">近15日</button>
+                      </div>
+                    </div>
+                    <div class="panel-placeholder">没有找到匹配的记录</div>
+                  </div>
+
+                  <!-- 能效配置 -->
+                  <div class="tab-panel" id="panel-eff" role="tabpanel" hidden>
+                    <div class="anno anno-ux" data-version="v2.5">
+                      <span class="anno-tag">交互说明</span>
+                      <span class="anno-version">v2.5</span>
+                      <span class="anno-source">需求文档</span>
+                      <div class="anno-body">
+                        <p><b>关联模块：</b>能效配置 Tab — 配置入口（真实系统交互：弹窗承载，非独立页面）</p>
+                        <ul>
+                          <li>本 Tab 对所有计量对象节点可见，包含两行配置入口：<b>用能定额考核</b>与<b>能耗计量方案</b>，点行尾「配置」打开对应弹窗。</li>
+                          <li><b>能耗计量方案</b>的配置产物是当前对象的计量拓扑（当前对象 ↔ 下级对象 / 表具），供对象能耗 / 成本 on-read 聚合查询使用（见页顶 v2.5 数据逻辑批注）。v2.5 方案稿中曾有独立页面承载该配置（原 <code>能耗计量方案.html</code>，已删除），现统一以本弹窗交互为准。</li>
+                          <li><b>用能定额考核</b>依赖能耗计量方案：未完成计量方案配置时，定额考核弹窗内提示前置校验、保存不可用。</li>
+                        </ul>
+                      </div>
+                    </div>
+                    <div class="eff-row">
+                      <span class="eff-row-name">用能定额考核</span>
+                      <button type="button" class="action-link" id="btnQuotaConfig">配置</button>
+                    </div>
+                    <div class="eff-row">
+                      <span class="eff-row-name">能耗计量方案</span>
+                      <button type="button" class="action-link" id="btnMeteringConfig">配置</button>
+                    </div>
+
                     <section class="meter-block" aria-label="计量表具">
                       <div class="anno anno-data" data-version="v2.5">
                         <span class="anno-tag">数据逻辑</span>
                         <span class="anno-version">v2.5</span>
-                        <span class="anno-source">需求文档</span>
+                        <span class="anno-source">待确认</span>
                         <div class="anno-body">
-                          <p><b>关联模块：</b>详情信息 Tab —「计量表具」列表</p>
+                          <p><b>关联模块：</b>能效配置 Tab —「计量表具」列表（v2.5 增量，真实系统当前版本无此模块，展示位置待评审）</p>
                           <ul>
                             <li><b>数据来源：</b>展示归属当前计量对象的表具（能源配置中挂了累积量测点的物模型实例）；归属关系来自「能耗计量方案」产出的计量拓扑。一块表具只归属一个计量对象（配置层强制查重），故此列表各对象间无重复。</li>
                             <li><b>是否已应用计费方案：</b>计费方案 1:1 应用在表具上。未应用方案的表具仍会自动生成电量明细，只是暂无表具成本；应用方案后可按时间范围补算此前区间成本。</li>
@@ -976,134 +1548,31 @@
                               <td>交流电表-市电进线1（AC_Meter_01）</td>
                               <td>电</td>
                               <td><span class="status-ok">已应用（峰平谷电价 V2）</span></td>
-                              <td>
-                                <div class="points-actions">
-                                  <a class="action-link" href="能耗管理-表具明细.html">查看能耗明细</a>
-                                </div>
-                              </td>
+                              <td><div class="points-actions"><a class="action-link" href="能耗管理-表具明细.html">查看能耗明细</a></div></td>
                             </tr>
                             <tr>
                               <td>交流电表-冷站总进线（AC_Meter_07）</td>
                               <td>电</td>
                               <td><span class="status-ok">已应用（峰平谷电价 V2）</span></td>
-                              <td>
-                                <div class="points-actions">
-                                  <a class="action-link" href="能耗管理-表具明细.html">查看能耗明细</a>
-                                </div>
-                              </td>
+                              <td><div class="points-actions"><a class="action-link" href="能耗管理-表具明细.html">查看能耗明细</a></div></td>
                             </tr>
                             <tr>
                               <td>冷量表-冷冻供回水（CL_Meter_02）</td>
                               <td>冷量</td>
                               <td><span class="status-muted">未应用</span></td>
-                              <td>
-                                <div class="points-actions">
-                                  <a class="action-link" href="能耗管理-表具明细.html">查看能耗明细</a>
-                                </div>
-                              </td>
+                              <td><div class="points-actions"><a class="action-link" href="能耗管理-表具明细.html">查看能耗明细</a></div></td>
                             </tr>
                           </tbody>
                         </table>
                       </div>
                     </section>
-                    <div class="panel-placeholder">其余详情信息占位。</div>
-                  </div>
-                  <div class="tab-panel" id="panel-topology" role="tabpanel" hidden>
-                    <div class="topo-toolbar">
-                      <p class="topo-hint">按能效归属展示供配电 → IT/制冷 → 末端设备的能量流与关键指标（示意数据）。侧栏入口已统一为「能效视图」；Tab 名称可与产品文案再对齐。</p>
-                      <div class="topo-zoom" aria-label="画布缩放">
-                        <button type="button" class="btn" id="zoomOut" title="缩小" aria-label="缩小">−</button>
-                        <button type="button" class="btn" id="zoomIn" title="放大" aria-label="放大">+</button>
-                        <button type="button" class="btn" id="zoomReset" title="重置" aria-label="重置缩放">1:1</button>
-                      </div>
-                    </div>
-                    <div class="topo-canvas-wrap" id="topoViewport">
-                      <svg class="topo-svg" viewBox="0 0 900 460" xmlns="http://www.w3.org/2000/svg" aria-label="关系拓扑图" id="topoSvg">
-                        <!-- 连线 -->
-                        <path class="topo-line" d="M450 62 L450 92" />
-                        <path class="topo-line" d="M150 92 L750 92" />
-                        <path class="topo-line" d="M150 92 L150 118" />
-                        <path class="topo-line" d="M450 92 L450 118" />
-                        <path class="topo-line" d="M750 92 L750 118" />
-                        <path class="topo-line" d="M150 178 L150 204" />
-                        <path class="topo-line" d="M90 204 L210 204" />
-                        <path class="topo-line" d="M90 204 L90 230" />
-                        <path class="topo-line" d="M210 204 L210 230" />
-                        <path class="topo-line" d="M450 178 L450 204" />
-                        <path class="topo-line" d="M390 204 L510 204" />
-                        <path class="topo-line" d="M390 204 L390 230" />
-                        <path class="topo-line" d="M510 204 L510 230" />
-                        <path class="topo-line" d="M750 178 L750 204" />
-                        <path class="topo-line" d="M690 204 L810 204" />
-                        <path class="topo-line" d="M690 204 L690 230" />
-                        <path class="topo-line" d="M810 204 L810 230" />
-
-                        <!-- 根节点 -->
-                        <rect class="topo-card root" x="310" y="8" width="280" height="54" rx="10" />
-                        <text class="topo-title" x="450" y="34" text-anchor="middle">互盟数据中心</text>
-                        <text class="topo-metric" x="450" y="52" text-anchor="middle">PUE 1.42 · 总功率 2.86 MW</text>
-
-                        <!-- 二层 -->
-                        <rect class="topo-card" x="40" y="118" width="220" height="60" rx="8" />
-                        <text class="topo-title" x="150" y="144" text-anchor="middle">IT 配电与负载</text>
-                        <text class="topo-metric" x="150" y="162" text-anchor="middle">IT 功率 1.21 MW · 占比 42%</text>
-
-                        <rect class="topo-card" x="340" y="118" width="220" height="60" rx="8" />
-                        <text class="topo-title" x="450" y="144" text-anchor="middle">制冷系统</text>
-                        <text class="topo-metric" x="450" y="162" text-anchor="middle">冷站功率 1.05 MW · 占比 37%</text>
-
-                        <rect class="topo-card" x="640" y="118" width="220" height="60" rx="8" />
-                        <text class="topo-title" x="750" y="144" text-anchor="middle">辅助与其它</text>
-                        <text class="topo-metric" x="750" y="162" text-anchor="middle">0.60 MW · 占比 21%</text>
-
-                        <!-- 三层 IT -->
-                        <rect class="topo-card" x="30" y="230" width="120" height="52" rx="8" />
-                        <text class="topo-title" x="90" y="252" text-anchor="middle" style="font-size:12px">列头柜 A 路</text>
-                        <text class="topo-metric" x="90" y="268" text-anchor="middle">612 kW</text>
-
-                        <rect class="topo-card" x="170" y="230" width="120" height="52" rx="8" />
-                        <text class="topo-title" x="230" y="252" text-anchor="middle" style="font-size:12px">列头柜 B 路</text>
-                        <text class="topo-metric" x="230" y="268" text-anchor="middle">598 kW</text>
-
-                        <!-- 制冷 -->
-                        <rect class="topo-card" x="330" y="230" width="100" height="52" rx="8" />
-                        <text class="topo-title" x="380" y="252" text-anchor="middle" style="font-size:11px">冷水机组</text>
-                        <text class="topo-metric" x="380" y="268" text-anchor="middle">480 kW</text>
-
-                        <rect class="topo-card" x="450" y="230" width="100" height="52" rx="8" />
-                        <text class="topo-title" x="500" y="252" text-anchor="middle" style="font-size:11px">冷却塔群</text>
-                        <text class="topo-metric" x="500" y="268" text-anchor="middle">310 kW</text>
-
-                        <rect class="topo-card" x="570" y="230" width="100" height="52" rx="8" />
-                        <text class="topo-title" x="620" y="254" text-anchor="middle" style="font-size:11px">冷冻泵</text>
-                        <text class="topo-metric" x="620" y="268" text-anchor="middle">185 kW</text>
-
-                        <!-- 辅助 -->
-                        <rect class="topo-card" x="630" y="230" width="120" height="52" rx="8" />
-                        <text class="topo-title" x="690" y="252" text-anchor="middle" style="font-size:12px">照明与弱电</text>
-                        <text class="topo-metric" x="690" y="268" text-anchor="middle">210 kW</text>
-
-                        <rect class="topo-card" x="770" y="230" width="120" height="52" rx="8" />
-                        <text class="topo-title" x="830" y="252" text-anchor="middle" style="font-size:12px">其它支路</text>
-                        <text class="topo-metric" x="830" y="268" text-anchor="middle">390 kW</text>
-
-                        <text class="topo-tag" x="24" y="310">能效视图</text>
-                        <text class="topo-metric" x="24" y="328">与侧栏「能效视图」入口一致</text>
-                      </svg>
-                    </div>
-                  </div>
-                  <div class="tab-panel" id="panel-history" role="tabpanel" hidden>
-                    <div class="panel-placeholder">设备履历占位。</div>
-                  </div>
-                  <div class="tab-panel" id="panel-eff" role="tabpanel" hidden>
-                    <div class="panel-placeholder">能效配置占位。</div>
                   </div>
                 </div>
               </div>
             </div>
 
             <div class="page-note-bar">
-              侧栏入口为「能效视图」；「创建集合」打开能耗模型集合创建页。页面文件为能效视图.html，与菜单名称一致。
+              侧栏入口为「能耗模型管理」（与真实系统菜单一致，原名「能效视图」）；页面文件名保留 能效视图.html。「创建集合」打开能耗模型集合创建页；能耗计量方案 / 用能定额考核在「能效配置」Tab 内以弹窗配置。
             </div>
           </section>
         </div>
@@ -1111,89 +1580,464 @@
     </div>
   </div>
 
+  <!-- 能耗计量方案配置弹窗 -->
+  <div class="modal-mask" id="meteringModal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="能耗计量方案配置">
+      <div class="modal-head">
+        <span>能耗计量方案配置</span>
+        <button type="button" class="modal-close" data-close="meteringModal" aria-label="关闭">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="anno anno-field" data-version="v2.5">
+          <span class="anno-tag">字段说明</span>
+          <span class="anno-version">v2.5</span>
+          <span class="anno-source">引用自古典原型</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>「能耗计量方案配置」弹窗（入口：能效配置 Tab → 能耗计量方案 → 配置）</p>
+            <ul>
+              <li><b>计量的能源：</b>行按「能源计费配置 → 能源类型」动态生成（当前环境为冷量 / 水 / 电），每行独立配置。</li>
+              <li><b>计量规则：</b>单选、非必选，未选择表示当前节点下无此能源介质的能耗计量。选项两个：
+                <b>仪表计量能耗</b>（由所选表具直接计量，选中后行内出现「计量对象选择(已选N个)」按钮，再次配置回显已选数量）；
+                <b>各子节点计量能耗</b>（由下级节点汇总，选中后行内出现子节点多选：仅可选下一级节点，且须为已启用对应能源计量方案的节点；子节点新增 / 删除时所选范围需联动调整）。</li>
+              <li><b>启用开关：</b>默认关闭。开启后该能源的计量方案生效，并在总览看板对应对象上自动勾选该能源类型的「能耗趋势」「能耗成本」图表；关闭则自动取消勾选。</li>
+              <li><b>保存：</b>校验通过后保存当前节点计量方案并生成 / 更新计量拓扑；保存时对表具归属强制查重（表具归属唯一）。</li>
+            </ul>
+          </div>
+        </div>
+        <table class="data-table metering-table" aria-label="能耗计量方案配置">
+          <thead>
+            <tr>
+              <th scope="col" style="width:120px">计量的能源</th>
+              <th scope="col">计量规则</th>
+              <th scope="col" style="width:110px;text-align:right">启用开关</th>
+            </tr>
+          </thead>
+          <tbody id="meteringBody"></tbody>
+        </table>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" data-close="meteringModal">取消</button>
+        <button type="button" class="btn btn-primary" id="btnMeteringSave">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 选择应用范围（计量对象选择）弹窗 -->
+  <div class="modal-mask" id="scopeModal" hidden style="z-index:240">
+    <div class="modal modal-wide" role="dialog" aria-modal="true" aria-label="选择应用范围">
+      <div class="modal-head">
+        <span>选择应用范围</span>
+        <button type="button" class="modal-close" data-close="scopeModal" aria-label="关闭">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="anno anno-ux" data-version="v2.5">
+          <span class="anno-tag">交互说明</span>
+          <span class="anno-version">v2.5</span>
+          <span class="anno-source">引用自古典原型</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>「选择应用范围」弹窗（入口：能耗计量方案配置 → 某能源行选「仪表计量能耗」→ 计量对象选择）</p>
+            <ul>
+              <li><b>数据来源：</b>查询当前能源类型在能源配置中定义的物模型，列出其下所有实例（表具）；若是组件则显示具体实例/组件名称。排序按创建时间倒序，分页 50 条/页。</li>
+              <li><b>筛选：</b>名称模糊搜索 + 物模型筛选（仅列当前能源类型配置的物模型）。</li>
+              <li><b>不可重复应用：</b>已被其他计量对象占用的表具置灰、不可勾选（表具归属唯一）。</li>
+              <li><b>右侧已选面板：</b>按选定顺序展示已选对象明细，点 ✕ 直接取消；「清除全部」一键清空。再次编辑时回显已选状态。</li>
+              <li><b>确定：</b>写回「计量对象选择(已选N个)」按钮的数量；<b>取消</b>放弃本次更改。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="scope-split">
+          <div class="scope-left">
+            <div class="scope-toolbar">
+              <input type="search" class="toolbar-search" id="scopeSearch" placeholder="请输入名称" aria-label="按名称搜索表具">
+              <select class="toolbar-select" id="scopeModelFilter" aria-label="物模型筛选">
+                <option value="">请选择物模型</option>
+              </select>
+              <button type="button" class="btn btn-primary" id="btnScopeSearch">搜索</button>
+            </div>
+            <div class="scope-table-wrap">
+              <table class="data-table scope-table" aria-label="表具列表">
+                <thead>
+                  <tr>
+                    <th class="col-check" scope="col"><input type="checkbox" id="scopeCheckAll" aria-label="全选表具"></th>
+                    <th scope="col">名称</th>
+                    <th scope="col">物模型</th>
+                  </tr>
+                </thead>
+                <tbody id="scopeBody"></tbody>
+              </table>
+            </div>
+            <div class="pager-bar">
+              <span id="scopeTotal">共 0 条</span>
+              <span>50条/页</span>
+              <span class="pager-num">1</span>
+              <span>前往 1 页</span>
+            </div>
+          </div>
+          <div class="scope-right">
+            <div class="scope-right-head">
+              <strong>已选择（<span id="scopeSelCount">0</span>）</strong>
+              <button type="button" class="action-link danger" id="btnScopeClear">清除全部</button>
+            </div>
+            <div class="scope-chips" id="scopeChips"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-primary" id="btnScopeOk">确定</button>
+        <button type="button" class="btn btn-ghost" data-close="scopeModal">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 用能定额考核配置弹窗 -->
+  <div class="modal-mask" id="quotaModal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="用能定额考核配置">
+      <div class="modal-head">
+        <span>用能定额考核配置</span>
+        <button type="button" class="modal-close" data-close="quotaModal" aria-label="关闭">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="anno anno-ux" data-version="v2.5">
+          <span class="anno-tag">交互说明</span>
+          <span class="anno-version">v2.5</span>
+          <span class="anno-source">产品推断</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>「用能定额考核配置」弹窗（入口：能效配置 Tab → 用能定额考核 → 配置）</p>
+            <ul>
+              <li><b>年份：</b>选择考核年度，默认当前年（2026），按年份分别维护定额。</li>
+              <li><b>前置校验：</b>当前节点未完成能耗计量方案配置（无任一能源启用）时，展示提示「请先完成能耗计量方案配置，配置后才可支持用能定额考核」，「保存」不可用。</li>
+              <li><b>已配置计量方案后：</b>按已启用的能源类型维护月度定额（示意为 12 个月定额输入）；考核结果在「用能定额考核」页查看。定额基于计量拓扑 + 能源类型（历史随当前拓扑口径见页顶数据逻辑批注）。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="quota-year-row">
+          <select class="toolbar-select" id="quotaYear" aria-label="考核年度">
+            <option selected>2026</option>
+            <option>2025</option>
+          </select>
+        </div>
+        <div class="banner-warn" id="quotaWarn">请先完成能耗计量方案配置，配置后才可支持用能定额考核</div>
+        <div id="quotaGridWrap" hidden>
+          <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px">已启用能源：<span id="quotaEnergyList">—</span> · 月度定额（示意，单位随能源类型）</div>
+          <div class="quota-grid" id="quotaGrid"></div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" data-close="quotaModal">取消</button>
+        <button type="button" class="btn btn-primary" id="btnQuotaSave" disabled>保存</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     (function () {
-      const showToast = function (msg) {
+      'use strict';
+
+      /* ---------- 通用 ---------- */
+      function showToast(msg) {
         var t = document.getElementById('protoToast');
         if (!t) {
           t = document.createElement('div');
           t.id = 'protoToast';
-          t.style.cssText = 'position:fixed;right:24px;bottom:24px;padding:12px 14px;border-radius:10px;background:rgba(15,23,42,.92);color:#fff;font-size:12px;z-index:300;opacity:0;transition:opacity .2s';
+          t.style.cssText = 'position:fixed;right:24px;bottom:24px;padding:12px 14px;border-radius:10px;background:rgba(15,23,42,.92);color:#fff;font-size:12px;z-index:400;opacity:0;transition:opacity .2s;max-width:320px;line-height:1.6';
           document.body.appendChild(t);
         }
         t.textContent = msg;
         t.style.opacity = '1';
         clearTimeout(t._h);
-        t._h = setTimeout(function () { t.style.opacity = '0'; }, 2200);
+        t._h = setTimeout(function () { t.style.opacity = '0'; }, 2600);
+      }
+
+      /* ---------- 节点数据（示意，结构对齐真实系统） ---------- */
+      var NOW = '2026-07-07 16:22:56';
+      var NODES = {
+        root:  { name: '人保北方信息中心工程', model: '工程集合', kind: 'collection', parent: null },
+        p39:   { name: '0_39:人保北方信息中心项目', model: '数据中心单元', kind: 'collection', parent: 'root' },
+        p530:  { name: '0_530:合肥中行', model: '数据中心单元', kind: 'collection', parent: 'root' },
+        p475:  { name: '0_475:软POC项目', model: '数据中心单元', kind: 'collection', parent: 'root',
+          points: [
+            { id: '0_475_1_201_0', name: 'IT负载', tags: ['根据查询路径动态取值'], value: '0.00', time: '2026-07-07 16:23:41' },
+            { id: '0_475_1_202_0', name: '实时PUE', tags: ['市电进线实时有功功率', 'IT负载'], value: '-', time: '2026-07-07 16:23:41' }
+          ] },
+        s476:  { name: '0_476:IT系统', model: '系统集合', kind: 'collection', parent: 'p475' },
+        s479:  { name: '0_479:其他系统', model: '系统集合', kind: 'collection', parent: 'p475' },
+        s477:  { name: '0_477:暖通空调系统', model: '系统集合', kind: 'collection', parent: 'p475' },
+        s478:  { name: '0_478:电力系统', model: '系统集合', kind: 'collection', parent: 'p475' },
+        s493:  { name: '0_493:3#数据中心水冷冷水系统', model: '水冷冷水系统', kind: 'water', parent: 's477',
+          points: [
+            { id: '0_493_1_301_0', name: '总电能', tags: [], value: '-', time: NOW }
+          ] },
+        u495:  { name: '0_495:制冷单元_1', model: '制冷单元', kind: 'collection', parent: 's493' },
+        u496:  { name: '0_496:制冷单元_2', model: '制冷单元', kind: 'collection', parent: 's493' },
+        u497:  { name: '0_497:制冷单元_3', model: '制冷单元', kind: 'collection', parent: 's493' },
+        u498:  { name: '0_498:制冷单元_4', model: '制冷单元', kind: 'collection', parent: 's493' },
+        u499:  { name: '0_499:制冷单元_5', model: '制冷单元', kind: 'collection', parent: 's493' },
+        pl505: { name: '0_505:并联冷冻水泵管路_1', model: '并联冷冻水泵管路', kind: 'collection', parent: 's493' },
+        pl506: { name: '0_506:并联冷冻水泵管路_2', model: '并联冷冻水泵管路', kind: 'collection', parent: 's493' },
+        pl507: { name: '0_507:并联冷冻水泵管路_3', model: '并联冷冻水泵管路', kind: 'collection', parent: 's493' },
+        pl508: { name: '0_508:并联冷冻水泵管路_4', model: '并联冷冻水泵管路', kind: 'collection', parent: 's493' },
+        pl509: { name: '0_509:并联冷冻水泵管路_5', model: '并联冷冻水泵管路', kind: 'collection', parent: 's493' },
+        pl510: { name: '0_510:并联冷却塔管路_1', model: '并联冷却塔管路', kind: 'collection', parent: 's493' },
+        pl500: { name: '0_500:并联冷却水泵管路_1', model: '并联冷却水泵管路', kind: 'collection', parent: 's493' },
+        pl501: { name: '0_501:并联冷却水泵管路_2', model: '并联冷却水泵管路', kind: 'collection', parent: 's493' },
+        u494:  { name: '0_494:蓄冷罐组', model: '蓄冷罐组', kind: 'collection', parent: 's493' },
+        g486:  { name: '0_486:3#数据中心水冷群控系统', model: '群控系统', kind: 'device', parent: 's493' },
+        d473:  { name: '0_473:冷冻水泵-CHWP4', model: '冷冻水泵', kind: 'device', parent: 'pl508',
+          points: [
+            { id: '0_473_1_101_0', name: '频率反馈', tags: [], value: '47.50', time: NOW },
+            { id: '0_473_1_102_0', name: '有功功率', tags: [], value: '78.20', time: NOW },
+            { id: '0_473_1_103_0', name: '正向有功电能', tags: [], value: '1,842,560.00', time: NOW },
+            { id: '0_473_1_104_0', name: '运行状态', tags: [], value: '运行', time: NOW },
+            { id: '0_473_1_105_0', name: '故障状态', tags: [], value: '正常', time: NOW }
+          ] }
       };
 
-      document.getElementById('btnCreateSet').addEventListener('click', function () {
-        window.location.href = '创建集合-能耗模型.html';
-      });
-      document.getElementById('btnLinkDevice').addEventListener('click', function () {
-        showToast('示意：打开关联设备');
-      });
-      document.getElementById('btnDelete').addEventListener('click', function () {
-        showToast('示意：校验选中节点后删除');
-      });
-
-      const pointCheckAll = document.getElementById('pointCheckAll');
-      const pointRowChecks = function () {
-        return document.querySelectorAll('.point-row-check');
+      var CHILD_LABELS = {
+        root: ['0_39:人保北方信息中心项目', '0_530:合肥中行', '0_475:软POC项目'],
+        p475: ['0_476:IT系统', '0_479:其他系统', '0_477:暖通空调系统', '0_478:电力系统'],
+        s477: ['0_493:3#数据中心水冷冷水系统'],
+        s493: ['0_495:制冷单元_1', '0_496:制冷单元_2', '0_497:制冷单元_3', '0_498:制冷单元_4', '0_499:制冷单元_5',
+               '0_505:并联冷冻水泵管路_1', '0_506:并联冷冻水泵管路_2', '0_507:并联冷冻水泵管路_3', '0_508:并联冷冻水泵管路_4', '0_509:并联冷冻水泵管路_5',
+               '0_510:并联冷却塔管路_1', '0_500:并联冷却水泵管路_1', '0_501:并联冷却水泵管路_2', '0_494:蓄冷罐组', '0_486:3#数据中心水冷群控系统'],
+        pl508: ['0_473:冷冻水泵-CHWP4']
       };
-      if (pointCheckAll) {
-        pointCheckAll.addEventListener('change', function () {
-          const on = pointCheckAll.checked;
-          pointRowChecks().forEach(function (cb) {
-            cb.checked = on;
-          });
-        });
-        pointRowChecks().forEach(function (cb) {
-          cb.addEventListener('change', function () {
-            const all = Array.prototype.every.call(pointRowChecks(), function (x) {
-              return x.checked;
-            });
-            const none = Array.prototype.every.call(pointRowChecks(), function (x) {
-              return !x.checked;
-            });
-            pointCheckAll.checked = all;
-            pointCheckAll.indeterminate = !all && !none;
-          });
-        });
+
+      /* 表具池（选择应用范围）：按能源类型区分物模型与实例 */
+      var METERS = {
+        '电': [
+          { name: '交流电表-市电进线1', model: '交流电表' },
+          { name: '交流电表-冷站总进线', model: '交流电表' },
+          { name: '交流电表-列头柜A路', model: '交流电表', occupiedBy: '0_476:IT系统' },
+          { name: '直流电表-IT配电屏', model: '直流电表' }
+        ],
+        '冷量': [
+          { name: '冷量表-冷冻供回水', model: '冷量表' },
+          { name: '冷量表-末端环路B', model: '冷量表' }
+        ],
+        '水': [
+          { name: '水表-冷却塔补水', model: '水表' },
+          { name: '水表-市政进水', model: '水表' }
+        ]
+      };
+      var ENERGIES = ['冷量', '水', '电'];
+
+      /* 每节点计量方案配置状态（会话内示意存储） */
+      var meteringState = {};
+
+      var currentNode = null;
+
+      /* ---------- 页头按钮 ---------- */
+      var headActions = document.getElementById('headActions');
+
+      function makeBtn(text, cls, handler) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'btn ' + cls;
+        b.textContent = text;
+        b.addEventListener('click', handler);
+        return b;
       }
 
-      var btnBatchBind = document.getElementById('btnBatchBind');
-      if (btnBatchBind) {
-        btnBatchBind.addEventListener('click', function () {
-          showToast('示意：请先勾选测点后再批量绑定');
-        });
+      function renderHeadActions(mode) {
+        headActions.innerHTML = '';
+        if (mode === 'home') {
+          headActions.appendChild(makeBtn('创建集合', 'btn-primary', function () { window.location.href = '创建集合-能耗模型.html'; }));
+          headActions.appendChild(makeBtn('同步管理域', 'btn-outline', function () { showToast('示意：将能耗模型树同步至管理域'); }));
+          headActions.appendChild(makeBtn('解除关联', 'btn-danger-outline', function () { showToast('示意：解除当前工程与能耗模型的关联（需二次确认）'); }));
+          return;
+        }
+        var node = NODES[currentNode];
+        if (node.kind === 'device') {
+          headActions.appendChild(makeBtn('解除关联', 'btn-danger-outline', function () { showToast('示意：解除该资产对象与当前集合的关联（需二次确认）'); }));
+          return;
+        }
+        if (node.kind === 'water') {
+          headActions.appendChild(makeBtn('数据质量自检', 'btn-outline', function () { window.location.href = '数据质量自检.html'; }));
+        }
+        headActions.appendChild(makeBtn('创建集合', 'btn-primary', function () { window.location.href = '创建集合-能耗模型.html'; }));
+        headActions.appendChild(makeBtn('关联设备', 'btn-ghost', function () { showToast('示意：进入关联设备页（左侧选择设备树 + 右侧已选设备，保存生效）'); }));
+        headActions.appendChild(makeBtn('删除', 'btn-danger-outline', function () { showToast('示意：二次确认后删除；若节点下存在包含关系的设备或集合对象，提示「请先删除名下的设备或者集合对象」'); }));
       }
-      var btnBatchUnbind = document.getElementById('btnBatchUnbind');
-      if (btnBatchUnbind) {
-        btnBatchUnbind.addEventListener('click', function () {
-          showToast('示意：请先勾选测点后再批量解绑');
-        });
+
+      /* ---------- 视图切换：首页态 / 节点态 ---------- */
+      var homeView = document.getElementById('homeView');
+      var nodeView = document.getElementById('nodeView');
+
+      function showHome() {
+        currentNode = null;
+        homeView.hidden = false;
+        nodeView.hidden = true;
+        renderHeadActions('home');
+        document.querySelectorAll('.tree-row').forEach(function (r) { r.classList.remove('active'); });
       }
-      var btnColSettings = document.getElementById('btnColSettings');
-      if (btnColSettings) {
-        btnColSettings.addEventListener('click', function () {
-          showToast('示意：打开显示列配置');
-        });
+
+      document.getElementById('btnNodeBack').addEventListener('click', showHome);
+      document.getElementById('btnHomeEdit').addEventListener('click', function () { showToast('示意：进入工程基础信息编辑态（名称必填）'); });
+
+      /* ---------- 节点选中与渲染 ---------- */
+      function esc(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       }
-      document.querySelectorAll('.points-table .action-link').forEach(function (el) {
-        el.addEventListener('click', function () {
-          var act = el.textContent.trim();
-          showToast('示意：' + act + '（测点详情/曲线）');
+
+      function renderPoints(node) {
+        var body = document.getElementById('pointsBody');
+        var pts = node.points || [];
+        document.getElementById('badgePoints').textContent = pts.length;
+        document.getElementById('badgePoints').classList.toggle('has', pts.length > 0);
+        if (!pts.length) {
+          body.innerHTML = '<tr><td colspan="7" class="empty-cell">暂无数据</td></tr>';
+          return;
+        }
+        body.innerHTML = pts.map(function (p) {
+          var src = '<span class="src-pill">P</span>' + p.tags.map(function (t) { return '<span class="src-tag">' + esc(t) + '</span>'; }).join('');
+          return '<tr>' +
+            '<td class="col-check"><input type="checkbox" class="point-row-check" aria-label="选择测点 ' + esc(p.id) + '"></td>' +
+            '<td class="num-cell">' + esc(p.id) + '</td>' +
+            '<td><span class="point-dot"></span>' + esc(p.name) + '</td>' +
+            '<td>' + src + '</td>' +
+            '<td class="num-cell">' + esc(p.value) + '</td>' +
+            '<td class="num-cell">' + esc(p.time) + '</td>' +
+            '<td><div class="points-actions"><button type="button" class="action-link pt-act">曲线</button><button type="button" class="action-link pt-act">编辑</button></div></td>' +
+          '</tr>';
+        }).join('');
+        body.querySelectorAll('.pt-act').forEach(function (el) {
+          el.addEventListener('click', function () { showToast('示意：' + el.textContent + '（测点历史曲线 / 编辑测点绑定）'); });
+        });
+        var checkAll = document.getElementById('pointCheckAll');
+        checkAll.checked = false;
+        checkAll.indeterminate = false;
+      }
+
+      var INFO_DEVICE = [
+        ['名称', '冷冻水泵-CHWP4'], ['水泵安装形式', '请选择'],
+        ['水泵进出水方式', '请选择'], ['电机与涡轮连接方式', '请选择'],
+        ['额定流量', '741'], ['额定扬程', '38'],
+        ['最大流量', '815.1'], ['最小频率', '25'],
+        ['最小流量', '370.5'], ['投入投出状态', '投入'],
+        ['额定功率', '110'], ['编号', '—'],
+        ['通信状态', '请选择'], ['资产编号', '—'],
+        ['序列号', '—'], ['物理标签编号', '—'],
+        ['型号', '—'], ['MAC地址', '—'],
+        ['IP地址', '—'], ['重量', '0'],
+        ['投产日期', '1970-01-01'], ['安装日期', '1970-01-01'],
+        ['资产状态', '请选择'], ['上下电状态', '请选择'],
+        ['ID', '0_473'], ['运行状态', '—']
+      ];
+
+      function locPath(nodeId) {
+        var parts = [];
+        var cur = nodeId;
+        while (cur) {
+          parts.unshift(NODES[cur].name.replace(/^[^:]*:/, ''));
+          cur = NODES[cur].parent;
+        }
+        return parts.join('>');
+      }
+
+      function renderInfo(nodeId) {
+        var node = NODES[nodeId];
+        var grid = document.getElementById('infoGrid');
+        var rows;
+        if (nodeId === 'd473') {
+          rows = INFO_DEVICE;
+        } else {
+          rows = [
+            ['名称', node.name.replace(/^[^:]*:/, '')],
+            ['物模型', node.model],
+            ['ID', node.name.indexOf(':') > -1 ? node.name.split(':')[0] : '—'],
+            ['描述', '—']
+          ];
+        }
+        grid.innerHTML = rows.map(function (r) {
+          var hintCls = (r[1] === '请选择' || r[1] === '—') ? ' hint' : '';
+          return '<div class="info-item"><span class="info-item-label">' + esc(r[0]) + '：</span><span class="info-item-value' + hintCls + '">' + esc(r[1]) + '</span></div>';
+        }).join('');
+        document.getElementById('infoLoc').textContent = '位置信息 · 位置：' + locPath(nodeId);
+        document.getElementById('infoRelList').style.display = nodeId === 'd473' ? '' : 'none';
+      }
+
+      function renderTopo(nodeId) {
+        var node = NODES[nodeId];
+        var body = document.getElementById('topoBody');
+        var rows = [];
+        if (node.parent) {
+          var parent = NODES[node.parent];
+          rows.push([parent.name.replace(/^[^:]*:/, ''), parent.model, '包含', node.name.replace(/^[^:]*:/, ''), node.model, '1:N', 'domain:true']);
+        }
+        if (nodeId === 'd473') {
+          rows.push(['屋面层', '楼顶', '是..的位置', '冷冻水泵-CHWP4', '冷冻水泵', '1:N', '—']);
+        }
+        if (!rows.length) {
+          body.innerHTML = '<tr><td colspan="8" class="empty-cell">暂无数据</td></tr>';
+        } else {
+          body.innerHTML = rows.map(function (r) {
+            return '<tr>' + r.map(function (c) { return '<td>' + esc(c) + '</td>'; }).join('') +
+              '<td><button type="button" class="action-link danger topo-del">删除</button></td></tr>';
+          }).join('');
+          body.querySelectorAll('.topo-del').forEach(function (el) {
+            el.addEventListener('click', function () { showToast('示意：二次确认后删除该关系'); });
+          });
+        }
+        /* 拓扑视图卡片文案 */
+        var parentNode = node.parent ? NODES[node.parent] : null;
+        document.getElementById('topoSrc1Name').textContent = parentNode ? parentNode.name.replace(/^[^:]*:/, '') : '—';
+        document.getElementById('topoSrc1Model').textContent = parentNode ? parentNode.model : '—';
+        document.getElementById('topoCurName').textContent = node.name.replace(/^[^:]*:/, '');
+        document.getElementById('topoCurModel').textContent = node.model;
+      }
+
+      function selectNode(nodeId) {
+        currentNode = nodeId;
+        var node = NODES[nodeId];
+        homeView.hidden = true;
+        nodeView.hidden = false;
+
+        document.querySelectorAll('.tree-row').forEach(function (r) {
+          r.classList.toggle('active', r.getAttribute('data-node') === nodeId);
+        });
+
+        document.getElementById('crumbName').textContent = node.name;
+        document.getElementById('crumbModel').textContent = node.model;
+        document.getElementById('badgeDevices').textContent = '0';
+        document.getElementById('badgeDevices').classList.remove('has');
+
+        renderHeadActions('node');
+        renderPoints(node);
+        renderInfo(nodeId);
+        renderTopo(nodeId);
+      }
+
+      /* 树：展开/收起 与 选中 */
+      document.querySelectorAll('.tree-row').forEach(function (row) {
+        row.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var nodeId = row.getAttribute('data-node');
+          if (nodeId) selectNode(nodeId);
+        });
+        var chev = row.querySelector('.tree-chevron');
+        if (row.hasAttribute('data-expand') && chev) {
+          chev.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var next = row.nextElementSibling;
+            if (next && next.classList.contains('tree-children')) {
+              var open = next.style.display !== 'none';
+              next.style.display = open ? 'none' : 'block';
+              chev.textContent = open ? '▶' : '▼';
+            }
+          });
+        }
+      });
+
+      document.getElementById('treeSearch').addEventListener('input', function () {
+        var kw = this.value.trim();
+        document.querySelectorAll('.tree-row').forEach(function (r) {
+          var label = r.querySelector('.tree-label').textContent;
+          r.style.display = (!kw || label.indexOf(kw) > -1 || r.hasAttribute('data-expand')) ? '' : 'none';
         });
       });
-      var refreshIntervalEl = document.getElementById('refreshInterval');
-      if (refreshIntervalEl) {
-        refreshIntervalEl.addEventListener('change', function () {
-          showToast('刷新间隔已切换为 ' + refreshIntervalEl.options[refreshIntervalEl.selectedIndex].text);
-        });
-      }
 
-      const panels = {
+      /* ---------- Tab 切换 ---------- */
+      var panels = {
         points: document.getElementById('panel-points'),
         devices: document.getElementById('panel-devices'),
         info: document.getElementById('panel-info'),
@@ -1204,76 +2048,395 @@
 
       document.querySelectorAll('.main-tab').forEach(function (tab) {
         tab.addEventListener('click', function () {
-          const key = tab.getAttribute('data-tab');
+          var key = tab.getAttribute('data-tab');
           document.querySelectorAll('.main-tab').forEach(function (t) {
-            const on = t === tab;
+            var on = t === tab;
             t.classList.toggle('active', on);
             t.setAttribute('aria-selected', on ? 'true' : 'false');
           });
           Object.keys(panels).forEach(function (k) {
-            const p = panels[k];
-            const on = k === key;
-            p.classList.toggle('active', on);
-            p.hidden = !on;
+            var on = k === key;
+            panels[k].classList.toggle('active', on);
+            panels[k].hidden = !on;
           });
         });
       });
 
-      var qualityCheckBtn = document.getElementById('btnQualityCheck');
-      document.querySelectorAll('.tree-row[data-node]').forEach(function (row) {
-        row.addEventListener('click', function () {
-          document.querySelectorAll('.tree-row[data-node]').forEach(function (r) {
-            r.classList.remove('active');
-            r.setAttribute('aria-selected', 'false');
+      /* ---------- 测点列表工具栏 ---------- */
+      var pointCheckAll = document.getElementById('pointCheckAll');
+      pointCheckAll.addEventListener('change', function () {
+        document.querySelectorAll('.point-row-check').forEach(function (cb) { cb.checked = pointCheckAll.checked; });
+      });
+
+      document.getElementById('btnBatchBind').addEventListener('click', function () {
+        var n = document.querySelectorAll('.point-row-check:checked').length;
+        showToast(n ? '示意：对已选 ' + n + ' 个测点批量绑定' : '示意：请先勾选测点后再批量绑定');
+      });
+
+      document.getElementById('btnPointSearch').addEventListener('click', function () {
+        var kw = document.getElementById('pointSearch').value.trim();
+        var rows = document.querySelectorAll('#pointsBody tr');
+        rows.forEach(function (tr) {
+          if (tr.querySelector('.empty-cell')) return;
+          tr.style.display = (!kw || tr.textContent.indexOf(kw) > -1) ? '' : 'none';
+        });
+        showToast(kw ? '按「' + kw + '」过滤测点（示意）' : '已清空搜索条件');
+      });
+
+      document.getElementById('pointTypeFilter').addEventListener('change', function () {
+        showToast('示意：按测点类型「' + (this.value || '全部') + '」过滤');
+      });
+      document.getElementById('refreshInterval').addEventListener('change', function () {
+        showToast('刷新时间已切换为 ' + this.value);
+      });
+      document.getElementById('btnColSettings').addEventListener('click', function () {
+        showToast('示意：打开显示列配置（勾选表格展示列）');
+      });
+
+      document.querySelectorAll('.dev-batch').forEach(function (b) {
+        b.addEventListener('click', function () { showToast('示意：请先勾选设备行再执行「' + b.textContent + '」'); });
+      });
+
+      document.getElementById('btnAttrPolicy').addEventListener('click', function () { showToast('示意：打开属性策略配置'); });
+      document.getElementById('btnInfoEdit').addEventListener('click', function () { showToast('示意：进入基本信息编辑态'); });
+
+      /* ---------- 关系拓扑视图切换 ---------- */
+      var btnTopoList = document.getElementById('btnTopoList');
+      var btnTopoGraph = document.getElementById('btnTopoGraph');
+      btnTopoList.addEventListener('click', function () {
+        btnTopoList.classList.add('active');
+        btnTopoGraph.classList.remove('active');
+        document.getElementById('topoListWrap').hidden = false;
+        document.getElementById('topoGraphWrap').hidden = true;
+      });
+      btnTopoGraph.addEventListener('click', function () {
+        btnTopoGraph.classList.add('active');
+        btnTopoList.classList.remove('active');
+        document.getElementById('topoListWrap').hidden = true;
+        document.getElementById('topoGraphWrap').hidden = false;
+      });
+      document.getElementById('btnNewRelation').addEventListener('click', function () {
+        showToast('示意：新建关系（选择关系类型 + 目标对象）');
+      });
+
+      document.querySelectorAll('.history-toolbar .seg button').forEach(function (b) {
+        b.addEventListener('click', function () {
+          b.parentElement.querySelectorAll('button').forEach(function (x) { x.classList.remove('active'); });
+          b.classList.add('active');
+        });
+      });
+
+      /* ---------- 弹窗通用 ---------- */
+      document.querySelectorAll('[data-close]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          document.getElementById(b.getAttribute('data-close')).hidden = true;
+        });
+      });
+
+      /* ---------- 能耗计量方案配置 ---------- */
+      var meteringModal = document.getElementById('meteringModal');
+      var meteringBody = document.getElementById('meteringBody');
+      var meteringDraft = null; /* 打开弹窗时的编辑草稿 */
+      var scopeCtx = null;      /* 当前打开“选择应用范围”的能源行 */
+
+      function getNodeMetering(nodeId) {
+        if (!meteringState[nodeId]) {
+          meteringState[nodeId] = {};
+          ENERGIES.forEach(function (e) {
+            meteringState[nodeId][e] = { rule: '', targets: [], childSel: [], enabled: false };
           });
-          row.classList.add('active');
-          row.setAttribute('aria-selected', 'true');
-          const label = row.querySelector('span:last-child').textContent;
-          document.getElementById('crumbName').textContent = label;
-          // 仅「水冷冷水系统」节点展示数据质量自检按钮
-          qualityCheckBtn.style.display = row.dataset.nodeType === 'water-cooled' ? '' : 'none';
-        });
-        row.addEventListener('keydown', function (e) {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            row.click();
+        }
+        return meteringState[nodeId];
+      }
+
+      function cloneState(s) { return JSON.parse(JSON.stringify(s)); }
+
+      function renderMeteringRows() {
+        meteringBody.innerHTML = '';
+        ENERGIES.forEach(function (energy) {
+          var row = meteringDraft[energy];
+          var tr = document.createElement('tr');
+
+          var tdE = document.createElement('td');
+          tdE.textContent = energy;
+          tr.appendChild(tdE);
+
+          var tdR = document.createElement('td');
+          var cell = document.createElement('div');
+          cell.className = 'metering-rule-cell';
+
+          var sel = document.createElement('select');
+          sel.className = 'toolbar-select';
+          sel.setAttribute('aria-label', energy + ' 计量规则');
+          ['', '仪表计量能耗', '各子节点计量能耗'].forEach(function (opt) {
+            var o = document.createElement('option');
+            o.value = opt;
+            o.textContent = opt || '请选择能源类型';
+            sel.appendChild(o);
+          });
+          sel.value = row.rule;
+          cell.appendChild(sel);
+
+          /* 仪表计量能耗：计量对象选择按钮 */
+          var pickBtn = document.createElement('button');
+          pickBtn.type = 'button';
+          pickBtn.className = 'btn btn-outline metering-pick-btn';
+          pickBtn.textContent = '计量对象选择(已选' + row.targets.length + '个)';
+          pickBtn.hidden = row.rule !== '仪表计量能耗';
+          pickBtn.addEventListener('click', function () {
+            openScopeModal(energy);
+          });
+          cell.appendChild(pickBtn);
+
+          /* 各子节点计量能耗：子节点多选 */
+          var childWrap = document.createElement('div');
+          childWrap.className = 'child-select';
+          childWrap.hidden = row.rule !== '各子节点计量能耗';
+          var childBtn = document.createElement('button');
+          childBtn.type = 'button';
+          childBtn.className = 'child-select-btn' + (row.childSel.length ? ' has-value' : '');
+          childBtn.textContent = row.childSel.length ? '已选 ' + row.childSel.length + ' 个子节点' : '请选择子节点';
+          var pop = document.createElement('div');
+          pop.className = 'child-pop';
+          pop.hidden = true;
+          pop.addEventListener('click', function (e) { e.stopPropagation(); });
+          var children = CHILD_LABELS[currentNode] || [];
+          if (!children.length) {
+            pop.innerHTML = '<div class="child-pop-empty">无数据</div>';
+          } else {
+            children.forEach(function (label) {
+              var lab = document.createElement('label');
+              var cb = document.createElement('input');
+              cb.type = 'checkbox';
+              cb.checked = row.childSel.indexOf(label) > -1;
+              cb.addEventListener('change', function () {
+                if (cb.checked) row.childSel.push(label);
+                else row.childSel = row.childSel.filter(function (x) { return x !== label; });
+                childBtn.textContent = row.childSel.length ? '已选 ' + row.childSel.length + ' 个子节点' : '请选择子节点';
+                childBtn.classList.toggle('has-value', row.childSel.length > 0);
+              });
+              lab.appendChild(cb);
+              lab.appendChild(document.createTextNode(label));
+              pop.appendChild(lab);
+            });
           }
+          childBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            document.querySelectorAll('.child-pop').forEach(function (p) { if (p !== pop) p.hidden = true; });
+            pop.hidden = !pop.hidden;
+          });
+          childWrap.appendChild(childBtn);
+          childWrap.appendChild(pop);
+          cell.appendChild(childWrap);
+
+          sel.addEventListener('change', function () {
+            row.rule = sel.value;
+            pickBtn.hidden = row.rule !== '仪表计量能耗';
+            childWrap.hidden = row.rule !== '各子节点计量能耗';
+          });
+
+          tdR.appendChild(cell);
+          tr.appendChild(tdR);
+
+          var tdS = document.createElement('td');
+          tdS.style.textAlign = 'right';
+          var sw = document.createElement('button');
+          sw.type = 'button';
+          sw.className = 'switch' + (row.enabled ? ' on' : '');
+          sw.setAttribute('role', 'switch');
+          sw.setAttribute('aria-checked', row.enabled ? 'true' : 'false');
+          sw.setAttribute('aria-label', energy + ' 启用开关');
+          sw.innerHTML = '<span class="switch-text">' + (row.enabled ? '开' : '关') + '</span>';
+          sw.addEventListener('click', function () {
+            row.enabled = !row.enabled;
+            sw.classList.toggle('on', row.enabled);
+            sw.setAttribute('aria-checked', row.enabled ? 'true' : 'false');
+            sw.querySelector('.switch-text').textContent = row.enabled ? '开' : '关';
+          });
+          tdS.appendChild(sw);
+          tr.appendChild(tdS);
+
+          meteringBody.appendChild(tr);
         });
+      }
+
+      document.addEventListener('click', function () {
+        document.querySelectorAll('.child-pop').forEach(function (p) { p.hidden = true; });
       });
 
-      document.querySelectorAll('.tree-row[data-expand]').forEach(function (row) {
-        row.addEventListener('click', function (e) {
-          e.stopPropagation();
-          const chev = row.querySelector('.tree-chevron');
-          const next = row.nextElementSibling;
-          if (next && next.classList.contains('tree-children')) {
-            const open = next.style.display !== 'none';
-            next.style.display = open ? 'none' : 'block';
-            if (chev) chev.textContent = open ? '▶' : '▼';
-          }
-        });
+      document.getElementById('btnMeteringConfig').addEventListener('click', function () {
+        meteringDraft = cloneState(getNodeMetering(currentNode));
+        renderMeteringRows();
+        meteringModal.hidden = false;
       });
 
-      let scale = 1;
-      const svg = document.getElementById('topoSvg');
-      const wrap = document.getElementById('topoViewport');
-      const applyScale = function () {
-        svg.style.transform = 'scale(' + scale + ')';
-        svg.style.transformOrigin = 'top left';
-        wrap.style.cursor = scale !== 1 ? 'grab' : 'default';
-      };
-      document.getElementById('zoomIn').addEventListener('click', function () {
-        scale = Math.min(1.6, scale + 0.1);
-        applyScale();
+      document.getElementById('btnMeteringSave').addEventListener('click', function () {
+        var invalid = ENERGIES.filter(function (e) {
+          var r = meteringDraft[e];
+          if (!r.enabled) return false;
+          if (!r.rule) return true;
+          if (r.rule === '仪表计量能耗' && !r.targets.length) return true;
+          if (r.rule === '各子节点计量能耗' && !r.childSel.length) return true;
+          return false;
+        });
+        if (invalid.length) {
+          showToast('「' + invalid.join('、') + '」已开启但未完成计量规则 / 计量对象配置，请补全后保存');
+          return;
+        }
+        meteringState[currentNode] = cloneState(meteringDraft);
+        meteringModal.hidden = true;
+        showToast('已保存能耗计量方案（示意）：生成 / 更新当前对象计量拓扑，表具归属已查重');
       });
-      document.getElementById('zoomOut').addEventListener('click', function () {
-        scale = Math.max(0.7, scale - 0.1);
-        applyScale();
+
+      /* ---------- 选择应用范围 ---------- */
+      var scopeModal = document.getElementById('scopeModal');
+      var scopeBody = document.getElementById('scopeBody');
+      var scopeSel = [];
+
+      function openScopeModal(energy) {
+        scopeCtx = energy;
+        scopeSel = meteringDraft[energy].targets.slice();
+        var modelFilter = document.getElementById('scopeModelFilter');
+        modelFilter.innerHTML = '<option value="">请选择物模型</option>';
+        var models = [];
+        (METERS[energy] || []).forEach(function (m) {
+          if (models.indexOf(m.model) === -1) models.push(m.model);
+        });
+        models.forEach(function (m) {
+          var o = document.createElement('option');
+          o.value = m; o.textContent = m;
+          modelFilter.appendChild(o);
+        });
+        document.getElementById('scopeSearch').value = '';
+        renderScopeTable();
+        renderScopeChips();
+        scopeModal.hidden = false;
+      }
+
+      function renderScopeTable() {
+        var kw = document.getElementById('scopeSearch').value.trim();
+        var model = document.getElementById('scopeModelFilter').value;
+        var list = (METERS[scopeCtx] || []).filter(function (m) {
+          if (kw && m.name.indexOf(kw) === -1) return false;
+          if (model && m.model !== model) return false;
+          return true;
+        });
+        document.getElementById('scopeTotal').textContent = '共 ' + list.length + ' 条';
+        if (!list.length) {
+          scopeBody.innerHTML = '<tr><td colspan="3" class="empty-cell">没有找到匹配的记录</td></tr>';
+          return;
+        }
+        scopeBody.innerHTML = '';
+        list.forEach(function (m) {
+          var tr = document.createElement('tr');
+          var occupied = !!m.occupiedBy;
+          if (occupied) tr.className = 'disabled';
+          var tdC = document.createElement('td');
+          tdC.className = 'col-check';
+          var cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.disabled = occupied;
+          cb.checked = scopeSel.indexOf(m.name) > -1;
+          cb.setAttribute('aria-label', '选择 ' + m.name);
+          cb.addEventListener('change', function () {
+            if (cb.checked) scopeSel.push(m.name);
+            else scopeSel = scopeSel.filter(function (x) { return x !== m.name; });
+            renderScopeChips();
+          });
+          tdC.appendChild(cb);
+          tr.appendChild(tdC);
+          var tdN = document.createElement('td');
+          tdN.innerHTML = esc(m.name) + (occupied ? '<div class="scope-occupied">已被「' + esc(m.occupiedBy) + '」占用，不可重复应用</div>' : '');
+          tr.appendChild(tdN);
+          var tdM = document.createElement('td');
+          tdM.textContent = m.model;
+          tr.appendChild(tdM);
+          scopeBody.appendChild(tr);
+        });
+      }
+
+      function renderScopeChips() {
+        var chips = document.getElementById('scopeChips');
+        document.getElementById('scopeSelCount').textContent = scopeSel.length;
+        if (!scopeSel.length) {
+          chips.innerHTML = '<div class="scope-chips-empty">尚未选择计量对象</div>';
+          return;
+        }
+        chips.innerHTML = '';
+        scopeSel.forEach(function (name) {
+          var chip = document.createElement('div');
+          chip.className = 'scope-chip';
+          var span = document.createElement('span');
+          span.textContent = name;
+          var x = document.createElement('button');
+          x.type = 'button';
+          x.textContent = '✕';
+          x.setAttribute('aria-label', '移除 ' + name);
+          x.addEventListener('click', function () {
+            scopeSel = scopeSel.filter(function (n) { return n !== name; });
+            renderScopeTable();
+            renderScopeChips();
+          });
+          chip.appendChild(span);
+          chip.appendChild(x);
+          chips.appendChild(chip);
+        });
+      }
+
+      document.getElementById('btnScopeSearch').addEventListener('click', renderScopeTable);
+      document.getElementById('scopeModelFilter').addEventListener('change', renderScopeTable);
+      document.getElementById('scopeCheckAll').addEventListener('change', function () {
+        var on = this.checked;
+        (METERS[scopeCtx] || []).forEach(function (m) {
+          if (m.occupiedBy) return;
+          if (on && scopeSel.indexOf(m.name) === -1) scopeSel.push(m.name);
+          if (!on) scopeSel = scopeSel.filter(function (x) { return x !== m.name; });
+        });
+        renderScopeTable();
+        renderScopeChips();
       });
-      document.getElementById('zoomReset').addEventListener('click', function () {
-        scale = 1;
-        applyScale();
+      document.getElementById('btnScopeClear').addEventListener('click', function () {
+        scopeSel = [];
+        renderScopeTable();
+        renderScopeChips();
       });
+      document.getElementById('btnScopeOk').addEventListener('click', function () {
+        meteringDraft[scopeCtx].targets = scopeSel.slice();
+        scopeModal.hidden = true;
+        renderMeteringRows();
+      });
+
+      /* ---------- 用能定额考核配置 ---------- */
+      var quotaModal = document.getElementById('quotaModal');
+
+      document.getElementById('btnQuotaConfig').addEventListener('click', function () {
+        var st = getNodeMetering(currentNode);
+        var enabled = ENERGIES.filter(function (e) { return st[e].enabled && st[e].rule; });
+        var ok = enabled.length > 0;
+        document.getElementById('quotaWarn').hidden = ok;
+        document.getElementById('quotaGridWrap').hidden = !ok;
+        document.getElementById('btnQuotaSave').disabled = !ok;
+        if (ok) {
+          document.getElementById('quotaEnergyList').textContent = enabled.join('、');
+          var grid = document.getElementById('quotaGrid');
+          grid.innerHTML = '';
+          for (var m = 1; m <= 12; m++) {
+            var cell = document.createElement('div');
+            cell.className = 'quota-cell';
+            cell.innerHTML = '<span>' + m + '月</span><input type="text" placeholder="定额" aria-label="' + m + '月定额">';
+            grid.appendChild(cell);
+          }
+        }
+        quotaModal.hidden = false;
+      });
+
+      document.getElementById('btnQuotaSave').addEventListener('click', function () {
+        quotaModal.hidden = true;
+        showToast('已保存用能定额（示意）：考核结果在「用能定额考核」页查看');
+      });
+
+      /* ---------- 初始态：与真实系统一致，进入页面默认展示工程基础信息 ---------- */
+      showHome();
     })();
   </script>
 
@@ -1329,6 +2492,6 @@
     el.classList.add('active');
   }
   </script>
-  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="能效视图"></script>
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="能耗模型管理"></script>
 </body>
 </html>
