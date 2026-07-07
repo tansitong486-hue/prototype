@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>能耗计量方案</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-dark: #17358A;
+      --primary-tint: #EEF4FF;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --danger: #DC2626;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button { border: none; background: none; font: inherit; cursor: pointer; }
+
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main { flex: 1; min-width: 0; overflow-y: auto; background: var(--bg-body); }
+
+    .page-shell { padding: 18px 20px 24px; }
+
+    .breadcrumb-bar {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .breadcrumb-bar a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .breadcrumb-bar a:hover { text-decoration: underline; }
+    .breadcrumb-bar strong { color: var(--text-primary); font-weight: 600; }
+
+    .page-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .page-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px 12px;
+      flex-wrap: wrap;
+    }
+
+    .page-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.4;
+    }
+
+    .object-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: var(--primary-tint);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .subtabs {
+      display: flex;
+      gap: 0;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border-light);
+      padding: 0 18px;
+    }
+
+    .subtab {
+      padding: 10px 20px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      background: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: color var(--transition), border-color var(--transition);
+    }
+
+    .subtab:hover { color: var(--primary); }
+    .subtab.active {
+      color: var(--primary);
+      font-weight: 600;
+      border-bottom-color: var(--primary);
+    }
+
+    .energy-panel { display: none; padding: 16px 18px 20px; }
+    .energy-panel.active { display: block; }
+
+    .panel-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .switch-field {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .switch {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      appearance: none;
+      background: #CBD5E1;
+      border-radius: 11px;
+      cursor: pointer;
+      transition: background var(--transition);
+      outline: none;
+      flex-shrink: 0;
+    }
+
+    .switch::after {
+      content: "";
+      position: absolute;
+      left: 2px;
+      top: 2px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25);
+      transition: transform var(--transition);
+    }
+
+    .switch:checked { background: var(--primary); }
+    .switch:checked::after { transform: translateX(18px); }
+
+    .panel-body { transition: opacity var(--transition); }
+    .panel-body.disabled {
+      opacity: 0.45;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .form-row { margin-bottom: 16px; }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .radio-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .radio-item input[type="radio"] {
+      width: 15px;
+      height: 15px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .method-block { display: none; }
+    .method-block.active { display: block; }
+
+    .method-hint {
+      font-size: 12px;
+      color: var(--text-hint);
+      margin: 6px 0 10px;
+    }
+
+    /* 下级计量对象树 */
+    .sel-tree {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      background: #FAFBFD;
+      padding: 12px 14px;
+      max-width: 620px;
+    }
+
+    .sel-group { margin-bottom: 8px; }
+    .sel-group:last-child { margin-bottom: 0; }
+
+    .sel-group > label,
+    .sel-children label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      padding: 5px 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background var(--transition);
+    }
+
+    .sel-group > label:hover,
+    .sel-children label:hover { background: rgba(30, 64, 175, 0.06); }
+
+    .sel-group > label { font-weight: 600; color: var(--text-primary); }
+    .sel-children { padding-left: 26px; }
+    .sel-children label { color: var(--text-secondary); }
+
+    .sel-tree input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      accent-color: var(--primary);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .meter-suffix { color: var(--text-hint); font-size: 12px; }
+
+    /* 已选表具 chips */
+    .chip-list {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fff;
+      font-size: 12px;
+      color: var(--text-primary);
+    }
+
+    .chip-x {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-hint);
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .chip-x:hover { background: #F1F5F9; color: var(--danger); }
+
+    .chip-empty {
+      font-size: 12px;
+      color: var(--text-hint);
+      margin-top: 10px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 34px;
+      padding: 0 14px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .btn-primary { color: #fff; background: var(--primary); }
+    .btn-primary:hover { background: var(--primary-dark); }
+
+    .btn-default {
+      background: #fff;
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+    }
+
+    .btn-default:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .btn-outline {
+      color: var(--primary);
+      background: #fff;
+      border: 1px solid var(--primary);
+    }
+
+    .btn-outline:hover { background: var(--primary-tint); }
+
+    /* 计量拓扑预览 */
+    .topo-preview-body { padding: 16px 18px 20px; }
+
+    .topo-energy-block { margin-bottom: 16px; }
+    .topo-energy-block:last-child { margin-bottom: 0; }
+
+    .topo-energy-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .topo-tree {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      background: #FAFBFD;
+      padding: 12px 14px;
+      font-size: 13px;
+      line-height: 2;
+      color: var(--text-secondary);
+      overflow-x: auto;
+    }
+
+    .topo-tree ul { list-style: none; padding-left: 22px; }
+    .topo-tree > ul { padding-left: 0; }
+
+    .topo-node-tag {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-right: 6px;
+      vertical-align: 1px;
+    }
+
+    .tag-object { background: var(--primary-tint); color: var(--primary); }
+    .tag-meter { background: #F0FDF4; color: #15803D; border: 1px solid #BBF7D0; }
+
+    .topo-empty { font-size: 12px; color: var(--text-hint); }
+
+    /* 底部操作条 */
+    .footer-bar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 14px 18px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* 弹窗 */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100000;
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .modal-backdrop.show { display: flex; }
+    body.modal-open { overflow: hidden; }
+
+    .modal {
+      position: relative;
+      z-index: 1;
+      background: #fff;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18), var(--shadow-card);
+      max-width: 720px;
+      width: 100%;
+      max-height: min(90vh, 720px);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-head {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .modal-title { font-size: 16px; font-weight: 700; }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      color: var(--text-hint);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .modal-close:hover { background: #F1F5F9; color: var(--text-primary); }
+
+    .modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+
+    .modal-foot {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .modal-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .input-text {
+      height: 34px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      color: var(--text-primary);
+      min-width: 200px;
+      transition: border-color var(--transition);
+    }
+
+    .input-text:focus-visible {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.12);
+    }
+
+    .input-text::placeholder { color: var(--text-hint); }
+    .modal-toolbar .input-text { min-width: 220px; flex: 1; }
+
+    .table-wrap { overflow-x: auto; }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table thead th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 12px 16px;
+      font-size: 13px;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover { background: #FBFCFE; }
+    .data-table tbody tr.disabled-row { background: #F8FAFC; }
+    .data-table tbody tr.disabled-row td { color: var(--text-hint); }
+
+    .check-cell { text-align: center; width: 72px; }
+    .check-cell input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: var(--primary);
+    }
+    .check-cell input[type="checkbox"]:disabled { cursor: not-allowed; }
+
+    .conflict-intro {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      line-height: 1.7;
+    }
+
+    .conflict-intro b { color: var(--danger); }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      min-width: 180px;
+      max-width: 360px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.92);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.6;
+      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.28);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: all .25s ease;
+      z-index: 100050;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+        <div class="anno-filter-bar" id="annoFilterBar">
+          <span class="anno-filter-label">批注版本：</span>
+          <div class="anno-filter-tags" id="annoFilterTags"></div>
+        </div>
+        <div class="page-shell">
+          <div class="anno anno-version-header" data-version="v2.5">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v2.5</p>
+              <p><b>更新日期：</b>2026-07-02</p>
+              <p><b>变更概述：</b>AI 节能 v2.5 新建：复用《能耗计量方案》配置能力接入计费能耗明细链路。</p>
+              <p><b>本页说明：</b>为当前计量对象（示例：水冷冷水系统-1F）按能源类型配置能耗计量方案；入口来自能效视图对象详情。配置产物为一棵「计量拓扑」（中间层 = 下级计量对象，叶子 = 表具），供对象能耗 / 成本 on-read 聚合查询使用。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-req" data-version="v2.5">
+            <span class="anno-tag">需求说明</span>
+            <span class="anno-version">v2.5</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>页面目的（v2.5 需求 4「计量方案与计量拓扑」）：</b>本版不新建抽象的计量关系模型，而是复用既有《能耗计量方案》配置能力，把配置产物纳入计费能耗明细链路。</p>
+              <ul>
+                <li><b>两种配置方式：</b>①「各子节点计量能耗」——沿能效视图树选择下级计量对象（系统 → 设备组 → 设备），中间层继续向下展开直至叶子表具；②「仪表计量能耗」——为当前对象直接选择一块或多块计量表具（物模型实例）。</li>
+                <li><b>统一产物：</b>两种方式最终都产出同一套计量拓扑，只是树的深浅不同：中间层是下级对象，叶子层是表具。</li>
+                <li><b>下游消费（需求 6）：</b>对象能耗 / 成本 = 沿本页产出的计量拓扑递归 SUM 到叶子表具归档明细，对象层不归档、全部 on-read 聚合。</li>
+                <li><b>页面级验收要点：</b>保存时强制校验「表具唯一归属一个计量对象」，冲突则拦截保存并给出冲突清单。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="breadcrumb-bar" aria-label="面包屑">
+            <a href="能效视图.html">能效视图</a>
+            <span> / </span>
+            <span>水冷冷水系统-1F</span>
+            <span> / </span>
+            <strong>能耗计量方案</strong>
+          </div>
+
+          <section class="page-card" aria-labelledby="pageTitle">
+            <div class="page-head">
+              <h1 class="page-title" id="pageTitle">能耗计量方案</h1>
+              <span class="object-badge">当前计量对象：水冷冷水系统-1F</span>
+            </div>
+
+            <div class="anno anno-ux" data-version="v2.5" style="margin: 0 18px 12px;">
+              <span class="anno-tag">交互说明</span>
+              <span class="anno-version">v2.5</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>能源类型 Tab 与计量方式选择</p>
+                <ul>
+                  <li><b>能源类型分块：</b>按当前对象可计量的能源类型（电 / 水 / 冷量）分 Tab 独立配置；各能源的计量方式、成员选择互不影响。</li>
+                  <li><b>计量方式（单选）：</b>「仪表计量能耗」显示「选择表具」按钮，打开表具选择弹窗；「各子节点计量能耗」显示下级计量对象勾选树。切换方式不清空另一方式下的已选内容，便于比对，保存时仅按当前选中方式生效。</li>
+                  <li><b>保存：</b>底部「保存」对全部已启用能源统一校验并保存；成功后提示保存成功并刷新「计量拓扑预览」。「取消」返回能效视图对象详情，不保存修改。</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="anno anno-state" data-version="v2.5" style="margin: 0 18px 12px;">
+              <span class="anno-tag">状态说明</span>
+              <span class="anno-version">v2.5</span>
+              <span class="anno-source">产品推断</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>能源启用开关与配置区状态</p>
+                <ul>
+                  <li><b>启用开关默认关闭：</b>未启用的能源类型不参与计量，其配置区整体置灰不可编辑；开启后恢复可编辑。</li>
+                  <li><b>未选择成员：</b>已启用但未选任何下级对象 / 表具时，表示当前对象该能源暂无计量成员，拓扑预览中显示「暂未配置」。</li>
+                  <li><b>已归属他处的表具：</b>在表具选择弹窗中整行置灰、复选框禁用，悬停提示「该表具已归属：xxx」。</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="subtabs" role="tablist" aria-label="能源类型">
+              <button type="button" class="subtab active" role="tab" aria-selected="true" data-energy="elec">电</button>
+              <button type="button" class="subtab" role="tab" aria-selected="false" data-energy="water">水</button>
+              <button type="button" class="subtab" role="tab" aria-selected="false" data-energy="cool">冷量</button>
+            </div>
+
+            <!-- 电 -->
+            <div class="energy-panel active" data-energy="elec">
+              <div class="panel-toolbar">
+                <label class="switch-field">
+                  <input type="checkbox" class="switch enable-switch" checked aria-label="启用电能计量">
+                  <span>启用该能源计量</span>
+                </label>
+              </div>
+              <div class="panel-body">
+                <div class="form-row">
+                  <span class="form-label">计量方式</span>
+                  <div class="radio-group">
+                    <label class="radio-item">
+                      <input type="radio" name="method-elec" value="meter">
+                      <span>仪表计量能耗（直接选表具）</span>
+                    </label>
+                    <label class="radio-item">
+                      <input type="radio" name="method-elec" value="sub" checked>
+                      <span>各子节点计量能耗（选下级计量对象）</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="method-block" data-method="meter">
+                  <button type="button" class="btn btn-outline btn-pick-meter">选择表具</button>
+                  <span class="method-hint" style="margin-left:10px;">已选 <b class="meter-count">0</b> 块表具</span>
+                  <ul class="chip-list"></ul>
+                  <p class="chip-empty">暂未选择表具</p>
+                </div>
+
+                <div class="method-block active" data-method="sub">
+                  <div class="anno anno-data" data-version="v2.5">
+                    <span class="anno-tag">数据逻辑</span>
+                    <span class="anno-version">v2.5</span>
+                    <span class="anno-source">产品推断</span>
+                    <div class="anno-body">
+                      <p><b>关联模块：</b>下级计量对象勾选树（各能源 Tab 通用）</p>
+                      <ul>
+                        <li><b>数据来源：</b>能效视图对象树中当前对象的下一级节点（设备组），及其下属设备；仅展示已启用对应能源计量方案的下级节点。</li>
+                        <li><b>展开口径：</b>勾选的下级对象在拓扑中作为中间层，继续沿其自身计量方案向下展开直至叶子表具；括号内为该设备当前挂接的表具（示意）。</li>
+                        <li><b>子节点联动：</b>下级节点被删除时自动移出勾选范围；下级节点自身计量成员变化时，本对象拓扑随之更新，无需重新保存本页。</li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div class="sel-tree" role="tree" aria-label="下级计量对象选择">
+                    <div class="sel-group">
+                      <label><input type="checkbox" class="grp-check" checked> 冷水主机组<span class="meter-suffix">（设备组）</span></label>
+                      <div class="sel-children">
+                        <label><input type="checkbox" class="dev-check" data-meters="冷机电表-01" checked> 冷水主机-01 <span class="meter-suffix">（冷机电表-01）</span></label>
+                        <label><input type="checkbox" class="dev-check" data-meters="冷机电表-02" checked> 冷水主机-02 <span class="meter-suffix">（冷机电表-02）</span></label>
+                      </div>
+                    </div>
+                    <div class="sel-group">
+                      <label><input type="checkbox" class="grp-check" checked> 冷冻水泵组<span class="meter-suffix">（设备组）</span></label>
+                      <div class="sel-children">
+                        <label><input type="checkbox" class="dev-check" data-meters="冷冻泵电表-01" checked> 冷冻泵-01 <span class="meter-suffix">（冷冻泵电表-01）</span></label>
+                        <label><input type="checkbox" class="dev-check" data-meters="冷冻泵电表-02" checked> 冷冻泵-02 <span class="meter-suffix">（冷冻泵电表-02）</span></label>
+                      </div>
+                    </div>
+                    <div class="sel-group">
+                      <label><input type="checkbox" class="grp-check" checked> 冷却塔组<span class="meter-suffix">（设备组）</span></label>
+                      <div class="sel-children">
+                        <label><input type="checkbox" class="dev-check" data-meters="冷却塔电表-01" checked> 冷却塔-01 <span class="meter-suffix">（冷却塔电表-01）</span></label>
+                        <label><input type="checkbox" class="dev-check" data-meters="冷却塔电表-03" checked> 冷却塔-02 <span class="meter-suffix">（冷却塔电表-03）</span></label>
+                      </div>
+                    </div>
+                  </div>
+                  <p class="method-hint">提示：勾选下级对象后，其展开到的叶子表具同样参与「表具唯一归属」查重（示例数据中「冷却塔电表-03」已归属其他对象，保存时可体验冲突拦截）。</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- 水 -->
+            <div class="energy-panel" data-energy="water">
+              <div class="panel-toolbar">
+                <label class="switch-field">
+                  <input type="checkbox" class="switch enable-switch" checked aria-label="启用水计量">
+                  <span>启用该能源计量</span>
+                </label>
+              </div>
+              <div class="panel-body">
+                <div class="form-row">
+                  <span class="form-label">计量方式</span>
+                  <div class="radio-group">
+                    <label class="radio-item">
+                      <input type="radio" name="method-water" value="meter" checked>
+                      <span>仪表计量能耗（直接选表具）</span>
+                    </label>
+                    <label class="radio-item">
+                      <input type="radio" name="method-water" value="sub">
+                      <span>各子节点计量能耗（选下级计量对象）</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="method-block active" data-method="meter">
+                  <button type="button" class="btn btn-outline btn-pick-meter">选择表具</button>
+                  <span class="method-hint" style="margin-left:10px;">已选 <b class="meter-count">1</b> 块表具</span>
+                  <ul class="chip-list"></ul>
+                  <p class="chip-empty" style="display:none;">暂未选择表具</p>
+                </div>
+
+                <div class="method-block" data-method="sub">
+                  <div class="sel-tree" role="tree" aria-label="下级计量对象选择">
+                    <div class="sel-group">
+                      <label><input type="checkbox" class="grp-check"> 冷冻水泵组<span class="meter-suffix">（设备组）</span></label>
+                      <div class="sel-children">
+                        <label><input type="checkbox" class="dev-check" data-meters="冷冻水补水表-01"> 冷冻泵-01 <span class="meter-suffix">（冷冻水补水表-01）</span></label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 冷量 -->
+            <div class="energy-panel" data-energy="cool">
+              <div class="panel-toolbar">
+                <label class="switch-field">
+                  <input type="checkbox" class="switch enable-switch" aria-label="启用冷量计量">
+                  <span>启用该能源计量</span>
+                </label>
+              </div>
+              <div class="panel-body disabled">
+                <div class="form-row">
+                  <span class="form-label">计量方式</span>
+                  <div class="radio-group">
+                    <label class="radio-item">
+                      <input type="radio" name="method-cool" value="meter" checked>
+                      <span>仪表计量能耗（直接选表具）</span>
+                    </label>
+                    <label class="radio-item">
+                      <input type="radio" name="method-cool" value="sub">
+                      <span>各子节点计量能耗（选下级计量对象）</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="method-block active" data-method="meter">
+                  <button type="button" class="btn btn-outline btn-pick-meter">选择表具</button>
+                  <span class="method-hint" style="margin-left:10px;">已选 <b class="meter-count">0</b> 块表具</span>
+                  <ul class="chip-list"></ul>
+                  <p class="chip-empty">暂未选择表具</p>
+                </div>
+
+                <div class="method-block" data-method="sub">
+                  <div class="sel-tree" role="tree" aria-label="下级计量对象选择">
+                    <div class="sel-group">
+                      <label><input type="checkbox" class="grp-check"> 板换组<span class="meter-suffix">（设备组）</span></label>
+                      <div class="sel-children">
+                        <label><input type="checkbox" class="dev-check" data-meters="冷量表-01"> 板换-01 <span class="meter-suffix">（冷量表-01）</span></label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="page-card" aria-labelledby="topoPreviewTitle">
+            <div class="page-head">
+              <h2 class="page-title" id="topoPreviewTitle" style="font-size:16px;">计量拓扑预览</h2>
+            </div>
+
+            <div class="anno anno-data" data-version="v2.5" style="margin: 0 18px 12px;">
+              <span class="anno-tag">数据逻辑</span>
+              <span class="anno-version">v2.5</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>计量拓扑预览</p>
+                <ul>
+                  <li><b>产物口径：</b>预览展示本页配置产出的计量拓扑：根 = 当前计量对象，中间层 = 勾选的下级计量对象（继续展开），叶子 = 表具。保存成功后按最新配置刷新。</li>
+                  <li><b>对象层不归档：</b>对象能耗 / 成本不落库，查询时沿本拓扑对表具归档明细（半小时 / 时 / 天 / 月）递归 SUM，on-read 聚合（需求 6）。拓扑一变，对象历史口径在下次查询自动一致，零回填。</li>
+                  <li><b>历史随当前拓扑（产品已接受口径，§9.4）：</b>对象查询始终沿【当前】拓扑聚合。表具改绑到其他计量对象后，其全部历史能耗 / 成本随之归到新对象名下、旧对象对应历史相应减少。本期不做计量拓扑生效版本；需「历史归属冻结」的场景（如用能定额考核）须另行立项。</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="topo-preview-body" id="topoPreview"></div>
+          </section>
+
+          <div class="anno anno-edge" data-version="v2.5">
+            <span class="anno-tag">边界与异常</span>
+            <span class="anno-version">v2.5</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>保存校验 — 表具唯一归属强制查重</p>
+              <ul>
+                <li><b>唯一归属约束（§7.1）：</b>一个表具只能归属一个计量对象，不得同时挂到两个计量对象 / 两处拓扑，从源头杜绝 on-read SUM 的重复计量。</li>
+                <li><b>查重范围：</b>保存时对「直接选择的表具」与「选下级对象后展开到的叶子表具」统一校验；与其他计量对象已占用的表具冲突即拦截。</li>
+                <li><b>冲突处理：</b>保存被拦截，弹出冲突清单（表具名称 + 已归属计量对象 + 冲突来源），本次不保存任何能源的配置；用户调整选择后重新保存。</li>
+                <li><b>换表不算重复计量（§6.2）：</b>换表 = 同一计量对象内旧表下线 + 新表上线，旧表停走、新表起走，二者归属同一对象、挂同一拓扑，不违反唯一归属约束；不支持通过改绑跨对象搬历史。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="footer-bar">
+            <button type="button" class="btn btn-default" id="btnCancel">取消</button>
+            <button type="button" class="btn btn-primary" id="btnSave">保存</button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- 选择表具弹窗 -->
+  <div class="modal-backdrop" id="modalMeter" aria-hidden="true">
+    <div class="modal" role="dialog" aria-labelledby="meterModalTitle" aria-modal="true">
+      <div class="modal-head">
+        <div class="modal-title" id="meterModalTitle">选择表具</div>
+        <button type="button" class="modal-close" id="meterModalClose" aria-label="关闭">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="anno anno-field" data-version="v2.5">
+          <span class="anno-tag">字段说明</span>
+          <span class="anno-version">v2.5</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>「选择表具」弹窗；入口：各能源 Tab「仪表计量能耗」方式下的「选择表具」按钮</p>
+            <ul>
+              <li><b>数据来源：</b>当前能源类型在能源配置中定义的物模型实例（物模型实例 = 表具）；仅展示挂有该能源标准累积量测点的实例。</li>
+              <li><b>列说明：</b>物模型（表具所属物模型名）、表具名称（实例 / 组件名，支持顶部输入框模糊搜索）、归属计量对象（未归属 / 本对象 / 其他对象名）。</li>
+              <li><b>已归属其他对象的行：</b>整行置灰、复选框禁用不可选，悬停提示「该表具已归属：xxx」——与保存查重同一套唯一归属规则的前置拦截。</li>
+              <li><b>回显：</b>再次打开时勾选状态按当前已选表具回显；多选，点「确定」写回已选列表，点「取消 / ×」放弃本次勾选变更。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="modal-toolbar">
+          <input type="search" class="input-text" id="meterSearch" placeholder="支持表具名称模糊搜索" aria-label="表具名称搜索">
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>物模型</th>
+                <th>表具名称</th>
+                <th>归属计量对象</th>
+                <th class="check-cell">选择</th>
+              </tr>
+            </thead>
+            <tbody id="meterTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-default" id="meterModalCancel">取消</button>
+        <button type="button" class="btn btn-primary" id="meterModalOk">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 保存冲突清单弹窗 -->
+  <div class="modal-backdrop" id="modalConflict" aria-hidden="true">
+    <div class="modal" role="dialog" aria-labelledby="conflictModalTitle" aria-modal="true" style="max-width: 640px;">
+      <div class="modal-head">
+        <div class="modal-title" id="conflictModalTitle">无法保存：表具归属冲突</div>
+        <button type="button" class="modal-close" id="conflictModalClose" aria-label="关闭">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="anno anno-edge" data-version="v2.5">
+          <span class="anno-tag">边界与异常</span>
+          <span class="anno-version">v2.5</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>「表具归属冲突」弹窗；入口：底部「保存」按钮触发唯一归属查重未通过时</p>
+            <ul>
+              <li><b>清单内容：</b>逐行列出冲突表具的名称、当前已归属的计量对象、冲突来源（直接选表 / 经某下级对象展开）。</li>
+              <li><b>处理方式：</b>本次保存整体拦截（所有能源均不保存）；用户回到配置区取消冲突表具或改选后重新保存。弹窗仅提供「我知道了」关闭，不提供强制覆盖。</li>
+            </ul>
+          </div>
+        </div>
+        <p class="conflict-intro">以下 <b id="conflictCount">0</b> 块表具已归属其他计量对象，违反「一个表具只能归属一个计量对象」约束，本次保存已被拦截：</p>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>表具名称</th>
+                <th>已归属计量对象</th>
+                <th>冲突来源</th>
+              </tr>
+            </thead>
+            <tbody id="conflictTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-primary" id="conflictModalOk">我知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (function () {
+      var CURRENT_OBJECT = '水冷冷水系统-1F';
+      var ENERGY_LABEL = { elec: '电', water: '水', cool: '冷量' };
+
+      // 已归属其他计量对象的表具（示例数据；本对象名下的不算冲突）
+      var METER_OWNERS = {
+        '冷却塔电表-03': '备用冷源系统-B1',
+        '3号列头柜电表': '末端空调系统-2F',
+        '市政进水总表': '园区给水系统',
+        '冷量表-02': '备用冷源系统-B1'
+      };
+
+      // 表具选择弹窗数据：按能源类型
+      var METER_POOL = {
+        elec: [
+          { model: '交流电表', name: '冷站总进线电表', owner: '' },
+          { model: '交流电表', name: '冷机电表-01', owner: CURRENT_OBJECT },
+          { model: '交流电表', name: '3号列头柜电表', owner: '末端空调系统-2F' },
+          { model: '直流电表', name: '直流屏电表-01', owner: '' }
+        ],
+        water: [
+          { model: '水表', name: '冷冻水补水表-01', owner: CURRENT_OBJECT },
+          { model: '水表', name: '冷却水补水表-02', owner: '' },
+          { model: '水表', name: '市政进水总表', owner: '园区给水系统' }
+        ],
+        cool: [
+          { model: '冷量计', name: '冷量表-01', owner: '' },
+          { model: '冷量计', name: '冷量表-02', owner: '备用冷源系统-B1' }
+        ]
+      };
+
+      // 各能源「仪表计量」方式下的已选表具
+      var selectedMeters = {
+        elec: [],
+        water: ['冷冻水补水表-01'],
+        cool: []
+      };
+
+      var toast = document.getElementById('toast');
+      var toastTimer = null;
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 2400);
+      }
+
+      function panelOf(energy) {
+        return document.querySelector('.energy-panel[data-energy="' + energy + '"]');
+      }
+
+      /* ============ 能源 Tab 切换 ============ */
+      document.querySelectorAll('.subtab[data-energy]').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          document.querySelectorAll('.subtab[data-energy]').forEach(function (t) {
+            var on = t === tab;
+            t.classList.toggle('active', on);
+            t.setAttribute('aria-selected', on ? 'true' : 'false');
+          });
+          document.querySelectorAll('.energy-panel').forEach(function (p) {
+            p.classList.toggle('active', p.getAttribute('data-energy') === tab.getAttribute('data-energy'));
+          });
+        });
+      });
+
+      /* ============ 启用开关 ============ */
+      document.querySelectorAll('.energy-panel').forEach(function (panel) {
+        var sw = panel.querySelector('.enable-switch');
+        var body = panel.querySelector('.panel-body');
+        sw.addEventListener('change', function () {
+          body.classList.toggle('disabled', !sw.checked);
+          showToast(ENERGY_LABEL[panel.getAttribute('data-energy')] + ' 能源计量已' + (sw.checked ? '启用' : '关闭'));
+        });
+      });
+
+      /* ============ 计量方式切换 ============ */
+      document.querySelectorAll('.energy-panel').forEach(function (panel) {
+        panel.querySelectorAll('input[type="radio"]').forEach(function (radio) {
+          radio.addEventListener('change', function () {
+            panel.querySelectorAll('.method-block').forEach(function (block) {
+              block.classList.toggle('active', block.getAttribute('data-method') === radio.value);
+            });
+          });
+        });
+      });
+
+      /* ============ 子节点树：组勾选联动 ============ */
+      document.querySelectorAll('.sel-group').forEach(function (group) {
+        var grp = group.querySelector('.grp-check');
+        var devs = group.querySelectorAll('.dev-check');
+        grp.addEventListener('change', function () {
+          devs.forEach(function (d) { d.checked = grp.checked; });
+        });
+        devs.forEach(function (d) {
+          d.addEventListener('change', function () {
+            var all = Array.prototype.every.call(devs, function (x) { return x.checked; });
+            var none = Array.prototype.every.call(devs, function (x) { return !x.checked; });
+            grp.checked = all;
+            grp.indeterminate = !all && !none;
+          });
+        });
+      });
+
+      /* ============ 已选表具 chips ============ */
+      function renderChips(energy) {
+        var panel = panelOf(energy);
+        var block = panel.querySelector('.method-block[data-method="meter"]');
+        var list = block.querySelector('.chip-list');
+        var empty = block.querySelector('.chip-empty');
+        var count = block.querySelector('.meter-count');
+        list.innerHTML = '';
+        selectedMeters[energy].forEach(function (name) {
+          var li = document.createElement('li');
+          li.className = 'chip';
+          var span = document.createElement('span');
+          span.textContent = name;
+          var x = document.createElement('button');
+          x.type = 'button';
+          x.className = 'chip-x';
+          x.setAttribute('aria-label', '移除 ' + name);
+          x.textContent = '×';
+          x.addEventListener('click', function () {
+            selectedMeters[energy] = selectedMeters[energy].filter(function (n) { return n !== name; });
+            renderChips(energy);
+          });
+          li.appendChild(span);
+          li.appendChild(x);
+          list.appendChild(li);
+        });
+        count.textContent = String(selectedMeters[energy].length);
+        empty.style.display = selectedMeters[energy].length ? 'none' : '';
+      }
+      Object.keys(selectedMeters).forEach(renderChips);
+
+      /* ============ 选择表具弹窗 ============ */
+      var meterModal = document.getElementById('modalMeter');
+      var meterBody = document.getElementById('meterTableBody');
+      var meterSearch = document.getElementById('meterSearch');
+      var meterTitle = document.getElementById('meterModalTitle');
+      var modalEnergy = 'elec';
+
+      function openMeterModal(energy) {
+        modalEnergy = energy;
+        meterTitle.textContent = '选择表具 — ' + ENERGY_LABEL[energy] + '（' + CURRENT_OBJECT + '）';
+        meterSearch.value = '';
+        meterBody.innerHTML = '';
+        METER_POOL[energy].forEach(function (m) {
+          var takenByOther = m.owner && m.owner !== CURRENT_OBJECT;
+          var tr = document.createElement('tr');
+          tr.setAttribute('data-name', m.name);
+          if (takenByOther) {
+            tr.className = 'disabled-row';
+            tr.title = '该表具已归属：' + m.owner;
+          }
+          var ownerText = m.owner ? (m.owner === CURRENT_OBJECT ? m.owner + '（本对象）' : m.owner) : '未归属';
+          tr.innerHTML =
+            '<td>' + m.model + '</td>' +
+            '<td>' + m.name + '</td>' +
+            '<td>' + ownerText + '</td>' +
+            '<td class="check-cell"><input type="checkbox" ' +
+            (takenByOther ? 'disabled aria-label="' + m.name + ' 不可选"' : 'aria-label="选择 ' + m.name + '"') +
+            (selectedMeters[energy].indexOf(m.name) !== -1 ? ' checked' : '') +
+            '></td>';
+          meterBody.appendChild(tr);
+        });
+        meterModal.classList.add('show');
+        meterModal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+        document.getElementById('meterModalClose').focus();
+      }
+
+      function closeMeterModal() {
+        meterModal.classList.remove('show');
+        meterModal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+      }
+
+      document.querySelectorAll('.btn-pick-meter').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          openMeterModal(btn.closest('.energy-panel').getAttribute('data-energy'));
+        });
+      });
+
+      document.getElementById('meterModalClose').addEventListener('click', closeMeterModal);
+      document.getElementById('meterModalCancel').addEventListener('click', closeMeterModal);
+      document.getElementById('meterModalOk').addEventListener('click', function () {
+        var names = [];
+        meterBody.querySelectorAll('tr').forEach(function (tr) {
+          var cb = tr.querySelector('input[type="checkbox"]');
+          if (cb && cb.checked && !cb.disabled) names.push(tr.getAttribute('data-name'));
+        });
+        selectedMeters[modalEnergy] = names;
+        renderChips(modalEnergy);
+        closeMeterModal();
+        showToast('已选 ' + names.length + ' 块表具（' + ENERGY_LABEL[modalEnergy] + '）');
+      });
+
+      meterModal.addEventListener('click', function (e) {
+        if (e.target === meterModal) closeMeterModal();
+      });
+
+      meterSearch.addEventListener('input', function () {
+        var q = meterSearch.value.trim().toLowerCase();
+        meterBody.querySelectorAll('tr').forEach(function (tr) {
+          var name = (tr.getAttribute('data-name') || '').toLowerCase();
+          tr.style.display = !q || name.indexOf(q) !== -1 ? '' : 'none';
+        });
+      });
+
+      /* ============ 冲突弹窗 ============ */
+      var conflictModal = document.getElementById('modalConflict');
+      function openConflictModal(conflicts) {
+        var body = document.getElementById('conflictTableBody');
+        body.innerHTML = '';
+        conflicts.forEach(function (c) {
+          var tr = document.createElement('tr');
+          tr.innerHTML = '<td>' + c.meter + '</td><td>' + c.owner + '</td><td>' + c.via + '</td>';
+          body.appendChild(tr);
+        });
+        document.getElementById('conflictCount').textContent = String(conflicts.length);
+        conflictModal.classList.add('show');
+        conflictModal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+        document.getElementById('conflictModalOk').focus();
+      }
+      function closeConflictModal() {
+        conflictModal.classList.remove('show');
+        conflictModal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+      }
+      document.getElementById('conflictModalClose').addEventListener('click', closeConflictModal);
+      document.getElementById('conflictModalOk').addEventListener('click', closeConflictModal);
+      conflictModal.addEventListener('click', function (e) {
+        if (e.target === conflictModal) closeConflictModal();
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Escape') return;
+        if (meterModal.classList.contains('show')) closeMeterModal();
+        if (conflictModal.classList.contains('show')) closeConflictModal();
+      });
+
+      /* ============ 收集当前配置 ============ */
+      function collectConfig() {
+        var config = {};
+        document.querySelectorAll('.energy-panel').forEach(function (panel) {
+          var energy = panel.getAttribute('data-energy');
+          var enabled = panel.querySelector('.enable-switch').checked;
+          var method = panel.querySelector('input[type="radio"]:checked').value;
+          var entry = { enabled: enabled, method: method, meters: [], groups: [] };
+          if (method === 'meter') {
+            entry.meters = selectedMeters[energy].slice();
+          } else {
+            panel.querySelectorAll('.method-block[data-method="sub"] .sel-group').forEach(function (group) {
+              var groupName = group.querySelector('.grp-check').parentElement.textContent.replace(/（设备组）/, '').trim();
+              var devices = [];
+              group.querySelectorAll('.dev-check').forEach(function (d) {
+                if (!d.checked) return;
+                devices.push({
+                  name: d.parentElement.textContent.replace(/（[^）]*）/g, '').trim(),
+                  meters: (d.getAttribute('data-meters') || '').split(',').filter(Boolean)
+                });
+              });
+              if (devices.length) entry.groups.push({ name: groupName, devices: devices });
+            });
+          }
+          config[energy] = entry;
+        });
+        return config;
+      }
+
+      /* ============ 唯一归属查重 ============ */
+      function findConflicts(config) {
+        var conflicts = [];
+        Object.keys(config).forEach(function (energy) {
+          var entry = config[energy];
+          if (!entry.enabled) return;
+          if (entry.method === 'meter') {
+            entry.meters.forEach(function (name) {
+              var owner = METER_OWNERS[name];
+              if (owner && owner !== CURRENT_OBJECT) {
+                conflicts.push({ meter: name, owner: owner, via: '直接选表（' + ENERGY_LABEL[energy] + '）' });
+              }
+            });
+          } else {
+            entry.groups.forEach(function (group) {
+              group.devices.forEach(function (dev) {
+                dev.meters.forEach(function (name) {
+                  var owner = METER_OWNERS[name];
+                  if (owner && owner !== CURRENT_OBJECT) {
+                    conflicts.push({ meter: name, owner: owner, via: '经下级对象「' + group.name + ' / ' + dev.name + '」展开（' + ENERGY_LABEL[energy] + '）' });
+                  }
+                });
+              });
+            });
+          }
+        });
+        return conflicts;
+      }
+
+      /* ============ 计量拓扑预览 ============ */
+      function rebuildPreview(config) {
+        var wrap = document.getElementById('topoPreview');
+        wrap.innerHTML = '';
+        Object.keys(config).forEach(function (energy) {
+          var entry = config[energy];
+          var block = document.createElement('div');
+          block.className = 'topo-energy-block';
+          var title = document.createElement('div');
+          title.className = 'topo-energy-title';
+          title.textContent = ENERGY_LABEL[energy] + (entry.enabled ? '' : '（未启用）');
+          block.appendChild(title);
+
+          var tree = document.createElement('div');
+          tree.className = 'topo-tree';
+
+          function nodeLi(tag, tagClass, text) {
+            var li = document.createElement('li');
+            var badge = document.createElement('span');
+            badge.className = 'topo-node-tag ' + tagClass;
+            badge.textContent = tag;
+            li.appendChild(badge);
+            li.appendChild(document.createTextNode(text));
+            return li;
+          }
+
+          if (!entry.enabled) {
+            tree.innerHTML = '<span class="topo-empty">该能源未启用计量</span>';
+          } else {
+            var hasMember = entry.method === 'meter' ? entry.meters.length > 0 : entry.groups.length > 0;
+            if (!hasMember) {
+              tree.innerHTML = '<span class="topo-empty">暂未配置计量成员</span>';
+            } else {
+              var rootUl = document.createElement('ul');
+              var rootLi = nodeLi('对象', 'tag-object', CURRENT_OBJECT);
+              var childUl = document.createElement('ul');
+              if (entry.method === 'meter') {
+                entry.meters.forEach(function (name) {
+                  childUl.appendChild(nodeLi('表具', 'tag-meter', name));
+                });
+              } else {
+                entry.groups.forEach(function (group) {
+                  var gLi = nodeLi('对象', 'tag-object', group.name);
+                  var dUl = document.createElement('ul');
+                  group.devices.forEach(function (dev) {
+                    var dLi = nodeLi('对象', 'tag-object', dev.name);
+                    var mUl = document.createElement('ul');
+                    dev.meters.forEach(function (name) {
+                      mUl.appendChild(nodeLi('表具', 'tag-meter', name));
+                    });
+                    dLi.appendChild(mUl);
+                    dUl.appendChild(dLi);
+                  });
+                  gLi.appendChild(dUl);
+                  childUl.appendChild(gLi);
+                });
+              }
+              rootLi.appendChild(childUl);
+              rootUl.appendChild(rootLi);
+              tree.appendChild(rootUl);
+            }
+          }
+          block.appendChild(tree);
+          wrap.appendChild(block);
+        });
+      }
+
+      /* ============ 保存 / 取消 ============ */
+      document.getElementById('btnSave').addEventListener('click', function () {
+        var config = collectConfig();
+        var conflicts = findConflicts(config);
+        if (conflicts.length) {
+          openConflictModal(conflicts);
+          return;
+        }
+        rebuildPreview(config);
+        showToast('计量方案保存成功，已生成最新计量拓扑');
+      });
+
+      document.getElementById('btnCancel').addEventListener('click', function () {
+        window.location.href = '能效视图.html';
+      });
+
+      // 初始渲染拓扑预览（示意当前已保存配置）
+      rebuildPreview(collectConfig());
+    })();
+  </script>
+
+  <button type="button" class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+
+  <script>
+    function initAnnoVersionFilter() {
+      var bar = document.getElementById('annoFilterBar');
+      var tags = document.getElementById('annoFilterTags');
+      if (!document.body.classList.contains('annotation-mode')) return;
+      var annos = document.querySelectorAll('.anno[data-version]');
+      var versions = [];
+      annos.forEach(function (a) {
+        var v = a.getAttribute('data-version');
+        if (v && versions.indexOf(v) === -1) versions.push(v);
+      });
+      versions.sort(function (a, b) {
+        var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+        var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+        for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+          if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+        }
+        return 0;
+      });
+      tags.innerHTML = '';
+      var allBtn = document.createElement('span');
+      allBtn.className = 'anno-filter-tag';
+      allBtn.textContent = '全部';
+      allBtn.onclick = function () { filterAnno('all', versions[0]); setActive(this); };
+      tags.appendChild(allBtn);
+      versions.forEach(function (v, i) {
+        var btn = document.createElement('span');
+        btn.className = 'anno-filter-tag' + (i === 0 ? ' active' : '');
+        btn.textContent = v;
+        btn.onclick = function () { filterAnno(v, versions[0]); setActive(this); };
+        tags.appendChild(btn);
+      });
+      if (versions.length > 0) filterAnno(versions[0], versions[0]);
+    }
+    function filterAnno(version, latest) {
+      document.querySelectorAll('.anno[data-version]').forEach(function (a) {
+        var v = a.getAttribute('data-version');
+        if (version === 'all') {
+          a.style.display = '';
+          a.style.opacity = (v === latest) ? '1' : '0.6';
+        } else {
+          a.style.display = (v === version) ? '' : 'none';
+          a.style.opacity = '1';
+        }
+      });
+    }
+    function setActive(el) {
+      el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function (t) { t.classList.remove('active'); });
+      el.classList.add('active');
+    }
+  </script>
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="能效视图"></script>
+</body>
+</html>

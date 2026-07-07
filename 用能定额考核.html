@@ -73,6 +73,34 @@
       fill: #3B82F6;
     }
 
+    /* v2.5 拓扑漂移提示条（橙色） */
+    .notice-bar.warn {
+      background: #FFF7ED;
+      border-color: #FDBA74;
+      color: #C2410C;
+    }
+
+    .notice-bar.warn svg { fill: #F97316; }
+
+    /* v2.5 完整性标记：汇总结果含坏值/缺失半小时槽时展示 */
+    .integrity-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      height: 18px;
+      padding: 0 7px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #C2410C;
+      background: #FFF7ED;
+      border: 1px solid #FDBA74;
+      cursor: help;
+      white-space: nowrap;
+      vertical-align: middle;
+      margin-left: 6px;
+    }
+
     /* ── Page card ───────────────────────────────────────── */
     .page-card {
       background: var(--bg-card);
@@ -314,7 +342,20 @@
     <div class="body-wrap">
       <div id="app-sidebar"></div>
       <main class="main">
+        <div class="anno-filter-bar" id="annoFilterBar">
+          <span class="anno-filter-label">批注版本：</span>
+          <div class="anno-filter-tags" id="annoFilterTags"></div>
+        </div>
         <div class="page-shell">
+
+          <div class="anno anno-version-header" data-version="v2.5">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v2.5</p>
+              <p><b>更新日期：</b>2026-07-02</p>
+              <p><b>变更概述：</b>对接「基于计费的能耗明细系统」对象层 on-read 聚合：① 原「测点名称」列改为「能源类型」对象口径；② 「数据中心1」用量旁新增「含异常/缺失」完整性标记示例；③ T+1 提示条旁新增拓扑漂移提示（历史用量按当前计量拓扑归属）；④ 新增对象能耗数据口径批注。本页以月为主粒度（考核月份），不增加时间粒度选择器；迷你趋势图保持日粒度。</p>
+            </div>
+          </div>
 
           <!-- T+1 提示条 -->
           <div class="notice-bar">
@@ -322,6 +363,49 @@
               <path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-2.75a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0V6A.75.75 0 0 1 8 5.25zm0 6.5a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5z"/>
             </svg>
             系统每日 T+1 模式更新用能定额考核结果
+          </div>
+
+          <div class="anno anno-data" data-version="v2.5">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.5</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>拓扑漂移提示条（T+1 提示条下方）</p>
+              <p>历史用量按【当前】计量拓扑归属，表具改绑计量对象后历史归属随之漂移；本期不做拓扑生效版本，需冻结历史归属须另行立项。这是产品已接受的口径（非缺陷）：定额考核的历史月份用量可能因表具改绑而变化，考核复核时应注意区间内是否发生过计量方案调整。</p>
+            </div>
+          </div>
+
+          <!-- v2.5 拓扑漂移提示条 -->
+          <div class="notice-bar warn">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-2.75a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0V6A.75.75 0 0 1 8 5.25zm0 6.5a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5z"/>
+            </svg>
+            历史用量按【当前】计量拓扑归属：表具改绑计量对象后，历史用量归属随之漂移；如需冻结历史归属须另行立项
+          </div>
+
+          <div class="anno anno-data" data-version="v2.5">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.5</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>考核结果表格（能源类型列、用量列、能耗趋势列）</p>
+              <ul>
+                <li><b>对象能耗口径：</b>对象能耗/成本不归档，查询时沿当前计量拓扑对表具归档明细 on-read 递归 SUM；支持半小时/时/天/月，时/天/月读表具对应粒度 rollup、不重算差值；跨天/跨月按本地时间切分。</li>
+                <li><b>能源类型列（v2.5 口径修正）：</b>原「测点名称」列（如「累计电量」）为单测点口径，v2.5 改为对象维度：考核对象的用量 = 该计量对象在所选能源类型下沿计量拓扑聚合的电量，不再绑定到某个具体测点展示。</li>
+                <li><b>本页粒度：</b>以月为主粒度（考核月份），用量列为对象月值（读表具月 rollup 求和）；行内迷你趋势图保持日粒度（读表具天 rollup 求和），不提供粒度切换。</li>
+                <li><b>完整性标记：</b>考核月内存在坏值或缺失半小时槽的对象，其用量旁展示橙色「含异常/缺失」标记（本页在「数据中心1」行给出示例）；坏值/缺失槽不参与聚合、不作 0 处理，用量与使用率可能偏低。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="anno anno-state" data-version="v2.5">
+            <span class="anno-tag">状态说明</span>
+            <span class="anno-version">v2.5</span>
+            <span class="anno-source">待确认</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>「含异常/缺失」完整性标记的展示形态</p>
+              <p>最终展示形态待确认：「坏值」与「缺失」是否用不同颜色/图标区分，还是统一按「含异常/缺失」占位展示。本原型暂用统一橙色标记 + 悬停说明示意。</p>
+            </div>
           </div>
 
           <section class="page-card">
@@ -371,7 +455,7 @@
                   <tr>
                     <th>对象名称</th>
                     <th>对象类型</th>
-                    <th>测点名称</th>
+                    <th>能源类型</th>
                     <th>额度 (kWh)</th>
                     <th>用量 (kWh)</th>
                     <th>使用率</th>
@@ -382,9 +466,9 @@
                   <tr data-objtype="数据中心" data-over="true">
                     <td><span class="obj-link" data-name="数据中心1">数据中心1</span></td>
                     <td>数据中心</td>
-                    <td>累计电量</td>
+                    <td>电</td>
                     <td>3000.00</td>
-                    <td>3600.00</td>
+                    <td>3600.00<span class="integrity-tag" title="统计区间内存在坏值或缺失的半小时槽，坏值/缺失不参与聚合，结果可能偏低">含异常/缺失</span></td>
                     <td><span class="usage-rate over">125.21%</span></td>
                     <td class="chart-cell">
                       <canvas class="mini-chart" id="chart0" width="272" height="88"></canvas>
@@ -393,7 +477,7 @@
                   <tr data-objtype="数据中心" data-over="false">
                     <td><span class="obj-link" data-name="数据中心2">数据中心2</span></td>
                     <td>数据中心</td>
-                    <td>累计电量</td>
+                    <td>电</td>
                     <td>3000.00</td>
                     <td>2800.00</td>
                     <td><span class="usage-rate">89.12%</span></td>
@@ -404,7 +488,7 @@
                   <tr data-objtype="机房" data-over="false">
                     <td><span class="obj-link" data-name="机房4">机房4</span></td>
                     <td>机房</td>
-                    <td>累计电量</td>
+                    <td>电</td>
                     <td>3000.00</td>
                     <td>2500.00</td>
                     <td><span class="usage-rate">85.52%</span></td>
@@ -415,7 +499,7 @@
                   <tr data-objtype="机房" data-over="false">
                     <td><span class="obj-link" data-name="机房5">机房5</span></td>
                     <td>机房</td>
-                    <td>累计电量</td>
+                    <td>电</td>
                     <td>3000.00</td>
                     <td>2400.00</td>
                     <td><span class="usage-rate">82.14%</span></td>
@@ -426,7 +510,7 @@
                   <tr data-objtype="机房" data-over="false">
                     <td><span class="obj-link" data-name="机房6">机房6</span></td>
                     <td>机房</td>
-                    <td>累计电量</td>
+                    <td>电</td>
                     <td>3000.00</td>
                     <td>2200.00</td>
                     <td><span class="usage-rate">74.21%</span></td>
@@ -616,7 +700,54 @@
   <button class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
 
   <script>
-    function initAnnoVersionFilter() {}
+    function initAnnoVersionFilter() {
+      var tags = document.getElementById('annoFilterTags');
+      if (!document.body.classList.contains('annotation-mode') || !tags) return;
+      var annos = document.querySelectorAll('.anno[data-version]');
+      var versions = [];
+      annos.forEach(function (a) {
+        var v = a.getAttribute('data-version');
+        if (v && versions.indexOf(v) === -1) versions.push(v);
+      });
+      versions.sort(function (a, b) {
+        var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+        var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+        for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+          if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+        }
+        return 0;
+      });
+      tags.innerHTML = '';
+      var allBtn = document.createElement('span');
+      allBtn.className = 'anno-filter-tag active';
+      allBtn.textContent = '全部';
+      allBtn.onclick = function () { filterAnno('all', versions[0]); setActiveAnnoTag(this); };
+      tags.appendChild(allBtn);
+      versions.forEach(function (v) {
+        var btn = document.createElement('span');
+        btn.className = 'anno-filter-tag';
+        btn.textContent = v;
+        btn.onclick = function () { filterAnno(v, versions[0]); setActiveAnnoTag(this); };
+        tags.appendChild(btn);
+      });
+      if (versions.length > 0) filterAnno('all', versions[0]);
+    }
+    function filterAnno(version, latest) {
+      document.querySelectorAll('.anno[data-version]').forEach(function (a) {
+        var v = a.getAttribute('data-version');
+        if (version === 'all') {
+          a.style.display = '';
+          a.style.opacity = (v === latest) ? '1' : '0.6';
+        } else {
+          a.style.display = (v === version) ? '' : 'none';
+          a.style.opacity = '1';
+        }
+      });
+    }
+    function setActiveAnnoTag(el) {
+      el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function (t) { t.classList.remove('active'); });
+      el.classList.add('active');
+    }
   </script>
 
   <script src="components/nav.js"

@@ -551,6 +551,50 @@
       background: #FAFBFD;
     }
 
+    /* 计量表具（v2.5） */
+    .meter-block { margin-bottom: 16px; }
+
+    .meter-block-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .meter-block-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .meter-block-hint {
+      font-size: 12px;
+      color: var(--text-hint);
+    }
+
+    .meter-table-wrap {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      overflow: auto;
+      background: #fff;
+    }
+
+    .meter-table { min-width: 680px; }
+
+    .status-muted {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: #F1F5F9;
+      border: 1px solid var(--border);
+    }
+
     @media (max-width: 960px) {
       .model-split { flex-direction: column; }
       .model-tree {
@@ -574,6 +618,29 @@
           <div class="anno-filter-tags" id="annoFilterTags"></div>
         </div>
         <div class="page-shell">
+          <div class="anno anno-version-header" data-version="v2.5">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v2.5</p>
+              <p><b>更新日期：</b>2026-07-02</p>
+              <p><b>变更概述：</b>配合「基于计费的能耗明细系统」：① 页头操作区新增「能耗计量方案」入口（对所有计量对象节点可见，跳转 <code>能耗计量方案.html</code>）；② 「详情信息」Tab 新增「计量表具」列表，展示当前对象名下表具（物模型实例）、能源类型、计费方案应用状态，并提供「查看能耗明细」跳转 <code>能耗管理-表具明细.html</code>。既有测点列表、数据质量自检入口、关系拓扑等能力不变。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-data" data-version="v2.5">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.5</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>整页 — 对象树与计量拓扑的关系</p>
+              <ul>
+                <li><b>对象树即计量对象树：</b>本页左侧对象树（系统 / 设备组 / 设备）就是能耗计量的对象范围；「能耗计量方案」配置的产物是一棵计量拓扑（当前对象 ↔ 下级对象 / 表具），对象的能耗与成本查询时沿该拓扑对表具归档明细做 on-read 聚合（SUM），对象层不单独归档。</li>
+                <li><b>表具归属唯一：</b>一块表具只能归属一个计量对象，不得同时挂到两处拓扑；计量方案配置层强制查重（含「直接选表具」与「选下级对象展开到的表具」之间、不同对象之间），从源头杜绝重复计量。</li>
+                <li><b>历史随当前拓扑（产品已接受口径）：</b>对象查询始终沿【当前】计量拓扑聚合；表具改绑计量对象后，其全部历史能耗 / 成本随之归到新对象名下、旧对象对应减少。本期不做计量拓扑生效版本。</li>
+              </ul>
+            </div>
+          </div>
+
           <div class="anno anno-version-header" data-version="v1.0">
             <span class="anno-tag">版本信息</span>
             <div class="anno-body">
@@ -584,9 +651,23 @@
           </div>
 
           <section class="page-card" aria-label="能效视图">
+            <div class="anno anno-ux" data-version="v2.5">
+              <span class="anno-tag">交互说明</span>
+              <span class="anno-version">v2.5</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>页头操作区 —「能耗计量方案」入口</p>
+                <ul>
+                  <li><b>可见范围：</b>凡计量对象节点（系统 / 设备组 / 设备）均展示该入口，不限定单一节点类型；与「数据质量自检」仅特定系统节点展示的口径不同。</li>
+                  <li><b>点击：</b>跳转「能耗计量方案」配置页（<code>能耗计量方案.html</code>），为当前选中计量对象配置计量拓扑：可选下级计量对象（沿本页对象树向下），也可直接选计量表具（物模型实例）；两种方式最终产出同一套计量拓扑。</li>
+                  <li><b>配置产物用途：</b>计量拓扑供对象能耗 / 成本 on-read 聚合查询使用（见页顶 v2.5 数据逻辑批注）。</li>
+                </ul>
+              </div>
+            </div>
             <div class="page-head">
               <h1 class="page-title">能效视图</h1>
               <div class="page-head-actions">
+                <button type="button" class="btn btn-outline" id="btnMeteringScheme" onclick="location.href='能耗计量方案.html'">能耗计量方案</button>
                 <button type="button" class="btn btn-outline" id="btnQualityCheck" style="display:none;" onclick="location.href='数据质量自检.html'">数据质量自检</button>
                 <button type="button" class="btn btn-primary" id="btnCreateSet">创建集合</button>
                 <button type="button" class="btn btn-outline" id="btnLinkDevice">关联设备</button>
@@ -862,7 +943,70 @@
                     <div class="panel-placeholder">设备列表占位。</div>
                   </div>
                   <div class="tab-panel" id="panel-info" role="tabpanel" hidden>
-                    <div class="panel-placeholder">详情信息占位。</div>
+                    <section class="meter-block" aria-label="计量表具">
+                      <div class="anno anno-data" data-version="v2.5">
+                        <span class="anno-tag">数据逻辑</span>
+                        <span class="anno-version">v2.5</span>
+                        <span class="anno-source">需求文档</span>
+                        <div class="anno-body">
+                          <p><b>关联模块：</b>详情信息 Tab —「计量表具」列表</p>
+                          <ul>
+                            <li><b>数据来源：</b>展示归属当前计量对象的表具（能源配置中挂了累积量测点的物模型实例）；归属关系来自「能耗计量方案」产出的计量拓扑。一块表具只归属一个计量对象（配置层强制查重），故此列表各对象间无重复。</li>
+                            <li><b>是否已应用计费方案：</b>计费方案 1:1 应用在表具上。未应用方案的表具仍会自动生成电量明细，只是暂无表具成本；应用方案后可按时间范围补算此前区间成本。</li>
+                            <li><b>查看能耗明细：</b>跳转「能耗管理-表具明细」页（<code>能耗管理-表具明细.html</code>），查看该表具半小时 / 时 / 天 / 月能耗明细、数据质量标记与人工修正。</li>
+                          </ul>
+                        </div>
+                      </div>
+                      <div class="meter-block-head">
+                        <span class="meter-block-title">计量表具</span>
+                        <span class="meter-block-hint">归属当前计量对象的表具（物模型实例），来自能耗计量方案的计量拓扑</span>
+                      </div>
+                      <div class="meter-table-wrap">
+                        <table class="data-table meter-table" aria-label="计量表具列表">
+                          <thead>
+                            <tr>
+                              <th scope="col">表具名称（物模型实例）</th>
+                              <th scope="col">能源类型</th>
+                              <th scope="col">是否已应用计费方案</th>
+                              <th scope="col">操作</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td>交流电表-市电进线1（AC_Meter_01）</td>
+                              <td>电</td>
+                              <td><span class="status-ok">已应用（峰平谷电价 V2）</span></td>
+                              <td>
+                                <div class="points-actions">
+                                  <a class="action-link" href="能耗管理-表具明细.html">查看能耗明细</a>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>交流电表-冷站总进线（AC_Meter_07）</td>
+                              <td>电</td>
+                              <td><span class="status-ok">已应用（峰平谷电价 V2）</span></td>
+                              <td>
+                                <div class="points-actions">
+                                  <a class="action-link" href="能耗管理-表具明细.html">查看能耗明细</a>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>冷量表-冷冻供回水（CL_Meter_02）</td>
+                              <td>冷量</td>
+                              <td><span class="status-muted">未应用</span></td>
+                              <td>
+                                <div class="points-actions">
+                                  <a class="action-link" href="能耗管理-表具明细.html">查看能耗明细</a>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </section>
+                    <div class="panel-placeholder">其余详情信息占位。</div>
                   </div>
                   <div class="tab-panel" id="panel-topology" role="tabpanel" hidden>
                     <div class="topo-toolbar">

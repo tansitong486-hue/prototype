@@ -443,6 +443,15 @@
           </div>
         </div>
 
+        <div class="anno anno-version-header" data-version="v2.5">
+          <span class="anno-tag">版本信息</span>
+          <div class="anno-body">
+            <p><b>当前版本：</b>v2.5</p>
+            <p><b>更新日期：</b>2026-07-02</p>
+            <p><b>变更概述：</b>已生效（生效日期 ≤ 今天）的方案明细<b>历史锁定</b>：编辑、删除均禁用，仅可新增未来生效版本；明确成本更新口径——历史计费方案不可改，成本更新走「表具成本按范围重算」，对象成本 on-read 自动一致。</p>
+          </div>
+        </div>
+
         <div class="anno anno-version-header" data-version="v1.0">
           <span class="anno-tag">版本信息</span>
           <div class="anno-body">
@@ -477,6 +486,34 @@
               <li><b>时段：</b>起始 / 结束以 30 分钟为刻度；同规则内时段不重叠；多时段拼接需覆盖全天（提交校验）。</li>
               <li><b>价格单位：</b>「元/能源单位」随所选能源类型的单位动态展示；金额必填，保留 2 位小数。</li>
               <li><b>编辑态：</b>能源类型不可改（置灰）。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="anno anno-ux" data-version="v2.5">
+          <span class="anno-tag">交互说明</span>
+          <span class="anno-version">v2.5</span>
+          <span class="anno-source" data-type="需求文档">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>方案明细列表操作列（编辑 / 删除）</p>
+            <ul>
+              <li><b>已生效明细（生效日期 ≤ 今天）：</b>编辑、删除均禁用（置灰），悬停提示「已生效明细历史锁定，仅可新增未来生效版本」；v1.0 仅限制删除，v2.5 起编辑同步锁定。</li>
+              <li><b>未来生效明细：</b>仍可编辑与二次确认删除。</li>
+              <li><b>调价方式：</b>需要调整价格时，新增一条未来生效日期的明细版本，自其生效日起自然切换。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="anno anno-data" data-version="v2.5">
+          <span class="anno-tag">数据逻辑</span>
+          <span class="anno-version">v2.5</span>
+          <span class="anno-source" data-type="需求文档">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>方案明细与能耗成本联动（v2.5 新口径）</p>
+            <ul>
+              <li><b>历史计费方案不可改：</b>已生效明细历史锁定，保证任一历史时刻的电价可回溯、审计友好。</li>
+              <li><b>成本更新路径：</b>修改方案不回改历史成本；成本更新走「计费方案配置」列表的<b>表具成本按范围重算</b>（按当时生效方案取价），电量明细不受影响。</li>
+              <li><b>对象成本：</b>沿计量拓扑 on-read 聚合，表具成本更新后下次查询自动一致，无需对象层单独处理。</li>
             </ul>
           </div>
         </div>
@@ -533,8 +570,8 @@
                     <td class="cell-multiline">2018-01-12 至 —</td>
                     <td>
                       <div class="actions">
-                        <span class="action-link" tabindex="0" role="button" data-edit-row="1">编辑</span>
-                        <span class="action-link danger muted" title="生效日期已不晚于今天，不可删除">删除</span>
+                        <span class="action-link muted" title="已生效明细历史锁定，仅可新增未来生效版本">编辑</span>
+                        <span class="action-link danger muted" title="已生效明细历史锁定，仅可新增未来生效版本">删除</span>
                       </div>
                     </td>
                   </tr>
@@ -545,8 +582,8 @@
                     <td class="cell-multiline">2015-01-12 至 2018-01-12</td>
                     <td>
                       <div class="actions">
-                        <span class="action-link" tabindex="0" role="button" data-edit-row="2">编辑</span>
-                        <span class="action-link danger muted" title="生效日期已不晚于今天，不可删除">删除</span>
+                        <span class="action-link muted" title="已生效明细历史锁定，仅可新增未来生效版本">编辑</span>
+                        <span class="action-link danger muted" title="已生效明细历史锁定，仅可新增未来生效版本">删除</span>
                       </div>
                     </td>
                   </tr>
@@ -735,7 +772,7 @@
         const handleDel = () => {
           const tr = el.closest('tr');
           if (tr.getAttribute('data-future') !== '1') {
-            showToast('生效日期不晚于今天，无法删除');
+            showToast('已生效明细历史锁定，仅可新增未来生效版本');
             return;
           }
           if (window.confirm('确认删除该条方案明细？')) {

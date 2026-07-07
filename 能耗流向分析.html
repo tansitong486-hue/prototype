@@ -284,6 +284,23 @@
       margin: 0 auto;
     }
 
+    /* v2.5 完整性标记：汇总结果含坏值/缺失半小时槽时展示 */
+    .integrity-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      height: 20px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #C2410C;
+      background: #FFF7ED;
+      border: 1px solid #FDBA74;
+      cursor: help;
+      white-space: nowrap;
+    }
+
     .anno-toggle {
       position: fixed;
       right: 18px;
@@ -326,6 +343,14 @@
         <div class="anno-filter-tags" id="annoFilterTags"></div>
       </div>
       <div class="page-shell">
+        <div class="anno anno-version-header" data-version="v2.5">
+          <span class="anno-tag">版本信息</span>
+          <div class="anno-body">
+            <p><b>当前版本：</b>v2.5</p>
+            <p><b>更新日期：</b>2026-07-02</p>
+            <p><b>变更概述：</b>对接「基于计费的能耗明细系统」对象层 on-read 聚合：① 统计时间区新增时间粒度选择（半小时 / 时 / 天 / 月）；② 桑基根节点汇总旁新增「含异常/缺失」完整性标记示例；③ 新增对象能耗数据口径批注（不归档、沿当前计量拓扑 on-read 递归 SUM）。</p>
+          </div>
+        </div>
         <div class="anno anno-version-header" data-version="v1.0">
           <span class="anno-tag">版本信息</span>
           <div class="anno-body">
@@ -339,6 +364,28 @@
           <span class="anno-source" data-type="引用自古典原型">引用自古典原型</span>
           <div class="anno-body">
             <p>带宽 ∝ 电量；占比 = 当前节点 / 父节点电量；默认今日；未启用计量节点置灰；下钻后左柱为父节点总量。</p>
+          </div>
+        </div>
+        <div class="anno anno-data" data-version="v2.5">
+          <span class="anno-tag">数据逻辑</span>
+          <span class="anno-version">v2.5</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>统计时间（时间粒度）与桑基各节点电量口径</p>
+            <ul>
+              <li><b>对象能耗口径：</b>对象能耗/成本不归档，查询时沿当前计量拓扑对表具归档明细 on-read 递归 SUM；支持半小时/时/天/月，时/天/月读表具对应粒度 rollup、不重算差值；跨天/跨月按本地时间切分。</li>
+              <li><b>时间粒度选择：</b>新增「时间粒度」下拉（半小时 / 时 / 天 / 月），默认「天」；粒度决定读取的表具归档粒度与桑基节点的聚合口径，日期范围不变。</li>
+              <li><b>完整性标记：</b>统计区间内存在坏值或缺失半小时槽的节点，其汇总旁展示橙色「含异常/缺失」标记（本页在标题行给出根节点合计的示例；下钻各级节点同规则）；坏值/缺失槽不参与聚合、不作 0 处理，结果可能偏低。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="anno anno-state" data-version="v2.5">
+          <span class="anno-tag">状态说明</span>
+          <span class="anno-version">v2.5</span>
+          <span class="anno-source">待确认</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>「含异常/缺失」完整性标记的展示形态</p>
+            <p>最终展示形态待确认：「坏值」与「缺失」是否用不同颜色/图标区分，还是统一按「含异常/缺失」占位展示。本原型暂用统一橙色标记 + 悬停说明示意。</p>
           </div>
         </div>
 
@@ -415,10 +462,17 @@
                 <div class="cmp-title-row">
                   <h1 class="cmp-title">能耗流向分析</h1>
                   <span class="cmp-unit">单位：kWh</span>
+                  <span class="integrity-tag" title="统计区间内存在坏值或缺失的半小时槽，坏值/缺失不参与聚合，结果可能偏低">含异常/缺失</span>
                 </div>
                 <div class="cmp-ranges-block" style="margin-top:14px;">
                   <div class="cmp-ranges-label">统计时间</div>
                   <div class="cmp-range-row">
+                    <select class="cmp-select" id="efGranularity" aria-label="时间粒度" style="width:auto;min-width:96px;">
+                      <option value="halfhour">半小时</option>
+                      <option value="hour">时</option>
+                      <option value="day" selected>天</option>
+                      <option value="month">月</option>
+                    </select>
                     <input class="cmp-input" type="date" id="efDateStart" aria-label="开始日期">
                     <span class="cmp-range-sep">至</span>
                     <input class="cmp-input" type="date" id="efDateEnd" aria-label="结束日期">

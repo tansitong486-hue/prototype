@@ -494,6 +494,23 @@
       color: var(--text-hint);
       font-weight: 500;
     }
+    /* v2.5 完整性标记：汇总结果含坏值/缺失半小时槽时展示 */
+    .integrity-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      height: 18px;
+      padding: 0 7px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #C2410C;
+      background: #FFF7ED;
+      border: 1px solid #FDBA74;
+      cursor: help;
+      white-space: nowrap;
+      align-self: center;
+    }
     .cost-chart-head-row {
       display: flex;
       align-items: center;
@@ -946,6 +963,15 @@
         </div>
         <div class="page-shell">
 
+          <div class="anno anno-version-header" data-version="v2.5">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v2.5</p>
+              <p><b>更新日期：</b>2026-07-02</p>
+              <p><b>变更概述：</b>对接「基于计费的能耗明细系统」对象层 on-read 聚合：① 顶栏时间控件保持年/月/日/时段不变，新增批注说明其与半小时/时/天/月四粒度 rollup 的映射；② 用能总览「用电量」卡片新增「含异常/缺失」完整性标记示例；③ 新增对象能耗数据口径批注（不归档、沿当前计量拓扑 on-read 递归 SUM）。本次为最小增量改造，不改动现有控件与图表结构。</p>
+            </div>
+          </div>
+
           <div class="anno anno-version-header" data-version="v1.0">
             <span class="anno-tag">版本信息</span>
             <div class="anno-body">
@@ -1019,6 +1045,31 @@
                 <li><b>时段粒度：</b>若业务需选择自然日内的起止时刻，需在需求中单列，本原型不展示时刻段。</li>
                 <li><b>浏览器兼容：</b>极旧浏览器可能不支持 <code>showPicker</code>，需降级为点击隐藏 input 触发选择（本页已做基础兼容）。</li>
               </ul>
+            </div>
+          </div>
+
+          <div class="anno anno-data" data-version="v2.5">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.5</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>顶栏时间粒度（年/月/日/时段）与各能耗类图元的数据口径</p>
+              <ul>
+                <li><b>对象能耗口径：</b>对象能耗/成本不归档，查询时沿当前计量拓扑对表具归档明细 on-read 递归 SUM；支持半小时/时/天/月，时/天/月读表具对应粒度 rollup、不重算差值；跨天/跨月按本地时间切分。</li>
+                <li><b>顶栏粒度与四粒度 rollup 的映射：</b>本页保留既有 年/月/日/时段 控件不变——<b>年</b>视图明细轴按月（读表具月 rollup）；<b>月</b>视图明细轴按日（读表具天 rollup）；<b>日</b>与<b>时段</b>视图明细轴按小时展示，底层对应表具「时」或「半小时」粒度明细（展示层可再按小时聚合）。</li>
+                <li><b>适用图元：</b>用能总览、能耗成本、能耗趋势等按累积量表具聚合的图元均遵循本口径；PUE（功率）等实时功率类图元不走本链路。</li>
+                <li><b>完整性标记：</b>统计区间内存在坏值或缺失半小时槽时，汇总数字旁展示橙色「含异常/缺失」标记（本页在用能总览「用电量」卡片给出示例，其余卡片同规则）；坏值/缺失槽不参与聚合、不作 0 处理，结果可能偏低。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="anno anno-state" data-version="v2.5">
+            <span class="anno-tag">状态说明</span>
+            <span class="anno-version">v2.5</span>
+            <span class="anno-source">待确认</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>「含异常/缺失」完整性标记的展示形态</p>
+              <p>最终展示形态待确认：「坏值」与「缺失」是否用不同颜色/图标区分，还是统一按「含异常/缺失」占位展示。本原型暂用统一橙色标记 + 悬停说明示意。</p>
             </div>
           </div>
 
@@ -1135,6 +1186,7 @@
                         <div class="energy-name">用电量</div>
                         <div class="energy-value-wrap">
                           <span class="energy-value">2,475,792</span><span class="energy-unit">kWh</span>
+                          <span class="integrity-tag" title="统计区间内存在坏值或缺失的半小时槽，坏值/缺失不参与聚合，结果可能偏低">含异常/缺失</span>
                         </div>
                       </div>
                     </div>

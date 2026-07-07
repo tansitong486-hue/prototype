@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>表具能耗明细</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-dark: #17358A;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --danger: #DC2626;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button { border: none; background: none; font: inherit; }
+
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main {
+      flex: 1;
+      min-width: 0;
+      overflow-y: auto;
+      background: var(--bg-body);
+    }
+
+    .page-shell { padding: 18px 20px 24px; }
+
+    .breadcrumb-bar {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .subtabs {
+      display: flex;
+      gap: 0;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border-light);
+      margin-bottom: 16px;
+    }
+
+    .subtab {
+      padding: 10px 20px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      background: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: color var(--transition), border-color var(--transition);
+    }
+
+    .subtab:hover { color: var(--primary); }
+    .subtab.active {
+      color: var(--primary);
+      font-weight: 600;
+      border-bottom-color: var(--primary);
+    }
+
+    .page-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .page-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px 10px;
+    }
+
+    .page-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.4;
+    }
+
+    .page-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 0 18px 16px;
+    }
+
+    .toolbar-filters {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-right: auto;
+    }
+
+    .input-text {
+      height: 34px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      color: var(--text-primary);
+      min-width: 160px;
+      background: #fff;
+      transition: border-color var(--transition);
+    }
+
+    .input-text:focus-visible {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.12);
+    }
+
+    .input-text::placeholder { color: var(--text-hint); }
+
+    .select-native {
+      height: 34px;
+      padding: 0 32px 0 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      color: var(--text-secondary);
+      background: #fff;
+      cursor: pointer;
+      min-width: 140px;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+    }
+
+    .select-native:focus-visible {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 34px;
+      padding: 0 14px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .btn-primary {
+      color: #fff;
+      background: var(--primary);
+    }
+
+    .btn-primary:hover { background: var(--primary-dark); }
+
+    .btn-default {
+      background: #fff;
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+    }
+
+    .btn-default:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* 汇总条 */
+    .summary-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 0 18px 16px;
+    }
+
+    .summary-card {
+      flex: 1;
+      min-width: 200px;
+      background: #F8FAFC;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .summary-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .summary-value {
+      font-size: 20px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-primary);
+    }
+
+    .summary-value .unit {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-left: 4px;
+    }
+
+    /* 状态与时段 tag */
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .tag-ok { background: #ECFDF5; color: #059669; }
+    .tag-missing { background: #FFF7ED; color: #EA580C; }
+    .tag-bad { background: #FEF2F2; color: #DC2626; }
+    .tag-manual { background: #EFF6FF; color: #2563EB; }
+    .tag-warn { background: #FFF7ED; color: #EA580C; border: 1px solid #FDBA74; }
+
+    .period-pill {
+      display: inline-flex;
+      align-items: center;
+      height: 20px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .period-sharp { background: #FEF2F2; color: #DC2626; }
+    .period-peak { background: #FFF7ED; color: #EA580C; }
+    .period-flat { background: #EFF6FF; color: #2563EB; }
+    .period-valley { background: #ECFDF5; color: #059669; }
+
+    .table-wrap { overflow-x: auto; }
+
+    .data-table {
+      width: 100%;
+      min-width: 960px;
+      border-collapse: collapse;
+    }
+
+    .data-table thead th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 14px 16px;
+      font-size: 13px;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover { background: #FBFCFE; }
+
+    .num-cell { font-variant-numeric: tabular-nums; }
+    .dash-cell { color: var(--text-hint); cursor: help; }
+
+    .actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .action-link {
+      font-size: 13px;
+      cursor: pointer;
+      color: #1890FF;
+      transition: opacity var(--transition);
+      border-radius: 4px;
+      padding: 2px 0;
+    }
+
+    .action-link:hover { opacity: 0.72; }
+    .action-link.danger { color: var(--danger); }
+    .action-link:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    .page-foot {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px;
+      flex-wrap: wrap;
+    }
+
+    .pagination-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+      margin-left: auto;
+    }
+
+    .pagination-total { font-size: 12px; color: var(--text-secondary); }
+
+    .pagination {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .page-item,
+    .page-arrow {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .page-item:hover,
+    .page-arrow:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .page-item.active {
+      color: #fff;
+      border-color: var(--primary);
+      background: var(--primary);
+    }
+
+    .page-size {
+      display: inline-flex;
+      align-items: center;
+      height: 32px;
+      padding: 0 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-left: 4px;
+    }
+
+    /* 弹窗 */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100000;
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .modal-backdrop.show { display: flex; }
+    body.modal-open { overflow: hidden; }
+
+    .modal {
+      position: relative;
+      z-index: 1;
+      background: #fff;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18), var(--shadow-card);
+      max-width: 640px;
+      width: 100%;
+      max-height: min(90vh, 720px);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-head {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .modal-title { font-size: 16px; font-weight: 700; }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      color: var(--text-hint);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .modal-close:hover { background: #F1F5F9; color: var(--text-primary); }
+
+    .modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+
+    .modal-foot {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .form-row { margin-bottom: 14px; }
+    .form-row:last-child { margin-bottom: 0; }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+
+    .form-label .required { color: var(--danger); margin-left: 2px; }
+
+    .form-static {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .form-row .input-text,
+    .form-row .select-native { width: 100%; min-width: 0; }
+
+    .form-row textarea.input-text {
+      height: auto;
+      min-height: 72px;
+      padding: 8px 12px;
+      resize: vertical;
+      line-height: 1.6;
+      font-family: inherit;
+    }
+
+    .form-inline { display: flex; align-items: center; gap: 10px; }
+    .form-inline .input-text { flex: 1; }
+    .form-inline .sep { color: var(--text-hint); font-size: 13px; }
+
+    .modal-note {
+      background: #F8FAFC;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-top: 14px;
+    }
+
+    .modal-note b { color: var(--text-primary); }
+    .modal-note ul { padding-left: 18px; margin-top: 4px; }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      min-width: 180px;
+      max-width: 360px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.92);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.6;
+      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.28);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: all .25s ease;
+      z-index: 100050;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+        <div class="anno-filter-bar" id="annoFilterBar">
+          <span class="anno-filter-label">批注版本：</span>
+          <div class="anno-filter-tags" id="annoFilterTags"></div>
+        </div>
+        <div class="page-shell">
+          <div class="anno anno-version-header" data-version="v2.5">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v2.5</p>
+              <p><b>更新日期：</b>2026-07-02</p>
+              <p><b>变更概述：</b>AI 节能 v2.5 新建：表具半小时能耗明细归档层的查询、数据质量（VEE）与人工修正、按范围重算。</p>
+              <p><b>本页说明：</b>本页为「能源计费配置」下的新增子页签，面向表具（物模型实例）维度查看归档的能耗明细与成本：按能源类型 / 表具 / 日期 / 时间粒度查询；每个时间槽展示尾值、用能量、数据质量状态、单价时段与成本；支持行内人工修正与工具栏「按时间范围重算」。对象层（系统 / 设备组 / 设备）的能耗查询走能效视图与分析页，不在本页。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-req" data-version="v2.5">
+            <span class="anno-tag">需求说明</span>
+            <span class="anno-version">v2.5</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>页面定位与范围（需求 2 / 3 / 5）：</b></p>
+              <ul>
+                <li>本页是表具明细归档层（唯一归档层）的产品入口：该能源类型下<b>所有</b>挂了累积量测点的物模型实例（=表具）自动生成半小时明细，未绑计量对象、未应用计费方案的表具同样可查（后者无成本列数据）。</li>
+                <li>覆盖三件事：① 半小时明细与时 / 天 / 月多粒度归档查询（需求 2）；② 数据质量 VEE 标记与人工修正（需求 3）；③ 表具成本展示与按时间范围重算（需求 5）。</li>
+                <li>本期不覆盖：估算补值（坏值 / 缺失只标记不估算）、虚拟表具计费分流、计量拓扑生效版本、对象层聚合查询页。</li>
+                <li>验收要点：坏值 / 缺失槽不计入总量且不作 0；人工修正留痕并锁定；重算幂等覆盖且不改历史电价（详见各模块批注）。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="breadcrumb-bar" aria-label="面包屑">能源计费配置</div>
+          <div class="subtabs" role="tablist" aria-label="能源计费子页">
+            <a href="计费方案配置.html" class="subtab" role="tab" aria-selected="false">计费方案配置</a>
+            <a href="能源配置.html" class="subtab" role="tab" aria-selected="false">能源配置</a>
+            <a href="能耗管理-表具明细.html" class="subtab active" role="tab" aria-selected="true">表具能耗明细</a>
+          </div>
+
+          <section class="page-card" aria-labelledby="pageTitle">
+            <div class="page-head">
+              <h1 class="page-title" id="pageTitle">表具能耗明细</h1>
+            </div>
+
+            <div class="anno anno-field" data-version="v2.5">
+              <span class="anno-tag">字段说明</span>
+              <span class="anno-version">v2.5</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>工具栏筛选区</p>
+                <table class="anno-table">
+                  <thead>
+                    <tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th><th>默认值</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>能源类型</td><td>下拉</td><td>是</td><td>电 / 水 / 冷量等，来自《能源配置》已配置的能源类型；多能源同构，切换后表格单位与单价时段列随能源类型变化（水等非分时能源单价时段列显示「统一单价」）</td><td>电</td></tr>
+                    <tr><td>表具</td><td>下拉（支持名称搜索）</td><td>是</td><td>该能源类型下所有挂了累积量测点的物模型实例；含未绑计量对象、未应用计费方案的表具</td><td>—（须选定一块表具后出数）</td></tr>
+                    <tr><td>日期</td><td>日期选择</td><td>是</td><td>查询的自然日；跨天 / 跨月按本地时间切分</td><td>昨天</td></tr>
+                    <tr><td>时间粒度</td><td>下拉</td><td>是</td><td>半小时 / 时 / 天 / 月；半小时为基准粒度，时 / 天 / 月直接读已归档 rollup（由半小时累加生成、不重算差值）</td><td>半小时</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="anno anno-ux" data-version="v2.5">
+              <span class="anno-tag">交互说明</span>
+              <span class="anno-version">v2.5</span>
+              <span class="anno-source">产品推断</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>工具栏与表格操作列</p>
+                <ul>
+                  <li><b>查询：</b>筛选条件变更后即时刷新明细表与汇总区。</li>
+                  <li><b>按时间范围重算：</b>打开重算弹窗（见弹窗内批注）；重算为异步任务，进行中按钮置灰防重复提交。</li>
+                  <li><b>人工修正：</b>表格每行操作列入口，打开人工修正弹窗；任意状态（正常 / 缺失 / 坏值 / 人工修正）的槽均可修正。</li>
+                  <li><b>粒度为时 / 天 / 月时：</b>行为对应粒度的 rollup 值，不提供行内人工修正（修正只作用于半小时基准明细，rollup 由修正联动重刷）。</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="page-toolbar">
+              <div class="toolbar-filters">
+                <label class="visually-hidden" for="filterEnergy">能源类型</label>
+                <select class="select-native" id="filterEnergy" aria-label="能源类型">
+                  <option value="elec" selected>电</option>
+                  <option value="water">水</option>
+                  <option value="cooling">冷量</option>
+                </select>
+                <label class="visually-hidden" for="filterMeter">表具</label>
+                <input type="search" class="input-text" id="filterMeter" list="meterList" placeholder="搜索/选择表具" value="1号楼总进线电表" aria-label="表具，支持名称搜索">
+                <datalist id="meterList">
+                  <option value="1号楼总进线电表"></option>
+                  <option value="1号冷机电表"></option>
+                  <option value="2号冷机电表"></option>
+                  <option value="冷冻水泵组电表"></option>
+                  <option value="B栋照明电表（未绑对象）"></option>
+                </datalist>
+                <label class="visually-hidden" for="filterDate">日期</label>
+                <input type="date" class="input-text" id="filterDate" value="2026-07-01" aria-label="日期">
+                <label class="visually-hidden" for="filterGranularity">时间粒度</label>
+                <select class="select-native" id="filterGranularity" aria-label="时间粒度">
+                  <option value="halfhour" selected>粒度：半小时</option>
+                  <option value="hour">粒度：时</option>
+                  <option value="day">粒度：天</option>
+                  <option value="month">粒度：月</option>
+                </select>
+              </div>
+              <button type="button" class="btn btn-primary" id="btnRecalc">按时间范围重算</button>
+            </div>
+
+            <div class="anno anno-data" data-version="v2.5">
+              <span class="anno-tag">数据逻辑</span>
+              <span class="anno-version">v2.5</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>汇总区（当日总用能量 / 总成本 / 完整性标记）</p>
+                <ul>
+                  <li><b>总用能量：</b>所选表具当日全部<b>有效</b>半小时槽用能量之和；缺失 / 坏值槽不参与聚合、<b>不作 0 处理</b>（§6.1）。</li>
+                  <li><b>总成本：</b>Σ（各半小时用能量 × 该半小时所属时段在【当时生效计费方案】下的单价），读取归档的表具成本（§8.2）。未应用计费方案的表具总成本显示「—」。</li>
+                  <li><b>完整性标记：</b>当日含缺失或坏值槽时显示橙色「含异常 / 缺失」标记，提示汇总结果偏低、不应误读为真实用能下降（对应需求文档待确认项 6，本原型按「带标记」呈现）。</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="summary-strip" id="summaryStrip">
+              <div class="summary-card">
+                <span class="summary-label">当日总用能量</span>
+                <span class="summary-value num-cell">1,742.6<span class="unit">kWh</span></span>
+              </div>
+              <div class="summary-card">
+                <span class="summary-label">当日总成本</span>
+                <span class="summary-value num-cell">1,386.45<span class="unit">元</span></span>
+              </div>
+              <div class="summary-card">
+                <span class="summary-label">数据完整性</span>
+                <span>
+                  <span class="tag tag-warn" title="当日存在缺失或坏值时间槽，异常槽不计入总量且不作 0，汇总结果可能偏低">含异常 / 缺失</span>
+                </span>
+              </div>
+            </div>
+
+            <div class="anno anno-data" data-version="v2.5">
+              <span class="anno-tag">数据逻辑</span>
+              <span class="anno-version">v2.5</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>明细表格 — 取数与差值规则（§5.2 / §5.3 / §5.4）</p>
+                <ul>
+                  <li><b>取数：</b>每个半小时槽<b>只取槽尾值</b>（槽末累计读数），忽略槽内中间采样点。</li>
+                  <li><b>差值：</b>本槽用能量 = 本槽尾值 − 上一槽尾值；<b>相邻两槽相减、不跨槽取值</b>，任一侧尾值取不到即标缺失，不向前追溯更早尾值凑差值。</li>
+                  <li><b>首个尾值仅作基线：</b>表具首次产生尾值的槽（新接入 / 首配累积量测点 / 换表后新表首槽）无上一槽尾值可减，该槽不产生用能量，从下一槽起计差值。</li>
+                  <li><b>幂等键：</b>每条明细以「表具 + 能源类型 + 时间槽」唯一定位，支持指定时间窗重算覆盖（表具在某能源类型下对应唯一累积量测点，键无需测点维度）。</li>
+                  <li><b>多粒度：</b>时 / 天 / 月行由半小时明细累加归档生成，只累加、绝不在高粒度层重算差值。</li>
+                  <li><b>成本列：</b>表具半小时成本 = 半小时用能量 × 该时段【当时生效计费方案】单价，随电量明细归档（§8.2）；缺失 / 坏值槽无有效用能量，成本同为「—」。</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="anno anno-edge" data-version="v2.5">
+              <span class="anno-tag">边界与异常</span>
+              <span class="anno-version">v2.5</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>明细表格 — 数据质量校验（VEE，§6.1，本期最小集）</p>
+                <table class="anno-table">
+                  <thead>
+                    <tr><th>类型</th><th>规则</th><th>处理</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>尾值缺失</td><td>本槽或上一槽尾值取不到（离线 / 未上报）</td><td>该槽标「缺失」，不产生有效用能量，不参与聚合；不作 0，不跨槽追溯</td></tr>
+                    <tr><td>单调性</td><td>本槽尾值 &lt; 上一槽尾值（尾值回退）</td><td>该槽标「坏值」</td></tr>
+                    <tr><td>增量上限</td><td>单槽差值 &gt; 该表具生效上限（电默认 1500 kWh / 半小时，支持按表具 / 能源类型配置，未配置取默认；本期用固定 / 可配上限，不用均值 / 标准差）</td><td>该槽标「坏值」</td></tr>
+                    <tr><td>坏值处理</td><td>坏值 / 缺失槽不参与聚合</td><td>标「数据异常 / 缺失」，可在数据质量自检页识别；不静默当 0</td></tr>
+                  </tbody>
+                </table>
+                <ul>
+                  <li><b>坏值槽的尾值仍可作下一槽基准：</b>质量标记作用于用能量（差值），不否定尾值本身；只要本槽尾值存在（非缺失），即可作下一槽减基准，下一槽差值独立判定。只有「尾值缺失」才不能作基准、才向后传递缺失。</li>
+                  <li><b>断点续传（晚到 / 批量补传）：</b>对受影响时间窗幂等重算；<b>重算范围须含缺口紧邻的下一槽</b>（其基准尾值被补回），首槽须读缺口前一槽尾值作基准；补传后仍无尾值的槽保持「缺失」，并同步刷新受影响槽的时 / 天 / 月 rollup 与成本。</li>
+                  <li><b>本期不做估算补值：</b>坏值 / 缺失由人工修正或补传后重算处理。</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="anno anno-state" data-version="v2.5">
+              <span class="anno-tag">状态说明</span>
+              <span class="anno-version">v2.5</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>明细表格 — 数据质量状态列</p>
+                <ul>
+                  <li><b>正常（绿）：</b>相邻尾值差值通过全部校验，计入聚合。</li>
+                  <li><b>缺失（橙）：</b>本槽或上一槽尾值取不到；用能量与成本显示「—」，悬停提示原因（尾值缺失 / 上一槽尾值缺失）。</li>
+                  <li><b>坏值（红）：</b>尾值回退或差值超上限；用能量与成本显示「—」，悬停提示触发的具体规则。</li>
+                  <li><b>人工修正（蓝）：</b>该槽用能量为人工修正值，悬停可见留痕摘要（操作人 / 时间 / 原值 / 新值 / 原因）；人工值锁定，自动重算不覆盖。</li>
+                  <li><b>空态：</b>所选表具当日无任何明细时显示「暂无数据」；<b>加载中：</b>表格骨架屏。</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="anno anno-state" data-version="v2.5">
+              <span class="anno-tag">状态说明</span>
+              <span class="anno-version">v2.5</span>
+              <span class="anno-source">待确认</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>数据质量状态列 — 坏值 / 缺失展示区分（需求文档待确认项 1）</p>
+                <p>「坏值」与「缺失」在报表上是用不同标识（颜色 / 图标）区分展示，还是统一按「异常」占位，需求侧尚未敲定；本原型先按<b>四色区分</b>呈现，评审时确认。</p>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="data-table" id="detailTable">
+                <thead>
+                  <tr>
+                    <th>时间槽</th>
+                    <th>槽末尾值（kWh 累计）</th>
+                    <th>用能量（kWh）</th>
+                    <th>数据质量状态</th>
+                    <th>单价时段</th>
+                    <th>成本（元）</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr data-slot="08:00–08:30" data-energy="86.4">
+                    <td class="num-cell">08:00–08:30</td>
+                    <td class="num-cell">158,420.6</td>
+                    <td class="num-cell cell-energy">86.4</td>
+                    <td class="cell-status"><span class="tag tag-ok">正常</span></td>
+                    <td><span class="period-pill period-peak">峰</span></td>
+                    <td class="num-cell cell-cost">90.72</td>
+                    <td><div class="actions"><span class="action-link" tabindex="0" role="button" data-act="fix">人工修正</span></div></td>
+                  </tr>
+                  <tr data-slot="08:30–09:00" data-energy="87.6">
+                    <td class="num-cell">08:30–09:00</td>
+                    <td class="num-cell">158,508.2</td>
+                    <td class="num-cell cell-energy">87.6</td>
+                    <td class="cell-status"><span class="tag tag-ok">正常</span></td>
+                    <td><span class="period-pill period-peak">峰</span></td>
+                    <td class="num-cell cell-cost">91.98</td>
+                    <td><div class="actions"><span class="action-link" tabindex="0" role="button" data-act="fix">人工修正</span></div></td>
+                  </tr>
+                  <tr data-slot="09:00–09:30" data-energy="">
+                    <td class="num-cell">09:00–09:30</td>
+                    <td class="num-cell dash-cell" title="尾值缺失：该槽内无有效累计读数（离线 / 未上报）">—</td>
+                    <td class="num-cell cell-energy dash-cell" title="尾值缺失：本槽尾值取不到，不产生有效用能量，不作 0">—</td>
+                    <td class="cell-status"><span class="tag tag-missing">缺失</span></td>
+                    <td><span class="period-pill period-peak">峰</span></td>
+                    <td class="num-cell cell-cost dash-cell" title="无有效用能量，不计成本">—</td>
+                    <td><div class="actions"><span class="action-link" tabindex="0" role="button" data-act="fix">人工修正</span></div></td>
+                  </tr>
+                  <tr data-slot="09:30–10:00" data-energy="">
+                    <td class="num-cell">09:30–10:00</td>
+                    <td class="num-cell">158,684.5</td>
+                    <td class="num-cell cell-energy dash-cell" title="上一槽（09:00–09:30）尾值缺失，本槽无减基准；相邻相减、不跨槽取值">—</td>
+                    <td class="cell-status"><span class="tag tag-missing">缺失</span></td>
+                    <td><span class="period-pill period-peak">峰</span></td>
+                    <td class="num-cell cell-cost dash-cell" title="无有效用能量，不计成本">—</td>
+                    <td><div class="actions"><span class="action-link" tabindex="0" role="button" data-act="fix">人工修正</span></div></td>
+                  </tr>
+                  <tr data-slot="10:00–10:30" data-energy="87.8">
+                    <td class="num-cell">10:00–10:30</td>
+                    <td class="num-cell">158,772.3</td>
+                    <td class="num-cell cell-energy">87.8</td>
+                    <td class="cell-status"><span class="tag tag-ok">正常</span></td>
+                    <td><span class="period-pill period-sharp">尖</span></td>
+                    <td class="num-cell cell-cost">118.53</td>
+                    <td><div class="actions"><span class="action-link" tabindex="0" role="button" data-act="fix">人工修正</span></div></td>
+                  </tr>
+                  <tr data-slot="10:30–11:00" data-energy="">
+                    <td class="num-cell">10:30–11:00</td>
+                    <td class="num-cell">158,690.1</td>
+                    <td class="num-cell cell-energy dash-cell" title="尾值回退：本槽尾值（158,690.1）小于上一槽尾值（158,772.3），违反单调性，标坏值">—</td>
+                    <td class="cell-status"><span class="tag tag-bad">坏值</span></td>
+                    <td><span class="period-pill period-sharp">尖</span></td>
+                    <td class="num-cell cell-cost dash-cell" title="无有效用能量，不计成本">—</td>
+                    <td><div class="actions"><span class="action-link" tabindex="0" role="button" data-act="fix">人工修正</span></div></td>
+                  </tr>
+                  <tr data-slot="11:00–11:30" data-energy="">
+                    <td class="num-cell">11:00–11:30</td>
+                    <td class="num-cell">160,305.4</td>
+                    <td class="num-cell cell-energy dash-cell" title="差值超上限：本槽差值 1,615.3 kWh，超过该表具生效增量上限 1,500 kWh/半小时，标坏值">—</td>
+                    <td class="cell-status"><span class="tag tag-bad">坏值</span></td>
+                    <td><span class="period-pill period-sharp">尖</span></td>
+                    <td class="num-cell cell-cost dash-cell" title="无有效用能量，不计成本">—</td>
+                    <td><div class="actions"><span class="action-link" tabindex="0" role="button" data-act="fix">人工修正</span></div></td>
+                  </tr>
+                  <tr data-slot="11:30–12:00" data-energy="89.4">
+                    <td class="num-cell">11:30–12:00</td>
+                    <td class="num-cell">160,394.8</td>
+                    <td class="num-cell cell-energy" title="上一槽虽为坏值，但其尾值（160,305.4）存在，仍作本槽减基准；本槽差值独立判定为正常">89.4</td>
+                    <td class="cell-status"><span class="tag tag-ok">正常</span></td>
+                    <td><span class="period-pill period-flat">平</span></td>
+                    <td class="num-cell cell-cost">60.79</td>
+                    <td><div class="actions"><span class="action-link" tabindex="0" role="button" data-act="fix">人工修正</span></div></td>
+                  </tr>
+                  <tr data-slot="12:00–12:30" data-energy="82.0">
+                    <td class="num-cell">12:00–12:30</td>
+                    <td class="num-cell">160,478.6</td>
+                    <td class="num-cell cell-energy">82.0</td>
+                    <td class="cell-status"><span class="tag tag-manual" title="留痕：王工 2026-07-02 09:14 修正，原值 83.8 → 新值 82.0，原因：换表当刻补值；人工值锁定，自动重算不覆盖">人工修正</span></td>
+                    <td><span class="period-pill period-flat">平</span></td>
+                    <td class="num-cell cell-cost">55.76</td>
+                    <td><div class="actions"><span class="action-link" tabindex="0" role="button" data-act="fix">人工修正</span></div></td>
+                  </tr>
+                  <tr data-slot="12:30–13:00" data-energy="78.3">
+                    <td class="num-cell">12:30–13:00</td>
+                    <td class="num-cell">160,556.9</td>
+                    <td class="num-cell cell-energy">78.3</td>
+                    <td class="cell-status"><span class="tag tag-ok">正常</span></td>
+                    <td><span class="period-pill period-valley">谷</span></td>
+                    <td class="num-cell cell-cost">25.06</td>
+                    <td><div class="actions"><span class="action-link" tabindex="0" role="button" data-act="fix">人工修正</span></div></td>
+                  </tr>
+                  <tr data-slot="13:00–13:30" data-energy="77.3">
+                    <td class="num-cell">13:00–13:30</td>
+                    <td class="num-cell">160,634.2</td>
+                    <td class="num-cell cell-energy">77.3</td>
+                    <td class="cell-status"><span class="tag tag-ok">正常</span></td>
+                    <td><span class="period-pill period-valley">谷</span></td>
+                    <td class="num-cell cell-cost">24.74</td>
+                    <td><div class="actions"><span class="action-link" tabindex="0" role="button" data-act="fix">人工修正</span></div></td>
+                  </tr>
+                  <tr data-slot="13:30–14:00" data-energy="79.3">
+                    <td class="num-cell">13:30–14:00</td>
+                    <td class="num-cell">160,713.5</td>
+                    <td class="num-cell cell-energy">79.3</td>
+                    <td class="cell-status"><span class="tag tag-ok">正常</span></td>
+                    <td><span class="period-pill period-valley">谷</span></td>
+                    <td class="num-cell cell-cost">25.38</td>
+                    <td><div class="actions"><span class="action-link" tabindex="0" role="button" data-act="fix">人工修正</span></div></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="page-foot">
+              <div class="pagination-wrap">
+                <div class="pagination-total">共 48 条记录 第 1 / 4 页</div>
+                <div class="pagination" role="navigation" aria-label="分页">
+                  <button type="button" class="page-arrow" aria-label="上一页">‹</button>
+                  <button type="button" class="page-item active" aria-current="page">1</button>
+                  <button type="button" class="page-item">2</button>
+                  <button type="button" class="page-item">3</button>
+                  <button type="button" class="page-item">4</button>
+                  <button type="button" class="page-arrow" aria-label="下一页">›</button>
+                  <span class="page-size">12 条/页</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- 人工修正弹窗 -->
+  <div class="modal-backdrop" id="modalFix" aria-hidden="true">
+    <div class="modal" role="dialog" aria-labelledby="fixModalTitle" aria-modal="true">
+      <div class="modal-head">
+        <div class="modal-title" id="fixModalTitle">人工修正</div>
+        <button type="button" class="modal-close" id="fixModalClose" aria-label="关闭">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="anno anno-field" data-version="v2.5">
+          <span class="anno-tag">字段说明</span>
+          <span class="anno-version">v2.5</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>人工修正弹窗；入口：明细表格行内「人工修正」</p>
+            <table class="anno-table">
+              <thead>
+                <tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>时间槽</td><td>只读</td><td>—</td><td>被修正的半小时槽；修正只作用于半小时基准明细</td></tr>
+                <tr><td>原用能量</td><td>只读</td><td>—</td><td>该槽当前派生用能量；缺失 / 坏值槽显示「—」</td></tr>
+                <tr><td>新用能量</td><td>数值输入（kWh）</td><td>是</td><td>≥ 0；提交后作为该槽用能量并打「人工修正」标记</td></tr>
+                <tr><td>修正原因</td><td>多行文本</td><td>是</td><td>必填，随留痕保存；为空时提交拦截并提示「请填写修正原因」</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="anno anno-edge" data-version="v2.5">
+          <span class="anno-tag">边界与异常</span>
+          <span class="anno-version">v2.5</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>人工修正弹窗 — 五条护栏（§6.3）</p>
+            <ul>
+              <li>采集<b>原始累计值不可改</b>（审计源头）；修正只作用于派生的表具半小时明细。</li>
+              <li>每次修正<b>留痕</b>：操作人 / 时间 / 原值 / 新值 / 原因，并打「人工修正」标记（区别于正常 / 坏值）。</li>
+              <li>对象层零回填：改表具明细一处，所有相关对象、所有粒度下次 on-read 查询自动反映；但表具自身的时 / 天 / 月 rollup 与成本是归档的，由同一次修正<b>联动重刷</b>。</li>
+              <li>成本联动：仅该表具受影响时段成本按当时生效方案本地重算（单表范围，轻量）。</li>
+              <li><b>人工值锁定：</b>晚到数据触发的自动重聚合必须尊重人工修正值，不得静默覆盖；冲突时提示人工复核。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="anno anno-perm" data-version="v2.5">
+          <span class="anno-tag">权限说明</span>
+          <span class="anno-version">v2.5</span>
+          <span class="anno-source">待确认</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>人工修正弹窗 — 修正权限与审批（需求文档待确认项 4）</p>
+            <p>谁可发起修正、是否需二次确认 / 审批及留痕级别尚未敲定；本原型暂按「有权限用户直接提交、系统自动留痕」呈现，评审时确认。</p>
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">时间槽</label>
+          <div class="form-static" id="fixSlot">—</div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">原用能量（kWh）</label>
+          <div class="form-static" id="fixOldValue">—</div>
+        </div>
+        <div class="form-row">
+          <label class="form-label" for="fixNewValue">新用能量（kWh）<span class="required">*</span></label>
+          <input type="number" class="input-text" id="fixNewValue" min="0" step="0.1" placeholder="请输入修正后的用能量">
+        </div>
+        <div class="form-row">
+          <label class="form-label" for="fixReason">修正原因<span class="required">*</span></label>
+          <textarea class="input-text" id="fixReason" placeholder="必填，例如：换表当刻补值 / 采集跳变修正"></textarea>
+        </div>
+        <div class="modal-note">
+          <b>修正说明：</b>
+          <ul>
+            <li>修正仅作用于派生的表具半小时明细，<b>原始累计值不可改</b>；</li>
+            <li>系统自动留痕（操作人 / 时间 / 原值 / 新值 / 原因）并打「人工修正」标记；</li>
+            <li>人工值锁定，晚到数据触发的自动重算<b>不覆盖</b>人工修正值，冲突时提示人工复核；</li>
+            <li>确认后联动重刷该表具受影响的时 / 天 / 月 rollup 与成本。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-default" id="fixModalCancel">取消</button>
+        <button type="button" class="btn btn-primary" id="fixModalOk">确认修正</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 按时间范围重算弹窗 -->
+  <div class="modal-backdrop" id="modalRecalc" aria-hidden="true">
+    <div class="modal" role="dialog" aria-labelledby="recalcModalTitle" aria-modal="true">
+      <div class="modal-head">
+        <div class="modal-title" id="recalcModalTitle">按时间范围重算</div>
+        <button type="button" class="modal-close" id="recalcModalClose" aria-label="关闭">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="anno anno-ux" data-version="v2.5">
+          <span class="anno-tag">交互说明</span>
+          <span class="anno-version">v2.5</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>按时间范围重算弹窗；入口：工具栏「按时间范围重算」按钮</p>
+            <ul>
+              <li><b>重算类型：</b>电量明细重算（补传 / 断点续传后按补全尾值逐槽重算差值）或成本重算（电量不变、只按当时生效方案重刷成本）。</li>
+              <li><b>时间范围：</b>开始 / 结束日期，作用于当前所选表具与能源类型；提交后异步执行，完成后刷新列表。</li>
+              <li>确认提交前须选择重算类型且时间范围完整，否则提交拦截并提示。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="anno anno-data" data-version="v2.5">
+          <span class="anno-tag">数据逻辑</span>
+          <span class="anno-version">v2.5</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>按时间范围重算弹窗 — 重算口径（§5.4 / §6.1 / §8.2 / §8.3）</p>
+            <ul>
+              <li><b>幂等覆盖：</b>按幂等键「表具 + 能源类型 + 时间槽」覆盖写入，重复重算结果一致。</li>
+              <li><b>范围含缺口紧邻下一槽：</b>电量重算自动把缺口紧邻的下一槽纳入范围（其减基准被补回），首槽读缺口前一槽尾值作基准。</li>
+              <li><b>尊重人工修正：</b>重算不覆盖已打「人工修正」标记的槽（人工值锁定），冲突提示人工复核。</li>
+              <li><b>成本口径：</b>成本 = 电量 × 目标时间窗【当时生效计费方案】单价并归档；历史计费方案锁定不可改、只能新增未来版本，因此重算<b>不改写历史电价</b>；典型触发：历史电量被人工修正、表具晚应用 / 新应用计费方案补算此前无成本区间。</li>
+              <li>对象侧无需单独重算：表具成本更新后，对象成本下次 on-read 查询经 SUM 自动一致。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label" for="recalcType">重算类型<span class="required">*</span></label>
+          <select class="select-native" id="recalcType">
+            <option value="energy" selected>电量明细重算</option>
+            <option value="cost">成本重算</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label class="form-label" for="recalcStart">时间范围<span class="required">*</span></label>
+          <div class="form-inline">
+            <input type="date" class="input-text" id="recalcStart" value="2026-07-01" aria-label="开始日期">
+            <span class="sep">至</span>
+            <input type="date" class="input-text" id="recalcEnd" value="2026-07-01" aria-label="结束日期">
+          </div>
+        </div>
+        <div class="modal-note">
+          <b>重算说明：</b>
+          <ul>
+            <li>按幂等键（表具 + 能源类型 + 时间槽）<b>幂等覆盖</b>，重复重算结果一致；</li>
+            <li>电量重算范围自动<b>含缺口紧邻的下一槽</b>，补全后仍无尾值的槽保持「缺失」；</li>
+            <li>重算<b>尊重人工修正值</b>（人工值锁定不覆盖，冲突提示复核）；</li>
+            <li>成本按目标时间窗【当时生效计费方案】重算并归档，<b>不改写历史电价</b>。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-default" id="recalcModalCancel">取消</button>
+        <button type="button" class="btn btn-primary" id="recalcModalOk">确认重算</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (function () {
+      const toast = document.getElementById('toast');
+      let toastTimer = null;
+
+      const showToast = (message) => {
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+      };
+
+      const openModal = (modal) => {
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+      };
+
+      const closeModal = (modal) => {
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+      };
+
+      /* ===== 人工修正弹窗 ===== */
+      const modalFix = document.getElementById('modalFix');
+      const fixSlot = document.getElementById('fixSlot');
+      const fixOldValue = document.getElementById('fixOldValue');
+      const fixNewValue = document.getElementById('fixNewValue');
+      const fixReason = document.getElementById('fixReason');
+      let fixingRow = null;
+
+      const openFixModal = (row) => {
+        fixingRow = row;
+        fixSlot.textContent = row.getAttribute('data-slot') || '—';
+        const old = row.getAttribute('data-energy');
+        fixOldValue.textContent = old ? old : '—（缺失 / 坏值槽无有效用能量）';
+        fixNewValue.value = '';
+        fixReason.value = '';
+        openModal(modalFix);
+        fixNewValue.focus();
+      };
+
+      document.getElementById('fixModalClose').addEventListener('click', () => closeModal(modalFix));
+      document.getElementById('fixModalCancel').addEventListener('click', () => closeModal(modalFix));
+      document.getElementById('fixModalOk').addEventListener('click', () => {
+        const val = fixNewValue.value.trim();
+        const reason = fixReason.value.trim();
+        if (val === '' || Number(val) < 0) {
+          showToast('请输入有效的新用能量（kWh，≥ 0）');
+          fixNewValue.focus();
+          return;
+        }
+        if (!reason) {
+          showToast('请填写修正原因');
+          fixReason.focus();
+          return;
+        }
+        if (fixingRow) {
+          const slot = fixingRow.getAttribute('data-slot') || '';
+          const oldVal = fixingRow.getAttribute('data-energy') || '—';
+          const newVal = Number(val).toFixed(1);
+          const energyCell = fixingRow.querySelector('.cell-energy');
+          const statusCell = fixingRow.querySelector('.cell-status');
+          energyCell.textContent = newVal;
+          energyCell.classList.remove('dash-cell');
+          energyCell.removeAttribute('title');
+          statusCell.innerHTML = '<span class="tag tag-manual" title="留痕：当前操作人 ' +
+            new Date().toISOString().slice(0, 16).replace('T', ' ') +
+            ' 修正，原值 ' + oldVal + ' → 新值 ' + newVal + '，原因：' + reason +
+            '；人工值锁定，自动重算不覆盖">人工修正</span>';
+          fixingRow.setAttribute('data-energy', newVal);
+          closeModal(modalFix);
+          showToast('已保存人工修正（' + slot + '）：留痕并锁定；联动重刷该表具时/天/月 rollup 与成本（示意）');
+        }
+      });
+
+      /* ===== 按时间范围重算弹窗 ===== */
+      const modalRecalc = document.getElementById('modalRecalc');
+
+      document.getElementById('btnRecalc').addEventListener('click', () => openModal(modalRecalc));
+      document.getElementById('recalcModalClose').addEventListener('click', () => closeModal(modalRecalc));
+      document.getElementById('recalcModalCancel').addEventListener('click', () => closeModal(modalRecalc));
+      document.getElementById('recalcModalOk').addEventListener('click', () => {
+        const start = document.getElementById('recalcStart').value;
+        const end = document.getElementById('recalcEnd').value;
+        if (!start || !end) {
+          showToast('请选择完整的时间范围');
+          return;
+        }
+        if (start > end) {
+          showToast('开始日期不能晚于结束日期');
+          return;
+        }
+        const typeText = document.getElementById('recalcType').value === 'cost' ? '成本重算' : '电量明细重算';
+        closeModal(modalRecalc);
+        showToast('示意：已提交' + typeText + '（' + start + ' 至 ' + end + '），幂等覆盖、尊重人工修正值，完成后刷新列表');
+      });
+
+      /* 弹窗通用：点遮罩 / Esc 关闭 */
+      [modalFix, modalRecalc].forEach((m) => {
+        m.addEventListener('click', (e) => {
+          if (e.target === m) closeModal(m);
+        });
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        if (modalFix.classList.contains('show')) closeModal(modalFix);
+        if (modalRecalc.classList.contains('show')) closeModal(modalRecalc);
+      });
+
+      /* 行内人工修正入口 */
+      document.querySelectorAll('.action-link[data-act="fix"]').forEach((el) => {
+        const go = () => openFixModal(el.closest('tr'));
+        el.addEventListener('click', go);
+        el.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            go();
+          }
+        });
+      });
+
+      /* 筛选与分页示意 */
+      document.getElementById('filterEnergy').addEventListener('change', () => showToast('示意：切换能源类型后刷新表具列表与明细'));
+      document.getElementById('filterMeter').addEventListener('change', () => showToast('示意：切换表具后刷新明细与汇总'));
+      document.getElementById('filterDate').addEventListener('change', () => showToast('示意：切换日期后刷新明细与汇总'));
+      document.getElementById('filterGranularity').addEventListener('change', (e) => {
+        const text = e.target.options[e.target.selectedIndex].textContent;
+        showToast('示意：切换' + text + '，读取对应粒度归档 rollup（累加、不重算差值）');
+      });
+      document.querySelectorAll('.page-item, .page-arrow').forEach((item) => {
+        item.addEventListener('click', () => showToast('分页为静态示意'));
+      });
+    })();
+  </script>
+
+  <button type="button" class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+
+  <script>
+    function initAnnoVersionFilter() {
+      var bar = document.getElementById('annoFilterBar');
+      var tags = document.getElementById('annoFilterTags');
+      if (!document.body.classList.contains('annotation-mode')) return;
+      var annos = document.querySelectorAll('.anno[data-version]');
+      var versions = [];
+      annos.forEach(function (a) {
+        var v = a.getAttribute('data-version');
+        if (v && versions.indexOf(v) === -1) versions.push(v);
+      });
+      versions.sort(function (a, b) {
+        var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+        var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+        for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+          if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+        }
+        return 0;
+      });
+      tags.innerHTML = '';
+      var allBtn = document.createElement('span');
+      allBtn.className = 'anno-filter-tag';
+      allBtn.textContent = '全部';
+      allBtn.onclick = function () { filterAnno('all', versions[0]); setActive(this); };
+      tags.appendChild(allBtn);
+      versions.forEach(function (v, i) {
+        var btn = document.createElement('span');
+        btn.className = 'anno-filter-tag' + (i === 0 ? ' active' : '');
+        btn.textContent = v;
+        btn.onclick = function () { filterAnno(v, versions[0]); setActive(this); };
+        tags.appendChild(btn);
+      });
+      if (versions.length > 0) filterAnno(versions[0], versions[0]);
+    }
+    function filterAnno(version, latest) {
+      document.querySelectorAll('.anno[data-version]').forEach(function (a) {
+        var v = a.getAttribute('data-version');
+        if (version === 'all') {
+          a.style.display = '';
+          a.style.opacity = (v === latest) ? '1' : '0.6';
+        } else {
+          a.style.display = (v === version) ? '' : 'none';
+          a.style.opacity = '1';
+        }
+      });
+    }
+    function setActive(el) {
+      el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function (t) { t.classList.remove('active'); });
+      el.classList.add('active');
+    }
+  </script>
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="能源计费配置"></script>
+</body>
+</html>

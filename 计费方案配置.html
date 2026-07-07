@@ -401,6 +401,32 @@
     }
     .check-cell input[type="checkbox"]:disabled { cursor: not-allowed; }
 
+    .recalc-field {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px 12px;
+      margin-bottom: 14px;
+    }
+
+    .recalc-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .recalc-scope { font-size: 13px; color: var(--text-primary); }
+
+    .recalc-note {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      padding: 10px 12px;
+      background: #F8FAFC;
+      border-radius: var(--radius);
+    }
+
     .toast {
       position: fixed;
       right: 24px;
@@ -439,6 +465,16 @@
           <div class="anno-filter-tags" id="annoFilterTags"></div>
         </div>
         <div class="page-shell">
+          <div class="anno anno-version-header" data-version="v2.5">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v2.5</p>
+              <p><b>更新日期：</b>2026-07-02</p>
+              <p><b>变更概述：</b>「应用」口径由测点改为<b>表具</b>（计费方案 1:1 应用在表具）；列表列「应用测点数」改为「应用表具数」；行操作新增「重算成本」（按时间范围重算表具成本）；子页签新增「表具能耗明细」入口。</p>
+              <p><b>本页说明（v2.5 增补）：</b>计费方案应用到表具后，系统按【当时生效计费方案】自动归档表具半小时成本；对象成本沿计量拓扑 on-read 聚合，随表具成本自动一致，无需对象层单独重算。</p>
+            </div>
+          </div>
+
           <div class="anno anno-version-header" data-version="v1.0">
             <span class="anno-tag">版本信息</span>
             <div class="anno-body">
@@ -475,10 +511,39 @@
             </div>
           </div>
 
+          <div class="anno anno-ux" data-version="v2.5">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v2.5</span>
+            <span class="anno-source" data-type="需求文档">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>列表操作列（应用 / 重算成本）与「应用表具」弹窗</p>
+              <ul>
+                <li><b>应用（v2.5 改口径）：</b>打开「应用表具」弹窗，勾选需应用本方案的<b>表具</b>（物模型实例）；计费方案 <b>1:1 应用在表具</b>上，已被其他方案应用的表具置灰不可选。弹窗列展示：物模型 / 表具名称 / 归属计量对象 / 选择；未绑定计量对象的表具同样可应用（先应用方案、后补绑对象，成本经重算补齐）。</li>
+                <li><b>重算成本（v2.5 新增）：</b>打开「重算成本」弹窗：表具范围固定为本方案已应用表具，选择开始 / 结束日期后确认；按【当时生效计费方案】重算该区间表具成本，电量明细不受影响、历史电价不被改写。确认后 toast 提示已提交重算。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="anno anno-data" data-version="v2.5">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.5</span>
+            <span class="anno-source" data-type="需求文档">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>计费方案与表具成本链路</p>
+              <ul>
+                <li><b>应用口径：</b>计费方案 1:1 应用在表具（物模型实例）；「应用表具数」列即本方案当前已应用的表具数量。</li>
+                <li><b>表具成本归档：</b>表具半小时成本 = 表具半小时电量 × 该半小时所属时段在【当时生效计费方案】下的单价，按半小时归档（与计量拓扑无关）。</li>
+                <li><b>按范围重算的三种触发场景（§8.3）：</b>① 历史电量被人工修正 → 对受影响时间窗重算成本；② 表具晚应用 / 新应用计费方案 → 从方案生效日起补算此前无成本的区间；③ 新增未来生效版本 → 自生效日起自然切换，不回改此前区间。三种场景均不修改历史电价。</li>
+                <li><b>对象成本：</b>沿计量拓扑 on-read 聚合 SUM(表具成本)，表具成本更新后对象成本下次查询自动一致，无单独的对象成本重算任务。</li>
+              </ul>
+            </div>
+          </div>
+
           <div class="breadcrumb-bar" aria-label="面包屑">能源计费配置</div>
           <div class="subtabs" role="tablist" aria-label="能源计费子页">
             <a href="计费方案配置.html" class="subtab active" role="tab" aria-selected="true">计费方案配置</a>
             <a href="能源配置.html" class="subtab" role="tab" aria-selected="false">能源配置</a>
+            <a href="能耗管理-表具明细.html" class="subtab" role="tab" aria-selected="false">表具能耗明细</a>
           </div>
 
           <section class="page-card" aria-labelledby="pageTitle">
@@ -506,7 +571,7 @@
                   <tr>
                     <th>能源</th>
                     <th>方案名称</th>
-                    <th>应用测点数</th>
+                    <th>应用表具数</th>
                     <th>创建时间</th>
                     <th>操作</th>
                   </tr>
@@ -521,6 +586,7 @@
                       <div class="actions">
                         <span class="action-link" tabindex="0" role="button" data-act="edit">编辑</span>
                         <span class="action-link" tabindex="0" role="button" data-act="apply" data-scheme="市电单一电价方案">应用</span>
+                        <span class="action-link" tabindex="0" role="button" data-act="recalc" data-scheme="市电单一电价方案">重算成本</span>
                         <span class="action-link danger" tabindex="0" role="button" data-act="del">删除</span>
                       </div>
                     </td>
@@ -534,6 +600,7 @@
                       <div class="actions">
                         <span class="action-link" tabindex="0" role="button" data-act="edit">编辑</span>
                         <span class="action-link" tabindex="0" role="button" data-act="apply" data-scheme="柴油发电方案">应用</span>
+                        <span class="action-link" tabindex="0" role="button" data-act="recalc" data-scheme="柴油发电方案">重算成本</span>
                         <span class="action-link danger" tabindex="0" role="button" data-act="del">删除</span>
                       </div>
                     </td>
@@ -547,6 +614,7 @@
                       <div class="actions">
                         <span class="action-link" tabindex="0" role="button" data-act="edit">编辑</span>
                         <span class="action-link" tabindex="0" role="button" data-act="apply" data-scheme="冷量单价方案">应用</span>
+                        <span class="action-link" tabindex="0" role="button" data-act="recalc" data-scheme="冷量单价方案">重算成本</span>
                         <span class="action-link danger" tabindex="0" role="button" data-act="del">删除</span>
                       </div>
                     </td>
@@ -575,19 +643,33 @@
   <div class="modal-backdrop" id="modalApply" aria-hidden="true">
     <div class="modal" role="dialog" aria-labelledby="applyModalTitle" aria-modal="true">
       <div class="modal-head">
-        <div class="modal-title" id="applyModalTitle">应用测点</div>
+        <div class="modal-title" id="applyModalTitle">应用表具</div>
         <button type="button" class="modal-close" id="applyModalClose" aria-label="关闭">&times;</button>
       </div>
       <div class="modal-body">
+        <div class="anno anno-field" data-version="v2.5">
+          <span class="anno-tag">字段说明</span>
+          <span class="anno-version">v2.5</span>
+          <span class="anno-source" data-type="需求文档">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>「应用表具」弹窗；入口：列表行操作「应用」</p>
+            <ul>
+              <li><b>表具范围：</b>当前能源类型下所有挂了累积量测点的物模型实例（=表具）；支持按表具名称模糊搜索。</li>
+              <li><b>归属计量对象：</b>展示该表具当前在计量拓扑中的归属（如「水冷冷水系统-1F」）；未挂拓扑的展示「未绑定」，仍可应用方案。</li>
+              <li><b>选择：</b>计费方案 1:1 应用在表具，已被其他计费方案应用的表具置灰不可选。</li>
+            </ul>
+          </div>
+        </div>
         <div class="modal-toolbar">
-          <input type="search" class="input-text" id="modalPointSearch" placeholder="支持名称模糊搜索" aria-label="测点名称搜索">
+          <input type="search" class="input-text" id="modalPointSearch" placeholder="支持表具名称模糊搜索" aria-label="表具名称搜索">
         </div>
         <div class="table-wrap">
           <table class="data-table">
             <thead>
               <tr>
                 <th>物模型</th>
-                <th>名称</th>
+                <th>表具名称</th>
+                <th>归属计量对象</th>
                 <th class="check-cell">选择</th>
               </tr>
             </thead>
@@ -595,16 +677,19 @@
               <tr data-name="1号电表">
                 <td>交流电表</td>
                 <td>1号电表</td>
+                <td>水冷冷水系统-1F</td>
                 <td class="check-cell"><input type="checkbox" aria-label="选择 1号电表"></td>
               </tr>
-              <tr class="disabled-row" data-name="1级电表" title="该测点已被其他计费方案应用">
+              <tr class="disabled-row" data-name="1级电表" title="该表具已被其他计费方案应用">
                 <td>交流电表</td>
                 <td>1级电表</td>
+                <td>水冷冷水系统-2F</td>
                 <td class="check-cell"><input type="checkbox" disabled aria-label="1级电表 不可选"></td>
               </tr>
               <tr data-name="2号电表">
                 <td>直流电表</td>
                 <td>2号电表</td>
+                <td>未绑定</td>
                 <td class="check-cell"><input type="checkbox" aria-label="选择 2号电表"></td>
               </tr>
             </tbody>
@@ -614,6 +699,45 @@
       <div class="modal-foot">
         <button type="button" class="btn btn-default" id="applyModalCancel">取消</button>
         <button type="button" class="btn btn-primary" id="applyModalOk">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modalRecalc" aria-hidden="true">
+    <div class="modal" role="dialog" aria-labelledby="recalcModalTitle" aria-modal="true">
+      <div class="modal-head">
+        <div class="modal-title" id="recalcModalTitle">重算成本</div>
+        <button type="button" class="modal-close" id="recalcModalClose" aria-label="关闭">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="anno anno-ux" data-version="v2.5">
+          <span class="anno-tag">交互说明</span>
+          <span class="anno-version">v2.5</span>
+          <span class="anno-source" data-type="需求文档">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>「重算成本」弹窗；入口：列表行操作「重算成本」</p>
+            <ul>
+              <li><b>表具范围：</b>固定为本方案已应用的全部表具，不支持单独勾选。</li>
+              <li><b>时间范围：</b>开始 / 结束日期均必选，结束不得早于开始；确认后对该区间表具成本幂等重算覆盖。</li>
+              <li><b>确认后：</b>toast 提示已提交重算；重算结果对对象成本查询自动生效。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="recalc-field">
+          <span class="recalc-label">表具范围</span>
+          <span class="recalc-scope" id="recalcScope">本方案已应用表具（全部）</span>
+        </div>
+        <div class="recalc-field">
+          <label class="recalc-label" for="recalcStart">开始日期</label>
+          <input type="date" class="input-text" id="recalcStart" style="min-width: 160px;">
+          <label class="recalc-label" for="recalcEnd">结束日期</label>
+          <input type="date" class="input-text" id="recalcEnd" style="min-width: 160px;">
+        </div>
+        <p class="recalc-note">按【当时生效计费方案】重算该区间表具成本，电量明细不受影响、历史电价不被改写；对象成本下次查询自动一致。</p>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-default" id="recalcModalCancel">取消</button>
+        <button type="button" class="btn btn-primary" id="recalcModalOk">确定</button>
       </div>
     </div>
   </div>
@@ -651,7 +775,7 @@
       };
 
       const openApplyModal = (schemeName) => {
-        applyTitle.textContent = '应用测点 — ' + schemeName;
+        applyTitle.textContent = '应用表具 — ' + schemeName;
         searchInput.value = '';
         pointBody.querySelectorAll('tr').forEach((tr) => { tr.style.display = ''; });
         modal.classList.add('show');
@@ -670,15 +794,60 @@
       document.getElementById('applyModalCancel').addEventListener('click', closeApplyModal);
       document.getElementById('applyModalOk').addEventListener('click', () => {
         closeApplyModal();
-        showToast('示意：保存应用测点并刷新列表');
+        showToast('示意：保存应用表具并刷新列表');
       });
 
       modal.addEventListener('click', (e) => {
         if (e.target === modal) closeApplyModal();
       });
 
+      const recalcModal = document.getElementById('modalRecalc');
+      const recalcTitle = document.getElementById('recalcModalTitle');
+      const recalcScope = document.getElementById('recalcScope');
+      const recalcStart = document.getElementById('recalcStart');
+      const recalcEnd = document.getElementById('recalcEnd');
+
+      const openRecalcModal = (schemeName) => {
+        recalcTitle.textContent = '重算成本 — ' + schemeName;
+        recalcScope.textContent = '「' + schemeName + '」已应用表具（全部）';
+        recalcStart.value = '';
+        recalcEnd.value = '';
+        recalcModal.classList.add('show');
+        recalcModal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+        document.getElementById('recalcModalClose').focus();
+      };
+
+      const closeRecalcModal = () => {
+        recalcModal.classList.remove('show');
+        recalcModal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+      };
+
+      document.getElementById('recalcModalClose').addEventListener('click', closeRecalcModal);
+      document.getElementById('recalcModalCancel').addEventListener('click', closeRecalcModal);
+      document.getElementById('recalcModalOk').addEventListener('click', () => {
+        if (!recalcStart.value || !recalcEnd.value) {
+          showToast('请选择开始与结束日期');
+          return;
+        }
+        if (recalcEnd.value < recalcStart.value) {
+          showToast('结束日期不得早于开始日期');
+          return;
+        }
+        closeRecalcModal();
+        showToast('示意：已提交重算，按当时生效计费方案重算 ' + recalcStart.value + ' 至 ' + recalcEnd.value + ' 表具成本');
+      });
+
+      recalcModal.addEventListener('click', (e) => {
+        if (e.target === recalcModal) closeRecalcModal();
+      });
+
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modal.classList.contains('show')) closeApplyModal();
+        if (e.key === 'Escape') {
+          if (modal.classList.contains('show')) closeApplyModal();
+          if (recalcModal.classList.contains('show')) closeRecalcModal();
+        }
       });
 
       searchInput.addEventListener('input', () => {
@@ -725,12 +894,23 @@
         });
       });
 
+      document.querySelectorAll('.action-link[data-act="recalc"]').forEach((el) => {
+        const go = () => openRecalcModal(el.getAttribute('data-scheme') || '计费方案');
+        el.addEventListener('click', go);
+        el.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            go();
+          }
+        });
+      });
+
       document.querySelectorAll('.action-link[data-act="del"]').forEach((el) => {
         const row = el.closest('tr');
         const go = () => {
           const apps = parseInt(row.getAttribute('data-apps') || '0', 10);
           if (apps > 0) {
-            showToast('当前方案下仍有应用测点，无法删除');
+            showToast('当前方案下仍有应用表具，无法删除');
             return;
           }
           if (window.confirm('确认删除该计费方案？')) showToast('示意：校验通过后删除');

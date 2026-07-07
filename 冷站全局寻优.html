@@ -183,41 +183,34 @@
     /* ── 正文 ── */
     .content { padding:10px 16px 16px; }
 
-    /* ── 节能潜力 + 能效预测 双列 ── */
-    .insight-row { display:grid; grid-template-columns:360px 1fr; gap:10px; margin-bottom:10px; }
-    @media (max-width:900px) { .insight-row { grid-template-columns:1fr; } }
-    .panel {
+    /* ── 寻优收益条（v2.4：替代节能潜力仪表盘 + 独立能效预测图） ── */
+    .benefit-strip { display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin-bottom:8px; }
+    @media (max-width:980px) { .benefit-strip { grid-template-columns:repeat(2, 1fr); } }
+    .benefit-card {
       background:var(--bg-card); border:1px solid var(--border-light);
-      border-radius:var(--radius-lg); padding:12px 14px; box-shadow:var(--shadow-sm);
+      border-radius:var(--radius-lg); padding:10px 14px; box-shadow:var(--shadow-sm);
+      display:flex; flex-direction:column; gap:4px;
     }
-    .panel-title { font-size:12.5px; font-weight:700; margin-bottom:10px; }
-
-    /* 仪表盘 */
-    .gauge-layout { display:flex; align-items:center; gap:14px; }
-    .gauge-box { flex-shrink:0; }
-    .gauge-metrics { flex:1; display:flex; flex-direction:column; gap:10px; }
-    .gm-row { display:flex; align-items:center; gap:8px; }
-    .gm-icon { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; color:#fff; }
-    .gm-icon.power { background:var(--success); }
-    .gm-icon.cop { background:var(--primary); }
-    .gm-body { flex:1; display:flex; flex-direction:column; gap:2px; }
-    .gm-label-row { font-size:10px; color:var(--text-hint); display:flex; gap:10px; }
-    .gm-val-row { display:flex; align-items:baseline; gap:10px; }
-    .gm-kv { font-size:16px; font-weight:700; }
-    .gm-kv.opt { color:var(--primary); }
-    .gm-delta { font-size:13px; font-weight:600; }
-    .gm-delta.down { color:var(--success); }
-    .gm-delta.up { color:var(--orange); }
-
-    /* 能效预测图 */
-    .chart-head { display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:6px; margin-bottom:6px; }
-    .chart-legend { display:flex; gap:8px; font-size:11px; color:var(--text-secondary); flex-wrap:wrap; align-items:center; }
-    .chart-legend label { display:flex; align-items:center; gap:3px; cursor:pointer; user-select:none; }
-    .chart-legend label input[type=checkbox] { width:12px; height:12px; accent-color:var(--primary); }
-    .lg-sq { width:9px; height:9px; border-radius:2px; flex-shrink:0; }
-    .chart-y-hint { font-size:10px; color:var(--text-hint); display:flex; justify-content:space-between; padding:0 2px; margin-bottom:2px; }
-    .chart-canvas-h { height:182px; position:relative; }
-    .chart-canvas-h canvas { width:100%!important; height:100%!important; }
+    .benefit-value {
+      font-size:20px; font-weight:700; line-height:1.2;
+      display:flex; align-items:center; gap:8px; font-variant-numeric:tabular-nums;
+    }
+    .benefit-value.green { color:var(--success); }
+    .benefit-value.blue { color:var(--primary); }
+    .benefit-label { font-size:11px; color:var(--text-hint); line-height:1.4; }
+    .benefit-badge {
+      display:inline-flex; align-items:center; padding:1px 8px; border-radius:999px;
+      font-size:11px; font-weight:700; white-space:nowrap;
+    }
+    .benefit-badge.saving { background:#F0FDF4; color:#15803D; }
+    .benefit-badge.worse { background:#FFF7ED; color:#C2410C; }
+    .benefit-headline {
+      border-left:3px solid var(--primary); background:#F8FAFC;
+      border:1px solid var(--border-light); border-left:3px solid var(--primary);
+      border-radius:6px; padding:8px 12px; font-size:12px; color:var(--text-secondary);
+      margin-bottom:10px;
+    }
+    .benefit-headline b { color:var(--text-primary); }
 
     /* ── Section 标题 ── */
     .section-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; margin-top:6px; }
@@ -240,6 +233,123 @@
     .data-table tbody tr:hover td { background:#FAFCFF; }
     .device-cell { font-weight:600; color:var(--text-secondary); background:#F8FAFC!important; font-size:11.5px; white-space:nowrap; width:86px; }
     .opt-cell { color:var(--primary); font-weight:500; }
+
+    /* ── 控制策略 × 功率变化（v2.4：固定分类卡 + 右侧功率栏） ── */
+    .strategy-toolbar {
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      margin-bottom:8px; flex-wrap:wrap;
+    }
+    .strategy-summary {
+      display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+      font-size:12px; color:var(--text-secondary);
+    }
+    .strategy-summary .sum-pill {
+      display:inline-flex; align-items:center; gap:4px;
+      padding:2px 8px; border-radius:999px; font-size:11px; font-weight:600;
+      background:#F1F5F9; color:#475569;
+    }
+    .strategy-summary .sum-pill.changed { background:#EEF4FF; color:var(--primary); }
+    .strategy-toggle {
+      display:inline-flex; align-items:center; gap:6px;
+      font-size:12px; color:var(--text-secondary); cursor:pointer; user-select:none;
+    }
+    .strategy-toggle input { accent-color:var(--primary); width:13px; height:13px; }
+    .strategy-cards { display:flex; flex-direction:column; gap:8px; margin-bottom:6px; }
+    .strategy-card {
+      background:var(--bg-card); border:1px solid var(--border-light);
+      border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); overflow:hidden;
+    }
+    .strategy-card.has-change { border-left:3px solid var(--primary); }
+    .strategy-card-flex { display:flex; align-items:stretch; }
+    .strategy-card-main { flex:1; min-width:0; }
+    .strategy-card-head {
+      display:flex; align-items:center; gap:10px;
+      padding:8px 12px;
+    }
+    .strategy-card-title { font-size:12.5px; font-weight:700; color:var(--text-primary); }
+    .strategy-card-badge {
+      font-size:10.5px; font-weight:600; padding:1px 7px; border-radius:999px; line-height:1.5;
+      background:#F1F5F9; color:#64748B; white-space:nowrap; margin-left:auto;
+    }
+    .strategy-card-badge.changed { background:#EEF4FF; color:var(--primary); }
+    .strategy-card-note { font-size:11px; color:var(--text-hint); }
+    .strategy-param {
+      display:flex; gap:10px; align-items:flex-start;
+      padding:7px 12px; border-top:1px solid var(--border-light);
+    }
+    .strategy-param-label {
+      font-size:11.5px; font-weight:600; color:var(--text-secondary);
+      min-width:104px; flex-shrink:0; padding-top:4px;
+    }
+    .strategy-param-content { flex:1; min-width:0; }
+    .strategy-unchanged {
+      padding:6px 12px; border-top:1px solid var(--border-light);
+      background:#F8FAFC; font-size:11px; color:var(--text-hint);
+    }
+    .strategy-tags { display:flex; flex-wrap:wrap; gap:5px; }
+    .strategy-tag {
+      display:inline-flex; align-items:center; padding:2px 8px; border-radius:6px;
+      font-size:11px; font-weight:500; line-height:1.5; border:1px solid #E2E8F0;
+      background:#fff; color:var(--text-primary);
+    }
+    .strategy-tag.same { background:#F8FAFC; color:#64748B; border-color:#E2E8F0; }
+    .strategy-tag.add { background:#F0FDF4; color:#15803D; border-color:#BBF7D0; }
+    .strategy-tag.remove { background:#FEF2F2; color:#B91C1C; border-color:#FECACA; text-decoration:line-through; }
+    /* 紧凑设备单元：设备名 + 前→后 + Δ 内联，一行自动排多台 */
+    .sv-cells { display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:6px; }
+    .sv-cell {
+      display:flex; align-items:center; gap:6px; min-width:0;
+      border:1px solid var(--border-light); border-radius:6px;
+      padding:3px 9px; background:#F8FAFC; font-size:11.5px;
+    }
+    .sv-cell .sv-name { color:var(--text-secondary); font-weight:600; min-width:44px; white-space:nowrap; }
+    .sv-cell .sv-before { color:var(--text-hint); font-variant-numeric:tabular-nums; }
+    .sv-cell .sv-arrow { color:var(--text-hint); font-size:10px; }
+    .sv-cell .sv-after { font-weight:700; font-variant-numeric:tabular-nums; color:var(--text-primary); }
+    .sv-cell .sv-delta {
+      margin-left:auto; font-size:10.5px; font-weight:700;
+      font-variant-numeric:tabular-nums; white-space:nowrap; color:var(--primary);
+    }
+    .sv-cell .sv-io {
+      display:inline-flex; align-items:center; padding:1px 7px; border-radius:5px;
+      font-size:10.5px; font-weight:600; line-height:1.5;
+    }
+    .sv-cell .sv-io.add { background:#F0FDF4; color:#15803D; border:1px solid #BBF7D0; }
+    .sv-cell .sv-io.remove { background:#FEF2F2; color:#B91C1C; border:1px solid #FECACA; }
+    /* 右侧功率栏（各卡等宽，纵向可扫读节能账本） */
+    .strategy-power-rail {
+      width:170px; flex-shrink:0; padding:10px 14px;
+      border-left:1px solid var(--border-light); background:#FBFCFE;
+      display:flex; flex-direction:column; gap:6px;
+    }
+    .strategy-power-rail .pr-label { font-size:10.5px; font-weight:600; color:var(--text-hint); }
+    .strategy-power-rail .pr-vals {
+      display:flex; align-items:baseline; gap:5px;
+      font-size:12px; font-variant-numeric:tabular-nums;
+    }
+    .strategy-power-rail .pr-vals .pv-before { color:var(--text-hint); }
+    .strategy-power-rail .pr-vals .pv-arrow { color:var(--text-hint); font-size:10px; }
+    .strategy-power-rail .pr-vals .pv-after { font-size:14px; font-weight:700; color:var(--text-primary); }
+    .strategy-power-rail .pr-badge {
+      align-self:flex-start; display:inline-flex; align-items:center;
+      padding:2px 8px; border-radius:999px; font-size:11.5px; font-weight:700; white-space:nowrap;
+    }
+    .strategy-power-rail .pr-badge.saving { background:#F0FDF4; color:#15803D; }
+    .strategy-power-rail .pr-badge.worse { background:#FFF7ED; color:#C2410C; }
+    .strategy-power-rail .pr-sharebar {
+      height:5px; border-radius:3px; background:#EEF2F6; overflow:hidden;
+    }
+    .strategy-power-rail .pr-sharebar i { display:block; height:100%; background:var(--success); border-radius:3px; }
+    .strategy-power-rail .pr-sharetext { font-size:10.5px; color:var(--text-hint); }
+    .strategy-power-rail .pr-keep { font-size:11.5px; color:var(--text-hint); font-variant-numeric:tabular-nums; }
+    .strategy-legend {
+      display:flex; flex-wrap:wrap; gap:12px; margin-bottom:10px;
+      font-size:10.5px; color:var(--text-hint);
+    }
+    @media (max-width:720px) {
+      .strategy-card-flex { flex-direction:column; }
+      .strategy-power-rail { width:auto; border-left:none; border-top:1px solid var(--border-light); }
+    }
     .confidence-pill {
       display:inline-flex; align-items:center; justify-content:center;
       padding:2px 8px; border-radius:999px; font-size:11px; font-weight:700;
@@ -551,10 +661,19 @@
         <div class="anno-filter-tags" id="annoFilterTags"></div>
       </div>
 
+      <div class="anno anno-version-header" data-version="v2.4">
+        <span class="anno-tag">版本信息</span>
+        <div class="anno-body">
+          <p><b>当前版本：</b>v2.4</p>
+          <p><b>更新日期：</b>2026-07-03</p>
+          <p><b>变更概述：</b>寻优结果展示区重构：① 节能潜力仪表盘区改为「寻优收益」四格指标条（系统节能率 / 系统功率 实际→预测 / COP 实际→预测 / 调整计数）+ 动态「最大单项调整」提示行；② 取消独立「能效预测」双轴图表，分类功率（kW）并入控制策略卡片右栏；③ 控制策略前后对比由 4 列表格改为固定设备分类卡片——按系统设备分类顺序恒定排列，有变化的卡展开（开机设备用投入/退出标签、数值参数用逐台紧凑单元 + Δ），无变化的卡压缩为单行；卡片右侧功率栏展示该类总功率前后、变化量与占总节能比重，各类功率变化之和等于系统功率变化。</p>
+        </div>
+      </div>
+
       <div class="anno anno-version-header" data-version="v2.3">
         <span class="anno-tag">版本信息</span>
         <div class="anno-body">
-          <p><b>当前版本：</b>v2.3</p>
+          <p><b>历史版本：</b>v2.3</p>
           <p><b>更新日期：</b>2026-06-15</p>
           <p><b>变更概述：</b>全局寻优建议接入置信结果：置信为「轮」级属性，在寻优策略卡片的最新寻优时间、寻优记录导航和当前寻优记录轮次旁展示本轮徽标（变量明细表不逐行加列，卡片不展示具体能耗修正文案）；下方寻优记录组件对齐冷站柔性寻优；规则配置新增「低置信保守度 γ(低)」滑块，低置信策略按保守系数参与排序。低置信徽标统一为灰色（不用警示色）。</p>
         </div>
@@ -578,6 +697,15 @@
           <span>1、对当前系统进行全局寻优，包括制冷模式、主机加减机、冷却塔加减机、水泵频率、主机出水温度、冷塔出水温度，在满足供冷安全前提下通过系统能效权限。</span>
         </div>
         <span class="alert-close">&times;</span>
+      </div>
+      <div class="anno anno-ux" data-version="v2.4">
+        <span class="anno-tag">交互说明</span>
+        <span class="anno-version">v2.4</span>
+        <span class="anno-source">开发对照</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>冷水系统页签</p>
+          <p>每个页签绑定一个 <code>mountSystem</code> twin 及其 <code>systemType</code>（水冷 / 风冷）。切换页签 → 换 <code>project + mountSystem + tuner</code> 拉取该系统的寻优记录列表，并重算策略卡显隐（风冷剔除冷却侧分类）。「仅看有变化项」勾选状态跨页签保留。原型演示：除「B路风冷冷水系统」外均为水冷口径。</p>
+        </div>
       </div>
       <div class="station-tabs-bar">
         <div class="station-tabs" id="stationTabs" role="tablist" aria-label="冷水系统切换">
@@ -718,84 +846,135 @@
       <!-- ── 正文 ── -->
       <div class="content">
 
-        <!-- 节能潜力 + 能效预测 -->
-        <div class="insight-row">
-
-          <!-- ─ 节能潜力（左） ─ -->
-          <div class="panel">
-            <div class="panel-title">节能潜力</div>
-            <div class="gauge-layout">
-              <div class="gauge-box"><canvas id="gaugeCanvas"></canvas></div>
-              <div class="gauge-metrics">
-                <div class="gm-row">
-                  <div class="gm-icon power">⚡</div>
-                  <div class="gm-body">
-                    <div class="gm-label-row"><span>实际值</span><span>AI寻优预测</span></div>
-                    <div class="gm-val-row">
-                      <span class="gm-kv">435.85</span>
-                      <span class="gm-kv opt">400.67</span>
-                      <span class="gm-delta down">−35.18</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="gm-row">
-                  <div class="gm-icon cop" style="font-size:9px;font-weight:700;">COP</div>
-                  <div class="gm-body">
-                    <div class="gm-label-row"><span>实际值</span><span>寻优预测</span></div>
-                    <div class="gm-val-row">
-                      <span class="gm-kv">8.93</span>
-                      <span class="gm-kv opt">9.63</span>
-                      <span class="gm-delta up">+0.70</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- ─ 能效预测（右） ─ -->
-          <div class="panel">
-            <div class="chart-head">
-              <div class="panel-title" style="margin-bottom:0;">能效预测（KW/RT）</div>
-              <div class="chart-legend" id="chartLegend">
-                <label><input type="checkbox" checked data-key="actual"><i class="lg-sq" style="background:#1890FF;"></i>实际能效</label>
-                <label><input type="checkbox" checked data-key="predict"><i class="lg-sq" style="background:#F59A23;"></i>寻优预测能效</label>
-                <label><input type="checkbox" checked data-key="rate"><span style="display:inline-block;width:14px;border-top:2px dashed #8B5CF6;margin-right:2px;"></span>预测节能率</label>
-              </div>
-            </div>
-            <div class="chart-y-hint">
-              <span>← 能效（KW/RT）</span>
-              <span>节能率（%）→</span>
-            </div>
-            <div class="chart-canvas-h"><canvas id="efficChart"></canvas></div>
+        <!-- ── 寻优收益（v2.4：替代节能潜力仪表盘 + 独立能效预测图） ── -->
+        <div class="anno anno-data" data-version="v2.4">
+          <span class="anno-tag">数据逻辑</span>
+          <span class="anno-version">v2.4</span>
+          <span class="anno-source">开发对照</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>寻优收益指标条 · 统一数据源</p>
+            <p><b>接口：</b>本页「寻优收益」「控制策略 × 功率变化」「寻优记录明细表」三块 UI 均来自<b>同一条寻优记录</b>，不另调仿真接口。列表：<code>POST /api/v2/xdayu/project/v1/projects/{project}/optimization_logs:list</code>（<code>source=OPTIMIZATION_GLOBAL_ONLY</code>，按 <code>tuner</code> + <code>scheduler=global_1</code> 过滤）；详情：列表选中项的 <code>OptimizationLog</code>，核心字段 <code>variable_records[]</code>（见 <code>log.proto</code>）。切换顶部系统页签 / 寻优记录 ◀▶ / 刷新，仅换 <code>mountSystem</code> 或 <code>log.name</code>，重拉同结构记录。</p>
+            <p><b>寻优记录含义：</b>一轮全局寻优 = 寻优器（如 L-SHADE）对 N 组候选控制向量各跑<b>一次完整仿真</b>（流程见 <code>水冷冷水系统仿真模型_v2.3.xlsx</code> / <code>风冷冷水系统仿真模型_v2.3.xlsx</code>），在满足安全边界与外置约束的可行解中取目标函数最优的一条，写入该 log。每条 <code>VariableRecord</code>：<code>real_value</code> = 寻优触发时刻实测/基线；<code>optimize_value</code> = 最优可行仿真输出；<code>name</code> = <code>{设备twin}_{标准测点id}</code>（如 <code>0_149_1_1159_0</code>）；<code>property</code> = 标准测点 id；<code>parent</code> = 设备 twin；<code>variable_type</code> 区分控制/被控/扰动（见下）。</p>
+            <p><b>variable_type 使用：</b>策略 diff 仅统计 <code>CTRL_OPTIMIZING</code>（参与寻优的直接控制量，对应仿真表「0：求解器参数输入 · 直接控制变量」）；<code>CTRL_UNOPTIMIZED</code> 参与「开机设备」前后集合（投出/未寻优设备）；系统级 KPI 取 <code>CONTROLLED</code>（仿真「被控变量」输出，如总功率、COP）；<code>DISTURBANCE</code> 仅明细表展示、不进策略卡。<b>注意：</b>回退 <code>realtime_baseline</code> 时可能出现 <code>CTRL_OPTIMIZING</code> 不变但 <code>CONTROLLED</code>（如 COP）仍变化——策略区判「无变化」、收益条仍展示数值，属口径差异而非前端 bug。</p>
           </div>
         </div>
 
-        <!-- ── 控制策略前后对比 ── -->
+        <div class="anno anno-data" data-version="v2.4">
+          <span class="anno-tag">数据逻辑</span>
+          <span class="anno-version">v2.4</span>
+          <span class="anno-source">开发对照</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>寻优收益指标条 · 各槽位取数与计算</p>
+            <p>以下 <code>P_real</code> / <code>P_opt</code> / <code>COP_real</code> / <code>COP_opt</code> 均从当前 <code>mountSystem</code>（如 <code>0_493</code>）在 <code>variable_records</code> 中按 <code>property</code> 匹配；找不到记录或 <code>optimize_value</code> 为空时该槽显示「—」。</p>
+            <ul>
+              <li><b>系统节能率：</b><code>(P_real − P_opt) / P_real × 100</code>，保留 2 位小数。其中 <code>P_real</code> = 系统对象 <code>1_167_0</code> 的 <code>real_value</code>，<code>P_opt</code> = 同点 <code>optimize_value</code>。仿真 xlsx step 4 定义：水冷为「<code>水冷冷水系统·总电功率</code>」、风冷为「<code>制冷系统·总电功率</code>」（= step3 全部开机设备 <code>1_627_0</code> 之和，<b>含二次泵</b>）。<code>twin</code> 取当前 <code>mountSystem</code> 对应系统实例（风冷勿误绑「风冷主系统」扰动对象）。仅当 <code>P_real &gt; 0</code> 且 <code>P_opt</code> 有效时展示。</li>
+              <li><b>系统功率 kW：</b>主值 = <code>P_opt</code>；副文案「实际 → 寻优预测」= <code>P_real → P_opt</code>；Δ 徽标 = <code>P_opt − P_real</code>（kW，带符号）。测点：<code>1_167_0</code>。</li>
+              <li><b>COP：</b>主值 = <code>COP_opt</code>；副文案 = <code>COP_real → COP_opt</code>；Δ = <code>COP_opt − COP_real</code>。测点：<code>1_1900_0</code>（仿真 step 4 = 总供冷量 <code>1_1300_0</code> / 总电功率 <code>1_167_0</code>）。</li>
+              <li><b>参数调整 / 组合变化：</b>前端对策略卡数据源做 diff 计数（与下方「控制策略」批注同算法）：有变化的 <code>CTRL_OPTIMIZING</code> 数值参数组数 =「N 项」；有变化的「开机设备」组数 =「N 组」。不过滤 UI 勾选，始终全量计数。</li>
+            </ul>
+            <p><b>最大调整提示行（<code>#benefitHeadline</code>）：</b>① 若任一类存在「开机设备」集合变化（<code>property=2_167_0</code> 且前后开机集合不同）→ 展示该类名称 + 前后设备名列表；② 否则在全部 <code>CTRL_OPTIMIZING</code> 数值变量中取 <code>score = |optimize − real| / range</code> 最大者，展示「类名 + 参数名 + 设备名 + Δ + 单位 + 量程占比%」。<code>range</code> = 规则配置「安全边界」该变量上下限之差；缺省：频率类（<code>1_1159_0</code>）50 Hz，温度类（<code>1_24_0</code>）10 ℃，台数类（<code>1_1982_0</code>）取配置上限。①②皆无则隐藏整行。</p>
+          </div>
+        </div>
+
+        <div class="benefit-strip" id="benefitStrip"></div>
+        <div class="benefit-headline" id="benefitHeadline"></div>
+
+        <!-- ── 控制策略 × 功率变化（v2.4：合并原能效预测 + 控制策略前后对比） ── -->
         <div class="section-row">
           <div class="section-title" onclick="toggleSection('strategy')">
             <span class="collapse-arrow" id="strategyArrow">▼</span>
-            控制策略前后对比
+            控制策略 × 功率变化
           </div>
           <button type="button" class="btn btn-orange btn-pill-action">仿真对比</button>
         </div>
 
-        <div class="anno anno-req" data-version="v1.3">
-          <span class="anno-tag">需求说明</span>
+        <div class="anno anno-data" data-version="v2.4">
+          <span class="anno-tag">数据逻辑</span>
+          <span class="anno-version">v2.4</span>
+          <span class="anno-source">开发对照</span>
           <div class="anno-body">
-            <p><b>关联模块：</b>控制策略前后对比</p>
-            <p>4 列结构与真实系统一致：设备分类 / 控制参数 / 寻优前 / 寻优后。「仿真对比」跳转仿真/对比分析页，对照寻优前后工况（原型占位）。</p>
+            <p><b>关联模块：</b>控制策略 × 功率变化 · 分类卡组装</p>
+            <p><b>卡片顺序与显隐：</b>按项目 <code>mountSystem</code> 实例清单中的设备模型类型固定排序，禁止按变化幅度重排。水冷：<b>冷冻水泵 → 冷却塔 → 冷却水泵 → 板式换热器 → 水冷冷水机组</b>；风冷（<code>systemType=风冷</code>）：<b>冷冻水泵 → 风冷冷水机组</b>，不渲染冷却侧三类。类下无实例则不出卡（风冷无板换/塔/冷却泵）。</p>
+            <p><b>单卡数据来源（均来自同 log 的 <code>variable_records</code>）：</b></p>
+            <ul>
+              <li><b>开机设备：</b>筛 <code>property=2_167_0</code> 且对应仿真表「<b>直接控制变量 · 开关设定</b>」（0 输入）的记录——<b>勿</b>用「被控变量 · 运行状态」（0.1 间接量，如制冷单元/并联冷却塔管路上的 <code>2_167_0</code> 输出）。按设备物模型归类。前 = <code>real_value∈{1,"1"}</code> 的设备名集合；后 = <code>optimize_value</code> 同理。含 <code>CTRL_UNOPTIMIZED</code>。集合相等 → 未变化。</li>
+              <li><b>数值参数（逐台单元）：</b>筛该分类下 <code>variable_type=CTRL_OPTIMIZING</code> 且 <code>property</code> 为下表者（均来自仿真 0 输入），按 <code>parent</code> 分行展示 <code>real_value → optimize_value</code>；某侧未开机则显示「新投入/退出」。</li>
+            </ul>
+            <table style="width:100%;border-collapse:collapse;font-size:12px;margin:8px 0;">
+              <tr style="background:#f8fafc;"><th style="border:1px solid #e2e8f0;padding:4px 6px;">卡片分类</th><th style="border:1px solid #e2e8f0;padding:4px 6px;">物模型 / 仿真对象</th><th style="border:1px solid #e2e8f0;padding:4px 6px;">策略对比参数（0 输入 property）</th><th style="border:1px solid #e2e8f0;padding:4px 6px;">step3 功率（3 输出）</th></tr>
+              <tr><td style="border:1px solid #e2e8f0;padding:4px 6px;">冷冻水泵</td><td style="border:1px solid #e2e8f0;padding:4px 6px;">冷冻水泵 / 冷冻泵n</td><td style="border:1px solid #e2e8f0;padding:4px 6px;">频率 <code>1_1159_0</code>；开关 <code>2_167_0</code></td><td style="border:1px solid #e2e8f0;padding:4px 6px;">冷冻泵n·功率 <code>1_627_0</code></td></tr>
+              <tr><td style="border:1px solid #e2e8f0;padding:4px 6px;">冷却塔</td><td style="border:1px solid #e2e8f0;padding:4px 6px;">冷却塔 / 冷却塔n</td><td style="border:1px solid #e2e8f0;padding:4px 6px;">频率 <code>1_1159_0</code>；风机数 <code>1_1982_0</code>；开关 <code>2_167_0</code></td><td style="border:1px solid #e2e8f0;padding:4px 6px;">冷却塔n·功率 <code>1_627_0</code></td></tr>
+              <tr><td style="border:1px solid #e2e8f0;padding:4px 6px;">冷却水泵</td><td style="border:1px solid #e2e8f0;padding:4px 6px;">冷却水泵 / 冷却泵n</td><td style="border:1px solid #e2e8f0;padding:4px 6px;">频率 <code>1_1159_0</code>；开关 <code>2_167_0</code></td><td style="border:1px solid #e2e8f0;padding:4px 6px;">冷却泵n·功率 <code>1_627_0</code></td></tr>
+              <tr><td style="border:1px solid #e2e8f0;padding:4px 6px;">板式换热器</td><td style="border:1px solid #e2e8f0;padding:4px 6px;">板式换热器 / 板换n</td><td style="border:1px solid #e2e8f0;padding:4px 6px;">开关 <code>2_167_0</code>（无频率类 0 输入）</td><td style="border:1px solid #e2e8f0;padding:4px 6px;">无（step3 不输出板换 <code>1_627_0</code>）</td></tr>
+              <tr><td style="border:1px solid #e2e8f0;padding:4px 6px;">水冷冷水机组</td><td style="border:1px solid #e2e8f0;padding:4px 6px;">水冷冷水机组 / 冷水主机n</td><td style="border:1px solid #e2e8f0;padding:4px 6px;">出水温度 <code>1_24_0</code>；开关 <code>2_167_0</code></td><td style="border:1px solid #e2e8f0;padding:4px 6px;">冷水主机n·功率 <code>1_627_0</code></td></tr>
+              <tr><td style="border:1px solid #e2e8f0;padding:4px 6px;">风冷冷水机组</td><td style="border:1px solid #e2e8f0;padding:4px 6px;">风冷冷水机组 / 冷水主机n</td><td style="border:1px solid #e2e8f0;padding:4px 6px;">出水温度 <code>1_24_0</code>；开关 <code>2_167_0</code></td><td style="border:1px solid #e2e8f0;padding:4px 6px;">冷水主机n·功率 <code>1_627_0</code></td></tr>
+            </table>
+            <p><b>右侧功率栏（分类总功率 kW）——两级取值（已对照仿真 xlsx + 物模型）：</b></p>
+            <ul>
+              <li><b>优先</b>：若 log 含 <code>mountSystem</code> 级物模型分项（<code>variable_type=CONTROLLED</code>，<b>不在仿真 xlsx 表内</b>，属系统自动计算）：冷冻泵 <code>1_1905_0</code>、冷却泵 <code>1_1906_0</code>、冷却塔 <code>1_1907_0</code>、主机 <code>1_1904_0</code>（见实施期数据质量 B2-g）。</li>
+              <li><b>降级</b>：对该类全部设备实例的仿真 step3 输出 <code>{deviceTwin}_1_627_0</code> 分别取 real/optimize 后<b>求和</b>（停机实例功率通常≈0，仍计入求和）。</li>
+              <li><b>板换</b>：无上述两类数据源 → 固定「功率 —」。</li>
+            </ul>
+            <p>展示：前 = <code>real_value</code>，后 = <code>optimize_value</code>，Δ = 后 − 前。<b>占总节能</b> = <code>round( max(0,前−后) / Σ<sub>各类</sub> max(0,前−后) × 100 )</code>（仅下降类出比重条）。<b>守恒校验：</b>使用物模型四项 <code>1_1904~7</code> 时，四卡 Δ 之和通常≈系统 <code>1_167_0</code> 的 Δ；若项目含<b>二次泵</b>（仿真 step3 有二次泵 <code>1_627_0</code> 但 UI 不单独成卡），差额=二次泵功率变化，属预期偏差。二次泵的 <code>1_1159_0</code>/<code>2_167_0</code> 若在寻优范围，计入策略 diff 计数但不单独成卡。</p>
+            <p><b>展开/压缩：</b>类内任一组（开机或数值）有变化 → 展开卡 + 左侧蓝条；否则压缩单行「无变化 + 功率维持 {real} kW」。板换类若项目无实例或本轮前后均无开机 → 备注「未启用」。</p>
+            <p><b>变化判定：</b>数值 <code>|optimize − real| &lt; 0.005</code> 视为未变；开机集合完全一致视为未变。语义色：控制 Δ 中性蓝；功率/COP/节能率绿降橙升；投入/退出标签绿/红。</p>
+          </div>
+        </div>
+
+        <div class="anno anno-ux" data-version="v2.4">
+          <span class="anno-tag">交互说明</span>
+          <span class="anno-version">v2.4</span>
+          <span class="anno-source">产品推断</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>控制策略工具栏</p>
+            <p>「仅看有变化项」勾选后隐藏无变化的压缩卡与卡内未变参数摘要行，默认不勾选。摘要计数（N 项参数调整 / N 组开机组合变化）随筛选状态不变，始终反映本轮全量 diff。「仿真对比」跳转仿真/对比分析页，对照寻优前后工况（原型占位）。模块标题左侧箭头可整体折叠 / 展开本模块。</p>
+          </div>
+        </div>
+
+        <div class="anno anno-state" data-version="v2.4">
+          <span class="anno-tag">状态说明</span>
+          <span class="anno-version">v2.4</span>
+          <span class="anno-source">开发对照</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>寻优收益 + 控制策略 × 功率变化</p>
+            <p><b>正常有可行解：</b><code>optimization_result=SUCCEED</code> 且存在至少一条 <code>CTRL_OPTIMIZING</code> 记录满足 <code>real_value ≠ optimize_value</code>（或开机集合变化）。收益条四格有值；策略卡按 diff 展开/压缩。</p>
+            <p><b>可行解但策略与现网一致：</b>接口成功但全部 <code>CTRL_OPTIMIZING</code> 与设备级 <code>2_167_0</code>（开关设定）前后一致（典型：<code>realtime_baseline</code> 回退）。摘要胶囊「本轮寻优与当前运行一致」；策略卡全压缩。收益条仍展示 <code>1_167_0</code>/<code>1_1900_0</code>——若仅有 <code>CONTROLLED</code> 派生值变化而控制量不变，COP/功率前后可能不同，<b>不以策略卡为准覆盖收益条</b>。</p>
+            <p><b>寻优失败 / 无有效 optimize：</b><code>optimization_result=FAILED</code>，或最优仿真不可行且未写入有效 <code>optimize_value</code>。收益条前三格「—」；调整计数「0 项 / 0 组」或「无调整」；策略区可展示上一轮 log（需记录 <code>create_time</code> 来源，原型未演示）。</p>
+            <p><b>板换未启用：</b>项目无「板式换热器」实例，或该类全部 <code>2_167_0</code> 前后均为 0 → 卡备注「未启用」，功率栏「—」，不参与占总节能分母。</p>
+            <p><b>单卡无变化：</b>压缩行展示 <code>1_190x_0</code> 的 <code>real_value</code> 作「功率维持」；勾选「仅看有变化项」隐藏该卡。</p>
+          </div>
+        </div>
+
+        <div class="anno anno-edge" data-version="v2.4">
+          <span class="anno-tag">边界与异常</span>
+          <span class="anno-version">v2.4</span>
+          <span class="anno-source">开发对照</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>寻优收益 + 控制策略 × 功率变化</p>
+            <p><b>浮点与空值：</b>数值 diff 阈值 0.005；<code>real_value</code> / <code>optimize_value</code> 为空或非数字 → 该单元格走「新投入/退出/—」，不参与 max 调整排序。</p>
+            <p><b>量程（headline 占比）：</b>优先读规则配置安全边界；缺省 <code>1_1159_0→50</code>、<code>1_24_0→10</code>、<code>1_1982_0→静态属性「风机数量」上限</code>。</p>
+            <p><b>占总节能取整：</b>各类 <code>round</code> 后合计可能 99~101%，不强制配平。</p>
+            <p><b>功率上升：</b><code>optimize &gt; real</code> 时橙色 ▲，不出比重条；系统总 Δ 仍以 <code>1_167_0</code> 为准。</p>
+            <p><b>记录与明细一致性：</b>策略卡 <code>real/optimize</code> 与同 log 明细表同源；明细「寻优变化」= <code>optimize − real</code>。</p>
+            <p><b>2_167_0 歧义：</b>同一 property 在仿真表既用于 0 输入「开关设定」也用于 0.1/2.x 输出「运行状态」——前端筛设备级<b>直接控制</b>记录（<code>variable_type</code> 为 CTRL_*），排除制冷单元/并联管路级间接输出。</p>
+            <p><b>仿真失败兜底：</b>N 次仿真均不可行时后端可能写 <code>realtime_baseline</code>；前端只渲染 log，不本地伪造 diff。</p>
+            <p><b>布局：</b>视口 ≤720px 功率栏折行到底部；单类设备按网格换行，不设横向滚动。</p>
           </div>
         </div>
 
         <div id="strategyWrap">
-          <div class="data-wrap">
-            <table class="data-table" style="min-width:540px;">
-              <thead>
-                <tr><th style="width:86px;">设备分类</th><th>控制参数</th><th>寻优前</th><th>寻优后</th></tr>
-              </thead>
-              <tbody id="strategyBody"></tbody>
-            </table>
+          <div class="strategy-toolbar">
+            <div class="strategy-summary" id="strategySummary"></div>
+            <label class="strategy-toggle">
+              <input type="checkbox" id="strategyOnlyChanged">
+              <span>仅看有变化项</span>
+            </label>
+          </div>
+          <div class="strategy-cards" id="strategyCards"></div>
+          <div class="strategy-legend">
+            <span>开机设备：灰=保持 · 绿=新投入 · 红=退出</span>
+            <span>控制值 Δ：中性蓝（不预设好坏）</span>
+            <span>功率栏：绿=下降 · 橙=上升 · 各卡 Δ 之和 = 系统功率变化</span>
           </div>
         </div>
 
@@ -873,30 +1052,343 @@
 <script>
 (function () {
 
-  /* ═══ 控制策略表 ═══ */
-  var strategy = [
-    { device:'冷冻水泵', rowspan:2, rows:[
-      { param:'开机设备', before:'一号冷冻水泵、四号冷冻水泵', after:'二号冷冻水泵、三号冷冻水泵' },
-      { param:'频率设定', before:'30.00、29.80', after:'28.00、30.00' },
-    ]},
-    { device:'风冷冷水机组', rowspan:2, rows:[
-      { param:'开机设备',               before:'一号风冷冷水机组、二号风冷冷水机组', after:'一号风冷冷水机组、二号风冷冷水机组' },
-      { param:'冷冻水出水温度（℃）',    before:'16.00、16.00',                    after:'16.01、16.00' },
-    ]},
-  ];
-  var sHtml = '';
-  strategy.forEach(function (g) {
-    g.rows.forEach(function (r, i) {
-      sHtml += '<tr>';
-      if (i === 0) sHtml += '<td class="device-cell" rowspan="' + g.rowspan + '">' + g.device + '</td>';
-      sHtml += '<td style="color:var(--text-secondary);">' + r.param + '</td>';
-      sHtml += '<td>' + r.before + '</td>';
-      var isChanged = r.before !== r.after && r.after !== '—';
-      sHtml += '<td' + (isChanged ? ' class="opt-cell"' : '') + '>' + r.after + '</td>';
-      sHtml += '</tr>';
+  /* ═══ 寻优收益 + 控制策略 × 功率变化（v2.4） ═══ */
+  /* 两套示例口径：水冷（含冷却侧五类设备）/ 风冷（隐藏冷却侧），随顶部系统页签 data-mode 切换 */
+  var strategyModes = {
+    water: {
+      benefit: { saveRate:7.20, power:{ before:626.10, after:581.00 }, cop:{ before:9.78, after:10.61 } },
+      /* 设备分类顺序恒定（与系统设备分类一致）；功率拆分与系统功率同源，各类之和 = 系统功率 */
+      cats: [
+        {
+          name:'冷冻水泵',
+          power:{ before:34.50, after:33.20 },
+          groups:[
+            { kind:'devices', label:'开机设备', before:['CHWP1','CHWP2','CHWP5'], after:['CHWP1','CHWP2','CHWP5'] },
+            { kind:'numeric', label:'频率反馈', unit:'Hz', range:50, items:[
+              { device:'CHWP1', before:30.18, after:30.00 },
+              { device:'CHWP2', before:30.32, after:30.11 },
+              { device:'CHWP5', before:30.45, after:30.15 },
+            ]},
+          ],
+        },
+        {
+          name:'冷却塔',
+          power:{ before:26.00, after:17.50 },
+          groups:[
+            { kind:'devices', label:'开机设备', before:['CT01','CT02','CT04','CT05'], after:['CT01','CT02','CT03','CT04'] },
+            { kind:'numeric', label:'频率反馈', unit:'Hz', range:50, items:[
+              { device:'CT01', before:28.90, after:26.22 },
+              { device:'CT02', before:26.27, after:26.24 },
+              { device:'CT03', before:null,  after:26.21 },
+              { device:'CT04', before:25.00, after:26.19 },
+              { device:'CT05', before:25.00, after:null },
+            ]},
+            { kind:'numeric', label:'风机开机数', unit:'台', range:4, items:[
+              { device:'CT01', before:2, after:2 },
+              { device:'CT02', before:2, after:2 },
+              { device:'CT04', before:2, after:2 },
+            ]},
+          ],
+        },
+        {
+          name:'冷却水泵',
+          power:{ before:45.60, after:43.80 },
+          groups:[
+            { kind:'devices', label:'开机设备', before:['CWP01','CWP02','CWP05'], after:['CWP01','CWP02','CWP05'] },
+            { kind:'numeric', label:'频率反馈', unit:'Hz', range:50, items:[
+              { device:'CWP01', before:39.80, after:39.32 },
+              { device:'CWP02', before:39.80, after:39.33 },
+              { device:'CWP05', before:39.70, after:39.08 },
+            ]},
+          ],
+        },
+        {
+          name:'板式换热器',
+          note:'未启用',
+          groups:[
+            { kind:'devices', label:'开机设备', before:[], after:[] },
+          ],
+        },
+        {
+          name:'水冷冷水机组',
+          power:{ before:520.00, after:486.50 },
+          groups:[
+            { kind:'devices', label:'开机设备', before:['CH01','CH02','CH05'], after:['CH01','CH02','CH05'] },
+            { kind:'numeric', label:'冷冻水出水温度', unit:'℃', range:10, items:[
+              { device:'CH01', before:17.53, after:18.45 },
+              { device:'CH02', before:17.52, after:18.27 },
+              { device:'CH05', before:17.48, after:18.70 },
+            ]},
+          ],
+        },
+      ],
+    },
+    wind: {
+      benefit: { saveRate:8.07, power:{ before:435.85, after:400.67 }, cop:{ before:8.93, after:9.63 } },
+      cats: [
+        {
+          name:'冷冻水泵',
+          power:{ before:37.65, after:33.17 },
+          groups:[
+            { kind:'devices', label:'开机设备',
+              before:['一号冷冻水泵','四号冷冻水泵'], after:['二号冷冻水泵','三号冷冻水泵'] },
+            { kind:'numeric', label:'频率设定', unit:'Hz', range:50, items:[
+              { device:'一号冷冻水泵', before:30.00, after:null },
+              { device:'四号冷冻水泵', before:29.80, after:null },
+              { device:'二号冷冻水泵', before:null,  after:28.00 },
+              { device:'三号冷冻水泵', before:null,  after:30.00 },
+            ]},
+          ],
+        },
+        {
+          name:'风冷冷水机组',
+          power:{ before:398.20, after:367.50 },
+          groups:[
+            { kind:'devices', label:'开机设备',
+              before:['一号风冷冷水机组','二号风冷冷水机组'], after:['一号风冷冷水机组','二号风冷冷水机组'] },
+            { kind:'numeric', label:'冷冻水出水温度', unit:'℃', range:10, items:[
+              { device:'一号风冷冷水机组', before:16.00, after:16.01 },
+              { device:'二号风冷冷水机组', before:16.00, after:16.00 },
+            ]},
+          ],
+        },
+      ],
+    },
+  };
+  var currentStrategyMode = 'water';   /* 默认激活页签「A路冷水系统」为水冷口径 */
+  var systemBenefit = strategyModes[currentStrategyMode].benefit;
+  var strategyCats = strategyModes[currentStrategyMode].cats;
+
+  function fmtSigned(v, d) { return (v > 0 ? '+' : '') + v.toFixed(d == null ? 2 : d); }
+  function numChanged(it) {
+    return it.before == null || it.after == null || Math.abs(it.after - it.before) >= 0.005;
+  }
+  function groupChanged(g) {
+    if (g.kind === 'devices') {
+      var a = {}, b = {};
+      g.after.forEach(function (d) { a[d] = 1; });
+      g.before.forEach(function (d) { b[d] = 1; });
+      return g.before.some(function (d) { return !a[d]; }) || g.after.some(function (d) { return !b[d]; });
+    }
+    return g.items.some(numChanged);
+  }
+
+  var totalSave = 0;
+  function computeTotalSave() {
+    totalSave = strategyCats.reduce(function (s, c) {
+      return s + (c.power ? Math.max(0, c.power.before - c.power.after) : 0);
+    }, 0);
+  }
+
+  /* ─ 收益条 ─ */
+  function renderBenefit() {
+    var numCount = 0, comboCount = 0;
+    strategyCats.forEach(function (c) {
+      c.groups.forEach(function (g) {
+        if (!groupChanged(g)) return;
+        if (g.kind === 'devices') comboCount++; else numCount++;
+      });
     });
+    var pd = systemBenefit.power.after - systemBenefit.power.before;
+    var cd = systemBenefit.cop.after - systemBenefit.cop.before;
+    var html = '';
+    html += '<div class="benefit-card"><div class="benefit-value green">' + systemBenefit.saveRate.toFixed(2) + '%</div>'
+          + '<div class="benefit-label">系统节能率（寻优预测）</div></div>';
+    html += '<div class="benefit-card"><div class="benefit-value">' + systemBenefit.power.after.toFixed(2)
+          + ' <span class="benefit-badge ' + (pd <= 0 ? 'saving' : 'worse') + '">' + (pd <= 0 ? '▼' : '▲') + ' ' + fmtSigned(pd) + '</span></div>'
+          + '<div class="benefit-label">系统功率 kW · 实际 ' + systemBenefit.power.before.toFixed(2) + ' → 寻优预测 ' + systemBenefit.power.after.toFixed(2) + '</div></div>';
+    html += '<div class="benefit-card"><div class="benefit-value">' + systemBenefit.cop.after.toFixed(2)
+          + ' <span class="benefit-badge ' + (cd >= 0 ? 'saving' : 'worse') + '">' + fmtSigned(cd) + '</span></div>'
+          + '<div class="benefit-label">COP · 实际 ' + systemBenefit.cop.before.toFixed(2) + ' → 寻优预测 ' + systemBenefit.cop.after.toFixed(2) + '</div></div>';
+    html += '<div class="benefit-card"><div class="benefit-value blue">' + numCount + ' 项 / ' + comboCount + ' 组</div>'
+          + '<div class="benefit-label">参数调整 / 开机组合变化</div></div>';
+    document.getElementById('benefitStrip').innerHTML = html;
+
+    /* 动态 headline：组合变化优先，其次 max(|Δ|/量程)，皆无则隐藏整行 */
+    var headEl = document.getElementById('benefitHeadline');
+    headEl.style.display = '';
+    var comboCat = null, comboGroup = null;
+    strategyCats.forEach(function (c) {
+      c.groups.forEach(function (g) {
+        if (!comboGroup && g.kind === 'devices' && groupChanged(g)) { comboCat = c; comboGroup = g; }
+      });
+    });
+    if (comboGroup) {
+      headEl.innerHTML = '本轮最大调整：<b>' + comboCat.name + '开机组合切换</b>（'
+        + comboGroup.before.join('、') + ' → ' + comboGroup.after.join('、')
+        + '）· 自动生成：开机组合变化优先，其次按 max |Δ|/参数量程';
+    } else {
+      var best = null;
+      strategyCats.forEach(function (c) {
+        c.groups.forEach(function (g) {
+          if (g.kind !== 'numeric') return;
+          g.items.forEach(function (it) {
+            if (it.before == null || it.after == null) return;
+            var d = it.after - it.before;
+            if (Math.abs(d) < 0.005) return;
+            var score = Math.abs(d) / (g.range || 50);
+            if (!best || score > best.score) best = { score:score, cat:c, g:g, it:it, d:d };
+          });
+        });
+      });
+      if (best) {
+        headEl.innerHTML = '本轮最大单项调整：<b>' + best.cat.name + best.g.label + ' ' + best.it.device + ' '
+          + fmtSigned(best.d) + best.g.unit + '</b>（量程占比 ' + (best.score * 100).toFixed(1)
+          + '%）· 自动生成：按 max |Δ|/参数量程';
+      } else {
+        headEl.style.display = 'none';
+      }
+    }
+  }
+
+  /* ─ 分类卡 ─ */
+  function renderDeviceTags(g) {
+    var afterSet = {}, beforeSet = {};
+    g.after.forEach(function (d) { afterSet[d] = 1; });
+    g.before.forEach(function (d) { beforeSet[d] = 1; });
+    var html = '<div class="strategy-tags">';
+    g.before.forEach(function (d) {
+      if (afterSet[d]) html += '<span class="strategy-tag same">' + d + '</span>';
+    });
+    g.before.forEach(function (d) {
+      if (!afterSet[d]) html += '<span class="strategy-tag remove">' + d + '</span>';
+    });
+    g.after.forEach(function (d) {
+      if (!beforeSet[d]) html += '<span class="strategy-tag add">+ ' + d + '</span>';
+    });
+    html += '</div>';
+    return html;
+  }
+
+  function renderNumericCells(g) {
+    var html = '<div class="sv-cells">';
+    g.items.forEach(function (it) {
+      html += '<div class="sv-cell"><span class="sv-name">' + it.device + '</span>';
+      if (it.before == null) {
+        html += '<span class="sv-io add">新投入</span>';
+      } else {
+        html += '<span class="sv-before">' + it.before.toFixed(2) + '</span>';
+      }
+      html += '<span class="sv-arrow">→</span>';
+      if (it.after == null) {
+        html += '<span class="sv-io remove">退出</span>';
+      } else {
+        html += '<span class="sv-after">' + it.after.toFixed(2) + '</span>';
+      }
+      if (it.before != null && it.after != null) {
+        var d = it.after - it.before;
+        if (Math.abs(d) >= 0.005) {
+          html += '<span class="sv-delta">' + (d > 0 ? '↑' : '↓') + fmtSigned(d) + '</span>';
+        }
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+    return html;
+  }
+
+  function renderPowerRail(cat, expanded) {
+    if (!cat.power) {
+      return '<div class="strategy-power-rail" style="justify-content:center;"><span class="pr-keep">功率 —</span></div>';
+    }
+    if (!expanded) {
+      return '<div class="strategy-power-rail" style="justify-content:center;"><span class="pr-keep">功率维持 '
+        + cat.power.before.toFixed(2) + ' kW</span></div>';
+    }
+    var d = cat.power.after - cat.power.before;
+    var saving = d < 0;
+    var share = saving && totalSave > 0 ? Math.round(Math.abs(d) / totalSave * 100) : 0;
+    var html = '<div class="strategy-power-rail">'
+      + '<span class="pr-label">功率（kW）</span>'
+      + '<div class="pr-vals"><span class="pv-before">' + cat.power.before.toFixed(2)
+      + '</span><span class="pv-arrow">→</span><span class="pv-after">' + cat.power.after.toFixed(2) + '</span></div>'
+      + '<span class="pr-badge ' + (saving ? 'saving' : 'worse') + '">' + (saving ? '▼' : '▲') + ' ' + fmtSigned(d) + ' kW</span>';
+    if (saving) {
+      html += '<div class="pr-sharebar"><i style="width:' + share + '%;"></i></div>'
+        + '<span class="pr-sharetext">占总节能 ' + share + '%</span>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function renderStrategy() {
+    var onlyChanged = document.getElementById('strategyOnlyChanged').checked;
+    var numCount = 0, comboCount = 0, unchangedCount = 0;
+    strategyCats.forEach(function (c) {
+      c.groups.forEach(function (g) {
+        if (groupChanged(g)) { if (g.kind === 'devices') comboCount++; else numCount++; }
+        else unchangedCount++;
+      });
+    });
+
+    var sum = '';
+    if (numCount + comboCount === 0) {
+      sum += '<span class="sum-pill">本轮寻优与当前运行一致，无策略调整</span>';
+    } else {
+      if (numCount) sum += '<span class="sum-pill changed">' + numCount + ' 项参数调整</span>';
+      if (comboCount) sum += '<span class="sum-pill changed">' + comboCount + ' 组开机组合变化</span>';
+      if (unchangedCount) sum += '<span class="sum-pill">' + unchangedCount + ' 项未变化</span>';
+    }
+    document.getElementById('strategySummary').innerHTML = sum;
+
+    var html = '';
+    strategyCats.forEach(function (cat) {
+      var changedGroups = cat.groups.filter(groupChanged);
+      var unchangedGroups = cat.groups.filter(function (g) { return !groupChanged(g); });
+      var expanded = changedGroups.length > 0;
+
+      if (!expanded && onlyChanged) return;
+
+      if (!expanded) {
+        html += '<div class="strategy-card"><div class="strategy-card-flex"><div class="strategy-card-main">'
+          + '<div class="strategy-card-head"><span class="strategy-card-title">' + cat.name + '</span>'
+          + (cat.note ? '<span class="strategy-card-note">' + cat.note + '</span>' : '')
+          + '<span class="strategy-card-badge">无变化</span></div></div>'
+          + renderPowerRail(cat, false) + '</div></div>';
+        return;
+      }
+
+      html += '<div class="strategy-card has-change"><div class="strategy-card-flex"><div class="strategy-card-main">';
+      html += '<div class="strategy-card-head"><span class="strategy-card-title">' + cat.name + '</span>'
+        + '<span class="strategy-card-badge changed">' + changedGroups.length + ' 项调整</span></div>';
+      changedGroups.forEach(function (g) {
+        html += '<div class="strategy-param">'
+          + '<div class="strategy-param-label">' + g.label + (g.kind === 'numeric' ? '（' + g.unit + '）' : '') + '</div>'
+          + '<div class="strategy-param-content">'
+          + (g.kind === 'devices' ? renderDeviceTags(g) : renderNumericCells(g))
+          + '</div></div>';
+      });
+      if (unchangedGroups.length && !onlyChanged) {
+        html += '<div class="strategy-unchanged">'
+          + unchangedGroups.map(function (g) { return g.label; }).join('、') + ' 未变化</div>';
+      }
+      html += '</div>' + renderPowerRail(cat, true) + '</div></div>';
+    });
+    document.getElementById('strategyCards').innerHTML = html;
+  }
+  document.getElementById('strategyOnlyChanged').addEventListener('change', renderStrategy);
+
+  /* ─ 系统页签切换：water=水冷口径（含冷却侧），wind=风冷口径（隐藏冷却侧） ─ */
+  function setStrategyMode(mode) {
+    currentStrategyMode = strategyModes[mode] ? mode : 'water';
+    systemBenefit = strategyModes[currentStrategyMode].benefit;
+    strategyCats = strategyModes[currentStrategyMode].cats;
+    computeTotalSave();
+    renderBenefit();
+    renderStrategy();
+  }
+  document.getElementById('stationTabs').addEventListener('click', function (e) {
+    var tab = e.target.closest('.station-tab');
+    if (!tab) return;
+    document.querySelectorAll('#stationTabs .station-tab').forEach(function (t) {
+      t.classList.remove('active');
+      t.removeAttribute('aria-selected');
+    });
+    tab.classList.add('active');
+    tab.setAttribute('aria-selected', 'true');
+    setStrategyMode(tab.getAttribute('data-mode'));
   });
-  document.getElementById('strategyBody').innerHTML = sHtml;
+  setStrategyMode(currentStrategyMode);
 
   /* ═══ 寻优记录：对齐冷站柔性寻优组件 ═══ */
   var recordData = [
@@ -1017,146 +1509,6 @@
     wrap.style.display = vis ? 'none' : '';
     arrow.textContent = vis ? '▶' : '▼';
   };
-
-  /* ═══ 环形仪表盘 ═══ */
-  (function drawGauge() {
-    var canvas = document.getElementById('gaugeCanvas');
-    var size = 136, dpr = window.devicePixelRatio || 1;
-    canvas.width = size * dpr; canvas.height = size * dpr;
-    canvas.style.width = size + 'px'; canvas.style.height = size + 'px';
-    var ctx = canvas.getContext('2d');
-    ctx.scale(dpr, dpr);
-
-    var cx = size / 2, cy = size / 2 + 4, r = 52;
-    var pct = 8.07, maxPct = 20;
-    var start = Math.PI * 0.75, sweep = Math.PI * 1.5;
-
-    ctx.beginPath(); ctx.arc(cx, cy, r, start, start + sweep);
-    ctx.strokeStyle = '#E2EBF4'; ctx.lineWidth = 10; ctx.lineCap = 'round'; ctx.stroke();
-
-    for (var i = 0; i <= 10; i++) {
-      var a = start + sweep * i / 10;
-      ctx.beginPath();
-      ctx.moveTo(cx + Math.cos(a) * (r - 14), cy + Math.sin(a) * (r - 14));
-      ctx.lineTo(cx + Math.cos(a) * (r - 8),  cy + Math.sin(a) * (r - 8));
-      ctx.strokeStyle = '#C8D6E4'; ctx.lineWidth = 1.2; ctx.lineCap = 'butt'; ctx.stroke();
-    }
-
-    var fillEnd = start + sweep * Math.min(pct / maxPct, 1);
-    var grad = ctx.createLinearGradient(
-      cx + Math.cos(start) * r, cy + Math.sin(start) * r,
-      cx + Math.cos(fillEnd) * r, cy + Math.sin(fillEnd) * r
-    );
-    grad.addColorStop(0, '#36CFF5'); grad.addColorStop(1, '#1E40AF');
-    ctx.beginPath(); ctx.arc(cx, cy, r, start, fillEnd);
-    ctx.strokeStyle = grad; ctx.lineWidth = 10; ctx.lineCap = 'round'; ctx.stroke();
-
-    /* needle */
-    var na = start + sweep * (pct / maxPct);
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.lineTo(cx + Math.cos(na) * (r - 18), cy + Math.sin(na) * (r - 18));
-    ctx.strokeStyle = '#334155'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.stroke();
-    ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2);
-    ctx.fillStyle = '#334155'; ctx.fill();
-
-    ctx.fillStyle = '#0F172A'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.font = 'bold 19px -apple-system,"PingFang SC",sans-serif';
-    ctx.fillText(pct.toFixed(2) + ' %', cx, cy + 22);
-    ctx.fillStyle = '#64748B'; ctx.font = '10px -apple-system,"PingFang SC",sans-serif';
-    ctx.fillText('节电量下降率', cx, cy + 36);
-  })();
-
-  /* ═══ 分组柱状图 ═══ */
-  var chartFlags = { actual:true, predict:true, rate:true };
-
-  function drawEfficChart() {
-    var canvas = document.getElementById('efficChart');
-    if (!canvas) return;
-    var ctx = canvas.getContext('2d');
-    var wrap = canvas.parentElement;
-    var dpr = window.devicePixelRatio || 1;
-    var w = wrap.clientWidth, h = wrap.clientHeight;
-    canvas.width = w * dpr; canvas.height = h * dpr;
-    canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
-    ctx.scale(dpr, dpr);
-
-    var groups = [
-      { label:'风冷主机', actual:0.28, predict:0.25, rate:-7.5 },
-      { label:'冷冻水泵', actual:0.042, predict:0.038, rate:-9.5 },
-    ];
-
-    var pad = { l:44, r:44, t:10, b:32 };
-    var cw = w - pad.l - pad.r, ch = h - pad.t - pad.b;
-    var efMax = 0.35, rMin = -40, rMax = 40;
-
-    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
-
-    ctx.strokeStyle = '#EEF2F6'; ctx.lineWidth = 1;
-    for (var i = 0; i <= 5; i++) {
-      var y = pad.t + (i / 5) * ch;
-      ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + cw, y); ctx.stroke();
-    }
-
-    ctx.font = '10px system-ui,sans-serif';
-    ctx.fillStyle = '#64748B'; ctx.textAlign = 'right';
-    for (var yi = 0; yi <= 5; yi++) {
-      var val = efMax - (yi / 5) * efMax;
-      ctx.fillText(val.toFixed(2), pad.l - 5, pad.t + (yi / 5) * ch + 4);
-    }
-    ctx.textAlign = 'left';
-    for (var ri = 0; ri <= 5; ri++) {
-      var rv = rMax - (ri / 5) * (rMax - rMin);
-      ctx.fillText(rv.toFixed(0) + '%', pad.l + cw + 5, pad.t + (ri / 5) * ch + 4);
-    }
-
-    var gW = cw / groups.length;
-    var barW = Math.min(gW * 0.24, 20);
-
-    function efY(v) { return pad.t + ch - (v / efMax) * ch; }
-    function ratY(v) { return pad.t + ch - ((v - rMin) / (rMax - rMin)) * ch; }
-
-    groups.forEach(function (g, gi) {
-      var gcx = pad.l + gW * (gi + 0.5);
-
-      if (chartFlags.actual) {
-        ctx.fillStyle = '#1890FF';
-        ctx.fillRect(gcx - barW - 2, efY(g.actual), barW, efY(0) - efY(g.actual));
-      }
-      if (chartFlags.predict) {
-        ctx.fillStyle = '#F59A23';
-        ctx.fillRect(gcx + 2, efY(g.predict), barW, efY(0) - efY(g.predict));
-      }
-
-      ctx.fillStyle = '#475569'; ctx.font = '10px system-ui,sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText(g.label, gcx, h - 10);
-    });
-
-    if (chartFlags.rate) {
-      ctx.beginPath(); ctx.strokeStyle = '#8B5CF6'; ctx.lineWidth = 1.8; ctx.setLineDash([5, 3]);
-      groups.forEach(function (g, gi) {
-        var x = pad.l + gW * (gi + 0.5);
-        if (gi === 0) ctx.moveTo(x, ratY(g.rate)); else ctx.lineTo(x, ratY(g.rate));
-      });
-      ctx.stroke(); ctx.setLineDash([]);
-
-      groups.forEach(function (g, gi) {
-        var x = pad.l + gW * (gi + 0.5);
-        ctx.beginPath(); ctx.arc(x, ratY(g.rate), 3, 0, Math.PI * 2);
-        ctx.fillStyle = '#fff'; ctx.fill();
-        ctx.strokeStyle = '#8B5CF6'; ctx.lineWidth = 2; ctx.stroke();
-      });
-    }
-  }
-
-  document.getElementById('chartLegend').addEventListener('change', function (e) {
-    if (e.target.type === 'checkbox') {
-      chartFlags[e.target.dataset.key] = e.target.checked;
-      drawEfficChart();
-    }
-  });
-  window.addEventListener('resize', drawEfficChart);
-  drawEfficChart();
 
   document.getElementById('btnRefresh').addEventListener('click', function () {
     var svg = this.querySelector('svg');
