@@ -82,6 +82,18 @@
     }
     .selector:hover { border-color:var(--primary); color:var(--primary); }
     .selector .arrow-down { font-size:10px; color:var(--text-hint); }
+    .cold-station-selector {
+      position:relative; padding:0; min-width:248px; overflow:hidden;
+    }
+    .cold-station-selector select {
+      width:100%; border:0; outline:none; appearance:none; -webkit-appearance:none;
+      background:transparent; padding:6px 32px 6px 14px;
+      color:inherit; font:inherit; font-size:13px; font-weight:500; cursor:pointer;
+    }
+    .cold-station-selector .arrow-down {
+      position:absolute; right:12px; top:50%; transform:translateY(-50%);
+      pointer-events:none;
+    }
 
     .system-alert {
       margin:14px 20px 8px; padding:10px 16px;
@@ -102,6 +114,7 @@
       background:#fff; border:1px solid var(--border-light); border-radius:4px;
       min-height:46px;
     }
+    .station-source-tabs { display:none; }
     .station-tabs {
       display:flex; align-items:stretch; gap:0; overflow-x:auto; flex:1; min-width:0;
     }
@@ -958,6 +971,28 @@
         </div>
       </div>
 
+      <div class="page-header">
+        <div class="page-header-left">
+          <label class="selector cold-station-selector">
+            <select id="coldStationSelect" aria-label="冷站选择">
+              <option value="3#数据中心水冷冷水系统">3#数据中心水冷冷水系统</option>
+              <option value="A路冷水系统">A路冷水系统</option>
+              <option value="B路风冷冷水系统">B路风冷冷水系统</option>
+              <option value="C路冷水系统">C路冷水系统</option>
+              <option value="G1栋A路冷水系统">G1栋A路冷水系统</option>
+              <option value="G1栋B路冷水系统">G1栋B路冷水系统</option>
+            </select>
+            <span class="arrow-down">▾</span>
+          </label>
+        </div>
+        <div class="page-header-nav">
+          <div class="page-nav-item" data-target-page="节能仿真对比-设定.html">冷站仿真对比</div>
+          <div class="page-nav-item active">冷站柔性寻优</div>
+          <div class="page-nav-item" data-target-page="冷站全局寻优.html">冷站全局寻优</div>
+          <div class="page-nav-item" data-target-page="冷站长周期寻优.html">冷站长周期寻优</div>
+        </div>
+      </div>
+
       <div class="system-alert">
         <div class="alert-left">
           <span class="alert-icon">!</span>
@@ -966,7 +1001,7 @@
         <span class="alert-close">&times;</span>
       </div>
 
-      <div class="station-tabs-bar">
+      <div class="station-tabs-bar station-source-tabs" aria-hidden="true">
         <div class="station-tabs" id="stationTabs">
           <button class="station-tab active" data-system-name="3#数据中心水冷冷水系统" data-mode="water">3#数据中心水冷冷水系统</button>
           <button class="station-tab" data-system-name="A路冷水系统" data-mode="water">A路冷水系统</button>
@@ -2006,6 +2041,40 @@ function setStationMode(tab) {
   renderIoConfig(mode, systemName);
 }
 
+const COLD_STATION_STORAGE_KEY = 'coldStationOptimizeSelected';
+
+function findStationTabByName(systemName) {
+  return Array.from(document.querySelectorAll('#stationTabs .station-tab')).find(function (tab) {
+    return (tab.dataset.systemName || tab.textContent.trim()) === systemName;
+  });
+}
+
+function setColdStation(systemName, persist) {
+  const tab = findStationTabByName(systemName) || document.querySelector('#stationTabs .station-tab.active') || document.querySelector('#stationTabs .station-tab');
+  if (!tab) return;
+  const selectedName = tab.dataset.systemName || tab.textContent.trim();
+  const select = document.getElementById('coldStationSelect');
+  if (select) select.value = selectedName;
+  if (persist) localStorage.setItem(COLD_STATION_STORAGE_KEY, selectedName);
+  setStationMode(tab);
+}
+
+function initColdStationTopNav() {
+  const select = document.getElementById('coldStationSelect');
+  if (!select) return;
+  const cached = localStorage.getItem(COLD_STATION_STORAGE_KEY);
+  setColdStation(cached || select.value, false);
+  select.addEventListener('change', function () {
+    setColdStation(this.value, true);
+  });
+  document.querySelectorAll('.page-nav-item[data-target-page]').forEach(function (nav) {
+    nav.addEventListener('click', function () {
+      localStorage.setItem(COLD_STATION_STORAGE_KEY, select.value);
+      window.location.assign(encodeURI(this.dataset.targetPage));
+    });
+  });
+}
+
 /** 寻优目标偏好：基准功率与折算用常量（保存后由后端刷新） */
 const PREF_MOCK = {
   pBaselineKw: 200,
@@ -2113,10 +2182,11 @@ document.querySelectorAll('.panel-tab').forEach(tab => {
 });
 document.querySelectorAll('#stationTabs .station-tab').forEach(tab => {
   tab.addEventListener('click', function() {
-    setStationMode(this);
+    const systemName = this.dataset.systemName || this.textContent.trim();
+    setColdStation(systemName, true);
   });
 });
-setStationMode(document.querySelector('#stationTabs .station-tab.active'));
+initColdStationTopNav();
 renderTable();
 initObjectivePreferenceControls();
 

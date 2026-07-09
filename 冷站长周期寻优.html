@@ -79,13 +79,33 @@
     }
     .selector:hover { border-color:var(--primary); color:var(--primary); }
     .selector .arrow-down { font-size:10px; color:var(--text-hint); }
+    .cold-station-selector {
+      position:relative; padding:0; min-width:248px; overflow:hidden;
+    }
+    .cold-station-selector select {
+      width:100%; border:0; outline:none; appearance:none; -webkit-appearance:none;
+      background:transparent; padding:6px 32px 6px 14px;
+      color:inherit; font:inherit; font-size:13px; font-weight:500; cursor:pointer;
+    }
+    .cold-station-selector .arrow-down {
+      position:absolute; right:12px; top:50%; transform:translateY(-50%);
+      pointer-events:none;
+    }
 
     .page-sub { padding:10px 20px 0; font-size:12px; color:var(--text-hint); }
-    .intro-card {
-      margin:12px 20px; padding:14px 16px; background:var(--bg-card);
-      border:1px solid var(--border-light); border-radius:var(--radius-lg);
-      box-shadow:var(--shadow-sm); font-size:12.5px; line-height:1.75; color:var(--text-secondary);
+    .system-alert {
+      margin:14px 20px 8px; padding:10px 16px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      background:#FFF7E6; border:1px solid #FFE0A3; border-radius:4px;
+      color:#B7791F; font-size:13px; line-height:1.5;
     }
+    .system-alert .alert-left { display:flex; align-items:center; gap:8px; min-width:0; }
+    .system-alert .alert-icon {
+      width:18px; height:18px; border-radius:50%; flex-shrink:0;
+      display:inline-flex; align-items:center; justify-content:center;
+      background:#F59E0B; color:#fff; font-size:12px; font-weight:700;
+    }
+    .system-alert .alert-close { color:#C7A45B; font-size:18px; line-height:1; }
 
     .subsystem-label {
       margin:12px 20px 0; font-size:13px; font-weight:700; color:var(--text-primary);
@@ -418,16 +438,22 @@
 
       <div class="page-header">
         <div class="page-header-left">
-          <a href="index.html" style="display:inline-flex; align-items:center; gap:4px; font-size:14px; color:var(--text-primary); cursor:pointer; text-decoration:none; margin-right:4px;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-primary)'">
-            <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            返回
-          </a>
-          <div class="selector">前海园区 <span class="arrow-down">▾</span></div>
-          <div class="selector">1号冷站 <span class="arrow-down">▾</span></div>
+          <label class="selector cold-station-selector">
+            <select id="coldStationSelect" aria-label="冷站选择">
+              <option value="3#数据中心水冷冷水系统">3#数据中心水冷冷水系统</option>
+              <option value="A路冷水系统">A路冷水系统</option>
+              <option value="B路风冷冷水系统">B路风冷冷水系统</option>
+              <option value="C路冷水系统">C路冷水系统</option>
+              <option value="G1栋A路冷水系统">G1栋A路冷水系统</option>
+              <option value="G1栋B路冷水系统">G1栋B路冷水系统</option>
+            </select>
+            <span class="arrow-down">▾</span>
+          </label>
         </div>
         <div class="page-header-nav">
-          <div class="page-nav-item" onclick="window.location.assign(encodeURI('冷站柔性调优.html'))">冷站柔性寻优</div>
-          <div class="page-nav-item" onclick="window.location.assign(encodeURI('冷站全局寻优.html'))">冷站全局寻优</div>
+          <div class="page-nav-item" data-target-page="节能仿真对比-设定.html">冷站仿真对比</div>
+          <div class="page-nav-item" data-target-page="冷站柔性调优.html">冷站柔性寻优</div>
+          <div class="page-nav-item" data-target-page="冷站全局寻优.html">冷站全局寻优</div>
           <div class="page-nav-item active">冷站长周期寻优</div>
         </div>
       </div>
@@ -440,8 +466,12 @@
         </div>
       </div>
 
-      <div class="intro-card">
-        基于未来 24 小时天气/负荷预测，提前规划系统的控制策略，进一步提升系统能效水平。
+      <div class="system-alert">
+        <div class="alert-left">
+          <span class="alert-icon">!</span>
+          <span>基于未来 24 小时天气/负荷预测，提前规划系统的控制策略，进一步提升系统能效水平。</span>
+        </div>
+        <span class="alert-close">&times;</span>
       </div>
 
       <div class="anno anno-ux" data-version="v1.0">
@@ -452,7 +482,7 @@
         </div>
       </div>
 
-      <div class="subsystem-label">风冷冷水系统</div>
+      <div class="subsystem-label" id="longStationName">B路风冷冷水系统</div>
       <div class="status-banner">
         <div class="meta">
           <span class="k">寻优状态</span>
@@ -1005,6 +1035,35 @@
 
 <script>
 (function () {
+  var COLD_STATION_STORAGE_KEY = 'coldStationOptimizeSelected';
+
+  function applyColdStationName(name, persist) {
+    var stationName = name || 'B路风冷冷水系统';
+    var select = document.getElementById('coldStationSelect');
+    if (select) select.value = stationName;
+    var title = document.getElementById('longStationName');
+    if (title) title.textContent = stationName;
+    document.querySelectorAll('.io-name').forEach(function (el) {
+      el.textContent = el.textContent.replace(/^[^—]+—/, stationName + '—');
+    });
+    if (persist) localStorage.setItem(COLD_STATION_STORAGE_KEY, stationName);
+  }
+
+  function initColdStationTopNav() {
+    var select = document.getElementById('coldStationSelect');
+    if (!select) return;
+    applyColdStationName(localStorage.getItem(COLD_STATION_STORAGE_KEY) || select.value, false);
+    select.addEventListener('change', function () {
+      applyColdStationName(this.value, true);
+    });
+    document.querySelectorAll('.page-nav-item[data-target-page]').forEach(function (nav) {
+      nav.addEventListener('click', function () {
+        localStorage.setItem(COLD_STATION_STORAGE_KEY, select.value);
+        window.location.assign(encodeURI(this.getAttribute('data-target-page')));
+      });
+    });
+  }
+
   window.openRuleModal = function () {
     document.getElementById('modalRuleConfig').classList.add('show');
   };
@@ -1084,6 +1143,8 @@
       });
     });
   });
+
+  initColdStationTopNav();
 })();
 </script>
 

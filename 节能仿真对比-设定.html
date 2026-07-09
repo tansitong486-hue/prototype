@@ -44,6 +44,89 @@
     .body-wrap { flex: 1 1 0; display: flex; min-height: 0; overflow: hidden; }
     .main { flex: 1 1 0; min-width: 0; min-height: 0; overflow-y: auto; background: var(--bg-body); display: flex; flex-direction: column; }
 
+    .page-header {
+      background: var(--bg-card);
+      padding: 0 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: stretch;
+      flex-shrink: 0;
+      min-height: 52px;
+    }
+    .page-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+    }
+    .page-header-nav {
+      display: flex;
+      align-items: stretch;
+      margin-left: auto;
+    }
+    .page-nav-item {
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      cursor: pointer;
+      position: relative;
+      transition: color .2s, border-color .2s;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -1px;
+    }
+    .page-nav-item:hover { color: var(--primary); }
+    .page-nav-item.active {
+      color: var(--primary);
+      font-weight: 600;
+      border-bottom-color: var(--primary);
+    }
+    .selector {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border: 1px solid #E2E8F0;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 13px;
+      background: #FFFFFF;
+      transition: all .2s;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    .selector:hover { border-color: var(--primary); color: var(--primary); }
+    .selector .arrow-down { font-size: 10px; color: var(--text-hint); }
+    .cold-station-selector {
+      position: relative;
+      padding: 0;
+      min-width: 248px;
+      overflow: hidden;
+    }
+    .cold-station-selector select {
+      width: 100%;
+      border: 0;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      background: transparent;
+      padding: 6px 32px 6px 14px;
+      color: inherit;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .cold-station-selector .arrow-down {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+
     .page-shell { padding: 12px 14px 72px; min-width: 1040px; flex: 1; }
     .station-strip {
       display: flex;
@@ -74,6 +157,7 @@
       border-bottom-color: var(--primary);
       font-weight: 600;
     }
+    .station-source-tabs { display: none; }
 
     .workbench {
       margin-top: 12px;
@@ -317,14 +401,35 @@
   <div class="body-wrap">
     <div id="app-sidebar"></div>
     <main class="main">
+      <div class="page-header">
+        <div class="page-header-left">
+          <label class="selector cold-station-selector">
+            <select id="coldStationSelect" aria-label="冷站选择">
+              <option value="3#数据中心水冷冷水系统">3#数据中心水冷冷水系统</option>
+              <option value="A路冷水系统">A路冷水系统</option>
+              <option value="B路风冷冷水系统">B路风冷冷水系统</option>
+              <option value="C路冷水系统">C路冷水系统</option>
+              <option value="G1栋A路冷水系统">G1栋A路冷水系统</option>
+              <option value="G1栋B路冷水系统">G1栋B路冷水系统</option>
+            </select>
+            <span class="arrow-down">▾</span>
+          </label>
+        </div>
+        <div class="page-header-nav">
+          <div class="page-nav-item active">冷站仿真对比</div>
+          <div class="page-nav-item" data-target-page="冷站柔性调优.html">冷站柔性寻优</div>
+          <div class="page-nav-item" data-target-page="冷站全局寻优.html">冷站全局寻优</div>
+          <div class="page-nav-item" data-target-page="冷站长周期寻优.html">冷站长周期寻优</div>
+        </div>
+      </div>
       <div class="page-shell">
-        <div class="station-strip" aria-label="冷站系统">
-          <button class="station-tab">3#数据中心水冷冷水系统</button>
-          <button class="station-tab active">A路冷水系统</button>
-          <button class="station-tab">B路风冷冷水系统</button>
-          <button class="station-tab">C路冷水系统</button>
-          <button class="station-tab">G1栋A路冷水系统</button>
-          <button class="station-tab">G1栋B路冷水系统</button>
+        <div class="station-strip station-source-tabs" id="stationTabs" aria-label="冷站系统" aria-hidden="true">
+          <button class="station-tab" data-system-name="3#数据中心水冷冷水系统">3#数据中心水冷冷水系统</button>
+          <button class="station-tab active" data-system-name="A路冷水系统">A路冷水系统</button>
+          <button class="station-tab" data-system-name="B路风冷冷水系统">B路风冷冷水系统</button>
+          <button class="station-tab" data-system-name="C路冷水系统">C路冷水系统</button>
+          <button class="station-tab" data-system-name="G1栋A路冷水系统">G1栋A路冷水系统</button>
+          <button class="station-tab" data-system-name="G1栋B路冷水系统">G1栋B路冷水系统</button>
         </div>
 
         <section class="workbench" aria-label="冷站仿真对比-仿真设定">
@@ -472,12 +577,48 @@
 </div>
 
 <script>
-  document.querySelectorAll('.station-tab').forEach(function (tab) {
+  var COLD_STATION_STORAGE_KEY = 'coldStationOptimizeSelected';
+
+  function findStationTabByName(systemName) {
+    return Array.prototype.slice.call(document.querySelectorAll('#stationTabs .station-tab')).find(function (tab) {
+      return (tab.getAttribute('data-system-name') || tab.textContent.trim()) === systemName;
+    });
+  }
+
+  function setColdStationFromTab(tab, persist) {
+    if (!tab) return;
+    document.querySelectorAll('#stationTabs .station-tab').forEach(function (item) { item.classList.remove('active'); });
+    tab.classList.add('active');
+    var selectedName = tab.getAttribute('data-system-name') || tab.textContent.trim();
+    var select = document.getElementById('coldStationSelect');
+    if (select) select.value = selectedName;
+    if (persist) localStorage.setItem(COLD_STATION_STORAGE_KEY, selectedName);
+  }
+
+  function initColdStationTopNav() {
+    var select = document.getElementById('coldStationSelect');
+    if (!select) return;
+    var cached = localStorage.getItem(COLD_STATION_STORAGE_KEY);
+    var tab = findStationTabByName(cached || select.value) || document.querySelector('#stationTabs .station-tab.active') || document.querySelector('#stationTabs .station-tab');
+    setColdStationFromTab(tab, false);
+    select.addEventListener('change', function () {
+      setColdStationFromTab(findStationTabByName(this.value), true);
+    });
+    document.querySelectorAll('.page-nav-item[data-target-page]').forEach(function (nav) {
+      nav.addEventListener('click', function () {
+        localStorage.setItem(COLD_STATION_STORAGE_KEY, select.value);
+        window.location.assign(encodeURI(this.getAttribute('data-target-page')));
+      });
+    });
+  }
+
+  document.querySelectorAll('#stationTabs .station-tab').forEach(function (tab) {
     tab.addEventListener('click', function () {
-      document.querySelectorAll('.station-tab').forEach(function (item) { item.classList.remove('active'); });
-      tab.classList.add('active');
+      setColdStationFromTab(tab, true);
     });
   });
+
+  initColdStationTopNav();
 
   function addCondition() {
     var tbody = document.querySelector('#conditionTable tbody');
@@ -505,6 +646,8 @@
   }
 
   function goCompare() {
+    var select = document.getElementById('coldStationSelect');
+    if (select) localStorage.setItem(COLD_STATION_STORAGE_KEY, select.value);
     window.location.href = '节能仿真对比-对比.html';
   }
 </script>

@@ -27,19 +27,19 @@
       children: ['冷站仿真对比', '冷站柔性寻优', '冷站全局寻优', '冷站长周期寻优', '多工况探索']
     },
     {
-      group: '节能效果评估',
-      open: true,
-      children: ['节能分析']
-    },
-    {
       group: '机房能效优化',
       open: true,
       children: ['机房总览', '机房柔性寻优', '机房加减机寻优', '机房智能诊断']
     },
     {
+      group: '节能评估',
+      open: true,
+      children: ['节能分析']
+    },
+    {
       group: '基础配置',
       open: true,
-      children: ['能耗模型管理', '能源计费配置', '表具能耗明细']
+      children: ['能效视图', '能源计费配置', '表具能耗明细']
     },
     {
       group: 'AI节能配置',
@@ -52,7 +52,7 @@
     '总览看板': '总览看板.html',
     '能耗流向分析': '能耗流向分析.html',
     '用能对比分析': '用能对比分析.html',
-    '能耗模型管理': '能效视图.html',
+    '能效视图': '能效视图.html',
     '能源计费配置': '能源配置.html',
     '表具能耗明细': '能耗管理-表具明细.html',
     '机理模型训练': '机理模型训练.html',
@@ -79,7 +79,7 @@
     '能耗流向分析': 'v2.5',
     '用能对比分析': 'v2.5',
     '用能定额考核': 'v2.5',
-    '能耗模型管理': 'v2.5',
+    '能效视图': 'v2.5',
     '能源计费配置': 'v2.5',
     '表具能耗明细': 'v2.5',
     '机理模型训练': 'v2.3',
@@ -99,7 +99,6 @@
     '节能分析': 'v2.5'
   };
 
-  const ICON_HOME = '<svg class="sidebar-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>';
   const ICON_DASH = '<svg class="sidebar-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h16"/></svg>';
   const ICON_GRID = '<svg class="sidebar-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>';
   const ICON_CHART = '<svg class="sidebar-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>';
@@ -113,7 +112,7 @@
     '能耗分析': ICON_CHART,
     '机房能效优化': ICON_SERVER,
     '冷站能效优化': ICON_COOL,
-    '节能效果评估': ICON_LEAF,
+    '节能评估': ICON_LEAF,
     'AI节能配置': ICON_GEAR,
     '基础配置': ICON_SLIDERS
   };
@@ -788,8 +787,7 @@
         if (href) item.href = href;
         item.className = 'sidebar-item' + (node.label === config.activeSidebar ? ' active' : '');
         let icon = ICON_DASH;
-        if (node.label === '原型导航') icon = ICON_HOME;
-        else if (node.label === '总览看板') icon = ICON_GRID;
+        if (node.label === '总览看板') icon = ICON_GRID;
         item.innerHTML = icon + sidebarItemRowHtml(node.label);
         item.setAttribute('data-nav-tip', node.label);
         if (href) item.setAttribute('aria-label', node.label);
@@ -839,6 +837,15 @@
     if (sidebarSlot) {
       sidebarSlot.replaceWith(buildSidebar());
     }
+    loadSharedIntegrityAlert();
+  }
+
+  function loadSharedIntegrityAlert() {
+    if (window.IntegrityAlert || document.querySelector('script[data-shared-integrity-alert]')) return;
+    const script = document.createElement('script');
+    script.src = 'components/integrity-alert.js';
+    script.setAttribute('data-shared-integrity-alert', 'true');
+    document.body.appendChild(script);
   }
 
   if (document.readyState === 'loading') {

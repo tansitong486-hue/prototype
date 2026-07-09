@@ -406,7 +406,7 @@
             <div class="anno-body">
               <p><b>当前版本：</b>v2.5</p>
               <p><b>更新日期：</b>2026-07-02</p>
-              <p><b>变更概述：</b>对接「基于计费的能耗明细系统」对象层 on-read 聚合：① 对比时间段区新增时间粒度选择（半小时 / 时 / 天 / 月）；② 表格「1 号楼」行汇总值旁新增「含异常/缺失」完整性标记示例；③ 新增对象能耗数据口径批注（不归档、沿当前计量拓扑 on-read 递归 SUM）。</p>
+              <p><b>变更概述：</b>对接「基于计费的能耗明细系统」对象层 on-read 聚合：① 对比时间段区新增时间粒度选择（半小时 / 时 / 天 / 月）；② 表格「1 号楼」行汇总值旁新增「含异常/缺失」完整性标记示例；③ 新增对象能耗数据口径批注（不归档、沿当前计量拓扑 on-read 递归 SUM）；④ 对比结果支持电量 / 成本双口径切换（成本直接汇总表具核算明细金额，前端不重算电价；无计费方案对象展示「—」）。</p>
             </div>
           </div>
 
@@ -425,7 +425,7 @@
             <div class="anno-body">
               <p><b>对比项：</b>按勾选节点动态展示，最多同时 5 个；界面不展示实例 ID。</p>
               <p><b>时间段：</b>最多 3 组日期范围对比；列头为各段起止日期文案。</p>
-              <p><b>电量：</b>按节点、时间段、能源类型汇总能耗明细（示意数据与古典表一致：1 号楼 522/1036 kWh 等）。</p>
+              <p><b>电量：</b>按节点、时间段、能源类型汇总能耗明细（示意数据与古典表一致：1 号楼 522/1036 kWh 等）。v2.5 起取数口径见上方 v2.5 数据逻辑，本段仅描述 v1.0 古典示意。</p>
               <p><b>默认：</b>进入页默认柱状图；树节点默认未勾选；能源类型默认「电」；视图默认「能效视图」。未启用计量节点置灰不可选。</p>
             </div>
           </div>
@@ -435,11 +435,14 @@
             <span class="anno-version">v2.5</span>
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>对比时间段（时间粒度）与对比结果电量口径</p>
+              <p><b>关联模块：</b>对比时间段（时间粒度）、统计维度（电量 / 成本）与对比结果取数口径</p>
               <ul>
                 <li><b>对象能耗口径：</b>对象能耗/成本不归档，查询时沿当前计量拓扑对表具归档明细 on-read 递归 SUM；支持半小时/时/天/月，时/天/月读表具对应粒度 rollup、不重算差值；跨天/跨月按本地时间切分。</li>
+                <li><b>取数切换：</b>v2.5 起对比结果全部改走对象能耗 / 成本多粒度查询（需求 6）；电量与成本均沿当前计量拓扑对<b>表具核算明细</b> on-read 汇总，<b>不再</b>直读原始累积量或旧统计表。</li>
+                <li><b>成本对比口径：</b>「成本」视图下表格与柱状图展示各节点、各时间段的成本汇总（表具核算明细成本金额直接求和），单位为元；<b>不在前端用单价 × 电量重算</b>。对象未应用计费方案时对应单元格展示「—」并提示无成本数据。</li>
+                <li><b>展示切换：</b>主区「电量 / 成本」切换仅改变读取字段与单位，对比节点、时间段、时间粒度筛选条件不变。</li>
                 <li><b>时间粒度选择：</b>新增「时间粒度」下拉（半小时 / 时 / 天 / 月），默认「天」；粒度对所有对比时间段统一生效，决定各节点电量读取的表具归档粒度。</li>
-                <li><b>完整性标记：</b>某节点在某时间段内存在坏值或缺失半小时槽时，对应柱顶/表格单元格旁展示橙色「含异常/缺失」标记（本页在表格「1 号楼」行给出示例）；坏值/缺失槽不参与聚合、不作 0 处理，结果可能偏低。</li>
+                <li><b>完整性标记：</b>某节点在某时间段内存在坏值或缺失半小时槽时，对应柱顶/表格单元格旁展示橙色「含异常/缺失」标记（本页在表格「1 号楼」行给出示例）；坏值/缺失槽不参与聚合、不作 0 处理，结果可能偏低。本原型在表格「1 号楼」首个时间段给出标记示例；柱状图柱顶、其余单元格按同一规则展示。</li>
               </ul>
             </div>
           </div>
@@ -552,7 +555,7 @@
                 <div>
                   <div class="cmp-title-row">
                     <h1 class="cmp-title">用能对比分析</h1>
-                    <span class="cmp-unit">单位：kWh</span>
+                    <span class="cmp-unit" id="cmpUnit">单位：kWh</span>
                   </div>
                   <div class="cmp-ranges-block" style="margin-top:14px;">
                     <div class="cmp-range-row">
@@ -563,6 +566,11 @@
                         <option value="day" selected>天</option>
                         <option value="month">月</option>
                       </select>
+                      <span class="cmp-ranges-label" style="margin-bottom:0;margin-left:4px;">统计维度</span>
+                      <div class="cmp-seg" id="cmpMetricSeg" style="height:32px;" role="tablist" aria-label="统计维度（电量 / 成本）">
+                        <button type="button" class="active" role="tab" aria-selected="true" id="cmpMetricEnergy" data-metric="energy">电量</button>
+                        <button type="button" role="tab" aria-selected="false" id="cmpMetricCost" data-metric="cost">成本</button>
+                      </div>
                     </div>
                     <div class="cmp-ranges-label">对比时间段（最多 3 组）</div>
                     <div id="cmpRanges"></div>
@@ -613,6 +621,27 @@
       hn1: [337, 525]
     }
 
+    // v2.5 成本演示数据规则：成本 = 电量演示值 × 0.72，保留 2 位小数；
+    // 华南1号楼(hn1) 演示「无计费方案对象无成本」，成本视图下展示「—」
+    const COST_FACTOR = 0.72
+    const NO_BILLING_NODES = ['hn1']
+    let currentMetric = 'energy'
+
+    function getMetricValue(nodeId, rangeIdx) {
+      const series = DEMO_DATA[nodeId]
+      const raw = series && series[rangeIdx] != null ? series[rangeIdx] : null
+      if (raw == null) return null
+      if (currentMetric === 'cost') {
+        if (NO_BILLING_NODES.indexOf(nodeId) !== -1) return null
+        return Math.round(raw * COST_FACTOR * 100) / 100
+      }
+      return raw
+    }
+
+    function formatMetricValue(v) {
+      return currentMetric === 'cost' ? v.toFixed(2) : String(v)
+    }
+
     const rangesEl = document.getElementById('cmpRanges')
     const countEl = document.getElementById('cmpCount')
     const chartMount = document.getElementById('cmpChartMount')
@@ -622,6 +651,8 @@
     const panelTable = document.getElementById('cmpPanelTable')
     const tabChart = document.getElementById('cmpTabChart')
     const tabTable = document.getElementById('cmpTabTable')
+    const unitEl = document.getElementById('cmpUnit')
+    const metricSeg = document.getElementById('cmpMetricSeg')
 
     function formatRangeLabel(start, end) {
       const a = start.replace(/-/g, '/')
@@ -738,14 +769,17 @@
       }
       nodes.forEach(function (node) {
         const row = document.createElement('tr')
-        const series = DEMO_DATA[node.id]
+        const noBilling = currentMetric === 'cost' && NO_BILLING_NODES.indexOf(node.id) !== -1
         const cells = ranges.map(function (_, i) {
-          const v = series && series[i] != null ? series[i] : '—'
-          // v2.5 完整性标记示例：1 号楼第一个时间段内存在坏值/缺失半小时槽
+          // v2.5 完整性标记示例：1 号楼第一个时间段内存在坏值/缺失半小时槽（电量/成本视图同规则）
           const tag = (node.id === 'b1' && i === 0)
             ? ' <span class="integrity-tag" title="统计区间内存在坏值或缺失的半小时槽，坏值/缺失不参与聚合，结果可能偏低">含异常/缺失</span>'
             : ''
-          return '<td class="num">' + v + tag + '</td>'
+          if (noBilling) {
+            return '<td class="num" title="该对象下无表具应用计费方案，无成本数据">—' + tag + '</td>'
+          }
+          const v = getMetricValue(node.id, i)
+          return '<td class="num">' + (v == null ? '—' : formatMetricValue(v)) + tag + '</td>'
         }).join('')
         row.innerHTML = '<td>' + node.label + '</td>' + cells
         tableBody.appendChild(row)
@@ -771,10 +805,9 @@
 
       let maxV = 1
       nodes.forEach(function (n) {
-        const s = DEMO_DATA[n.id]
-        if (!s) return
         ranges.forEach(function (_, i) {
-          if (s[i] != null) maxV = Math.max(maxV, s[i])
+          var v = getMetricValue(n.id, i)
+          if (v != null) maxV = Math.max(maxV, v)
         })
       })
       maxV *= 1.08
@@ -785,7 +818,7 @@
       const gap = (groupW - barSlot) / 2
 
       let svg = '<svg class="cmp-chart-svg" viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" aria-label="用能对比柱状图">'
-      svg += '<text x="' + (W / 2) + '" y="22" text-anchor="middle" font-size="11" fill="#BFBFBF">示意数据 · 按节点与时间段汇总电量</text>'
+      svg += '<text x="' + (W / 2) + '" y="22" text-anchor="middle" font-size="11" fill="#BFBFBF">示意数据 · 按节点与时间段汇总' + (currentMetric === 'cost' ? '成本（元）' : '电量（kWh）') + '</text>'
 
       for (var g = 0; g <= 4; g++) {
         var y = padT + (innerH * g / 4)
@@ -796,16 +829,15 @@
 
       nodes.forEach(function (node, ni) {
         var gx = padL + ni * groupW + gap
-        var series = DEMO_DATA[node.id] || []
         ranges.forEach(function (_, ri) {
-          var v = series[ri]
+          var v = getMetricValue(node.id, ri)
           if (v == null) return
           var h = (v / maxV) * innerH
           var x = gx + ri * barW + barW * 0.08
           var y = padT + innerH - h
           var fill = ri === 0 ? '#1E40AF' : (ri === 1 ? '#16A34A' : '#EA580C')
           svg += '<rect x="' + x + '" y="' + y + '" width="' + (barW * 0.84) + '" height="' + h + '" rx="3" fill="' + fill + '" opacity="0.9"/>'
-          svg += '<text x="' + (x + barW * 0.42) + '" y="' + (y - 4) + '" text-anchor="middle" font-size="10" fill="#595959">' + v + '</text>'
+          svg += '<text x="' + (x + barW * 0.42) + '" y="' + (y - 4) + '" text-anchor="middle" font-size="10" fill="#595959">' + formatMetricValue(v) + '</text>'
         })
         var cx = padL + ni * groupW + groupW / 2
         var label = node.label.length > 6 ? node.label.slice(0, 5) + '…' : node.label
@@ -847,6 +879,22 @@
       panelChart.hidden = true
       panelTable.hidden = false
       renderTable()
+    })
+
+    // v2.5 电量 / 成本 维度切换：仅改变读取字段与单位，节点、时间段、时间粒度筛选不变
+    metricSeg.querySelectorAll('button[data-metric]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var metric = btn.getAttribute('data-metric')
+        if (metric === currentMetric) return
+        currentMetric = metric
+        metricSeg.querySelectorAll('button[data-metric]').forEach(function (b) {
+          var on = b === btn
+          b.classList.toggle('active', on)
+          b.setAttribute('aria-selected', on ? 'true' : 'false')
+        })
+        unitEl.textContent = '单位：' + (currentMetric === 'cost' ? '元' : 'kWh')
+        renderAll()
+      })
     })
 
     const search = document.getElementById('cmpSearch')

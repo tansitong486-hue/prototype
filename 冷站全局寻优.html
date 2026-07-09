@@ -43,6 +43,51 @@
     .body-wrap { display:flex; flex:1; overflow:hidden; }
     .main { flex:1; display:flex; flex-direction:column; overflow-y:auto; background:var(--bg-body); }
 
+    .page-header {
+      background:var(--bg-card); padding:0 20px;
+      border-bottom:1px solid var(--border-light);
+      display:flex; align-items:stretch; flex-shrink:0;
+      min-height:52px;
+    }
+    .page-header-left {
+      display:flex; align-items:center; gap:12px; padding:10px 0;
+    }
+    .page-header-nav {
+      display:flex; align-items:stretch; margin-left:auto;
+    }
+    .page-nav-item {
+      display:flex; align-items:center; padding:0 20px;
+      font-size:14px; font-weight:500; color:var(--text-primary);
+      cursor:pointer; position:relative; transition:color .2s, border-color .2s;
+      border-bottom:3px solid transparent; margin-bottom:-1px;
+    }
+    .page-nav-item:hover { color:var(--primary); }
+    .page-nav-item.active {
+      color:var(--primary); font-weight:600;
+      border-bottom-color:var(--primary);
+    }
+    .selector {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 14px; border:1px solid #E2E8F0;
+      border-radius:999px; cursor:pointer; font-size:13px;
+      background:#fff; transition:all .2s; font-weight:500;
+      color:var(--text-primary);
+    }
+    .selector:hover { border-color:var(--primary); color:var(--primary); }
+    .selector .arrow-down { font-size:10px; color:var(--text-hint); }
+    .cold-station-selector {
+      position:relative; padding:0; min-width:248px; overflow:hidden;
+    }
+    .cold-station-selector select {
+      width:100%; border:0; outline:none; appearance:none; -webkit-appearance:none;
+      background:transparent; padding:6px 32px 6px 14px;
+      color:inherit; font:inherit; font-size:13px; font-weight:500; cursor:pointer;
+    }
+    .cold-station-selector .arrow-down {
+      position:absolute; right:12px; top:50%; transform:translateY(-50%);
+      pointer-events:none;
+    }
+
     /* ── 顶部业务态：与冷站柔性寻优一致 ── */
     .system-alert {
       margin:14px 20px 8px; padding:10px 16px;
@@ -63,6 +108,7 @@
       background:#fff; border:1px solid var(--border-light); border-radius:4px;
       min-height:46px; flex-shrink:0;
     }
+    .station-source-tabs { display:none; }
     .station-tabs {
       display:flex; align-items:stretch; gap:0; overflow-x:auto; flex:1; min-width:0;
     }
@@ -690,6 +736,28 @@
         </div>
       </div>
 
+      <div class="page-header">
+        <div class="page-header-left">
+          <label class="selector cold-station-selector">
+            <select id="coldStationSelect" aria-label="冷站选择">
+              <option value="3#数据中心水冷冷水系统">3#数据中心水冷冷水系统</option>
+              <option value="A路冷水系统">A路冷水系统</option>
+              <option value="B路风冷冷水系统">B路风冷冷水系统</option>
+              <option value="C路冷水系统">C路冷水系统</option>
+              <option value="G1栋A路冷水系统">G1栋A路冷水系统</option>
+              <option value="G1栋B路冷水系统">G1栋B路冷水系统</option>
+            </select>
+            <span class="arrow-down">▾</span>
+          </label>
+        </div>
+        <div class="page-header-nav">
+          <div class="page-nav-item" data-target-page="节能仿真对比-设定.html">冷站仿真对比</div>
+          <div class="page-nav-item" data-target-page="冷站柔性调优.html">冷站柔性寻优</div>
+          <div class="page-nav-item active">冷站全局寻优</div>
+          <div class="page-nav-item" data-target-page="冷站长周期寻优.html">冷站长周期寻优</div>
+        </div>
+      </div>
+
       <!-- 顶部：权限提示 + 冷水系统切换（对齐冷站柔性寻优） -->
       <div class="system-alert">
         <div class="alert-left">
@@ -707,7 +775,7 @@
           <p>每个页签绑定一个 <code>mountSystem</code> twin 及其 <code>systemType</code>（水冷 / 风冷）。切换页签 → 换 <code>project + mountSystem + tuner</code> 拉取该系统的寻优记录列表，并重算策略卡显隐（风冷剔除冷却侧分类）。「仅看有变化项」勾选状态跨页签保留。原型演示：除「B路风冷冷水系统」外均为水冷口径。</p>
         </div>
       </div>
-      <div class="station-tabs-bar">
+      <div class="station-tabs-bar station-source-tabs" aria-hidden="true">
         <div class="station-tabs" id="stationTabs" role="tablist" aria-label="冷水系统切换">
           <button class="station-tab" type="button" role="tab" data-system-name="3#数据中心水冷冷水系统" data-mode="water">3#数据中心水冷冷水系统</button>
           <button class="station-tab active" type="button" role="tab" aria-selected="true" data-system-name="A路冷水系统" data-mode="water">A路冷水系统</button>
@@ -1377,8 +1445,10 @@
     renderBenefit();
     renderStrategy();
   }
-  document.getElementById('stationTabs').addEventListener('click', function (e) {
-    var tab = e.target.closest('.station-tab');
+
+  var COLD_STATION_STORAGE_KEY = 'coldStationOptimizeSelected';
+
+  function setColdStationFromTab(tab, persist) {
     if (!tab) return;
     document.querySelectorAll('#stationTabs .station-tab').forEach(function (t) {
       t.classList.remove('active');
@@ -1386,9 +1456,41 @@
     });
     tab.classList.add('active');
     tab.setAttribute('aria-selected', 'true');
+    var selectedName = tab.getAttribute('data-system-name') || tab.textContent.trim();
+    var select = document.getElementById('coldStationSelect');
+    if (select) select.value = selectedName;
+    if (persist) localStorage.setItem(COLD_STATION_STORAGE_KEY, selectedName);
     setStrategyMode(tab.getAttribute('data-mode'));
+  }
+
+  function findStationTabByName(systemName) {
+    return Array.prototype.slice.call(document.querySelectorAll('#stationTabs .station-tab')).find(function (tab) {
+      return (tab.getAttribute('data-system-name') || tab.textContent.trim()) === systemName;
+    });
+  }
+
+  function initColdStationTopNav() {
+    var select = document.getElementById('coldStationSelect');
+    if (!select) return;
+    var cached = localStorage.getItem(COLD_STATION_STORAGE_KEY);
+    var tab = findStationTabByName(cached || select.value) || document.querySelector('#stationTabs .station-tab.active') || document.querySelector('#stationTabs .station-tab');
+    setColdStationFromTab(tab, false);
+    select.addEventListener('change', function () {
+      setColdStationFromTab(findStationTabByName(this.value), true);
+    });
+    document.querySelectorAll('.page-nav-item[data-target-page]').forEach(function (nav) {
+      nav.addEventListener('click', function () {
+        localStorage.setItem(COLD_STATION_STORAGE_KEY, select.value);
+        window.location.assign(encodeURI(this.getAttribute('data-target-page')));
+      });
+    });
+  }
+
+  document.getElementById('stationTabs').addEventListener('click', function (e) {
+    var tab = e.target.closest('.station-tab');
+    setColdStationFromTab(tab, true);
   });
-  setStrategyMode(currentStrategyMode);
+  initColdStationTopNav();
 
   /* ═══ 寻优记录：对齐冷站柔性寻优组件 ═══ */
   var recordData = [
