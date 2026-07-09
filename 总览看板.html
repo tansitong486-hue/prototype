@@ -567,6 +567,13 @@
       border-radius: 0;
       margin-top: 6px;
     }
+    .mini-chart-tip-footer {
+      margin-top: 6px;
+      padding-top: 5px;
+      border-top: 1px solid rgba(148, 163, 184, 0.35);
+      font-weight: 700;
+      color: #E2E8F0;
+    }
     .energy-foot {
       display: flex;
       flex-direction: column;
@@ -2019,11 +2026,9 @@
             <div class="anno-body">
               <p><b>当前版本：</b>v2.5</p>
               <p><b>更新日期：</b>2026-07-09</p>
-              <p><b>变更概述：</b>按《存量页面消费与总览看板改造需求方案》（需求 7 + 需求 8）整页改造：① <b>数据口径</b>——能耗/成本全部消费对象层 on-read 聚合（表具核算明细 + 沿当前计量拓扑 SUM），成本不在前端重算电价；② <b>页面结构</b>——取消「能耗统计 / 能效总览」双 Tab 与可见分组标题，卡片按出现规则连续呈现，工具条仅承载视图、对象和时间筛选；③ <b>生成机制</b>——旧配置入口整体下线，组件按出现规则自动生成（规则不满足的组件不渲染也不占位），不提供卡片隐藏偏好；④ <b>组件</b>——用能总览升级为瓦片矩阵，卡内按「能耗 / 折算」Tab 展示总成本、N 个能源量、标准煤与碳排放折算；新增数据完整性承接、WUE / OLF 等能力。</p>
-              <p><b>本页演示：</b>对象下拉提供「园区 / 数据中心 / 系统」三个演示对象（元数据组合不同），切换后可观察组件集按规则自动变化。</p>
-              <p><b>评审迭代（2026-07-08）：</b>① 工具条吸顶，任意滚动位置可切换筛选；② 删除“按电、水折算”“用量汇总粒度”等冗余口径文案（口径沉入批注）；③ 大数值 ≥1 万按「万+单位」缩写、悬停显示精确值；④ 独立「用能成本总览」下线，总成本并入「用能总览」作为第一块瓦片，仅展示总成本与环比，分时/单一计价明细由「能耗成本」卡承接；⑤ 能耗成本 / 能耗趋势合并为单卡按能源 Tab；⑥ 用能分项统计并入趋势卡左侧环形区；⑦ 数据完整性并入用能总览（异常标签→表具清单弹层→表具明细跳转，正常不展示）；⑧ 能效指标改为单卡指标瓦片矩阵，首行按 PUE = 1 + CLF + PLF + OLF 展示，卡片之间直接显示公式符号。</p>
-              <p><b>评审迭代（2026-07-09）：</b>① 用能总览「能耗」Tab 能源用量瓦片接入定额对照——Chart.js 迷你趋势叠加橙色额度虚线（与分桶同量纲），周期累计超限时标题行展示红色「已超限」标签；无定额配置时不展示虚线与标签；总成本与折算瓦片不接入。② 用能总览与能效指标瓦片迷你趋势统一改为 Chart.js 小折线图（隐藏坐标轴、悬停查看时间与数值），交互与样式对齐。</p>
-              <p><b>评审修订（2026-07-09）：</b>① 卡片顺序对齐需求：用能总览 → 能耗趋势与分项 → 能耗成本 → 能耗明细；② PUE 构成改为「总电耗 / IT 电量」并修正演示数；③ 时段图表与迷你趋势统一按小时刻度；④ 无计费对象明细成本显示「–」；⑤ 「互盟数据中心」演示 CLF/PLF/OLF「待配置」；⑥ 清理过期批注与孤儿页「能耗统计分析」。</p>
+              <p><b>变更概述：</b>按《存量页面消费与总览看板改造需求方案》整页改造：能耗/成本走对象层聚合；组件按出现规则自动生成（不满足不渲染）；取消双 Tab 与看板配置；卡片顺序为能效指标 → 用能总览 → 趋势分项 → 能耗成本 → 明细。</p>
+              <p><b>本页演示：</b>园区 / 数据中心 / 系统三个对象，切换可观察组件集变化。</p>
+              <p><b>评审迭代（2026-07-09）：</b>① 用能总览取消「能耗/折算」Tab，总成本、各能源、标准煤、碳排放平铺；② 能源用量瓦片加定额虚线与「已超限」；③ 迷你趋势统一 Chart.js 外部浮层；④ 工具条吸顶、大数值万级缩写、完整性并入用能总览、能效指标瓦片矩阵（PUE=1+CLF+PLF+OLF）。</p>
             </div>
           </div>
 
@@ -2044,12 +2049,9 @@
             <div class="anno-body">
               <p><b>关联模块：</b>整页生成机制——看板从「配出来」变成「长出来」</p>
               <ul>
-                <li><b>零配置：</b>取消一切对象级看板配置。打开看板时按三份元数据实时推导组件集：<strong>对象类型</strong>（园区/数据中心/系统/设备组/设备）、<strong>对象在各能源类型下是否有计量拓扑</strong>、<strong>叶子表具是否应用计费方案</strong>（个别组件附加数据前提：节能分析基准、CO₂ 折算系数、顶栏粒度）。规则不满足的组件<strong>不渲染也不占位</strong>。</li>
-                <li><b>规则先行：</b>任何组件（含未来新增）必须先定义「自动出现规则」才能进看板；没有出现规则的组件不接纳。</li>
-                <li><b>无人工配置入口：</b>本页不提供对象级配置、卡片隐藏或排序能力；卡片是否出现只由自动规则决定。</li>
-                <li><b>与引擎口径自洽：</b>对象晚绑计量拓扑 / 晚应用计费方案后，下次打开看板对应组件自动出现，无需任何配置，杜绝「忘了配置所以看不到数据」的实施事故。</li>
-                <li><b>本版下线：</b>「看板配置」页面（对象树 × 图元勾选 × 画布 Tab）整页移除，相关入口不再展示。</li>
-                <li><b>本版不做：</b>对象级/项目级看板配置；卡片拖拽排序；冷站 COP / EER 组件（沉淀需求池 #22）；节能收益组件。</li>
+                <li><b>零配置：</b>按对象类型、各能源计量拓扑、叶子表具计费方案自动推导组件；不满足规则的组件不渲染、不占位。</li>
+                <li><b>无配置入口：</b>不提供对象级配置、卡片隐藏、拖拽排序；「看板配置」页本版下线。</li>
+                <li><b>本版不做：</b>冷站 COP/EER、节能收益、实时 PUE/DCIE/CUE。</li>
               </ul>
             </div>
           </div>
@@ -2059,21 +2061,19 @@
             <span class="anno-version">v2.5</span>
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>组件出现规则总表（自动生成的唯一依据；当前原型渲染顺序为：能效指标总览 → 用能总览 → 能耗趋势与分项 → 能耗成本 → 能耗明细；卡内多能源 Tab 按能源配置中的能源类型顺序排列）</p>
+              <p><b>关联模块：</b>组件出现规则总表（渲染顺序：能效 → 用能总览 → 趋势分项 → 能耗成本 → 明细）</p>
               <table class="anno-table">
-                <tr><th>组件</th><th>分区</th><th>出现规则</th><th>宽度</th><th>性质</th></tr>
-                <tr><td>PUE(能耗)</td><td>能效指标</td><td>园区 / 数据中心 且 下级有 IT 系统节点，并有可计算结果时展示</td><td>全宽卡内瓦片</td><td>既有</td></tr>
-                <tr><td>制冷负载系数(CLF)</td><td>能效指标</td><td>园区 / 数据中心 且 下级有暖通空调与 IT 系统节点；缺计算输入时瓦片显示「待配置」</td><td>全宽卡内瓦片</td><td>既有</td></tr>
-                <tr><td>PLF</td><td>能效指标</td><td>园区 / 数据中心 且 下级有配电与 IT 系统节点；缺计算输入时瓦片显示「待配置」</td><td>全宽卡内瓦片</td><td>既有</td></tr>
-                <tr><td>OLF</td><td>能效指标</td><td>园区 / 数据中心 + 下级有 IT 系统节点；缺其他系统电量等计算输入时瓦片显示「待配置」</td><td>全宽卡内瓦片</td><td>新增</td></tr>
-                <tr><td>WUE</td><td>能效指标</td><td>园区 / 数据中心 + 启用水计量 + 下级有 IT 系统节点，并有可计算结果时展示</td><td>全宽卡内瓦片</td><td>新增</td></tr>
-                <tr><td>用能总览</td><td>用能与成本</td><td>任意对象，≥1 能源类型启用计量；存在计费方案时追加总成本瓦片</td><td>全宽</td><td>既有，多能源通用化 + 成本摘要并入</td></tr>
-                <tr><td>数据完整性</td><td>用能与成本</td><td>并入用能总览能源瓦片；异常时在对应能源标题行展示「含异常/缺失」标签并可打开表具清单，正常时不展示完整性文案</td><td>标题行标签</td><td>新增承接，不再独立成卡</td></tr>
-                <tr><td>能耗趋势与分项</td><td>用能与成本</td><td>存在 ≥1 个启用计量且有趋势数据的能源时展示；符合规则的能源生成卡内 Tab；该能源有 2 个及以上分项时左侧展示分项环形</td><td>全宽单卡</td><td>既有，趋势与分项合并</td></tr>
-                <tr><td>能耗成本</td><td>用能与成本</td><td>存在 ≥1 个「启用计量 且 有计费方案」的能源时展示；符合规则的能源生成卡内 Tab</td><td>全宽单卡</td><td>既有，合并为多能源 Tab</td></tr>
+                <tr><th>组件</th><th>出现规则</th></tr>
+                <tr><td>PUE</td><td>园区/数据中心 + IT 节点 + 可计算</td></tr>
+                <tr><td>CLF / PLF / OLF</td><td>园区/数据中心 + 对应系统前提；缺输入时瓦片「待配置」</td></tr>
+                <tr><td>WUE</td><td>园区/数据中心 + 水计量 + IT + 可计算</td></tr>
+                <tr><td>用能总览</td><td>≥1 能源启用计量；有计费时追加总成本瓦片</td></tr>
+                <tr><td>数据完整性</td><td>并入能源瓦片「含异常/缺失」标签，正常不展示</td></tr>
+                <tr><td>能耗趋势与分项</td><td>≥1 能源有趋势；卡内能源 Tab；≥2 分项才出环形</td></tr>
+                <tr><td>能耗成本</td><td>≥1 能源同时启用计量且有计费；卡内能源 Tab</td></tr>
+                <tr><td>能耗明细</td><td>≥1 能源有可展示明细；卡内能源 Tab</td></tr>
               </table>
-              <p>「不渲染也不占位」（能力不适用）区别于「卡片在但显示暂无数据」（该有数据但没取到），二者不得混用。</p>
-              <p><b>评审迭代（2026-07-08，仅展示层聚合）：</b>① 能耗成本 / 能耗趋势由“每能源一张卡”合并为<strong>单卡内按能源 Tab</strong>（Tab 集合 = 满足该行规则的能源集合，为空则整卡不出现）；② 用能分项统计并入「能耗趋势与分项」卡左侧环形区（满足其规则的能源 Tab 才出现环形区）；③ 数据完整性并入用能总览（可点击「含异常/缺失」标签 → 表具清单弹层 → 跳转表具明细，不再独立成卡）；④ PUE/CLF/PLF/WUE/OLF 五类指标合并为「能效指标总览」单卡内的<strong>指标瓦片</strong>，其中 PUE/CLF/PLF/OLF 首行用公式符号表达 PUE = 1 + CLF + PLF + OLF；CLF/PLF/OLF 缺计算输入时保留指标瓦片并显示「待配置」；实时 PUE、DCIE 与 CUE 本期下线。</p>
+              <p>「不渲染也不占位」≠「卡片在但暂无数据」。</p>
             </div>
           </div>
 
@@ -2082,15 +2082,12 @@
             <span class="anno-version">v2.5</span>
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>顶部筛选工具条、自动生成规则、演示对象</p>
+              <p><b>关联模块：</b>顶部筛选工具条、演示对象</p>
               <ul>
-                <li><b>卡片呈现：</b>页面不再展示「用能与成本」「能效指标」两个可见分组标题；卡片按自动出现规则连续排列。原「能耗统计 / 能效总览」双 Tab、锚点计数条与旧配置入口均移除。</li>
-                <li><b>无隐藏入口：</b>卡片标题栏不提供「隐藏」操作；工具条不提供配置或管理入口。当前对象下可见卡片完全由出现规则推导，不支持用户级隐藏偏好。</li>
-                <li><b>对象切换（演示）：</b>三个演示对象分别为「云谷园区」（园区：电+水+冷量计量，电分时计费+水单一计价，能效指标齐全）、「互盟数据中心」（数据中心：纯电分时计费；PUE 可算，CLF/PLF/OLF 演示「待配置」）、「AI路冷水系统」（系统：仅电计量、无计费方案、无 IT 节点）。切换后组件集按出现规则实时重推——切到系统对象时，能耗成本卡与「能效指标」分区整体消失；无计费时能耗明细「累计能耗成本」显示「–」。</li>
-                <li><b>工具条吸顶（评审迭代）：</b>顶部工具条（视图 / 对象 / 时间粒度 / 日期）滚动时<strong>吸顶固定</strong>，任意位置可直接切换筛选，不必先滚回页顶。</li>
-                <li><b>时间控件（评审迭代）：</b>点击日期 pill 弹出<strong>日期选择弹层</strong>并随粒度自适应——年→年份快选格；月→月份选择；日→日期选择；时段→开始/结束日期（结束早于开始自动对调）。不再依赖浏览器 showPicker 调起隐藏原生控件（部分内嵌环境不弹出）。</li>
-                <li><b>大数值展示（评审迭代）：</b>能耗量 / 成本 / 折算量 ≥1 万时默认按「###.#万+单位」缩写展示，<strong>鼠标悬停显示精确值</strong>（原生 tooltip）；&lt;1 万保持原样。避免八位数字排满卡片。</li>
-                <li><b>卡内能源 Tab（评审迭代）：</b>「能耗成本」「能耗趋势与分项」卡标题旁提供能源 Tab（电/水/冷量…），切换只影响本卡展示，不影响顶栏筛选与其他卡。</li>
+                <li><b>呈现：</b>无分区标题、无隐藏/配置入口；卡片仅由出现规则决定。</li>
+                <li><b>演示对象：</b>云谷园区（电+水+冷，能效齐全）／互盟数据中心（纯电，CLF/PLF/OLF 待配置）／AI路冷水系统（系统，无能效与成本卡）。</li>
+                <li><b>工具条：</b>吸顶；日期 pill 自绘弹层（年/月/日/时段，时段结束早于开始自动对调）。</li>
+                <li><b>展示：</b>≥1 万缩写为「万+单位」、悬停精确值；趋势/成本卡内能源 Tab 只影响本卡。</li>
               </ul>
             </div>
           </div>
@@ -2102,11 +2099,9 @@
             <div class="anno-body">
               <p><b>关联模块：</b>顶栏筛选、时间粒度与日期</p>
               <ul>
-                <li><b>视图：</b>下拉在<strong>空间视图</strong>（按物理空间/机房拓扑维度组织）、<strong>能效视图</strong>（侧重 PUE、能效指标与对比）之间切换；切换后下方卡片数据范围随所选视图刷新（原型未接真实数据，仅作语义区分）。</li>
-                <li><b>时间粒度：</b>年 / 月 / 日 / 时段四段切换；右侧日期 pill 文案联动为：年→YYYY，月→YYYY-MM，日→YYYY-MM-DD，时段→起止日期（精确到<strong>日</strong>，不展示自然日内起止时刻）。</li>
-                <li><b>用量与成本图表联动：</b>选择<strong>年</strong>时，用量与成本/趋势横轴按<strong>月</strong>；选择<strong>月</strong>时按<strong>日</strong>；选择<strong>日</strong>时按<strong>小时</strong>（所选日 24 小时内示意）；选择<strong>时段</strong>时 pill 展示<strong>起止日期</strong>，图表按<strong>小时</strong>粒度在范围内均匀取刻度示意。</li>
-                <li><b>日期 pill：</b>点击后打开自绘日期选择弹层（年→年份快选格；月→月份；日→日期；时段→开始/结束日期，结束早于开始自动对调）；变更后 pill 与内部状态同步。</li>
-                <li><b>能耗统计 / 能效总览 Tab 与旧配置入口：</b>v1.0 副栏为双 Tab + 配置入口；该结构已于 v2.5 移除，见 v2.5 交互说明。</li>
+                <li><b>视图：</b>空间视图 / 能效视图切换后刷新下方卡片范围。</li>
+                <li><b>粒度：</b>年→月轴，月→日轴，日/时段→小时轴；时段 pill 为起止日期（不展示日内时刻）。</li>
+                <li><b>日期：</b>点击 pill 打开自绘弹层；v2.5 已取代 showPicker。</li>
               </ul>
             </div>
           </div>
@@ -2118,8 +2113,8 @@
             <div class="anno-body">
               <p><b>关联模块：</b>看板图元（总览）</p>
               <ul>
-                <li><b>分析对象：</b>v1.0 数据中心选择器支持<strong>数据中心 → 子系统 → 设备</strong>三级；未选到设备时统计范围默认为当前数据中心；选定设备后各图元指标按该对象聚合。v2.5 起演示对象改为「园区 / 数据中心 / 系统」三级，用于演示组件出现规则。</li>
-                <li><b>与旧配置页：</b>v1.0 每一类图元均可在「看板配置」中勾选是否展示；v2.5 起改为按出现规则自动生成，该配置页下线。<strong>各图元的目的、字段含义与古典稿对应关系</strong>见该卡片<strong>正上方</strong>的「图元说明」批注。</li>
+                <li><b>对象：</b>v2.5 演示为园区 / 数据中心 / 系统，用于验证出现规则。</li>
+                <li><b>图元细则：</b>见各卡正上方「图元说明」；v1.0 看板配置已下线。</li>
               </ul>
             </div>
           </div>
@@ -2131,8 +2126,8 @@
             <div class="anno-body">
               <p><b>关联模块：</b>卡片与图表</p>
               <ul>
-                <li><b>加载中：</b>真实系统可对整页或单卡骨架/转圈；v1.0 初版为静态数据，无加载态。v2.5 当前原型已补对象 / 时间切换短加载态，见上方 v2.5 状态说明。</li>
-                <li><b>无权限 / 无数据：</b>某图元对当前对象不适用时隐藏卡片（v2.5 起统一为「不渲染也不占位」）；该有数据但没取到时展示「暂无数据」。</li>
+                <li><b>不适用：</b>不渲染不占位；该有数据但未取到时「暂无数据」。</li>
+                <li><b>加载：</b>见 v2.5 状态说明（对象/时间切换短加载）。</li>
               </ul>
             </div>
           </div>
@@ -2140,12 +2135,11 @@
           <div class="anno anno-edge" data-version="v1.0">
             <span class="anno-tag">边界与异常</span>
             <span class="anno-version">v1.0</span>
-            <span class="anno-source" data-type="待确认">待确认</span>
+            <span class="anno-source">待确认</span>
             <div class="anno-body">
               <p><b>关联模块：</b>时间与对象范围</p>
               <ul>
-                <li><b>时段粒度：</b>若业务需选择自然日内的起止时刻，需在需求中单列，本原型不展示时刻段。</li>
-                <li><b>浏览器兼容：</b>v1.0 依赖 <code>showPicker</code> 调起隐藏原生控件，部分内嵌/旧浏览器不弹出；v2.5 评审迭代已改为自绘日期弹层内嵌可见原生 input，不再有此兼容问题。</li>
+                <li><b>时段：</b>本期不选自然日内起止时刻；若业务需要需单列需求。</li>
               </ul>
             </div>
           </div>
@@ -2155,13 +2149,11 @@
             <span class="anno-version">v2.5</span>
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>顶栏时间粒度（年/月/日/时段）与各能耗类图元的数据口径</p>
+              <p><b>关联模块：</b>顶栏时间粒度与能耗/成本口径</p>
               <ul>
-                <li><b>对象能耗口径：</b>对象能耗/成本不归档，查询时沿当前计量拓扑对表具归档明细 on-read 递归 SUM；支持半小时/时/天/月，时/天/月读表具对应粒度 rollup、不重算差值；跨天/跨月按本地时间切分。</li>
-                <li><b>顶栏粒度与四粒度 rollup 的映射：</b>本页保留既有 年/月/日/时段 控件不变——<b>年</b>视图明细轴按月（读表具月 rollup）；<b>月</b>视图明细轴按日（读表具天 rollup）；<b>日</b>与<b>时段</b>视图明细轴按小时展示，底层对应表具「时」或「半小时」粒度明细（展示层可再按小时聚合）。</li>
-                <li><b>适用图元：</b>用能总览、能耗成本、能耗趋势、用能分项统计、数据完整性及能效指标类图元的电量/水量输入均遵循本口径；PUE（功率）等实时功率类图元不走本链路。</li>
-                <li><b>成本口径：</b>所有成本展示 = SUM(表具核算明细.成本金额)，不在前端重算电价。</li>
-                <li><b>完整性标记：</b>统计区间内存在坏值或缺失半小时槽时，用能总览对应能源瓦片标题行展示橙色「含异常/缺失」标记；坏值/缺失槽不参与聚合、不作 0 处理，结果可能偏低，避免被误读为真实下降。明细承接入口为该标签打开的「数据完整性 · 能源」表具清单弹层。数据正常时不展示完整性标记。</li>
+                <li><b>能耗：</b>沿计量拓扑对表具明细 on-read SUM；年→月、月→日、日/时段→小时。</li>
+                <li><b>成本：</b>SUM(表具核算明细.成本金额)，前端不重算电价。</li>
+                <li><b>完整性：</b>区间含坏值/缺失时能源瓦片出「含异常/缺失」，点击开表具清单；坏值/缺失不参与聚合。</li>
               </ul>
             </div>
           </div>
@@ -2171,10 +2163,10 @@
             <span class="anno-version">v2.5</span>
             <span class="anno-source">待确认</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>对象 / 时间切换加载态与「含异常/缺失」完整性标记</p>
+              <p><b>关联模块：</b>加载态与完整性标记</p>
               <ul>
-                <li><b>加载态：</b>对象切换、时间粒度或日期变化后，当前可见卡片短暂展示半透明骨架与转圈，模拟重新取数；不满足出现规则而隐藏的卡片不展示加载态。</li>
-                <li><b>完整性标记：</b>最终展示形态待确认：「坏值」与「缺失」是否用不同颜色/图标区分，还是统一按「含异常/缺失」占位展示（区分口径以明细引擎册结论为准，本页跟随执行）。本原型暂用统一橙色标记 + 悬停说明示意；表具清单弹层已分列缺失/坏值/人工修正计数，汇总角标是否同步区分随该结论确定。</li>
+                <li><b>加载：</b>切换对象/粒度/日期后，可见卡短骨架；隐藏卡不加载。</li>
+                <li><b>待确认：</b>坏值与缺失是否分色；本原型统一橙色标签，清单内分列计数。</li>
               </ul>
             </div>
           </div>
@@ -2184,10 +2176,10 @@
             <span class="anno-version">v2.5</span>
             <span class="anno-source">待确认</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>本版待确认问题（需求方案 §四）</p>
+              <p><b>关联模块：</b>本版待确认（需求方案 §四）</p>
               <ul>
-                <li><b>冷量等二次能源折算系数默认值：</b>本版口径为标煤 / CO₂ 系数默认 0（不计入折算）、能源配置可改，引擎不做能源特判；默认值清单需在能源配置侧确认。</li>
-                <li><b>分项指标标准依据：</b>PUE 按 GB 40879-2021 展示能效等级；WUE 按 GB/T 32910.6-2025 的 WUEev 水效等级展示，本原型示例暂用 WUE 值代入水效等级演示，真实系统需补齐 WUEev 水源修正输入后再判定；CLF / PLF / OLF 保留诊断档位入口，弹窗不展示标准来源说明。</li>
+                <li><b>二次能源折算：</b>冷量等标煤/CO₂ 系数默认 0，可在能源配置改。</li>
+                <li><b>等级依据：</b>PUE 用 GB 40879-2021；WUE 按 WUEev（原型暂用 WUE 值演示）；CLF/PLF/OLF 仅诊断档位、不展示标准来源。</li>
               </ul>
             </div>
           </div>
@@ -2293,15 +2285,13 @@
                 <span class="anno-version">v2.5</span>
                 <span class="anno-source">需求文档</span>
                 <div class="anno-body">
-                  <p><b>关联模块：</b>用能总览图元（多能源通用化改造）</p>
+                  <p><b>关联模块：</b>用能总览图元</p>
                   <ul>
-                    <li><b>动态生成：</b>从固定四格改为「总成本 + N 个能源格 + 2 个折算格」的动态瓦片矩阵，卡内通过「能耗 / 折算」Tab 分开展示：能耗 Tab 展示总成本与各能源用量，折算 Tab 展示标准煤、碳排放等折算量。对象每启用一种能源类型的计量拓扑就出一格，名称/单位/图标取自能源配置（电 kWh、水 m³、冷量 kWh 等）；<strong>未启用的能源不出占位格</strong>（不再有「暂无数据」死格）。当前原型桌面端一行 3 格、窄屏自动降列；纯电对象切到「互盟数据中心」时，能耗 Tab 展示总成本与用电量，折算 Tab 展示标准煤与碳排放。</li>
-                    <li><b>折算格：</b>标准煤 = Σ(各启用能源用量 × 该能源标煤折算系数)；碳排放 = Σ(各启用能源用量 × 该能源 CO₂ 折算系数)。系数来自能源类型配置，折算公式从古典「电 + 水」固定口径推广为「所有启用能源求和」。</li>
-                    <li><b>二次能源防重复计量：</b>冷量等二次能源的用能已含在电（制冷耗电）中，再折标煤/碳排会重复计量；口径为「是否计入折算由该能源类型的折算系数决定」，冷量标煤 / CO₂ 系数默认 0（能源配置可改），引擎不做能源特判。</li>
-                    <li><b>环比与完整性标记逐格生效：</b>环比 =（本期量 − 环比期量）/ 环比期量 × 100%，本期与环比期各查一次对象能耗接口后计算；统计区间含坏值/缺失槽时，该能源瓦片标题行右侧展示可点击的「含异常/缺失」标签；数据正常时不展示完整性文案（承接链路见下方「数据完整性」批注）。</li>
-                    <li><b>定额对照（评审迭代 2026-07-09）：</b>仅「能耗」Tab 的能源用量瓦片接入。额度来自「用能定额考核」中当前对象 × 该能源类型的配置；无定额时不画虚线、不出超限标签。顶栏为年/月时用月额度档，为日/时段时用日额度档。迷你趋势统一用 Chart.js 小折线图，有定额时叠加橙色虚线数据集（与趋势分桶同量纲：年→月额度线，月→日额度线，日/时段→日额度÷24 的小时线）；悬停数据点可同时看到用量与额度。超限判定按当前筛选周期累计用量 vs 周期对应额度（年=月额度×12，月=月额度，日=日额度，时段=日额度×区间天数），超限时标题行展示红色「已超限」标签，可与「含异常/缺失」并存。总成本与折算瓦片不接入定额。</li>
-                    <li><b>迷你趋势（评审迭代）：</b>用能总览与能效指标瓦片统一使用 Chart.js 小折线图（隐藏坐标轴、悬停看时间与数值）；时间轴与顶栏粒度联动：年→近 12 月，月→选中月内按日，日→当日小时，时段→起止范围内均匀小时刻度。</li>
-                    <li><b>展示（评审迭代）：</b>用量 ≥1 万时按「###.#万+单位」缩写、悬停显示精确值；折算口径说明（“按电、水折算”等）不再在界面常驻展示，口径以本批注为准。</li>
+                    <li><b>瓦片：</b>总成本（有计费才出）+ 各启用能源用量 + 标准煤 + 碳排放，全部平铺；未启用能源不出格。</li>
+                    <li><b>折算：</b>Σ(用量×系数)；冷量等二次能源系数默认 0，防重复计量。</li>
+                    <li><b>定额：</b>仅能源用量瓦片。年/月→月额度档，日/时段→日额度档；无定额不画线、无标签。虚线与分桶同量纲（年→月线，月→日线，日/时段→日÷24）。超限=周期累计 vs 周期额度，出红色「已超限」。</li>
+                    <li><b>迷你趋势：</b>Chart.js；年→近12月，月→按日，日→小时，时段→均匀小时；悬停看时间/用量/额度。</li>
+                    <li><b>展示：</b>≥1 万缩写「万+单位」、悬停精确值；环比逐格；完整性见下块。</li>
                   </ul>
                 </div>
               </div>
@@ -2313,9 +2303,8 @@
                 <div class="anno-body">
                   <p><b>关联模块：</b>用能总览图元</p>
                   <ul>
-                    <li><b>用途：</b>在顶栏所选时间范围内，对当前分析对象汇总展示电、水、折标煤与碳排放等核心用量，并给出环比变化，便于一眼判断用能规模与波动。</li>
-                    <li><b>适用范围：</b>卡片角标「支持任意对象」——园区、数据中心或下钻至子系统/设备后均可挂载（以权限与数据完备性为准）。</li>
-                    <li><b>古典对应：</b>「用能总览」单页/图元（固定四格：用电量、用水量、标准煤、碳排放；该固定口径已被 v2.5 通用化取代）。</li>
+                    <li><b>用途：</b>汇总电/水/标煤/碳排放与环比，看用能规模与波动。</li>
+                    <li><b>古典：</b>固定四格；已被 v2.5 动态瓦片取代。</li>
                   </ul>
                 </div>
               </div>
@@ -2325,7 +2314,7 @@
                 <div class="card-head">
                   <div class="card-title">
                     <span class="card-title-dot"></span><span id="t-energy">用能总览</span>
-                    <span class="card-tabs" id="overviewTabs" role="tablist" aria-label="用能总览口径切换"></span>
+                    <span class="card-tabs" id="overviewTabs" role="tablist" aria-label="用能总览口径切换" hidden></span>
                   </div>
                 </div>
                 <div class="card-body">
@@ -2338,12 +2327,11 @@
                 <span class="anno-version">v2.5</span>
                 <span class="anno-source">需求文档</span>
                 <div class="anno-body">
-                  <p><b>关联模块：</b>数据完整性（评审迭代：并入用能总览，独立卡下线）</p>
+                  <p><b>关联模块：</b>数据完整性（并入用能总览）</p>
                   <ul>
-                    <li><b>形态：</b>不再单独出卡。统计区间内某能源存在坏值/缺失半小时槽时，用能总览对应能源瓦片的标题行右侧展示可点击的「含异常/缺失」标签；数据正常时不展示任何完整性文字或占位。</li>
-                    <li><b>承接链路：</b>点击标签 → 弹出当前对象该能源的<strong>计量表具清单</strong>（完整率、缺失/坏值/人工修正槽数，异常表具高亮定位）→ 点击每行「查看」按钮跳转「表具能耗明细」页，并携带对象 / 能源 / 统计区间 / 表具参数。</li>
-                    <li><b>口径：</b>完整率 = 有效半小时槽 ÷ 应有半小时槽 × 100%；坏值/缺失不参与聚合、不作 0 处理，汇总结果可能偏低。</li>
-                    <li><b>数据：</b>当前对象沿计量拓扑覆盖的叶子表具在区间内的 VEE 质量标记计数。</li>
+                    <li><b>形态：</b>独立卡下线；有坏值/缺失时能源瓦片出可点「含异常/缺失」，正常不展示。</li>
+                    <li><b>链路：</b>点标签 → 表具清单（完整率、缺失/坏值/人工修正）→ 行内「查看」进表具能耗明细。</li>
+                    <li><b>口径：</b>完整率=有效槽÷应有槽；坏值/缺失不参与聚合。</li>
                   </ul>
                 </div>
               </div>
@@ -2353,13 +2341,10 @@
                 <span class="anno-version">v2.5</span>
                 <span class="anno-source">需求文档</span>
                 <div class="anno-body">
-                  <p><b>关联模块：</b>用能成本总览（评审迭代：并入用能总览）</p>
+                  <p><b>关联模块：</b>总成本瓦片（并入用能总览）</p>
                   <ul>
-                    <li><b>定位：</b>不再作为独立全宽卡出现；当当前对象存在任意计费方案时，在「用能总览」矩阵内生成「总成本」瓦片，回答「这个周期花了多少钱、钱主要花在哪」。</li>
-                    <li><b>内容：</b>总成本瓦片仅展示本期总成本（≥1 万元按「万元」缩写、悬停精确值）+ 环比；不再在瓦片底部展示成本构成摘要，分时/单一计价结构明细统一下沉到下方「能耗成本」卡。</li>
-                    <li><b>承接关系：</b>分时电费、单一计价用量、时段成本趋势等细节继续由下方「能耗成本」卡按能源 Tab 承接，避免总览区重复展开细节。</li>
-                    <li><b>数据：</b>SUM(表具核算明细.成本金额) 按能源类型分组；不在前端重算电价。</li>
-                    <li><b>出现规则：</b>对象没有任何能源应用计费方案时，「总成本」瓦片不出现；用能总览仍展示能耗与折算指标。</li>
+                    <li><b>内容：</b>本期总成本 + 环比；无计费方案时不出瓦片。</li>
+                    <li><b>细节：</b>分时/单一构成下沉到「能耗成本」卡，总览不重复展开。</li>
                   </ul>
                 </div>
               </div>
@@ -2369,13 +2354,11 @@
                 <span class="anno-version">v2.5</span>
                 <span class="anno-source">需求文档</span>
                 <div class="anno-body">
-                  <p><b>关联模块：</b>能耗趋势与分项图元（既有改造 · 评审迭代为单卡多 Tab + 并入分项构成）</p>
+                  <p><b>关联模块：</b>能耗趋势与分项</p>
                   <ul>
-                    <li><b>动态出现：</b>每个启用计量的能源生成一个 <strong>Tab</strong>（评审迭代：原“每能源一张趋势卡”改为单卡内按能源 Tab 切换；演示对象「云谷园区」为 电 / 水 / 冷量 三个 Tab，「互盟数据中心」与「AI路冷水系统」仅电）。</li>
-                    <li><b>分项构成并入（评审迭代）：</b>原独立「用能分项统计(#能源#)」卡并入本卡——<strong>左侧分项构成环形</strong>（中心即该能源总量）+ <strong>右侧堆叠趋势</strong>，不再单独重复左侧汇总数字。</li>
-                    <li><b>堆叠分类来自能耗计量配置规则：</b>按<strong>子节点</strong>统计时展示下级子节点并过滤未启用该能源的子节点（见电、水 Tab）；按<strong>计量对象</strong>统计时展示对应计量对象（见冷量 Tab 按冷量表堆叠）。</li>
-                    <li><b>口径：</b>时间刻度 ≤3 天按小时、&gt;3 且 ≤90 天按天、&gt;90 天按月；各节点能耗量保留 2 位小数，单位取对应能源单位；汇总值 ≥1 万时按「万+单位」缩写、悬停显示精确值；未启用该能源计量拓扑的对象不纳入统计。</li>
-                    <li><b>数据：</b>对象能耗多粒度查询，按配置的统计维度拆分下级对象 / 计量对象。</li>
+                    <li><b>形态：</b>单卡多能源 Tab；左环形（≥2 分项才出）+ 右堆叠趋势；0/1 分项时总量内联在趋势区顶。</li>
+                    <li><b>堆叠：</b>按子节点或计量对象（见计量配置）；未启用该能源的下级过滤。</li>
+                    <li><b>刻度：</b>≤3 天按小时，≤90 天按天，&gt;90 天按月；≥1 万缩写。</li>
                   </ul>
                 </div>
               </div>
@@ -2385,40 +2368,10 @@
                 <span class="anno-version">v1.0</span>
                 <span class="anno-source" data-type="引用自古典原型">引用自古典原型</span>
                 <div class="anno-body">
-                  <p><b>关联模块：</b>能耗趋势（电）图元</p>
+                  <p><b>关联模块：</b>能耗趋势 / 用能分项（古典）</p>
                   <ul>
-                    <li><b>用途：</b>在顶栏筛选时间范围内，按时间序列展示<strong>用电量</strong>的<strong>堆叠柱状</strong>趋势；柱内各段对应计量方案下的分项。该能源<strong>总量</strong>由左侧环形图中心展示（与分项构成同源），右侧仅展示时间趋势。</li>
-                    <li><b>X 轴粒度：</b>与顶栏时间维度联动：<strong>年</strong>→按月，<strong>月</strong>→按日，<strong>日</strong>→按小时，<strong>时段</strong>→起止日期范围内按小时均匀刻度示意；与「能耗成本」趋势图同一套规则。</li>
-                    <li><b>适用范围：</b>古典写明支持园区、数据中心、设备组、设备等<strong>任意对象</strong>。</li>
-                    <li><b>古典对应：</b>「能耗趋势」页堆叠柱状图元。</li>
-                  </ul>
-                </div>
-              </div>
-
-              <div class="anno anno-data" data-version="v2.5">
-                <span class="anno-tag">图元说明</span>
-                <span class="anno-version">v2.5</span>
-                <span class="anno-source">需求文档</span>
-                <div class="anno-body">
-                  <p><b>关联模块：</b>分项构成（并入「能耗趋势与分项」卡左侧，原「用能分项统计」独立卡下线）</p>
-                  <ul>
-                    <li><b>出现规则：</b>启用该能源 <strong>且</strong> 当前统计口径下有 <strong>2 个及以上</strong>下级分项时，该能源 Tab <strong>左侧</strong>展示分项构成环形（中心即总量）；仅 0 / 1 个下级分项时不展示环形，改在趋势区顶部内联展示总量，避免单分项环形造成误读。</li>
-                    <li><b>口径：</b>环形中心为当前节点该能源在查询时间范围内的能耗量之和（≥1 万按「万+单位」缩写、悬停精确值）；分项展示下级节点或计量对象名称、能耗量与占比；未启用该能源计量拓扑的下级节点不展示。</li>
-                    <li><b>古典「用能分布」图元已废弃</b>（古典原型标注与本图元效果重叠），本版不再出现。</li>
-                  </ul>
-                </div>
-              </div>
-
-              <div class="anno anno-data" data-version="v1.0">
-                <span class="anno-tag">图元说明</span>
-                <span class="anno-version">v1.0</span>
-                <span class="anno-source" data-type="引用自古典原型">引用自古典原型</span>
-                <div class="anno-body">
-                  <p><b>关联模块：</b>用能分项统计（电）图元</p>
-                  <ul>
-                    <li><b>用途：</b>按电耗<strong>分项</strong>展示占比与绝对量；多段环形堆叠，中心为所选对象在该周期内的<strong>用电总能耗</strong>。</li>
-                    <li><b>图例：</b>与各色扇区一一对应，便于核对分项名称与数值。</li>
-                    <li><b>古典对应：</b>「用能分项统计」图元。</li>
+                    <li><b>趋势：</b>用电堆叠柱；X 轴与顶栏联动（年→月，月→日，日/时段→小时）。</li>
+                    <li><b>分项：</b>环形占比，中心为总量；「用能分布」已废弃。</li>
                   </ul>
                 </div>
               </div>
@@ -2518,12 +2471,11 @@
                 <span class="anno-version">v2.5</span>
                 <span class="anno-source">需求文档</span>
                 <div class="anno-body">
-                  <p><b>关联模块：</b>能耗成本图元（既有改造 · 评审迭代为单卡多 Tab）</p>
+                  <p><b>关联模块：</b>能耗成本</p>
                   <ul>
-                    <li><b>动态出现：</b>每个「启用计量 且 有计费方案」的能源生成一个 <strong>Tab</strong>（评审迭代：原“每能源一张卡”改为单卡内按能源 Tab 切换，能源多时不再挤占版面）；无任何能源符合时整卡不出现。本页演示 电 / 水 两个 Tab（演示对象「云谷园区」）。</li>
-                    <li><b>两种形态：</b>单一计价方案按<strong>面积图</strong>展示（见「水」Tab）；峰平谷 / 尖峰平谷方案左侧展示<strong>分时成本构成环形</strong>（中心为总成本，悬停展示各时段成本与占比），右侧按<strong>尖峰平谷分时堆叠柱</strong>展示趋势（见「电」Tab，按表具核算明细中的计费时段 / 单价快照归组汇总）。卡头右侧角标随当前 Tab 显示计价形态。</li>
-                    <li><b>口径：</b>统计筛选时间段内能耗成本总和保留 2 位小数，单位元；≥1 万元时默认以「万元」缩写展示、悬停显示精确值；时间刻度 ≤3 天按小时、&gt;3 且 ≤90 天按天、&gt;90 天按月。</li>
-                    <li><b>数据：</b>对象成本查询 SUM(表具核算明细.成本金额)，不在前端重算电价。</li>
+                    <li><b>出现：</b>启用计量且有计费的能源出 Tab；无一符合则整卡隐藏。</li>
+                    <li><b>形态：</b>单一计价→面积图；峰平谷→左分时环形 + 右分时堆叠柱；卡头角标随 Tab 显示计价形态。</li>
+                    <li><b>口径：</b>SUM(核算明细.成本金额)；≥1 万按「万元」缩写；刻度同趋势卡。</li>
                   </ul>
                 </div>
               </div>
@@ -2533,12 +2485,10 @@
                 <span class="anno-version">v1.0</span>
                 <span class="anno-source" data-type="引用自古典原型">引用自古典原型</span>
                 <div class="anno-body">
-                  <p><b>关联模块：</b>能耗成本图元（v1.0 为「能耗成本（IT用电量）」单卡）</p>
+                  <p><b>关联模块：</b>能耗成本（古典）</p>
                   <ul>
-                    <li><b>展示规则：</b>根据对象下已关联计费方案的测点动态展示；若对象下测点均未关联计费方案，则无需展示（v2.5 起统一为「对象 × 能源类型」维度，测点维度废弃）。</li>
-                    <li><b>卡片内容：</b>左侧展示筛选时间段内能耗成本总和，保留 2 位小数；右侧展示按时间粒度聚合的成本趋势。</li>
-                    <li><b>单一计价样式：</b>按面积图展示总成本与单条成本趋势。</li>
-                    <li><b>峰平谷样式：</b>切换为分时成本展示样式，体现峰 / 平 / 谷（及尖峰场景下的尖）各时段成本分布与趋势。</li>
+                    <li><b>规则：</b>有计费才展示；左总和、右趋势；单一=面积图，峰平谷=分时样式。</li>
+                    <li><b>v2.5：</b>改为对象×能源维度，测点维度废弃。</li>
                   </ul>
                 </div>
               </div>
@@ -2615,12 +2565,11 @@
                 <span class="anno-version">v2.5</span>
                 <span class="anno-source">需求文档</span>
                 <div class="anno-body">
-                  <p><b>关联模块：</b>能效指标分区（既有卡口径切换 + 出现规则）</p>
+                  <p><b>关联模块：</b>能效指标分区</p>
                   <ul>
-                    <li><b>PUE(能耗)：</b>总电耗 = 当前对象电能耗；IT 电量 = 按下级物模型类型筛选 IT 系统计量对象后查询电能耗并汇总；PUE = 总电耗 / IT 电量，保留 3 位小数。电量均走对象能耗多粒度查询，<strong>前端只计算指标比值</strong>。</li>
-                    <li><b>CLF</b> = 下级暖通空调系统电量 / IT 电量；<b>PLF</b> = 下级配电系统电量 / IT 电量；<b>OLF</b> = 下级其他系统电量 / IT 电量。均保留 3 位小数；PUE 首行按 <strong>PUE = 1 + CLF + PLF + OLF</strong> 组织。</li>
-                    <li><b>出现规则：</b>本分区仅园区 / 数据中心出现；PUE/WUE 按可计算结果展示；CLF/PLF/OLF 满足对象与下级系统前提但缺计算输入时，指标瓦片保留并显示「待配置」（演示：切「互盟数据中心」可见 CLF/PLF/OLF 待配置）。切演示对象「AI路冷水系统」（系统类型、无 IT 节点）时本分区按规则整体隐藏，不显示分区标题、卡片边框或空态提示。</li>
-                    <li><b>本期取舍：</b>实时 PUE 属于瞬时功率口径，放在周期指标矩阵内突兀，本页下线；DCIE 与 CUE 价值较低，本期不展示；CUE 改为 OLF 其他负载系数。</li>
+                    <li><b>公式：</b>PUE=总电/IT；CLF=暖通/IT；PLF=配电/IT；OLF=其他/IT；首行 PUE=1+CLF+PLF+OLF。</li>
+                    <li><b>出现：</b>仅园区/数据中心；缺输入时 CLF/PLF/OLF「待配置」；系统对象整区隐藏。</li>
+                    <li><b>本期不做：</b>实时 PUE、DCIE、CUE。</li>
                   </ul>
                 </div>
               </div>
@@ -2630,77 +2579,25 @@
                 <span class="anno-version">v1.0</span>
                 <span class="anno-source" data-type="引用自古典原型">引用自古典原型</span>
                 <div class="anno-body">
-                  <p><b>关联模块：</b>PUE（能耗）图元</p>
+                  <p><b>关联模块：</b>PUE / CLF / PLF（古典）</p>
                   <ul>
-                    <li><b>用途：</b>在统计周期内用<strong>累积能耗</strong>折算 PUE，展示周期内等效能效水平；下方给出<strong>总电耗</strong>与<strong>IT 电量</strong>（kWh）作为构成说明。</li>
-                    <li><b>展示取舍：</b>本页仅保留周期能耗口径 PUE，实时功率 PUE 不进入指标矩阵。</li>
-                    <li><b>古典对应：</b>「pue（能耗）」图元。</li>
+                    <li><b>PUE：</b>周期能耗口径；展示总电与 IT 构成。</li>
+                    <li><b>CLF/PLF：</b>仅园区/数据中心；环形对比 IT 与暖通/配电。</li>
                   </ul>
                 </div>
               </div>
-
-              <div class="anno anno-data" data-version="v1.0">
-                <span class="anno-tag">图元说明</span>
-                <span class="anno-version">v1.0</span>
-                <span class="anno-source" data-type="引用自古典原型">引用自古典原型</span>
-                <div class="anno-body">
-                  <p><b>关联模块：</b>制冷负载系数（CLF）图元</p>
-                  <ul>
-                    <li><b>用途：</b>用双扇区环形对比<strong>IT 系统</strong>与<strong>暖通空调系统</strong>在相关能耗中的占比关系，中心展示<strong>CLF</strong>综合指标，用于看制冷侧负荷与 IT 侧的相对权重。</li>
-                    <li><b>适用范围：</b>角标「仅园区/数据中心」。</li>
-                    <li><b>古典对应：</b>「制冷负载系数」图元。</li>
-                  </ul>
-                </div>
-              </div>
-
-
-              <div class="anno anno-data" data-version="v1.0">
-                <span class="anno-tag">图元说明</span>
-                <span class="anno-version">v1.0</span>
-                <span class="anno-source" data-type="引用自古典原型">引用自古典原型</span>
-                <div class="anno-body">
-                  <p><b>关联模块：</b>PLF 图元</p>
-                  <ul>
-                    <li><b>用途：</b>环形对比<strong>IT 系统</strong>与<strong>配电（动力）系统</strong>相关能耗占比，中心为 <strong>PLF</strong> 指标，用于观察动力侧（如供配电等）相对 IT 的负荷特征。</li>
-                    <li><b>适用范围：</b>「仅园区/数据中心」。</li>
-                    <li><b>古典对应：</b>「plf」图元；与 CLF 的拆分维度不同，评审时对照分项定义区分。</li>
-                  </ul>
-                </div>
-              </div>
-
 
               <div class="anno anno-data" data-version="v2.5">
                 <span class="anno-tag">图元说明</span>
                 <span class="anno-version">v2.5</span>
                 <span class="anno-source">需求文档</span>
                 <div class="anno-body">
-                  <p><b>关联模块：</b>WUE / OLF 图元（新增）</p>
+                  <p><b>关联模块：</b>能效指标总览（瓦片矩阵）</p>
                   <ul>
-                    <li><b>口径：</b>WUE = 周期用水量(L) ÷ IT 电量(kWh)，单位 L/kWh；OLF = 其他系统电量 ÷ IT 系统电量，保留 3 位小数。</li>
-                    <li><b>输入：</b>IT 电量取下级 IT 系统物模型节点电量之和，口径同 PUE(能耗)；用水量走水能源类型对象能耗查询，默认按水能源单位 m³ 汇总；其他系统电量取下级「其他系统」节点电量之和。</li>
-                    <li><b>单位转换：</b>页面用水量默认展示单位为 m³，但 WUE 公式分子固定使用 L；计算前先按 <strong>1 m³ = 1,000 L</strong> 将周期用水量折算为 L，再除以 IT 电量。例如 38,450 m³ 先折算为 38,450,000 L（3,845.0 万L），再除以 20,014,000 kWh（2,001.4 万kWh），展示为 1.92 L/kWh。</li>
-                    <li><b>零配置示范组件：</b>有水计量 WUE 自然出现，没有就不出现；OLF 作为 PUE 拆解项参与首行公式，园区 / 数据中心有 IT 节点时保留卡片，缺其他系统电量等计算输入时显示「待配置」。两者都不需要人工配置卡片。</li>
-                    <li><b>展示形态与 PUE(能耗) 一致：</b>数值、环比、按当前时间颗粒度生成的趋势和构成说明同步展示；WUE 点击「水效」标签查看 WUEev 水效等级说明；OLF 点击「诊断」标签查看当前所处诊断档位。WUE 等级按 GB/T 32910.6-2025 的 WUEev 判定，本原型示例暂按 WUE 值代入演示，真实系统需补齐水源结构输入。</li>
-                  </ul>
-                </div>
-              </div>
-
-
-
-              <div class="anno anno-data" data-version="v2.5">
-                <span class="anno-tag">图元说明</span>
-                <span class="anno-version">v2.5</span>
-                <span class="anno-source">需求文档</span>
-                <div class="anno-body">
-                  <p><b>关联模块：</b>能效指标总览（评审迭代：指标卡合并为单卡瓦片矩阵）</p>
-                  <ul>
-                    <li><b>动因：</b>原 PUE / CLF / PLF / WUE / OLF 各占半宽大卡，仪表与环形占面积大、单位面积有效信息少；合并为一张全宽卡内的<strong>指标瓦片</strong>，每瓦片含 指标值、环比、Chart.js 迷你趋势、分子/分母构成，一屏读全关键能效指标；PUE / WUE 展示国标等级标签，CLF / PLF / OLF 展示诊断档位标签。</li>
-                    <li><b>公式首行：</b>桌面端首行固定展示 PUE、CLF、PLF、OLF 四张卡，并在卡片间直接显示「= 1 + / +」符号，形成 PUE = 1 + CLF + PLF + OLF 的扫读关系。</li>
-                    <li><b>出现规则：</b>PUE(能耗) 需下级 IT 节点且有可计算结果；CLF 需暖通+IT，PLF 需配电+IT，OLF 需 IT，三者缺计算输入时指标瓦片仍显示但值为「待配置」；WUE 需水计量+IT 且有可计算结果。不满足对象/节点前提的指标瓦片不渲染也不占位；全部不满足时整张「能效指标」分区隐藏。</li>
-                    <li><b>标准 / 诊断入口：</b>PUE 展示「能效 + 等级」标签，WUE 展示「水效 + 等级」标签，CLF / PLF / OLF 展示「诊断 + 档位」标签。非国标指标弹窗不展示标准来源说明。待配置指标不展示入口。</li>
-                    <li><b>环比方向语义：</b>PUE / CLF / PLF / WUE / OLF 越低越好（下降标绿、上升标红）。</li>
-                    <li><b>迷你趋势：</b>与用能总览瓦片统一使用 Chart.js 小折线图组件渲染走势，默认隐藏坐标轴但保留数据点悬停命中区域；鼠标移到折线数据点时，直接显示对应时间与该期指标值。时间轴规则为：年→近 12 月；月→近 12 日（选中月内）；日→近 12 小时（当日）；时段→起止范围内均匀取至多 12 个小时刻度。各指标口径见上方 v1.0 图元批注与本分区数据逻辑批注，计算口径不因合并改变。</li>
-                    <li><b>展示粒度：</b>能效指标以整卡承载，桌面端首行一排 4 个公式卡，第二行仅承载 WUE 等补充指标；逐指标按出现规则生成瓦片，不提供按单指标隐藏或配置。</li>
+                    <li><b>形态：</b>单卡瓦片：值、环比、迷你趋势、构成；首行 PUE/CLF/PLF/OLF 带「=1+/+」扫读。</li>
+                    <li><b>WUE：</b>=用水量(L)÷IT(kWh)，1 m³=1000 L；有水计量才出。OLF 参与公式，缺输入「待配置」。</li>
+                    <li><b>标签：</b>PUE/WUE 点开国标等级；CLF/PLF/OLF 点开诊断档位（无标准来源）。待配置无入口。</li>
+                    <li><b>环比：</b>越低越好（降绿升红）。迷你趋势规则同用能总览。</li>
                   </ul>
                 </div>
               </div>
@@ -2710,12 +2607,10 @@
                 <span class="anno-version">v2.5</span>
                 <span class="anno-source">产品推断</span>
                 <div class="anno-body">
-                  <p><b>关联模块：</b>能效指标瓦片内「趋势」区域（每张指标卡中部迷你折线）</p>
+                  <p><b>关联模块：</b>能效瓦片迷你趋势</p>
                   <ul>
-                    <li><b>触发规则：</b>用户把鼠标移到 Chart.js 折线图上的任一数据点命中区域时，显示该点的时间和具体指标值；趋势区域不再通过点击进入明细，也不弹出趋势明细层。</li>
-                    <li><b>展示内容：</b>组件 tooltip 标题显示「时间：YYYY-MM / YYYY-MM-DD / YYYY-MM-DD HH:00」，内容显示「指标值：数值」；WUE 追加单位 L/kWh，其他无单位指标按三位小数展示。</li>
-                    <li><b>不可用态：</b>指标值为「待配置」时仅展示虚线占位，不提供趋势点提示；原因以瓦片底部构成行展示为「待配置」。</li>
-                    <li><b>刷新联动：</b>切换对象、时间粒度或日期范围后，趋势序列和每个数据点提示随当前看板上下文重新生成。</li>
+                    <li><b>悬停：</b>显示时间与指标值；不点击进明细。</li>
+                    <li><b>待配置：</b>虚线占位，无点提示。</li>
                   </ul>
                 </div>
               </div>
@@ -2742,11 +2637,11 @@
                 <span class="anno-version">v2.5</span>
                 <span class="anno-source">需求文档</span>
                 <div class="anno-body">
-                  <p><b>关联模块：</b>能耗明细（由原「能耗统计分析」独立页面并入总览看板底部）</p>
+                  <p><b>关联模块：</b>能耗明细（并入看板底部）</p>
                   <ul>
-                    <li><b>定位：</b>承接当前看板对象与时间范围，在总览、趋势、能效指标之后提供可导出的树状明细，不再保留独立「能耗统计分析」菜单页。</li>
-                    <li><b>数据口径：</b>默认展示当前对象电耗明细；累计能耗量、累计能耗成本、日均能耗量、能耗占比均沿当前对象下级计量拓扑汇总；成本直接取表具核算明细金额口径，不在前端重算电价；当前对象该能源无计费方案时「累计能耗成本」显示「–」。</li>
-                    <li><b>交互：</b>默认全部展开；支持逐级收起、同层级排序和点击对象名称切换当前看板对象；导出报表沿用当前对象与日期范围生成文件名。</li>
+                    <li><b>定位：</b>承接当前对象与时间；可导出树状明细；独立「能耗统计分析」页下线。</li>
+                    <li><b>字段：</b>累计量/成本/日均/占比；无计费时成本列「–」。</li>
+                    <li><b>交互：</b>默认展开；收起、同层排序、点名称切对象；导出带当前对象与日期。</li>
                   </ul>
                 </div>
               </div>
@@ -2801,6 +2696,18 @@
         <button type="button" class="settings-close" id="meterClose" aria-label="关闭">×</button>
       </div>
       <div class="settings-body">
+        <div class="anno anno-ux" data-version="v2.5">
+          <span class="anno-tag">交互说明</span>
+          <span class="anno-version">v2.5</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>表具清单弹层（入口：能源瓦片「含异常/缺失」）</p>
+            <ul>
+              <li><b>内容：</b>当前对象×该能源的叶子表具：完整率、缺失/坏值/人工修正槽数；异常行高亮。</li>
+              <li><b>操作：</b>行内「查看」跳转表具能耗明细（带对象/能源/区间/表具）；点遮罩或 × 关闭。</li>
+            </ul>
+          </div>
+        </div>
         <div class="meter-summary" id="meterSummary"></div>
         <table class="meter-table">
           <thead>
@@ -2831,10 +2738,10 @@
           <span class="anno-version">v2.5</span>
           <span class="anno-source">需求文档</span>
           <div class="anno-body">
-            <p><b>关联模块：</b>能效标准/诊断详情弹窗（触发入口：能效指标瓦片右上角等级/诊断标签）</p>
+            <p><b>关联模块：</b>能效标准/诊断弹窗（入口：瓦片等级/诊断标签）</p>
             <ul>
-              <li><b>交互目的：</b>用户点击任一能效指标等级/诊断档位后，查看该指标当前所处水平、判断结论和优化方向。</li>
-              <li><b>展示规则：</b>PUE / WUE 展示国家标准分级；CLF / PLF / OLF 展示诊断档位，但不展示标准来源说明。弹窗顶部突出当前等级/档位，分级表高亮当前落点，底部说明计算口径与后续能效管理建议。待配置指标不展示入口。</li>
+              <li><b>PUE/WUE：</b>国标分级表，高亮当前档；附口径与优化建议。</li>
+              <li><b>CLF/PLF/OLF：</b>诊断档位，不展示标准来源；待配置无入口。</li>
             </ul>
           </div>
         </div>
@@ -3883,7 +3790,6 @@
       function energyColor (key) {
         return { elec: '#3B82F6', water: '#0891B2', cooling: '#8B5CF6', coal: '#F59E0B', carbon: '#10B981', cost: '#3B82F6' }[key] || '#64748B'
       }
-      var overviewMode = 'usage'
       function isConversionEnergy (ico) {
         return ico === 'coal' || ico === 'carbon'
       }
@@ -4001,7 +3907,7 @@
         return '<span class="over-quota-tag" title="' + escapeHtml(tip.trim()) + '">已超限</span>'
       }
 
-      /* ── 渲染：用能总览瓦片矩阵（总成本 + 动态能源/折算指标） ── */
+      /* ── 渲染：用能总览瓦片矩阵（总成本 + 能源用量 + 折算指标，全部平铺） ── */
       var overviewChartTiles = []
       function renderOverview (o) {
         var host = document.getElementById('energyRow')
@@ -4009,7 +3915,7 @@
         var html = ''
         overviewChartTiles = []
         var cost = o.data.costOverview
-        if (overviewMode === 'usage' && cost && hasAnyBilling(o)) {
+        if (cost && hasAnyBilling(o)) {
           var cf = fmtWan(cost.total)
           var costKey = 'cost'
           var costVal = parseFloat(String(cost.total).replace(/,/g, '')) || 1
@@ -4035,8 +3941,6 @@
           })
         }
         o.data.overview.forEach(function (c) {
-          if (overviewMode === 'usage' && isConversionEnergy(c.ico)) return
-          if (overviewMode === 'conversion' && !isConversionEnergy(c.ico)) return
           var f = fmtWan(c.value)
           var exact = c.value + ' ' + c.unit
           var quotaCtx = (!isConversionEnergy(c.ico)) ? overviewQuotaContext(c) : null
@@ -4045,7 +3949,7 @@
             badges += '<button type="button" class="integrity-tag clickable" data-integrity-native="true" data-energy="' + c.ico + '" title="' + INTEG_TITLE + '；点击查看表具清单">含异常/缺失</button>'
           }
           if (quotaCtx) badges += overQuotaBadgeHtml(quotaCtx)
-          var chartKey = overviewMode + '_' + c.ico
+          var chartKey = c.ico
           var rawVal = parseFloat(String(c.value).replace(/,/g, '')) || 1
           overviewChartTiles.push({
             key: chartKey,
@@ -4170,17 +4074,6 @@
           })
         })
         host.hidden = items.length <= 1
-      }
-
-      function renderOverviewTabs (o) {
-        buildCardTabs('overviewTabs', [
-          { key: 'usage', label: '能耗' },
-          { key: 'conversion', label: '折算' }
-        ], overviewMode, function (key) {
-          overviewMode = key
-          renderOverview(o)
-          if (typeof window.refreshDashCharts === 'function') window.refreshDashCharts()
-        })
       }
 
       /* ── 渲染：能耗成本（单卡多 Tab） ── */
@@ -4748,7 +4641,8 @@
       }
 
       function renderAllData (o) {
-        renderOverviewTabs(o)
+        var overviewTabs = document.getElementById('overviewTabs')
+        if (overviewTabs) overviewTabs.hidden = true
         renderOverview(o)
         renderCostCards(o)
         renderTrendCards(o)
@@ -5016,12 +4910,18 @@
         return out
       }
 
-      /* 堆叠柱状图：数据集结构变化时销毁重建 */
+      /* 堆叠柱状图：数据集结构变化时销毁重建；tooltip 挂 body 避免卡片 overflow 裁切 */
       function ensureStacked (key, canvasId, stackCfg, labels, seed, axisUnit, tipUnit) {
         var el = document.getElementById(canvasId)
         if (!el || !stackCfg) return
         var sig = stackCfg.labels.join('|')
         var data = stackedSeries(labels.length, seed, stackCfg.bases, stackCfg.scale)
+        function tooltipFooter (items) {
+          if (!items.length) return ''
+          var t = 0
+          items.forEach(function (it) { t += it.parsed.y || 0 })
+          return '合计：' + Math.round(t * 10) / 10 + ' ' + tipUnit
+        }
         if (charts[key] && charts[key].sig === sig) {
           var ch = charts[key].chart
           ch.data.labels = labels
@@ -5029,6 +4929,9 @@
             ch.data.datasets[i].data = data[i]
           })
           ch.options.scales.y.title.text = axisUnit
+          ch.options.plugins.tooltip.enabled = false
+          ch.options.plugins.tooltip.external = externalMiniTooltip
+          ch.options.plugins.tooltip.callbacks.footer = tooltipFooter
           ch.update('none')
           return
         }
@@ -5062,14 +4965,10 @@
               plugins: {
                 legend: { display: false },
                 tooltip: {
-                  backgroundColor: 'rgba(15, 23, 42, 0.88)',
+                  enabled: false,
+                  external: externalMiniTooltip,
                   callbacks: {
-                    footer: function (items) {
-                      if (!items.length) return ''
-                      var t = 0
-                      items.forEach(function (it) { t += it.parsed.y || 0 })
-                      return '合计：' + Math.round(t * 10) / 10 + ' ' + tipUnit
-                    }
+                    footer: tooltipFooter
                   }
                 }
               },
@@ -5090,17 +4989,25 @@
             }
           })
         }
+        bindMiniTipLeave(el)
       }
 
-      /* 面积图（单一计价成本） */
+      /* 面积图（单一计价成本）；tooltip 挂 body 避免卡片 overflow 裁切 */
       function ensureArea (key, canvasId, labels, seed, scale) {
         var el = document.getElementById(canvasId)
         if (!el) return
         var data = lineSeries(labels.length, seed, scale)
+        function tooltipLabel (ctx) {
+          var v = ctx.parsed.y
+          return '成本：' + (v != null ? v : '—') + ' 万元'
+        }
         if (charts[key]) {
           var ch = charts[key].chart
           ch.data.labels = labels
           ch.data.datasets[0].data = data
+          ch.options.plugins.tooltip.enabled = false
+          ch.options.plugins.tooltip.external = externalMiniTooltip
+          ch.options.plugins.tooltip.callbacks.label = tooltipLabel
           ch.update('none')
           return
         }
@@ -5131,11 +5038,10 @@
               plugins: {
                 legend: { display: false },
                 tooltip: {
+                  enabled: false,
+                  external: externalMiniTooltip,
                   callbacks: {
-                    label: function (ctx) {
-                      var v = ctx.parsed.y
-                      return '成本：' + (v != null ? v : '—') + ' 万元'
-                    }
+                    label: tooltipLabel
                   }
                 }
               },
@@ -5154,12 +5060,14 @@
             }
           })
         }
+        bindMiniTipLeave(el)
       }
 
-      /* 环形图 */
+      /* 环形图：tooltip 挂 body，避免被 .dash-card / .subitem-donut 的 overflow 裁切 */
       function ensureDoughnut (key, canvasId, labels, data, colors, cutout, suffix, tooltipTexts) {
         var el = document.getElementById(canvasId)
         if (!el) return
+        function tooltipTitle () { return '' }
         function tooltipLabel (ctx) {
           var text = tooltipTexts && tooltipTexts[ctx.dataIndex]
           return (ctx.label || '') + '：' + (text || (ctx.parsed.toLocaleString() + suffix))
@@ -5169,6 +5077,9 @@
           ch.data.labels = labels
           ch.data.datasets[0].data = data
           ch.data.datasets[0].backgroundColor = colors
+          ch.options.plugins.tooltip.enabled = false
+          ch.options.plugins.tooltip.external = externalMiniTooltip
+          ch.options.plugins.tooltip.callbacks.title = tooltipTitle
           ch.options.plugins.tooltip.callbacks.label = tooltipLabel
           ch.update('none')
           return
@@ -5192,7 +5103,10 @@
               plugins: {
                 legend: { display: false },
                 tooltip: {
+                  enabled: false,
+                  external: externalMiniTooltip,
                   callbacks: {
+                    title: tooltipTitle,
                     label: tooltipLabel
                   }
                 }
@@ -5200,6 +5114,7 @@
             }
           })
         }
+        bindMiniTipLeave(el)
       }
 
       function destroyChart (key) {
@@ -5236,6 +5151,11 @@
         var tip = document.getElementById('miniChartTip')
         if (tip) tip.classList.remove('is-open')
       }
+      function bindMiniTipLeave (el) {
+        if (!el || el.dataset.miniTipBound) return
+        el.dataset.miniTipBound = '1'
+        el.addEventListener('mouseleave', hideMiniTip)
+      }
       function externalMiniTooltip (context) {
         var tip = getMiniTipEl()
         var tooltip = context.tooltip
@@ -5246,7 +5166,8 @@
         var title = (tooltip.title && tooltip.title.length) ? tooltip.title.join(' ') : ''
         var rows = (tooltip.dataPoints || []).map(function (dp, idx) {
           var ds = dp.dataset || {}
-          var color = ds._isQuota ? '#F59E0B' : (ds.borderColor || '#3B82F6')
+          var color = ds._isQuota ? '#F59E0B' : (ds.borderColor || ds.backgroundColor || '#3B82F6')
+          if (Array.isArray(color)) color = color[dp.dataIndex] || color[0] || '#3B82F6'
           var bodyLine = (tooltip.body && tooltip.body[idx] && tooltip.body[idx].lines)
             ? tooltip.body[idx].lines.join(' ')
             : ((ds.label || '') + '：' + dp.formattedValue)
@@ -5256,7 +5177,10 @@
             + '<span>' + String(bodyLine == null ? '' : bodyLine) + '</span>'
             + '</div>'
         }).join('')
-        tip.innerHTML = (title ? '<div class="mini-chart-tip-title">' + title + '</div>' : '') + rows
+        var footer = (tooltip.footer && tooltip.footer.length)
+          ? '<div class="mini-chart-tip-footer">' + tooltip.footer.join('<br>') + '</div>'
+          : ''
+        tip.innerHTML = (title ? '<div class="mini-chart-tip-title">' + title + '</div>' : '') + rows + footer
         var canvas = context.chart.canvas
         var rect = canvas.getBoundingClientRect()
         var caretX = rect.left + tooltip.caretX
