@@ -228,8 +228,17 @@
     /* ---------- 表格通用 ---------- */
     .table-wrap { overflow-x: auto; }
     .data-table { width: 100%; border-collapse: collapse; min-width: 720px; }
-    .data-table.baseline-table { min-width: 980px; }
-    .data-table.schedule-table { min-width: 1160px; }
+    .data-table.baseline-table { min-width: 1180px; }
+    .point-select {
+      width:100%; min-width:128px; max-width:180px;
+      padding:5px 8px; border:1px solid var(--border); border-radius:6px;
+      font-size:12px; color:var(--text-primary); background:#fff; outline:none;
+      transition:border-color var(--transition), box-shadow var(--transition);
+    }
+    .point-select:focus-visible {
+      border-color:var(--primary); box-shadow:0 0 0 2px rgba(30,64,175,.15);
+    }
+    .data-table.schedule-table { min-width: 1320px; }
     .data-table thead th {
       padding: 10px 12px;
       text-align: left;
@@ -248,6 +257,34 @@
     }
     .data-table tbody tr:hover { background: #FAFCFF; }
     .schedule-row.batch-start td { border-top: 2px solid var(--border); }
+    .schedule-row.row-covered td {
+      background: #F1F5F9;
+      color: var(--text-hint);
+    }
+    .schedule-row.row-covered:hover td { background: #E8EEF5; }
+    .schedule-row.row-covered .status-tag { opacity: .85; }
+    .covered-badge {
+      display: inline-block;
+      margin-left: 6px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      background: #E2E8F0;
+      color: var(--text-secondary);
+      vertical-align: middle;
+    }
+    .interval-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 16px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+      padding-top: 14px;
+      border-top: 1px dashed var(--border-light);
+    }
+    .interval-row .form-group { max-width: 280px; }
+    .batch-guard-cell { font-size: 12px; color: var(--text-secondary); line-height: 1.5; max-width: 200px; }
 
     .table-input {
       width: 76px;
@@ -411,9 +448,9 @@
             <span class="anno-tag">版本信息</span>
             <div class="anno-body">
               <p><b>当前版本：</b>v2.4</p>
-              <p><b>更新日期：</b>2026-07-02</p>
-              <p><b>变更概述：</b>「多工况探索」为 v2.4 新增独立功能模块（主动激励 · 多工况探索），本页为该模块阶段一"策略制定"工作台的首个版本。评审修订：基准线与执行计划按设备类型统一设定、去除范围二次确认与冻结环节、历史数据比对改为生成时自动排除。</p>
-              <p><b>本页说明：</b>本页面向实施人员，用于离线编排一次探索策略：① 确定开机组合与绑定 → ② 按设备类型手动录入基准线 → ③ 配置调整步长生成执行计划（生成时自动排除历史已覆盖工况点）→ ④ 审核勾选执行计划清单并保存草稿。全程不下发、不动设备，只产出一份执行计划表；执行计划生成并保存后可跳转执行监控页发起执行。</p>
+              <p><b>更新日期：</b>2026-07-10</p>
+              <p><b>变更概述：</b>对齐最新需求口径：① 阶段一输入排程间隔时长（默认 15min，写入稳态等待与预计时长 est=间隔+10）；② 阶段一绑定探索下发策略（允许手动/自动）与安全回退策略，开跑前必绑边界/仿真/下发/回退；③ <b>无冻结步骤</b>，草稿态可持续改，排程就绪后直接从本页「发起执行」；④ 历史已覆盖点灰显保留在清单、默认不勾选、可强制勾回；⑤ 冷却塔批次展示 batch_guard 温差监测约束；⑥ 明确两套下发勿混（寻优下发执行期强制手动，探索下发可自动）。</p>
+              <p><b>本页说明：</b>本页面向实施人员，用于离线编排一次探索策略：① 确定开机组合并绑定安全边界/仿真/探索下发/安全回退 → ② 按设备类型手动录入基准线 → ③ 配置调整步长与排程间隔时长并生成执行计划 → ④ 审核勾选（含已覆盖灰显点可勾回）→ 满足就绪条件后从本页发起执行。全程不下发、不动设备；草稿可改开机组合、边界/仿真绑定、勾选、步长、间隔、下发/回退；进入执行中后排程才锁定。</p>
             </div>
           </div>
 
@@ -423,22 +460,23 @@
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
               <p><b>关联模块：</b>多工况探索 — 策略制定（阶段一）</p>
-              <p>「多工况探索」是 v2.4 新增的独立功能模块，目标是在受控、安全前提下主动驱动冷站走到被动运行走不到的稀缺工况，为模型训练补充样本。模块内分三阶段：<b>策略制定</b>（本页，离线编排，不下发不动设备）→<b>执行</b>（按已生成并保存的执行计划连续下发 + 运行稳定后记录）→<b>验证</b>（训练完成后对比预测值与实测值，不保存）。策略归属创建时选定的目标系统（本页演示：3#数据中心水冷冷水系统），本页只读展示。</p>
-              <p><b>本页覆盖：</b>确定开机组合与绑定安全边界/仿真模型、按设备类型（设备类型）手动录入基准线并做边界校验、配置调整步长生成执行计划（生成时按历史数据比对自动排除已覆盖点）、执行计划清单审核勾选与保存草稿。</p>
-              <p><b>本期不覆盖：</b>设备开关机 / 加减机探索；基准线自动求解；执行下发与运行稳定（见执行监控页）；验证对比展示（见验证对比页）。</p>
+              <p>「多工况探索」是 v2.4 新增的独立功能模块，目标是在受控、安全前提下主动驱动冷站走到被动运行走不到的稀缺工况，为模型训练补充样本。模块内分三阶段：<b>策略制定</b>（本页，离线编排，不下发不动设备）→<b>执行</b>（按排程连续下发 + 判稳后归档）→<b>验证</b>（对归档探索点用重训后模型重算预测 vs 归档实测，不入库）。策略归属创建时选定的目标系统（本页演示：3#数据中心水冷冷水系统），本页只读展示。</p>
+              <p><b>本页覆盖：</b>开机组合；绑定安全边界 / 仿真实例 / 探索下发策略（允许手动或自动）/ 安全回退策略；基准线录入与边界校验；补偿步长 + 排程间隔时长生成排程；历史已覆盖点灰显保留可勾回；冷却塔批次 batch_guard；审核勾选后从本页发起执行。</p>
+              <p><b>两套下发勿混：</b>寻优下发策略（柔性/全局）在探索执行期须为「手动」；本页绑定的是探索下发策略，允许「手动」或「自动」，只控制本模块排程如何推进。</p>
+              <p><b>本期不覆盖：</b>设备开关机 / 加减机探索；基准线自动求解；执行下发与判稳归档（见执行详情页）；验证详情展示（见验证详情页）。</p>
             </div>
           </div>
 
           <div class="anno anno-state" data-version="v2.4">
             <span class="anno-tag">状态说明</span>
             <span class="anno-version">v2.4</span>
-            <span class="anno-source">产品推断</span>
+            <span class="anno-source">需求文档</span>
             <div class="anno-body">
               <p><b>关联模块：</b>整页状态（策略制定工作台）</p>
               <ul>
-                <li><b>新建态（默认，无 URL 参数）：</b>① 开机组合按常见组合默认勾选；② 基准值留空待录入；④ 执行计划清单区展示"尚未生成执行计划"空态；"生成执行计划"按钮置灰（门控条件：②全部行基准值通过边界校验）。</li>
-                <li><b>已生成态：</b>② 全部行基准值录入且边界校验通过后，"生成执行计划"按钮可点击；点击后系统自动完成自动跳过历史已有工况，④ 执行计划清单区展开展示执行计划结果（历史已覆盖点不出现在清单中）。可点"保存草稿"保存，草稿可随时回来继续编辑。</li>
-                <li><b>只读查看态（本页演示：URL 加 <code>?mode=view</code>）：</b>顶部出现"当前为只读查看模式"提示条；① ② ③ ④ 全部输入控件置灰禁用；④ 按钮区仅保留"发起执行"按钮，跳转执行监控页。</li>
+                <li><b>新建态（默认，无 URL 参数）：</b>① 开机组合按常见组合默认勾选；绑定四项可改；② 基准值留空；③ 间隔默认 15；④ 清单空态；「生成执行计划」置灰（须②全部行边界校验通过）；「发起执行」在未就绪时置灰（须已生成 + 四项已绑 + 至少勾选 1 点）。</li>
+                <li><b>已生成排程（草稿）：</b>④ 展开展示排程（含已覆盖灰显行，默认不勾选）；可保存草稿、持续调整勾选与绑定；满足就绪条件后「发起执行」可用并跳转执行详情。</li>
+                <li><b>只读查看态（<code>?mode=view</code>）：</b>顶部只读提示；全部输入只读；仅保留「发起执行」跳转。</li>
               </ul>
             </div>
           </div>
@@ -477,7 +515,7 @@
               <table class="anno-table">
                 <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>校验规则</th><th>默认值</th><th>备注</th></tr></thead>
                 <tbody>
-                  <tr><td>策略名称</td><td>文本输入（内嵌于标题）</td><td>是</td><td>非空；建议体现探索对象 + 时间，便于列表检索</td><td>新建为空，占位"请输入策略名称，如「冷冻泵变频探索-2026Q3」"</td><td>草稿态可修改，发起执行后随执行计划一并锁定（来源：产品推断）；本页 <code>?mode=view</code> 演示态展示为只读"冷冻泵变频探索-2026Q3"，对应列表页同名策略记录</td></tr>
+                  <tr><td>策略名称</td><td>文本输入（内嵌于标题）</td><td>是</td><td>非空；建议体现探索对象 + 时间，便于列表检索</td><td>新建为空，占位"请输入策略名称，如「冷冻泵变频探索-2026Q3」"</td><td>草稿态可修改；本页 <code>?mode=view</code> 展示为只读"冷冻泵变频探索-2026Q3"</td></tr>
                 </tbody>
               </table>
             </div>
@@ -551,9 +589,28 @@
                   <label class="field-label">绑定仿真模型<span class="required">*</span></label>
                   <select class="field-select" id="simSelect">
                     <option value="">请选择</option>
-                    <option>1号集成冷站仿真</option>
+                    <option selected>1号集成冷站仿真</option>
                     <option>2号集成冷站仿真</option>
                     <option>3号集成冷站仿真</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="field-label">绑定探索下发策略<span class="required">*</span></label>
+                  <select class="field-select" id="dispatchSelect">
+                    <option value="">请选择</option>
+                    <option value="手动下发" selected>手动下发</option>
+                    <option value="自动下发">自动下发</option>
+                    <option value="末端手动下发">末端手动下发</option>
+                  </select>
+                  <p class="field-hint field-hint-annoonly">探索下发允许手动或自动，只控制本模块排程推进方式；勿与寻优下发（执行期须手动）混淆</p>
+                </div>
+                <div class="form-group">
+                  <label class="field-label">绑定安全回退策略<span class="required">*</span></label>
+                  <select class="field-select" id="fallbackSelect">
+                    <option value="">请选择</option>
+                    <option selected>水泵、冷水主机故障安全回退策略</option>
+                    <option>冷却塔故障安全回退策略</option>
+                    <option>末端侧安全回退策略</option>
                   </select>
                 </div>
               </div>
@@ -565,14 +622,16 @@
             <span class="anno-version">v2.4</span>
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>① 开机组合与绑定</p>
+              <p><b>关联模块：</b>① 开机组合与绑定（含探索下发 / 安全回退）</p>
               <table class="anno-table">
                 <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>校验规则</th><th>默认值</th><th>备注</th></tr></thead>
                 <tbody>
-                  <tr><td>所属系统</td><td>只读文本</td><td>—</td><td>创建策略时已选定，本页不可修改</td><td>本页演示："3#数据中心水冷冷水系统"</td><td>策略归属目标系统；开机组合、基准线、执行计划均在该目标系统范围内取数与下发</td></tr>
-                  <tr><td>设备开机组合（冷水主机 / 冷冻泵 / 冷却泵 / 冷却塔）</td><td>Checkbox 多选</td><td>是（至少 1 台）</td><td>至少勾选 1 台设备方可继续录入基准线</td><td>按当前实际开机设备预勾选（本页演示：1/2号冷水主机、1/2/3号冷冻泵、1/2号冷却泵、1/2号冷却塔，共 9 台）</td><td>开机组合快照仍是设备实例级，保存后写入策略快照 <code>device_combo</code>，执行期用于一致性校验（开机设备变化即中止，见需求 8.5）</td></tr>
-                  <tr><td>绑定安全边界</td><td>下拉单选</td><td>是</td><td>需为已生成的安全边界策略；仅列出与本策略系统类型匹配的边界</td><td>空（本页演示默认"正常策略2"）</td><td>决定②基准线边界校验与探索范围默认值的取值来源，选项对齐「安全边界」列表页已有名称</td></tr>
-                  <tr><td>绑定仿真模型</td><td>下拉单选</td><td>是</td><td>需为已建模完成的仿真模型</td><td>空（本页演示默认"1号集成冷站仿真"）</td><td>执行期每步运行稳定后查询该模型最新结果并记录；验证期查询同一模型做预测 vs 实测对比</td></tr>
+                  <tr><td>所属系统</td><td>只读文本</td><td>—</td><td>创建策略时已选定，本页不可修改</td><td>本页演示："3#数据中心水冷冷水系统"</td><td>策略归属目标系统</td></tr>
+                  <tr><td>设备开机组合</td><td>Checkbox 多选</td><td>是（至少 1 台）</td><td>至少勾选 1 台</td><td>按当前实际开机预勾选</td><td>草稿可改；执行期一致性校验锚点</td></tr>
+                  <tr><td>绑定安全边界</td><td>下拉单选</td><td>是</td><td>开跑前必选</td><td>空（演示默认"正常策略2"）</td><td>草稿可改</td></tr>
+                  <tr><td>绑定仿真模型</td><td>下拉单选</td><td>是</td><td>开跑前必选</td><td>空（演示默认"1号集成冷站仿真"）</td><td>草稿可改；执行期判稳后查最新结果归档</td></tr>
+                  <tr><td>绑定探索下发策略</td><td>下拉单选</td><td>是</td><td>开跑前必选；允许手动/自动</td><td>空（演示默认"手动下发"）</td><td>只控制本模块排程推进；<b>草稿可改</b>；勿与寻优下发混淆</td></tr>
+                  <tr><td>绑定安全回退策略</td><td>下拉单选</td><td>是</td><td>开跑前必选</td><td>空（演示默认"水泵、冷水主机故障安全回退策略"）</td><td>复用安全回退策略页；<b>草稿可改</b></td></tr>
                 </tbody>
               </table>
             </div>
@@ -584,10 +643,10 @@
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
               <p><b>关联模块：</b>① 开机组合与绑定</p>
-              <p>开机组合将作为后续基准线、执行计划、执行一致性校验的锚点：勾选的设备类型决定②基准线录入表格覆盖的类型行，勾选的具体实例决定各类型行的"应用实例"范围；执行计划保存后该组合被固化为快照，执行前会校验"当前实际开机组合 == 策略快照"，不一致则拦截执行（见执行监控页）。</p>
+              <p>开机组合将作为后续基准线、执行计划、执行一致性校验的锚点。开跑前须已绑齐四项：安全边界、仿真实例、探索下发策略、安全回退策略；缺一则「发起执行」不可用。</p>
               <ul>
-                <li>未勾选任何设备时，②基准线表格无对应行，无法完成后续步骤（本页演示默认已按常见组合预勾选 9 台设备）。</li>
-                <li>"绑定安全边界""绑定仿真模型"均为必选下拉；草稿态下可随时重新勾选设备或重新绑定，发起执行后随执行计划一并锁定（来源：产品推断）。</li>
+                <li>草稿态：可随时调整开机组合、四项绑定、间隔、下发与回退。</li>
+                <li>进入执行中后排程才锁定；已开跑 run 用开跑快照，新开跑/续跑取主表当前值。</li>
               </ul>
             </div>
           </div>
@@ -599,8 +658,9 @@
             <div class="anno-body">
               <p><b>关联模块：</b>① 开机组合与绑定</p>
               <ul>
-                <li>开机组合仅允许勾选运行中设备的模拟量控制点，不涉及开关机 / 加减机探索（需求 2.3 原则 1：缩范围）。</li>
-                <li>草稿态下可随时调整开机组合、重新绑定安全边界 / 仿真模型，草稿可反复编辑；发起执行后执行计划锁定，组合与绑定不可再修改（后半句来源：产品推断）。</li>
+                <li>开机组合仅允许勾选运行中设备的模拟量控制点，不涉及开关机 / 加减机探索（需求 2.3 原则 1）。</li>
+                <li>未绑齐四项不可发起执行。</li>
+                <li>两套下发勿混：寻优下发（柔性/全局）执行期强制手动；本页探索下发允许自动。</li>
               </ul>
             </div>
           </div>
@@ -611,7 +671,7 @@
               <div class="section-head-main">
                 <span class="step-num">2</span>
                 <span class="section-title">基准线录入</span>
-                <span class="section-subtitle">按设备类型（设备类型）统一设定安全基准值，同类型开机实例同时下发相同设定值</span>
+                <span class="section-subtitle">按设备类型统一设定安全基准值；控制测点 / 反馈测点可改选（有初始默认），同类型开机实例同时下发相同设定值</span>
               </div>
             </div>
             <div class="section-body">
@@ -620,7 +680,8 @@
                   <thead>
                     <tr>
                       <th>设备类型</th>
-                      <th>控制变量</th>
+                      <th>控制测点</th>
+                      <th>反馈测点</th>
                       <th>基准值</th>
                       <th>边界校验</th>
                       <th>探索方向</th>
@@ -634,7 +695,16 @@
                         <div class="type-cell-name">冷冻泵</div>
                         <div class="apply-scope" data-scope-type="chwp">应用于已开机的 1号、2号、3号</div>
                       </td>
-                      <td>频率</td>
+                      <td>
+                        <select class="point-select control-point-select" aria-label="冷冻泵控制测点">
+                          <option value="频率设定" selected>频率设定</option>
+                        </select>
+                      </td>
+                      <td>
+                        <select class="point-select feedback-point-select" aria-label="冷冻泵反馈测点">
+                          <option value="频率反馈" selected>频率反馈</option>
+                        </select>
+                      </td>
                       <td>
                         <div class="unit-cell">
                           <input type="number" class="table-input baseline-input" step="0.01" placeholder="保留2位小数">
@@ -652,7 +722,16 @@
                         <div class="type-cell-name">冷却泵</div>
                         <div class="apply-scope" data-scope-type="cwp">应用于已开机的 1号、2号</div>
                       </td>
-                      <td>频率</td>
+                      <td>
+                        <select class="point-select control-point-select" aria-label="冷却泵控制测点">
+                          <option value="频率设定" selected>频率设定</option>
+                        </select>
+                      </td>
+                      <td>
+                        <select class="point-select feedback-point-select" aria-label="冷却泵反馈测点">
+                          <option value="频率反馈" selected>频率反馈</option>
+                        </select>
+                      </td>
                       <td>
                         <div class="unit-cell">
                           <input type="number" class="table-input baseline-input" step="0.01" placeholder="保留2位小数">
@@ -669,7 +748,22 @@
                         <div class="type-cell-name">冷却塔</div>
                         <div class="apply-scope" data-scope-type="ct">应用于已开机的 1号、2号</div>
                       </td>
-                      <td>风机频率</td>
+                      <td>
+                        <select class="point-select control-point-select" aria-label="冷却塔控制测点">
+                          <option value="频率设定" selected>频率设定</option>
+                          <option value="冷却水出水温度设定">冷却水出水温度设定</option>
+                          <option value="风机开机数量设定">风机开机数量设定</option>
+                          <option value="冷却塔逼近度设定">冷却塔逼近度设定</option>
+                        </select>
+                      </td>
+                      <td>
+                        <select class="point-select feedback-point-select" aria-label="冷却塔反馈测点">
+                          <option value="频率反馈" selected>频率反馈</option>
+                          <option value="风机频率反馈">风机频率反馈</option>
+                          <option value="冷却塔出水温度">冷却塔出水温度</option>
+                          <option value="风机开机数">风机开机数</option>
+                        </select>
+                      </td>
                       <td>
                         <div class="unit-cell">
                           <input type="number" class="table-input baseline-input" step="0.01" placeholder="保留2位小数">
@@ -687,7 +781,20 @@
                         <div class="type-cell-name">冷水主机</div>
                         <div class="apply-scope" data-scope-type="chiller">应用于已开机的 1号、2号</div>
                       </td>
-                      <td>出水温度设定</td>
+                      <td>
+                        <select class="point-select control-point-select" aria-label="冷水主机控制测点">
+                          <option value="冷冻出水温度设定" selected>冷冻出水温度设定</option>
+                          <option value="最大电流限制设定">最大电流限制设定</option>
+                        </select>
+                      </td>
+                      <td>
+                        <select class="point-select feedback-point-select" aria-label="冷水主机反馈测点">
+                          <option value="冷冻水出水温度" selected>冷冻水出水温度</option>
+                          <option value="冷冻水进水温度">冷冻水进水温度</option>
+                          <option value="冷却水出水温度">冷却水出水温度</option>
+                          <option value="冷却水进水温度">冷却水进水温度</option>
+                        </select>
+                      </td>
                       <td>
                         <div class="unit-cell">
                           <input type="number" class="table-input baseline-input" step="0.01" placeholder="保留2位小数">
@@ -716,8 +823,9 @@
                 <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>校验规则</th><th>默认值</th><th>备注</th></tr></thead>
                 <tbody>
                   <tr><td>设备类型（含应用实例说明）</td><td>只读文本</td><td>—</td><td>—</td><td>按①勾选设备涉及的设备类型（设备类型）生成一行，固定 4 类：冷冻泵 / 冷却泵 / 冷却塔 / 冷水主机</td><td>类型名下方注明应用范围（如"冷冻泵 · 应用于已开机的 1号、2号、3号"），随①区勾选实时联动刷新</td></tr>
-                  <tr><td>控制变量</td><td>只读文本</td><td>—</td><td>—</td><td>按探索对象口径表（需求六）匹配</td><td>冷水主机 → 出水温度设定；冷冻泵/冷却泵 → 频率；冷却塔 → 风机频率</td></tr>
-                  <tr><td>基准值</td><td>数字输入</td><td>是</td><td>须落在安全边界（硬∩软）内，保留 2 位小数（四舍五入）；越界不可生成执行计划</td><td>空，占位提示"保留2位小数"</td><td>按设备类型统一设定，同类型所有开机实例同时下发相同设定值（例：开机了 1号、2号冷冻泵，则对两台同时下发同一频率）；用户手动输入，不做自动求解；探索起点（泵/塔为频率下侧起点，主机为出水温度上侧起点，见需求 7.2）</td></tr>
+                  <tr><td>控制测点</td><td>下拉选择</td><td>是</td><td>须选自该设备类型标准物模型可写测点；草稿可改</td><td>冷冻泵/冷却泵/冷却塔 → 频率设定；冷水主机 → 冷冻出水温度设定</td><td>命名与标准属性 ID 对齐标准物模型：泵/塔 频率设定(3_101_0)；主机 冷冻出水温度设定(3_301_0)。冷却塔另可选冷却水出水温度设定等</td></tr>
+                  <tr><td>反馈测点</td><td>下拉选择</td><td>是</td><td>须选自该设备类型标准物模型可读测点；草稿可改</td><td>冷冻泵/冷却泵/冷却塔 → 频率反馈；冷水主机 → 冷冻水出水温度</td><td>泵/塔 频率反馈(1_1159_0)；主机 冷冻水出水温度(1_24_0)。冷却塔另可选组件「风机频率反馈」(1_1151_0)</td></tr>
+                  <tr><td>基准值</td><td>数字输入</td><td>是</td><td>须落在安全边界（硬∩软）内，保留 2 位小数（四舍五入）；越界不可生成执行计划</td><td>空，占位提示"保留2位小数"</td><td>按设备类型统一设定，同类型所有开机实例同时下发相同设定值（例：开机了 1号、2号冷冻泵，则对两台同时下发同一频率设定）；用户手动输入，不做自动求解；探索起点见需求 7.2</td></tr>
                   <tr><td>边界校验状态</td><td>只读状态标签</td><td>—</td><td>基准值为空显示"待录入"；落在边界内显示"通过"；超出显示"越界"</td><td>待录入</td><td>输入即实时校验，无需额外点击"校验"；任意一行"越界"或"待录入"时③"生成执行计划"按钮置灰</td></tr>
                   <tr><td>探索方向</td><td>只读标签</td><td>—</td><td>—</td><td>按设备类型固定（需求六）：泵/塔往上，主机出水温度往下</td><td>冷却塔往上探在冷凝侧温差保护场景下有例外，属执行期监测（需求 8.5），本页仅展示方向</td></tr>
                   <tr><td>探索范围下限 / 上限</td><td>数字输入</td><td>是</td><td>默认 = 安全边界侧限值；可编辑，仍须落在安全边界内；无需二次确认</td><td>取绑定安全边界对应变量的软边界侧限值</td><td>往上方向：下限=基准值、上限=边界上限；往下方向：下限=边界下限、上限=基准值（需求 7.2）；本页默认值为简化演示，不随基准值实时联动重算，实际以后端为准</td></tr>
@@ -733,7 +841,8 @@
             <div class="anno-body">
               <p><b>关联模块：</b>② 基准线录入</p>
               <ul>
-                <li><b>行来源：</b>表格行 = ①中已勾选开机设备涉及的设备类型（设备类型）× 其对应控制变量（按需求六口径表匹配），按类型一行，不按设备实例逐台生成行；每行"应用实例"说明随①区勾选联动刷新。</li>
+                <li><b>行来源：</b>表格行 = ①中已勾选开机设备涉及的设备类型，按类型一行；控制测点 / 反馈测点有标准物模型默认值，可改选；不按设备实例逐台生成行；每行"应用实例"说明随①区勾选联动刷新。</li>
+                <li><b>测点来源：</b>选项取自标准物模型（冷冻水泵n / 冷却水泵n / 冷却塔n / 水冷冷水机组n）；默认对为频率设定↔频率反馈、冷冻出水温度设定↔冷冻水出水温度。</li>
                 <li><b>边界校验实时联动：</b>基准值输入后立即与该行安全边界比对，实时刷新"边界校验状态"标签，无需点击额外的"校验"按钮。</li>
                 <li><b>与③④的联动：</b>本表所有行基准值均通过边界校验，才会解锁③"生成执行计划"按钮（探索范围默认取安全边界、可编辑，无需二次确认）；点击生成执行计划后 ④ 区域展开展示执行计划结果。</li>
               </ul>
@@ -759,7 +868,7 @@
               <div class="section-head-main">
                 <span class="step-num">3</span>
                 <span class="section-title">调整步长与生成执行计划</span>
-                <span class="section-subtitle">按设备类型配置默认步长，逐级生成执行计划</span>
+                <span class="section-subtitle">按设备类型配置默认步长，并输入排程间隔时长后生成执行计划</span>
               </div>
             </div>
             <div class="section-body">
@@ -771,26 +880,36 @@
                   <tbody>
                     <tr>
                       <td>冷冻泵 / 二次泵</td>
-                      <td>频率</td>
-                      <td><div class="unit-cell"><input type="number" class="table-input" id="stepChwp" step="0.1" value="2.00"><span class="unit-suffix">Hz</span></div></td>
+                      <td>频率设定</td>
+                      <td><div class="unit-cell"><input type="number" class="table-input step-input" id="stepChwp" step="0.1" value="2.00"><span class="unit-suffix">Hz</span></div></td>
                     </tr>
                     <tr>
                       <td>冷却泵</td>
-                      <td>频率</td>
-                      <td><div class="unit-cell"><input type="number" class="table-input" id="stepCwp" step="0.1" value="2.00"><span class="unit-suffix">Hz</span></div></td>
+                      <td>频率设定</td>
+                      <td><div class="unit-cell"><input type="number" class="table-input step-input" id="stepCwp" step="0.1" value="2.00"><span class="unit-suffix">Hz</span></div></td>
                     </tr>
                     <tr>
                       <td>冷却塔</td>
-                      <td>风机频率</td>
-                      <td><div class="unit-cell"><input type="number" class="table-input" id="stepCt" step="0.1" value="2.00"><span class="unit-suffix">Hz</span></div></td>
+                      <td>频率设定</td>
+                      <td><div class="unit-cell"><input type="number" class="table-input step-input" id="stepCt" step="0.1" value="2.00"><span class="unit-suffix">Hz</span></div></td>
                     </tr>
                     <tr>
                       <td>冷水主机</td>
-                      <td>出水温度设定</td>
-                      <td><div class="unit-cell"><input type="number" class="table-input" id="stepChiller" step="0.1" value="0.50"><span class="unit-suffix">℃</span></div></td>
+                      <td>冷冻出水温度设定</td>
+                      <td><div class="unit-cell"><input type="number" class="table-input step-input" id="stepChiller" step="0.1" value="0.50"><span class="unit-suffix">℃</span></div></td>
                     </tr>
                   </tbody>
                 </table>
+              </div>
+              <div class="interval-row">
+                <div class="form-group">
+                  <label class="field-label">排程间隔时长<span class="required">*</span></label>
+                  <div class="unit-cell">
+                    <input type="number" class="field-control" id="intervalDurationInput" min="1" step="1" value="15" style="width:120px;">
+                    <span class="unit-suffix">分钟</span>
+                  </div>
+                  <p class="field-hint field-hint-annoonly">须 &gt; 0；默认 15；写入各行稳态等待条件；单步预计时长 = 间隔 + 10；草稿可改</p>
+                </div>
               </div>
               <div class="section-actions-row">
                 <button class="btn btn-primary" id="btnGenerateSchedule" disabled>生成执行计划</button>
@@ -808,10 +927,11 @@
               <table class="anno-table">
                 <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>校验规则</th><th>默认值</th><th>备注</th></tr></thead>
                 <tbody>
-                  <tr><td>默认调整步长（冷冻泵/二次泵、冷却泵、冷却塔、冷水主机 4 行）</td><td>数字输入，按设备类型</td><td>是</td><td>须为正数；生成执行计划前可调整</td><td>冷冻泵/二次泵 2Hz；冷却泵 2Hz；冷却塔 2Hz；冷水主机 0.5℃</td><td>调整步长按设备类型配置，不要求逐台设备单独设置；同类型下所有被探变量共用该步长（需求 7.3）</td></tr>
+                  <tr><td>默认调整步长（4 行）</td><td>数字输入</td><td>是</td><td>须为正数</td><td>泵/塔 2Hz；主机 0.5℃</td><td>按设备类型配置；草稿可改</td></tr>
+                  <tr><td>排程间隔时长</td><td>数字输入（分钟）</td><td>是</td><td>须 &gt; 0</td><td>15</td><td>写入 dwell_condition；est_duration = 间隔 + 10；<b>草稿可改</b></td></tr>
                 </tbody>
               </table>
-              <p><b>生成执行计划按钮：</b>②全部行完成基准值录入且边界校验通过前置灰不可点击；满足条件后点击将自动完成自动跳过历史已有工况并展开 ④ 执行计划清单区域。</p>
+              <p><b>生成执行计划：</b>②全部行边界校验通过后可点；生成时标注历史已覆盖点（灰显、默认不勾选、保留在清单），并按当前间隔写入稳态等待与预计时长；冷却塔批次写入 batch_guard。</p>
             </div>
           </div>
 
@@ -822,8 +942,9 @@
             <div class="anno-body">
               <p><b>关联模块：</b>③ 调整步长与生成执行计划</p>
               <ul>
-                <li><b>置灰条件：</b>②基准线表格中任意一行未完成基准值录入 / 边界校验未通过，"生成执行计划"按钮均保持置灰，右侧提示文案说明原因。</li>
-                <li><b>点击后：</b>系统从各类型行基准值按对应步长，在探索范围内逐级生成工况点（往上方向递增、往下方向递减），并<b>自动完成自动跳过历史已有工况</b>——被历史覆盖（近 90 天邻域窗口内稳态样本 n≥20）的工况点不出现在清单里，仅在④汇总条显示"已自动排除 N 个历史已覆盖工况点"；随后展开 ④ 执行计划清单。草稿态下允许反复调整①②③后重新点击生成，覆盖刷新执行计划（本页 Demo 展示同一份预置执行计划结果）。</li>
+                <li><b>置灰条件：</b>②任一行未通过边界校验时「生成执行计划」置灰。</li>
+                <li><b>点击后：</b>按步长在探索范围内生成工况点；历史已覆盖点（n≥20）灰显保留在④清单、默认不勾选，允许强制勾回；汇总条展示已覆盖灰显点数；展开④。</li>
+                <li>草稿态可反复调整①②③后重新生成；间隔输入可随时改（改后可刷新清单中的等待条件文案，本页演示即时刷新）。</li>
               </ul>
             </div>
           </div>
@@ -833,14 +954,12 @@
             <span class="anno-version">v2.4</span>
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>④ 执行计划清单 — 历史数据比对自动排除规则（生成执行计划时后台自动执行，界面不常显）</p>
+              <p><b>关联模块：</b>历史回溯与间隔写入（需求 7.3 / 7.4）</p>
               <ul>
-                <li><b>取数：</b>对每个执行计划点，查被探变量对应测点近 T = 90 天历史数据（项目级可配）。</li>
-                <li><b>邻域窗口：</b>以执行计划点目标值 v 为中心，取 v ± 半个调整步长为邻域窗口（如步长 2Hz、目标 34Hz → 窗口 [33,35)，各点窗口互不重叠、无缝覆盖）。</li>
-                <li><b>稳态过滤：</b>窗口内仅统计稳态样本（复用三层预处理稳态筛选口径）。</li>
-                <li><b>判定与排除：</b>窗口内稳态样本数 n ≥ N_hist = 20 → 判"已覆盖"，该工况点在生成执行计划时被自动排除，<b>不出现在④执行计划清单中</b>，仅计入汇总条"已自动排除 N 个历史已覆盖工况点"；n &lt; 20 → 判"空白/稀疏"，保留进清单。</li>
-                <li><b>人工复核：</b>④执行计划清单每行展示历史样本 n 值（保留的点均为 n&lt;20 的稀疏点），供审核复核。</li>
-                <li>T、N_hist 均支持项目级配置覆盖，不叠加开机组合一致性过滤。</li>
+                <li><b>邻域窗口：</b>目标值 v ± 半个调整步长；窗口内稳态样本 n ≥ 20 → 已覆盖（灰显、默认不勾选、可勾回）；n &lt; 20 → 空白/稀疏（默认勾选）。</li>
+                <li><b>间隔写入：</b>dwell_condition =「停留 ≥{N}min 且判稳后再进下一步」；est_duration = N + 10。</li>
+                <li><b>batch_guard：</b>冷却塔批次写入「须监测冷冻/冷却温差 ≤ 边界下限 + 1℃」；其他批次为「—」。</li>
+                <li>已覆盖点<b>不从清单消失</b>，仅灰显且默认不勾选。</li>
               </ul>
             </div>
           </div>
@@ -850,16 +969,16 @@
             <div class="section-head">
               <div class="section-head-main">
                 <span class="step-num">4</span>
-                <span class="section-title">执行计划清单与保存</span>
-                <span class="section-subtitle">按设备类型审核勾选工况点，保存草稿后可发起执行</span>
+                <span class="section-title">执行计划清单</span>
+                <span class="section-subtitle">审核勾选后可发起执行</span>
               </div>
             </div>
             <div class="section-body">
               <div class="empty-state" id="scheduleEmptyState">
-                尚未生成执行计划。请先完成②基准线录入与③调整步长配置，点击"生成执行计划"后在此查看执行计划清单。
+                尚未生成执行计划。请先完成②基准线录入与③步长/间隔配置，点击"生成执行计划"后在此查看执行计划清单。
               </div>
-              <div id="scheduleContent" style="display:none;" data-excluded-count="4">
-                <div class="schedule-summary" id="scheduleSummary">共 <b>9</b> 步，预计总时长 <b>225 分钟（约 3.8 小时）</b>，已自动排除 <b>4</b> 个历史已覆盖工况点；拟执行 <b>9</b> 步</div>
+              <div id="scheduleContent" style="display:none;" data-covered-count="3">
+                <div class="schedule-summary" id="scheduleSummary">共 <b>12</b> 步（含已覆盖灰显 <b>3</b> 点，默认不勾选可强制勾回），预计总时长 <b>225 分钟（约 3.8 小时）</b>；拟执行 <b>9</b> 步</div>
                 <div class="table-toolbar">
                   <button class="btn btn-ghost btn-sm" id="btnSelectAll">全选</button>
                   <button class="btn btn-ghost btn-sm" id="btnSelectNone">清空勾选</button>
@@ -876,125 +995,174 @@
                         <th>补偿 / 步长</th>
                         <th>历史样本 n 值</th>
                         <th>安全边界校验</th>
+                        <th>批次联动约束</th>
                         <th>稳态等待条件</th>
                         <th>单步预计时长</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr class="schedule-row batch-start" data-duration-min="25">
+                      <tr class="schedule-row row-covered batch-start" data-duration-min="25" data-batch="chwp">
+                        <td><input type="checkbox" class="schedule-checkbox"></td>
+                        <td>冷冻泵变频探索 <span class="covered-badge">已覆盖</span></td>
+                        <td>冷冻泵（1号、2号、3号 同时下发）/ 频率设定</td>
+                        <td>1</td>
+                        <td>32.00 Hz</td>
+                        <td>+2.00 Hz</td>
+                        <td><span class="status-tag">n=42</span></td>
+                        <td><span class="status-tag pass">通过</span></td>
+                        <td class="batch-guard-cell">—</td>
+                        <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
+                        <td class="est-cell">25 min</td>
+                      </tr>
+                      <tr class="schedule-row row-covered" data-duration-min="25" data-batch="chwp">
+                        <td><input type="checkbox" class="schedule-checkbox"></td>
+                        <td>冷冻泵变频探索 <span class="covered-badge">已覆盖</span></td>
+                        <td>冷冻泵（1号、2号、3号 同时下发）/ 频率设定</td>
+                        <td>2</td>
+                        <td>34.00 Hz</td>
+                        <td>+2.00 Hz</td>
+                        <td><span class="status-tag">n=28</span></td>
+                        <td><span class="status-tag pass">通过</span></td>
+                        <td class="batch-guard-cell">—</td>
+                        <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
+                        <td class="est-cell">25 min</td>
+                      </tr>
+                      <tr class="schedule-row" data-duration-min="25" data-batch="chwp">
                         <td><input type="checkbox" class="schedule-checkbox" checked></td>
                         <td>冷冻泵变频探索</td>
-                        <td>冷冻泵（1号、2号、3号 同时下发）/ 频率</td>
-                        <td>1</td>
+                        <td>冷冻泵（1号、2号、3号 同时下发）/ 频率设定</td>
+                        <td>3</td>
                         <td>36.00 Hz</td>
                         <td>+2.00 Hz</td>
                         <td><span class="status-tag">n=8</span></td>
                         <td><span class="status-tag pass">通过</span></td>
-                        <td>停留≥15min且温度稳定</td>
-                        <td>25 min</td>
+                        <td class="batch-guard-cell">—</td>
+                        <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
+                        <td class="est-cell">25 min</td>
                       </tr>
-                      <tr class="schedule-row" data-duration-min="25">
+                      <tr class="schedule-row" data-duration-min="25" data-batch="chwp">
                         <td><input type="checkbox" class="schedule-checkbox" checked></td>
                         <td>冷冻泵变频探索</td>
-                        <td>冷冻泵（1号、2号、3号 同时下发）/ 频率</td>
-                        <td>2</td>
+                        <td>冷冻泵（1号、2号、3号 同时下发）/ 频率设定</td>
+                        <td>4</td>
                         <td>38.00 Hz</td>
                         <td>+2.00 Hz</td>
                         <td><span class="status-tag">n=3</span></td>
                         <td><span class="status-tag pass">通过</span></td>
-                        <td>停留≥15min且温度稳定</td>
-                        <td>25 min</td>
+                        <td class="batch-guard-cell">—</td>
+                        <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
+                        <td class="est-cell">25 min</td>
                       </tr>
-                      <tr class="schedule-row batch-start" data-duration-min="25">
+                      <tr class="schedule-row row-covered batch-start" data-duration-min="25" data-batch="cwp">
+                        <td><input type="checkbox" class="schedule-checkbox"></td>
+                        <td>冷却泵变频探索 <span class="covered-badge">已覆盖</span></td>
+                        <td>冷却泵（1号、2号 同时下发）/ 频率设定</td>
+                        <td>1</td>
+                        <td>32.00 Hz</td>
+                        <td>+2.00 Hz</td>
+                        <td><span class="status-tag">n=35</span></td>
+                        <td><span class="status-tag pass">通过</span></td>
+                        <td class="batch-guard-cell">—</td>
+                        <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
+                        <td class="est-cell">25 min</td>
+                      </tr>
+                      <tr class="schedule-row" data-duration-min="25" data-batch="cwp">
                         <td><input type="checkbox" class="schedule-checkbox" checked></td>
                         <td>冷却泵变频探索</td>
-                        <td>冷却泵（1号、2号 同时下发）/ 频率</td>
-                        <td>1</td>
+                        <td>冷却泵（1号、2号 同时下发）/ 频率设定</td>
+                        <td>2</td>
                         <td>34.00 Hz</td>
                         <td>+2.00 Hz</td>
                         <td><span class="status-tag">n=12</span></td>
                         <td><span class="status-tag pass">通过</span></td>
-                        <td>停留≥15min且温度稳定</td>
-                        <td>25 min</td>
+                        <td class="batch-guard-cell">—</td>
+                        <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
+                        <td class="est-cell">25 min</td>
                       </tr>
-                      <tr class="schedule-row" data-duration-min="25">
+                      <tr class="schedule-row" data-duration-min="25" data-batch="cwp">
                         <td><input type="checkbox" class="schedule-checkbox" checked></td>
                         <td>冷却泵变频探索</td>
-                        <td>冷却泵（1号、2号 同时下发）/ 频率</td>
-                        <td>2</td>
+                        <td>冷却泵（1号、2号 同时下发）/ 频率设定</td>
+                        <td>3</td>
                         <td>36.00 Hz</td>
                         <td>+2.00 Hz</td>
                         <td><span class="status-tag">n=5</span></td>
                         <td><span class="status-tag pass">通过</span></td>
-                        <td>停留≥15min且温度稳定</td>
-                        <td>25 min</td>
+                        <td class="batch-guard-cell">—</td>
+                        <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
+                        <td class="est-cell">25 min</td>
                       </tr>
-                      <tr class="schedule-row" data-duration-min="25">
+                      <tr class="schedule-row" data-duration-min="25" data-batch="cwp">
                         <td><input type="checkbox" class="schedule-checkbox" checked></td>
                         <td>冷却泵变频探索</td>
-                        <td>冷却泵（1号、2号 同时下发）/ 频率</td>
-                        <td>3</td>
+                        <td>冷却泵（1号、2号 同时下发）/ 频率设定</td>
+                        <td>4</td>
                         <td>38.00 Hz</td>
                         <td>+2.00 Hz</td>
                         <td><span class="status-tag">n=0</span></td>
                         <td><span class="status-tag pass">通过</span></td>
-                        <td>停留≥15min且温度稳定</td>
-                        <td>25 min</td>
+                        <td class="batch-guard-cell">—</td>
+                        <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
+                        <td class="est-cell">25 min</td>
                       </tr>
-                      <tr class="schedule-row batch-start" data-duration-min="25">
+                      <tr class="schedule-row batch-start" data-duration-min="25" data-batch="ct">
                         <td><input type="checkbox" class="schedule-checkbox" checked></td>
                         <td>冷却塔变频探索</td>
-                        <td>冷却塔（1号、2号 同时下发）/ 风机频率</td>
+                        <td>冷却塔（1号、2号 同时下发）/ 频率设定设定</td>
                         <td>1</td>
                         <td>32.00 Hz</td>
                         <td>+2.00 Hz</td>
                         <td><span class="status-tag">n=15</span></td>
                         <td><span class="status-tag pass">通过</span></td>
-                        <td>停留≥15min且温度稳定</td>
-                        <td>25 min</td>
+                        <td class="batch-guard-cell">须监测冷冻/冷却温差 ≤ 边界下限 + 1℃</td>
+                        <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
+                        <td class="est-cell">25 min</td>
                       </tr>
-                      <tr class="schedule-row" data-duration-min="25">
+                      <tr class="schedule-row" data-duration-min="25" data-batch="ct">
                         <td><input type="checkbox" class="schedule-checkbox" checked></td>
                         <td>冷却塔变频探索</td>
-                        <td>冷却塔（1号、2号 同时下发）/ 风机频率</td>
+                        <td>冷却塔（1号、2号 同时下发）/ 频率设定设定</td>
                         <td>2</td>
                         <td>34.00 Hz</td>
                         <td>+2.00 Hz</td>
                         <td><span class="status-tag">n=6</span></td>
                         <td><span class="status-tag pass">通过</span></td>
-                        <td>停留≥15min且温度稳定</td>
-                        <td>25 min</td>
+                        <td class="batch-guard-cell">须监测冷冻/冷却温差 ≤ 边界下限 + 1℃</td>
+                        <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
+                        <td class="est-cell">25 min</td>
                       </tr>
-                      <tr class="schedule-row batch-start" data-duration-min="25">
+                      <tr class="schedule-row batch-start" data-duration-min="25" data-batch="chiller">
                         <td><input type="checkbox" class="schedule-checkbox" checked></td>
                         <td>冷水主机出水温度探索</td>
-                        <td>冷水主机（1号、2号 同时下发）/ 出水温度设定</td>
+                        <td>冷水主机（1号、2号 同时下发）/ 冷冻出水温度设定</td>
                         <td>1</td>
                         <td>8.50 ℃</td>
                         <td>-0.50 ℃</td>
                         <td><span class="status-tag">n=18</span></td>
                         <td><span class="status-tag pass">通过</span></td>
-                        <td>停留≥15min且温度稳定</td>
-                        <td>25 min</td>
+                        <td class="batch-guard-cell">—</td>
+                        <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
+                        <td class="est-cell">25 min</td>
                       </tr>
-                      <tr class="schedule-row" data-duration-min="25">
+                      <tr class="schedule-row" data-duration-min="25" data-batch="chiller">
                         <td><input type="checkbox" class="schedule-checkbox" checked></td>
                         <td>冷水主机出水温度探索</td>
-                        <td>冷水主机（1号、2号 同时下发）/ 出水温度设定</td>
+                        <td>冷水主机（1号、2号 同时下发）/ 冷冻出水温度设定</td>
                         <td>2</td>
                         <td>8.00 ℃</td>
                         <td>-0.50 ℃</td>
                         <td><span class="status-tag">n=9</span></td>
                         <td><span class="status-tag pass">通过</span></td>
-                        <td>停留≥15min且温度稳定</td>
-                        <td>25 min</td>
+                        <td class="batch-guard-cell">—</td>
+                        <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
+                        <td class="est-cell">25 min</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
                 <div class="action-bar">
                   <button class="btn btn-ghost" id="btnSaveDraft">保存草稿</button>
-                  <button class="btn btn-primary" id="btnGotoExec" onclick="location.href='多工况探索-执行监控.html'">发起执行 →</button>
+                  <button class="btn btn-primary" id="btnGotoExec" disabled>发起执行 →</button>
                 </div>
               </div>
             </div>
@@ -1005,20 +1173,21 @@
             <span class="anno-version">v2.4</span>
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>④ 执行计划清单与保存</p>
+              <p><b>关联模块：</b>④ 执行计划清单</p>
               <table class="anno-table">
                 <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>校验规则</th><th>默认值</th><th>备注</th></tr></thead>
                 <tbody>
-                  <tr><td>勾选框</td><td>Checkbox</td><td>—</td><td>—</td><td>清单内全部行默认勾选（历史已覆盖点已在生成时自动排除，不出现在清单里）</td><td>用户可取消勾选本次不执行的点，勾选状态随保存草稿留存</td></tr>
-                  <tr><td>探索批次 / 测试内容</td><td>只读文本</td><td>—</td><td>—</td><td>按设备类型分批（如"冷冻泵变频探索"）</td><td>同批次内按序号连续单变量步进，扫完一批次再扫下一批次</td></tr>
-                  <tr><td>被探对象 / 控制变量</td><td>只读文本</td><td>—</td><td>—</td><td>按设备类型写，并注明同时下发的开机实例（如"冷冻泵（1号、2号、3号 同时下发）/ 频率"）</td><td>同类型所有开机实例同时下发相同设定值，不逐台单独排步</td></tr>
-                  <tr><td>批次内序号</td><td>只读数字</td><td>—</td><td>—</td><td>批次内从 1 递增</td><td>对应"批次内第 n 步"</td></tr>
-                  <tr><td>目标设定值</td><td>只读数字</td><td>—</td><td>—</td><td>基准值 + 累计补偿</td><td>如"34.00 Hz""8.50 ℃"；按设备类型统一，一步对同类型全部开机实例生效</td></tr>
-                  <tr><td>补偿 / 步长</td><td>只读数字</td><td>—</td><td>—</td><td>取③对应设备类型步长</td><td>往上方向为正、往下方向为负</td></tr>
-                  <tr><td>历史样本 n 值</td><td>只读数字标签</td><td>—</td><td>—</td><td>如"n=5"</td><td>保留进清单的点均为 n&lt;20 的空白/稀疏点，展示 n 值供审核复核；排除规则见上方数据逻辑批注</td></tr>
-                  <tr><td>安全边界校验</td><td>只读状态标签</td><td>—</td><td>通过 / 越界</td><td>通过（生成逻辑保证不越界）</td><td>若因边界配置变更等原因出现"越界"，该行不建议勾选执行，需回到②③调整后重新生成</td></tr>
-                  <tr><td>稳态等待条件</td><td>只读文本</td><td>—</td><td>—</td><td>"停留≥15min且温度稳定"</td><td>对应需求 8.3 运行稳定的最小停留时长</td></tr>
-                  <tr><td>单步预计时长</td><td>只读数字</td><td>—</td><td>—</td><td>25 分钟 / 步（示意）</td><td>汇总为批次 / 总预计执行时长，展示于表格上方汇总条</td></tr>
+                  <tr><td>勾选框</td><td>Checkbox</td><td>—</td><td>草稿可改</td><td>稀疏点默认勾选；已覆盖灰显点默认不勾选，可强制勾回</td><td>已覆盖点保留在清单，不消失</td></tr>
+                  <tr><td>探索批次 / 测试内容</td><td>只读</td><td>—</td><td>—</td><td>按设备类型分批</td><td>已覆盖行带「已覆盖」角标并灰显</td></tr>
+                  <tr><td>被探对象 / 控制变量</td><td>只读</td><td>—</td><td>—</td><td>按类型 + 开机实例</td><td>—</td></tr>
+                  <tr><td>批次内序号</td><td>只读</td><td>—</td><td>—</td><td>批次内从 1 递增</td><td>—</td></tr>
+                  <tr><td>目标设定值</td><td>只读</td><td>—</td><td>—</td><td>基准 + 累计补偿</td><td>生成后随重新生成刷新；执行中锁定</td></tr>
+                  <tr><td>补偿 / 步长</td><td>只读</td><td>—</td><td>—</td><td>取③步长</td><td>—</td></tr>
+                  <tr><td>历史样本 n 值</td><td>只读</td><td>—</td><td>—</td><td>如 n=42 / n=8</td><td>n≥20 为已覆盖</td></tr>
+                  <tr><td>安全边界校验</td><td>只读</td><td>—</td><td>—</td><td>通过</td><td>—</td></tr>
+                  <tr><td>批次联动约束</td><td>只读</td><td>—</td><td>—</td><td>冷却塔：须监测冷冻/冷却温差 ≤ 边界下限 + 1℃；其他：—</td><td>对应 batch_guard</td></tr>
+                  <tr><td>稳态等待条件</td><td>只读</td><td>—</td><td>—</td><td>停留 ≥{间隔}min 且判稳后再进下一步</td><td>随间隔时长写入/刷新</td></tr>
+                  <tr><td>单步预计时长</td><td>只读</td><td>—</td><td>—</td><td>间隔 + 10（分钟）</td><td>汇总条按勾选累加</td></tr>
                 </tbody>
               </table>
             </div>
@@ -1029,13 +1198,11 @@
             <span class="anno-version">v2.4</span>
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>④ 执行计划清单与保存</p>
+              <p><b>关联模块：</b>④ 执行计划清单</p>
               <ul>
-                <li><b>全选：</b>勾选清单内全部行。</li>
-                <li><b>清空勾选：</b>取消清单内全部勾选，便于反向少量勾选。</li>
-                <li><b>保存草稿：</b>点击后保存当前执行计划与勾选状态，toast 提示"已保存草稿，可随时回来继续编辑或发起执行"；草稿可反复编辑。</li>
-                <li><b>发起执行：</b>跳转 <code>多工况探索-执行监控.html</code>；前提是执行计划已生成并保存，能否执行只看这一条件。发起执行后执行计划锁定，不可再修改（来源：产品推断）。</li>
-                <li>草稿态下可反复调整①②③后重新生成执行计划（④刷新），发起执行前均可修改。</li>
+                <li><b>全选 / 清空勾选：</b>草稿态可用；全选会勾上已覆盖灰显行（强制勾回）。</li>
+                <li><b>保存草稿：</b>保存当前排程与勾选/绑定；toast「已保存草稿…」。</li>
+                <li><b>发起执行：</b>校验已绑四项（边界/仿真/下发/回退）+ 至少勾选 1 点；就绪后跳转 <code>多工况探索-执行详情.html?ready=1</code>。</li>
               </ul>
             </div>
           </div>
@@ -1045,8 +1212,8 @@
             <span class="anno-version">v2.4</span>
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>④ 执行计划清单与保存 — 汇总条</p>
-              <p>"共 N 步" = 执行计划清单总行数（历史已覆盖点不计入，已在生成时排除）；"已自动排除 M 个历史已覆盖工况点" = 生成执行计划时被自动排除的点数（固定值，不随勾选变化）；"预计总时长"与"拟执行 K 步" = 当前已勾选（拟执行）行的数量与"单步预计时长"累加，随勾选状态变化实时重算。</p>
+              <p><b>关联模块：</b>④ 汇总条</p>
+              <p>「共 N 步」= 清单总行数（含已覆盖灰显）；「含已覆盖灰显 M 点」= hist_covered=true 的行数（默认不勾选可强制勾回）；「预计总时长 / 拟执行 K 步」= 当前已勾选行的 est_duration 累加，随勾选变化。进入执行中后排程才锁定。</p>
             </div>
           </div>
 
@@ -1055,12 +1222,11 @@
             <span class="anno-version">v2.4</span>
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>④ 执行计划清单与保存</p>
+              <p><b>关联模块：</b>④ 执行计划清单</p>
               <ul>
-                <li>②中任一行基准值越界或未录入，均不可生成执行计划；基准值越界不可生成执行计划。</li>
-                <li>执行计划清单中若存在"安全边界校验 = 越界"的行，需回到②③修正后重新生成，不建议强行勾选执行。</li>
-                <li>草稿可反复编辑，发起执行后执行计划锁定，不可再修改；如需调整需发起新的策略草稿（后半句来源：产品推断）。</li>
-                <li>"发起执行"仅在执行计划已生成并保存后可用，重复点击的幂等处理由执行监控页负责。</li>
+                <li>未绑齐四项或无勾选点 → 「发起执行」置灰。</li>
+                <li>草稿态改间隔 / 下发 / 回退：写回策略主表；已开跑 run 仍用开跑快照。</li>
+                <li>间隔须 &gt; 0，否则生成/刷新等待条件时提示。</li>
               </ul>
             </div>
           </div>
@@ -1076,11 +1242,32 @@
   (function () {
     var toast = document.getElementById('toast');
     var toastTimer = null;
+    var isViewMode = false;
+    var scheduleGenerated = false;
+
     function showToast(msg) {
       toast.textContent = msg;
       toast.classList.add('show');
       clearTimeout(toastTimer);
-      toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 2000);
+      toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 2200);
+    }
+
+    function getIntervalMin() {
+      var n = parseInt(document.getElementById('intervalDurationInput').value, 10);
+      return (isNaN(n) || n <= 0) ? null : n;
+    }
+
+    function applyIntervalToScheduleRows() {
+      var interval = getIntervalMin();
+      if (interval == null) return;
+      var est = interval + 10;
+      document.querySelectorAll('.schedule-row').forEach(function (row) {
+        row.setAttribute('data-duration-min', String(est));
+        var dwell = row.querySelector('.dwell-cell');
+        var estCell = row.querySelector('.est-cell');
+        if (dwell) dwell.textContent = '停留 ≥' + interval + 'min 且判稳后再进下一步';
+        if (estCell) estCell.textContent = est + ' min';
+      });
     }
 
     /* ② 应用实例说明随①区勾选联动 */
@@ -1121,7 +1308,6 @@
       }
     }
 
-    /* 门控：②全部行基准值均通过边界校验，才可生成执行计划 */
     function updateGenerateButtonState() {
       var rows = document.querySelectorAll('.baseline-row');
       var allOk = rows.length > 0;
@@ -1131,7 +1317,7 @@
       });
       var btn = document.getElementById('btnGenerateSchedule');
       var hint = document.getElementById('generateHint');
-      if (!btn.hasAttribute('data-view-mode')) {
+      if (!isViewMode) {
         btn.disabled = !allOk;
       }
       hint.style.display = allOk ? 'none' : 'inline';
@@ -1146,53 +1332,120 @@
     document.querySelectorAll('.baseline-row').forEach(validateBaselineRow);
     updateGenerateButtonState();
 
+    function bindingsReady() {
+      var b = document.getElementById('boundarySelect').value;
+      var s = document.getElementById('simSelect').value;
+      var d = document.getElementById('dispatchSelect').value;
+      var f = document.getElementById('fallbackSelect').value;
+      return !!(b && s && d && f);
+    }
+
+    function selectedPointCount() {
+      var n = 0;
+      document.querySelectorAll('.schedule-checkbox').forEach(function (cb) {
+        if (cb.checked) n++;
+      });
+      return n;
+    }
+
+    function execReady() {
+      return scheduleGenerated && bindingsReady() && selectedPointCount() > 0;
+    }
+
+    function updateExecButton() {
+      var gotoBtn = document.getElementById('btnGotoExec');
+      if (isViewMode) {
+        gotoBtn.disabled = false;
+        return;
+      }
+      gotoBtn.disabled = !execReady();
+    }
+
     function updateScheduleSummary() {
       var rows = document.querySelectorAll('.schedule-row');
       var total = rows.length;
-      var excludedCount = parseInt(document.getElementById('scheduleContent').getAttribute('data-excluded-count'), 10) || 0;
+      var coveredCount = parseInt(document.getElementById('scheduleContent').getAttribute('data-covered-count'), 10) || 0;
       var minutes = 0, selectedCount = 0;
       rows.forEach(function (row) {
         var cb = row.querySelector('.schedule-checkbox');
-        if (cb.checked) {
+        if (cb && cb.checked) {
           selectedCount++;
           minutes += parseInt(row.getAttribute('data-duration-min'), 10) || 0;
         }
       });
       var hours = (minutes / 60).toFixed(1);
       document.getElementById('scheduleSummary').innerHTML =
-        '共 <b>' + total + '</b> 步，预计总时长 <b>' + minutes + ' 分钟（约 ' + hours + ' 小时）</b>，已自动排除 <b>' + excludedCount + '</b> 个历史已覆盖工况点；拟执行 <b>' + selectedCount + '</b> 步';
+        '共 <b>' + total + '</b> 步（含已覆盖灰显 <b>' + coveredCount + '</b> 点，默认不勾选可强制勾回），预计总时长 <b>' +
+        minutes + ' 分钟（约 ' + hours + ' 小时）</b>；拟执行 <b>' + selectedCount + '</b> 步';
+      updateExecButton();
     }
+
     document.querySelectorAll('.schedule-checkbox').forEach(function (cb) {
       cb.addEventListener('change', updateScheduleSummary);
     });
 
+    ['boundarySelect', 'simSelect', 'dispatchSelect', 'fallbackSelect'].forEach(function (id) {
+      document.getElementById(id).addEventListener('change', updateExecButton);
+    });
+
+    document.getElementById('intervalDurationInput').addEventListener('input', function () {
+      if (!scheduleGenerated && document.getElementById('scheduleContent').style.display === 'none') return;
+      var interval = getIntervalMin();
+      if (interval == null) return;
+      applyIntervalToScheduleRows();
+      updateScheduleSummary();
+    });
+
     document.getElementById('btnGenerateSchedule').addEventListener('click', function () {
+      if (isViewMode) return;
+      var interval = getIntervalMin();
+      if (interval == null) {
+        showToast('请填写有效的排程间隔时长（须 > 0）');
+        return;
+      }
+      applyIntervalToScheduleRows();
       document.getElementById('scheduleEmptyState').style.display = 'none';
       document.getElementById('scheduleContent').style.display = '';
+      scheduleGenerated = true;
       updateScheduleSummary();
-      var excludedCount = parseInt(document.getElementById('scheduleContent').getAttribute('data-excluded-count'), 10) || 0;
-      showToast('已生成执行计划，已自动排除 ' + excludedCount + ' 个历史已覆盖工况点');
+      var coveredCount = parseInt(document.getElementById('scheduleContent').getAttribute('data-covered-count'), 10) || 0;
+      showToast('已生成执行计划：含 ' + coveredCount + ' 个已覆盖灰显点（默认不勾选，可强制勾回）；间隔 ' + interval + 'min，单步预计 ' + (interval + 10) + 'min');
       document.getElementById('sectionSchedule').scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
     document.getElementById('btnSelectAll').addEventListener('click', function () {
+      if (isViewMode) return;
       document.querySelectorAll('.schedule-checkbox').forEach(function (cb) { cb.checked = true; });
       updateScheduleSummary();
     });
     document.getElementById('btnSelectNone').addEventListener('click', function () {
+      if (isViewMode) return;
       document.querySelectorAll('.schedule-checkbox').forEach(function (cb) { cb.checked = false; });
       updateScheduleSummary();
     });
 
     document.getElementById('btnSaveDraft').addEventListener('click', function () {
-      showToast('已保存草稿，可随时回来继续编辑或发起执行');
+      showToast('已保存草稿，可随时回来继续编辑');
     });
 
-    /* 只读查看态（?mode=view）：仅演示查看执行计划，不可编辑 */
+    document.getElementById('btnGotoExec').addEventListener('click', function () {
+      if (isViewMode) {
+        location.href = '多工况探索-执行详情.html?ready=1';
+        return;
+      }
+      if (!execReady()) return;
+      location.href = '多工况探索-执行详情.html?ready=1';
+    });
+
+    /* 只读查看态（?mode=view） */
     function applyViewMode() {
+      isViewMode = true;
       document.getElementById('viewBanner').style.display = 'flex';
+      document.getElementById('viewBannerText').textContent = '当前为只读查看模式';
       document.getElementById('scheduleEmptyState').style.display = 'none';
       document.getElementById('scheduleContent').style.display = '';
+      scheduleGenerated = true;
+
       document.getElementById('strategyNameInput').disabled = true;
       document.querySelectorAll('.section-body input, .section-body select, .section-body button').forEach(function (el) {
         el.disabled = true;
@@ -1201,8 +1454,8 @@
       genBtn.setAttribute('data-view-mode', '1');
       genBtn.style.display = 'none';
       document.getElementById('btnSaveDraft').style.display = 'none';
-      var gotoBtn = document.getElementById('btnGotoExec');
-      gotoBtn.disabled = false;
+      document.getElementById('btnGotoExec').disabled = false;
+      document.getElementById('generateHint').style.display = 'none';
     }
 
     function initViewMode() {
@@ -1210,12 +1463,16 @@
       document.getElementById('strategyNameInput').value = '冷冻泵变频探索-2026Q3';
       document.getElementById('boundarySelect').value = '正常策略2';
       document.getElementById('simSelect').value = '1号集成冷站仿真';
+      document.getElementById('dispatchSelect').value = '手动下发';
+      document.getElementById('fallbackSelect').value = '水泵、冷水主机故障安全回退策略';
+      document.getElementById('intervalDurationInput').value = '15';
       document.querySelectorAll('.baseline-row').forEach(function (row) {
         var type = row.getAttribute('data-device-type');
         var input = row.querySelector('.baseline-input');
         input.value = demoBaseline[type] || '';
         validateBaselineRow(row);
       });
+      applyIntervalToScheduleRows();
       updateGenerateButtonState();
       updateScheduleSummary();
       applyViewMode();
@@ -1224,6 +1481,8 @@
     var params = new URLSearchParams(location.search);
     if (params.get('mode') === 'view') {
       initViewMode();
+    } else {
+      updateExecButton();
     }
   })();
   </script>

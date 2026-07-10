@@ -1,0 +1,738 @@
+# AI 节能 — 产品关系图（机读）
+# 人读入口：AGENT-MAP.md（本目录）+ 07-产品文档/01-ai 节能/产品文档/00-产品全貌.md
+# 维护：改 nav.js / index 拓扑 / 主流程时同步本文件
+# 更新：2026-07-10
+
+meta:
+  product: ai-energy
+  canonical:
+    status: 04-需求文档/00-版本需求清单.md
+    nav: components/nav.js
+    topology: index.html
+    value_doc: ../../07-产品文档/01-ai 节能/产品文档/00-产品全貌.md
+    agent_map: AGENT-MAP.md
+
+domains:
+  - id: domain.overview
+    name: 总览
+    value_prop: 一眼看清用能与能效
+    related_flows: [flow.energy_config_to_consume]
+  - id: domain.cold_station_opt
+    name: 冷站 AI 节能
+    value_prop: 整站最低能耗满足冷量
+    related_flows: [flow.cold_station_opt_family]
+  - id: domain.room_opt
+    name: 机房末端节能
+    value_prop: 开几台、怎么调最省电
+    related_flows: [flow.room_opt_diagnosis]
+  - id: domain.room_diagnosis
+    name: 机房智能诊断
+    value_prop: 调不动的根因预警
+    related_flows: [flow.room_opt_diagnosis]
+  - id: domain.sim_predict
+    name: 建模与仿真
+    value_prop: 可信预测与数字孪生
+    related_flows: [flow.model_train_sim, flow.multi_condition_explore]
+  - id: domain.safety_dispatch
+    name: 安全与下发
+    value_prop: 可渐进放权、可随时退出
+    related_flows: [flow.config_crud_safety_dispatch]
+  - id: domain.energy_metering
+    name: 能耗计量
+    value_prop: 表具到明细到成本
+    related_flows: [flow.energy_config_to_consume]
+  - id: domain.energy_consume
+    name: 能耗消费分析
+    value_prop: 效果可量化考核
+    related_flows: [flow.energy_config_to_consume]
+  - id: domain.data_quality
+    name: 数据质量
+    value_prop: 降低脏数据导致的训练好运行差
+    related_flows: [flow.energy_config_to_consume, flow.model_train_sim]
+  - id: domain.multi_condition
+    name: 多工况探索
+    value_prop: 主动补齐稀缺工况样本
+    related_flows: [flow.multi_condition_explore]
+  - id: domain.asset_model
+    name: 物模型与系统类型
+    value_prop: 水冷/风冷等对象底座
+    related_flows: [flow.energy_config_to_consume, flow.model_train_sim]
+
+pages:
+  # —— 总览 ——
+  - id: page.overview_dashboard
+    file: 总览看板.html
+    nav_label: 总览看板
+    nav_group: null
+    domain: overview
+    version: v2.5
+    role: entry
+
+  # —— 能耗分析 ——
+  - id: page.energy_flow
+    file: 能耗流向分析.html
+    nav_label: 能耗流向分析
+    nav_group: 能耗分析
+    domain: energy_consume
+    version: v2.5
+    role: entry
+  - id: page.energy_compare
+    file: 用能对比分析.html
+    nav_label: 用能对比分析
+    nav_group: 能耗分析
+    domain: energy_consume
+    version: v2.5
+    role: entry
+  - id: page.energy_quota
+    file: 用能定额考核.html
+    nav_label: 用能定额考核
+    nav_group: 能耗分析
+    domain: energy_consume
+    version: v2.5
+    role: entry
+
+  # —— 冷站能效优化 ——
+  - id: page.cold_sim_setup
+    file: 节能仿真对比-设定.html
+    nav_label: 冷站仿真对比
+    nav_group: 冷站能效优化
+    domain: cold_station_opt
+    version: v2.3
+    role: entry
+  - id: page.cold_sim_result
+    file: 节能仿真对比-对比.html
+    nav_label: null
+    nav_group: 冷站能效优化
+    domain: cold_station_opt
+    version: v2.3
+    role: subflow
+  - id: page.cold_flex_opt
+    file: 冷站柔性调优.html
+    nav_label: 冷站柔性寻优
+    nav_group: 冷站能效优化
+    domain: cold_station_opt
+    version: v2.3
+    role: entry
+  - id: page.cold_global_opt
+    file: 冷站全局寻优.html
+    nav_label: 冷站全局寻优
+    nav_group: 冷站能效优化
+    domain: cold_station_opt
+    version: v2.4
+    role: entry
+  - id: page.cold_long_cycle_opt
+    file: 冷站长周期寻优.html
+    nav_label: 冷站长周期寻优
+    nav_group: 冷站能效优化
+    domain: cold_station_opt
+    version: v2.3
+    role: entry
+  - id: page.multi_condition_list
+    file: 多工况探索-列表.html
+    nav_label: 多工况探索
+    nav_group: 冷站能效优化
+    domain: multi_condition
+    version: v2.4
+    role: entry
+  - id: page.multi_condition_strategy
+    file: 多工况探索-策略制定.html
+    nav_label: null
+    nav_group: 冷站能效优化
+    domain: multi_condition
+    version: v2.4
+    role: subflow
+  - id: page.multi_condition_detail
+    file: 多工况探索-执行详情.html
+    nav_label: null
+    nav_group: 冷站能效优化
+    domain: multi_condition
+    version: v2.4
+    role: subflow
+  - id: page.multi_condition_verify
+    file: 多工况探索-验证详情.html
+    nav_label: null
+    nav_group: 冷站能效优化
+    domain: multi_condition
+    version: v2.4
+    role: subflow
+
+  # —— 机房能效优化 ——
+  - id: page.room_overview
+    file: 机房总览.html
+    nav_label: 机房总览
+    nav_group: 机房能效优化
+    domain: room_opt
+    version: v1.9
+    role: entry
+  - id: page.room_flex_opt
+    file: 机房寻优-柔性寻优.html
+    nav_label: 机房柔性寻优
+    nav_group: 机房能效优化
+    domain: room_opt
+    version: v1.7
+    role: entry
+  - id: page.room_add_remove_opt
+    file: 机房寻优-加减机寻优.html
+    nav_label: 机房加减机寻优
+    nav_group: 机房能效优化
+    domain: room_opt
+    version: v1.7
+    role: entry
+  - id: page.room_diagnosis
+    file: 机房智能诊断.html
+    nav_label: 机房智能诊断
+    nav_group: 机房能效优化
+    domain: room_diagnosis
+    version: v1.9
+    role: entry
+
+  # —— 节能评估 ——
+  - id: page.energy_saving
+    file: 节能分析.html
+    nav_label: 节能分析
+    nav_group: 节能评估
+    domain: energy_consume
+    version: v2.5
+    role: entry
+
+  # —— 基础配置 ——
+  - id: page.efficiency_view
+    file: 能效视图.html
+    nav_label: 能效视图
+    nav_group: 基础配置
+    domain: asset_model
+    version: v2.5
+    role: entry
+  - id: page.create_collection
+    file: 创建集合-能耗模型.html
+    nav_label: null
+    nav_group: 基础配置
+    domain: asset_model
+    version: v2.0
+    role: subflow
+  - id: page.data_quality_check
+    file: 数据质量自检.html
+    nav_label: null
+    nav_group: 基础配置
+    domain: data_quality
+    version: v2.5
+    role: subflow
+  - id: page.energy_config
+    file: 能源配置.html
+    nav_label: 能源计费配置
+    nav_group: 基础配置
+    domain: energy_metering
+    version: v2.5
+    role: entry
+  - id: page.billing_plan
+    file: 计费方案配置.html
+    nav_label: null
+    nav_group: 基础配置
+    domain: energy_metering
+    version: v2.5
+    role: subflow
+  - id: page.billing_plan_edit
+    file: 新增-编辑能源计费方案.html
+    nav_label: null
+    nav_group: 基础配置
+    domain: energy_metering
+    version: v2.5
+    role: subflow
+  - id: page.energy_edit
+    file: 新增-编辑能源.html
+    nav_label: null
+    nav_group: 基础配置
+    domain: energy_metering
+    version: v2.5
+    role: subflow
+  - id: page.meter_detail
+    file: 能耗管理-表具明细.html
+    nav_label: 表具能耗明细
+    nav_group: 基础配置
+    domain: energy_metering
+    version: v2.5
+    role: entry
+
+  # —— AI节能配置 ——
+  - id: page.mechanism_train
+    file: 机理模型训练.html
+    nav_label: 机理模型训练
+    nav_group: AI节能配置
+    domain: sim_predict
+    version: v2.3
+    role: entry
+  - id: page.model_create_edit
+    file: 创建-编辑模型.html
+    nav_label: null
+    nav_group: AI节能配置
+    domain: sim_predict
+    version: v2.3
+    role: subflow
+  - id: page.model_eval
+    file: 模型评估详情.html
+    nav_label: null
+    nav_group: AI节能配置
+    domain: sim_predict
+    version: v2.3
+    role: subflow
+  - id: page.system_sim
+    file: 系统仿真建模.html
+    nav_label: 系统仿真建模
+    nav_group: AI节能配置
+    domain: sim_predict
+    version: v2.3
+    role: entry
+  - id: page.create_sim
+    file: 创建仿真模型.html
+    nav_label: null
+    nav_group: AI节能配置
+    domain: sim_predict
+    version: v2.3
+    role: subflow
+  - id: page.sim_verify
+    file: 仿真校验.html
+    nav_label: null
+    nav_group: AI节能配置
+    domain: sim_predict
+    version: v2.3
+    role: subflow
+  - id: page.safety_boundary_list
+    file: 安全边界-列表.html
+    nav_label: 安全边界
+    nav_group: AI节能配置
+    domain: safety_dispatch
+    version: v1.8
+    role: entry
+  - id: page.safety_boundary_create
+    file: 安全边界-创建.html
+    nav_label: null
+    nav_group: AI节能配置
+    domain: safety_dispatch
+    version: v2.0
+    role: subflow
+  - id: page.safety_boundary_edit
+    file: 安全边界-编辑.html
+    nav_label: null
+    nav_group: AI节能配置
+    domain: safety_dispatch
+    version: v2.0
+    role: subflow
+  - id: page.dispatch_list
+    file: 智控下发策略管理.html
+    nav_label: 智控下发策略
+    nav_group: AI节能配置
+    domain: safety_dispatch
+    version: v1.0
+    role: entry
+  - id: page.dispatch_edit
+    file: 创建-编辑智控下发策略.html
+    nav_label: null
+    nav_group: AI节能配置
+    domain: safety_dispatch
+    version: v2.3
+    role: subflow
+  - id: page.safety_fallback
+    file: null
+    nav_label: 安全回退策略
+    nav_group: AI节能配置
+    domain: safety_dispatch
+    version: null
+    role: placeholder
+  - id: page.room_thermal_list
+    file: 机房寻优-机房热力模型列表.html
+    nav_label: 机房热力模型
+    nav_group: AI节能配置
+    domain: room_opt
+    version: v1.6
+    role: entry
+  - id: page.room_model_s1
+    file: 机房寻优-创建机房模型.html
+    nav_label: null
+    nav_group: AI节能配置
+    domain: room_opt
+    version: v1.9
+    role: subflow
+  - id: page.room_model_s2
+    file: 机房寻优-创建机房模型-步骤2.html
+    nav_label: null
+    nav_group: AI节能配置
+    domain: room_opt
+    version: v1.6
+    role: subflow
+
+  # —— orphan（有文件、未进侧栏/拓扑）——
+  - id: page.manual_train
+    file: 手动训练.html
+    nav_label: null
+    nav_group: null
+    domain: sim_predict
+    version: v2.3
+    role: orphan
+
+flows:
+  - id: flow.multi_condition_explore
+    name: 多工况探索
+    purpose: 主动补齐稀缺工况样本；列表→策略制定→执行详情→验证详情；验证不入库，可选回流机理重训
+    steps:
+      - page_id: page.multi_condition_list
+      - page_id: page.multi_condition_strategy
+      - page_id: page.multi_condition_detail
+      - page_id: page.multi_condition_verify
+      - page_id: page.mechanism_train  # 可选回流
+    binds:
+      - page.multi_condition_list
+      - page.multi_condition_strategy
+      - page.multi_condition_detail
+      - page.multi_condition_verify
+      - domain:multi_condition
+      - page.system_sim           # 仿真实例绑定
+      - page.safety_boundary_list # 安全边界绑定
+      - page.dispatch_list        # 探索下发策略绑定
+      - page.safety_fallback      # 安全回退绑定（占位能力）
+      - page.mechanism_train      # 验证后可选重训
+
+  - id: flow.cold_station_opt_family
+    name: 冷站寻优族
+    purpose: 冷站仿真对比与柔性/全局/长周期寻优互跳；运行时绑定仿真模型、安全边界、智控下发、安全回退
+    steps:
+      - page_id: page.cold_sim_setup
+      - page_id: page.cold_sim_result
+      - page_id: page.cold_flex_opt
+      - page_id: page.cold_global_opt
+      - page_id: page.cold_long_cycle_opt
+    binds:
+      - domain:cold_station_opt
+      - page.cold_sim_setup
+      - page.cold_sim_result
+      - page.cold_flex_opt
+      - page.cold_global_opt
+      - page.cold_long_cycle_opt
+      - page.system_sim
+      - page.safety_boundary_list
+      - page.dispatch_list
+      - page.safety_fallback
+
+  - id: flow.energy_config_to_consume
+    name: 能耗配置到消费分析
+    purpose: 计量拓扑与表具明细配置完成后，供总览/流向/对比/定额/节能分析 on-read 消费；区分实施期自检与运行期 VEE
+    steps:
+      - page_id: page.efficiency_view
+      - page_id: page.create_collection
+      - page_id: page.energy_config
+      - page_id: page.energy_edit
+      - page_id: page.billing_plan
+      - page_id: page.billing_plan_edit
+      - page_id: page.meter_detail
+      - page_id: page.data_quality_check
+      - page_id: page.overview_dashboard
+      - page_id: page.energy_flow
+      - page_id: page.energy_compare
+      - page_id: page.energy_quota
+      - page_id: page.energy_saving
+    binds:
+      - domain:asset_model
+      - domain:energy_metering
+      - domain:data_quality
+      - domain:energy_consume
+      - domain:overview
+      - page.efficiency_view
+      - page.energy_config
+      - page.meter_detail
+      - page.data_quality_check
+      - page.overview_dashboard
+      - page.energy_flow
+      - page.energy_compare
+      - page.energy_quota
+      - page.energy_saving
+
+  - id: flow.model_train_sim
+    name: 模型训练与仿真
+    purpose: 机理模型训练（含创建/评估/手动训练 orphan）与系统仿真建模→创建→校验闭环
+    steps:
+      - page_id: page.mechanism_train
+      - page_id: page.model_create_edit
+      - page_id: page.manual_train
+      - page_id: page.model_eval
+      - page_id: page.system_sim
+      - page_id: page.create_sim
+      - page_id: page.sim_verify
+    binds:
+      - domain:sim_predict
+      - page.mechanism_train
+      - page.model_create_edit
+      - page.manual_train
+      - page.model_eval
+      - page.system_sim
+      - page.create_sim
+      - page.sim_verify
+
+  - id: flow.room_opt_diagnosis
+    name: 机房寻优与诊断
+    purpose: 机房总览进入柔性/加减机；健康度跳转智能诊断；热力模型创建影响诊断可用性
+    steps:
+      - page_id: page.room_overview
+      - page_id: page.room_flex_opt
+      - page_id: page.room_add_remove_opt
+      - page_id: page.room_diagnosis
+      - page_id: page.room_thermal_list
+      - page_id: page.room_model_s1
+      - page_id: page.room_model_s2
+    binds:
+      - domain:room_opt
+      - domain:room_diagnosis
+      - page.room_overview
+      - page.room_flex_opt
+      - page.room_add_remove_opt
+      - page.room_diagnosis
+      - page.room_thermal_list
+      - page.room_model_s1
+      - page.room_model_s2
+
+  - id: flow.config_crud_safety_dispatch
+    name: 安全与下发配置
+    purpose: 安全边界与智控下发策略 CRUD；安全回退为侧栏占位能力（无独立 HTML）
+    steps:
+      - page_id: page.safety_boundary_list
+      - page_id: page.safety_boundary_create
+      - page_id: page.safety_boundary_edit
+      - page_id: page.dispatch_list
+      - page_id: page.dispatch_edit
+      - page_id: page.safety_fallback
+    binds:
+      - domain:safety_dispatch
+      - page.safety_boundary_list
+      - page.safety_boundary_create
+      - page.safety_boundary_edit
+      - page.dispatch_list
+      - page.dispatch_edit
+      - page.safety_fallback
+
+requirements:
+  - id: req.v25.energy_metering
+    version: v2.5
+    status: 规划中
+    domain: energy_metering
+    prd_path: 04-需求文档/AI节能v2.5 版本/基于计费的能耗明细系统需求方案与架构.md
+    prototype_pages:
+      - 能耗管理-表具明细.html
+      - 能源配置.html
+      - 计费方案配置.html
+      - 新增-编辑能源.html
+      - 新增-编辑能源计费方案.html
+      - 能效视图.html
+      - 数据质量自检.html
+    upstream: [req.v21.data_quality_selfcheck]
+    downstream: [req.v25.energy_consume]
+    algo_vs_ui: mixed
+    notes: 需求1–6明细引擎；表具归档+VEE+计量拓扑+on-read；自检页仅跳转/分工说明
+
+  - id: req.v25.energy_consume
+    version: v2.5
+    status: 规划中
+    domain: energy_consume
+    prd_path: 04-需求文档/AI节能v2.5 版本/存量页面消费与总览看板改造需求方案.md
+    prototype_pages:
+      - 总览看板.html
+      - 能耗流向分析.html
+      - 用能对比分析.html
+      - 用能定额考核.html
+      - 节能分析.html
+    upstream: [req.v25.energy_metering]
+    downstream: []
+    algo_vs_ui: ui
+    notes: 存量四页切对象聚合接口；总览含明细/导出，不另开统计分析页
+
+  - id: req.v24.multi_condition
+    version: v2.4
+    status: 规划中
+    domain: multi_condition
+    prd_path: 04-需求文档/AI节能v2.4 版本/主动激励-多工况探索需求方案.md
+    prototype_pages:
+      - 多工况探索-列表.html
+      - 多工况探索-策略制定.html
+      - 多工况探索-执行详情.html
+      - 多工况探索-验证详情.html
+    upstream: [req.cross.safety_dispatch_base, req.v23.l0_l1_confidence]
+    downstream: [req.v23.l0_l1_confidence]
+    algo_vs_ui: mixed
+    notes: 策略/执行/验证三阶段；验证不入库；样本回流机理训练
+
+  - id: req.v24.global_opt_round_result
+    version: v2.4
+    status: 规划中
+    domain: cold_station_opt
+    prd_path: 04-需求文档/AI节能v2.4 版本/冷站全局寻优-本轮搜索结果展示需求方案.md
+    prototype_pages:
+      - 冷站全局寻优.html
+    upstream: [req.v23.l0_l1_confidence, req.cross.safety_dispatch_base]
+    downstream: []
+    algo_vs_ui: ui
+    notes: 本页增强不另开页；候选组合功率/COP+不合规原因码
+
+  - id: req.v23.l0_l1_confidence
+    version: v2.3
+    status: 开发中
+    domain: sim_predict
+    prd_path: 04-需求文档/AI节能v2.3 版本/模型泛化性优化需求文档.md
+    prototype_pages:
+      - 机理模型训练.html
+      - 创建-编辑模型.html
+      - 模型评估详情.html
+      - 手动训练.html
+      - 系统仿真建模.html
+      - 创建仿真模型.html
+      - 仿真校验.html
+      - 冷站柔性调优.html
+      - 冷站全局寻优.html
+      - 冷站长周期寻优.html
+      - 节能仿真对比-设定.html
+      - 节能仿真对比-对比.html
+      - 创建-编辑智控下发策略.html
+    upstream: [req.v21.data_quality_selfcheck]
+    downstream: [req.v24.multi_condition, req.v24.global_opt_round_result, req.v26.pac_power_predict]
+    algo_vs_ui: mixed
+    notes: L0/L1+置信路由/γ降权/前端胶囊；含仿真v2.3适配与两层服务配置
+
+  - id: req.v21.data_quality_selfcheck
+    version: v2.1
+    status: 已上线
+    domain: data_quality
+    prd_path: 04-需求文档/AI节能v2.1 版本/实施期数据质量自检方案设计.md
+    prototype_pages:
+      - 数据质量自检.html
+      - 能效视图.html
+    upstream: []
+    downstream: [req.v23.l0_l1_confidence, req.v25.energy_metering]
+    algo_vs_ui: mixed
+    notes: 实施期9条规则；≠v2.5表具VEE；v2.3另有误报优化
+
+  - id: req.v19.room_diagnosis
+    version: v1.9
+    status: 已上线
+    domain: room_diagnosis
+    prd_path: 04-需求文档/AI节能v1.9 版本/末端机房智能诊断方案设计.md
+    prototype_pages:
+      - 机房智能诊断.html
+      - 机房总览.html
+      - 机房寻优-创建机房模型.html
+    upstream: []
+    downstream: []
+    algo_vs_ui: mixed
+    notes: 双层诊断+三大检测+报告页；通道封闭模式影响诊断可用性
+
+  - id: req.v26.pac_power_predict
+    version: v2.6
+    status: 规划中
+    domain: asset_model
+    prd_path: 04-需求文档/AI节能v2.6 版本/风冷精密空调功率预测模型需求文档.md
+    prototype_pages: []
+    upstream: [req.v23.l0_l1_confidence]
+    downstream: []
+    algo_vs_ui: algo_only
+    notes: 复用AirCooledPAC；L0/L1功率预测；只读接入健康检查/EER/节能量；无新页
+
+  - id: req.cross.safety_dispatch_base
+    version: v1.6
+    status: 已发布
+    domain: safety_dispatch
+    prd_path: 04-需求文档/00-版本需求清单.md
+    prototype_pages:
+      - 安全边界-列表.html
+      - 安全边界-创建.html
+      - 安全边界-编辑.html
+      - 智控下发策略管理.html
+      - 创建-编辑智控下发策略.html
+    upstream: []
+    downstream: [req.v24.multi_condition, req.v24.global_opt_round_result]
+    algo_vs_ui: mixed
+    notes: 安全边界+智控下发有页；安全回退能力散落、AI原型无独立页
+
+
+edges:
+  # 计量 → 消费 → 总览
+  - from: domain.energy_metering
+    to: domain.energy_consume
+    rel: produces
+  - from: domain.energy_consume
+    to: domain.overview
+    rel: implements
+  - from: page.meter_detail
+    to: page.overview_dashboard
+    rel: produces
+  - from: page.efficiency_view
+    to: domain.energy_metering
+    rel: binds
+  # 数据质量
+  - from: domain.data_quality
+    to: domain.energy_metering
+    rel: enhances
+  - from: domain.data_quality
+    to: domain.sim_predict
+    rel: enhances
+  - from: page.data_quality_check
+    to: page.meter_detail
+    rel: consumes
+  # 仿真 → 寻优 / 多工况
+  - from: domain.sim_predict
+    to: domain.cold_station_opt
+    rel: produces
+  - from: domain.sim_predict
+    to: domain.multi_condition
+    rel: enhances
+  - from: domain.multi_condition
+    to: domain.sim_predict
+    rel: produces
+  - from: page.multi_condition_verify
+    to: page.mechanism_train
+    rel: consumes
+  # 安全下发绑定
+  - from: domain.safety_dispatch
+    to: domain.multi_condition
+    rel: binds
+  - from: domain.safety_dispatch
+    to: domain.cold_station_opt
+    rel: binds
+  - from: page.safety_boundary_list
+    to: page.multi_condition_strategy
+    rel: binds
+  - from: page.dispatch_list
+    to: page.multi_condition_strategy
+    rel: binds
+  # 置信贯穿冷站
+  - from: req.v23.l0_l1_confidence
+    to: page.cold_flex_opt
+    rel: implements
+  - from: req.v23.l0_l1_confidence
+    to: page.sim_verify
+    rel: implements
+  - from: req.v24.global_opt_round_result
+    to: page.cold_global_opt
+    rel: enhances
+  # 机房
+  - from: domain.room_opt
+    to: domain.room_diagnosis
+    rel: reuses
+  - from: domain.room_diagnosis
+    to: page.room_overview
+    rel: enhances
+  # v2.6
+  - from: req.v26.pac_power_predict
+    to: domain.sim_predict
+    rel: reuses
+  - from: req.v26.pac_power_predict
+    to: domain.room_opt
+    rel: enhances
+
+noise:
+  - id: noise.version_plan_stale
+    note: 03-需求规划/01-版本计划.md 仅历史快照；版本范围/状态以 00-版本需求清单.md 为准
+  - id: noise.safety_fallback_missing_page
+    note: nav 有「安全回退策略」菜单项但 SIDEBAR_LINKS 无链接，AI 原型无独立页
+  - id: noise.dual_data_quality
+    note: 数据质量自检页并存 v2.1 实施期规则与 v2.5 表具 VEE，勿混为同一引擎
+  - id: noise.manual_train_orphan
+    note: 手动训练.html 可从机理模型训练跳入，但未进 index.html topologyData
+  - id: noise.v24_explore_unlist_html
+    note: 清单 v2.4 多工况条目仅链 PRD，未直链 4 个 HTML（拓扑/nav 已挂）
+  - id: noise.v26_algo_only
+    note: v2.6 无新原型页；仅复用训练/同步弹窗，标 algo_only

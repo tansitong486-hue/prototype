@@ -1,0 +1,2045 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>多工况探索 - 执行详情</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-light: #EEF4FF;
+      --primary-dark: #17358A;
+      --primary-tint: #EEF4FF;
+      --primary-soft: #F5F8FF;
+      --success: #16A34A;
+      --success-light: #F0FDF4;
+      --warning: #D97706;
+      --warning-light: #FFF7ED;
+      --danger: #DC2626;
+      --danger-light: #FEF2F2;
+      --text-primary: #001833;
+      --text-secondary: #667485;
+      --text-hint: #8B98A8;
+      --border: #D8DEE8;
+      --border-light: #E5EAF0;
+      --bg-body: #F2F3F5;
+      --bg-card: #FFFFFF;
+      --sidebar-bg: #071B2E;
+      --header-bg: #071B2E;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15,23,42,.04);
+      --shadow-card: 0 8px 24px rgba(15,23,42,.05), 0 1px 3px rgba(15,23,42,.04);
+      --shadow-hover: 0 14px 32px rgba(15,23,42,.08), 0 4px 12px rgba(15,23,42,.05);
+      --focus-ring: rgba(30,64,175,.22);
+      --transition: .22s cubic-bezier(.4,0,.2,1);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", Arial, sans-serif;
+      font-size:13px; color:var(--text-primary); background:var(--bg-body);
+      -webkit-font-smoothing:antialiased;
+    }
+    a { text-decoration:none; color:inherit; }
+    button { font:inherit; }
+    ::-webkit-scrollbar { width:6px; height:6px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:rgba(15,23,42,.12); border-radius:3px; }
+    ::-webkit-scrollbar-thumb:hover { background:rgba(15,23,42,.2); }
+
+    .layout { display:flex; flex-direction:column; min-height:100vh; }
+    .body-wrap { display:flex; flex:1; overflow:hidden; }
+    .main { flex:1; display:flex; flex-direction:column; overflow-y:auto; background:var(--bg-body); }
+
+    /* ---------- 按钮 ---------- */
+    .btn {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 14px; border-radius:7px;
+      border:1px solid var(--border); cursor:pointer;
+      font-size:12.5px; background:#fff; color:var(--text-primary);
+      transition:border-color var(--transition), color var(--transition), background var(--transition), box-shadow var(--transition);
+      white-space:nowrap; font-weight:500; line-height:1.5;
+    }
+    .btn:hover { border-color:var(--primary); color:var(--primary); background:var(--primary-soft); }
+    .btn:focus-visible { outline:none; box-shadow:0 0 0 2px var(--focus-ring); }
+    .btn-primary { background:var(--primary); color:#fff; border-color:transparent; }
+    .btn-primary:hover { background:var(--primary-dark); color:#fff; border-color:transparent; }
+    .btn-danger { color:var(--danger); border-color:#FECACA; background:#FFF7F7; }
+    .btn-danger:hover { background:#FFF1F1; color:var(--danger); border-color:#FCA5A5; }
+    .btn.disabled, .btn[disabled] { opacity:.48; cursor:not-allowed; pointer-events:none; background:#F8FAFC; }
+    .btn-xs { padding:3px 10px; font-size:11.5px; border-radius:999px; font-weight:600; }
+
+    /* ---------- 表单 ---------- */
+    .form-group { margin-bottom:16px; }
+    .form-label { font-size:13px; color:var(--text-primary); margin-bottom:6px; display:flex; align-items:center; gap:2px; font-weight:500; }
+    .form-control {
+      width:100%; padding:8px 12px; border:1px solid var(--border);
+      border-radius:var(--radius); font-size:13px; outline:none;
+      transition:all .2s; background:#fff;
+    }
+    .form-control:focus { border-color:var(--primary); box-shadow:0 0 0 2px var(--focus-ring); }
+
+    /* ---------- 弹窗 ---------- */
+    .modal-mask {
+      position:fixed; inset:0; background:rgba(0,0,0,.35);
+      z-index:300; display:flex; align-items:center; justify-content:center;
+      opacity:0; pointer-events:none; transition:opacity .25s;
+    }
+    .modal-mask.show { opacity:1; pointer-events:auto; }
+    .modal-box {
+      background:#fff; border-radius:var(--radius-lg);
+      box-shadow:0 18px 42px rgba(15,23,42,.18);
+      max-width:620px; width:90%; max-height:85vh;
+      display:flex; flex-direction:column; border:1px solid var(--border-light);
+      transform:translateY(20px) scale(.97);
+      transition:transform .3s cubic-bezier(.4,0,.2,1);
+    }
+    .modal-mask.show .modal-box { transform:translateY(0) scale(1); }
+    .modal-head { padding:16px 20px 12px; display:flex; align-items:flex-start; gap:10px; }
+    .modal-head .modal-icon { width:22px; height:22px; flex-shrink:0; margin-top:1px; }
+    .modal-head .modal-title { font-size:14.5px; font-weight:700; flex:1; line-height:1.5; }
+    .modal-close { cursor:pointer; font-size:20px; color:var(--text-hint); line-height:1; }
+    .modal-body { padding:0 20px 14px; flex:1; overflow-y:auto; font-size:12.5px; }
+    .modal-foot { padding:12px 20px; border-top:1px solid var(--border-light); display:flex; align-items:center; gap:10px; }
+    .modal-foot .modal-hint { font-size:11.5px; color:var(--warning); flex:1; line-height:1.5; }
+    .modal-foot .btn-group { display:flex; gap:10px; margin-left:auto; }
+
+    /* ---------- 单选列表（策略选择） ---------- */
+    .strategy-list { list-style:none; padding:0; }
+    .strategy-item {
+      display:flex; align-items:center; gap:10px; padding:12px 16px;
+      border:1px solid var(--border-light); border-radius:var(--radius);
+      margin-bottom:8px; cursor:pointer; transition:all .2s;
+    }
+    .strategy-item:hover { border-color:var(--primary); background:var(--primary-light); }
+    .strategy-item.selected { border-color:var(--primary); background:var(--primary-light); }
+    .strategy-item .strategy-radio {
+      width:16px; height:16px; border-radius:50%;
+      border:2px solid var(--border); flex-shrink:0; position:relative; transition:all .2s;
+    }
+    .strategy-item.selected .strategy-radio { border-color:var(--primary); }
+    .strategy-item.selected .strategy-radio::after {
+      content:''; position:absolute; top:3px; left:3px; width:6px; height:6px;
+      border-radius:50%; background:var(--primary);
+    }
+    .strategy-item .strategy-info { flex:1; }
+    .strategy-item .strategy-name { font-size:13px; font-weight:600; }
+    .strategy-item .strategy-desc { font-size:11px; color:var(--text-hint); margin-top:2px; }
+    .mode-chip { display:inline-block; padding:0 6px; border-radius:4px; font-size:10.5px; font-weight:600; margin-left:6px; vertical-align:middle; line-height:1.7; }
+    .mode-chip.manual { background:var(--primary-light); color:var(--primary); }
+    .mode-chip.auto { background:var(--warning-light); color:var(--warning); }
+
+    /* ---------- 数据表格 ---------- */
+    .data-table { width:100%; border-collapse:collapse; min-width:920px; }
+    .data-table thead th {
+      background:linear-gradient(180deg,#FFFFFF 0%, #F8FAFC 100%);
+      padding:10px 14px; text-align:left;
+      font-size:11.5px; font-weight:600; color:var(--text-secondary);
+      border-bottom:1px solid var(--border); white-space:nowrap;
+      letter-spacing:.02em;
+    }
+    .data-table tbody td { padding:11px 14px; font-size:12.5px; border-bottom:1px solid var(--border-light); vertical-align:middle; }
+    .data-table tbody tr { transition:background var(--transition); }
+    .data-table tbody tr:hover { background:#FAFCFF; }
+    .data-table tbody tr.row-current { background:linear-gradient(90deg,#EEF4FF 0%, #F7FAFF 100%); }
+    .data-table tbody tr.row-current td:first-child { box-shadow:inset 3px 0 0 var(--primary); }
+    .table-scroll-wrap { overflow-x:auto; }
+    .mono-num { font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .cell-muted { color:var(--text-hint); }
+    .continuity-pass { color:var(--success); font-weight:600; }
+    .continuity-fail { color:var(--danger); font-weight:700; }
+    .steady-wait { color:var(--warning); }
+    .steady-done { color:var(--success); }
+    .exec-status-tag {
+      display:inline-flex; align-items:center; padding:2px 9px; border-radius:999px;
+      font-size:11px; font-weight:600; white-space:nowrap;
+    }
+    .exec-status-tag.pending { background:#F1F5F9; color:var(--text-hint); }
+    .exec-status-tag.running { background:var(--primary-light); color:var(--primary); }
+    .exec-status-tag.done { background:var(--success-light); color:var(--success); }
+    .exec-status-tag.aborted { background:var(--danger-light); color:var(--danger); }
+    .fb-list { display:flex; flex-direction:column; gap:2px; }
+    .fb-line { font-size:11.5px; color:var(--text-secondary); white-space:nowrap; font-variant-numeric:tabular-nums; }
+    .ctrl-param { display:block; margin-top:4px; font-size:11.5px; color:var(--text-hint); }
+    .point-name {
+      font-size:11px; color:var(--text-hint); font-weight:500; margin-bottom:3px; white-space:nowrap;
+    }
+    .point-name.write { color:#64748B; }
+    .point-name.feedback { color:#64748B; }
+    .target-cell .mono-num { font-weight:600; color:var(--text-primary); }
+    .fb-link {
+      display:inline; border:0; background:none; padding:0; margin:0;
+      font:inherit; font-size:11.5px; color:var(--primary); cursor:pointer;
+      white-space:nowrap; font-variant-numeric:tabular-nums; font-weight:500;
+      text-decoration:none; transition:color var(--transition);
+    }
+    .fb-link:hover { color:var(--primary-dark); text-decoration:underline; }
+    .fb-link:focus-visible { outline:none; box-shadow:0 0 0 2px var(--focus-ring); border-radius:3px; }
+
+    .modal-box.chart-modal { max-width:720px; width:720px; }
+    .chart-head {
+      display:flex; align-items:center; gap:16px; padding:18px 24px;
+      border-bottom:1px solid var(--border-light);
+    }
+    .chart-head .chart-title { font-size:15px; font-weight:600; }
+    .chart-head .chart-subtitle { font-size:12px; color:var(--primary); }
+    .chart-head .chart-close {
+      margin-left:auto; width:28px; height:28px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; font-size:16px; color:var(--text-hint);
+      transition:all .2s;
+    }
+    .chart-head .chart-close:hover { background:#F5F5F5; color:var(--text-primary); }
+    .chart-toolbar { display:flex; align-items:center; gap:12px; padding:14px 24px; }
+    .time-tabs { display:flex; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+    .time-tab {
+      padding:5px 16px; font-size:12px; cursor:pointer; font-weight:500;
+      border-right:1px solid var(--border); color:var(--text-secondary);
+      transition:all .15s;
+    }
+    .time-tab:last-child { border-right:none; }
+    .time-tab:hover { color:var(--primary); }
+    .time-tab.active { background:var(--primary); color:#fff; }
+    .chart-canvas { padding:0 24px 16px; height:280px; position:relative; }
+    .chart-canvas canvas { width:100%!important; height:100%!important; }
+    .chart-legend {
+      display:flex; align-items:center; gap:24px; justify-content:center;
+      padding:0 24px 18px; font-size:12px; color:var(--text-secondary);
+    }
+    .chart-legend .leg { display:flex; align-items:center; gap:6px; }
+    .chart-legend .leg-line { width:20px; height:2px; border-radius:1px; }
+    .chart-legend .leg-line.dashed { background:repeating-linear-gradient(90deg,currentColor 0 4px,transparent 4px 8px); height:2px; }
+    .chart-foot {
+      padding:14px 24px; border-top:1px solid var(--border-light);
+      display:flex; justify-content:flex-end; gap:10px;
+    }
+
+    /* ---------- 页面容器 ---------- */
+    .monitor-shell { padding:12px 20px 36px; }
+
+    .page-crumb { font-size:12px; color:var(--text-hint); margin-bottom:12px; }
+    .page-crumb a { color:var(--text-secondary); transition:color var(--transition); }
+    .page-crumb a:hover { color:var(--primary); }
+    .page-crumb .crumb-sep { margin:0 6px; color:var(--border); }
+    .page-crumb .crumb-current { color:var(--text-primary); font-weight:600; }
+
+    .done-banner {
+      display:none; align-items:flex-start; gap:10px; margin-bottom:14px;
+      padding:12px 16px;
+      background:linear-gradient(180deg,#F0FDF4 0%, #ECFDF5 100%);
+      border:1px solid #BBF7D0; border-radius:var(--radius-lg);
+      color:#166534; font-size:13px; line-height:1.6;
+      box-shadow:var(--shadow-sm);
+    }
+    .done-banner a { color:var(--primary); font-weight:600; }
+    .done-banner a:hover { text-decoration:underline; }
+
+    .strategy-link { color:var(--primary); }
+    .strategy-link:hover { text-decoration:underline; }
+
+    /* ---------- 顶部三卡片（对齐冷站全局寻优） ---------- */
+    .module-strip {
+      display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;
+      margin-bottom:18px;
+    }
+    .module-card {
+      background:var(--bg-card); border-radius:var(--radius-lg);
+      box-shadow:var(--shadow-card); overflow:hidden;
+      border:1px solid rgba(232,238,243,.95);
+      transition:transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+    }
+    .module-card:hover {
+      transform:translateY(-1px);
+      box-shadow:var(--shadow-hover);
+      border-color:rgba(214,225,233,.96);
+    }
+    .module-card-header {
+      padding:10px 16px; display:flex; align-items:center; gap:8px;
+      font-size:13px; font-weight:700; color:var(--text-primary);
+      border-bottom:1px solid var(--border-light);
+      background:linear-gradient(180deg,#FFFFFF 0%, #FBFCFD 100%);
+    }
+    .module-card-header .module-icon { display:flex; align-items:center; }
+    .module-card-header .module-icon svg { width:14px; height:14px; }
+    .module-card-body { padding:14px 16px 12px; }
+    .module-status-row {
+      display:flex; flex-wrap:wrap; gap:8px 16px; margin-bottom:12px;
+    }
+    .status-item { display:flex; flex-direction:column; gap:3px; }
+    .status-item .label { font-size:10.5px; color:var(--text-hint); line-height:1.1; }
+    .status-item .value { font-size:12.5px; font-weight:600; line-height:1.2; }
+    .status-item .value.blue { color:var(--primary); }
+    .status-item .value.green { color:var(--success); }
+    .status-tag {
+      display:inline-flex; align-items:center; justify-content:center;
+      padding:2px 8px; border-radius:999px; font-size:11px; font-weight:600;
+      line-height:1.25; white-space:nowrap;
+    }
+    .status-tag.muted { background:#F1F5F9; color:#64748B; }
+    .status-tag.ok { background:#DCFCE7; color:#16A34A; }
+    .status-tag.run { background:var(--primary-light); color:var(--primary); }
+    .status-tag.warn { background:var(--warning-light); color:var(--warning); }
+    .status-tag.done { background:var(--success-light); color:var(--success); }
+    .status-tag.danger { background:var(--danger-light); color:var(--danger); }
+    .module-actions { display:flex; gap:6px; flex-wrap:wrap; }
+    .module-actions .btn {
+      padding:5px 12px; font-size:12px; gap:4px; border-radius:999px; font-weight:600;
+      color:var(--text-primary); border-color:var(--border); background:#fff;
+    }
+    .module-actions .btn:hover { border-color:var(--primary); color:var(--primary); background:var(--primary-soft); }
+    .module-actions .btn.btn-primary { background:var(--primary); color:#fff; border-color:transparent; }
+    .module-actions .btn.btn-primary:hover { background:var(--primary-dark); color:#fff; }
+    .module-actions .btn.btn-danger { color:var(--danger); border-color:#FECACA; background:#FFF7F7; }
+    .module-actions .btn.btn-danger:hover { border-color:#FCA5A5; color:var(--danger); background:#FFF1F1; }
+    .module-card-header.opt { color:var(--primary); }
+    .module-card-header.opt .module-icon svg { fill:var(--primary); }
+    .module-card-header.deliver { color:#722ED1; }
+    .module-card-header.deliver .module-icon svg { fill:#722ED1; }
+    .module-card-header.safety { color:var(--success); }
+    .module-card-header.safety .module-icon svg { fill:var(--success); }
+
+    /* ---------- 前置校验（弹窗内） ---------- */
+    .precheck-summary { font-size:12px; font-weight:600; color:var(--success); margin:8px 0 4px; }
+    .precheck-list { list-style:none; }
+    .precheck-item { display:flex; align-items:flex-start; gap:10px; padding:9px 0; border-bottom:1px solid var(--border-light); }
+    .precheck-item:last-child { border-bottom:none; }
+    .precheck-icon {
+      width:20px; height:20px; border-radius:50%; flex-shrink:0; margin-top:1px;
+      display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700;
+    }
+    .precheck-item.pass .precheck-icon { background:var(--success-light); color:var(--success); }
+    .precheck-item.fail .precheck-icon { background:var(--danger-light); color:var(--danger); }
+    .precheck-text { font-size:13px; color:var(--text-primary); line-height:1.65; padding-top:1px; }
+    .precheck-item.fail .precheck-text { color:var(--danger); }
+
+    .section-heading { display:flex; align-items:center; gap:10px; margin:2px 0 12px; flex-wrap:wrap; }
+    .section-heading-title {
+      display:inline-flex; align-items:center; gap:8px;
+      font-size:14.5px; font-weight:700; color:var(--text-primary);
+    }
+    .section-heading-title::before {
+      content:""; width:3px; height:14px; border-radius:2px; background:var(--primary);
+    }
+    .section-heading-sub { font-size:12px; color:var(--text-hint); }
+
+    .ready-placeholder {
+      display:none; padding:40px 24px; text-align:center; color:var(--text-hint);
+      background:linear-gradient(180deg,#FFFFFF 0%, #FBFCFE 100%);
+      border:1px dashed var(--border); border-radius:var(--radius-lg);
+      font-size:13px; line-height:1.8; margin-bottom:16px; box-shadow:var(--shadow-sm);
+    }
+
+    /* ---------- Tab 卡片（对齐全局寻优 record-bar 质感） ---------- */
+    .main-tabs-card {
+      background:var(--bg-card);
+      border:1px solid rgba(232,238,243,.95);
+      border-radius:var(--radius-lg);
+      box-shadow:var(--shadow-card);
+      overflow:hidden;
+      margin-bottom:8px;
+    }
+    .tabs-bar {
+      display:flex; background:linear-gradient(180deg,#FFFFFF 0%, #FBFCFD 100%);
+      border-bottom:1px solid var(--border-light); margin:0; flex-shrink:0;
+      padding:0 8px;
+    }
+    .tab-item {
+      padding:12px 18px; cursor:pointer; font-size:13px;
+      color:var(--text-secondary); border-bottom:2px solid transparent;
+      transition:color var(--transition), border-color var(--transition); font-weight:500;
+    }
+    .tab-item:hover { color:var(--primary); }
+    .tab-item.active { color:var(--primary); border-bottom-color:var(--primary); font-weight:600; }
+    .tab-pane { display:block; padding:16px 16px 18px; }
+    .tab-pane:not(.active) { display:none !important; }
+
+    .filter-bar {
+      display:flex; align-items:center; gap:8px; margin-bottom:12px;
+      flex-wrap:wrap; padding:10px 12px;
+      background:linear-gradient(180deg,#FFFFFF 0%, #F8FAFC 100%);
+      border-radius:var(--radius);
+      border:1px solid var(--border-light);
+    }
+    .filter-label { font-size:12px; color:var(--text-secondary); white-space:nowrap; font-weight:600; }
+    .filter-input, .search-input {
+      padding:5px 10px; border:1px solid var(--border); border-radius:7px;
+      font-size:12px; outline:none; background:#fff;
+      transition:border-color var(--transition), box-shadow var(--transition);
+    }
+    .filter-input { min-width:120px; }
+    .search-input { min-width:190px; }
+    .filter-input:focus, .search-input:focus {
+      border-color:var(--primary); box-shadow:0 0 0 2px var(--focus-ring);
+    }
+    .filter-sep { color:var(--text-hint); margin:0 2px; }
+    .filter-group { display:flex; align-items:center; gap:6px; }
+    .filter-group + .filter-group { margin-left:8px; }
+
+    .data-table-wrap {
+      background:#fff; border-radius:var(--radius);
+      overflow-x:auto; border:1px solid var(--border-light);
+    }
+    .table-pagination {
+      display:flex; align-items:center; justify-content:flex-end; gap:10px;
+      padding:10px 12px; border-top:1px solid var(--border-light);
+      color:var(--text-secondary); font-size:12px;
+      background:linear-gradient(180deg,#FFFFFF 0%, #FBFCFE 100%);
+    }
+    .page-size, .page-jump {
+      border:1px solid var(--border); border-radius:6px; background:#fff;
+      padding:5px 10px; font-size:12px; color:var(--text-primary);
+    }
+    .pager-btn {
+      width:26px; height:26px; border:1px solid var(--border); border-radius:6px;
+      display:inline-flex; align-items:center; justify-content:center;
+      background:#fff; color:var(--text-hint); cursor:pointer;
+      transition:border-color var(--transition), color var(--transition);
+    }
+    .pager-btn:hover { border-color:var(--primary); color:var(--primary); }
+    .pager-btn.disabled { opacity:.45; }
+    .empty-row td {
+      text-align:center; padding:42px 12px !important; color:var(--text-hint);
+      background:#fff;
+    }
+
+    /* ---------- 批次执行进度 ---------- */
+    .batch-block {
+      background:#fff;
+      border:1px solid var(--border-light);
+      border-radius:var(--radius);
+      box-shadow:none;
+      margin-bottom:12px; overflow:hidden;
+      transition:border-color var(--transition);
+    }
+    .batch-block:last-child { margin-bottom:0; }
+    .batch-block:hover { border-color:#D6E1E9; }
+    .batch-head {
+      padding:13px 16px; display:flex; align-items:center; gap:10px;
+      cursor:pointer; user-select:none;
+      background:linear-gradient(180deg,#FFFFFF 0%, #FBFCFD 100%);
+      transition:background var(--transition);
+    }
+    .batch-block:not(.collapsed) .batch-head { border-bottom:1px solid var(--border-light); cursor:default; }
+    .batch-block.collapsed .batch-head:hover { background:linear-gradient(180deg,#FFFFFF 0%, #F5F8FF 100%); }
+    .batch-index {
+      font-size:11px; font-weight:700; color:var(--primary);
+      background:var(--primary-light); padding:2px 9px; border-radius:999px; flex-shrink:0;
+    }
+    .batch-name { font-size:13.5px; font-weight:700; color:var(--text-primary); }
+    .batch-tag { display:inline-flex; align-items:center; padding:2px 9px; border-radius:999px; font-size:11px; font-weight:600; }
+    .batch-tag.running { background:var(--primary-light); color:var(--primary); }
+    .batch-tag.pending { background:#F1F5F9; color:var(--text-hint); }
+    .batch-guard-tag {
+      display:inline-flex; align-items:center; gap:4px; padding:2px 9px; border-radius:999px;
+      font-size:10.5px; font-weight:600; background:var(--warning-light); color:var(--warning);
+    }
+    .batch-guard-tag svg { width:12px; height:12px; flex-shrink:0; }
+    .batch-toggle-icon { margin-left:auto; font-size:11.5px; color:var(--text-hint); flex-shrink:0; }
+    .batch-body { padding:0; }
+
+    /* ---------- 换批次回基准提示 ---------- */
+    .batch-reset-banner {
+      display:flex; align-items:flex-start; gap:8px; margin:0 0 12px;
+      padding:11px 14px;
+      background:linear-gradient(180deg,#FFFBF0 0%, #FFF7E6 100%);
+      border:1px solid #F6D9A8; border-radius:var(--radius);
+      color:#9A3412; font-size:12.5px; line-height:1.65;
+    }
+    .batch-reset-banner-icon {
+      flex-shrink:0; width:18px; height:18px; margin-top:1px;
+      display:inline-flex; align-items:center; justify-content:center;
+      color:#B45309;
+    }
+    .batch-reset-banner-icon svg { width:16px; height:16px; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        transition-duration:.01ms !important;
+        animation-duration:.01ms !important;
+      }
+      .module-card:hover { transform:none; }
+    }
+
+
+    /* ---------- 手动下发确认弹窗 ---------- */
+    .dispatch-confirm-table { width:100%; border-collapse:collapse; margin:8px 0 4px; }
+    .dispatch-confirm-table td { padding:7px 10px; font-size:12.5px; border-bottom:1px solid var(--border-light); vertical-align:top; }
+    .dispatch-confirm-table td:first-child { width:110px; color:var(--text-hint); font-size:12px; white-space:nowrap; }
+    .dispatch-confirm-table tr:last-child td { border-bottom:none; }
+    .dispatch-table { width:100%; border-collapse:collapse; }
+    .dispatch-table th {
+      text-align:left; font-size:12px; color:var(--text-secondary); font-weight:600;
+      padding:8px 10px; border-bottom:1px solid var(--border-light); background:#FAFBFC;
+    }
+    .dispatch-table td {
+      padding:8px 10px; border-bottom:1px solid var(--border-light); font-size:12.5px;
+    }
+    .dispatch-table .dev-name { font-weight:600; white-space:nowrap; }
+    .dispatch-table .param-name { color:var(--text-secondary); }
+    .dispatch-table .val-actual { color:var(--text-hint); }
+    .dispatch-table .val-safe { color:var(--success); font-weight:600; }
+    .dispatch-table input.dispatch-val {
+      width:88px; padding:4px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px;
+    }
+    .dispatch-table input.dispatch-val:focus {
+      outline:none; border-color:var(--primary); box-shadow:0 0 0 2px rgba(24,144,255,.15);
+    }
+    .dispatch-section {
+      display:flex; align-items:center; gap:8px; margin:4px 0 10px;
+      font-size:12.5px; font-weight:600; color:var(--text-primary);
+    }
+    .ds-badge {
+      display:inline-flex; align-items:center; padding:1px 8px; border-radius:999px;
+      font-size:11px; font-weight:600;
+    }
+    .ds-badge.rollback { background:#FEF2F2; color:#B91C1C; }
+
+    /* ---------- Toast ---------- */
+    .toast {
+      position:fixed; right:24px; bottom:24px; min-width:160px; max-width:320px;
+      padding:12px 16px; border-radius:10px; background:rgba(15,23,42,.92); color:#fff;
+      font-size:13px; line-height:1.5; z-index:400; box-shadow:0 8px 24px rgba(15,23,42,.25);
+      opacity:0; transform:translateY(8px); transition:all .25s; pointer-events:none;
+    }
+    .toast.show { opacity:1; transform:translateY(0); }
+
+    @media (max-width:1100px) {
+      .module-strip { grid-template-columns:1fr; }
+    }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+</head>
+<body>
+<div class="layout">
+
+  <div id="app-header"></div>
+
+  <div class="body-wrap">
+
+    <div id="app-sidebar"></div>
+
+    <div class="main">
+
+      <div class="anno-filter-bar" id="annoFilterBar">
+        <span class="anno-filter-label">批注版本：</span>
+        <div class="anno-filter-tags" id="annoFilterTags"></div>
+      </div>
+
+      <div class="monitor-shell">
+
+        <!-- ===== 版本信息 ===== -->
+        <div class="anno anno-version-header" data-version="v2.4">
+          <span class="anno-tag">版本信息</span>
+          <div class="anno-body">
+            <p><b>当前版本：</b>v2.4</p>
+            <p><b>更新日期：</b>2026-07-10</p>
+            <p><b>变更概述：</b>对齐最新需求口径：探索下发/安全回退在<strong>阶段一已绑定</strong>；前置校验对齐 8.1；换批次回基准；本页为<strong>执行详情（任务主页面）</strong>：执行中/暂停中/已结束共用；执行中可暂停或结束；安全回退→暂停中；排程全部完成→自动已结束；新增<strong>下发记录 Tab</strong>（字段对齐冷站柔性寻优）。</p>
+            <p><b>本页说明：</b>默认展示策略「冷冻泵变频探索-2026Q3」（所属系统：3#数据中心水冷冷水系统）执行中的界面态；追加 <code>?ready=1</code> 可查看尚未开始执行的初始界面态（从制定页「发起执行」进入；便于自检「开始执行 → 执行前校验 → 密码校验」）。跳转关系：面包屑「多工况探索」返回列表页；执行前校验弹窗内可跳转「多工况探索-策略制定」只读模式查看排程；「已记录」行「验证」跳转「多工况探索-验证详情」。</p>
+          </div>
+        </div>
+
+        <div class="anno anno-req" data-version="v2.4">
+          <span class="anno-tag">需求说明</span>
+          <span class="anno-version">v2.4</span>
+          <span class="anno-source" data-type="引用自需求文档">需求文档</span>
+          <div class="anno-body">
+            <p><b>本页做什么：</b>作为任务主页面展示策略——顶部三卡片（探索任务 / 智控下发策略 / 安全回退策略）、执行前校验弹窗（对齐 8.1，仅 2 项运行时条件）、开始/暂停/结束/断点续跑（均需密码二次确认；暂停中无「继续」，续跑须新建 run；已结束不可续跑）、<b>执行进度 / 下发记录</b>双 Tab（下发记录字段对齐冷站柔性寻优）、按批次分组的单变量执行进度表（含换批次回基准提示）、手动下发逐步推进。</p>
+            <p><b>本页不做：</b>不做策略制定（开机组合、基准线、补偿步长与间隔时长、排程生成与勾选、阶段一绑定下发/回退，见「多工况探索-策略制定」）；不做训练完成后的预测值 vs 实测值验证对比展示（见「多工况探索-验证详情」）；执行归档样本供机理/仿真模型训练使用，训练在「机理模型训练」模块完成。</p>
+          </div>
+        </div>
+
+        <div class="anno anno-edge" data-version="v2.4">
+          <span class="anno-tag">边界与异常</span>
+          <span class="anno-version">v2.4</span>
+          <span class="anno-source" data-type="引用自需求文档">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>断点续跑口径（8.6）</p>
+            <p><b>暂停中可断点续跑，也可直接结束；已结束不可续跑</b>：人工暂停 / 安全回退触发 / 运行期硬校验 → <strong>暂停中</strong>，可断点续跑或手动「结束」。排程全部完成（自动）或执行中/暂停中手动「结束」→ <strong>已结束</strong>，不可续跑。续跑前须重过 8.1 前置校验并重新快照主表绑定。</p>
+          </div>
+        </div>
+
+        <!-- ===== 完成态提示条 ===== -->
+        <div class="done-banner" id="doneBanner">
+          <span>✓</span>
+          <span>任务已结束。待模型训练完成后，可在下方已记录行点「验证」查看验证详情，对比训练前后的预测效果。</span>
+        </div>
+
+        <!-- ===== 面包屑 ===== -->
+        <div class="page-crumb">
+          <a href="多工况探索-列表.html">多工况探索</a>
+          <span class="crumb-sep">/</span>
+          <span class="crumb-current">执行详情</span>
+        </div>
+
+        <!-- ===== 顶部三卡片（复用冷站全局寻优 module-strip 结构） ===== -->
+        <div class="anno anno-ux" data-version="v2.4">
+          <span class="anno-tag">交互说明</span>
+          <span class="anno-version">v2.4</span>
+          <span class="anno-source" data-type="AI 生成">产品推断</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>顶部三卡片（探索任务 / 智控下发策略 / 安全回退策略）</p>
+            <ul>
+              <li>布局、class 与配色直接复用冷站柔性调优、冷站全局寻优页的 <code>module-strip</code> / <code>module-card</code> 结构，保持三个寻优类页面顶部体验一致。</li>
+              <li><b>卡1 探索任务：</b>操作按钮随任务状态切换——待执行（从制定页发起进入）→「开始执行」（先弹执行前校验弹窗）；执行中 →「暂停」「结束」；暂停中 →「断点续跑」「结束」；已结束 → 只读终态。开始、暂停、结束、续跑均需密码二次确认。无同 run「继续」。前置校验不单独提供「执行校验」按钮，仅在开始/续跑时触发。验证从「已记录」行进入，不在任务卡提供策略级入口。</li>
+              <li><b>卡2「策略切换」/ 卡3「一键回退」「切换策略」：</b>卡2/卡3「切换策略」打开对应选择弹窗，确认后密码校验，写回<strong>策略主表</strong>（已开跑 run 仍用快照，下次开跑/续跑生效）。卡3「一键回退」对齐冷站全局寻优：核对回退指令 → 密码校验 → 按绑定策略回送安全值；执行中触发后停止后续下发并进入<strong>暂停中</strong>。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="anno anno-field" data-version="v2.4">
+          <span class="anno-tag">字段说明</span>
+          <span class="anno-version">v2.4</span>
+          <span class="anno-source" data-type="引用自需求文档">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>卡2 智控下发策略 / 卡3 安全回退策略</p>
+            <ul>
+              <li><b>探索下发策略：</b>阶段一绑定的下发策略（<code>dispatch_strategy_id</code>），取自「智控下发策略管理」，<strong>允许手动或自动</strong>（与寻优下发勿混：柔性/全局寻优执行期必须手动）。手动模式下每步下发前需人工确认；自动模式下运行稳定后系统自动推进下一步。本演示绑定「手动下发」。</li>
+              <li><b>安全回退策略：</b>阶段一绑定的安全回退策略（<code>fallback_strategy_id</code>）；告警触发规则命中后自动执行「停止寻优任务 → 工单通知 → 回送安全值」。另提供「一键回退」人工入口（对齐全局/柔性寻优）。本演示绑定「水泵、冷水主机故障安全回退策略」。</li>
+              <li><b>草稿/执行中可改主表：</b>切换写回策略主表；已开跑 run 用开跑快照，新开跑/断点续跑取主表当前值并重新快照。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="module-strip">
+
+          <div class="module-card" id="modTask">
+            <div class="module-card-header opt">
+              <span class="module-icon"><svg viewBox="0 0 24 24"><path d="M17.75 4.09C12.06 4.61 7.88 7.55 6.56 12.04c-1.02-.1-2.02.1-2.93.58 1.74.26 3.04 1.02 4.03 2.04 1.98-4.55 5.38-7.03 10.09-7.77-3.72 2.04-6.09 4.93-7.12 8.68 2.98-.33 5.31-1.55 6.99-3.66 1.72-2.17 2.21-4.77 1.48-7.82-.43-.04-.88-.04-1.35 0z"/></svg></span>
+              探索任务
+            </div>
+            <div class="module-card-body">
+              <div class="module-status-row">
+                <div class="status-item">
+                  <span class="label">策略名称</span>
+                  <span class="value blue"><a class="strategy-link" href="多工况探索-策略制定.html?mode=view">冷冻泵变频探索-2026Q3</a></span>
+                </div>
+                <div class="status-item">
+                  <span class="label">所属系统</span>
+                  <span class="value">3#数据中心水冷冷水系统</span>
+                </div>
+                <div class="status-item">
+                  <span class="label">任务状态</span>
+                  <span class="value"><span class="status-tag run" id="runStatusTag">执行中</span></span>
+                </div>
+                <div class="status-item">
+                  <span class="label">当前进度</span>
+                  <span class="value" id="runProgressText">批次 1/4 · 第 2 步</span>
+                </div>
+              </div>
+              <div class="module-actions" id="taskActions"></div>
+            </div>
+          </div>
+
+          <div class="module-card" id="modDeliver">
+            <div class="module-card-header deliver">
+              <span class="module-icon"><svg viewBox="0 0 24 24"><path d="M3 4l9 8-9 8V4z"/><path d="M14 4l9 8-9 8V4z"/></svg></span>
+              智控下发策略
+            </div>
+            <div class="module-card-body">
+              <div class="module-status-row">
+                <div class="status-item">
+                  <span class="label">当前下发策略</span>
+                  <span class="value blue" id="dispatchBindingName">手动下发</span>
+                </div>
+                <div class="status-item">
+                  <span class="label">下发模式</span>
+                  <span class="value" id="dispatchBindingMode">手动</span>
+                </div>
+              </div>
+              <div class="module-actions">
+                <button class="btn binding-swap-btn" type="button" onclick="openModal('modalDispatchSelect')" title="改写策略主表；已开跑 run 用快照，下次开跑/续跑生效">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M7 7h11l-3-3 1.41-1.41L21.83 8l-5.42 5.41L15 12l3-3H7V7zm10 10H6l3 3-1.41 1.41L2.17 16l5.42-5.41L9 12l-3 3h11v2z"/></svg>
+                  策略切换
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="module-card" id="modSafety">
+            <div class="module-card-header safety">
+              <span class="module-icon"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg></span>
+              安全回退策略
+            </div>
+            <div class="module-card-body">
+              <div class="module-status-row">
+                <div class="status-item">
+                  <span class="label">当前安全回退策略</span>
+                  <span class="value blue" id="safetyBindingName">水泵、冷水主机故障安全回退策略</span>
+                </div>
+                <div class="status-item">
+                  <span class="label">今日安全诊断</span>
+                  <span class="value"><span class="status-tag ok">正常</span></span>
+                </div>
+              </div>
+              <div class="module-actions">
+                <button class="btn" type="button" onclick="openOneClickRollback()" title="按当前绑定的安全回退策略回送安全值">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M11 7V3L4 10l7 7v-4h4a4 4 0 014 4v1h2v-1a6 6 0 00-6-6h-4z"/></svg>
+                  一键回退
+                </button>
+                <button class="btn binding-swap-btn" type="button" onclick="openModal('modalSafetySelect')" title="改写策略主表；已开跑 run 用快照，下次开跑/续跑生效">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M7 7h11l-3-3 1.41-1.41L21.83 8l-5.42 5.41L15 12l3-3H7V7zm10 10H6l3 3-1.41 1.41L2.17 16l5.42-5.41L9 12l-3 3h11v2z"/></svg>
+                  切换策略
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="anno anno-edge" data-version="v2.4">
+          <span class="anno-tag">边界与异常</span>
+          <span class="anno-version">v2.4</span>
+          <span class="anno-source" data-type="引用自需求文档">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>暂停操作语义（8.6）</p>
+            <p>「暂停」→暂停中（可续跑或直接结束）；「结束」→已结束（不可续跑），执行中与暂停中均可点结束。二者均停止后续下发且不自动回送设定值。安全回退自动触发→暂停中（回送由回退策略执行）。排程全部完成→自动已结束。</p>
+          </div>
+        </div>
+
+        <div class="ready-placeholder" id="readyPlaceholder">
+          任务尚未开始执行（从策略制定页发起）。点击探索任务卡「开始执行」，先通过执行前校验弹窗确认、再完成密码校验后，将按已勾选排程逐步下发；执行进度与下发记录将在此展示。
+        </div>
+
+        <!-- ===== 执行进度 / 下发记录（卡片 + Tab） ===== -->
+        <div id="mainTabsSection" class="main-tabs-card">
+          <div class="tabs-bar">
+            <div class="tab-item active" data-tab="progress">执行进度</div>
+            <div class="tab-item" data-tab="dispatchRecord">下发记录</div>
+          </div>
+
+          <div class="tab-pane active" id="pane-progress">
+        <!-- ===== 执行进度主区 ===== -->
+        <div id="progressSection">
+
+          <div class="anno anno-ux" data-version="v2.4">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source" data-type="AI 生成">产品推断</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>执行进度表格与批次折叠</p>
+              <ul>
+                <li>当前正在执行的工况点高亮显示（浅蓝底 + 左侧色条），便于快速定位进度；批次标题栏点击可展开/收起，当前批次默认展开，其余批次默认收起并展示「待执行」占位行。</li>
+                <li>「已记录」状态的工况点提供「验证」，进入该归档点的验证详情（重训后预测 vs 归档实测）。其余状态不展示验证。</li>
+              </ul>
+            </div>
+          </div>
+          <div class="anno anno-data" data-version="v2.4">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source" data-type="引用自需求文档">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>按设备类型同时下发 + 换批次回基准（8.2）</p>
+              <ul>
+                <li>每个排程步针对<b>一类设备（设备类型）的所有开机实例</b>同时下发相同设定值：如「冷冻泵 36 Hz」一步，会同时向 1号、2号、3号冷冻泵下发 36 Hz。</li>
+                <li>表格中每行一个排程步：<b>目标值</b>对应可写入的<strong>下发测点</strong>（设备类型级同一设定值）；<b>实际反馈</b>对应各实例的<strong>反馈测点</strong>（按台罗列）。二者测点不同，须区分展示。</li>
+                <li>反馈测点数值可点击，打开与柔性/全局寻优同款的历史趋势弹窗，查看该对象反馈测点时序（可对照下发目标曲线）。</li>
+                <li><b>换批次回基准（强制）：</b>当前批次全部完成（或因温差保护提前结束该批次）后，须先将该被探变量<strong>回送至基准线设定值</strong>并确认到位，再开始下一批次。例：冷冻泵扫完 → 冷冻泵回基准 → 再探冷却泵。未回基准不得开下一批次。批次间横幅提示本规则。</li>
+                <li>历史数据比对已覆盖且未强制勾选的工况点，在策略制定阶段即被排除、<b>不进入排程</b>，因此本表不会出现这类行——排程从基准值之后的下一步开始。</li>
+              </ul>
+            </div>
+          </div>
+          <div class="anno anno-data" data-version="v2.4">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source" data-type="引用自需求文档">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>调整幅度检查（8.2）</p>
+              <p>每步下发到位后，比较「应执行步长」（本步目标值 − 上步目标值）与「实际步长」（各实例反馈值变化量），二者之差的绝对值须 ≤ 允许偏差；否则视为跳变/漏步，<b>停止下发</b>并告警留痕。</p>
+              <table class="anno-table">
+                <thead><tr><th>设备类型</th><th>控制量</th><th>默认调整步长</th><th>连续性允许偏差</th></tr></thead>
+                <tbody>
+                  <tr><td>冷冻泵 / 二次泵</td><td>频率</td><td>2 Hz</td><td>± 1.0 Hz</td></tr>
+                  <tr><td>冷却泵</td><td>频率</td><td>2 Hz</td><td>± 1.0 Hz</td></tr>
+                  <tr><td>冷却塔</td><td>频率设定</td><td>2 Hz</td><td>± 1.0 Hz（另有冷凝侧温差保护，见下方运行期监测规则批注）</td></tr>
+                  <tr><td>冷水主机</td><td>冷冻出水温度设定</td><td>0.5 ℃</td><td>± 0.5 ℃</td></tr>
+                </tbody>
+              </table>
+              <p>例：应执行 +2 Hz、某实例实际反馈仅 +0.5 Hz → 超出 1.0 Hz 容差，停止下发并告警留痕。</p>
+            </div>
+          </div>
+          <div class="anno anno-data" data-version="v2.4">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source" data-type="引用自需求文档">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>运行稳定（8.3）</p>
+              <ul>
+                <li><b>最小停留：</b>下发到位后须先等待 ≥ 本次 run 快照的排程间隔时长（默认 15 分钟），再进入稳定判断时段；</li>
+                <li><b>采样间隔：</b>5 分钟（与三层预处理第三层一致）；</li>
+                <li><b>稳态窗口：</b>连续 3 个采样点，首末时刻相差 10 分钟；</li>
+                <li><b>判定：</b>参与稳定判断的量在窗口内极差 R = max − min &lt; ε；ε 默认频率 3 Hz、温度 1.0 ℃（项目级可覆盖）；</li>
+                <li>全部参与量同时满足且已过最小停留才视为稳定；未稳定不采样、不记录。</li>
+              </ul>
+              <p>说明：运行稳定器为本模块新做（非复用离线三层预处理批处理组件），判据口径与三层预处理对齐，保证运行稳定通过的样本回流后不会被预处理再滤掉。</p>
+            </div>
+          </div>
+          <div class="anno anno-edge" data-version="v2.4">
+            <span class="anno-tag">边界与异常</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source" data-type="引用自需求文档">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>运行期持续监测规则（8.5，界面不单独展示，后台持续监测）</p>
+              <p>执行期间持续监测以下 3 条模块内置硬校验（不依赖安全回退策略的告警配置质量），命中后自动处置并告警留痕：① <b>开机设备发生变化</b>（实际开机组合 ≠ 策略快照，如设备故障停机、现场手动加减机）→ 停止下发、进入<strong>暂停中</strong>；② <b>下发模式被改回自动</b>（柔性 / 全局寻优下发策略在执行中被切回「自动」）→ 停止下发、进入<strong>暂停中</strong>；③ <b>冷凝侧温差保护</b>（仅冷却塔批次：主机冷冻 / 冷却间温差实测值 ≤ 安全边界温差下限 + 1 ℃，喘振风险）→ 仅<b>终止该批次</b>后续更高频点，批次按完成处理，不进入暂停中。前两条为任务级暂停、第三条为批次级终止，处置层级不同，告警文案须明确区分。</p>
+            </div>
+          </div>
+          <div class="anno anno-ux" data-version="v2.4">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source" data-type="引用自需求文档">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>下发推进方式与「手动下发」按钮（8.2）</p>
+              <p>下发推进方式由阶段一绑定的<strong>探索下发策略</strong>决定（允许手动/自动，与寻优下发勿混）：<b>自动下发</b>=按排程自动逐步推进，稳定后记录后系统自动下发下一步；<b>手动下发</b>=每步需人工确认并密码校验后下发。本演示绑定「手动下发」，因此当前待下发的排程步行内展示「手动下发」按钮：点击 → 下发确认弹窗 → 确认 → 密码校验 → 提示「已下发」并推进行状态。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-data" data-version="v2.4">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source" data-type="引用自需求文档">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>排程明细与执行状态流转</p>
+              <p>本区每一行对应开跑时已勾选的一个工况点。行内序号、目标设定值与策略制定页保持一致；状态取自执行状态（待执行 / 执行中 / 已记录 / 暂停）；已记录行提供「验证」：</p>
+              <ul>
+                <li><b>待执行 → 执行中 → 已记录：</b>按批次内序号依次流转；探索下发为手动时，「待执行 → 执行中」由人工确认触发；</li>
+                <li><b>暂停：</b>任务进入暂停中时，尚未采集的后续步统一置为「暂停」；可通过「断点续跑」新建 run 从剩余点继续；</li>
+                <li><b>行内「验证」：</b>仅「已记录」展示；点击进入该归档点的验证详情页（需求 §9），直接展示对比结果；</li>
+                <li>历史数据比对被排除的工况点不进入排程，本表无对应行。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="batch-block" data-batch-index="1">
+            <div class="batch-head">
+              <span class="batch-index">批次 1/4</span>
+              <span class="batch-name">冷冻泵变频探索</span>
+              <span class="batch-tag running">执行中</span>
+            </div>
+            <div class="batch-body">
+              <div class="table-scroll-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>序号</th><th>设备名称</th><th>目标值（下发测点）</th><th>实际反馈（反馈测点）</th>
+                      <th>调整幅度检查</th><th>运行稳定状态</th><th>记录时间</th><th>状态</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>1</td>
+                      <td>
+                        <div class="fb-list">
+                          <span class="fb-line">1号冷冻泵</span>
+                          <span class="fb-line">2号冷冻泵</span>
+                          <span class="fb-line">3号冷冻泵</span>
+                        </div>
+                      </td>
+                      <td class="target-cell">
+                        <div class="point-name write">频率设定</div>
+                        <div class="mono-num">36.00 Hz</div>
+                      </td>
+                      <td>
+                        <div class="point-name feedback">频率反馈</div>
+                        <div class="fb-list">
+                          <span class="fb-line"><button type="button" class="fb-link" onclick="openChart('1号冷冻泵','频率反馈')">1号 36.2 Hz</button></span>
+                          <span class="fb-line"><button type="button" class="fb-link" onclick="openChart('2号冷冻泵','频率反馈')">2号 35.8 Hz</button></span>
+                          <span class="fb-line"><button type="button" class="fb-link" onclick="openChart('3号冷冻泵','频率反馈')">3号 36.1 Hz</button></span>
+                        </div>
+                      </td>
+                      <td class="continuity-pass">通过</td>
+                      <td class="steady-done">已稳定</td>
+                      <td class="mono-num">2026-06-28 09:42</td>
+                      <td><span class="exec-status-tag done">已记录</span><a class="btn btn-xs" href="多工况探索-验证详情.html?step=36" style="margin-left:8px;">验证</a></td>
+                    </tr>
+                    <tr class="row-current" id="rowStep38">
+                      <td>2</td>
+                      <td>
+                        <div class="fb-list">
+                          <span class="fb-line">1号冷冻泵</span>
+                          <span class="fb-line">2号冷冻泵</span>
+                          <span class="fb-line">3号冷冻泵</span>
+                        </div>
+                      </td>
+                      <td class="target-cell">
+                        <div class="point-name write">频率设定</div>
+                        <div class="mono-num">38.00 Hz</div>
+                      </td>
+                      <td id="fbStep38">
+                        <div class="point-name feedback">频率反馈</div>
+                        <div class="fb-list">
+                          <span class="fb-line"><button type="button" class="fb-link" onclick="openChart('1号冷冻泵','频率反馈')">1号 37.9 Hz（实时）</button></span>
+                          <span class="fb-line"><button type="button" class="fb-link" onclick="openChart('2号冷冻泵','频率反馈')">2号 38.1 Hz（实时）</button></span>
+                          <span class="fb-line"><button type="button" class="fb-link" onclick="openChart('3号冷冻泵','频率反馈')">3号 37.8 Hz（实时）</button></span>
+                        </div>
+                      </td>
+                      <td class="continuity-pass">通过</td>
+                      <td class="steady-wait" id="steadyStep38">等待稳定中（已等待 12/15 min）</td>
+                      <td class="cell-muted" id="archStep38">—</td>
+                      <td id="statStep38"><span class="exec-status-tag running">执行中</span></td>
+                    </tr>
+                    <tr id="rowStep40">
+                      <td>3</td>
+                      <td>
+                        <div class="fb-list">
+                          <span class="fb-line">1号冷冻泵</span>
+                          <span class="fb-line">2号冷冻泵</span>
+                          <span class="fb-line">3号冷冻泵</span>
+                        </div>
+                      </td>
+                      <td class="target-cell">
+                        <div class="point-name write">频率设定</div>
+                        <div class="mono-num">40.00 Hz</div>
+                      </td>
+                      <td class="cell-muted" id="fbStep40">
+                        <div class="point-name feedback">频率反馈</div>
+                        <span>—</span>
+                      </td>
+                      <td class="cell-muted" id="contStep40">—</td>
+                      <td class="cell-muted" id="steadyStep40">—</td>
+                      <td class="cell-muted" id="archStep40">—</td>
+                      <td id="statStep40"><span class="exec-status-tag pending">待执行</span><button class="btn btn-xs" id="btnManualDispatch" style="margin-left:8px;" onclick="openManualDispatch()">手动下发</button></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="batch-reset-banner" id="batchResetBanner">
+            <span class="batch-reset-banner-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 7V3L4 10l7 7v-4h4a4 4 0 014 4v1h2v-1a6 6 0 00-6-6h-4z"/></svg>
+            </span>
+            <span>本批次结束后将回送冷冻泵至基准，再开始冷却泵批次（换批次回基准，未回基准不得开下一批）。</span>
+          </div>
+
+          <div class="batch-block collapsed" data-batch-index="2">
+            <div class="batch-head" onclick="toggleBatch(this)">
+              <span class="batch-index">批次 2/4</span>
+              <span class="batch-name">冷却泵变频探索</span>
+              <span class="batch-tag pending">待执行</span>
+              <span class="batch-toggle-icon">展开 ▾</span>
+            </div>
+            <div class="batch-body" style="display:none;">
+              <div class="table-scroll-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>序号</th><th>设备名称</th><th>目标值（下发测点）</th><th>实际反馈（反馈测点）</th>
+                      <th>调整幅度检查</th><th>运行稳定状态</th><th>记录时间</th><th>状态</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>1</td>
+                      <td>
+                        <div class="fb-list">
+                          <span class="fb-line">1号冷却泵</span>
+                          <span class="fb-line">2号冷却泵</span>
+                        </div>
+                        </td>
+                      <td class="target-cell">
+                        <div class="point-name write">频率设定</div>
+                        <div class="mono-num">34.00 Hz</div>
+                      </td>
+                      <td class="cell-muted">
+                        <div class="point-name feedback">频率反馈</div>
+                        <span>—</span>
+                      </td><td class="cell-muted">—</td><td class="cell-muted">—</td><td class="cell-muted">—</td>
+                      <td><span class="exec-status-tag pending">待执行</span></td>
+                    </tr>
+                    <tr>
+                      <td>2</td>
+                      <td>
+                        <div class="fb-list">
+                          <span class="fb-line">1号冷却泵</span>
+                          <span class="fb-line">2号冷却泵</span>
+                        </div>
+                        </td>
+                      <td class="target-cell">
+                        <div class="point-name write">频率设定</div>
+                        <div class="mono-num">36.00 Hz</div>
+                      </td>
+                      <td class="cell-muted">
+                        <div class="point-name feedback">频率反馈</div>
+                        <span>—</span>
+                      </td><td class="cell-muted">—</td><td class="cell-muted">—</td><td class="cell-muted">—</td>
+                      <td><span class="exec-status-tag pending">待执行</span></td>
+                    </tr>
+                    <tr>
+                      <td>3</td>
+                      <td>
+                        <div class="fb-list">
+                          <span class="fb-line">1号冷却泵</span>
+                          <span class="fb-line">2号冷却泵</span>
+                        </div>
+                        </td>
+                      <td class="target-cell">
+                        <div class="point-name write">频率设定</div>
+                        <div class="mono-num">38.00 Hz</div>
+                      </td>
+                      <td class="cell-muted">
+                        <div class="point-name feedback">频率反馈</div>
+                        <span>—</span>
+                      </td><td class="cell-muted">—</td><td class="cell-muted">—</td><td class="cell-muted">—</td>
+                      <td><span class="exec-status-tag pending">待执行</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="batch-block collapsed" data-batch-index="3">
+            <div class="batch-head" onclick="toggleBatch(this)">
+              <span class="batch-index">批次 3/4</span>
+              <span class="batch-name">冷却塔变频探索</span>
+              <span class="batch-tag pending">待执行</span>
+              <span class="batch-guard-tag">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+                受冷凝侧温差保护监测
+              </span>
+              <span class="batch-toggle-icon">展开 ▾</span>
+            </div>
+            <div class="batch-body" style="display:none;">
+              <div class="table-scroll-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>序号</th><th>设备名称</th><th>目标值（下发测点）</th><th>实际反馈（反馈测点）</th>
+                      <th>调整幅度检查</th><th>运行稳定状态</th><th>记录时间</th><th>状态</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>1</td>
+                      <td>
+                        <div class="fb-list">
+                          <span class="fb-line">1号冷却塔</span>
+                          <span class="fb-line">2号冷却塔</span>
+                        </div>
+                        </td>
+                      <td class="target-cell">
+                        <div class="point-name write">频率设定</div>
+                        <div class="mono-num">32.00 Hz</div>
+                      </td>
+                      <td class="cell-muted">
+                        <div class="point-name feedback">频率反馈</div>
+                        <span>—</span>
+                      </td><td class="cell-muted">—</td><td class="cell-muted">—</td><td class="cell-muted">—</td>
+                      <td><span class="exec-status-tag pending">待执行</span></td>
+                    </tr>
+                    <tr>
+                      <td>2</td>
+                      <td>
+                        <div class="fb-list">
+                          <span class="fb-line">1号冷却塔</span>
+                          <span class="fb-line">2号冷却塔</span>
+                        </div>
+                        </td>
+                      <td class="target-cell">
+                        <div class="point-name write">频率设定</div>
+                        <div class="mono-num">34.00 Hz</div>
+                      </td>
+                      <td class="cell-muted">
+                        <div class="point-name feedback">频率反馈</div>
+                        <span>—</span>
+                      </td><td class="cell-muted">—</td><td class="cell-muted">—</td><td class="cell-muted">—</td>
+                      <td><span class="exec-status-tag pending">待执行</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="batch-block collapsed" data-batch-index="4">
+            <div class="batch-head" onclick="toggleBatch(this)">
+              <span class="batch-index">批次 4/4</span>
+              <span class="batch-name">冷水主机出水温度探索</span>
+              <span class="batch-tag pending">待执行</span>
+              <span class="batch-toggle-icon">展开 ▾</span>
+            </div>
+            <div class="batch-body" style="display:none;">
+              <div class="table-scroll-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>序号</th><th>设备名称</th><th>目标值（下发测点）</th><th>实际反馈（反馈测点）</th>
+                      <th>调整幅度检查</th><th>运行稳定状态</th><th>记录时间</th><th>状态</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>1</td>
+                      <td>
+                        <div class="fb-list">
+                          <span class="fb-line">1号冷水主机</span>
+                          <span class="fb-line">2号冷水主机</span>
+                        </div>
+                        </td>
+                      <td class="target-cell">
+                        <div class="point-name write">冷冻出水温度设定</div>
+                        <div class="mono-num">8.50 ℃</div>
+                      </td>
+                      <td class="cell-muted">
+                        <div class="point-name feedback">冷冻水出水温度</div>
+                        <span>—</span>
+                      </td><td class="cell-muted">—</td><td class="cell-muted">—</td><td class="cell-muted">—</td>
+                      <td><span class="exec-status-tag pending">待执行</span></td>
+                    </tr>
+                    <tr>
+                      <td>2</td>
+                      <td>
+                        <div class="fb-list">
+                          <span class="fb-line">1号冷水主机</span>
+                          <span class="fb-line">2号冷水主机</span>
+                        </div>
+                        </td>
+                      <td class="target-cell">
+                        <div class="point-name write">冷冻出水温度设定</div>
+                        <div class="mono-num">8.00 ℃</div>
+                      </td>
+                      <td class="cell-muted">
+                        <div class="point-name feedback">冷冻水出水温度</div>
+                        <span>—</span>
+                      </td><td class="cell-muted">—</td><td class="cell-muted">—</td><td class="cell-muted">—</td>
+                      <td><span class="exec-status-tag pending">待执行</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+          </div><!-- /pane-progress -->
+
+          <!-- TAB: 下发记录（字段对齐冷站柔性寻优） -->
+          <div class="tab-pane" id="pane-dispatchRecord">
+            <div class="anno anno-field" data-version="v2.4">
+              <span class="anno-tag">字段说明</span>
+              <span class="anno-version">v2.4</span>
+              <span class="anno-source" data-type="引用自需求文档">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>下发记录 Tab — 筛选条件与表格</p>
+                <p><b>下发记录：</b>记录本探索任务逐步下发的策略、时间、下发人、对象与属性、实际参数、下发参数和下发结果（复用既有下发留痕，增 provenance「主动激励来源」）。字段与筛选口径对齐「冷站柔性寻优」下发记录 Tab；可按策略、日期、关键词筛选。</p>
+              </div>
+            </div>
+            <div class="filter-bar">
+              <div class="filter-group">
+                <span class="filter-label">策略：</span>
+                <select class="filter-input" id="dispatchStrategyFilter" style="min-width:140px;">
+                  <option value="">请选择</option>
+                  <option selected>手动下发</option>
+                  <option>自动下发</option>
+                </select>
+              </div>
+              <div class="filter-group">
+                <span class="filter-label">日期：</span>
+                <input type="date" class="filter-input" value="2026-06-28">
+                <span class="filter-sep">~</span>
+                <input type="date" class="filter-input" value="2026-06-28">
+              </div>
+              <div class="filter-group" style="margin-left:auto;">
+                <span class="filter-label">Q</span>
+                <input type="text" class="search-input" id="dispatchKeyword" placeholder="设备名称、属性名称" style="min-width:160px;">
+              </div>
+            </div>
+            <div class="data-table-wrap">
+              <table class="data-table" id="dispatchTable" style="min-width:980px;">
+                <thead>
+                  <tr>
+                    <th style="width:160px;">下发策略</th>
+                    <th style="width:160px;">下发时间</th>
+                    <th style="width:80px;">下发人</th>
+                    <th style="width:240px;">对象名称、下发属性</th>
+                    <th style="width:90px;">实际参数</th>
+                    <th style="width:90px;">下发参数</th>
+                    <th style="width:80px;">下发结果</th>
+                  </tr>
+                </thead>
+                <tbody id="dispatchBody"></tbody>
+              </table>
+              <div class="table-pagination">
+                <span id="dispatchTotalText">共 0 条</span>
+                <span class="page-size">100条/页</span>
+                <span class="pager-btn disabled">‹</span>
+                <span class="page-size">1</span>
+                <span class="pager-btn disabled">›</span>
+                <span>前往</span>
+                <span class="page-jump">1</span>
+                <span>页</span>
+              </div>
+            </div>
+          </div><!-- /pane-dispatchRecord -->
+        </div><!-- /mainTabsSection -->
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- 弹窗：执行前校验 -->
+<div class="modal-mask" id="modalPrecheck">
+  <div class="modal-box" style="max-width:560px;">
+    <div class="modal-head">
+      <svg class="modal-icon" viewBox="0 0 24 24" fill="#16A34A"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm-1.2 14.6l-4.2-4.2 1.4-1.4 2.8 2.8 5.8-5.8 1.4 1.4-7.2 7.2z"/></svg>
+      <span class="modal-title">执行前校验</span>
+      <span class="modal-close" onclick="closeModal('modalPrecheck')">&times;</span>
+    </div>
+    <div class="modal-body">
+      <div class="anno anno-state" data-version="v2.4">
+        <span class="anno-tag">状态说明</span>
+        <span class="anno-version">v2.4</span>
+        <span class="anno-source" data-type="引用自需求文档">需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>执行前校验弹窗（仅 2 项，需求文档 8.1）</p>
+          <ul>
+            <li><b>触发路径：</b>仅任务待执行态点「开始执行」、暂停中态点「断点续跑」时弹出；不提供独立「执行校验」入口（校验为开跑/续跑后端门禁，失败直接拦截提示）。</li>
+            <li><b>只验会变的运行时条件：</b>寻优下发是否仍为手动、开机组合是否仍与制定时一致。排程勾选、仿真实例/边界/下发/回退绑定、间隔等配置项已在制定与「发起执行」门禁配齐，此处不再复检。</li>
+            <li><b>全部通过：</b>底部确认按钮可点，点击后关闭本弹窗、转入密码校验，密码校验通过后进入执行中（开跑或续跑新建 run）。本页演示 2 项均为 ✓。</li>
+            <li><b>任一项不通过：</b>该项左侧图标变为 ✗（红色），文案下方追加具体不通过原因；只要有 1 项不通过，确认按钮即置灰不可点。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="anno anno-data" data-version="v2.4">
+        <span class="anno-tag">数据逻辑</span>
+        <span class="anno-version">v2.4</span>
+        <span class="anno-source" data-type="引用自需求文档">需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>执行前校验 — 2 项判定规则（8.1）</p>
+          <table class="anno-table">
+            <thead><tr><th>校验项</th><th>判定规则</th><th>不通过时</th></tr></thead>
+            <tbody>
+              <tr><td>寻优下发手动</td><td>柔性寻优、全局寻优下发策略均为「手动」（与探索下发勿混）</td><td>拦截，提示先改手动</td></tr>
+              <tr><td>开机组合一致性</td><td>策略制定时的开机组合快照 == 当前实际开机组合</td><td>拦截，不允许执行</td></tr>
+            </tbody>
+          </table>
+          <p>断点续跑同样只重验上述 2 项；开跑/续跑时将主表当前的下发/回退/间隔写入本次 run 快照（配置完整性由发起执行门禁保证）。</p>
+        </div>
+      </div>
+      <div class="precheck-summary" id="precheckSummary">2 项全部通过</div>
+      <ul class="precheck-list" id="precheckList">
+        <li class="precheck-item pass" data-key="dispatch-manual">
+          <span class="precheck-icon">✓</span>
+          <span class="precheck-text">① 柔性寻优、全局寻优下发策略均为「手动」（寻优下发，与探索下发勿混）</span>
+        </li>
+        <li class="precheck-item pass" data-key="combo-consistent">
+          <span class="precheck-icon">✓</span>
+          <span class="precheck-text">② 开机组合一致性：策略制定时的开机组合与当前实际开机组合一致</span>
+        </li>
+      </ul>
+    </div>
+    <div class="modal-foot">
+      <div class="modal-hint" id="precheckFootHint">确认后转入密码校验，校验通过即开始按已勾选排程执行</div>
+      <div class="btn-group">
+        <button class="btn" onclick="closeModal('modalPrecheck')">关 闭</button>
+        <button class="btn btn-primary" id="btnPrecheckConfirm" onclick="confirmPrecheck()">确认，开始执行</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：密码权限校验（通用，覆盖开始/暂停/结束/续跑/切换策略/手动下发） -->
+<div class="modal-mask" id="modalPwd">
+  <div class="modal-box" style="max-width:400px;">
+    <div class="modal-head">
+      <svg class="modal-icon" viewBox="0 0 24 24" fill="#1890FF"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z"/></svg>
+      <span class="modal-title" id="pwdTitle">密码权限校验</span>
+    </div>
+    <div class="modal-body">
+      <div class="anno anno-ux" data-version="v2.4">
+        <span class="anno-tag">交互说明</span>
+        <span class="anno-version">v2.4</span>
+        <span class="anno-source" data-type="引用自需求文档">需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>密码权限校验弹窗（通用，<code>modalPwd</code>）</p>
+          <p><b>入口：</b>开始执行 / 断点续跑（执行前校验弹窗确认后）、暂停、结束、切换下发 / 回退策略、一键回退、手动下发每步确认，共用同一弹窗，仅标题与提示文案不同。</p>
+          <ul><li><b>取消/确认：</b>取消关闭、不生效；确认提交密码校验，通过后对应操作立即生效并更新页面状态。</li></ul>
+        </div>
+      </div>
+      <div class="anno anno-field" data-version="v2.4">
+        <span class="anno-tag">字段说明</span>
+        <span class="anno-version">v2.4</span>
+        <span class="anno-source" data-type="引用自需求文档">需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>密码权限校验弹窗（通用）</p>
+          <p><b>操作密码：</b>密文输入，必填；标题与提示文案随触发的操作动态变化。</p>
+        </div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div class="form-label">请输入操作密码</div>
+        <input type="password" class="form-control" id="pwdInput" placeholder="请输入密码">
+      </div>
+      <div style="font-size:12px; color:var(--text-hint);" id="pwdHint">校验通过后操作即刻生效</div>
+    </div>
+    <div class="modal-foot">
+      <div class="btn-group" style="margin-left:auto;">
+        <button class="btn" onclick="closeModal('modalPwd')">取 消</button>
+        <button class="btn btn-primary" onclick="onPwdConfirm()">确 认</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：切换下发策略 -->
+<div class="modal-mask" id="modalDispatchSelect">
+  <div class="modal-box" style="max-width:480px;">
+    <div class="modal-head">
+      <svg class="modal-icon" viewBox="0 0 24 24" fill="#722ED1"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+      <span class="modal-title">切换下发策略</span>
+    </div>
+    <div class="modal-body">
+      <div class="anno anno-field" data-version="v2.4">
+        <span class="anno-tag">字段说明</span>
+        <span class="anno-version">v2.4</span>
+        <span class="anno-source" data-type="AI 生成">产品推断</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>切换下发策略弹窗</p>
+          <ul>
+            <li><b>策略项：</b>名称 + 下发模式标签（手动/自动）+ 简要说明，单选，点击整行即选中。</li>
+            <li><b>手动：</b>每步下发前需人工确认（执行进度区行内「手动下发」按钮）；<b>自动：</b>运行稳定后系统自动推进下一步，无需人工逐步确认。<strong>探索下发允许自动</strong>；勿与寻优（柔性/全局）下发混淆——后者执行期必须手动。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="anno anno-ux" data-version="v2.4">
+        <span class="anno-tag">交互说明</span>
+        <span class="anno-version">v2.4</span>
+        <span class="anno-source" data-type="AI 生成">产品推断</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>切换下发策略弹窗</p>
+          <p><b>入口：</b>顶部卡2「智控下发策略」的「策略切换」按钮。确认后关闭本弹窗并转入密码二次校验，取消不生效；校验通过后<strong>写回策略主表</strong>并刷新卡2展示。已开跑 run 仍用开跑快照；改后下次开跑/断点续跑生效。</p>
+        </div>
+      </div>
+      <ul class="strategy-list" id="dispatchStrategyList">
+        <li class="strategy-item selected" data-name="手动下发" data-mode="手动" onclick="selectDispatchStrategy(this)">
+          <div class="strategy-radio"></div>
+          <div class="strategy-info">
+            <div class="strategy-name">手动下发<span class="mode-chip manual">手动</span></div>
+            <div class="strategy-desc">每步下发前需人工确认，适合探索类高风险动作</div>
+          </div>
+        </li>
+        <li class="strategy-item" data-name="末端手动下发" data-mode="手动" onclick="selectDispatchStrategy(this)">
+          <div class="strategy-radio"></div>
+          <div class="strategy-info">
+            <div class="strategy-name">末端手动下发<span class="mode-chip manual">手动</span></div>
+            <div class="strategy-desc">末端设备变更同样需人工确认后下发</div>
+          </div>
+        </li>
+        <li class="strategy-item" data-name="自动寻优下发" data-mode="自动" onclick="selectDispatchStrategy(this)">
+          <div class="strategy-radio"></div>
+          <div class="strategy-info">
+            <div class="strategy-name">自动寻优下发<span class="mode-chip auto">自动</span></div>
+            <div class="strategy-desc">运行稳定后系统自动推进下一步（探索下发允许自动；勿与寻优下发混淆）</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div class="modal-foot">
+      <div class="modal-hint">切换后写回策略主表；已开跑 run 用快照，下次开跑/续跑取新值</div>
+      <div class="btn-group">
+        <button class="btn" onclick="closeModal('modalDispatchSelect')">取 消</button>
+        <button class="btn btn-primary" onclick="confirmDispatchSwitch()">确 认</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：切换安全回退策略 -->
+<div class="modal-mask" id="modalSafetySelect">
+  <div class="modal-box" style="max-width:480px;">
+    <div class="modal-head" style="justify-content:space-between;">
+      <span class="modal-title" style="font-size:16px;font-weight:700;">切换安全回退策略</span>
+      <span class="modal-close" onclick="closeModal('modalSafetySelect')">&times;</span>
+    </div>
+    <div class="modal-body" style="padding:20px 24px 28px;">
+      <div class="anno anno-field" data-version="v2.4">
+        <span class="anno-tag">字段说明</span>
+        <span class="anno-version">v2.4</span>
+        <span class="anno-source" data-type="AI 生成">产品推断</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>切换安全回退策略弹窗</p>
+          <p><b>安全回退策略：</b>下拉单选，选项来自「安全回退策略」页已创建的策略；默认选中当前已绑定策略。</p>
+        </div>
+      </div>
+      <div class="anno anno-ux" data-version="v2.4">
+        <span class="anno-tag">交互说明</span>
+        <span class="anno-version">v2.4</span>
+        <span class="anno-source" data-type="AI 生成">产品推断</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>切换安全回退策略弹窗</p>
+          <p><b>入口：</b>顶部卡3「安全回退策略」的「切换策略」按钮。「确认绑定」后转入密码二次校验，取消关闭不保存；校验通过后<strong>写回策略主表</strong>并刷新卡3。已开跑 run 仍用开跑快照；改后下次开跑/断点续跑生效。</p>
+        </div>
+      </div>
+      <select class="form-control" id="safetyRollbackSelect" style="width:100%;padding:10px 14px;font-size:14px;">
+        <option value="水泵、冷水主机故障安全回退策略">水泵、冷水主机故障安全回退策略</option>
+        <option value="全量回退策略">全量回退策略</option>
+        <option value="最小干预回退策略">最小干预回退策略</option>
+      </select>
+    </div>
+    <div class="modal-foot" style="justify-content:flex-end;">
+      <div class="btn-group">
+        <button class="btn" onclick="closeModal('modalSafetySelect')" style="border-color:var(--success);color:var(--success);">取 消</button>
+        <button class="btn" onclick="confirmSafetySwitch()" style="background:var(--success);color:#fff;border-color:var(--success);">确认绑定</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：手动下发确认 -->
+<div class="modal-mask" id="modalManualDispatch">
+  <div class="modal-box" style="max-width:460px;">
+    <div class="modal-head">
+      <svg class="modal-icon" viewBox="0 0 24 24" fill="#1E40AF"><path d="M9 11.24V7.5a2.5 2.5 0 015 0v3.74l1.31-1.31 1.42 1.41L12 16.07l-4.73-4.73 1.42-1.41L9 11.24zM5 19h14v2H5z"/></svg>
+      <span class="modal-title">手动下发确认</span>
+      <span class="modal-close" onclick="closeModal('modalManualDispatch')">&times;</span>
+    </div>
+    <div class="modal-body">
+      <div class="anno anno-ux" data-version="v2.4">
+        <span class="anno-tag">交互说明</span>
+        <span class="anno-version">v2.4</span>
+        <span class="anno-source" data-type="引用自需求文档">需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>手动下发确认弹窗（8.2）</p>
+          <p><b>入口：</b>执行进度区当前待下发执行计划步行内「手动下发」按钮（仅绑定手动模式下发策略时出现）。展示本步设备类型、控制变量、目标值与应用实例列表供人工核对；「确认下发」→ 密码校验 → 校验通过后同时向该设备类型全部开机实例下发相同设定值，提示「已下发」并推进行状态为执行中。取消不生效。</p>
+        </div>
+      </div>
+      <table class="dispatch-confirm-table">
+        <tbody>
+          <tr><td>设备类型</td><td><b>冷冻泵</b>（设备类型级同时下发）</td></tr>
+          <tr><td>控制变量</td><td>频率</td></tr>
+          <tr><td>目标值</td><td class="mono-num"><b>40.00 Hz</b>（上一步 38.00 Hz，步进 +2 Hz）</td></tr>
+          <tr><td>应用实例</td><td>1号冷冻泵、2号冷冻泵、3号冷冻泵（同时下发相同设定值）</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="modal-foot">
+      <div class="modal-hint">确认后需密码权限校验，校验通过后立即下发</div>
+      <div class="btn-group">
+        <button class="btn" onclick="closeModal('modalManualDispatch')">取 消</button>
+        <button class="btn btn-primary" onclick="confirmManualDispatch()">确认下发</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：一键回退确认（对齐冷站全局寻优） -->
+<div class="modal-mask" id="modalOneClickRollback">
+  <div class="modal-box" style="max-width:780px;">
+    <div class="modal-head">
+      <span class="modal-title">请仔细核对回退的指令参数，改为空值可不下发</span>
+      <span class="modal-close" onclick="closeModal('modalOneClickRollback')">&times;</span>
+    </div>
+    <div class="modal-body" style="padding-bottom:0;">
+      <div class="anno anno-ux" data-version="v2.4">
+        <span class="anno-tag">交互说明</span>
+        <span class="anno-version">v2.4</span>
+        <span class="anno-source" data-type="对齐全局寻优">产品推断</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>一键回退确认弹窗（对齐冷站全局寻优）</p>
+          <p><b>入口：</b>顶部卡3「安全回退策略」的「一键回退」。按当前绑定回退策略列出回送点位与安全值，下发值可改（空值表示该点不下发）。「确认回退」→ 密码校验 → 回送安全值；若任务处于执行中，同时停止后续下发并进入暂停中。</p>
+        </div>
+      </div>
+      <div id="rollbackModalBody" style="max-height:55vh;overflow-y:auto;padding:0 0 14px;"></div>
+    </div>
+    <div class="modal-foot">
+      <div class="modal-hint">1、点击后需密码权限校验，校验后才可正式回退<br>2、回退后需基于反馈结果确认是否成功，失败点位可再次回退</div>
+      <div class="btn-group">
+        <button class="btn" onclick="closeModal('modalOneClickRollback')">取 消</button>
+        <button class="btn btn-primary" onclick="confirmOneClickRollback()">确认回退</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- 弹窗：历史趋势（复用冷站柔性/全局寻优同款组件） -->
+<div class="modal-mask" id="modalChart">
+  <div class="modal-box chart-modal">
+    <div class="chart-head">
+      <span class="chart-title" id="chartMainTitle">频率反馈</span>
+      <span class="chart-subtitle" id="chartSubTitle">1号冷冻泵</span>
+      <span class="chart-close" onclick="closeModal('modalChart')">&times;</span>
+    </div>
+    <div class="chart-toolbar">
+      <div class="time-tabs">
+        <div class="time-tab" onclick="switchTimeTab(this)">月</div>
+        <div class="time-tab active" onclick="switchTimeTab(this)">日</div>
+        <div class="time-tab" onclick="switchTimeTab(this)">段</div>
+      </div>
+      <input type="date" class="filter-input" value="2026-06-28" style="font-size:12px;">
+    </div>
+    <div class="anno anno-ux" data-version="v2.4" style="margin:0 20px 8px;">
+      <span class="anno-tag">交互说明</span>
+      <span class="anno-version">v2.4</span>
+      <span class="anno-source" data-type="对齐柔性寻优">产品推断</span>
+      <div class="anno-body">
+        <p><b>关联模块：</b>历史趋势图表弹窗（复用冷站柔性/全局寻优 modalChart）</p>
+        <p><b>入口：</b>执行进度表「实际反馈（反馈测点）」列中的反馈值。标题=反馈测点名，副标题=设备对象；月/日/段切换粒度。</p>
+      </div>
+    </div>
+    <div class="anno anno-field" data-version="v2.4" style="margin:0 20px 8px;">
+      <span class="anno-tag">字段说明</span>
+      <span class="anno-version">v2.4</span>
+      <span class="anno-source" data-type="对齐柔性寻优">产品推断</span>
+      <div class="anno-body">
+        <p><b>关联模块：</b>历史趋势</p>
+        <p><b>图例：</b>实际值（反馈测点实线）与目标设定（下发测点虚线）；与柔性/全局寻优同款组件，本页语义映射为反馈 vs 下发目标。</p>
+      </div>
+    </div>
+    <div class="chart-canvas">
+      <canvas id="trendChart"></canvas>
+    </div>
+    <div class="chart-legend">
+      <div class="leg"><div class="leg-line" style="background:#1890FF;"></div>实际值</div>
+      <div class="leg"><div class="leg-line dashed" style="color:#52C41A;"></div>目标设定</div>
+    </div>
+    <div class="chart-foot">
+      <button class="btn" onclick="closeModal('modalChart')">取 消</button>
+      <button class="btn btn-primary" onclick="closeModal('modalChart')">确 定</button>
+    </div>
+  </div>
+</div>
+
+<button class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+
+<script>
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+document.querySelectorAll('.modal-mask').forEach(function (m) {
+  m.addEventListener('click', function (e) { if (e.target === this) closeModal(this.id); });
+});
+
+var toastTimer = null;
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { t.classList.remove('show'); }, 2200);
+}
+
+var STATUS_TAG_TEXT = { ready: '待执行', running: '执行中', aborted: '暂停中', completed: '已结束' };
+var STATUS_TAG_CLASS = { ready: 'muted', running: 'run', aborted: 'danger', completed: 'done' };
+
+var params = new URLSearchParams(window.location.search);
+var state = {
+  runStatus: 'running',
+  abortReason: '',
+  abortTime: '',
+  progressText: '批次 1/4 · 第 2 步'
+};
+if (params.get('ready') === '1') {
+  state.runStatus = 'ready';
+  state.progressText = '未开始';
+}
+if (params.get('paused') === '1' || params.get('aborted') === '1' || params.get('resume') === '1') {
+  state.runStatus = 'aborted';
+  state.abortReason = '安全回退策略自动触发';
+  state.abortTime = '2026-06-12 14:32';
+  state.progressText = '批次 1/4 · 暂停中';
+}
+if (params.get('ended') === '1' || params.get('completed') === '1') {
+  state.runStatus = 'completed';
+  state.progressText = '全部批次已完成';
+}
+
+var pendingAction = null;
+var precheckIntent = 'start'; /* start | resume */
+
+function renderStatusTag() {
+  var el = document.getElementById('runStatusTag');
+  el.className = 'status-tag ' + STATUS_TAG_CLASS[state.runStatus];
+  el.textContent = STATUS_TAG_TEXT[state.runStatus];
+  document.getElementById('runProgressText').textContent = state.progressText;
+}
+
+function renderBanners() {
+  document.getElementById('doneBanner').style.display = state.runStatus === 'completed' ? 'flex' : 'none';
+}
+
+function renderTaskActions() {
+  var el = document.getElementById('taskActions');
+  var html = '';
+  if (state.runStatus === 'ready') {
+    html = '<button class="btn btn-primary" type="button" onclick="ExecOps.start()">▶ 开始执行</button>';
+  } else if (state.runStatus === 'running') {
+    html = '<button class="btn" type="button" onclick="ExecOps.pause()">⏸ 暂停</button>' +
+      '<button class="btn btn-danger" type="button" onclick="ExecOps.end()">■ 结束</button>';
+  } else if (state.runStatus === 'completed') {
+    html = '';
+  } else if (state.runStatus === 'aborted') {
+    html = '<button class="btn btn-primary" type="button" onclick="ExecOps.resume()">▶ 断点续跑</button>' +
+      '<button class="btn btn-danger" type="button" onclick="ExecOps.end()">■ 结束</button>';
+  }
+  el.innerHTML = html;
+}
+
+function renderBindingButtons() {
+  document.querySelectorAll('.binding-swap-btn').forEach(function (btn) {
+    btn.classList.remove('disabled');
+    btn.setAttribute('title', '改写策略主表；已开跑 run 用快照，下次开跑/续跑生效');
+  });
+}
+
+function renderReadyPlaceholder() {
+  var isReady = state.runStatus === 'ready';
+  document.getElementById('readyPlaceholder').style.display = isReady ? 'block' : 'none';
+  var tabs = document.getElementById('mainTabsSection');
+  if (tabs) tabs.style.display = isReady ? 'none' : 'block';
+}
+
+function renderAll() {
+  renderStatusTag();
+  renderBanners();
+  renderTaskActions();
+  renderBindingButtons();
+  renderReadyPlaceholder();
+}
+
+/* ---------- 执行前校验弹窗 ---------- */
+function openPrecheckModal() {
+  var btn = document.getElementById('btnPrecheckConfirm');
+  var hint = document.getElementById('precheckFootHint');
+  btn.style.display = '';
+  if (precheckIntent === 'resume') {
+    btn.textContent = '确认，断点续跑';
+    hint.textContent = '确认后转入密码校验；通过后新建 run，从断点续跑并重新快照主表当前绑定';
+  } else {
+    btn.textContent = '确认，开始执行';
+    hint.textContent = '确认后转入密码校验，校验通过即开始按已勾选排程执行';
+  }
+  openModal('modalPrecheck');
+}
+
+function confirmPrecheck() {
+  closeModal('modalPrecheck');
+  if (precheckIntent === 'resume') {
+    openPwd('resume', '断点续跑 — 密码校验', '前置校验 2 项已全部通过，密码校验通过后将新建 run，从剩余未执行工况点继续');
+  } else {
+    openPwd('start', '开始执行 — 密码校验', '前置校验 2 项已全部通过，密码校验通过后将按已勾选排程开始执行');
+  }
+}
+
+/* ---------- 密码校验 ---------- */
+function openPwd(action, title, hint) {
+  pendingAction = action;
+  document.getElementById('pwdTitle').textContent = title;
+  document.getElementById('pwdHint').textContent = hint;
+  document.getElementById('pwdInput').value = '';
+  openModal('modalPwd');
+}
+
+var ExecOps = {
+  start: function () {
+    precheckIntent = 'start';
+    openPrecheckModal();
+  },
+  pause: function () { openPwd('pause', '暂停 — 密码校验', '校验通过后停止后续下发并进入暂停中（不自动回送设定值）；之后可断点续跑'); },
+  end: function () { openPwd('end', '结束 — 密码校验', '校验通过后停止后续下发并进入已结束（不自动回送设定值）；未执行点不可再续跑'); },
+  resume: function () {
+    precheckIntent = 'resume';
+    openPrecheckModal();
+  }
+};
+
+function onPwdConfirm() {
+  var pwd = document.getElementById('pwdInput').value;
+  closeModal('modalPwd');
+  if (!pwd) { return; }
+  if (pendingAction === 'start' || pendingAction === 'resume') {
+    state.runStatus = 'running';
+    state.abortReason = '';
+    state.abortTime = '';
+    state.progressText = '批次 1/4 · 第 2 步';
+    if (pendingAction === 'resume') {
+      showToast('已断点续跑：新建 run，从剩余工况点继续');
+    }
+  } else if (pendingAction === 'pause') {
+    state.runStatus = 'aborted';
+    state.abortReason = '人工操作暂停';
+    state.abortTime = formatNow();
+    state.progressText = '批次 1/4 · 暂停中';
+    showToast('已进入暂停中：可断点续跑；如需安全工况请手动处理或依赖安全回退');
+  } else if (pendingAction === 'end') {
+    state.runStatus = 'completed';
+    state.abortReason = '';
+    state.abortTime = '';
+    state.progressText = '已结束';
+    showToast('已结束：停止后续下发，不可再续跑');
+  } else if (pendingAction === 'dispatchSwitch') {
+    var dName = window._pendingDispatchName;
+    var dMode = window._pendingDispatchMode;
+    if (dName) {
+      document.getElementById('dispatchBindingName').textContent = dName;
+      document.getElementById('dispatchBindingMode').textContent = dMode || '';
+      showToast('已写回策略主表：' + dName + '（下次开跑/续跑生效）');
+    }
+  } else if (pendingAction === 'safetySwitch') {
+    var sName = window._pendingSafetyName;
+    if (sName) {
+      document.getElementById('safetyBindingName').textContent = sName;
+      showToast('已写回策略主表：' + sName + '（下次开跑/续跑生效）');
+    }
+  } else if (pendingAction === 'manualDispatch') {
+    applyManualDispatch();
+  } else if (pendingAction === 'oneClickRollback') {
+    applyOneClickRollback();
+  }
+  pendingAction = null;
+  renderAll();
+}
+
+function formatNow() {
+  var d = new Date();
+  function p(n) { return n < 10 ? ('0' + n) : ('' + n); }
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+
+/* ---------- 策略切换 ---------- */
+function selectDispatchStrategy(el) {
+  document.querySelectorAll('#dispatchStrategyList .strategy-item').forEach(function (i) { i.classList.remove('selected'); });
+  el.classList.add('selected');
+}
+
+function confirmDispatchSwitch() {
+  var selected = document.querySelector('#dispatchStrategyList .strategy-item.selected');
+  var name = selected ? selected.dataset.name : '';
+  var mode = selected ? selected.dataset.mode : '';
+  closeModal('modalDispatchSelect');
+  window._pendingDispatchName = name;
+  window._pendingDispatchMode = mode;
+  openPwd('dispatchSwitch', '切换下发策略 — 密码校验', name ? ('校验通过后写回策略主表「' + name + '」；已开跑 run 用快照，下次开跑/续跑生效') : '请选择下发策略');
+}
+
+function confirmSafetySwitch() {
+  var sel = document.getElementById('safetyRollbackSelect');
+  var name = sel.value;
+  closeModal('modalSafetySelect');
+  window._pendingSafetyName = name;
+  openPwd('safetySwitch', '切换安全回退策略 — 密码校验', '校验通过后写回策略主表「' + name + '」；已开跑 run 用快照，下次开跑/续跑生效');
+}
+
+/* ---------- 一键回退（对齐冷站全局寻优） ---------- */
+function openOneClickRollback() {
+  var rows = [
+    { dev: '1号冷冻泵', param: '频率设定', actual: '38.00 Hz', safe: '34.00' },
+    { dev: '2号冷冻泵', param: '频率设定', actual: '38.10 Hz', safe: '34.00' },
+    { dev: '3号冷冻泵', param: '频率设定', actual: '37.80 Hz', safe: '34.00' },
+    { dev: '1号冷水主机', param: '冷冻出水温度设定', actual: '7.20 ℃', safe: '7.00' },
+    { dev: '2号冷水主机', param: '冷冻出水温度设定', actual: '7.10 ℃', safe: '7.00' }
+  ];
+  var html = '<div class="dispatch-section"><span class="ds-badge rollback">回退</span> 按「'
+    + (document.getElementById('safetyBindingName').textContent || '安全回退策略')
+    + '」回送安全值（' + rows.length + ' 条）</div>';
+  html += '<table class="dispatch-table"><thead><tr><th>对象</th><th>下发属性</th><th>当前值</th><th>安全值</th><th>下发值</th></tr></thead><tbody>';
+  rows.forEach(function (r) {
+    html += '<tr><td class="dev-name">' + r.dev + '</td><td class="param-name">' + r.param
+      + '</td><td class="val-actual">' + r.actual + '</td><td class="val-safe">' + r.safe
+      + '</td><td><input class="dispatch-val" type="text" value="' + r.safe + '"></td></tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('rollbackModalBody').innerHTML = html;
+  openModal('modalOneClickRollback');
+}
+
+function confirmOneClickRollback() {
+  closeModal('modalOneClickRollback');
+  openPwd('oneClickRollback', '一键回退 — 密码校验', '校验通过后按绑定安全回退策略回送安全值；执行中将停止后续下发并进入暂停中');
+}
+
+function applyOneClickRollback() {
+  if (state.runStatus === 'running' || state.runStatus === 'ready') {
+    state.runStatus = 'aborted';
+    state.abortReason = '人工一键回退';
+    state.abortTime = formatNow();
+    state.progressText = '批次 1/4 · 暂停中';
+  }
+  showToast('已一键回退：安全值已下发' + (state.runStatus === 'aborted' ? '，任务进入暂停中' : ''));
+}
+
+/* ---------- 手动下发 ---------- */
+function openManualDispatch() {
+  openModal('modalManualDispatch');
+}
+
+function confirmManualDispatch() {
+  closeModal('modalManualDispatch');
+  openPwd('manualDispatch', '手动下发 — 密码校验', '校验通过后将向 1号/2号/3号冷冻泵同时下发 40.00 Hz');
+}
+
+function applyManualDispatch() {
+  /* 演示推进：38 Hz 步稳定后记录为已记录，40 Hz 步进入执行中 */
+  var row38 = document.getElementById('rowStep38');
+  var row40 = document.getElementById('rowStep40');
+  if (!row38 || !row40) { return; }
+  row38.classList.remove('row-current');
+  document.getElementById('fbStep38').innerHTML =
+    '<div class="point-name feedback">频率反馈</div>'
+    + '<div class="fb-list">'
+    + '<span class="fb-line"><button type="button" class="fb-link" onclick="openChart(\'1号冷冻泵\',\'频率反馈\')">1号 38.1 Hz</button></span>'
+    + '<span class="fb-line"><button type="button" class="fb-link" onclick="openChart(\'2号冷冻泵\',\'频率反馈\')">2号 37.9 Hz</button></span>'
+    + '<span class="fb-line"><button type="button" class="fb-link" onclick="openChart(\'3号冷冻泵\',\'频率反馈\')">3号 38.0 Hz</button></span>'
+    + '</div>';
+  var steady38 = document.getElementById('steadyStep38');
+  steady38.className = 'steady-done';
+  steady38.textContent = '已稳定';
+  var arch38 = document.getElementById('archStep38');
+  arch38.className = 'mono-num';
+  arch38.textContent = formatNow();
+  document.getElementById('statStep38').innerHTML =
+    '<span class="exec-status-tag done">已记录</span><a class="btn btn-xs" href="多工况探索-验证详情.html?step=38" style="margin-left:8px;">验证</a>';
+
+  row40.classList.add('row-current');
+  document.getElementById('fbStep40').innerHTML =
+    '<div class="point-name feedback">频率反馈</div>'
+    + '<div class="fb-list">'
+    + '<span class="fb-line"><button type="button" class="fb-link" onclick="openChart(\'1号冷冻泵\',\'频率反馈\')">1号 下发中…（实时）</button></span>'
+    + '<span class="fb-line"><button type="button" class="fb-link" onclick="openChart(\'2号冷冻泵\',\'频率反馈\')">2号 下发中…（实时）</button></span>'
+    + '<span class="fb-line"><button type="button" class="fb-link" onclick="openChart(\'3号冷冻泵\',\'频率反馈\')">3号 下发中…（实时）</button></span>'
+    + '</div>';
+  document.getElementById('fbStep40').classList.remove('cell-muted');
+  var cont40 = document.getElementById('contStep40');
+  cont40.className = 'cell-muted';
+  cont40.textContent = '校验中…';
+  var steady40 = document.getElementById('steadyStep40');
+  steady40.className = 'steady-wait';
+  steady40.textContent = '等待稳定中（已等待 0/15 min）';
+  document.getElementById('statStep40').innerHTML = '<span class="exec-status-tag running">执行中</span>';
+
+  state.progressText = '批次 1/4 · 第 3 步';
+  showToast('已下发：冷冻泵（1号/2号/3号）40.00 Hz');
+}
+
+/* ---------- 历史趋势（复用柔性/全局寻优组件） ---------- */
+function openChart(acName, varName) {
+  document.getElementById('chartMainTitle').textContent = varName || '';
+  document.getElementById('chartSubTitle').textContent = acName || '';
+  openModal('modalChart');
+  setTimeout(drawTrendChart, 80);
+}
+function switchTimeTab(el) {
+  el.parentElement.querySelectorAll('.time-tab').forEach(function (t) { t.classList.remove('active'); });
+  el.classList.add('active');
+  drawTrendChart();
+}
+function drawTrendChart() {
+  var canvas = document.getElementById('trendChart');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var container = canvas.parentElement;
+  var dpr = window.devicePixelRatio || 1;
+  var w = container.clientWidth;
+  var h = container.clientHeight;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  var activeTab = document.querySelector('#modalChart .time-tab.active');
+  var grain = activeTab ? activeTab.textContent.trim() : '日';
+  var hours, actual, target, yMin, yMax, yStep;
+  if (grain === '月') {
+    hours = ['1日','5日','10日','15日','20日','25日','30日'];
+    actual = [34.1, 34.8, 36.0, 35.5, 36.2, 37.0, 36.8];
+    target = [34.0, 34.0, 36.0, 36.0, 36.0, 38.0, 38.0];
+    yMin = 30; yMax = 42; yStep = 2;
+  } else if (grain === '段') {
+    hours = ['08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30'];
+    actual = [34.0, 34.2, 35.8, 36.1, 36.0, 36.2, 37.9, 38.1];
+    target = [34.0, 34.0, 36.0, 36.0, 36.0, 36.0, 38.0, 38.0];
+    yMin = 30; yMax = 42; yStep = 2;
+  } else {
+    hours = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'];
+    actual = [34.1, 34.0, 35.9, 36.2, 36.1, 36.0, 37.9, 38.1, 38.0, 39.8, 40.1, 40.0];
+    target = [34.0, 34.0, 36.0, 36.0, 36.0, 36.0, 38.0, 38.0, 38.0, 40.0, 40.0, 40.0];
+    yMin = 30; yMax = 42; yStep = 2;
+  }
+
+  var pad = { l: 50, r: 20, t: 20, b: 40 };
+  var chartW = w - pad.l - pad.r;
+  var chartH = h - pad.t - pad.b;
+  ctx.clearRect(0, 0, w, h);
+
+  ctx.strokeStyle = '#E8E8E8';
+  ctx.lineWidth = 1;
+  ctx.fillStyle = '#999';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'right';
+  for (var v = yMin; v <= yMax; v += yStep) {
+    var y = pad.t + chartH - ((v - yMin) / (yMax - yMin)) * chartH;
+    ctx.beginPath();
+    ctx.moveTo(pad.l, y);
+    ctx.lineTo(pad.l + chartW, y);
+    ctx.stroke();
+    ctx.fillText(String(v), pad.l - 8, y + 4);
+  }
+
+  ctx.textAlign = 'center';
+  hours.forEach(function (lbl, i) {
+    var x = pad.l + (i / (hours.length - 1)) * chartW;
+    ctx.fillText(lbl, x, h - pad.b + 20);
+  });
+
+  function drawLine(data, color, dashed) {
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    if (dashed) ctx.setLineDash([6, 4]);
+    else ctx.setLineDash([]);
+    data.forEach(function (val, i) {
+      var x = pad.l + (i / (data.length - 1)) * chartW;
+      var yy = pad.t + chartH - ((val - yMin) / (yMax - yMin)) * chartH;
+      if (i === 0) ctx.moveTo(x, yy);
+      else ctx.lineTo(x, yy);
+    });
+    ctx.stroke();
+    ctx.setLineDash([]);
+    data.forEach(function (val, i) {
+      var x = pad.l + (i / (data.length - 1)) * chartW;
+      var yy = pad.t + chartH - ((val - yMin) / (yMax - yMin)) * chartH;
+      ctx.beginPath();
+      ctx.arc(x, yy, 3, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+    });
+  }
+
+  drawLine(actual, '#1890FF', false);
+  drawLine(target, '#52C41A', true);
+}
+
+/* ---------- 批次折叠 ---------- */
+function toggleBatch(headEl) {
+  var block = headEl.closest('.batch-block');
+  var body = block.querySelector('.batch-body');
+  var collapsed = block.classList.toggle('collapsed');
+  body.style.display = collapsed ? 'none' : '';
+  var icon = headEl.querySelector('.batch-toggle-icon');
+  if (icon) { icon.textContent = collapsed ? '展开 ▾' : '收起 ▴'; }
+}
+
+
+/* ---------- 下发记录（对齐冷站柔性寻优） ---------- */
+var DISPATCH_DATA = [
+  { strategy: '手动下发', time: '2026-06-28 09:20:00', user: '王工', target: '1号冷冻泵/频率设定', actual: '34.1', dispatch: '36.00', result: '成功' },
+  { strategy: '', time: '2026-06-28 09:20:00', user: '王工', target: '2号冷冻泵/频率设定', actual: '33.9', dispatch: '36.00', result: '成功' },
+  { strategy: '', time: '2026-06-28 09:20:00', user: '王工', target: '3号冷冻泵/频率设定', actual: '34.0', dispatch: '36.00', result: '成功' },
+  { strategy: '手动下发', time: '2026-06-28 09:42:00', user: '王工', target: '1号冷冻泵/频率设定', actual: '36.2', dispatch: '38.00', result: '成功' },
+  { strategy: '', time: '2026-06-28 09:42:00', user: '王工', target: '2号冷冻泵/频率设定', actual: '35.8', dispatch: '38.00', result: '成功' },
+  { strategy: '', time: '2026-06-28 09:42:00', user: '王工', target: '3号冷冻泵/频率设定', actual: '36.1', dispatch: '38.00', result: '成功' }
+];
+
+function renderDispatchTable() {
+  var tbody = document.getElementById('dispatchBody');
+  if (!tbody) return;
+  var currentStrategy = '';
+  var strategyFilter = (document.getElementById('dispatchStrategyFilter') || {}).value || '';
+  var keyword = ((document.getElementById('dispatchKeyword') || {}).value || '').trim();
+  var sourceRows = DISPATCH_DATA.map(function (d) {
+    if (d.strategy) currentStrategy = d.strategy;
+    return Object.assign({}, d, { strategyGroup: currentStrategy });
+  }).filter(function (d) {
+    if (strategyFilter && d.strategyGroup !== strategyFilter) return false;
+    if (keyword && d.target.indexOf(keyword) < 0) return false;
+    return true;
+  });
+  var totalText = document.getElementById('dispatchTotalText');
+  if (totalText) totalText.textContent = '共 ' + sourceRows.length + ' 条';
+  if (sourceRows.length === 0) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="7">暂无数据</td></tr>';
+    return;
+  }
+  tbody.innerHTML = sourceRows.map(function (d) {
+    var showStrategy = d.strategy !== '';
+    var resultClass = d.result === '成功' ? 'color:#52C41A' : 'color:#FF4D4F';
+    return '<tr>' +
+      '<td style="font-weight:' + (showStrategy ? 500 : 400) + ';color:' + (showStrategy ? 'var(--text-primary)' : 'transparent') + '">' + (showStrategy ? d.strategy : '') + '</td>' +
+      '<td>' + d.time + '</td>' +
+      '<td>' + d.user + '</td>' +
+      '<td>' + d.target + '</td>' +
+      '<td>' + d.actual + '</td>' +
+      '<td>' + d.dispatch + '</td>' +
+      '<td style="' + resultClass + ';font-weight:500">' + d.result + '</td>' +
+      '</tr>';
+  }).join('');
+}
+
+document.querySelectorAll('.tabs-bar .tab-item').forEach(function (tab) {
+  tab.addEventListener('click', function () {
+    this.parentElement.querySelectorAll('.tab-item').forEach(function (t) { t.classList.remove('active'); });
+    this.classList.add('active');
+    var name = this.getAttribute('data-tab');
+    document.querySelectorAll('#mainTabsSection .tab-pane').forEach(function (p) { p.classList.remove('active'); });
+    var pane = document.getElementById(name === 'progress' ? 'pane-progress' : 'pane-dispatchRecord');
+    if (pane) pane.classList.add('active');
+  });
+});
+
+['dispatchStrategyFilter', 'dispatchKeyword'].forEach(function (id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener(id === 'dispatchKeyword' ? 'input' : 'change', renderDispatchTable);
+});
+
+renderDispatchTable();
+renderAll();
+</script>
+
+  <script>
+  function initAnnoVersionFilter() {
+    var bar = document.getElementById('annoFilterBar');
+    var tags = document.getElementById('annoFilterTags');
+    if (!document.body.classList.contains('annotation-mode')) return;
+    var annos = document.querySelectorAll('.anno[data-version]');
+    var versions = [];
+    annos.forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (v && versions.indexOf(v) === -1) versions.push(v);
+    });
+    versions.sort(function(a, b) {
+      var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+      var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+      for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+        if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+      }
+      return 0;
+    });
+    tags.innerHTML = '';
+    var allBtn = document.createElement('span');
+    allBtn.className = 'anno-filter-tag active';
+    allBtn.textContent = '全部';
+    allBtn.onclick = function() { filterAnno('all', versions[0]); setActive(this); };
+    tags.appendChild(allBtn);
+    versions.forEach(function(v) {
+      var btn = document.createElement('span');
+      btn.className = 'anno-filter-tag';
+      btn.textContent = v;
+      btn.onclick = function() { filterAnno(v, versions[0]); setActive(this); };
+      tags.appendChild(btn);
+    });
+    if (versions.length > 0) filterAnno('all', versions[0]);
+  }
+  function filterAnno(version, latest) {
+    document.querySelectorAll('.anno[data-version]').forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (version === 'all') {
+        a.style.display = '';
+        a.style.opacity = (v === latest) ? '1' : '0.6';
+      } else {
+        a.style.display = (v === version) ? '' : 'none';
+        a.style.opacity = '1';
+      }
+    });
+  }
+  function setActive(el) {
+    el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function(t) { t.classList.remove('active'); });
+    el.classList.add('active');
+  }
+  </script>
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="多工况探索"></script>
+</body>
+</html>

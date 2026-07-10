@@ -47,26 +47,33 @@
 
     .layout { display:flex; flex-direction:column; min-height:100vh; }
     .body-wrap { display:flex; flex:1; overflow:hidden; }
-    .main { flex:1; display:flex; flex-direction:column; overflow-y:auto; background:transparent; }
+    .main { flex:1; display:flex; flex-direction:column; overflow-y:auto; background:var(--bg-body); }
 
     .page-header {
-      background:var(--bg-card); padding:0 20px;
-      border-bottom:1px solid var(--border-light);
-      display:flex; align-items:stretch; flex-shrink:0;
-      min-height:52px;
+      /* 对齐 KE：圆角白底板卡片 + sticky（左右留灰底，勿通栏） */
+      display:flex; justify-content:space-between; align-items:center;
+      padding:0 16px; height:46px; flex-shrink:0;
+      margin:8px 20px 0;
+      background:var(--bg-card);
+      border:1px solid rgba(232,238,243,.95);
+      border-radius:var(--radius-lg);
+      /* 卡片阴影 + 灰底遮罩：挡住吸顶上方/两侧透出的滚动内容，clip 避免盖住下方告警条 */
+      box-shadow:var(--shadow-card), 0 0 0 100vmax var(--bg-body);
+      clip-path:inset(-8px -100vmax -2px -100vmax);
+      position:sticky; top:8px; z-index:40;
     }
     .page-header-left {
-      display:flex; align-items:center; gap:12px; padding:10px 0;
+      display:flex; align-items:center; gap:12px; min-width:0; max-width:calc(100% - 80px);
     }
     .page-header-nav {
-      display:flex; align-items:stretch; margin-left:auto;
+      display:flex; align-items:stretch; align-self:stretch; flex-shrink:0;
     }
-    /* 与柔性寻优一致：未选中近黑，选中品牌蓝 + 底部粗下划线 */
+    /* 对齐 KE el-tabs：选中品牌蓝 + 底部 2px 下划线 */
     .page-nav-item {
-      display:flex; align-items:center; padding:0 20px;
-      font-size:14px; font-weight:500; color:var(--text-primary);
+      display:flex; align-items:center; padding:0 16px;
+      font-size:14px; font-weight:500; color:var(--text-secondary);
       cursor:pointer; position:relative; transition:color .2s, border-color .2s;
-      border-bottom:3px solid transparent; margin-bottom:-1px;
+      border-bottom:2px solid transparent;
     }
     .page-nav-item:hover { color:var(--primary); }
     .page-nav-item.active {
@@ -97,7 +104,7 @@
 
     /* ── 顶部业务态：与冷站柔性寻优一致 ── */
     .system-alert {
-      margin:12px 20px 8px; padding:10px 16px;
+      margin:8px 20px 0; padding:10px 16px;
       display:flex; align-items:center; justify-content:space-between; gap:12px;
       background:linear-gradient(180deg,#FFFBF0 0%, #FFF7E6 100%);
       border:1px solid #FFE0A3; border-radius:12px;
@@ -141,7 +148,7 @@
     /* ── 三策略卡片条（与冷站柔性调优一致） ── */
     .module-strip {
       display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;
-      padding:4px 20px 8px; flex-shrink:0;
+      padding:8px 20px; flex-shrink:0;
     }
     .module-card {
       background:var(--bg-card); border-radius:var(--radius-lg);
@@ -198,12 +205,6 @@
     }
     .module-status-badge.active { background:#F6FFED; color:#52C41A; }
     .module-status-badge.inactive { background:#FFF1F0; color:#FF4D4F; }
-    .btn-danger { color:var(--danger); border-color:#FECACA; background:#FFF7F7; }
-    .btn-danger:hover { background:#FFF1F1; color:var(--danger); border-color:#FCA5A5; }
-    .btn-primary {
-      background:var(--primary); color:#fff; border-color:transparent;
-    }
-    .btn-primary:hover { background:var(--primary-dark); color:#fff; border-color:transparent; }
     .btn.disabled, .btn:disabled {
       opacity:.55; cursor:not-allowed; pointer-events:none;
     }
@@ -288,6 +289,12 @@
     }
     .btn:hover { border-color:var(--primary); color:var(--primary); }
     .btn:focus-visible { outline:none; box-shadow:0 0 0 2px var(--focus-ring); }
+    .btn-primary {
+      background:var(--primary); color:#fff; border-color:transparent;
+    }
+    .btn-primary:hover { background:var(--primary-dark); color:#fff; border-color:transparent; }
+    .btn-danger { color:var(--danger); border-color:#FECACA; background:#FFF7F7; }
+    .btn-danger:hover { background:#FFF1F1; color:var(--danger); border-color:#FCA5A5; }
     .btn-fill { background:var(--primary); color:#fff; border-color:transparent; }
     .btn-fill:hover { background:var(--primary-dark); color:#fff; border-color:transparent; }
     /* 对齐 KE：el-button--primary is-plain 仿真对比 */
@@ -300,21 +307,24 @@
     .btn-compare svg { width:14px; height:14px; fill:currentColor; flex-shrink:0; }
     .btn svg { width:12px; height:12px; fill:currentColor; }
 
-    /* ── 底部记录 Tab ── */
+    /* ── 底部记录 Tab（已并入寻优记录筛选栏） ── */
     .tabs-bar {
-      display:flex; background:transparent;
-      border-bottom:1px solid var(--border-light); margin-top:14px; flex-shrink:0;
+      display:flex; align-items:stretch; background:transparent;
+      border-bottom:none; margin:0; flex-shrink:0; align-self:stretch;
     }
     .tab-item {
-      padding:10px 18px; cursor:pointer; font-size:13px;
+      display:flex; align-items:center; padding:0 14px; cursor:pointer; font-size:13px;
       color:var(--text-secondary); border-bottom:2px solid transparent;
-      transition:all .2s; font-weight:500;
+      transition:all .2s; font-weight:500; white-space:nowrap;
     }
     .tab-item:hover { color:var(--primary); }
     .tab-item.active { color:var(--primary); border-bottom-color:var(--primary); font-weight:600; }
     .tab-pane { display:block; }
     .tab-pane:not(.active) { display:none !important; }
     .filter-sep { color:var(--text-hint); margin:0 2px; }
+    .record-bar-sep {
+      width:1px; height:16px; background:var(--border); flex-shrink:0; margin:0 4px 0 2px;
+    }
     .table-pagination {
       display:flex; align-items:center; gap:10px; padding:10px 14px;
       border-top:1px solid var(--border-light); color:var(--text-secondary); font-size:12px;
@@ -330,15 +340,21 @@
     }
     .pager-btn.disabled { opacity:.45; }
 
-    /* ── 寻优记录栏 ── */
+    /* ── 寻优记录栏：白底板卡片，吸在顶部导航正下方 ── */
     .record-bar {
-      display:flex; align-items:center; gap:8px; padding:10px 16px;
-      background:var(--bg-card); flex-shrink:0;
-      margin:4px 20px 0; border:1px solid rgba(232,238,243,.95);
-      border-radius:12px; box-shadow:var(--shadow-sm);
+      display:flex; align-items:center; gap:8px; padding:0 16px;
+      background:var(--bg-card); flex-shrink:0; height:44px;
+      margin:12px 20px 0;
+      border:1px solid rgba(232,238,243,.95);
+      border-radius:var(--radius-lg);
+      /* 8(top) + 46(header) + 10(卡片间距) = 64，两卡之间留灰底缝 */
+      position:sticky; top:64px; z-index:30;
+      /* 灰底遮罩盖住两卡夹缝、左右与下方间距，正文滚动时不再透出来 */
+      box-shadow:var(--shadow-card), 0 0 0 100vmax var(--bg-body);
+      clip-path:inset(-12px -100vmax -12px -100vmax);
     }
     .record-title { font-size:13px; font-weight:700; flex-shrink:0; }
-    .rb-label { font-size:12px; color:var(--text-secondary); flex-shrink:0; margin-left:8px; }
+    .rb-label { font-size:12px; color:var(--text-secondary); flex-shrink:0; margin-left:4px; }
     .time-input {
       padding:4px 10px; border:1px solid #DDE5EC; border-radius:999px;
       font-size:12px; outline:none; color:var(--text-primary); background:#fff;
@@ -354,9 +370,16 @@
     .nav-btn:hover { border-color:var(--primary); color:var(--primary); background:var(--primary-soft); }
     .rb-spacer { flex:1; }
     .record-bar .round-confidence { margin-left:8px; }
+    .record-bar-opt-tools {
+      display:inline-flex; align-items:center; gap:8px; min-width:0;
+    }
+    body.view-dispatch .opt-view-only,
+    body.view-dispatch #optViewOnly,
+    body.view-dispatch .record-bar-opt-tools,
+    body.view-dispatch #pane-optRecord { display:none !important; }
 
     /* ── 正文 ── */
-    .content { padding:12px 20px 28px; }
+    .content { padding:16px 20px 28px; }
 
     /* ── 寻优收益条（v2.4：替代节能潜力仪表盘 + 独立能效预测图） ── */
     .benefit-strip { display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; margin:12px 0 10px; }
@@ -534,12 +557,42 @@
       display:block; width:100%; height:560px; border:0; background:#F4F7F7;
     }
     .topology-iframe-fallback {
-      position:absolute; inset:0; display:none; align-items:center; justify-content:center;
-      padding:24px; text-align:center; font-size:12px; color:var(--text-secondary); background:#F8FAFC;
-      line-height:1.6;
+      position:absolute; inset:0; z-index:2; display:none; flex-direction:column;
+      padding:16px 18px 18px; text-align:left; font-size:12px; color:var(--text-secondary);
+      background:linear-gradient(180deg,#F4F7F7 0%,#EEF3F4 100%);
+      line-height:1.55; overflow:auto;
     }
     .topology-iframe-fallback.show { display:flex; }
     .topology-iframe-fallback a { color:var(--primary); font-weight:600; }
+    .topology-fallback-head {
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+      margin-bottom:12px; flex-wrap:wrap;
+    }
+    .topology-fallback-title { font-size:13px; font-weight:700; color:var(--text); }
+    .topology-fallback-hint { font-size:11px; color:var(--text-hint); max-width:520px; }
+    .topology-offline-map {
+      flex:1; min-height:420px; border:1px solid var(--border-light); border-radius:10px;
+      background:#fff; position:relative; overflow:hidden;
+    }
+    .topology-offline-map svg { width:100%; height:100%; display:block; }
+    .topology-offline-bubbles {
+      position:absolute; inset:0; pointer-events:none;
+    }
+    .topology-offline-bubble {
+      position:absolute; transform:translate(-50%,-110%);
+      min-width:88px; max-width:140px; padding:6px 8px; border-radius:8px;
+      background:#fff; border:1px solid var(--border); box-shadow:0 4px 12px rgba(15,23,42,.08);
+      font-size:11px; line-height:1.35; color:var(--text); pointer-events:auto;
+    }
+    .topology-offline-bubble .ob-dev { font-weight:700; margin-bottom:2px; }
+    .topology-offline-bubble .ob-txt { color:var(--text-secondary); }
+    .topology-offline-bubble.kind-add { border-color:#86EFAC; background:#F0FDF4; }
+    .topology-offline-bubble.kind-remove { border-color:#FECACA; background:#FEF2F2; }
+    .topology-offline-bubble.kind-adj { border-color:#BFDBFE; background:#EFF6FF; }
+    .topology-offline-empty {
+      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+      color:var(--text-hint); font-size:12px;
+    }
     .strategy-empty {
       margin:12px 16px; padding:18px; text-align:center; color:var(--text-hint); font-size:12px;
       border:1px dashed var(--border); border-radius:10px; background:#F8FAFC;
@@ -550,9 +603,10 @@
       .topology-iframe { height:480px; }
       .topology-stage { min-height:480px; }
       .module-strip { grid-template-columns:1fr; }
-      .page-header { margin:12px 12px 0; }
+      .page-header { margin:8px 12px 0; }
       .system-alert, .station-tabs-bar, .module-strip, .record-bar { margin-left:12px; margin-right:12px; }
-      .content { padding:12px 12px 24px; }
+      .record-bar { top:64px; }
+      .content { padding:16px 12px 24px; }
     }
     .confidence-pill {
       display:inline-flex; align-items:center; justify-content:center;
@@ -564,12 +618,12 @@
     .energy-cell { white-space:nowrap; font-variant-numeric:tabular-nums; }
 
     /* ── 寻优记录组件：对齐冷站柔性寻优 ── */
-    .record-section { margin-top:10px; }
+    .record-section { margin-top:8px; }
     .filter-bar {
-      display:flex; align-items:center; gap:8px; margin-bottom:12px;
+      display:flex; align-items:center; gap:12px; margin-bottom:8px;
       flex-wrap:nowrap; padding:10px 14px; overflow-x:auto;
-      background:var(--bg-card); border-radius:12px;
-      box-shadow:var(--shadow-card); border:1px solid rgba(232,238,243,.95);
+      background:var(--bg-card); border-radius:8px;
+      box-shadow:var(--shadow-sm); border:1px solid rgba(232,238,243,.95);
     }
     .filter-label { font-size:12px; color:var(--text-secondary); white-space:nowrap; font-weight:600; }
     .filter-input, .search-input {
@@ -1110,15 +1164,21 @@
         </div>
       </div>
 
-      <!-- ── 寻优记录导航栏 ── -->
+      <!-- ── 寻优记录导航栏（含 寻优记录 / 下发记录 Tab） ── -->
       <div class="record-bar">
-        <div class="record-title">寻优记录</div>
-        <span class="rb-label">时间</span>
-        <input class="time-input" type="date" value="2025-12-25" style="width:126px;">
-        <span class="nav-btn" title="上一条">◀</span>
-        <input class="time-input" type="time" value="08:57" step="1" style="width:90px;">
-        <span class="nav-btn" title="下一条">▶</span>
-        <span class="round-confidence">当前轮次 <span class="confidence-pill low">数据积累中</span></span>
+        <div class="tabs-bar" id="recordTabs" role="tablist" aria-label="记录类型">
+          <div class="tab-item active" data-tab="optRecord" role="tab" aria-selected="true">寻优记录</div>
+          <div class="tab-item" data-tab="dispatchRecord" role="tab" aria-selected="false">下发记录</div>
+        </div>
+        <span class="record-bar-opt-tools">
+          <span class="record-bar-sep" aria-hidden="true"></span>
+          <span class="rb-label">时间</span>
+          <input class="time-input" type="date" value="2025-12-25" style="width:126px;">
+          <span class="nav-btn" title="上一条">◀</span>
+          <input class="time-input" type="time" value="08:57" step="1" style="width:90px;">
+          <span class="nav-btn" title="下一条">▶</span>
+          <span class="round-confidence">当前轮次 <span class="confidence-pill low">数据积累中</span></span>
+        </span>
         <div class="rb-spacer"></div>
         <button class="btn" id="btnRefresh">
           <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
@@ -1137,6 +1197,7 @@
       <!-- ── 正文 ── -->
       <div class="content">
 
+        <div id="optViewOnly">
         <!-- ── 本轮搜索结果（v2.4：候选组合最优功率；点击切换下方指标与策略） ── -->
         <div class="section-row" style="margin-top:10px;">
           <div class="section-title" onclick="toggleSection('searchResult')">
@@ -1218,26 +1279,23 @@
                 loading="lazy"
                 referrerpolicy="no-referrer"
               ></iframe>
-              <div class="topology-iframe-fallback" id="topologyIframeFallback">
-                <div>
-                  真实组态未加载。请确认本目录下已包含静态包<br>
-                  <code>cold-station-global-opt-demo/</code><br>
-                  后刷新本页。本地开发也可先启动
-                  <a href="http://127.0.0.1:5174/?dataSource=ke_fixture&amp;coldStationId=0_51&amp;embed=global-opt" target="_blank" rel="noopener">Vite demo :5174</a>
-                  。<br>
-                  <span style="opacity:.8;">原工程保持不动。</span>
+              <div class="topology-iframe-fallback show" id="topologyIframeFallback">
+                <div class="topology-fallback-head">
+                  <div>
+                    <div class="topology-fallback-title">冷站组态（离线示意）</div>
+                    <div class="topology-fallback-hint">正在加载静态组态包…若长时间未出现 3D 组态，将保留本示意与策略气泡。</div>
+                  </div>
                 </div>
+                <div class="topology-offline-map" id="topologyOfflineMap"></div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- ── 底部记录：寻优记录 | 下发记录（对齐 KE） ── -->
-        <div class="tabs-bar" id="recordTabs">
-          <div class="tab-item active" data-tab="optRecord">寻优记录</div>
-          <div class="tab-item" data-tab="dispatchRecord">下发记录</div>
-        </div>
+        </div><!-- /#postSearchResultBlock -->
+        </div><!-- /#optViewOnly -->
 
+        <!-- ── 底部记录内容：寻优记录 | 下发记录（Tab 已并入上方筛选栏） ── -->
         <div class="record-section tab-pane active" id="pane-optRecord">
           <div class="filter-bar">
             <div class="filter-group" id="varTypeFilter">
@@ -1349,8 +1407,6 @@
             </div>
           </div>
         </div>
-
-        </div><!-- /#postSearchResultBlock -->
 
       </div><!-- /.content -->
     </div><!-- /.main -->
@@ -2044,31 +2100,109 @@
     });
   }
 
-  /* ─ 贡献条 + 真实组态 iframe（静态包 / 本地 Vite） ─ */
+  /* ─ 贡献条 + 真实组态 iframe（静态包优先 / 可选本地 Vite） ─ */
   /* 发布：AI原型html/cold-station-global-opt-demo/（由 ColdStation-GlobalOpt-Demo 构建） */
-  /* 本地开发可选：http://127.0.0.1:5174/（原工程 5173 不动） */
+  /* 本地开发可选：?preferVite=1 或 ?topologyBase=http://127.0.0.1:5174/ */
+  var VITE_TOPOLOGY_BASE = 'http://127.0.0.1:5174/';
+  var STATIC_TOPOLOGY_BASE = (function () {
+    try { return new URL('cold-station-global-opt-demo/', location.href).href; }
+    catch (e) { return 'cold-station-global-opt-demo/'; }
+  })();
   var REAL_TOPOLOGY_BASE = (function () {
     var params = new URLSearchParams(location.search || '');
     var override = params.get('topologyBase');
     if (override) return override.replace(/\/?$/, '/');
-    // file:// 无法可靠嵌本地静态包，提示用 HTTP；HTTP/Pages 用相对路径
-    if (location.protocol === 'file:') return 'http://127.0.0.1:5174/';
-    return new URL('cold-station-global-opt-demo/', location.href).href;
+    if (params.get('preferVite') === '1') return VITE_TOPOLOGY_BASE;
+    // 始终优先静态包；file:// 下 ES module 可能失败，由离线示意兜底，不再默认打 127.0.0.1
+    return STATIC_TOPOLOGY_BASE;
   })();
   var REAL_TOPOLOGY_STATIONS = {
     water: { coldStationId: '0_51', label: 'A路冷水系统' },
     wind: { coldStationId: '0_421', label: 'B路风冷冷水系统' },
   };
   var lastTopologySrc = '';
+  var topologyReady = false;
+  var topologyReadyTimer = null;
   var EXTERNAL_OVERLAY_TYPE = 'cold-station-global-opt/strategy-overlay';
   var EXTERNAL_READY_TYPE = 'cold-station-global-opt/ready';
 
-  function realTopologyUrl(mode) {
+  function realTopologyUrl(mode, base) {
     var st = REAL_TOPOLOGY_STATIONS[mode] || REAL_TOPOLOGY_STATIONS.water;
-    return REAL_TOPOLOGY_BASE
+    var root = (base || REAL_TOPOLOGY_BASE).replace(/\/?$/, '/');
+    return root
       + '?dataSource=ke_fixture'
       + '&coldStationId=' + encodeURIComponent(st.coldStationId)
       + '&embed=global-opt';
+  }
+
+  function topologyFallbackHintHtml() {
+    var isFile = location.protocol === 'file:';
+    var usingVite = /^https?:\/\/(127\.0\.0\.1|localhost):5174\/?/i.test(REAL_TOPOLOGY_BASE);
+    if (isFile) {
+      return '当前为本地文件打开（file://），浏览器无法可靠加载静态包模块。请用本地 HTTP 打开本目录（如 <code>python3 -m http.server</code>），或保留下方离线示意。';
+    }
+    if (usingVite) {
+      return '本地 Vite :5174 未连通。已显示离线示意；也可去掉 <code>preferVite</code> 改用静态包 <code>cold-station-global-opt-demo/</code>。';
+    }
+    return '静态组态包暂未就绪。请确认同目录存在 <code>cold-station-global-opt-demo/</code> 后刷新；下方为策略气泡离线示意。';
+  }
+
+  function renderOfflineTopologyMap() {
+    var map = document.getElementById('topologyOfflineMap');
+    if (!map) return;
+    var st = REAL_TOPOLOGY_STATIONS[currentStrategyMode] || REAL_TOPOLOGY_STATIONS.water;
+    var bubbles = (typeof collectChangeBubbles === 'function') ? collectChangeBubbles() : [];
+    var slots = [
+      { x: 18, y: 22 }, { x: 38, y: 18 }, { x: 58, y: 22 }, { x: 78, y: 18 },
+      { x: 22, y: 48 }, { x: 42, y: 52 }, { x: 62, y: 48 }, { x: 82, y: 52 },
+      { x: 30, y: 78 }, { x: 50, y: 74 }, { x: 70, y: 78 }
+    ];
+    var bubbleHtml = bubbles.length
+      ? '<div class="topology-offline-bubbles">' + bubbles.slice(0, slots.length).map(function (b, i) {
+          var s = slots[i];
+          return '<div class="topology-offline-bubble kind-' + b.kind + '" style="left:' + s.x + '%;top:' + s.y + '%;">'
+            + '<div class="ob-dev">' + b.device + '</div>'
+            + '<div class="ob-txt">' + b.text + '</div>'
+            + '</div>';
+        }).join('') + '</div>'
+      : '<div class="topology-offline-empty">本轮策略无设备开停/调参变化</div>';
+    map.innerHTML = ''
+      + '<svg viewBox="0 0 800 420" preserveAspectRatio="xMidYMid meet" aria-hidden="true">'
+      + '<rect x="24" y="24" width="752" height="372" rx="16" fill="#F8FBFC" stroke="#D7E2E6"/>'
+      + '<text x="40" y="52" fill="#334155" font-size="14" font-weight="700">' + st.label + ' · 离线组态示意</text>'
+      + '<path d="M80 120 H720" stroke="#94A3B8" stroke-width="3" stroke-linecap="round"/>'
+      + '<path d="M80 210 H720" stroke="#38BDF8" stroke-width="3" stroke-linecap="round"/>'
+      + '<path d="M80 300 H720" stroke="#64748B" stroke-width="3" stroke-linecap="round"/>'
+      + '<rect x="120" y="150" width="88" height="48" rx="8" fill="#E2E8F0"/><text x="164" y="179" text-anchor="middle" font-size="12" fill="#475569">冷机</text>'
+      + '<rect x="260" y="150" width="88" height="48" rx="8" fill="#E2E8F0"/><text x="304" y="179" text-anchor="middle" font-size="12" fill="#475569">冷冻泵</text>'
+      + '<rect x="400" y="150" width="88" height="48" rx="8" fill="#E2E8F0"/><text x="444" y="179" text-anchor="middle" font-size="12" fill="#475569">冷却泵</text>'
+      + '<rect x="540" y="150" width="88" height="48" rx="8" fill="#E2E8F0"/><text x="584" y="179" text-anchor="middle" font-size="12" fill="#475569">冷却塔</text>'
+      + '<rect x="260" y="250" width="88" height="48" rx="8" fill="#E2E8F0"/><text x="304" y="279" text-anchor="middle" font-size="12" fill="#475569">二次泵</text>'
+      + '<rect x="400" y="250" width="88" height="48" rx="8" fill="#E2E8F0"/><text x="444" y="279" text-anchor="middle" font-size="12" fill="#475569">末端</text>'
+      + '</svg>'
+      + bubbleHtml;
+  }
+
+  function showTopologyFallback(state) {
+    var fallback = document.getElementById('topologyIframeFallback');
+    if (!fallback) return;
+    var title = state === 'loading' ? '冷站组态（加载中）' : '冷站组态（离线示意）';
+    var hint = state === 'loading'
+      ? '正在加载静态组态包 cold-station-global-opt-demo…'
+      : topologyFallbackHintHtml();
+    fallback.innerHTML = ''
+      + '<div class="topology-fallback-head">'
+      + '<div><div class="topology-fallback-title">' + title + '</div>'
+      + '<div class="topology-fallback-hint">' + hint + '</div></div>'
+      + '</div>'
+      + '<div class="topology-offline-map" id="topologyOfflineMap"></div>';
+    fallback.classList.add('show');
+    renderOfflineTopologyMap();
+  }
+
+  function hideTopologyFallback() {
+    var fallback = document.getElementById('topologyIframeFallback');
+    if (fallback) fallback.classList.remove('show');
   }
 
   function ensureTopologyShell(card) {
@@ -2077,11 +2211,9 @@
       + '<div class="contrib-bar" id="contribBar"></div>'
       + '<div class="topology-stage" id="topologyStage">'
       + '<iframe id="topologyIframe" class="topology-iframe" title="冷站组态（GlobalOpt Demo）" loading="lazy" referrerpolicy="no-referrer"></iframe>'
-      + '<div class="topology-iframe-fallback" id="topologyIframeFallback">'
-      + '<div>真实组态未加载。请确认已同步静态包 <code>cold-station-global-opt-demo/</code>，或本地启动 Vite :5174 后刷新。<br>'
-      + '<a href="' + realTopologyUrl('water') + '" target="_blank" rel="noopener">打开组态</a><br>'
-      + '<span style="opacity:.8;">原工程 Water-Cooled Chiller System 3D Visualization 保持不动。</span></div>'
-      + '</div></div>';
+      + '<div class="topology-iframe-fallback show" id="topologyIframeFallback"></div>'
+      + '</div>';
+    showTopologyFallback('loading');
   }
 
   function buildExternalMarkers() {
@@ -2110,7 +2242,44 @@
     window.__globalOptOverlayListenerBound = true;
     window.addEventListener('message', function (ev) {
       if (!ev.data || ev.data.type !== EXTERNAL_READY_TYPE) return;
+      topologyReady = true;
+      if (topologyReadyTimer) {
+        clearTimeout(topologyReadyTimer);
+        topologyReadyTimer = null;
+      }
+      hideTopologyFallback();
       postStrategyOverlayToIframe();
+    });
+  }
+
+  function probeTopologyBase(base, done) {
+    var url = (base || '').replace(/\/?$/, '/') + 'index.html';
+    var finished = false;
+    function finish(ok) {
+      if (finished) return;
+      finished = true;
+      done(ok);
+    }
+    // file:// 下 fetch 常失败，直接交给 iframe + ready/timeout
+    if (location.protocol === 'file:') {
+      finish(false);
+      return;
+    }
+    var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var timer = setTimeout(function () {
+      if (ctrl) try { ctrl.abort(); } catch (e) {}
+      finish(false);
+    }, 1800);
+    fetch(url, {
+      method: 'GET',
+      cache: 'no-store',
+      signal: ctrl ? ctrl.signal : undefined,
+    }).then(function (res) {
+      clearTimeout(timer);
+      finish(!!(res && res.ok));
+    }).catch(function () {
+      clearTimeout(timer);
+      finish(false);
     });
   }
 
@@ -2119,23 +2288,61 @@
     var fallback = document.getElementById('topologyIframeFallback');
     if (!iframe) return;
     var src = realTopologyUrl(currentStrategyMode);
-    if (src === lastTopologySrc) {
+    if (src === lastTopologySrc && topologyReady) {
       postStrategyOverlayToIframe();
       return;
     }
+    if (src === lastTopologySrc && !topologyReady) {
+      // 仍在加载：刷新离线气泡即可
+      if (fallback && fallback.classList.contains('show')) renderOfflineTopologyMap();
+      return;
+    }
     lastTopologySrc = src;
-    if (fallback) fallback.classList.remove('show');
+    topologyReady = false;
+    if (topologyReadyTimer) {
+      clearTimeout(topologyReadyTimer);
+      topologyReadyTimer = null;
+    }
+
+    // 先盖住 iframe，避免 Vite/空地址露出浏览器「连接被拒绝」页
+    showTopologyFallback('loading');
+
+    // file://：不主动嵌 127.0.0.1，直接离线示意（静态包 module 在 file 下通常不可用）
+    if (location.protocol === 'file:' && REAL_TOPOLOGY_BASE.indexOf('127.0.0.1') === -1 && REAL_TOPOLOGY_BASE.indexOf('localhost') === -1) {
+      iframe.removeAttribute('src');
+      showTopologyFallback('offline');
+      return;
+    }
+
     iframe.onload = function () {
-      if (fallback) fallback.classList.remove('show');
+      // 注意：connection refused 错误页也会触发 onload，不能据此隐藏 fallback
       setTimeout(postStrategyOverlayToIframe, 300);
       setTimeout(postStrategyOverlayToIframe, 1200);
     };
-    iframe.src = src;
-    fetch(REAL_TOPOLOGY_BASE, { method: 'GET', mode: 'no-cors', cache: 'no-store' })
-      .then(function () { /* opaque ok */ })
-      .catch(function () {
-        if (fallback) fallback.classList.add('show');
-      });
+
+    probeTopologyBase(REAL_TOPOLOGY_BASE, function (ok) {
+      if (topologyReady) return;
+      if (!ok) {
+        // 静态包不可达时，若当前不是 Vite，可再试一次 Vite；否则直接离线
+        var usingVite = /^https?:\/\/(127\.0\.0\.1|localhost):5174\/?/i.test(REAL_TOPOLOGY_BASE);
+        if (!usingVite && location.protocol !== 'file:') {
+          // 静态失败：仍尝试把 iframe 指到静态包（可能是 CORS/路径瞬时问题），同时展示离线示意兜底
+          iframe.src = src;
+          showTopologyFallback('offline');
+          topologyReadyTimer = setTimeout(function () {
+            if (!topologyReady) showTopologyFallback('offline');
+          }, 3500);
+          return;
+        }
+        iframe.removeAttribute('src');
+        showTopologyFallback('offline');
+        return;
+      }
+      iframe.src = src;
+      topologyReadyTimer = setTimeout(function () {
+        if (!topologyReady) showTopologyFallback('offline');
+      }, 5000);
+    });
   }
 
   function fmtBubbleNum(v) {
@@ -2429,9 +2636,21 @@
         renderSearchResult();
         return;
       }
-      startOptRun();
+      openStartOptVerify();
     });
   }
+
+  window.openStartOptVerify = function () {
+    var account = document.getElementById('verifyAccountInput');
+    var pwd = document.getElementById('verifyPwdInput');
+    if (account) account.value = 'admin';
+    if (pwd) pwd.value = '';
+    openModal('modalVerifyOp');
+  };
+  window.onStartOptVerifyConfirm = function () {
+    closeModal('modalVerifyOp');
+    startOptRun();
+  };
 
   /* ═══ 历史趋势弹窗（对齐冷站柔性寻优） ═══ */
   window.openModal = function (id) {
@@ -2583,12 +2802,22 @@
 
   document.querySelectorAll('#recordTabs .tab-item').forEach(function (tab) {
     tab.addEventListener('click', function () {
-      document.querySelectorAll('#recordTabs .tab-item').forEach(function (t) { t.classList.remove('active'); });
+      document.querySelectorAll('#recordTabs .tab-item').forEach(function (t) {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+      });
       this.classList.add('active');
+      this.setAttribute('aria-selected', 'true');
       var target = this.getAttribute('data-tab');
       document.querySelectorAll('#pane-optRecord, #pane-dispatchRecord').forEach(function (p) { p.classList.remove('active'); });
       var pane = document.getElementById('pane-' + target);
       if (pane) pane.classList.add('active');
+      // 下发记录：只保留下发记录内容；寻优记录：恢复搜索结果/策略组态等
+      document.body.classList.toggle('view-dispatch', target === 'dispatchRecord');
+      if (target === 'dispatchRecord') {
+        var main = document.querySelector('.main');
+        if (main) main.scrollTop = 0;
+      }
     });
   });
 
@@ -2709,6 +2938,30 @@
     <div class="modal-foot" style="justify-content:flex-end;">
       <button class="btn" onclick="closeModal('modalPwd')">取 消</button>
       <button class="btn btn-primary" onclick="onPwdConfirm()">确 认</button>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：开始寻优 — 验证操作 -->
+<div class="modal-mask" id="modalVerifyOp">
+  <div class="modal-box" style="max-width:420px;width:420px;">
+    <div class="modal-head">
+      <span class="modal-title">验证操作</span>
+      <span class="modal-close" onclick="closeModal('modalVerifyOp')">&times;</span>
+    </div>
+    <div class="modal-body" style="padding:20px 24px 8px;">
+      <div class="form-group">
+        <div class="form-label">请输入账号</div>
+        <input type="text" class="form-control" id="verifyAccountInput" value="admin" placeholder="admin" autocomplete="username" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;">
+      </div>
+      <div class="form-group" style="margin-bottom:8px;">
+        <div class="form-label">请输入密码</div>
+        <input type="password" class="form-control" id="verifyPwdInput" placeholder="请输入密码" autocomplete="current-password" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;">
+      </div>
+    </div>
+    <div class="modal-foot" style="justify-content:flex-end;gap:8px;">
+      <button class="btn" type="button" onclick="closeModal('modalVerifyOp')">取 消</button>
+      <button class="btn btn-primary" type="button" onclick="onStartOptVerifyConfirm()" style="border-radius:999px;padding:6px 20px;">确 定</button>
     </div>
   </div>
 </div>

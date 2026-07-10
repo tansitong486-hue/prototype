@@ -546,8 +546,8 @@
             <div class="anno-body">
               <p><b>当前版本：</b>v2.4</p>
               <p><b>更新日期：</b>2026-07-02</p>
-              <p><b>变更概述：</b>新增独立模块「多工况探索」，作为策略制定/执行/验证三阶段的统一入口。评审修订：去除冻结与续跑概念、新建须选目标系统。</p>
-              <p><b>本页说明：</b>本页是「多工况探索」模块的策略列表与生命周期管理入口，支持按策略名称搜索、按状态筛选、新建探索策略（须选择目标系统）；表格按状态显示对应操作入口，串联策略制定、执行监控、验证对比三个子页。</p>
+              <p><b>变更概述：</b>新增独立模块「多工况探索」。四态：草稿/执行中/暂停中/已结束；执行中/暂停中/已结束以执行详情页为任务主页面；暂停中可断点续跑；新建须选目标系统。</p>
+              <p><b>本页说明：</b>本页是「多工况探索」模块的策略列表与生命周期管理入口，支持按策略名称搜索、按状态筛选、新建探索策略（须选择目标系统）；表格按状态显示操作入口；草稿仅制定/删除（无冻结、列表无执行按钮，开跑从制定页发起）；执行中/暂停中/已结束以执行详情页为主入口。</p>
             </div>
           </div>
 
@@ -558,11 +558,11 @@
             <div class="anno-body">
               <p><b>页面级验收要点（引用需求 §5.3 生命周期状态机、§11 需求清单 #1）：</b></p>
               <ul>
-                <li>策略状态只有四个：草稿 / 执行中 / 已完成 / 已中止；策略制定的产物通过「保存草稿」保存，<b>能否进入执行只看"执行计划已生成并保存"</b>——执行计划已生成并保存的草稿方可执行，未生成执行计划的草稿只能继续制定或删除。</li>
-                <li><b>"验证"不是状态</b>：已完成、已中止的策略均可随时发起验证查询，操作列需分别为这两种状态提供"验证"入口。</li>
-                <li>草稿态是唯一允许"制定"（继续编辑执行计划）与"删除"的状态；进入执行中及之后不再允许回到制定环节；<b>已中止是终态</b>，不提供任何重新执行入口，仅可验证与查看执行计划。</li>
+                <li>策略状态只有四个：草稿 / 执行中 / 暂停中 / 已结束。<b>无冻结步骤</b>；草稿仅「制定 / 删除」；开跑从策略制定页「发起执行」。</li>
+                <li><b>"验证"不是状态</b>：执行中/暂停中/已结束均以「执行详情」为任务主入口；验证仅能从执行详情「已记录」行进入。</li>
+                <li>草稿态是唯一允许"制定"与"删除"的状态；进入执行中及之后不再允许回到制定环节；执行中/暂停中/已结束以<strong>执行详情页为任务主页面</strong>；暂停中在执行详情页内断点续跑。</li>
                 <li>每条策略归属一个目标系统（水冷冷水系统对象），新建时必选且创建后不可改；开机组合、基准线与执行计划均锚定该目标系统（需求 §7.1）。</li>
-                <li>本页是模块唯一入口，需可跳转到策略制定、执行监控、验证对比三个子页，不额外新增其他入口。</li>
+                <li>本页是模块唯一入口，需可跳转到策略制定、执行详情、验证详情三个子页，不额外新增其他入口。</li>
               </ul>
             </div>
           </div>
@@ -584,8 +584,8 @@
                   <option value="all" selected>全部</option>
                   <option value="draft">草稿</option>
                   <option value="running">执行中</option>
-                  <option value="done">已完成</option>
-                  <option value="aborted">已中止</option>
+                  <option value="ended">已结束</option>
+                  <option value="paused">暂停中</option>
                 </select>
               </div>
               <div class="page-toolbar-right">
@@ -605,7 +605,7 @@
                   </thead>
                   <tbody>
                     <tr><td>搜索输入框</td><td>文本</td><td>按"策略名称"模糊匹配，对应 <code>exploration_strategy.strategy_name</code>（需求 §4.1①）</td></tr>
-                    <tr><td>状态筛选下拉</td><td>单选下拉</td><td>可选项：全部 / 草稿 / 执行中 / 已完成 / 已中止，四态定义见需求 §5.3</td></tr>
+                    <tr><td>状态筛选下拉</td><td>单选下拉</td><td>可选项：全部 / 草稿 / 执行中 / 暂停中 / 已结束，四态定义见需求 §5.3</td></tr>
                     <tr><td>新建探索策略按钮</td><td>主操作</td><td>点击打开新建弹窗（须选择目标系统并填写策略名称），创建后进入策略制定阶段</td></tr>
                   </tbody>
                 </table>
@@ -665,22 +665,21 @@
                     <td>2026-06-10</td>
                     <td>
                       <div class="actions">
-                        <span class="action-link" data-action="monitor">监控</span>
+                        <span class="action-link" data-action="detail">执行详情</span>
                       </div>
                     </td>
                   </tr>
-                  <tr data-name="冷却塔风机频率探索-2026Q2" data-status="done">
+                  <tr data-name="冷却塔风机频率探索-2026Q2" data-status="ended">
                     <td>冷却塔风机频率探索-2026Q2</td>
                     <td>A路冷水系统</td>
                     <td>2 主机 / 2 冷冻泵 / 3 冷却泵 / 2 冷却塔</td>
                     <td>1号集成冷站仿真</td>
-                    <td class="status-cell"><span class="status-tag done">已完成</span></td>
+                    <td class="status-cell"><span class="status-tag done">已结束</span></td>
                     <td>王工</td>
                     <td>2026-03-20</td>
                     <td>
                       <div class="actions">
-                        <span class="action-link" data-action="verify">验证</span>
-                        <span class="action-link" data-action="view-schedule">查看执行计划</span>
+                        <span class="action-link" data-action="detail-ended">执行详情</span>
                       </div>
                     </td>
                   </tr>
@@ -691,7 +690,7 @@
                     <td>—</td>
                     <td class="status-cell">
                       <span class="status-tag draft">草稿</span>
-                      <div class="status-sub">执行计划未生成，暂不可执行</div>
+                      <div class="status-sub">排程未完成</div>
                     </td>
                     <td>赵工</td>
                     <td>2026-06-25</td>
@@ -702,21 +701,38 @@
                       </div>
                     </td>
                   </tr>
-                  <tr data-name="主机出水温度探索-2026Q1" data-status="aborted">
+                  <tr data-name="冷冻泵压差探索-待执行" data-status="draft">
+                    <td>冷冻泵压差探索-待执行</td>
+                    <td>A路冷水系统</td>
+                    <td>2 主机 / 3 冷冻泵 / 2 冷却泵 / 2 冷却塔</td>
+                    <td>1号集成冷站仿真</td>
+                    <td class="status-cell">
+                      <span class="status-tag draft">草稿</span>
+                      <div class="status-sub">排程已就绪，可从制定页发起执行</div>
+                    </td>
+                    <td>赵工</td>
+                    <td>2026-06-28</td>
+                    <td>
+                      <div class="actions">
+                        <span class="action-link" data-action="edit-plan">制定</span>
+                        <span class="action-link delete" data-action="delete">删除</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr data-name="主机出水温度探索-2026Q1" data-status="paused">
                     <td>主机出水温度探索-2026Q1</td>
                     <td>G1栋A路冷水系统</td>
                     <td>1 主机 / 2 冷冻泵 / 2 冷却泵 / 2 冷却塔</td>
                     <td>1号集成冷站仿真</td>
                     <td class="status-cell">
-                      <span class="status-tag aborted">已中止</span>
-                      <div class="status-sub">中止原因：执行过程中检测到"开机设备发生变化"</div>
+                      <span class="status-tag aborted">暂停中</span>
+                      <div class="status-sub">暂停原因：执行过程中检测到"开机设备发生变化"</div>
                     </td>
                     <td>李工</td>
                     <td>2026-01-15</td>
                     <td>
                       <div class="actions">
-                        <span class="action-link" data-action="verify">验证</span>
-                        <span class="action-link" data-action="view-schedule">查看执行计划</span>
+                        <span class="action-link" data-action="detail-paused">执行详情</span>
                       </div>
                     </td>
                   </tr>
@@ -745,10 +761,10 @@
                     <tr><td>所属系统</td><td>String</td><td>策略归属的目标系统（水冷冷水系统对象），新建时必选、创建后不可改；开机组合与执行计划均锚定该系统（需求 §7.1）</td></tr>
                     <tr><td>开机组合摘要</td><td>String（摘要）</td><td>对应 <code>device_combo</code> 开机组合快照的摘要展示（需求 §4.1①、§7.1）；草稿态尚未完成"确定开机组合"步骤时显示"—"。开机组合按设备类型（设备类型）设定，同类型所有开机实例同时下发相同设定值</td></tr>
                     <tr><td>绑定仿真模型</td><td>String</td><td>对应 <code>sim_id</code>（需求 §4.1①、§7.1）；执行期每步记录与验证期对比查询均基于此模型</td></tr>
-                    <tr><td>状态</td><td>Enum</td><td>草稿 / 执行中 / 已完成 / 已中止，四态定义见需求 §5.3；只反映任务生命周期阶段。草稿态下能否执行只看"执行计划已生成并保存"，未生成执行计划的草稿在状态下方以副文案提示"执行计划未生成，暂不可执行"</td></tr>
+                    <tr><td>状态</td><td>Enum</td><td>草稿 / 执行中 / 暂停中 / 已结束，四态定义见需求 §5.3。草稿副文案可提示「排程未完成」或「排程已就绪，可从制定页发起执行」；列表无「执行」按钮</td></tr>
                     <tr><td>创建人</td><td>String</td><td>对应 <code>created_by</code>（需求 §4.1①）</td></tr>
                     <tr><td>创建时间</td><td>Datetime</td><td>对应 <code>created_at</code></td></tr>
-                    <tr><td>操作</td><td>Action</td><td>按"状态 × 执行计划是否已生成并保存"显隐，见下方数据逻辑批注</td></tr>
+                    <tr><td>操作</td><td>Action</td><td>按状态显隐，见下方数据逻辑批注</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -763,19 +779,18 @@
                 <ul>
                   <li><b>排序规则：</b>按创建时间倒序排列。</li>
                   <li><b>分页规则：</b>20 条/页（本页为静态演示）。</li>
-                  <li><b>状态口径：</b>状态机只有四态（需求 §5.3）；策略制定的产物通过「保存草稿」保存，草稿态下能否进入执行只看"执行计划已生成并保存"；已中止是终态，不提供重新执行入口。</li>
+                  <li><b>状态口径：</b>状态机只有四态（需求 §5.3）；无冻结；草稿从制定页发起执行；暂停中可断点续跑。</li>
                 </ul>
-                <p><b>操作列显隐矩阵（状态 × 执行计划是否已生成并保存，依据需求 §5.2/§5.3/§4.1①）：</b></p>
+                <p><b>操作列显隐矩阵（依据需求 §5.3 / §7.6）：</b></p>
                 <table class="anno-table">
                   <thead>
-                    <tr><th>状态</th><th>执行计划情况</th><th>可用操作</th></tr>
+                    <tr><th>状态</th><th>可用操作</th></tr>
                   </thead>
                   <tbody>
-                    <tr><td>草稿</td><td>执行计划未生成</td><td>制定 / 删除（"执行"入口不展示）</td></tr>
-                    <tr><td>草稿</td><td>执行计划已生成并保存，尚未开跑</td><td>制定 / 执行 / 删除</td></tr>
-                    <tr><td>执行中</td><td>执行计划已生成并保存（恒成立）</td><td>监控</td></tr>
-                    <tr><td>已完成</td><td>执行计划已生成并保存（恒成立）</td><td>验证 / 查看执行计划</td></tr>
-                    <tr><td>已中止</td><td>执行计划已生成并保存（恒成立）</td><td>验证 / 查看执行计划（终态，仅可回溯）</td></tr>
+                    <tr><td>草稿</td><td>制定 / 删除（开跑从制定页发起，列表无「执行」）</td></tr>
+                    <tr><td>执行中</td><td>执行详情（任务主页面）</td></tr>
+                    <tr><td>暂停中</td><td>执行详情（任务主页面，内含断点续跑）</td></tr>
+                    <tr><td>已结束</td><td>执行详情（任务主页面，只读终态）</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -788,11 +803,8 @@
               <div class="anno-body">
                 <p><b>关联模块：</b>表格行操作列</p>
                 <ul>
-                  <li><b>制定：</b>跳转多工况探索-策略制定.html，继续编辑该草稿的开机组合/基准线/执行计划（对应需求 §3.1 U1 策略制定工作台）。</li>
-                  <li><b>查看执行计划：</b>跳转多工况探索-策略制定.html?mode=view，只读查看已保存的执行计划内容。</li>
-                  <li><b>执行：</b>跳转多工况探索-执行监控.html，进入执行前置校验（需求 §8.1）；前提是执行计划已生成并保存，未生成执行计划的草稿不展示该入口（本页演示数据中"冷却泵频率探索-筹备中"即此情况，仅显示 制定/删除）。</li>
-                  <li><b>监控：</b>跳转多工况探索-执行监控.html，查看执行中任务的实时进度（对应需求 §3.1 U2 执行监控台）。</li>
-                  <li><b>验证：</b>跳转多工况探索-验证对比.html，查询预测值 vs 实测值在线偏差（对应需求 §3.1 U3 验证对比视图、§9）。</li>
+                  <li><b>制定：</b>跳转多工况探索-策略制定.html，继续编辑该草稿的开机组合/基准线/执行计划（对应需求 §3.1 U1 策略制定工作台）；草稿可进入制定页继续编排并「发起执行」。</li>
+                  <li><b>执行详情：</b>跳转执行详情页（任务主页面，需求 §3.1 U2）。执行中 / 暂停中 / 已结束均可进入：执行中看实时进度与暂停/结束；暂停中可断点续跑或直接结束；已结束为只读终态。暂停中入口带 <code>?paused=1</code>，已结束带 <code>?ended=1</code>。验证在执行详情「已记录」行内「验证」进入（§9.0），列表不提供验证入口。</li>
                   <li><b>删除：</b>二次确认后从列表移除（示意）。</li>
                 </ul>
               </div>
@@ -805,7 +817,7 @@
               <div class="anno-body">
                 <p><b>关联模块：</b>表格区域</p>
                 <ul>
-                  <li><b>默认态：</b>展示当前页策略列表（本原型静态展示 4 条示例，覆盖四态，其中草稿示例为"执行计划未生成"情况）。</li>
+                  <li><b>默认态：</b>展示当前页策略列表（本原型静态展示 5 条示例，覆盖四态；草稿含「排程未完成」与「排程已就绪」两条演示）。</li>
                   <li><b>空态：</b>搜索或筛选后无匹配数据时，表格区域展示"暂无匹配的探索策略"，并引导「新建探索策略」。</li>
                   <li><b>加载态：</b>真实环境下应展示骨架屏；本原型为静态数据，不模拟网络延迟。</li>
                 </ul>
@@ -819,7 +831,7 @@
               <div class="anno-body">
                 <p><b>关联模块：</b>表格操作列（删除相关）</p>
                 <ul>
-                  <li><b>删除限制：</b>仅"草稿"状态提供删除入口（无论执行计划是否已生成并保存）；<b>执行中的策略不可删除</b>，避免正在执行的任务被误删导致下发/记录链路悬空；已完成、已中止的策略同样不提供删除入口，以保留执行留痕与记录（产品推断，需求未直接提及，符合状态机与可追溯性约束；评审时建议与团队确认"已中止"策略是否需要单独的清理/归档机制）。</li>
+                  <li><b>删除限制：</b>仅"草稿"状态提供删除入口；<b>执行中的策略不可删除</b>，避免正在执行的任务被误删导致下发/记录链路悬空；已结束、暂停中的策略同样不提供删除入口，以保留执行留痕与记录（产品推断，需求未直接提及，符合状态机与可追溯性约束；评审时建议与团队确认"暂停中"策略是否需要单独的清理/归档机制）。</li>
                   <li><b>删除二次确认：</b>点击删除后弹出确认提示，确认后从列表移除并 Toast 提示"已删除"；取消不产生变化。</li>
                   <li><b>搜索无匹配：</b>关键字与筛选条件不限制字数，无匹配结果时展示空态，不报错。</li>
                 </ul>
@@ -832,7 +844,7 @@
                 <div>分页：20条/页</div>
               </div>
               <div class="pagination-wrap">
-                <div class="pagination-total">总共 4 个项目</div>
+                <div class="pagination-total">总共 5 个项目</div>
                 <div class="pagination">
                   <span class="page-arrow" data-page="prev">‹</span>
                   <span class="page-item active">1</span>
@@ -937,9 +949,9 @@
       var ACTION_URLS = {
         'edit-plan': '多工况探索-策略制定.html',
         'view-schedule': '多工况探索-策略制定.html?mode=view',
-        'execute': '多工况探索-执行监控.html',
-        'monitor': '多工况探索-执行监控.html',
-        'verify': '多工况探索-验证对比.html'
+        'detail': '多工况探索-执行详情.html',
+        'detail-paused': '多工况探索-执行详情.html?paused=1',
+        'detail-ended': '多工况探索-执行详情.html?ended=1'
       };
 
       var searchInput = document.getElementById('searchInput');

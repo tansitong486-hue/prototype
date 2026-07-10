@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>验证详情 - 多工况探索</title>
+  <link rel="stylesheet" href="annotation-styles.css">
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --text-primary: #262626;
+      --text-secondary: #595959;
+      --text-hint: #8C8C8C;
+      --border: #D9D9D9;
+      --border-light: #F0F0F0;
+      --bg-body: #F5F5F5;
+      --bg-card: #FFFFFF;
+      --tip-bg: #FFFBE6;
+      --tip-border: #FFE58F;
+      --radius: 6px;
+      --radius-lg: 8px;
+      --transition: .2s ease;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { text-decoration: none; color: inherit; }
+    button { border: none; background: none; font: inherit; cursor: pointer; }
+
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main {
+      flex: 1;
+      min-width: 0;
+      overflow-y: auto;
+      background: var(--bg-body);
+    }
+
+    .content-wrap {
+      padding: 16px 20px 24px;
+      max-width: 100%;
+    }
+
+    .breadcrumb {
+      font-size: 13px;
+      color: var(--text-hint);
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .breadcrumb a {
+      color: var(--text-secondary);
+      transition: color var(--transition);
+    }
+
+    .breadcrumb a:hover { color: var(--primary); }
+
+    .breadcrumb-sep {
+      margin: 0 8px;
+      color: var(--text-hint);
+    }
+
+    .breadcrumb-current { color: var(--text-primary); }
+
+    .page-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .back-ico {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      color: var(--text-secondary);
+      border-radius: var(--radius);
+      transition: background var(--transition), color var(--transition);
+    }
+
+    .back-ico:hover {
+      background: rgba(0, 0, 0, 0.04);
+      color: var(--primary);
+    }
+
+    .page-heading {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .strategy-meta-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px 28px;
+      padding: 14px 18px;
+      margin-bottom: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+    }
+
+    .strategy-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .strategy-meta-label { color: var(--text-hint); }
+    .strategy-meta-value { color: var(--text-primary); font-weight: 600; }
+
+    .banner-tip {
+      display: flex;
+      gap: 12px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      background: var(--tip-bg);
+      border: 1px solid var(--tip-border);
+      border-radius: var(--radius-lg);
+      align-items: flex-start;
+    }
+
+    .banner-tip-ico {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      margin-top: 2px;
+      color: #1890FF;
+    }
+
+    .banner-tip-body { min-width: 0; }
+
+    .banner-tip-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .banner-tip-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .data-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .card-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-light);
+      flex-wrap: wrap;
+    }
+
+    .card-toolbar-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .card-toolbar-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .table-scroll { overflow-x: auto; }
+
+    .data-table {
+      width: 100%;
+      min-width: 880px;
+      border-collapse: collapse;
+    }
+
+    .data-table thead th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #FAFAFA;
+      border-bottom: 1px solid var(--border-light);
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 12px 16px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+    }
+
+    .tbody-data tr:hover { background: #FAFAFA; }
+
+    .col-object {
+      vertical-align: top;
+      white-space: normal;
+      line-height: 1.5;
+      max-width: 180px;
+    }
+
+    .diff-cell {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .diff-arrow {
+      width: 10px;
+      height: 10px;
+      flex-shrink: 0;
+      color: var(--text-hint);
+    }
+
+    .diff-arrow.down { transform: rotate(180deg); }
+
+    .table-footnote {
+      padding: 10px 18px;
+      font-size: 12px;
+      color: var(--text-hint);
+      background: #FAFAFA;
+      border-top: 1px solid var(--border-light);
+    }
+
+    .empty-state {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 56px 24px;
+      text-align: center;
+      background: var(--bg-card);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 16px;
+    }
+
+    .empty-state.show { display: flex; }
+
+    .empty-state-ico {
+      width: 48px;
+      height: 48px;
+      color: var(--text-hint);
+    }
+
+    .empty-state-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .empty-state-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      max-width: 420px;
+      line-height: 1.6;
+    }
+
+    .empty-state-link {
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    .empty-state-link:hover { text-decoration: underline; }
+
+    .content-with-step { display: none; }
+    .content-with-step.show { display: block; }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+        <div class="anno-filter-bar" id="annoFilterBar">
+          <span class="anno-filter-label">批注版本：</span>
+          <div class="anno-filter-tags" id="annoFilterTags"></div>
+        </div>
+        <div class="content-wrap">
+          <nav class="breadcrumb" aria-label="面包屑">
+            <a href="多工况探索-列表.html">多工况探索</a>
+            <span class="breadcrumb-sep">/</span>
+            <a href="多工况探索-执行详情.html" id="crumbDetail">执行详情</a>
+            <span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">验证详情</span>
+          </nav>
+
+          <div class="page-title-row">
+            <a href="多工况探索-执行详情.html" class="back-ico" id="backToDetail" aria-label="返回执行详情">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M15 18l-6-6 6-6"/>
+              </svg>
+            </a>
+            <h1 class="page-heading">验证详情</h1>
+          </div>
+
+          <div class="anno anno-version-header" data-version="v2.4">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v2.4</p>
+              <p><b>更新日期：</b>2026-07-10</p>
+              <p><b>变更概述：</b>简化为单归档点验证详情页；唯一入口为执行详情「已记录」行「验证」（带 <code>?step=</code>）；进入后直接展示归档实测 vs 训练前预测 vs 重训后预测对比，不入库。</p>
+              <p><b>本页说明：</b>展示单个归档探索点的三组数值对比。须从执行详情页「已记录」行点「验证」进入（URL 带 step 定位）；无 step 时展示空态引导。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-req" data-version="v2.4">
+            <span class="anno-tag">需求说明</span>
+            <span class="anno-version">v2.4</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>页面范围（对应需求 §九 阶段三·验证）：</b></p>
+              <ul>
+                <li><b>验证对象 = 归档探索点</b>：对比归档实测值、训练前预测（归档快照）与重训后预测（对该归档点工况重算）；<strong>不是</strong>当前实时工况的最新仿真结果。</li>
+                <li><b>唯一入口</b>：执行详情页执行进度「已记录」行「验证」，URL 带 <code>?step=</code> 定位归档点。</li>
+                <li><b>不做验证结果入库</b>：对比结果仅在线展示，不建表、不保存（§9.2）。</li>
+                <li><b>不设合格判定、不驱动状态</b>：本页不做达标/未达标判断；验证动作不驱动探索策略状态流转。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div id="emptyState" class="empty-state" role="status">
+            <svg class="empty-state-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path d="M9 12h6M12 9v6"/><circle cx="12" cy="12" r="9"/>
+            </svg>
+            <div class="empty-state-title">请从执行详情的已记录行进入验证</div>
+            <p class="empty-state-desc">本页仅展示单个归档点的验证对比结果。请返回<a class="empty-state-link" href="多工况探索-执行详情.html">执行详情</a>，在「已记录」工况点行点击「验证」。</p>
+          </div>
+
+          <div id="contentWithStep" class="content-with-step">
+            <div class="strategy-meta-bar" id="metaBar">
+              <div class="strategy-meta-item">
+                <span class="strategy-meta-label">所属系统</span>
+                <span class="strategy-meta-value" id="metaSystem">—</span>
+              </div>
+              <div class="strategy-meta-item">
+                <span class="strategy-meta-label">被探对象 / 控制变量</span>
+                <span class="strategy-meta-value" id="metaObject">—</span>
+              </div>
+              <div class="strategy-meta-item">
+                <span class="strategy-meta-label">工况点目标值</span>
+                <span class="strategy-meta-value" id="metaTarget">—</span>
+              </div>
+              <div class="strategy-meta-item">
+                <span class="strategy-meta-label">归档时间</span>
+                <span class="strategy-meta-value" id="metaArchivedAt">—</span>
+              </div>
+              <div class="strategy-meta-item">
+                <span class="strategy-meta-label">绑定仿真模型</span>
+                <span class="strategy-meta-value" id="metaSim">—</span>
+              </div>
+            </div>
+
+            <div class="banner-tip" role="region" aria-label="提示">
+              <svg class="banner-tip-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+              </svg>
+              <div class="banner-tip-body">
+                <div class="banner-tip-title">提示</div>
+                <div class="banner-tip-text">
+                  <p>本页由执行详情「已记录」行进入，直接展示该归档点的<strong>归档实测 vs 训练前预测 vs 重训后预测</strong>对比；对比对象为历史归档点，结果仅本页查看、<strong>不入库</strong>。</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="anno anno-data" data-version="v2.4">
+              <span class="anno-tag">数据逻辑</span>
+              <span class="anno-version">v2.4</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>验证对比表 —— 三列取值口径（§九）</p>
+                <ul>
+                  <li><b>归档实测值：</b>取自该归档探索点的 <code>measured_value</code> / <code>sim_snapshot</code> 实测，为判稳归档时刻的真值基准。</li>
+                  <li><b>训练前预测：</b>同一归档快照中的模拟预测值，即归档时刻旧模型（训练前）对该工况的预测。</li>
+                  <li><b>重训后预测值：</b>系统读取该归档点工况输入，基于策略绑定仿真实例用<strong>重训后模型</strong>重算得到的预测值——不是查询当前实时仿真的最新结果。</li>
+                  <li><b>训练前偏差 / 训练后偏差：</b>分别 = 训练前预测值 − 归档实测值、重训后预测值 − 归档实测值；训练后偏差收窄即说明补样重训对该工况段精度改善。</li>
+                  <li><b>展示范围：</b>归档快照为全系统存档（100+ 参数），页面默认展示与被探变量强相关的代表性对象/指标节选。</li>
+                </ul>
+              </div>
+            </div>
+
+            <section class="data-card" aria-label="验证对比结果">
+              <div class="card-toolbar">
+                <div>
+                  <div class="card-toolbar-title" id="compareTitle">验证详情 — 归档点</div>
+                  <div class="card-toolbar-desc">比对基准：归档实测值 · 重训后重算：<span id="verifyTime">—</span>（对归档点工况重算，非当前实时最新结果）</div>
+                </div>
+              </div>
+
+              <div class="table-scroll">
+                <table class="data-table" style="min-width:1000px;">
+                  <thead>
+                    <tr>
+                      <th>对象</th>
+                      <th>指标名称</th>
+                      <th>归档实测值</th>
+                      <th>训练前预测</th>
+                      <th>重训后预测值（对归档点重算）</th>
+                      <th>训练前偏差</th>
+                      <th>训练后偏差</th>
+                    </tr>
+                  </thead>
+                  <tbody class="tbody-data" id="compareTbody"></tbody>
+                </table>
+              </div>
+              <div class="table-footnote">完整对比包含全系统 100+ 项参数，此处仅节选演示；偏差 = 预测值 − 归档实测值；结果不入库、不驱动状态，本页不做合格与否的判定。</div>
+            </section>
+          </div>
+
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const G = function (id) { return document.getElementById(id) }
+
+      const pad = function (n) { return n < 10 ? '0' + n : '' + n }
+      const formatNow = function () {
+        const d = new Date()
+        return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes())
+      }
+
+      const POINTS = {
+        step36: {
+          label: '冷冻泵频率 36Hz',
+          system: '3#数据中心水冷冷水系统',
+          object: '冷冻泵（1号、2号、3号 同时下发）· 频率',
+          target: '36.00 Hz',
+          archivedAt: '2026-06-28 09:42',
+          sim: '1号集成冷站仿真',
+          rows: [
+            ['3#数据中心水冷冷水系统', '系统能效（COP）', '5.52', '5.21', '5.47', '-0.31', '-0.05'],
+            ['3#数据中心水冷冷水系统', '系统总电功率（kW）', '81.20 kW', '84.10 kW', '81.85 kW', '+2.90 kW', '+0.65 kW'],
+            ['1号冷冻泵', '频率（Hz）', '36.20 Hz', '37.40 Hz', '36.35 Hz', '+1.20 Hz', '+0.15 Hz'],
+            ['2号冷冻泵', '频率（Hz）', '35.80 Hz', '37.05 Hz', '35.95 Hz', '+1.25 Hz', '+0.15 Hz'],
+            ['3号冷冻泵', '频率（Hz）', '36.10 Hz', '37.28 Hz', '36.22 Hz', '+1.18 Hz', '+0.12 Hz'],
+            ['冷冻水供水温度（℃）', '供水温度（℃）', '7.15℃', '7.52℃', '7.22℃', '+0.37℃', '+0.07℃']
+          ]
+        },
+        p30: {
+          label: '冷却塔风机频率 30Hz',
+          system: 'A路冷水系统',
+          object: '冷却塔（1号、2号 同时下发）· 风机频率',
+          target: '30.00 Hz',
+          archivedAt: '2026-04-03 14:20',
+          sim: '1号集成冷站仿真',
+          rows: [
+            ['A路冷水系统', '系统能效（COP）', '5.41', '5.12', '5.36', '-0.29', '-0.05'],
+            ['A路冷水系统', '系统总电功率（kW）', '82.60 kW', '85.30 kW', '83.15 kW', '+2.70 kW', '+0.55 kW'],
+            ['A路冷水系统', '冷冻水供水温度（℃）', '7.20℃', '7.58℃', '7.27℃', '+0.38℃', '+0.07℃'],
+            ['A路冷水系统', '冷冻水回水温度（℃）', '12.31℃', '12.79℃', '12.41℃', '+0.48℃', '+0.10℃'],
+            ['1号冷却塔', '风机频率（Hz）', '29.88 Hz', '31.02 Hz', '30.03 Hz', '+1.14 Hz', '+0.15 Hz'],
+            ['1号冷却塔', '出水温度（℃）', '30.92℃', '32.45℃', '31.10℃', '+1.53℃', '+0.18℃'],
+            ['1号冷水主机', '冷凝器进水温度（℃）', '31.05℃', '32.24℃', '31.21℃', '+1.19℃', '+0.16℃']
+          ]
+        },
+        p32: {
+          label: '冷却塔风机频率 32Hz',
+          system: 'A路冷水系统',
+          object: '冷却塔（1号、2号 同时下发）· 风机频率',
+          target: '32.00 Hz',
+          archivedAt: '2026-04-03 16:05',
+          sim: '1号集成冷站仿真',
+          rows: [
+            ['A路冷水系统', '系统能效（COP）', '5.55', '5.28', '5.50', '-0.27', '-0.05'],
+            ['A路冷水系统', '系统总电功率（kW）', '80.40 kW', '83.02 kW', '80.94 kW', '+2.62 kW', '+0.54 kW'],
+            ['A路冷水系统', '冷冻水供水温度（℃）', '7.16℃', '7.52℃', '7.22℃', '+0.36℃', '+0.06℃'],
+            ['A路冷水系统', '冷冻水回水温度（℃）', '12.18℃', '12.64℃', '12.27℃', '+0.46℃', '+0.09℃'],
+            ['1号冷却塔', '风机频率（Hz）', '31.90 Hz', '33.12 Hz', '32.06 Hz', '+1.22 Hz', '+0.16 Hz'],
+            ['1号冷却塔', '出水温度（℃）', '30.35℃', '31.86℃', '30.51℃', '+1.51℃', '+0.16℃'],
+            ['1号冷水主机', '冷凝器进水温度（℃）', '30.55℃', '31.72℃', '30.72℃', '+1.17℃', '+0.17℃']
+          ]
+        },
+        p34: {
+          label: '冷却塔风机频率 34Hz',
+          system: 'A路冷水系统',
+          object: '冷却塔（1号、2号 同时下发）· 风机频率',
+          target: '34.00 Hz',
+          archivedAt: '2026-04-04 09:40',
+          sim: '1号集成冷站仿真',
+          rows: [
+            ['A路冷水系统', '系统能效（COP）', '5.68', '5.42', '5.63', '-0.26', '-0.05'],
+            ['A路冷水系统', '系统总电功率（kW）', '78.40 kW', '80.95 kW', '78.92 kW', '+2.55 kW', '+0.52 kW'],
+            ['A路冷水系统', '冷冻水供水温度（℃）', '7.12℃', '7.46℃', '7.18℃', '+0.34℃', '+0.06℃'],
+            ['A路冷水系统', '冷冻水回水温度（℃）', '12.05℃', '12.51℃', '12.14℃', '+0.46℃', '+0.09℃'],
+            ['1号冷却塔', '风机频率（Hz）', '33.92 Hz', '35.10 Hz', '34.08 Hz', '+1.18 Hz', '+0.16 Hz'],
+            ['1号冷却塔', '出水温度（℃）', '29.85℃', '31.42℃', '30.02℃', '+1.57℃', '+0.17℃'],
+            ['1号冷水主机', '冷凝器进水温度（℃）', '30.10℃', '31.35℃', '30.28℃', '+1.25℃', '+0.18℃']
+          ]
+        },
+        p36: {
+          label: '冷却塔风机频率 36Hz',
+          system: 'A路冷水系统',
+          object: '冷却塔（1号、2号 同时下发）· 风机频率',
+          target: '36.00 Hz',
+          archivedAt: '2026-04-04 11:55',
+          sim: '1号集成冷站仿真',
+          rows: [
+            ['A路冷水系统', '系统能效（COP）', '5.74', '5.39', '5.68', '-0.35', '-0.06'],
+            ['A路冷水系统', '系统总电功率（kW）', '77.10 kW', '79.90 kW', '77.70 kW', '+2.80 kW', '+0.60 kW'],
+            ['A路冷水系统', '冷冻水供水温度（℃）', '7.08℃', '7.44℃', '7.15℃', '+0.36℃', '+0.07℃'],
+            ['A路冷水系统', '冷冻水回水温度（℃）', '11.92℃', '12.42℃', '12.02℃', '+0.50℃', '+0.10℃'],
+            ['1号冷却塔', '风机频率（Hz）', '35.86 Hz', '37.21 Hz', '36.04 Hz', '+1.35 Hz', '+0.18 Hz'],
+            ['1号冷却塔', '出水温度（℃）', '29.31℃', '31.05℃', '29.50℃', '+1.74℃', '+0.19℃'],
+            ['1号冷水主机', '冷凝器进水温度（℃）', '29.72℃', '31.08℃', '29.92℃', '+1.36℃', '+0.20℃']
+          ]
+        }
+      }
+
+      const STEP_MAP = { '36': 'step36', '38': 'step36' }
+
+      const resolvePointKey = function (stepParam) {
+        if (!stepParam) return null
+        if (STEP_MAP[stepParam]) return STEP_MAP[stepParam]
+        if (POINTS['step' + stepParam]) return 'step' + stepParam
+        if (POINTS['p' + stepParam]) return 'p' + stepParam
+        return null
+      }
+
+      const diffCell = function (text) {
+        const down = text.charAt(0) === '-'
+        return '<span class="diff-cell">' +
+          '<svg class="diff-arrow' + (down ? ' down' : '') + '" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M6 2l4 5H2z"/></svg>' +
+          text + '</span>'
+      }
+
+      const renderCompare = function (key) {
+        const p = POINTS[key]
+        if (!p) return
+        G('metaSystem').textContent = p.system
+        G('metaObject').textContent = p.object
+        G('metaTarget').textContent = p.target
+        G('metaArchivedAt').textContent = p.archivedAt
+        G('metaSim').textContent = p.sim
+        G('compareTitle').textContent = '验证详情 — 归档点：' + p.label + ' · 归档于 ' + p.archivedAt
+        G('verifyTime').textContent = formatNow()
+        G('compareTbody').innerHTML = p.rows.map(function (r) {
+          return '<tr>' +
+            '<td class="col-object">' + r[0] + '</td>' +
+            '<td>' + r[1] + '</td>' +
+            '<td>' + r[2] + '</td>' +
+            '<td>' + r[3] + '</td>' +
+            '<td>' + r[4] + '</td>' +
+            '<td>' + diffCell(r[5]) + '</td>' +
+            '<td>' + diffCell(r[6]) + '</td>' +
+            '</tr>'
+        }).join('')
+      }
+
+      const params = new URLSearchParams(window.location.search)
+      const stepParam = params.get('step')
+      const pointKey = resolvePointKey(stepParam)
+
+      if (pointKey && POINTS[pointKey]) {
+        G('emptyState').classList.remove('show')
+        G('contentWithStep').classList.add('show')
+        renderCompare(pointKey)
+      } else {
+        G('emptyState').classList.add('show')
+        G('contentWithStep').classList.remove('show')
+      }
+    })()
+  </script>
+
+  <button class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+
+  <script>
+  function initAnnoVersionFilter() {
+    var tags = document.getElementById('annoFilterTags');
+    if (!document.body.classList.contains('annotation-mode')) return;
+    var annos = document.querySelectorAll('.anno[data-version]');
+    var versions = [];
+    annos.forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (v && versions.indexOf(v) === -1) versions.push(v);
+    });
+    versions.sort(function(a, b) {
+      var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+      var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+      for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+        if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+      }
+      return 0;
+    });
+    tags.innerHTML = '';
+    var allBtn = document.createElement('span');
+    allBtn.className = 'anno-filter-tag active';
+    allBtn.textContent = '全部';
+    allBtn.onclick = function() { filterAnno('all', versions[0]); setActive(this); };
+    tags.appendChild(allBtn);
+    versions.forEach(function(v) {
+      var btn = document.createElement('span');
+      btn.className = 'anno-filter-tag';
+      btn.textContent = v;
+      btn.onclick = function() { filterAnno(v, versions[0]); setActive(this); };
+      tags.appendChild(btn);
+    });
+    if (versions.length > 0) filterAnno('all', versions[0]);
+  }
+  function filterAnno(version, latest) {
+    document.querySelectorAll('.anno[data-version]').forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (version === 'all') {
+        a.style.display = '';
+        a.style.opacity = (v === latest) ? '1' : '0.6';
+      } else {
+        a.style.display = (v === version) ? '' : 'none';
+        a.style.opacity = '1';
+      }
+    });
+  }
+  function setActive(el) {
+    el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function(t) { t.classList.remove('active'); });
+    el.classList.add('active');
+  }
+  </script>
+  <script src="components/nav.js" data-active-nav="运营管理" data-active-sidebar="多工况探索"></script>
+</body>
+</html>
