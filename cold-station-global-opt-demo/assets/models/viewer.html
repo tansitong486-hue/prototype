@@ -1,0 +1,2002 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>设备标准化 GLB 预览</title>
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #111312;
+        color: #eef4ef;
+        --panel: #171b19;
+        --panel-strong: #1d2320;
+        --line: #2d3731;
+        --muted: #9fad9f;
+        --text: #eef4ef;
+        --running: #29d17d;
+        --running-soft: rgb(41 209 125 / 18%);
+        --stopped: #859188;
+        --out: #8ca7b8;
+        --fault: #ff4b5f;
+        --warn: #f4b445;
+        --focus: #70d7c7;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 296px minmax(0, 1fr) 368px;
+        background: #111312;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      button {
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #202620;
+        color: #dfe8df;
+        cursor: pointer;
+      }
+
+      button:hover {
+        border-color: #5bb79b;
+        background: #26312a;
+      }
+
+      .sidebar,
+      .detail-panel {
+        height: 100vh;
+        overflow: auto;
+        background: var(--panel);
+      }
+
+      .sidebar {
+        border-right: 1px solid var(--line);
+        padding: 18px;
+      }
+
+      .detail-panel {
+        border-left: 1px solid var(--line);
+        padding: 18px;
+      }
+
+      .eyebrow {
+        margin: 0 0 6px;
+        color: var(--focus);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        margin-bottom: 16px;
+        font-size: 20px;
+        line-height: 1.25;
+      }
+
+      h2 {
+        margin-bottom: 12px;
+        font-size: 15px;
+      }
+
+      h3 {
+        margin-bottom: 10px;
+        font-size: 14px;
+      }
+
+      .control-section {
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 1px solid var(--line);
+      }
+
+      .button-stack {
+        display: grid;
+        gap: 8px;
+      }
+
+      .device-button,
+      .scene-button {
+        width: 100%;
+        min-height: 48px;
+        padding: 10px 12px;
+        text-align: left;
+      }
+
+      .device-button strong,
+      .scene-button strong {
+        display: block;
+        font-size: 13px;
+        line-height: 1.35;
+      }
+
+      .device-button span,
+      .scene-button span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .device-button.active,
+      .scene-button.active {
+        border-color: var(--focus);
+        background: #17332c;
+        box-shadow: inset 3px 0 0 var(--focus);
+      }
+
+      .tool-row {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .switch-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 12px;
+        min-height: 44px;
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #202620;
+      }
+
+      .switch-row span:first-child {
+        font-size: 13px;
+        color: #dde8de;
+      }
+
+      .switch-row input {
+        position: absolute;
+        inline-size: 1px;
+        block-size: 1px;
+        opacity: 0;
+      }
+
+      .switch-track {
+        position: relative;
+        width: 42px;
+        height: 22px;
+        border-radius: 999px;
+        background: #45504a;
+        transition: background 160ms ease;
+      }
+
+      .switch-track::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #ffffff;
+        transition: transform 160ms ease;
+      }
+
+      .switch-row input:checked + .switch-track {
+        background: #1ea96a;
+      }
+
+      .switch-row input:checked + .switch-track::after {
+        transform: translateX(20px);
+      }
+
+      .ghost-button {
+        width: 100%;
+        min-height: 42px;
+        padding: 10px 12px;
+        text-align: center;
+      }
+
+      .stage {
+        position: relative;
+        min-width: 0;
+        min-height: 100vh;
+        overflow: hidden;
+        background:
+          linear-gradient(90deg, rgb(255 255 255 / 3%) 1px, transparent 1px),
+          linear-gradient(0deg, rgb(255 255 255 / 3%) 1px, transparent 1px),
+          radial-gradient(circle at 50% 38%, #243127 0, #121816 58%, #0a0c0b 100%);
+        background-size: 48px 48px, 48px 48px, auto;
+      }
+
+      .stage-status {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        right: 16px;
+        z-index: 4;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 12px;
+        border: 1px solid rgb(238 244 239 / 12%);
+        border-radius: 8px;
+        background: rgb(15 18 16 / 78%);
+        backdrop-filter: blur(12px);
+      }
+
+      .stage-title {
+        min-width: 0;
+      }
+
+      .stage-title strong {
+        display: block;
+        overflow: hidden;
+        color: #ffffff;
+        font-size: 14px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .stage-title span {
+        display: block;
+        margin-top: 2px;
+        overflow: hidden;
+        color: var(--muted);
+        font-size: 12px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .eligibility {
+        flex: 0 0 auto;
+        min-width: 96px;
+        padding: 6px 10px;
+        border: 1px solid rgb(112 215 199 / 34%);
+        border-radius: 6px;
+        background: rgb(112 215 199 / 12%);
+        color: #dcfff8;
+        font-size: 12px;
+        font-weight: 700;
+        text-align: center;
+      }
+
+      .eligibility.not-eligible {
+        border-color: rgb(244 180 69 / 35%);
+        background: rgb(244 180 69 / 12%);
+        color: #ffe3ad;
+      }
+
+      .model-shell {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      model-viewer {
+        width: 100%;
+        height: 100%;
+        min-height: 520px;
+        background: transparent;
+        transition: filter 220ms ease, opacity 220ms ease;
+      }
+
+      .model-shell.state-stopped model-viewer {
+        filter: grayscale(0.78) saturate(0.52) brightness(0.58);
+        opacity: 0.86;
+      }
+
+      .model-shell.service-out model-viewer {
+        filter: saturate(0.72) brightness(0.86);
+      }
+
+      .model-shell.fault-fault model-viewer {
+        filter: saturate(0.9) brightness(0.94) drop-shadow(0 0 18px rgb(255 75 95 / 34%));
+      }
+
+      .status-ring {
+        position: absolute;
+        left: 50%;
+        bottom: 13%;
+        z-index: 1;
+        width: min(52vw, 500px);
+        height: 96px;
+        border: 2px solid var(--running);
+        border-radius: 50%;
+        background: radial-gradient(ellipse at center, var(--running-soft) 0 36%, transparent 68%);
+        box-shadow: 0 0 32px rgb(41 209 125 / 24%), inset 0 0 18px rgb(41 209 125 / 18%);
+        transform: translateX(-50%) perspective(620px) rotateX(66deg);
+        pointer-events: none;
+        transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+      }
+
+      .status-ring.is-stopped {
+        border-color: var(--stopped);
+        background: radial-gradient(ellipse at center, rgb(133 145 136 / 12%) 0 34%, transparent 68%);
+        box-shadow: 0 0 18px rgb(133 145 136 / 16%);
+      }
+
+      .status-ring.is-out {
+        border-color: var(--out);
+        background: radial-gradient(ellipse at center, rgb(140 167 184 / 16%) 0 36%, transparent 68%);
+        box-shadow: 0 0 24px rgb(140 167 184 / 22%);
+      }
+
+      .status-ring.is-fault {
+        border-color: var(--fault);
+        background: radial-gradient(ellipse at center, rgb(255 75 95 / 16%) 0 36%, transparent 68%);
+        box-shadow: 0 0 34px rgb(255 75 95 / 28%), inset 0 0 18px rgb(255 75 95 / 18%);
+      }
+
+      .status-ring.is-warn {
+        border-color: var(--warn);
+        background: radial-gradient(ellipse at center, rgb(244 180 69 / 16%) 0 36%, transparent 68%);
+        box-shadow: 0 0 28px rgb(244 180 69 / 24%), inset 0 0 18px rgb(244 180 69 / 14%);
+      }
+
+      .fault-marker {
+        position: absolute;
+        top: 86px;
+        right: 20px;
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        max-width: min(280px, calc(100% - 40px));
+        padding: 8px 10px;
+        border: 1px solid rgb(255 75 95 / 55%);
+        border-radius: 6px;
+        background: rgb(62 14 20 / 86%);
+        color: #fff2f4;
+        font-size: 13px;
+        font-weight: 700;
+        box-shadow: 0 10px 28px rgb(0 0 0 / 28%);
+      }
+
+      .fault-marker::before {
+        content: "";
+        flex: 0 0 auto;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--fault);
+        box-shadow: 0 0 0 4px rgb(255 75 95 / 18%);
+      }
+
+      .fault-marker[hidden] {
+        display: none;
+      }
+
+      .device-label {
+        position: absolute;
+        top: 86px;
+        left: 20px;
+        z-index: 5;
+        width: min(340px, calc(100% - 40px));
+        padding: 12px;
+        border: 1px solid rgb(112 215 199 / 38%);
+        border-radius: 8px;
+        background: rgb(17 23 20 / 86%);
+        box-shadow: 0 16px 40px rgb(0 0 0 / 28%);
+        backdrop-filter: blur(12px);
+        transition: opacity 160ms ease, transform 160ms ease;
+      }
+
+      .device-label.is-hidden {
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(-8px);
+      }
+
+      .device-label.is-fault {
+        border-color: rgb(255 75 95 / 58%);
+        background: rgb(43 17 20 / 88%);
+      }
+
+      .device-label.is-out {
+        border-color: rgb(140 167 184 / 48%);
+      }
+
+      .label-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .label-name {
+        min-width: 0;
+      }
+
+      .label-name strong {
+        display: block;
+        color: #ffffff;
+        font-size: 15px;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+      }
+
+      .label-name span {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .status-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 10px;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        min-height: 24px;
+        padding: 4px 7px;
+        border: 1px solid rgb(238 244 239 / 14%);
+        border-radius: 6px;
+        background: rgb(238 244 239 / 7%);
+        color: #e9f2e9;
+        font-size: 12px;
+        line-height: 1.2;
+      }
+
+      .chip::before {
+        content: "";
+        flex: 0 0 auto;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+
+      .chip.running {
+        color: #88f0b6;
+      }
+
+      .chip.stopped,
+      .chip.unknown {
+        color: #c5cec7;
+      }
+
+      .chip.out {
+        color: #bfdaea;
+      }
+
+      .chip.fault {
+        color: #ff9aa5;
+      }
+
+      .chip.eligible {
+        color: #9effd5;
+      }
+
+      .chip.not-eligible {
+        color: #ffd287;
+      }
+
+      .label-metrics {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .metric-mini {
+        min-width: 0;
+        padding: 8px;
+        border: 1px solid rgb(238 244 239 / 10%);
+        border-radius: 6px;
+        background: rgb(238 244 239 / 5%);
+      }
+
+      .metric-mini span {
+        display: block;
+        overflow: hidden;
+        color: var(--muted);
+        font-size: 11px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .metric-mini strong {
+        display: block;
+        margin-top: 3px;
+        color: #ffffff;
+        font-size: 15px;
+        line-height: 1.2;
+        overflow-wrap: anywhere;
+      }
+
+      .detail-header {
+        margin-bottom: 16px;
+      }
+
+      .detail-header strong {
+        display: block;
+        color: #ffffff;
+        font-size: 19px;
+        line-height: 1.3;
+      }
+
+      .detail-header span {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .state-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 18px;
+      }
+
+      .state-tile {
+        min-width: 0;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel-strong);
+      }
+
+      .state-tile span {
+        display: block;
+        margin-bottom: 4px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .state-tile strong {
+        display: block;
+        color: #ffffff;
+        font-size: 14px;
+        overflow-wrap: anywhere;
+      }
+
+      .state-tile.is-warn {
+        border-color: rgb(244 180 69 / 45%);
+        background: rgb(80 58 18 / 34%);
+      }
+
+      .state-tile.is-warn strong {
+        color: #ffe2a4;
+      }
+
+      .section-caption {
+        margin: 0 0 10px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .metric-table {
+        display: grid;
+        gap: 12px;
+      }
+
+      .metric-group {
+        min-width: 0;
+        border: 1px solid rgb(238 244 239 / 10%);
+        border-radius: 8px;
+        background: rgb(238 244 239 / 4%);
+        overflow: hidden;
+      }
+
+      .metric-group-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        min-height: 34px;
+        padding: 8px 10px;
+        border-bottom: 1px solid rgb(238 244 239 / 8%);
+        background: rgb(238 244 239 / 5%);
+        color: #eff7ef;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .metric-group-title span {
+        flex: 0 0 auto;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .metric-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(118px, 0.72fr);
+        gap: 8px;
+        align-items: center;
+        min-height: 42px;
+        padding: 10px;
+        border-bottom: 1px solid rgb(238 244 239 / 8%);
+      }
+
+      .metric-row:last-child {
+        border-bottom: 0;
+      }
+
+      .metric-row.has-anomaly {
+        background: rgb(80 58 18 / 22%);
+      }
+
+      .metric-label {
+        min-width: 0;
+      }
+
+      .metric-label strong {
+        display: block;
+        color: #eff7ef;
+        font-size: 13px;
+        line-height: 1.35;
+      }
+
+      .metric-label span {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.35;
+      }
+
+      .metric-label .metric-anomaly {
+        color: #ffd287;
+      }
+
+      .metric-values {
+        display: grid;
+        gap: 4px;
+        color: #ffffff;
+        font-size: 13px;
+        text-align: right;
+        overflow-wrap: anywhere;
+      }
+
+      .metric-values span {
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.25;
+      }
+
+      .metric-values strong {
+        color: #ffffff;
+        font-size: 13px;
+        line-height: 1.25;
+      }
+
+      .metric-code {
+        color: #b7c3b9;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 11px;
+        text-align: right;
+        overflow-wrap: anywhere;
+      }
+
+      .label-note {
+        margin-top: 10px;
+        padding: 8px;
+        border: 1px dashed rgb(238 244 239 / 16%);
+        border-radius: 6px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .source-box {
+        margin-top: 18px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #151a17;
+      }
+
+      .source-box dl {
+        display: grid;
+        grid-template-columns: 82px minmax(0, 1fr);
+        gap: 8px 10px;
+        margin: 0;
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .source-box dt {
+        color: var(--muted);
+      }
+
+      .source-box dd {
+        margin: 0;
+        color: #e4eee5;
+        overflow-wrap: anywhere;
+      }
+
+      @media (max-width: 1180px) {
+        body {
+          grid-template-columns: 288px minmax(0, 1fr);
+        }
+
+        .detail-panel {
+          grid-column: 1 / -1;
+          height: auto;
+          max-height: none;
+          border-top: 1px solid var(--line);
+          border-left: 0;
+        }
+
+        .stage,
+        .sidebar {
+          min-height: 640px;
+        }
+      }
+
+      @media (max-width: 760px) {
+        body {
+          display: block;
+        }
+
+        .sidebar,
+        .detail-panel {
+          height: auto;
+          border-right: 0;
+          border-left: 0;
+        }
+
+        .sidebar {
+          border-bottom: 1px solid var(--line);
+        }
+
+        .stage {
+          min-height: 0;
+          overflow: visible;
+        }
+
+        model-viewer {
+          order: 3;
+          flex: 0 0 600px;
+          height: 600px;
+          min-height: 0;
+        }
+
+        .stage-status {
+          position: relative;
+          top: auto;
+          right: auto;
+          left: auto;
+          align-items: flex-start;
+          flex-direction: column;
+          margin: 14px;
+        }
+
+        .model-shell {
+          position: relative;
+          inset: auto;
+          display: flex;
+          flex-direction: column;
+          min-height: 0;
+          overflow: visible;
+        }
+
+        .status-ring {
+          bottom: 24px;
+          width: min(78vw, 320px);
+          height: 70px;
+        }
+
+        .eligibility {
+          width: 100%;
+          text-align: left;
+        }
+
+        .device-label {
+          position: relative;
+          order: 2;
+          top: auto;
+          left: auto;
+          width: auto;
+          margin: 12px 14px 0;
+        }
+
+        .fault-marker {
+          position: relative;
+          order: 1;
+          top: auto;
+          right: auto;
+          left: auto;
+          max-width: none;
+          margin: 0 14px;
+        }
+
+        .fault-marker[hidden] {
+          display: none;
+        }
+
+        .device-label.is-hidden {
+          display: none;
+          opacity: 0;
+          pointer-events: none;
+          transform: none;
+        }
+
+        .device-label {
+          transform: none;
+        }
+
+        .label-metrics {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .state-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .metric-row {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 4px;
+        }
+
+        .metric-values,
+        .metric-code {
+          text-align: left;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <aside class="sidebar">
+      <p class="eyebrow">设备模型标准化</p>
+      <h1>统一状态与关键参数预览</h1>
+
+      <section class="control-section" aria-labelledby="deviceSectionTitle">
+        <h2 id="deviceSectionTitle">设备类型</h2>
+        <div id="deviceButtons" class="button-stack"></div>
+      </section>
+
+      <section class="control-section" aria-labelledby="sceneSectionTitle">
+        <h2 id="sceneSectionTitle">状态场景</h2>
+        <div id="sceneButtons" class="button-stack"></div>
+      </section>
+
+      <section class="control-section" aria-labelledby="toolSectionTitle">
+        <h2 id="toolSectionTitle">查看控制</h2>
+        <div class="tool-row">
+          <label class="switch-row" for="labelToggle">
+            <span>标签开关</span>
+            <input id="labelToggle" type="checkbox" checked />
+            <span class="switch-track" aria-hidden="true"></span>
+          </label>
+          <button id="resetCamera" class="ghost-button" type="button">复位视角</button>
+        </div>
+      </section>
+    </aside>
+
+    <main class="stage">
+      <div class="stage-status">
+        <div class="stage-title">
+          <strong id="stageDeviceName">冷水主机 CH-01</strong>
+          <span id="stageStateText">运行中 / 投入 / 正常</span>
+        </div>
+        <div id="eligibilityBadge" class="eligibility">参与寻优</div>
+      </div>
+
+      <div id="modelShell" class="model-shell state-running service-in fault-normal">
+        <div id="statusRing" class="status-ring"></div>
+        <model-viewer
+          id="viewer"
+          src="chiller.glb"
+          camera-controls
+          auto-rotate
+          shadow-intensity="0.45"
+          exposure="0.92"
+          camera-orbit="35deg 68deg auto"
+          field-of-view="30deg"
+        ></model-viewer>
+        <div id="faultMarker" class="fault-marker" hidden>设备故障，已排除寻优</div>
+        <article id="deviceLabel" class="device-label" aria-live="polite"></article>
+      </div>
+    </main>
+
+    <section class="detail-panel" aria-labelledby="detailTitle">
+      <div class="detail-header">
+        <strong id="detailTitle">冷水主机 CH-01</strong>
+        <span id="detailSubtitle">冷水主机 · chiller.glb · mock 更新时间 2026-05-31 09:30</span>
+      </div>
+      <div id="stateGrid" class="state-grid"></div>
+
+      <h3>关键参数</h3>
+      <p class="section-caption">按 KE 变量类型分组展示，保留标准属性ID、原始变量类型、真实值和推荐值。</p>
+      <div id="metricTable" class="metric-table"></div>
+
+      <div class="source-box">
+        <h3>点位来源</h3>
+        <dl id="sourceList"></dl>
+      </div>
+    </section>
+
+    <script>
+      const assetVersion = "20260601-pump-bolt-gap-storage-tank-upper-port";
+      const defaultCameraOrbit = "35deg 68deg auto";
+      const defaultFieldOfView = "30deg";
+      const mockUpdatedAt = "2026-06-01 09:30";
+
+      const variableSemantics = {
+        CTRL_OPTIMIZING: { parameterType: "control", controlType: "optimized" },
+        CTRL_UNOPTIMIZED: { parameterType: "control", controlType: "notOptimized" },
+        CONTROLLED: { parameterType: "controlled" },
+        DISTURBANCE: { parameterType: "disturbance" },
+      };
+
+      const detailGroups = [
+        {
+          id: "optimizedControl",
+          title: "寻优控制参数",
+          match: (metricItem) => metricItem.parameterType === "control" && metricItem.controlType === "optimized",
+        },
+        {
+          id: "notOptimizedControl",
+          title: "未寻优控制参数",
+          match: (metricItem) => metricItem.parameterType === "control" && metricItem.controlType === "notOptimized",
+        },
+        {
+          id: "controlled",
+          title: "被控参数",
+          match: (metricItem) => metricItem.parameterType === "controlled",
+        },
+        {
+          id: "disturbance",
+          title: "扰动参数",
+          match: (metricItem) => metricItem.parameterType === "disturbance",
+        },
+      ];
+
+      const defaultRequiredStates = ["runState", "serviceState", "faultState"];
+
+      const deviceDefinitions = {
+        chiller: {
+          kind: "chiller",
+          standardModelIds: ["std:water-cooled-chiller"],
+          displayName: "冷水主机",
+          version: "2026.06",
+          modelFile: "chiller.glb",
+          fallbackShape: "box",
+          statePolicy: {
+            runPropertyIds: ["2_167_0"],
+            faultPropertyIds: ["mock_fault_0"],
+            servicePropertyKey: "InputOrOutput",
+          },
+          labelPolicy: {
+            showWhenRunning: true,
+            maxMetrics: 3,
+          },
+          detailPolicy: {
+            groups: ["optimizedControl", "notOptimizedControl", "controlled", "state"],
+          },
+          validation: definitionValidation(["3_301_0", "1_627_0", "1_1958_0", "2_167_0"]),
+          metrics: [
+            metricTemplate("chwSupplyTempSet", "冷冻出水温度设定", "CTRL_OPTIMIZING", "3_301_0", "℃", "label"),
+            metricTemplate("power", "功率", "CONTROLLED", "1_627_0", "KW", "label"),
+            metricTemplate("loadRate", "负载率", "CONTROLLED", "1_1958_0", "%", "label"),
+            metricTemplate("switchSet", "开关设定", "CTRL_UNOPTIMIZED", "2_167_0", "", "detail"),
+            metricTemplate("coolingCapacity", "制冷量", "CONTROLLED", "1_1300_0", "KW", "detail"),
+            metricTemplate("chwCwTempDiff", "冷冻冷却温差", "CONTROLLED", "1_1988_0", "℃", "detail"),
+            metricTemplate("cwReturnTemp", "冷却水进水温度", "CONTROLLED", "1_1978_0", "℃", "detail"),
+          ],
+        },
+        pump: {
+          kind: "pump",
+          standardModelIds: ["std:chilled-water-pump", "std:cooling-water-pump", "std:secondary-pump"],
+          displayName: "水泵",
+          version: "2026.06",
+          modelFile: "pump.glb",
+          fallbackShape: "cylinder",
+          statePolicy: {
+            runPropertyIds: ["2_167_0"],
+            faultPropertyIds: ["mock_fault_0"],
+            servicePropertyKey: "InputOrOutput",
+          },
+          labelPolicy: {
+            showWhenRunning: true,
+            maxMetrics: 3,
+          },
+          detailPolicy: {
+            groups: ["optimizedControl", "notOptimizedControl", "controlled", "state"],
+          },
+          validation: definitionValidation(["3_101_0", "1_1279_0", "1_627_0", "2_167_0"]),
+          metrics: [
+            metricTemplate("frequencySet", "频率设定", "CTRL_OPTIMIZING", "3_101_0", "HZ", "label"),
+            metricTemplate("flow", "流量", "CONTROLLED", "1_1279_0", "m³/h", "label"),
+            metricTemplate("power", "功率", "CONTROLLED", "1_627_0", "KW", "label"),
+            metricTemplate("frequencyInput", "频率", "CTRL_UNOPTIMIZED", "1_1159_0", "HZ", "detail"),
+            metricTemplate("switchSet", "开关设定", "CTRL_UNOPTIMIZED", "2_167_0", "", "detail"),
+            metricTemplate("pressureDiff", "进出口压差", "CONTROLLED", "1_104_0", "bar", "detail"),
+          ],
+        },
+        coolingTower: {
+          kind: "coolingTower",
+          standardModelIds: ["std:cooling-tower"],
+          displayName: "冷却塔",
+          version: "2026.06",
+          modelFile: "cooling-tower.glb",
+          fallbackShape: "box",
+          statePolicy: {
+            runPropertyIds: ["2_167_0"],
+            faultPropertyIds: ["mock_fault_0"],
+            servicePropertyKey: "InputOrOutput",
+          },
+          labelPolicy: {
+            showWhenRunning: true,
+            maxMetrics: 3,
+          },
+          detailPolicy: {
+            groups: ["optimizedControl", "notOptimizedControl", "controlled", "state"],
+          },
+          validation: definitionValidation(["3_101_0", "1_627_0", "1_59_0", "2_167_0"]),
+          metrics: [
+            metricTemplate("frequencySet", "频率设定", "CTRL_OPTIMIZING", "3_101_0", "HZ", "label"),
+            metricTemplate("power", "功率", "CONTROLLED", "1_627_0", "KW", "label"),
+            metricTemplate("towerSupplyTemp", "冷却水出塔温度", "CONTROLLED", "1_59_0", "℃", "label"),
+            metricTemplate("frequencyInput", "频率", "CTRL_UNOPTIMIZED", "1_1159_0", "HZ", "detail"),
+            metricTemplate("fanCountSet", "风机数量设定", "CTRL_UNOPTIMIZED", "1_1982_0", "台", "detail"),
+            metricTemplate("switchSet", "开关设定", "CTRL_UNOPTIMIZED", "2_167_0", "", "detail"),
+            metricTemplate("towerSupplyTempSet", "冷却水出水温度设定", "CTRL_OPTIMIZING", "4_59_0", "℃", "detail"),
+            metricTemplate("approachTempSet", "逼近度设定", "CTRL_OPTIMIZING", "4_60_0", "℃", "detail"),
+            metricTemplate("approachTemp", "逼近度", "CONTROLLED", "1_166_0", "℃", "detail"),
+          ],
+        },
+        storageTank: {
+          kind: "storageTank",
+          standardModelIds: ["std:thermal-storage-tank"],
+          displayName: "蓄冷罐",
+          version: "2026.06",
+          modelFile: "storage-tank.glb",
+          fallbackShape: "cylinder",
+          statePolicy: {
+            runPropertyIds: ["2_167_0"],
+            faultPropertyIds: ["mock_fault_0"],
+            servicePropertyKey: "InputOrOutput",
+          },
+          labelPolicy: {
+            showWhenRunning: true,
+            maxMetrics: 0,
+          },
+          detailPolicy: {
+            groups: ["controlled", "state"],
+          },
+          validation: definitionValidation(["1_1301_0", "1_1210_0"]),
+          metrics: [
+            metricTemplate("storageEnergy", "蓄冷量", "CONTROLLED", "1_1301_0", "Kwh", "detail", {
+              scopeNote: "蓄冷罐组级仿真结果，仅作参考",
+            }),
+            metricTemplate("dischargeDuration", "可放冷时长", "CONTROLLED", "1_1210_0", "min", "detail", {
+              scopeNote: "蓄冷罐组级仿真结果，仅作参考",
+            }),
+          ],
+        },
+        heatExchanger: {
+          kind: "heatExchanger",
+          standardModelIds: ["std:plate-heat-exchanger"],
+          displayName: "板式换热器",
+          version: "2026.06",
+          modelFile: "heat-exchanger.glb",
+          fallbackShape: "box",
+          statePolicy: {
+            runPropertyIds: ["2_167_0"],
+            faultPropertyIds: ["mock_fault_0"],
+            servicePropertyKey: "InputOrOutput",
+          },
+          labelPolicy: {
+            showWhenRunning: true,
+            maxMetrics: 3,
+          },
+          detailPolicy: {
+            groups: ["notOptimizedControl", "controlled", "state"],
+          },
+          validation: definitionValidation(["2_167_0", "1_1300_0", "1_1977_0"]),
+          metrics: [
+            metricTemplate("switchSet", "开关设定", "CTRL_UNOPTIMIZED", "2_167_0", "", "label"),
+            metricTemplate("coolingCapacity", "实时制冷量", "CONTROLLED", "1_1300_0", "KW", "label"),
+            metricTemplate("heatTransferTempDiff", "换热温差", "CONTROLLED", "1_1977_0", "℃", "label"),
+            metricTemplate("chwSupplyTemp", "冷冻水出水温度", "CONTROLLED", "1_24_0", "℃", "detail"),
+            metricTemplate("cwSupplyTemp", "冷却出水温度", "CONTROLLED", "1_45_0", "℃", "detail"),
+          ],
+        },
+        groupControl: {
+          kind: "groupControl",
+          standardModelIds: ["std:group-control-system"],
+          displayName: "群控柜",
+          version: "2026.06",
+          modelFile: "control-cabinet.glb",
+          fallbackShape: "cabinet",
+          statePolicy: {
+            runPropertyIds: ["2_167_0"],
+            faultPropertyIds: ["mock_fault_0"],
+            servicePropertyKey: "InputOrOutput",
+          },
+          labelPolicy: {
+            showWhenRunning: true,
+            maxMetrics: 3,
+          },
+          detailPolicy: {
+            groups: ["optimizedControl", "state"],
+          },
+          validation: definitionValidation(["3_901_0", "3_915_0", "3_301_0"]),
+          metrics: [
+            metricTemplate("coolingModeSet", "制冷模式设定", "CTRL_OPTIMIZING", "3_901_0", "", "label"),
+            metricTemplate("chillerUnitCountSet", "制冷单元开机数量设定", "CTRL_OPTIMIZING", "3_915_0", "台", "label"),
+            metricTemplate("chwSupplyTempSet", "冷冻水出水温度设定", "CTRL_OPTIMIZING", "3_301_0", "℃", "label"),
+            metricTemplate("chilledPumpCountSet", "冷冻泵开机数量设定", "CTRL_OPTIMIZING", "3_917_0", "台", "detail"),
+            metricTemplate("coolingPumpCountSet", "冷却泵开机数量设定", "CTRL_OPTIMIZING", "3_923_0", "台", "detail"),
+            metricTemplate("towerCountSet", "冷却塔数量设定", "CTRL_OPTIMIZING", "3_903_0", "台", "detail"),
+            metricTemplate("chilledPressureSet", "冷冻水主管压差设定", "CTRL_OPTIMIZING", "4_77_0", "bar", "detail"),
+            metricTemplate("terminalPressureSet", "最不利点压差设定", "CTRL_OPTIMIZING", "3_922_0", "bar", "detail"),
+            metricTemplate("towerSupplyTempSet", "冷却塔出水温度设定", "CTRL_OPTIMIZING", "3_912_0", "℃", "detail"),
+          ],
+        },
+      };
+
+      const mockMetricRecords = {
+        chiller: {
+          chwSupplyTempSet: metricRecord(7.5, 7.0),
+          power: metricRecord(398, 386),
+          loadRate: metricRecord(75, 72),
+          switchSet: metricRecord("开机", "开机"),
+          coolingCapacity: metricRecord(2100, 2150),
+          chwCwTempDiff: metricRecord(4.9, 4.6),
+          cwReturnTemp: metricRecord(30.8, 30.4),
+        },
+        pump: {
+          frequencySet: metricRecord(42, 39),
+          flow: metricRecord(278, 286),
+          power: metricRecord(46, 42),
+          frequencyInput: metricRecord(42.5, 42.5),
+          switchSet: metricRecord("开机", "开机"),
+          pressureDiff: metricRecord(1.4, 1.5),
+        },
+        coolingTower: {
+          frequencySet: metricRecord(38, 36),
+          power: metricRecord(31, 28),
+          towerSupplyTemp: metricRecord(30.8, 30.2),
+          frequencyInput: metricRecord(38, 38),
+          fanCountSet: metricRecord(3, 3),
+          switchSet: metricRecord("开机", "开机"),
+          towerSupplyTempSet: metricRecord(30.5, 30.0),
+          approachTempSet: metricRecord(3.5, 3.2),
+          approachTemp: metricRecord(3.6, 3.2),
+        },
+        storageTank: {
+          storageEnergy: metricRecord(1160, 1210),
+          dischargeDuration: metricRecord(85, 92),
+        },
+        heatExchanger: {
+          switchSet: metricRecord("开机", "开机"),
+          coolingCapacity: metricRecord(1130, 1180),
+          heatTransferTempDiff: metricRecord(5.1, 4.8),
+          chwSupplyTemp: metricRecord(7.6, 7.4),
+          cwSupplyTemp: metricRecord(34.8, 34.4),
+        },
+        groupControl: {
+          coolingModeSet: metricRecord("制冷", "联合制冷"),
+          chillerUnitCountSet: metricRecord(1, 2),
+          chwSupplyTempSet: metricRecord(7.5, 7.0),
+          chilledPumpCountSet: metricRecord(1, 2),
+          coolingPumpCountSet: metricRecord(1, 2),
+          towerCountSet: metricRecord(2, 3),
+          chilledPressureSet: metricRecord(1.45, 1.38),
+          terminalPressureSet: metricRecord(1.18, 1.12),
+          towerSupplyTempSet: metricRecord(30.5, 30.0),
+        },
+      };
+
+      const mockDeviceInstances = [
+        {
+          id: "chiller",
+          objectId: "cold-station-001/chiller-01",
+          instanceId: "CH-01",
+          standardModelId: "std:water-cooled-chiller",
+          name: "冷水主机 CH-01",
+          kind: "chiller",
+        },
+        {
+          id: "pump",
+          objectId: "cold-station-001/chilled-pump-01",
+          instanceId: "CHP-01",
+          standardModelId: "std:chilled-water-pump",
+          name: "冷冻水泵 CHP-01",
+          kind: "pump",
+        },
+        {
+          id: "coolingTower",
+          objectId: "cold-station-001/cooling-tower-01",
+          instanceId: "CT-01",
+          standardModelId: "std:cooling-tower",
+          name: "冷却塔 CT-01",
+          kind: "coolingTower",
+        },
+        {
+          id: "storageTank",
+          objectId: "cold-station-001/storage-tank-01",
+          instanceId: "TES-01",
+          standardModelId: "std:thermal-storage-tank",
+          name: "蓄冷罐 TES-01",
+          kind: "storageTank",
+        },
+        {
+          id: "heatExchanger",
+          objectId: "cold-station-001/heat-exchanger-01",
+          instanceId: "HEX-01",
+          standardModelId: "std:plate-heat-exchanger",
+          name: "板式换热器 HEX-01",
+          kind: "heatExchanger",
+        },
+        {
+          id: "groupControl",
+          objectId: "cold-station-001/group-control-01",
+          instanceId: "BAS-01",
+          standardModelId: "std:group-control-system",
+          name: "群控柜 BAS-01",
+          kind: "groupControl",
+        },
+      ];
+
+      const scenarios = [
+        {
+          id: "normal",
+          title: "正常运行",
+          description: "运行中 / 投入 / 正常",
+          runPoint: 1,
+          serviceParam: 0,
+          faultPoint: 0,
+        },
+        {
+          id: "out",
+          title: "运行投出",
+          description: "运行中但不参与寻优",
+          runPoint: 1,
+          serviceParam: 1,
+          faultPoint: 0,
+        },
+        {
+          id: "fault",
+          title: "运行故障",
+          description: "故障优先高亮",
+          runPoint: 1,
+          serviceParam: 0,
+          faultPoint: 1,
+        },
+        {
+          id: "stopped",
+          title: "关机",
+          description: "弱化模型并默认隐藏标签",
+          runPoint: 0,
+          serviceParam: 0,
+          faultPoint: 0,
+        },
+        {
+          id: "data-gap",
+          title: "数据异常",
+          description: "缺失/异常时不参与寻优",
+          runPoint: null,
+          serviceParam: undefined,
+          faultPoint: "ERR",
+          metricOverrides: {
+            chiller: {
+              chwSupplyTempSet: {
+                rawVariableType: "CTRL_UNKNOWN",
+              },
+              power: {
+                realValue: null,
+                optimizeValue: null,
+              },
+            },
+          },
+        },
+      ];
+
+      const deviceButtons = document.querySelector("#deviceButtons");
+      const sceneButtons = document.querySelector("#sceneButtons");
+      const viewer = document.querySelector("#viewer");
+      const modelShell = document.querySelector("#modelShell");
+      const statusRing = document.querySelector("#statusRing");
+      const deviceLabel = document.querySelector("#deviceLabel");
+      const faultMarker = document.querySelector("#faultMarker");
+      const labelToggle = document.querySelector("#labelToggle");
+      const eligibilityBadge = document.querySelector("#eligibilityBadge");
+      const stageDeviceName = document.querySelector("#stageDeviceName");
+      const stageStateText = document.querySelector("#stageStateText");
+      const detailTitle = document.querySelector("#detailTitle");
+      const detailSubtitle = document.querySelector("#detailSubtitle");
+      const stateGrid = document.querySelector("#stateGrid");
+      const metricTable = document.querySelector("#metricTable");
+      const sourceList = document.querySelector("#sourceList");
+
+      let currentDeviceId = "chiller";
+      let currentScenarioId = "normal";
+      let labelsEnabled = true;
+      let lastModelFile = "";
+      let controlsEventsBound = false;
+      let mockColdStationViewModel = null;
+
+      function definitionValidation(requiredProperties) {
+        return {
+          requiredProperties,
+          requiredStates: defaultRequiredStates,
+        };
+      }
+
+      function metricTemplate(key, label, rawVariableType, standardPropertyId, unit, priority, extra = {}) {
+        return {
+          key,
+          label,
+          unit,
+          pointCode: standardPropertyId,
+          standardPropertyId,
+          rawVariableType,
+          priority,
+          defaultSource: extra.source || "optimization_log",
+          scopeNote: extra.scopeNote,
+        };
+      }
+
+      function metricRecord(realValue, optimizeValue, extra = {}) {
+        return {
+          realValue,
+          optimizeValue,
+          ...extra,
+        };
+      }
+
+      function mapVariableSemantics(variableType) {
+        return variableSemantics[variableType] || { parameterType: "controlled" };
+      }
+
+      function hasOwn(object, key) {
+        return Object.prototype.hasOwnProperty.call(object || {}, key);
+      }
+
+      function pickOwn(object, key, fallback) {
+        return hasOwn(object, key) ? object[key] : fallback;
+      }
+
+      function buildMetricViewModels(device, definition, scenario) {
+        const baseRecords = mockMetricRecords[device.id] || {};
+        const scenarioRecords = scenario.metricOverrides?.[device.id] || {};
+
+        return definition.metrics.map((template) => {
+          const baseRecord = baseRecords[template.key] || {};
+          const scenarioRecord = scenarioRecords[template.key] || {};
+          const record = {
+            ...baseRecord,
+            ...scenarioRecord,
+          };
+          const rawVariableType = pickOwn(record, "rawVariableType", template.rawVariableType);
+          const semantics = mapVariableSemantics(rawVariableType);
+          const realValue = pickOwn(record, "realValue", null);
+          const optimizeValue = pickOwn(record, "optimizeValue", null);
+          const dataAnomalies = [...(record.dataAnomalies || [])];
+
+          if (!variableSemantics[rawVariableType]) {
+            dataAnomalies.push(`未知 variableType: ${rawVariableType || "缺失"}`);
+          }
+
+          if (realValue === null && optimizeValue === null) {
+            dataAnomalies.push("参数值缺失");
+          }
+
+          return {
+            ...template,
+            rawVariableType,
+            realValue,
+            optimizeValue,
+            value: chooseMetricValue(semantics, realValue, optimizeValue),
+            source: pickOwn(record, "source", template.defaultSource || "optimization_log"),
+            timestamp: pickOwn(record, "timestamp", mockUpdatedAt),
+            dataAnomalies,
+            ...semantics,
+          };
+        });
+      }
+
+      function chooseMetricValue(semantics, realValue, optimizeValue) {
+        if (semantics.parameterType === "control" && semantics.controlType === "optimized") {
+          return optimizeValue ?? realValue ?? null;
+        }
+
+        if (semantics.parameterType === "control" && semantics.controlType === "notOptimized") {
+          return realValue ?? optimizeValue ?? null;
+        }
+
+        if (semantics.parameterType === "controlled") {
+          return optimizeValue ?? realValue ?? null;
+        }
+
+        return realValue ?? optimizeValue ?? null;
+      }
+
+      function mapRunState(value) {
+        if (value === 1 || value === true || value === "1") return "running";
+        if (value === 0 || value === false || value === "0") return "stopped";
+        return "unknown";
+      }
+
+      function mapFaultState(value) {
+        if (value === 0 || value === "0") return "normal";
+        if (value === 1 || value === "1") return "fault";
+        return "unknown";
+      }
+
+      function mapServiceState(value) {
+        if (value === 0 || value === false || value === "0" || value === "正常" || value === "投入") {
+          return "inService";
+        }
+
+        if (value === 1 || value === true || value === "1" || value === "检修中" || value === "投出") {
+          return "outOfService";
+        }
+
+        return "unknown";
+      }
+
+      function deriveOptimizationEligible(device) {
+        return (
+          device.runState === "running" &&
+          device.serviceState === "inService" &&
+          device.faultState === "normal"
+        );
+      }
+
+      function shouldShowLabel(device) {
+        return device.runState === "running";
+      }
+
+      function stateValidationText(device) {
+        const issues = [];
+
+        if (device.runState === "unknown") issues.push("运行点位缺失或异常");
+        if (device.serviceState === "unknown") issues.push("投退属性缺失或异常");
+        if (device.faultState === "unknown") issues.push("故障点位缺失或异常");
+
+        return issues;
+      }
+
+      function validateDeviceViewModel(device, definition) {
+        const issues = [];
+
+        if (!definition) {
+          issues.push(`设备定义未匹配: ${device.kind} / ${device.standardModelId}`);
+          return issues;
+        }
+
+        if (!definition.validation) {
+          issues.push("设备定义缺少 validation 校验策略");
+        }
+
+        issues.push(...stateValidationText(device));
+
+        const propertyIds = new Set(device.metrics.map((item) => item.standardPropertyId).filter(Boolean));
+        const requiredProperties = definition.validation?.requiredProperties || [];
+        requiredProperties.forEach((propertyId) => {
+          if (!propertyIds.has(propertyId)) {
+            issues.push(`缺少必需属性模板: ${propertyId}`);
+          }
+        });
+
+        device.metrics.forEach((metricItem) => {
+          if (metricItem.dataAnomalies?.length) {
+            issues.push(`${metricItem.label}: ${metricItem.dataAnomalies.join("，")}`);
+          }
+        });
+
+        return issues;
+      }
+
+      function resolveDefinition(device) {
+        const definition = deviceDefinitions[device.kind];
+        if (!definition) return null;
+        if (!definition.standardModelIds.includes(device.standardModelId)) return null;
+        return definition;
+      }
+
+      function buildDeviceViewModel(device, scenario) {
+        const definition = resolveDefinition(device);
+        const runState = mapRunState(scenario.runPoint);
+        const serviceState = mapServiceState(scenario.serviceParam);
+        const faultState = mapFaultState(scenario.faultPoint);
+        const metrics = definition ? buildMetricViewModels(device, definition, scenario) : [];
+        const base = {
+          ...device,
+          kindLabel: definition?.displayName || device.kind,
+          modelFile: definition?.modelFile || "control-cabinet.glb",
+          labelMaxMetrics: definition?.labelPolicy?.maxMetrics ?? 3,
+          detailGroups: definition?.detailPolicy?.groups || ["optimizedControl", "notOptimizedControl", "controlled"],
+          metrics,
+          runState,
+          serviceState,
+          faultState,
+          updatedAt: mockUpdatedAt,
+        };
+        const viewModel = {
+          ...base,
+          optimizationEligible: deriveOptimizationEligible(base),
+          showLabel: shouldShowLabel(base),
+        };
+
+        return {
+          ...viewModel,
+          validationAnomalies: validateDeviceViewModel(viewModel, definition),
+          raw: {
+            runPoint: scenario.runPoint,
+            serviceParam: scenario.serviceParam,
+            faultPoint: scenario.faultPoint,
+            statePolicy: definition?.statePolicy,
+            definitionMatched: Boolean(definition),
+          },
+        };
+      }
+
+      function buildColdStationViewModel(scenario) {
+        return {
+          station: {
+            id: "cold-station-001",
+            name: "设备标准化 Mock 冷站",
+            projectId: "project-mock-energy",
+            modelId: "dtdl:collection:waterCoolSystem",
+          },
+          optimizationRun: {
+            id: "mock-optimization-log-20260601-0930",
+            createTime: mockUpdatedAt,
+            tunerName: "mock-cold-station-tuner",
+            schedulerName: "manual-preview",
+            message: "本地 mock，字段形态对齐 optimization_logs:list",
+            source: "mock",
+          },
+          devices: mockDeviceInstances.map((device) => buildDeviceViewModel(device, scenario)),
+          topologyEdges: [
+            {
+              id: "edge-chiller-pump",
+              from: "cold-station-001/chiller-01",
+              to: "cold-station-001/chilled-pump-01",
+              relationType: "hydraulic_mock",
+              medium: "chilledWater",
+              direction: "forward",
+            },
+            {
+              id: "edge-chiller-tower",
+              from: "cold-station-001/chiller-01",
+              to: "cold-station-001/cooling-tower-01",
+              relationType: "hydraulic_mock",
+              medium: "coolingWater",
+              direction: "forward",
+            },
+          ],
+          refreshPolicy: {
+            mode: "manual",
+            source: "default",
+          },
+        };
+      }
+
+      function stateText(value, type) {
+        const maps = {
+          run: {
+            running: "运行中",
+            stopped: "关机中",
+            unknown: "运行未知",
+          },
+          service: {
+            inService: "投入",
+            outOfService: "投出",
+            unknown: "投退未知",
+          },
+          fault: {
+            normal: "正常",
+            fault: "故障",
+            unknown: "故障未知",
+          },
+        };
+
+        return maps[type][value] || "未知";
+      }
+
+      function stateSummary(device) {
+        return [
+          stateText(device.runState, "run"),
+          stateText(device.serviceState, "service"),
+          stateText(device.faultState, "fault"),
+          device.optimizationEligible ? "参与寻优" : "不参与寻优",
+        ].join(" / ");
+      }
+
+      function serviceChipClass(serviceState) {
+        if (serviceState === "outOfService") return "out";
+        if (serviceState === "unknown") return "unknown";
+        return "running";
+      }
+
+      function faultChipClass(faultState) {
+        if (faultState === "fault") return "fault";
+        if (faultState === "unknown") return "unknown";
+        return "running";
+      }
+
+      function rawValueText(value) {
+        if (value === null || value === undefined || value === "") return "缺失";
+        return String(value);
+      }
+
+      function formatValue(value, unit = "") {
+        if (value === null || value === undefined || value === "") {
+          return "缺失";
+        }
+
+        return `${value}${unit || ""}`;
+      }
+
+      function formatMetricValue(metricItem) {
+        return formatValue(metricItem.value, metricItem.unit);
+      }
+
+      function semanticText(metricItem) {
+        if (metricItem.parameterType === "control" && metricItem.controlType === "optimized") {
+          return "寻优控制";
+        }
+
+        if (metricItem.parameterType === "control" && metricItem.controlType === "notOptimized") {
+          return "未寻优控制";
+        }
+
+        if (metricItem.parameterType === "controlled") {
+          return "被控参数";
+        }
+
+        return "扰动参数";
+      }
+
+      function sourceText(source) {
+        const maps = {
+          optimization_log: "寻优记录",
+          optimization_result: "当前建议",
+          latest_value: "点位最新值",
+          static_property: "静态属性",
+          alarm: "报警兜底",
+          mock: "本地 mock",
+        };
+
+        return maps[source] || source;
+      }
+
+      function metricValuePair(metricItem) {
+        if (metricItem.parameterType === "control" && metricItem.controlType === "optimized") {
+          return {
+            sub: `当前 ${formatValue(metricItem.realValue, metricItem.unit)}`,
+            main: `推荐 ${formatValue(metricItem.optimizeValue, metricItem.unit)}`,
+          };
+        }
+
+        if (metricItem.parameterType === "control" && metricItem.controlType === "notOptimized") {
+          return {
+            sub: `当前 ${formatValue(metricItem.realValue, metricItem.unit)}`,
+            main: `未寻优 ${formatValue(metricItem.optimizeValue ?? metricItem.realValue, metricItem.unit)}`,
+          };
+        }
+
+        if (metricItem.parameterType === "controlled") {
+          return {
+            sub: `当前 ${formatValue(metricItem.realValue, metricItem.unit)}`,
+            main: `求解 ${formatValue(metricItem.optimizeValue, metricItem.unit)}`,
+          };
+        }
+
+        return {
+          sub: `当前 ${formatValue(metricItem.realValue, metricItem.unit)}`,
+          main: `工况 ${formatValue(metricItem.value, metricItem.unit)}`,
+        };
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function chip(label, className) {
+        return `<span class="chip ${className}">${label}</span>`;
+      }
+
+      function getClassForRunState(runState) {
+        return runState === "running" ? "running" : runState === "stopped" ? "stopped" : "unknown";
+      }
+
+      function renderControls() {
+        deviceButtons.innerHTML = mockDeviceInstances
+          .map(
+            (device) => {
+              const definition = resolveDefinition(device);
+              return `
+              <button
+                class="device-button${device.id === currentDeviceId ? " active" : ""}"
+                type="button"
+                data-device="${device.id}"
+                aria-pressed="${device.id === currentDeviceId}"
+              >
+                <strong>${definition?.displayName || device.kind}</strong>
+                <span>${definition?.modelFile || "未绑定模型"} · ${device.standardModelId}</span>
+              </button>
+            `;
+            }
+          )
+          .join("");
+
+        sceneButtons.innerHTML = scenarios
+          .map(
+            (scene) => `
+              <button
+                class="scene-button${scene.id === currentScenarioId ? " active" : ""}"
+                type="button"
+                data-scene="${scene.id}"
+                aria-pressed="${scene.id === currentScenarioId}"
+              >
+                <strong>${scene.title}</strong>
+                <span>${scene.description}</span>
+              </button>
+            `
+          )
+          .join("");
+
+        if (!controlsEventsBound) {
+          deviceButtons.addEventListener("click", (event) => {
+            const button = event.target.closest("[data-device]");
+            if (!button) return;
+            currentDeviceId = button.dataset.device;
+            render();
+          });
+
+          sceneButtons.addEventListener("click", (event) => {
+            const button = event.target.closest("[data-scene]");
+            if (!button) return;
+            currentScenarioId = button.dataset.scene;
+            render();
+          });
+
+          controlsEventsBound = true;
+        }
+      }
+
+      function renderLabel(device) {
+        const labelMetrics = device.metrics
+          .filter((item) => item.priority === "label")
+          .slice(0, device.labelMaxMetrics);
+        const isVisible = labelsEnabled && device.showLabel;
+        const noMetricNote = device.kind === "storageTank"
+          ? "组级仿真字段仅在详情展示，不作为单台蓄冷罐标签参数"
+          : "当前设备暂无可展示标签参数";
+
+        deviceLabel.className = [
+          "device-label",
+          isVisible ? "" : "is-hidden",
+          device.faultState === "fault" ? "is-fault" : "",
+          device.serviceState === "outOfService" ? "is-out" : "",
+        ]
+          .filter(Boolean)
+          .join(" ");
+
+        deviceLabel.innerHTML = `
+          <div class="label-head">
+            <div class="label-name">
+              <strong>${device.name}</strong>
+              <span>${device.kindLabel} · ${device.modelFile}</span>
+            </div>
+          </div>
+          <div class="status-chips">
+            ${chip(stateText(device.runState, "run"), getClassForRunState(device.runState))}
+            ${chip(stateText(device.serviceState, "service"), serviceChipClass(device.serviceState))}
+            ${chip(stateText(device.faultState, "fault"), faultChipClass(device.faultState))}
+            ${chip(device.optimizationEligible ? "参与寻优" : "不参与寻优", device.optimizationEligible ? "eligible" : "not-eligible")}
+          </div>
+          <div class="label-metrics">
+            ${labelMetrics
+              .map(
+                (item) => `
+                  <div class="metric-mini">
+                    <span>${escapeHtml(semanticText(item))} · ${escapeHtml(item.label)}</span>
+                    <strong>${escapeHtml(formatMetricValue(item))}</strong>
+                  </div>
+                `
+              )
+              .join("")}
+          </div>
+          ${labelMetrics.length ? "" : `<div class="label-note">${escapeHtml(noMetricNote)}</div>`}
+        `;
+      }
+
+      function renderMetricGroups(device) {
+        const groups = detailGroups
+          .filter((group) => device.detailGroups.includes(group.id))
+          .map((group) => ({
+            ...group,
+            metrics: device.metrics.filter((item) => group.match(item)),
+          }))
+          .filter((group) => group.metrics.length > 0);
+
+        if (!groups.length) {
+          return `<div class="label-note">当前设备无设备层级详情参数。</div>`;
+        }
+
+        return groups
+          .map(
+            (group) => `
+              <section class="metric-group" aria-label="${escapeHtml(group.title)}">
+                <div class="metric-group-title">
+                  ${escapeHtml(group.title)}
+                  <span>${group.metrics.length} 项</span>
+                </div>
+                ${group.metrics.map(renderMetricRow).join("")}
+              </section>
+            `
+          )
+          .join("");
+      }
+
+      function renderMetricRow(metricItem) {
+        const pair = metricValuePair(metricItem);
+        const idText = metricItem.standardPropertyId || metricItem.pointCode || "无标准ID";
+        const source = sourceText(metricItem.source);
+        const timeText = metricItem.timestamp || "无更新时间";
+        const note = metricItem.scopeNote ? ` · ${metricItem.scopeNote}` : "";
+        const anomalyText = metricItem.dataAnomalies?.length
+          ? ` · 异常: ${metricItem.dataAnomalies.join("，")}`
+          : "";
+        const rowClass = metricItem.dataAnomalies?.length ? "metric-row has-anomaly" : "metric-row";
+
+        return `
+          <div class="${rowClass}">
+            <div class="metric-label">
+              <strong>${escapeHtml(metricItem.label)}</strong>
+              <span>
+                ${escapeHtml(idText)} · ${escapeHtml(metricItem.rawVariableType || "无 variableType")} · ${escapeHtml(source)} · ${escapeHtml(timeText)}${escapeHtml(note)}
+                ${anomalyText ? `<span class="metric-anomaly">${escapeHtml(anomalyText)}</span>` : ""}
+              </span>
+            </div>
+            <div class="metric-values">
+              <span>${escapeHtml(pair.sub)}</span>
+              <strong>${escapeHtml(pair.main)}</strong>
+            </div>
+          </div>
+        `;
+      }
+
+      function renderDetails(device, scenario, stationViewModel) {
+        detailTitle.textContent = device.name;
+        detailSubtitle.textContent = `${stationViewModel.station.name} · ${device.kindLabel} · ${device.modelFile} · ${device.updatedAt}`;
+        const validationText = device.validationAnomalies.length ? device.validationAnomalies.join("；") : "通过";
+
+        const stateTiles = [
+          { label: "运行状态", value: stateText(device.runState, "run"), warn: device.runState === "unknown" },
+          { label: "投退状态", value: stateText(device.serviceState, "service"), warn: device.serviceState === "unknown" },
+          { label: "故障状态", value: stateText(device.faultState, "fault"), warn: device.faultState === "unknown" },
+          { label: "AI 寻优", value: device.optimizationEligible ? "参与寻优" : "不参与寻优", warn: !device.optimizationEligible && device.validationAnomalies.length > 0 },
+          { label: "对象 ID", value: device.objectId },
+          { label: "标准模型", value: device.standardModelId },
+          { label: "数据校验", value: validationText, warn: device.validationAnomalies.length > 0 },
+        ]
+          .map(
+            (item) => `
+              <div class="state-tile${item.warn ? " is-warn" : ""}">
+                <span>${escapeHtml(item.label)}</span>
+                <strong>${escapeHtml(item.value)}</strong>
+              </div>
+            `
+          )
+          .join("");
+        stateGrid.innerHTML = stateTiles;
+
+        metricTable.innerHTML = renderMetricGroups(device);
+
+        sourceList.innerHTML = `
+          <dt>冷站入口</dt>
+          <dd>${stationViewModel.station.id}，正式模块只需冷站 ID，由适配器解析项目、tuner 和 scheduler</dd>
+          <dt>寻优记录</dt>
+          <dd>${stationViewModel.optimizationRun.id} · ${stationViewModel.optimizationRun.source} · ${stationViewModel.optimizationRun.createTime}</dd>
+          <dt>运行点位</dt>
+          <dd>${device.raw.statePolicy?.runPropertyIds?.join(" / ") || "mock_run"} = ${rawValueText(scenario.runPoint)}，映射为${stateText(device.runState, "run")}</dd>
+          <dt>投退属性</dt>
+          <dd>${device.raw.statePolicy?.servicePropertyKey || "InputOrOutput"} = ${rawValueText(scenario.serviceParam)}，0 正常为投入，1 检修中为投出</dd>
+          <dt>故障点位</dt>
+          <dd>${device.raw.statePolicy?.faultPropertyIds?.join(" / ") || "mock_fault"} = ${rawValueText(scenario.faultPoint)}，0 正常，1 故障</dd>
+          <dt>数据校验</dt>
+          <dd>${escapeHtml(validationText)}</dd>
+          <dt>参数模板</dt>
+          <dd>来自 doc/04-字段参考/设备寻优字段映射表.md，并保留 KE variableType 原始枚举</dd>
+          <dt>旧组态</dt>
+          <dd>本页不读取 enableSceneName，不依赖 gallery.html，也不执行任何策略写入</dd>
+        `;
+      }
+
+      function renderStage(device) {
+        stageDeviceName.textContent = device.name;
+        stageStateText.textContent = stateSummary(device);
+
+        eligibilityBadge.textContent = device.optimizationEligible ? "参与寻优" : "不参与寻优";
+        eligibilityBadge.classList.toggle("not-eligible", !device.optimizationEligible);
+
+        modelShell.className = [
+          "model-shell",
+          `state-${device.runState}`,
+          device.serviceState === "outOfService" ? "service-out" : "service-in",
+          device.faultState === "fault" ? "fault-fault" : "fault-normal",
+        ].join(" ");
+
+        const ringClass = device.faultState === "fault"
+          ? "is-fault"
+          : device.runState === "stopped"
+            ? "is-stopped"
+            : device.validationAnomalies.length
+              ? "is-warn"
+              : device.serviceState === "outOfService"
+                ? "is-out"
+                : "";
+        statusRing.className = ["status-ring", ringClass].filter(Boolean).join(" ");
+
+        faultMarker.hidden = device.faultState !== "fault";
+      }
+
+      function renderModel(device) {
+        if (lastModelFile === device.modelFile) return;
+
+        lastModelFile = device.modelFile;
+        viewer.setAttribute("src", `${device.modelFile}?v=${assetVersion}`);
+      }
+
+      function render() {
+        const scenario = scenarios.find((item) => item.id === currentScenarioId) || scenarios[0];
+        mockColdStationViewModel = buildColdStationViewModel(scenario);
+        const stationViewModel = mockColdStationViewModel;
+        const viewModel = stationViewModel.devices.find((item) => item.id === currentDeviceId) || stationViewModel.devices[0];
+
+        renderControls();
+        renderModel(viewModel);
+        renderStage(viewModel);
+        renderLabel(viewModel);
+        renderDetails(viewModel, scenario, stationViewModel);
+      }
+
+      labelToggle.addEventListener("change", () => {
+        labelsEnabled = labelToggle.checked;
+        render();
+      });
+
+      document.querySelector("#resetCamera").addEventListener("click", () => {
+        viewer.cameraOrbit = defaultCameraOrbit;
+        viewer.fieldOfView = defaultFieldOfView;
+        if (typeof viewer.resetTurntableRotation === "function") {
+          viewer.resetTurntableRotation();
+        }
+        if (typeof viewer.jumpCameraToGoal === "function") {
+          viewer.jumpCameraToGoal();
+        }
+      });
+
+      render();
+    </script>
+  </body>
+</html>
