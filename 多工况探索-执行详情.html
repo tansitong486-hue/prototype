@@ -148,8 +148,8 @@
     .cell-muted { color:var(--text-hint); }
     .continuity-pass { color:var(--success); font-weight:600; }
     .continuity-fail { color:var(--danger); font-weight:700; }
-    .steady-wait { color:var(--warning); }
-    .steady-done { color:var(--success); }
+    .collect-wait { color:var(--warning); }
+    .collect-done { color:var(--success); }
     .exec-status-tag {
       display:inline-flex; align-items:center; padding:2px 9px; border-radius:999px;
       font-size:11px; font-weight:600; white-space:nowrap;
@@ -541,7 +541,7 @@
           <div class="anno-body">
             <p><b>当前版本：</b>v2.4</p>
             <p><b>更新日期：</b>2026-07-13</p>
-            <p><b>变更概述：</b>执行改为本期唯一的自动下发模式：移除探索下发策略、策略切换、手动下发按钮和确认弹窗；前置门禁新增自动下发能力和相关寻优停止；运行期使用策略配置的最低冷冻冷却温差下限；安全回退同时停止探索及同控制域相关寻优；保留执行进度与下发记录双 Tab。</p>
+            <p><b>变更概述：</b>执行改为本期唯一的自动下发模式：移除探索下发策略、策略切换和手动下发；间隔到点后直接定时采集归档，不再判断稳态；前置门禁校验自动下发能力和相关寻优停止；运行期使用策略配置的最低冷冻冷却温差下限；安全回退同时停止探索及同控制域相关寻优；保留执行进度与下发记录双 Tab。</p>
             <p><b>本页说明：</b>策略制定页已完成“开始执行 → 执行前校验 → 密码校验”，进入本页时策略已是执行中，默认直接展示执行进度与下发记录。面包屑「多工况探索」返回列表页；「已记录」行「验证」跳转验证详情。</p>
           </div>
         </div>
@@ -551,7 +551,7 @@
           <span class="anno-version">v2.4</span>
           <span class="anno-source" data-type="引用自需求文档">需求文档</span>
           <div class="anno-body">
-            <p><b>本页做什么：</b>作为任务主页面展示探索任务、自动下发链路和安全回退；支持暂停、结束与断点续跑；按排程自动下发、判稳、归档；展示执行进度与系统下发记录。首次开始执行在策略制定页完成。</p>
+            <p><b>本页做什么：</b>作为任务主页面展示探索任务、自动下发链路和安全回退；支持暂停、结束与断点续跑；按排程自动下发，间隔到点后定时采集归档；展示执行进度与系统下发记录。首次开始执行在策略制定页完成。</p>
             <p><b>本页不做：</b>不提供探索下发策略、手动下发或线上手动兜底；自动下发条件不满足时拦截执行并提示按线下 SOP 处理。</p>
           </div>
         </div>
@@ -759,15 +759,15 @@
             <span class="anno-version">v2.4</span>
             <span class="anno-source" data-type="引用自需求文档">需求文档</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>运行稳定（8.3）</p>
+              <p><b>关联模块：</b>定时采集与归档</p>
               <ul>
-                <li><b>最小停留：</b>下发到位后须先等待 ≥ 本次 run 快照的排程间隔时长（默认 15 分钟），再进入稳定判断时段；</li>
-                <li><b>采样间隔：</b>5 分钟（与三层预处理第三层一致）；</li>
-                <li><b>稳态窗口：</b>连续 3 个采样点，首末时刻相差 10 分钟；</li>
-                <li><b>判定：</b>参与稳定判断的量在窗口内极差 R = max − min &lt; ε；ε 默认频率 3 Hz、温度 1.0 ℃（项目级可覆盖）；</li>
-                <li>全部参与量同时满足且已过最小停留才视为稳定；未稳定不采样、不记录。</li>
+                <li><b>计时起点：</b>本步目标值下发成功并确认到位；</li>
+                <li><b>采集时间：</b>等待本次 run 快照的统一间隔时长，默认 15 分钟；</li>
+                <li><b>到时动作：</b>立即采集一次实际反馈，并查询绑定仿真模型的最新结果；</li>
+                <li><b>归档推进：</b>保存实际值、预测值、目标值、采集时间和主动激励来源，成功后进入下一步；</li>
+                <li><b>不再判断：</b>不计算连续采样窗口、极差阈值或稳态状态。采集失败时当前步骤不记为已记录，任务进入暂停中。</li>
               </ul>
-              <p>说明：运行稳定器为本模块新做（非复用离线三层预处理批处理组件），判据口径与三层预处理对齐，保证运行稳定通过的样本回流后不会被预处理再滤掉。</p>
+              <p>等待期间仍持续执行开机组合、自动下发链路、水冷最低温差和安全回退监测；本次简化仅移除稳态判断。</p>
             </div>
           </div>
           <div class="anno anno-edge" data-version="v2.4">
@@ -785,7 +785,7 @@
             <span class="anno-source" data-type="引用自需求文档">需求文档</span>
             <div class="anno-body">
               <p><b>关联模块：</b>自动下发推进方式</p>
-              <p>本期仅支持自动下发：当前步骤达到统一间隔并判稳归档后，系统自动下发下一步；自动下发条件不满足时暂停或拦截，不降级为页面内手动下发。</p>
+              <p>本期仅支持自动下发：当前步骤达到统一间隔后直接定时采集归档，成功后系统自动下发下一步；采集失败或安全校验不通过时暂停，不降级为页面内手动下发。</p>
             </div>
           </div>
 
@@ -817,7 +817,7 @@
                   <thead>
                     <tr>
                       <th>序号</th><th>设备名称</th><th>目标值（下发测点）</th><th>实际反馈（反馈测点）</th>
-                      <th>调整幅度检查</th><th>运行稳定状态</th><th>记录时间</th><th>状态</th>
+                      <th>调整幅度检查</th><th>定时采集状态</th><th>记录时间</th><th>状态</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -843,7 +843,7 @@
                         </div>
                       </td>
                       <td class="continuity-pass">通过</td>
-                      <td class="steady-done">已稳定</td>
+                      <td class="collect-done">已采集</td>
                       <td class="mono-num">2026-06-28 09:42</td>
                       <td><span class="exec-status-tag done">已记录</span><a class="btn btn-xs" href="多工况探索-验证详情.html?step=36" style="margin-left:8px;">验证</a></td>
                     </tr>
@@ -869,7 +869,7 @@
                         </div>
                       </td>
                       <td class="continuity-pass">通过</td>
-                      <td class="steady-wait" id="steadyStep38">等待稳定中（已等待 12/15 min）</td>
+                      <td class="collect-wait" id="collectStep38">等待采集中（已等待 12/15 min）</td>
                       <td class="cell-muted" id="archStep38">—</td>
                       <td id="statStep38"><span class="exec-status-tag running">执行中</span></td>
                     </tr>
@@ -891,7 +891,7 @@
                         <span>—</span>
                       </td>
                       <td class="cell-muted" id="contStep40">—</td>
-                      <td class="cell-muted" id="steadyStep40">—</td>
+                      <td class="cell-muted" id="collectStep40">—</td>
                       <td class="cell-muted" id="archStep40">—</td>
                       <td id="statStep40"><span class="exec-status-tag pending">等待自动下发</span></td>
                     </tr>
@@ -921,7 +921,7 @@
                   <thead>
                     <tr>
                       <th>序号</th><th>设备名称</th><th>目标值（下发测点）</th><th>实际反馈（反馈测点）</th>
-                      <th>调整幅度检查</th><th>运行稳定状态</th><th>记录时间</th><th>状态</th>
+                      <th>调整幅度检查</th><th>定时采集状态</th><th>记录时间</th><th>状态</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1002,7 +1002,7 @@
                   <thead>
                     <tr>
                       <th>序号</th><th>设备名称</th><th>目标值（下发测点）</th><th>实际反馈（反馈测点）</th>
-                      <th>调整幅度检查</th><th>运行稳定状态</th><th>记录时间</th><th>状态</th>
+                      <th>调整幅度检查</th><th>定时采集状态</th><th>记录时间</th><th>状态</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1061,7 +1061,7 @@
                   <thead>
                     <tr>
                       <th>序号</th><th>设备名称</th><th>目标值（下发测点）</th><th>实际反馈（反馈测点）</th>
-                      <th>调整幅度检查</th><th>运行稳定状态</th><th>记录时间</th><th>状态</th>
+                      <th>调整幅度检查</th><th>定时采集状态</th><th>记录时间</th><th>状态</th>
                     </tr>
                   </thead>
                   <tbody>

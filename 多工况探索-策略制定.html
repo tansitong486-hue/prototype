@@ -530,9 +530,9 @@
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
               <p><b>关联模块：</b>多工况探索 — 策略制定（阶段一）</p>
-              <p>「多工况探索」是 v2.4 新增的独立功能模块，目标是在受控、安全前提下主动驱动冷站走到被动运行走不到的稀缺工况，为模型训练补充样本。模块内分三阶段：<b>策略制定</b>（本页，离线编排，不下发不动设备）→<b>执行</b>（按排程连续下发 + 判稳后归档）→<b>验证</b>（对归档探索点用重训后模型重算预测 vs 归档实测，不入库）。策略归属创建时选定的目标系统（本页演示：3#数据中心水冷冷水系统），本页只读展示。</p>
+              <p>「多工况探索」是 v2.4 新增的独立功能模块，目标是在受控、安全前提下主动驱动冷站走到被动运行走不到的稀缺工况，为模型训练补充样本。模块内分三阶段：<b>策略制定</b>（本页，离线编排，不下发不动设备）→<b>执行</b>（按排程连续下发 + 间隔到点定时采集归档）→<b>验证</b>（对归档探索点用重训后模型重算预测 vs 归档实测，不入库）。策略归属创建时选定的目标系统（本页演示：3#数据中心水冷冷水系统），本页只读展示。</p>
               <p><b>本页覆盖：</b>只读开机组合；绑定仿真模型和安全回退策略；默认探索范围编辑；基准值、双向探索、步长和统一间隔；水冷最低温差；一次泵/二次泵/风冷场景；历史覆盖与排程审核。</p>
-              <p><b>本期不覆盖：</b>安全边界选择；探索下发策略；页面内手动下发；设备开关机 / 加减机探索；执行下发与判稳归档；验证详情展示。</p>
+              <p><b>本期不覆盖：</b>安全边界选择；探索下发策略；页面内手动下发；设备开关机 / 加减机探索；执行下发与定时采集归档；验证详情展示。</p>
             </div>
           </div>
 
@@ -693,7 +693,7 @@
                 <tbody>
                   <tr><td>所属系统</td><td>只读文本</td><td>—</td><td>创建策略时已选定，本页不可修改</td><td>本页演示："3#数据中心水冷冷水系统"</td><td>策略归属目标系统</td></tr>
                   <tr><td>设备开机组合</td><td>只读分组列表</td><td>是</td><td>必须能读取至少 1 台开机设备</td><td>进入页面时自动查询</td><td>用户不可修改；执行期一致性校验锚点</td></tr>
-                  <tr><td>绑定仿真模型</td><td>下拉单选</td><td>是</td><td>开跑前必选</td><td>空（演示默认"1号集成冷站仿真"）</td><td>草稿可改；执行期判稳后查最新结果归档</td></tr>
+                  <tr><td>绑定仿真模型</td><td>下拉单选</td><td>是</td><td>开跑前必选</td><td>空（演示默认"1号集成冷站仿真"）</td><td>草稿可改；执行期间隔到点后查最新结果归档</td></tr>
                   <tr><td>绑定安全回退策略</td><td>下拉单选</td><td>是</td><td>开跑前必选</td><td>空（演示默认"水泵、冷水主机故障安全回退策略"）</td><td>复用安全回退策略页；<b>草稿可改</b></td></tr>
                   <tr><td>最低冷冻冷却温差下限</td><td>数字输入</td><td>水冷必填</td><td>&gt;0，保留 1 位小数</td><td>3.0℃</td><td>风冷场景隐藏；执行期安全校验使用</td></tr>
                   <tr><td>下发方式</td><td>只读文本</td><td>—</td><td>固定自动下发</td><td>自动下发</td><td>不引用智控下发策略，不支持页面内手动模式</td></tr>
@@ -983,7 +983,7 @@
                     <input type="number" class="field-control" id="intervalDurationInput" min="1" step="1" value="15" style="width:120px;">
                     <span class="unit-suffix">分钟</span>
                   </div>
-                  <p class="field-hint field-hint-annoonly">全策略统一，默认 15 分钟，只允许正整数；间隔到达后仍须满足稳态条件才进入下一步</p>
+                  <p class="field-hint field-hint-annoonly">全策略统一，默认 15 分钟，只允许正整数；间隔到达后直接采集归档并进入下一步</p>
                 </div>
               </div>
               <div class="section-actions-row">
@@ -1003,10 +1003,10 @@
                 <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>校验规则</th><th>默认值</th><th>备注</th></tr></thead>
                 <tbody>
                   <tr><td>默认调整步长</td><td>数字输入</td><td>是</td><td>须为正数，保留 1 位小数</td><td>泵/塔 2.0Hz；主机 0.5℃</td><td>按设备类型配置；草稿可改</td></tr>
-                  <tr><td>间隔时长</td><td>数字输入（分钟）</td><td>是</td><td>须为正整数</td><td>15</td><td>全策略统一；到达间隔后仍须判稳</td></tr>
+                  <tr><td>间隔时长</td><td>数字输入（分钟）</td><td>是</td><td>须为正整数</td><td>15</td><td>全策略统一；到达间隔后直接定时采集</td></tr>
                 </tbody>
               </table>
-              <p><b>生成执行计划：</b>②全部行参数校验通过后可点；生成时标注历史已覆盖点，并按当前统一间隔写入稳态等待条件。水冷批次写入最低冷冻冷却温差校验说明。</p>
+              <p><b>生成执行计划：</b>②全部行参数校验通过后可点；生成时标注历史已覆盖点，并按当前统一间隔写入定时采集规则。水冷批次写入最低冷冻冷却温差校验说明。</p>
             </div>
           </div>
 
@@ -1019,7 +1019,7 @@
               <ul>
                 <li><b>置灰条件：</b>②任一行未通过参数校验，或步长/间隔非法时「生成执行计划」置灰。</li>
                 <li><b>点击后：</b>按步长在探索范围内生成工况点；历史已覆盖点（n≥20）灰显保留在④清单、默认不勾选，允许强制勾回；汇总条展示已覆盖灰显点数；展开④。</li>
-                <li>草稿态可反复调整①②③后重新生成；间隔输入可随时改（改后可刷新清单中的等待条件文案，本页演示即时刷新）。</li>
+                <li>草稿态可反复调整①②③后重新生成；间隔输入可随时改（改后可刷新清单中的定时采集规则，本页演示即时刷新）。</li>
               </ul>
             </div>
           </div>
@@ -1031,8 +1031,8 @@
             <div class="anno-body">
               <p><b>关联模块：</b>历史回溯与间隔写入（需求 7.3 / 7.4）</p>
               <ul>
-                <li><b>邻域窗口：</b>目标值 v ± 半个调整步长；窗口内稳态样本 n ≥ 20 → 已覆盖（灰显、默认不勾选、可勾回）；n &lt; 20 → 空白/稀疏（默认勾选）。</li>
-                <li><b>间隔写入：</b>所有计划行使用同一间隔；dwell_condition =「停留 ≥{N}min 且判稳后再进下一步」。</li>
+                <li><b>邻域窗口：</b>目标值 v ± 半个调整步长；窗口内数据完整、质量有效的样本 n ≥ 20 → 已覆盖（灰显、默认不勾选、可勾回）；n &lt; 20 → 空白/稀疏（默认勾选）。不执行稳态筛选。</li>
+                <li><b>间隔写入：</b>所有计划行使用同一间隔；采集规则 =「下发后第 {N} 分钟采集并进入下一步」。</li>
                 <li><b>安全校验：</b>水冷系统计划写入「冷冻冷却温差须高于策略配置下限」；风冷系统不执行此项。</li>
                 <li>已覆盖点<b>不从清单消失</b>，仅灰显且默认不勾选。</li>
               </ul>
@@ -1071,11 +1071,11 @@
                         <th>历史样本 n 值</th>
                         <th>参数校验</th>
                         <th>安全校验</th>
-                        <th>稳态等待条件</th>
+                        <th>定时采集规则</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr class="schedule-row row-covered batch-start" data-duration-min="25" data-batch="chwp">
+                      <tr class="schedule-row row-covered batch-start" data-batch="chwp">
                         <td><input type="checkbox" class="schedule-checkbox"></td>
                         <td>冷冻泵变频探索 <span class="covered-badge">已覆盖</span></td>
                         <td>冷冻泵（1号、2号、3号 同时下发）/ 频率设定</td>
@@ -1085,9 +1085,9 @@
                         <td><span class="status-tag">n=42</span></td>
                         <td><span class="status-tag pass">通过</span></td>
                         <td class="batch-guard-cell">—</td>
-                        <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
+                        <td class="dwell-cell">下发后第15分钟采集并进入下一步</td>
                       </tr>
-                      <tr class="schedule-row row-covered" data-duration-min="25" data-batch="chwp">
+                      <tr class="schedule-row row-covered" data-batch="chwp">
                         <td><input type="checkbox" class="schedule-checkbox"></td>
                         <td>冷冻泵变频探索 <span class="covered-badge">已覆盖</span></td>
                         <td>冷冻泵（1号、2号、3号 同时下发）/ 频率设定</td>
@@ -1097,9 +1097,9 @@
                         <td><span class="status-tag">n=28</span></td>
                         <td><span class="status-tag pass">通过</span></td>
                         <td class="batch-guard-cell">—</td>
-                        <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
+                        <td class="dwell-cell">下发后第15分钟采集并进入下一步</td>
                       </tr>
-                      <tr class="schedule-row" data-duration-min="25" data-batch="chwp">
+                      <tr class="schedule-row" data-batch="chwp">
                         <td><input type="checkbox" class="schedule-checkbox" checked></td>
                         <td>冷冻泵变频探索</td>
                         <td>冷冻泵（1号、2号、3号 同时下发）/ 频率设定</td>
@@ -1109,9 +1109,9 @@
                         <td><span class="status-tag">n=8</span></td>
                         <td><span class="status-tag pass">通过</span></td>
                         <td class="batch-guard-cell">—</td>
-                        <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
+                        <td class="dwell-cell">下发后第15分钟采集并进入下一步</td>
                       </tr>
-                      <tr class="schedule-row" data-duration-min="25" data-batch="chwp">
+                      <tr class="schedule-row" data-batch="chwp">
                         <td><input type="checkbox" class="schedule-checkbox" checked></td>
                         <td>冷冻泵变频探索</td>
                         <td>冷冻泵（1号、2号、3号 同时下发）/ 频率设定</td>
@@ -1121,9 +1121,9 @@
                         <td><span class="status-tag">n=3</span></td>
                         <td><span class="status-tag pass">通过</span></td>
                         <td class="batch-guard-cell">—</td>
-                        <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
+                        <td class="dwell-cell">下发后第15分钟采集并进入下一步</td>
                       </tr>
-                      <tr class="schedule-row row-covered batch-start" data-duration-min="25" data-batch="cwp">
+                      <tr class="schedule-row row-covered batch-start" data-batch="cwp">
                         <td><input type="checkbox" class="schedule-checkbox"></td>
                         <td>冷却泵变频探索 <span class="covered-badge">已覆盖</span></td>
                         <td>冷却泵（1号、2号 同时下发）/ 频率设定</td>
@@ -1133,9 +1133,9 @@
                         <td><span class="status-tag">n=35</span></td>
                         <td><span class="status-tag pass">通过</span></td>
                         <td class="batch-guard-cell">—</td>
-                        <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
+                        <td class="dwell-cell">下发后第15分钟采集并进入下一步</td>
                       </tr>
-                      <tr class="schedule-row" data-duration-min="25" data-batch="cwp">
+                      <tr class="schedule-row" data-batch="cwp">
                         <td><input type="checkbox" class="schedule-checkbox" checked></td>
                         <td>冷却泵变频探索</td>
                         <td>冷却泵（1号、2号 同时下发）/ 频率设定</td>
@@ -1145,9 +1145,9 @@
                         <td><span class="status-tag">n=12</span></td>
                         <td><span class="status-tag pass">通过</span></td>
                         <td class="batch-guard-cell">—</td>
-                        <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
+                        <td class="dwell-cell">下发后第15分钟采集并进入下一步</td>
                       </tr>
-                      <tr class="schedule-row" data-duration-min="25" data-batch="cwp">
+                      <tr class="schedule-row" data-batch="cwp">
                         <td><input type="checkbox" class="schedule-checkbox" checked></td>
                         <td>冷却泵变频探索</td>
                         <td>冷却泵（1号、2号 同时下发）/ 频率设定</td>
@@ -1157,9 +1157,9 @@
                         <td><span class="status-tag">n=5</span></td>
                         <td><span class="status-tag pass">通过</span></td>
                         <td class="batch-guard-cell">—</td>
-                        <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
+                        <td class="dwell-cell">下发后第15分钟采集并进入下一步</td>
                       </tr>
-                      <tr class="schedule-row" data-duration-min="25" data-batch="cwp">
+                      <tr class="schedule-row" data-batch="cwp">
                         <td><input type="checkbox" class="schedule-checkbox" checked></td>
                         <td>冷却泵变频探索</td>
                         <td>冷却泵（1号、2号 同时下发）/ 频率设定</td>
@@ -1169,9 +1169,9 @@
                         <td><span class="status-tag">n=0</span></td>
                         <td><span class="status-tag pass">通过</span></td>
                         <td class="batch-guard-cell">—</td>
-                        <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
+                        <td class="dwell-cell">下发后第15分钟采集并进入下一步</td>
                       </tr>
-                      <tr class="schedule-row batch-start" data-duration-min="25" data-batch="ct">
+                      <tr class="schedule-row batch-start" data-batch="ct">
                         <td><input type="checkbox" class="schedule-checkbox" checked></td>
                         <td>冷却塔变频探索</td>
                         <td>冷却塔（1号、2号 同时下发）/ 频率设定设定</td>
@@ -1181,9 +1181,9 @@
                         <td><span class="status-tag">n=15</span></td>
                         <td><span class="status-tag pass">通过</span></td>
                         <td class="batch-guard-cell">冷冻冷却温差须 &gt; 3.0℃</td>
-                        <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
+                        <td class="dwell-cell">下发后第15分钟采集并进入下一步</td>
                       </tr>
-                      <tr class="schedule-row" data-duration-min="25" data-batch="ct">
+                      <tr class="schedule-row" data-batch="ct">
                         <td><input type="checkbox" class="schedule-checkbox" checked></td>
                         <td>冷却塔变频探索</td>
                         <td>冷却塔（1号、2号 同时下发）/ 频率设定设定</td>
@@ -1193,9 +1193,9 @@
                         <td><span class="status-tag">n=6</span></td>
                         <td><span class="status-tag pass">通过</span></td>
                         <td class="batch-guard-cell">冷冻冷却温差须 &gt; 3.0℃</td>
-                        <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
+                        <td class="dwell-cell">下发后第15分钟采集并进入下一步</td>
                       </tr>
-                      <tr class="schedule-row batch-start" data-duration-min="25" data-batch="chiller">
+                      <tr class="schedule-row batch-start" data-batch="chiller">
                         <td><input type="checkbox" class="schedule-checkbox" checked></td>
                         <td>冷水主机出水温度探索</td>
                         <td>冷水主机（1号、2号 同时下发）/ 冷冻出水温度设定</td>
@@ -1205,9 +1205,9 @@
                         <td><span class="status-tag">n=18</span></td>
                         <td><span class="status-tag pass">通过</span></td>
                         <td class="batch-guard-cell">—</td>
-                        <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
+                        <td class="dwell-cell">下发后第15分钟采集并进入下一步</td>
                       </tr>
-                      <tr class="schedule-row" data-duration-min="25" data-batch="chiller">
+                      <tr class="schedule-row" data-batch="chiller">
                         <td><input type="checkbox" class="schedule-checkbox" checked></td>
                         <td>冷水主机出水温度探索</td>
                         <td>冷水主机（1号、2号 同时下发）/ 冷冻出水温度设定</td>
@@ -1217,7 +1217,7 @@
                         <td><span class="status-tag">n=9</span></td>
                         <td><span class="status-tag pass">通过</span></td>
                         <td class="batch-guard-cell">—</td>
-                        <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
+                        <td class="dwell-cell">下发后第15分钟采集并进入下一步</td>
                       </tr>
                     </tbody>
                   </table>
@@ -1248,7 +1248,7 @@
                   <tr><td>历史样本 n 值</td><td>只读</td><td>—</td><td>—</td><td>如 n=42 / n=8</td><td>n≥20 为已覆盖</td></tr>
                   <tr><td>参数校验</td><td>只读</td><td>—</td><td>—</td><td>通过</td><td>校验目标值未超出用户配置范围</td></tr>
                   <tr><td>安全校验</td><td>只读</td><td>—</td><td>—</td><td>水冷：冷冻冷却温差须高于配置下限；风冷：—</td><td>不引用安全边界</td></tr>
-                  <tr><td>稳态等待条件</td><td>只读</td><td>—</td><td>—</td><td>停留 ≥{间隔}min 且判稳后再进下一步</td><td>随间隔时长写入/刷新</td></tr>
+                  <tr><td>定时采集规则</td><td>只读</td><td>—</td><td>—</td><td>下发后第 {间隔} 分钟采集并进入下一步</td><td>随间隔时长写入/刷新；不判断稳态</td></tr>
                 </tbody>
               </table>
             </div>
@@ -1379,7 +1379,7 @@
       if (interval == null) return;
       document.querySelectorAll('.schedule-row').forEach(function (row) {
         var dwell = row.querySelector('.dwell-cell');
-        if (dwell) dwell.textContent = '停留 ≥' + interval + 'min 且判稳后再进下一步';
+        if (dwell) dwell.textContent = '下发后第' + interval + '分钟采集并进入下一步';
       });
     }
 
