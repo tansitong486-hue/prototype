@@ -164,10 +164,10 @@
     .section-subtitle { font-size: 12px; color: var(--text-hint); font-weight: 400; margin-left: 4px; }
     .section-body { padding: 18px; }
 
-    /* ---------- 开机组合勾选 ---------- */
+    /* ---------- 开机组合只读列表 ---------- */
     .device-combo-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 14px;
       margin-bottom: 20px;
     }
@@ -186,8 +186,8 @@
       border-bottom: 1px solid var(--border-light);
     }
     .device-checks { display: flex; flex-direction: column; gap: 8px; }
-    .device-check { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
-    .device-check input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--primary); cursor: pointer; }
+    .device-item { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--text-primary); }
+    .device-item::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--success); flex-shrink: 0; }
 
     .form-row-2col {
       display: grid;
@@ -314,6 +314,7 @@
     .direction-tag.down::before { content: '↓ '; }
     .direction-tag.up { color: #16A34A; }
     .direction-tag.down { color: #D97706; }
+    .direction-select { min-width: 82px; padding: 6px 28px 6px 9px; }
 
     .status-tag {
       display: inline-flex;
@@ -405,6 +406,54 @@
     .btn-sm { height: 28px; padding: 0 12px; font-size: 12px; }
     .btn[disabled] { pointer-events: none; }
 
+    /* ---------- 执行确认弹窗 ---------- */
+    .modal-mask {
+      position: fixed; inset: 0; z-index: 1100;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px; background: rgba(15, 23, 42, .38);
+      opacity: 0; pointer-events: none; transition: opacity .2s ease;
+    }
+    .modal-mask.show { opacity: 1; pointer-events: auto; }
+    .modal-box {
+      width: min(540px, 100%); max-height: calc(100vh - 40px); overflow-y: auto;
+      background: #fff; border: 1px solid var(--border-light); border-radius: var(--radius-lg);
+      box-shadow: 0 20px 50px rgba(15, 23, 42, .22);
+      transform: translateY(10px); transition: transform .2s ease;
+    }
+    .modal-mask.show .modal-box { transform: translateY(0); }
+    .modal-box.modal-sm { width: min(400px, 100%); }
+    .modal-head {
+      display: flex; align-items: center; gap: 10px;
+      padding: 16px 20px; border-bottom: 1px solid var(--border-light);
+    }
+    .modal-icon {
+      width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--success); color: #fff; font-size: 12px; font-weight: 700;
+    }
+    .modal-title { flex: 1; font-size: 15px; font-weight: 700; }
+    .modal-close { font-size: 20px; line-height: 1; color: var(--text-hint); cursor: pointer; }
+    .modal-body { padding: 16px 20px; }
+    .precheck-summary { margin-bottom: 10px; color: var(--success); font-size: 13px; font-weight: 600; }
+    .precheck-list { list-style: none; }
+    .precheck-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 0; border-bottom: 1px solid var(--border-light);
+      color: var(--text-secondary); font-size: 13px; line-height: 1.5;
+    }
+    .precheck-item:last-child { border-bottom: 0; }
+    .precheck-pass {
+      width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--success-light); color: var(--success); font-size: 11px; font-weight: 700;
+    }
+    .modal-foot {
+      display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+      padding: 12px 20px; border-top: 1px solid var(--border-light);
+    }
+    .modal-foot-hint { margin-right: auto; color: var(--warning); font-size: 12px; line-height: 1.5; }
+    .password-error { min-height: 18px; margin-top: 6px; color: var(--danger); font-size: 12px; }
+
     /* ---------- toast ---------- */
     .toast {
       position: fixed; right: 24px; bottom: 24px;
@@ -421,6 +470,27 @@
     @media (max-width: 1100px) {
       .device-combo-grid { grid-template-columns: repeat(2, 1fr); }
       .form-row-2col { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 720px) {
+      #app-sidebar, .sidebar { display: none !important; }
+      .body-wrap { display: block; }
+      .main { width: 100%; }
+      .breadcrumb { padding: 10px 12px; }
+      .content-body { padding: 12px 12px 48px; }
+      .page-title { align-items: flex-start; }
+      .strategy-name-input { width: 100%; min-width: 0; }
+      .section-head { align-items: flex-start; }
+      .section-head-main { display: flex; flex-wrap: wrap; }
+      .section-subtitle { width: calc(100% - 34px); margin-left: 34px; }
+      .section-body { padding: 14px; }
+      .device-combo-grid { grid-template-columns: 1fr; }
+      .table-wrap { width: 100%; }
+      .modal-mask { padding: 12px; }
+      .modal-head, .modal-body, .modal-foot { padding-left: 16px; padding-right: 16px; }
+      .modal-foot { align-items: stretch; flex-direction: column; }
+      .modal-foot-hint { margin-right: 0; }
+      .modal-foot .btn { justify-content: center; }
+      .toast { left: 12px; right: 12px; min-width: 0; max-width: none; }
     }
   </style>
   <link rel="stylesheet" href="annotation-styles.css">
@@ -448,9 +518,9 @@
             <span class="anno-tag">版本信息</span>
             <div class="anno-body">
               <p><b>当前版本：</b>v2.4</p>
-              <p><b>更新日期：</b>2026-07-10</p>
-              <p><b>变更概述：</b>对齐最新需求口径：① 阶段一输入排程间隔时长（默认 15min，写入稳态等待与预计时长 est=间隔+10）；② 阶段一绑定探索下发策略（允许手动/自动）与安全回退策略，开跑前必绑边界/仿真/下发/回退；③ <b>无冻结步骤</b>，草稿态可持续改，排程就绪后直接从本页「发起执行」；④ 历史已覆盖点灰显保留在清单、默认不勾选、可强制勾回；⑤ 冷却塔批次展示 batch_guard 温差监测约束；⑥ 明确两套下发勿混（寻优下发执行期强制手动，探索下发可自动）。</p>
-              <p><b>本页说明：</b>本页面向实施人员，用于离线编排一次探索策略：① 确定开机组合并绑定安全边界/仿真/探索下发/安全回退 → ② 按设备类型手动录入基准线 → ③ 配置调整步长与排程间隔时长并生成执行计划 → ④ 审核勾选（含已覆盖灰显点可勾回）→ 满足就绪条件后从本页发起执行。全程不下发、不动设备；草稿可改开机组合、边界/仿真绑定、勾选、步长、间隔、下发/回退；进入执行中后排程才锁定。</p>
+              <p><b>更新日期：</b>2026-07-13</p>
+              <p><b>变更概述：</b>按 2.4 最新口径重构：开机组合改为自动回显只读；移除安全边界和探索下发策略；探索范围改为内置默认值后可编辑；探索方向支持向上/向下；基准值、范围和步长统一 1 位小数；全策略统一间隔默认 15 分钟；水冷场景新增最低冷冻冷却温差下限；兼容二次泵和风冷冷水系统；执行计划移除单步预计时长。</p>
+              <p><b>本页说明：</b>本页面向实施人员，用于编排并启动一次自动探索策略：① 回显当前开机组合并绑定仿真模型/安全回退策略 → ② 配置基准值、方向和可编辑默认范围 → ③ 配置步长、统一间隔和水冷最低温差 → ④ 生成计划并审核勾选 → 开始执行。配置过程中不下发；完成执行前校验与密码确认后开始自动执行。</p>
             </div>
           </div>
 
@@ -461,9 +531,8 @@
             <div class="anno-body">
               <p><b>关联模块：</b>多工况探索 — 策略制定（阶段一）</p>
               <p>「多工况探索」是 v2.4 新增的独立功能模块，目标是在受控、安全前提下主动驱动冷站走到被动运行走不到的稀缺工况，为模型训练补充样本。模块内分三阶段：<b>策略制定</b>（本页，离线编排，不下发不动设备）→<b>执行</b>（按排程连续下发 + 判稳后归档）→<b>验证</b>（对归档探索点用重训后模型重算预测 vs 归档实测，不入库）。策略归属创建时选定的目标系统（本页演示：3#数据中心水冷冷水系统），本页只读展示。</p>
-              <p><b>本页覆盖：</b>开机组合；绑定安全边界 / 仿真实例 / 探索下发策略（允许手动或自动）/ 安全回退策略；基准线录入与边界校验；补偿步长 + 排程间隔时长生成排程；历史已覆盖点灰显保留可勾回；冷却塔批次 batch_guard；审核勾选后从本页发起执行。</p>
-              <p><b>两套下发勿混：</b>寻优下发策略（柔性/全局）在探索执行期须为「手动」；本页绑定的是探索下发策略，允许「手动」或「自动」，只控制本模块排程如何推进。</p>
-              <p><b>本期不覆盖：</b>设备开关机 / 加减机探索；基准线自动求解；执行下发与判稳归档（见执行详情页）；验证详情展示（见验证详情页）。</p>
+              <p><b>本页覆盖：</b>只读开机组合；绑定仿真模型和安全回退策略；默认探索范围编辑；基准值、双向探索、步长和统一间隔；水冷最低温差；一次泵/二次泵/风冷场景；历史覆盖与排程审核。</p>
+              <p><b>本期不覆盖：</b>安全边界选择；探索下发策略；页面内手动下发；设备开关机 / 加减机探索；执行下发与判稳归档；验证详情展示。</p>
             </div>
           </div>
 
@@ -474,9 +543,9 @@
             <div class="anno-body">
               <p><b>关联模块：</b>整页状态（策略制定工作台）</p>
               <ul>
-                <li><b>新建态（默认，无 URL 参数）：</b>① 开机组合按常见组合默认勾选；绑定四项可改；② 基准值留空；③ 间隔默认 15；④ 清单空态；「生成执行计划」置灰（须②全部行边界校验通过）；「发起执行」在未就绪时置灰（须已生成 + 四项已绑 + 至少勾选 1 点）。</li>
-                <li><b>已生成排程（草稿）：</b>④ 展开展示排程（含已覆盖灰显行，默认不勾选）；可保存草稿、持续调整勾选与绑定；满足就绪条件后「发起执行」可用并跳转执行详情。</li>
-                <li><b>只读查看态（<code>?mode=view</code>）：</b>顶部只读提示；全部输入只读；仅保留「发起执行」跳转。</li>
+                <li><b>新建态（默认，无 URL 参数）：</b>① 自动回显当前开机设备且只读；仿真模型/回退策略可选；② 基准值留空，范围带出默认值；③ 间隔默认 15；④ 清单空态；参数校验通过后可生成计划。</li>
+                <li><b>已生成排程（草稿）：</b>④ 展开展示排程（含已覆盖灰显行，默认不勾选）；可保存草稿、持续调整勾选与绑定；满足就绪条件后「开始执行」可用。</li>
+                <li><b>只读查看态（<code>?mode=view</code>）：</b>顶部只读提示；全部输入只读；仅保留「返回执行详情」。</li>
               </ul>
             </div>
           </div>
@@ -521,13 +590,13 @@
             </div>
           </div>
 
-          <!-- ============ ① 开机组合与绑定 ============ -->
+          <!-- ============ ① 开机组合与基础配置 ============ -->
           <section class="section-card" id="sectionCombo">
             <div class="section-head">
               <div class="section-head-main">
                 <span class="step-num">1</span>
-                <span class="section-title">开机组合与绑定</span>
-                <span class="section-subtitle">锁定当前开机设备，只探模拟量，不探开关机</span>
+                <span class="section-title">开机组合与基础配置</span>
+                <span class="section-subtitle">自动读取当前开机设备，只读展示；本期仅自动下发</span>
               </div>
             </div>
             <div class="section-body">
@@ -542,49 +611,42 @@
                 <div class="device-group">
                   <div class="device-group-title">冷水主机</div>
                   <div class="device-checks">
-                    <label class="device-check"><input type="checkbox" checked data-device="1号冷水主机" data-type="chiller">1号冷水主机</label>
-                    <label class="device-check"><input type="checkbox" checked data-device="2号冷水主机" data-type="chiller">2号冷水主机</label>
-                    <label class="device-check"><input type="checkbox" data-device="3号冷水主机" data-type="chiller">3号冷水主机</label>
+                    <span class="device-item">1号冷水主机</span>
+                    <span class="device-item">2号冷水主机</span>
                   </div>
                 </div>
                 <div class="device-group">
                   <div class="device-group-title">冷冻泵</div>
                   <div class="device-checks">
-                    <label class="device-check"><input type="checkbox" checked data-device="1号冷冻泵" data-type="chwp">1号冷冻泵</label>
-                    <label class="device-check"><input type="checkbox" checked data-device="2号冷冻泵" data-type="chwp">2号冷冻泵</label>
-                    <label class="device-check"><input type="checkbox" checked data-device="3号冷冻泵" data-type="chwp">3号冷冻泵</label>
-                    <label class="device-check"><input type="checkbox" data-device="4号冷冻泵" data-type="chwp">4号冷冻泵</label>
+                    <span class="device-item">1号冷冻泵</span>
+                    <span class="device-item">2号冷冻泵</span>
+                    <span class="device-item">3号冷冻泵</span>
+                  </div>
+                </div>
+                <div class="device-group" data-scene="secondary">
+                  <div class="device-group-title">二次冷冻泵</div>
+                  <div class="device-checks">
+                    <span class="device-item">1号二次冷冻泵</span>
+                    <span class="device-item">2号二次冷冻泵</span>
                   </div>
                 </div>
                 <div class="device-group">
                   <div class="device-group-title">冷却泵</div>
                   <div class="device-checks">
-                    <label class="device-check"><input type="checkbox" checked data-device="1号冷却泵" data-type="cwp">1号冷却泵</label>
-                    <label class="device-check"><input type="checkbox" checked data-device="2号冷却泵" data-type="cwp">2号冷却泵</label>
-                    <label class="device-check"><input type="checkbox" data-device="3号冷却泵" data-type="cwp">3号冷却泵</label>
+                    <span class="device-item">1号冷却泵</span>
+                    <span class="device-item">2号冷却泵</span>
                   </div>
                 </div>
                 <div class="device-group">
                   <div class="device-group-title">冷却塔</div>
                   <div class="device-checks">
-                    <label class="device-check"><input type="checkbox" checked data-device="1号冷却塔" data-type="ct">1号冷却塔</label>
-                    <label class="device-check"><input type="checkbox" checked data-device="2号冷却塔" data-type="ct">2号冷却塔</label>
-                    <label class="device-check"><input type="checkbox" data-device="3号冷却塔" data-type="ct">3号冷却塔</label>
+                    <span class="device-item">1号冷却塔</span>
+                    <span class="device-item">2号冷却塔</span>
                   </div>
                 </div>
               </div>
 
               <div class="form-row-2col">
-                <div class="form-group">
-                  <label class="field-label">绑定安全边界<span class="required">*</span></label>
-                  <select class="field-select" id="boundarySelect">
-                    <option value="">请选择</option>
-                    <option>安全策略1</option>
-                    <option selected>正常策略2</option>
-                    <option>正常策略3</option>
-                    <option>正常策略4</option>
-                  </select>
-                </div>
                 <div class="form-group">
                   <label class="field-label">绑定仿真模型<span class="required">*</span></label>
                   <select class="field-select" id="simSelect">
@@ -595,16 +657,6 @@
                   </select>
                 </div>
                 <div class="form-group">
-                  <label class="field-label">绑定探索下发策略<span class="required">*</span></label>
-                  <select class="field-select" id="dispatchSelect">
-                    <option value="">请选择</option>
-                    <option value="手动下发" selected>手动下发</option>
-                    <option value="自动下发">自动下发</option>
-                    <option value="末端手动下发">末端手动下发</option>
-                  </select>
-                  <p class="field-hint field-hint-annoonly">探索下发允许手动或自动，只控制本模块排程推进方式；勿与寻优下发（执行期须手动）混淆</p>
-                </div>
-                <div class="form-group">
                   <label class="field-label">绑定安全回退策略<span class="required">*</span></label>
                   <select class="field-select" id="fallbackSelect">
                     <option value="">请选择</option>
@@ -612,6 +664,19 @@
                     <option>冷却塔故障安全回退策略</option>
                     <option>末端侧安全回退策略</option>
                   </select>
+                </div>
+                <div class="form-group" id="minTempDiffGroup">
+                  <label class="field-label">最低冷冻冷却温差下限<span class="required">*</span></label>
+                  <div class="unit-cell">
+                    <input type="number" class="field-control" id="minTempDiffInput" min="0.1" step="0.1" value="3.0">
+                    <span class="unit-suffix">℃</span>
+                  </div>
+                  <p class="field-hint field-hint-annoonly">仅水冷冷水系统显示；执行期任一相关主机实测温差小于等于该值时暂停</p>
+                </div>
+                <div class="form-group">
+                  <label class="field-label">下发方式</label>
+                  <input type="text" class="field-control" value="自动下发" disabled>
+                  <p class="field-hint field-hint-annoonly">本期固定自动下发，不提供策略选择或页面内手动模式</p>
                 </div>
               </div>
             </div>
@@ -622,16 +687,16 @@
             <span class="anno-version">v2.4</span>
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>① 开机组合与绑定（含探索下发 / 安全回退）</p>
+              <p><b>关联模块：</b>① 开机组合与基础配置</p>
               <table class="anno-table">
                 <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>校验规则</th><th>默认值</th><th>备注</th></tr></thead>
                 <tbody>
                   <tr><td>所属系统</td><td>只读文本</td><td>—</td><td>创建策略时已选定，本页不可修改</td><td>本页演示："3#数据中心水冷冷水系统"</td><td>策略归属目标系统</td></tr>
-                  <tr><td>设备开机组合</td><td>Checkbox 多选</td><td>是（至少 1 台）</td><td>至少勾选 1 台</td><td>按当前实际开机预勾选</td><td>草稿可改；执行期一致性校验锚点</td></tr>
-                  <tr><td>绑定安全边界</td><td>下拉单选</td><td>是</td><td>开跑前必选</td><td>空（演示默认"正常策略2"）</td><td>草稿可改</td></tr>
+                  <tr><td>设备开机组合</td><td>只读分组列表</td><td>是</td><td>必须能读取至少 1 台开机设备</td><td>进入页面时自动查询</td><td>用户不可修改；执行期一致性校验锚点</td></tr>
                   <tr><td>绑定仿真模型</td><td>下拉单选</td><td>是</td><td>开跑前必选</td><td>空（演示默认"1号集成冷站仿真"）</td><td>草稿可改；执行期判稳后查最新结果归档</td></tr>
-                  <tr><td>绑定探索下发策略</td><td>下拉单选</td><td>是</td><td>开跑前必选；允许手动/自动</td><td>空（演示默认"手动下发"）</td><td>只控制本模块排程推进；<b>草稿可改</b>；勿与寻优下发混淆</td></tr>
                   <tr><td>绑定安全回退策略</td><td>下拉单选</td><td>是</td><td>开跑前必选</td><td>空（演示默认"水泵、冷水主机故障安全回退策略"）</td><td>复用安全回退策略页；<b>草稿可改</b></td></tr>
+                  <tr><td>最低冷冻冷却温差下限</td><td>数字输入</td><td>水冷必填</td><td>&gt;0，保留 1 位小数</td><td>3.0℃</td><td>风冷场景隐藏；执行期安全校验使用</td></tr>
+                  <tr><td>下发方式</td><td>只读文本</td><td>—</td><td>固定自动下发</td><td>自动下发</td><td>不引用智控下发策略，不支持页面内手动模式</td></tr>
                 </tbody>
               </table>
             </div>
@@ -642,11 +707,11 @@
             <span class="anno-version">v2.4</span>
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>① 开机组合与绑定</p>
-              <p>开机组合将作为后续基准线、执行计划、执行一致性校验的锚点。开跑前须已绑齐四项：安全边界、仿真实例、探索下发策略、安全回退策略；缺一则「发起执行」不可用。</p>
+              <p><b>关联模块：</b>① 开机组合与基础配置</p>
+              <p>开机组合由当前实际运行状态自动生成并只读展示，作为执行一致性校验锚点。水冷场景显示最低温差配置，风冷场景自动隐藏。</p>
               <ul>
-                <li>草稿态：可随时调整开机组合、四项绑定、间隔、下发与回退。</li>
-                <li>进入执行中后排程才锁定；已开跑 run 用开跑快照，新开跑/续跑取主表当前值。</li>
+                <li>草稿态可修改仿真模型、回退策略和最低温差，但不可修改开机组合。</li>
+                <li>项目不满足自动下发条件时，执行门禁拦截并提示转线下 SOP，不在页面切换成手动模式。</li>
               </ul>
             </div>
           </div>
@@ -656,11 +721,11 @@
             <span class="anno-version">v2.4</span>
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>① 开机组合与绑定</p>
+              <p><b>关联模块：</b>① 开机组合与基础配置</p>
               <ul>
-                <li>开机组合仅允许勾选运行中设备的模拟量控制点，不涉及开关机 / 加减机探索（需求 2.3 原则 1）。</li>
-                <li>未绑齐四项不可发起执行。</li>
-                <li>两套下发勿混：寻优下发（柔性/全局）执行期强制手动；本页探索下发允许自动。</li>
+                <li>开机组合读取失败或为空时不可开始执行；用户不能通过本页改变设备开关状态。</li>
+                <li>水冷最低温差为空、非数值或小于等于 0 时不可开始执行。</li>
+                <li>开始执行前必须已绑定仿真模型和安全回退策略。</li>
               </ul>
             </div>
           </div>
@@ -671,7 +736,7 @@
               <div class="section-head-main">
                 <span class="step-num">2</span>
                 <span class="section-title">基准线录入</span>
-                <span class="section-subtitle">按设备类型统一设定安全基准值；控制测点 / 反馈测点可改选（有初始默认），同类型开机实例同时下发相同设定值</span>
+                <span class="section-subtitle">按设备类型配置基准值、方向和可编辑默认范围；同类型开机实例执行同一目标值</span>
               </div>
             </div>
             <div class="section-body">
@@ -682,15 +747,15 @@
                       <th>设备类型</th>
                       <th>控制测点</th>
                       <th>反馈测点</th>
-                      <th>基准值</th>
-                      <th>边界校验</th>
                       <th>探索方向</th>
                       <th>探索范围下限</th>
                       <th>探索范围上限</th>
+                      <th>基准值</th>
+                      <th>参数校验</th>
                     </tr>
                   </thead>
                   <tbody id="baselineTbody">
-                    <tr class="baseline-row" data-device-type="chwp" data-type-name="冷冻泵" data-bound-min="30.00" data-bound-max="38.00">
+                    <tr class="baseline-row" data-device-type="chwp" data-type-name="冷冻泵">
                       <td>
                         <div class="type-cell-name">冷冻泵</div>
                         <div class="apply-scope" data-scope-type="chwp">应用于已开机的 1号、2号、3号</div>
@@ -705,19 +770,29 @@
                           <option value="频率反馈" selected>频率反馈</option>
                         </select>
                       </td>
+                      <td><select class="field-select direction-select"><option value="up" selected>向上</option><option value="down">向下</option></select></td>
+                      <td><input type="number" class="table-input range-min-input" step="0.1" value="30.0"></td>
+                      <td><input type="number" class="table-input range-max-input" step="0.1" value="50.0"></td>
                       <td>
                         <div class="unit-cell">
-                          <input type="number" class="table-input baseline-input" step="0.01" placeholder="保留2位小数">
+                          <input type="number" class="table-input baseline-input" step="0.1" placeholder="保留1位小数">
                           <span class="unit-suffix">Hz</span>
                         </div>
-                        <p class="field-hint field-hint-annoonly">须落在安全边界（硬∩软）内，保留 2 位小数，四舍五入；按设备类型统一设定，同类型所有开机实例同时下发同一频率</p>
+                        <p class="field-hint field-hint-annoonly">须落在本行探索范围内，保留 1 位小数；同类型所有开机实例执行同一目标值</p>
                       </td>
                       <td><span class="status-tag pending">待录入</span></td>
-                      <td><span class="direction-tag up">往上</span></td>
-                      <td><input type="number" class="table-input range-min-input" step="0.01" value="30.00"></td>
-                      <td><input type="number" class="table-input range-max-input" step="0.01" value="38.00"></td>
                     </tr>
-                    <tr class="baseline-row" data-device-type="cwp" data-type-name="冷却泵" data-bound-min="32.00" data-bound-max="38.00">
+                    <tr class="baseline-row" data-device-type="schwp" data-type-name="二次冷冻泵">
+                      <td><div class="type-cell-name">二次冷冻泵</div><div class="apply-scope">应用于已开机的 1号、2号</div></td>
+                      <td><select class="point-select control-point-select" aria-label="二次冷冻泵控制测点"><option selected>频率设定</option></select></td>
+                      <td><select class="point-select feedback-point-select" aria-label="二次冷冻泵反馈测点"><option selected>频率反馈</option></select></td>
+                      <td><select class="field-select direction-select"><option value="up" selected>向上</option><option value="down">向下</option></select></td>
+                      <td><input type="number" class="table-input range-min-input" step="0.1" value="30.0"></td>
+                      <td><input type="number" class="table-input range-max-input" step="0.1" value="50.0"></td>
+                      <td><div class="unit-cell"><input type="number" class="table-input baseline-input" step="0.1" placeholder="保留1位小数"><span class="unit-suffix">Hz</span></div></td>
+                      <td><span class="status-tag pending">待录入</span></td>
+                    </tr>
+                    <tr class="baseline-row" data-device-type="cwp" data-type-name="冷却泵">
                       <td>
                         <div class="type-cell-name">冷却泵</div>
                         <div class="apply-scope" data-scope-type="cwp">应用于已开机的 1号、2号</div>
@@ -732,18 +807,18 @@
                           <option value="频率反馈" selected>频率反馈</option>
                         </select>
                       </td>
+                      <td><select class="field-select direction-select"><option value="up" selected>向上</option><option value="down">向下</option></select></td>
+                      <td><input type="number" class="table-input range-min-input" step="0.1" value="30.0"></td>
+                      <td><input type="number" class="table-input range-max-input" step="0.1" value="50.0"></td>
                       <td>
                         <div class="unit-cell">
-                          <input type="number" class="table-input baseline-input" step="0.01" placeholder="保留2位小数">
+                          <input type="number" class="table-input baseline-input" step="0.1" placeholder="保留1位小数">
                           <span class="unit-suffix">Hz</span>
                         </div>
                       </td>
                       <td><span class="status-tag pending">待录入</span></td>
-                      <td><span class="direction-tag up">往上</span></td>
-                      <td><input type="number" class="table-input range-min-input" step="0.01" value="32.00"></td>
-                      <td><input type="number" class="table-input range-max-input" step="0.01" value="38.00"></td>
                     </tr>
-                    <tr class="baseline-row" data-device-type="ct" data-type-name="冷却塔" data-bound-min="28.00" data-bound-max="34.00">
+                    <tr class="baseline-row" data-device-type="ct" data-type-name="冷却塔">
                       <td>
                         <div class="type-cell-name">冷却塔</div>
                         <div class="apply-scope" data-scope-type="ct">应用于已开机的 1号、2号</div>
@@ -764,19 +839,19 @@
                           <option value="风机开机数">风机开机数</option>
                         </select>
                       </td>
+                      <td><select class="field-select direction-select"><option value="up" selected>向上</option><option value="down">向下</option></select></td>
+                      <td><input type="number" class="table-input range-min-input" step="0.1" value="20.0"></td>
+                      <td><input type="number" class="table-input range-max-input" step="0.1" value="50.0"></td>
                       <td>
                         <div class="unit-cell">
-                          <input type="number" class="table-input baseline-input" step="0.01" placeholder="保留2位小数">
+                          <input type="number" class="table-input baseline-input" step="0.1" placeholder="保留1位小数">
                           <span class="unit-suffix">Hz</span>
                         </div>
-                        <p class="field-hint field-hint-annoonly">须落在安全边界（硬∩软）内，保留 2 位小数，四舍五入；往上探在冷凝侧温差保护场景下有例外（见需求六章），本页仅展示方向</p>
+                        <p class="field-hint field-hint-annoonly">须落在本行探索范围内，保留 1 位小数；执行期受最低冷冻冷却温差校验监管</p>
                       </td>
                       <td><span class="status-tag pending">待录入</span></td>
-                      <td><span class="direction-tag up">往上</span></td>
-                      <td><input type="number" class="table-input range-min-input" step="0.01" value="28.00"></td>
-                      <td><input type="number" class="table-input range-max-input" step="0.01" value="34.00"></td>
                     </tr>
-                    <tr class="baseline-row" data-device-type="chiller" data-type-name="冷水主机" data-bound-min="7.50" data-bound-max="9.00">
+                    <tr class="baseline-row" data-device-type="chiller" data-type-name="冷水主机">
                       <td>
                         <div class="type-cell-name">冷水主机</div>
                         <div class="apply-scope" data-scope-type="chiller">应用于已开机的 1号、2号</div>
@@ -795,17 +870,17 @@
                           <option value="冷却水进水温度">冷却水进水温度</option>
                         </select>
                       </td>
+                      <td><select class="field-select direction-select"><option value="up">向上</option><option value="down" selected>向下</option></select></td>
+                      <td><input type="number" class="table-input range-min-input" step="0.1" value="5.0"></td>
+                      <td><input type="number" class="table-input range-max-input" step="0.1" value="12.0"></td>
                       <td>
                         <div class="unit-cell">
-                          <input type="number" class="table-input baseline-input" step="0.01" placeholder="保留2位小数">
+                          <input type="number" class="table-input baseline-input" step="0.1" placeholder="保留1位小数">
                           <span class="unit-suffix">℃</span>
                         </div>
-                        <p class="field-hint field-hint-annoonly">须落在安全边界（硬∩软）内，保留 2 位小数，四舍五入</p>
+                        <p class="field-hint field-hint-annoonly">须落在本行探索范围内，保留 1 位小数</p>
                       </td>
                       <td><span class="status-tag pending">待录入</span></td>
-                      <td><span class="direction-tag down">往下</span></td>
-                      <td><input type="number" class="table-input range-min-input" step="0.01" value="7.50"></td>
-                      <td><input type="number" class="table-input range-max-input" step="0.01" value="9.00"></td>
                     </tr>
                   </tbody>
                 </table>
@@ -818,17 +893,17 @@
             <span class="anno-version">v2.4</span>
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>② 基准线录入（按设备类型统一设定，不按设备实例逐台设置；来源：需求文档 7.3 口径 + 评审确认）</p>
+              <p><b>关联模块：</b>② 基准线与探索参数（按设备类型统一设定）</p>
               <table class="anno-table">
                 <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>校验规则</th><th>默认值</th><th>备注</th></tr></thead>
                 <tbody>
-                  <tr><td>设备类型（含应用实例说明）</td><td>只读文本</td><td>—</td><td>—</td><td>按①勾选设备涉及的设备类型（设备类型）生成一行，固定 4 类：冷冻泵 / 冷却泵 / 冷却塔 / 冷水主机</td><td>类型名下方注明应用范围（如"冷冻泵 · 应用于已开机的 1号、2号、3号"），随①区勾选实时联动刷新</td></tr>
+                  <tr><td>设备类型（含应用实例说明）</td><td>只读文本</td><td>—</td><td>—</td><td>按系统拓扑和当前开机组合动态生成</td><td>兼容水冷一次泵、二次泵与风冷冷水系统；无此设备类型时不生成空行</td></tr>
                   <tr><td>控制测点</td><td>下拉选择</td><td>是</td><td>须选自该设备类型标准物模型可写测点；草稿可改</td><td>冷冻泵/冷却泵/冷却塔 → 频率设定；冷水主机 → 冷冻出水温度设定</td><td>命名与标准属性 ID 对齐标准物模型：泵/塔 频率设定(3_101_0)；主机 冷冻出水温度设定(3_301_0)。冷却塔另可选冷却水出水温度设定等</td></tr>
                   <tr><td>反馈测点</td><td>下拉选择</td><td>是</td><td>须选自该设备类型标准物模型可读测点；草稿可改</td><td>冷冻泵/冷却泵/冷却塔 → 频率反馈；冷水主机 → 冷冻水出水温度</td><td>泵/塔 频率反馈(1_1159_0)；主机 冷冻水出水温度(1_24_0)。冷却塔另可选组件「风机频率反馈」(1_1151_0)</td></tr>
-                  <tr><td>基准值</td><td>数字输入</td><td>是</td><td>须落在安全边界（硬∩软）内，保留 2 位小数（四舍五入）；越界不可生成执行计划</td><td>空，占位提示"保留2位小数"</td><td>按设备类型统一设定，同类型所有开机实例同时下发相同设定值（例：开机了 1号、2号冷冻泵，则对两台同时下发同一频率设定）；用户手动输入，不做自动求解；探索起点见需求 7.2</td></tr>
-                  <tr><td>边界校验状态</td><td>只读状态标签</td><td>—</td><td>基准值为空显示"待录入"；落在边界内显示"通过"；超出显示"越界"</td><td>待录入</td><td>输入即实时校验，无需额外点击"校验"；任意一行"越界"或"待录入"时③"生成执行计划"按钮置灰</td></tr>
-                  <tr><td>探索方向</td><td>只读标签</td><td>—</td><td>—</td><td>按设备类型固定（需求六）：泵/塔往上，主机出水温度往下</td><td>冷却塔往上探在冷凝侧温差保护场景下有例外，属执行期监测（需求 8.5），本页仅展示方向</td></tr>
-                  <tr><td>探索范围下限 / 上限</td><td>数字输入</td><td>是</td><td>默认 = 安全边界侧限值；可编辑，仍须落在安全边界内；无需二次确认</td><td>取绑定安全边界对应变量的软边界侧限值</td><td>往上方向：下限=基准值、上限=边界上限；往下方向：下限=边界下限、上限=基准值（需求 7.2）；本页默认值为简化演示，不随基准值实时联动重算，实际以后端为准</td></tr>
+                  <tr><td>基准值</td><td>数字输入</td><td>是</td><td>须落在本行探索范围内，保留 1 位小数</td><td>空，占位提示“保留1位小数”</td><td>同类型所有开机实例执行相同目标值</td></tr>
+                  <tr><td>参数校验状态</td><td>只读状态标签</td><td>—</td><td>校验上下限、基准和方向是否能生成至少一个工况点</td><td>待录入</td><td>任意一行不通过时生成按钮置灰</td></tr>
+                  <tr><td>探索方向</td><td>下拉单选</td><td>是</td><td>向上 / 向下</td><td>泵/塔向上；主机向下</td><td>用户可修改；系统按方向生成递增或递减目标值</td></tr>
+                  <tr><td>探索范围下限 / 上限</td><td>数字输入</td><td>是</td><td>下限≤基准≤上限，保留 1 位小数</td><td>按系统类型、设备类型和控制测点内置</td><td>不引用安全边界，草稿可编辑</td></tr>
                 </tbody>
               </table>
             </div>
@@ -841,10 +916,10 @@
             <div class="anno-body">
               <p><b>关联模块：</b>② 基准线录入</p>
               <ul>
-                <li><b>行来源：</b>表格行 = ①中已勾选开机设备涉及的设备类型，按类型一行；控制测点 / 反馈测点有标准物模型默认值，可改选；不按设备实例逐台生成行；每行"应用实例"说明随①区勾选联动刷新。</li>
+                <li><b>行来源：</b>表格行由所属系统物模型拓扑和只读开机组合生成；二次泵独立成行；风冷场景不生成冷却泵/冷却塔。</li>
                 <li><b>测点来源：</b>选项取自标准物模型（冷冻水泵n / 冷却水泵n / 冷却塔n / 水冷冷水机组n）；默认对为频率设定↔频率反馈、冷冻出水温度设定↔冷冻水出水温度。</li>
-                <li><b>边界校验实时联动：</b>基准值输入后立即与该行安全边界比对，实时刷新"边界校验状态"标签，无需点击额外的"校验"按钮。</li>
-                <li><b>与③④的联动：</b>本表所有行基准值均通过边界校验，才会解锁③"生成执行计划"按钮（探索范围默认取安全边界、可编辑，无需二次确认）；点击生成执行计划后 ④ 区域展开展示执行计划结果。</li>
+                <li><b>默认范围：</b>由产品内置配置带出，不依赖安全边界；切换控制测点后同步刷新单位、默认范围和默认步长。</li>
+                <li><b>实时联动：</b>修改基准、方向或范围后立即刷新参数校验；全部通过后解锁生成按钮。</li>
               </ul>
             </div>
           </div>
@@ -856,8 +931,8 @@
             <div class="anno-body">
               <p><b>关联模块：</b>② 基准线录入</p>
               <ul>
-                <li>基准值越界（超出安全边界硬∩软范围）：该行边界校验状态标红显示"越界"，基准值越界不可生成执行计划，直至改回边界内数值。</li>
-                <li>探索范围下限 / 上限被编辑为超出安全边界侧限值：需求文档要求"仍须在边界内"，本页以人工审核约束为准，评审时建议确认是否需要前端强拦截。</li>
+                <li>下限大于上限、基准不在范围内或方向终点等于基准时，状态标红并禁止生成。</li>
+                <li>所有数值离开输入框后统一按 1 位小数展示和保存。</li>
               </ul>
             </div>
           </div>
@@ -881,39 +956,39 @@
                     <tr>
                       <td>冷冻泵 / 二次泵</td>
                       <td>频率设定</td>
-                      <td><div class="unit-cell"><input type="number" class="table-input step-input" id="stepChwp" step="0.1" value="2.00"><span class="unit-suffix">Hz</span></div></td>
+                      <td><div class="unit-cell"><input type="number" class="table-input step-input" id="stepChwp" step="0.1" value="2.0"><span class="unit-suffix">Hz</span></div></td>
                     </tr>
                     <tr>
                       <td>冷却泵</td>
                       <td>频率设定</td>
-                      <td><div class="unit-cell"><input type="number" class="table-input step-input" id="stepCwp" step="0.1" value="2.00"><span class="unit-suffix">Hz</span></div></td>
+                      <td><div class="unit-cell"><input type="number" class="table-input step-input" id="stepCwp" step="0.1" value="2.0"><span class="unit-suffix">Hz</span></div></td>
                     </tr>
                     <tr>
                       <td>冷却塔</td>
                       <td>频率设定</td>
-                      <td><div class="unit-cell"><input type="number" class="table-input step-input" id="stepCt" step="0.1" value="2.00"><span class="unit-suffix">Hz</span></div></td>
+                      <td><div class="unit-cell"><input type="number" class="table-input step-input" id="stepCt" step="0.1" value="2.0"><span class="unit-suffix">Hz</span></div></td>
                     </tr>
                     <tr>
                       <td>冷水主机</td>
                       <td>冷冻出水温度设定</td>
-                      <td><div class="unit-cell"><input type="number" class="table-input step-input" id="stepChiller" step="0.1" value="0.50"><span class="unit-suffix">℃</span></div></td>
+                      <td><div class="unit-cell"><input type="number" class="table-input step-input" id="stepChiller" step="0.1" value="0.5"><span class="unit-suffix">℃</span></div></td>
                     </tr>
                   </tbody>
                 </table>
               </div>
               <div class="interval-row">
                 <div class="form-group">
-                  <label class="field-label">排程间隔时长<span class="required">*</span></label>
+                  <label class="field-label">间隔时长<span class="required">*</span></label>
                   <div class="unit-cell">
                     <input type="number" class="field-control" id="intervalDurationInput" min="1" step="1" value="15" style="width:120px;">
                     <span class="unit-suffix">分钟</span>
                   </div>
-                  <p class="field-hint field-hint-annoonly">须 &gt; 0；默认 15；写入各行稳态等待条件；单步预计时长 = 间隔 + 10；草稿可改</p>
+                  <p class="field-hint field-hint-annoonly">全策略统一，默认 15 分钟，只允许正整数；间隔到达后仍须满足稳态条件才进入下一步</p>
                 </div>
               </div>
               <div class="section-actions-row">
                 <button class="btn btn-primary" id="btnGenerateSchedule" disabled>生成执行计划</button>
-                <span class="hint-inline" id="generateHint">请先在②完成全部行的基准值录入且边界校验通过</span>
+                <span class="hint-inline" id="generateHint">请先在②完成全部行参数并通过校验</span>
               </div>
             </div>
           </section>
@@ -927,11 +1002,11 @@
               <table class="anno-table">
                 <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>校验规则</th><th>默认值</th><th>备注</th></tr></thead>
                 <tbody>
-                  <tr><td>默认调整步长（4 行）</td><td>数字输入</td><td>是</td><td>须为正数</td><td>泵/塔 2Hz；主机 0.5℃</td><td>按设备类型配置；草稿可改</td></tr>
-                  <tr><td>排程间隔时长</td><td>数字输入（分钟）</td><td>是</td><td>须 &gt; 0</td><td>15</td><td>写入 dwell_condition；est_duration = 间隔 + 10；<b>草稿可改</b></td></tr>
+                  <tr><td>默认调整步长</td><td>数字输入</td><td>是</td><td>须为正数，保留 1 位小数</td><td>泵/塔 2.0Hz；主机 0.5℃</td><td>按设备类型配置；草稿可改</td></tr>
+                  <tr><td>间隔时长</td><td>数字输入（分钟）</td><td>是</td><td>须为正整数</td><td>15</td><td>全策略统一；到达间隔后仍须判稳</td></tr>
                 </tbody>
               </table>
-              <p><b>生成执行计划：</b>②全部行边界校验通过后可点；生成时标注历史已覆盖点（灰显、默认不勾选、保留在清单），并按当前间隔写入稳态等待与预计时长；冷却塔批次写入 batch_guard。</p>
+              <p><b>生成执行计划：</b>②全部行参数校验通过后可点；生成时标注历史已覆盖点，并按当前统一间隔写入稳态等待条件。水冷批次写入最低冷冻冷却温差校验说明。</p>
             </div>
           </div>
 
@@ -942,7 +1017,7 @@
             <div class="anno-body">
               <p><b>关联模块：</b>③ 调整步长与生成执行计划</p>
               <ul>
-                <li><b>置灰条件：</b>②任一行未通过边界校验时「生成执行计划」置灰。</li>
+                <li><b>置灰条件：</b>②任一行未通过参数校验，或步长/间隔非法时「生成执行计划」置灰。</li>
                 <li><b>点击后：</b>按步长在探索范围内生成工况点；历史已覆盖点（n≥20）灰显保留在④清单、默认不勾选，允许强制勾回；汇总条展示已覆盖灰显点数；展开④。</li>
                 <li>草稿态可反复调整①②③后重新生成；间隔输入可随时改（改后可刷新清单中的等待条件文案，本页演示即时刷新）。</li>
               </ul>
@@ -957,8 +1032,8 @@
               <p><b>关联模块：</b>历史回溯与间隔写入（需求 7.3 / 7.4）</p>
               <ul>
                 <li><b>邻域窗口：</b>目标值 v ± 半个调整步长；窗口内稳态样本 n ≥ 20 → 已覆盖（灰显、默认不勾选、可勾回）；n &lt; 20 → 空白/稀疏（默认勾选）。</li>
-                <li><b>间隔写入：</b>dwell_condition =「停留 ≥{N}min 且判稳后再进下一步」；est_duration = N + 10。</li>
-                <li><b>batch_guard：</b>冷却塔批次写入「须监测冷冻/冷却温差 ≤ 边界下限 + 1℃」；其他批次为「—」。</li>
+                <li><b>间隔写入：</b>所有计划行使用同一间隔；dwell_condition =「停留 ≥{N}min 且判稳后再进下一步」。</li>
+                <li><b>安全校验：</b>水冷系统计划写入「冷冻冷却温差须高于策略配置下限」；风冷系统不执行此项。</li>
                 <li>已覆盖点<b>不从清单消失</b>，仅灰显且默认不勾选。</li>
               </ul>
             </div>
@@ -970,7 +1045,7 @@
               <div class="section-head-main">
                 <span class="step-num">4</span>
                 <span class="section-title">执行计划清单</span>
-                <span class="section-subtitle">审核勾选后可发起执行</span>
+                <span class="section-subtitle">审核勾选后可开始执行</span>
               </div>
             </div>
             <div class="section-body">
@@ -978,7 +1053,7 @@
                 尚未生成执行计划。请先完成②基准线录入与③步长/间隔配置，点击"生成执行计划"后在此查看执行计划清单。
               </div>
               <div id="scheduleContent" style="display:none;" data-covered-count="3">
-                <div class="schedule-summary" id="scheduleSummary">共 <b>12</b> 步（含已覆盖灰显 <b>3</b> 点，默认不勾选可强制勾回），预计总时长 <b>225 分钟（约 3.8 小时）</b>；拟执行 <b>9</b> 步</div>
+                <div class="schedule-summary" id="scheduleSummary">共 <b>12</b> 步（含已覆盖灰显 <b>3</b> 点，默认不勾选可强制勾回）；拟执行 <b>9</b> 步；统一间隔 <b>15 分钟</b></div>
                 <div class="table-toolbar">
                   <button class="btn btn-ghost btn-sm" id="btnSelectAll">全选</button>
                   <button class="btn btn-ghost btn-sm" id="btnSelectNone">清空勾选</button>
@@ -994,10 +1069,9 @@
                         <th>目标设定值</th>
                         <th>补偿 / 步长</th>
                         <th>历史样本 n 值</th>
-                        <th>安全边界校验</th>
-                        <th>批次联动约束</th>
+                        <th>参数校验</th>
+                        <th>安全校验</th>
                         <th>稳态等待条件</th>
-                        <th>单步预计时长</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1006,163 +1080,151 @@
                         <td>冷冻泵变频探索 <span class="covered-badge">已覆盖</span></td>
                         <td>冷冻泵（1号、2号、3号 同时下发）/ 频率设定</td>
                         <td>1</td>
-                        <td>32.00 Hz</td>
-                        <td>+2.00 Hz</td>
+                        <td>32.0 Hz</td>
+                        <td>+2.0 Hz</td>
                         <td><span class="status-tag">n=42</span></td>
                         <td><span class="status-tag pass">通过</span></td>
                         <td class="batch-guard-cell">—</td>
                         <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
-                        <td class="est-cell">25 min</td>
                       </tr>
                       <tr class="schedule-row row-covered" data-duration-min="25" data-batch="chwp">
                         <td><input type="checkbox" class="schedule-checkbox"></td>
                         <td>冷冻泵变频探索 <span class="covered-badge">已覆盖</span></td>
                         <td>冷冻泵（1号、2号、3号 同时下发）/ 频率设定</td>
                         <td>2</td>
-                        <td>34.00 Hz</td>
-                        <td>+2.00 Hz</td>
+                        <td>34.0 Hz</td>
+                        <td>+2.0 Hz</td>
                         <td><span class="status-tag">n=28</span></td>
                         <td><span class="status-tag pass">通过</span></td>
                         <td class="batch-guard-cell">—</td>
                         <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
-                        <td class="est-cell">25 min</td>
                       </tr>
                       <tr class="schedule-row" data-duration-min="25" data-batch="chwp">
                         <td><input type="checkbox" class="schedule-checkbox" checked></td>
                         <td>冷冻泵变频探索</td>
                         <td>冷冻泵（1号、2号、3号 同时下发）/ 频率设定</td>
                         <td>3</td>
-                        <td>36.00 Hz</td>
-                        <td>+2.00 Hz</td>
+                        <td>36.0 Hz</td>
+                        <td>+2.0 Hz</td>
                         <td><span class="status-tag">n=8</span></td>
                         <td><span class="status-tag pass">通过</span></td>
                         <td class="batch-guard-cell">—</td>
                         <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
-                        <td class="est-cell">25 min</td>
                       </tr>
                       <tr class="schedule-row" data-duration-min="25" data-batch="chwp">
                         <td><input type="checkbox" class="schedule-checkbox" checked></td>
                         <td>冷冻泵变频探索</td>
                         <td>冷冻泵（1号、2号、3号 同时下发）/ 频率设定</td>
                         <td>4</td>
-                        <td>38.00 Hz</td>
-                        <td>+2.00 Hz</td>
+                        <td>38.0 Hz</td>
+                        <td>+2.0 Hz</td>
                         <td><span class="status-tag">n=3</span></td>
                         <td><span class="status-tag pass">通过</span></td>
                         <td class="batch-guard-cell">—</td>
                         <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
-                        <td class="est-cell">25 min</td>
                       </tr>
                       <tr class="schedule-row row-covered batch-start" data-duration-min="25" data-batch="cwp">
                         <td><input type="checkbox" class="schedule-checkbox"></td>
                         <td>冷却泵变频探索 <span class="covered-badge">已覆盖</span></td>
                         <td>冷却泵（1号、2号 同时下发）/ 频率设定</td>
                         <td>1</td>
-                        <td>32.00 Hz</td>
-                        <td>+2.00 Hz</td>
+                        <td>32.0 Hz</td>
+                        <td>+2.0 Hz</td>
                         <td><span class="status-tag">n=35</span></td>
                         <td><span class="status-tag pass">通过</span></td>
                         <td class="batch-guard-cell">—</td>
                         <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
-                        <td class="est-cell">25 min</td>
                       </tr>
                       <tr class="schedule-row" data-duration-min="25" data-batch="cwp">
                         <td><input type="checkbox" class="schedule-checkbox" checked></td>
                         <td>冷却泵变频探索</td>
                         <td>冷却泵（1号、2号 同时下发）/ 频率设定</td>
                         <td>2</td>
-                        <td>34.00 Hz</td>
-                        <td>+2.00 Hz</td>
+                        <td>34.0 Hz</td>
+                        <td>+2.0 Hz</td>
                         <td><span class="status-tag">n=12</span></td>
                         <td><span class="status-tag pass">通过</span></td>
                         <td class="batch-guard-cell">—</td>
                         <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
-                        <td class="est-cell">25 min</td>
                       </tr>
                       <tr class="schedule-row" data-duration-min="25" data-batch="cwp">
                         <td><input type="checkbox" class="schedule-checkbox" checked></td>
                         <td>冷却泵变频探索</td>
                         <td>冷却泵（1号、2号 同时下发）/ 频率设定</td>
                         <td>3</td>
-                        <td>36.00 Hz</td>
-                        <td>+2.00 Hz</td>
+                        <td>36.0 Hz</td>
+                        <td>+2.0 Hz</td>
                         <td><span class="status-tag">n=5</span></td>
                         <td><span class="status-tag pass">通过</span></td>
                         <td class="batch-guard-cell">—</td>
                         <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
-                        <td class="est-cell">25 min</td>
                       </tr>
                       <tr class="schedule-row" data-duration-min="25" data-batch="cwp">
                         <td><input type="checkbox" class="schedule-checkbox" checked></td>
                         <td>冷却泵变频探索</td>
                         <td>冷却泵（1号、2号 同时下发）/ 频率设定</td>
                         <td>4</td>
-                        <td>38.00 Hz</td>
-                        <td>+2.00 Hz</td>
+                        <td>38.0 Hz</td>
+                        <td>+2.0 Hz</td>
                         <td><span class="status-tag">n=0</span></td>
                         <td><span class="status-tag pass">通过</span></td>
                         <td class="batch-guard-cell">—</td>
                         <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
-                        <td class="est-cell">25 min</td>
                       </tr>
                       <tr class="schedule-row batch-start" data-duration-min="25" data-batch="ct">
                         <td><input type="checkbox" class="schedule-checkbox" checked></td>
                         <td>冷却塔变频探索</td>
                         <td>冷却塔（1号、2号 同时下发）/ 频率设定设定</td>
                         <td>1</td>
-                        <td>32.00 Hz</td>
-                        <td>+2.00 Hz</td>
+                        <td>32.0 Hz</td>
+                        <td>+2.0 Hz</td>
                         <td><span class="status-tag">n=15</span></td>
                         <td><span class="status-tag pass">通过</span></td>
-                        <td class="batch-guard-cell">须监测冷冻/冷却温差 ≤ 边界下限 + 1℃</td>
+                        <td class="batch-guard-cell">冷冻冷却温差须 &gt; 3.0℃</td>
                         <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
-                        <td class="est-cell">25 min</td>
                       </tr>
                       <tr class="schedule-row" data-duration-min="25" data-batch="ct">
                         <td><input type="checkbox" class="schedule-checkbox" checked></td>
                         <td>冷却塔变频探索</td>
                         <td>冷却塔（1号、2号 同时下发）/ 频率设定设定</td>
                         <td>2</td>
-                        <td>34.00 Hz</td>
-                        <td>+2.00 Hz</td>
+                        <td>34.0 Hz</td>
+                        <td>+2.0 Hz</td>
                         <td><span class="status-tag">n=6</span></td>
                         <td><span class="status-tag pass">通过</span></td>
-                        <td class="batch-guard-cell">须监测冷冻/冷却温差 ≤ 边界下限 + 1℃</td>
+                        <td class="batch-guard-cell">冷冻冷却温差须 &gt; 3.0℃</td>
                         <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
-                        <td class="est-cell">25 min</td>
                       </tr>
                       <tr class="schedule-row batch-start" data-duration-min="25" data-batch="chiller">
                         <td><input type="checkbox" class="schedule-checkbox" checked></td>
                         <td>冷水主机出水温度探索</td>
                         <td>冷水主机（1号、2号 同时下发）/ 冷冻出水温度设定</td>
                         <td>1</td>
-                        <td>8.50 ℃</td>
-                        <td>-0.50 ℃</td>
+                        <td>8.5 ℃</td>
+                        <td>-0.5 ℃</td>
                         <td><span class="status-tag">n=18</span></td>
                         <td><span class="status-tag pass">通过</span></td>
                         <td class="batch-guard-cell">—</td>
                         <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
-                        <td class="est-cell">25 min</td>
                       </tr>
                       <tr class="schedule-row" data-duration-min="25" data-batch="chiller">
                         <td><input type="checkbox" class="schedule-checkbox" checked></td>
                         <td>冷水主机出水温度探索</td>
                         <td>冷水主机（1号、2号 同时下发）/ 冷冻出水温度设定</td>
                         <td>2</td>
-                        <td>8.00 ℃</td>
-                        <td>-0.50 ℃</td>
+                        <td>8.0 ℃</td>
+                        <td>-0.5 ℃</td>
                         <td><span class="status-tag">n=9</span></td>
                         <td><span class="status-tag pass">通过</span></td>
                         <td class="batch-guard-cell">—</td>
                         <td class="dwell-cell">停留 ≥15min 且判稳后再进下一步</td>
-                        <td class="est-cell">25 min</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
                 <div class="action-bar">
                   <button class="btn btn-ghost" id="btnSaveDraft">保存草稿</button>
-                  <button class="btn btn-primary" id="btnGotoExec" disabled>发起执行 →</button>
+                  <button class="btn btn-primary" id="btnGotoExec" disabled>开始执行</button>
                 </div>
               </div>
             </div>
@@ -1184,10 +1246,9 @@
                   <tr><td>目标设定值</td><td>只读</td><td>—</td><td>—</td><td>基准 + 累计补偿</td><td>生成后随重新生成刷新；执行中锁定</td></tr>
                   <tr><td>补偿 / 步长</td><td>只读</td><td>—</td><td>—</td><td>取③步长</td><td>—</td></tr>
                   <tr><td>历史样本 n 值</td><td>只读</td><td>—</td><td>—</td><td>如 n=42 / n=8</td><td>n≥20 为已覆盖</td></tr>
-                  <tr><td>安全边界校验</td><td>只读</td><td>—</td><td>—</td><td>通过</td><td>—</td></tr>
-                  <tr><td>批次联动约束</td><td>只读</td><td>—</td><td>—</td><td>冷却塔：须监测冷冻/冷却温差 ≤ 边界下限 + 1℃；其他：—</td><td>对应 batch_guard</td></tr>
+                  <tr><td>参数校验</td><td>只读</td><td>—</td><td>—</td><td>通过</td><td>校验目标值未超出用户配置范围</td></tr>
+                  <tr><td>安全校验</td><td>只读</td><td>—</td><td>—</td><td>水冷：冷冻冷却温差须高于配置下限；风冷：—</td><td>不引用安全边界</td></tr>
                   <tr><td>稳态等待条件</td><td>只读</td><td>—</td><td>—</td><td>停留 ≥{间隔}min 且判稳后再进下一步</td><td>随间隔时长写入/刷新</td></tr>
-                  <tr><td>单步预计时长</td><td>只读</td><td>—</td><td>—</td><td>间隔 + 10（分钟）</td><td>汇总条按勾选累加</td></tr>
                 </tbody>
               </table>
             </div>
@@ -1201,8 +1262,8 @@
               <p><b>关联模块：</b>④ 执行计划清单</p>
               <ul>
                 <li><b>全选 / 清空勾选：</b>草稿态可用；全选会勾上已覆盖灰显行（强制勾回）。</li>
-                <li><b>保存草稿：</b>保存当前排程与勾选/绑定；toast「已保存草稿…」。</li>
-                <li><b>发起执行：</b>校验已绑四项（边界/仿真/下发/回退）+ 至少勾选 1 点；就绪后跳转 <code>多工况探索-执行详情.html?ready=1</code>。</li>
+                <li><b>保存草稿：</b>保存当前排程、勾选、仿真模型、回退策略及安全参数。</li>
+                <li><b>开始执行：</b>校验策略已就绪后，先弹出 4 项执行前校验；用户确认后输入操作密码，校验通过即跳转执行详情运行态。</li>
               </ul>
             </div>
           </div>
@@ -1213,7 +1274,7 @@
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
               <p><b>关联模块：</b>④ 汇总条</p>
-              <p>「共 N 步」= 清单总行数（含已覆盖灰显）；「含已覆盖灰显 M 点」= hist_covered=true 的行数（默认不勾选可强制勾回）；「预计总时长 / 拟执行 K 步」= 当前已勾选行的 est_duration 累加，随勾选变化。进入执行中后排程才锁定。</p>
+              <p>「共 N 步」= 清单总行数（含已覆盖灰显）；「拟执行 K 步」随勾选变化；统一间隔取策略字段。清单和汇总均不展示单步预计时长。</p>
             </div>
           </div>
 
@@ -1224,9 +1285,8 @@
             <div class="anno-body">
               <p><b>关联模块：</b>④ 执行计划清单</p>
               <ul>
-                <li>未绑齐四项或无勾选点 → 「发起执行」置灰。</li>
-                <li>草稿态改间隔 / 下发 / 回退：写回策略主表；已开跑 run 仍用开跑快照。</li>
-                <li>间隔须 &gt; 0，否则生成/刷新等待条件时提示。</li>
+                <li>仿真模型/回退策略未绑定、水冷最低温差非法或无勾选点时，「开始执行」置灰。</li>
+                <li>间隔须为正整数；基准、范围和步长统一按 1 位小数处理。</li>
               </ul>
             </div>
           </div>
@@ -1237,6 +1297,62 @@
   </div>
 
   <div class="toast" id="toast"></div>
+
+  <div class="modal-mask" id="modalPrecheck" aria-hidden="true">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="precheckTitle">
+      <div class="modal-head">
+        <span class="modal-icon">✓</span>
+        <span class="modal-title" id="precheckTitle">执行前校验</span>
+        <button type="button" class="modal-close" data-close-modal="modalPrecheck" aria-label="关闭">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="anno anno-ux" data-version="v2.4">
+          <span class="anno-tag">交互说明</span><span class="anno-version">v2.4</span><span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>开始执行 - 执行前校验弹窗</p>
+            <p>策略就绪后点击“开始执行”弹出本窗；4 项全部通过时可确认进入密码校验，任一项失败则保留在本页并提示失败原因。</p>
+          </div>
+        </div>
+        <div class="precheck-summary">4 项全部通过</div>
+        <ul class="precheck-list">
+          <li class="precheck-item"><span class="precheck-pass">✓</span><span>① 自动下发能力可用：权限、链路和执行器状态正常</span></li>
+          <li class="precheck-item"><span class="precheck-pass">✓</span><span>② 相关寻优已停止：柔性寻优、全局寻优无运行中任务</span></li>
+          <li class="precheck-item"><span class="precheck-pass">✓</span><span>③ 开机组合一致：当前实际组合与策略快照一致</span></li>
+          <li class="precheck-item"><span class="precheck-pass">✓</span><span>④ 配置完整：仿真、回退、统一间隔和最低温差均有效</span></li>
+        </ul>
+      </div>
+      <div class="modal-foot">
+        <span class="modal-foot-hint">确认后输入操作密码</span>
+        <button type="button" class="btn btn-ghost" data-close-modal="modalPrecheck">关 闭</button>
+        <button type="button" class="btn btn-primary" id="btnConfirmPrecheck">确认，下一步</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-mask" id="modalPassword" aria-hidden="true">
+    <div class="modal-box modal-sm" role="dialog" aria-modal="true" aria-labelledby="passwordTitle">
+      <div class="modal-head">
+        <span class="modal-title" id="passwordTitle">开始执行 - 密码校验</span>
+        <button type="button" class="modal-close" data-close-modal="modalPassword" aria-label="关闭">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="anno anno-field" data-version="v2.4">
+          <span class="anno-tag">字段说明</span><span class="anno-version">v2.4</span><span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>开始执行 - 密码校验弹窗</p>
+            <p>操作密码必填；校验通过后策略进入执行中并跳转执行详情，默认直接展示执行进度与下发记录模块。</p>
+          </div>
+        </div>
+        <label class="field-label" for="startPassword">请输入操作密码<span class="required">*</span></label>
+        <input type="password" class="field-control" id="startPassword" placeholder="请输入密码" autocomplete="current-password">
+        <div class="password-error" id="passwordError" role="alert"></div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" data-close-modal="modalPassword">取 消</button>
+        <button type="button" class="btn btn-primary" id="btnConfirmPassword">确认并开始</button>
+      </div>
+    </div>
+  </div>
 
   <script>
   (function () {
@@ -1253,40 +1369,19 @@
     }
 
     function getIntervalMin() {
-      var n = parseInt(document.getElementById('intervalDurationInput').value, 10);
-      return (isNaN(n) || n <= 0) ? null : n;
+      var raw = document.getElementById('intervalDurationInput').value;
+      var n = Number(raw);
+      return (!Number.isInteger(n) || n <= 0) ? null : n;
     }
 
     function applyIntervalToScheduleRows() {
       var interval = getIntervalMin();
       if (interval == null) return;
-      var est = interval + 10;
       document.querySelectorAll('.schedule-row').forEach(function (row) {
-        row.setAttribute('data-duration-min', String(est));
         var dwell = row.querySelector('.dwell-cell');
-        var estCell = row.querySelector('.est-cell');
         if (dwell) dwell.textContent = '停留 ≥' + interval + 'min 且判稳后再进下一步';
-        if (estCell) estCell.textContent = est + ' min';
       });
     }
-
-    /* ② 应用实例说明随①区勾选联动 */
-    function updateApplyScopes() {
-      document.querySelectorAll('.apply-scope[data-scope-type]').forEach(function (scopeEl) {
-        var type = scopeEl.getAttribute('data-scope-type');
-        var names = [];
-        document.querySelectorAll('.device-check input[data-type="' + type + '"]').forEach(function (cb) {
-          if (cb.checked) names.push(cb.getAttribute('data-device').replace(/冷水主机|冷冻泵|冷却泵|冷却塔/, ''));
-        });
-        scopeEl.textContent = names.length
-          ? '应用于已开机的 ' + names.join('、')
-          : '该类型暂无已开机设备';
-      });
-    }
-    document.querySelectorAll('.device-check input[type="checkbox"]').forEach(function (cb) {
-      cb.addEventListener('change', updateApplyScopes);
-    });
-    updateApplyScopes();
 
     function validateBaselineRow(row) {
       var input = row.querySelector('.baseline-input');
@@ -1297,14 +1392,16 @@
         statusEl.textContent = '待录入';
         return;
       }
-      var min = parseFloat(row.getAttribute('data-bound-min'));
-      var max = parseFloat(row.getAttribute('data-bound-max'));
-      if (val >= min && val <= max) {
+      var min = parseFloat(row.querySelector('.range-min-input').value);
+      var max = parseFloat(row.querySelector('.range-max-input').value);
+      var direction = row.querySelector('.direction-select').value;
+      var hasRoom = direction === 'up' ? val < max : val > min;
+      if (!isNaN(min) && !isNaN(max) && min <= val && val <= max && min <= max && hasRoom) {
         statusEl.className = 'status-tag pass';
         statusEl.textContent = '通过';
       } else {
         statusEl.className = 'status-tag danger';
-        statusEl.textContent = '越界';
+        statusEl.textContent = '参数异常';
       }
     }
 
@@ -1312,9 +1409,14 @@
       var rows = document.querySelectorAll('.baseline-row');
       var allOk = rows.length > 0;
       rows.forEach(function (row) {
+        if (row.style.display === 'none') return;
         var statusEl = row.querySelector('.status-tag');
         if (!statusEl.classList.contains('pass')) allOk = false;
       });
+      document.querySelectorAll('.step-input').forEach(function (input) {
+        if (!(parseFloat(input.value) > 0)) allOk = false;
+      });
+      if (getIntervalMin() == null) allOk = false;
       var btn = document.getElementById('btnGenerateSchedule');
       var hint = document.getElementById('generateHint');
       if (!isViewMode) {
@@ -1323,7 +1425,7 @@
       hint.style.display = allOk ? 'none' : 'inline';
     }
 
-    document.querySelectorAll('.baseline-input').forEach(function (input) {
+    document.querySelectorAll('.baseline-input, .range-min-input, .range-max-input, .direction-select').forEach(function (input) {
       input.addEventListener('input', function () {
         validateBaselineRow(input.closest('.baseline-row'));
         updateGenerateButtonState();
@@ -1332,12 +1434,16 @@
     document.querySelectorAll('.baseline-row').forEach(validateBaselineRow);
     updateGenerateButtonState();
 
+    document.querySelectorAll('.step-input, #intervalDurationInput').forEach(function (input) {
+      input.addEventListener('input', updateGenerateButtonState);
+    });
+
     function bindingsReady() {
-      var b = document.getElementById('boundarySelect').value;
       var s = document.getElementById('simSelect').value;
-      var d = document.getElementById('dispatchSelect').value;
       var f = document.getElementById('fallbackSelect').value;
-      return !!(b && s && d && f);
+      var temp = parseFloat(document.getElementById('minTempDiffInput').value);
+      var isWind = new URLSearchParams(location.search).get('system') === 'wind';
+      return !!(s && f && (isWind || (!isNaN(temp) && temp > 0)));
     }
 
     function selectedPointCount() {
@@ -1365,18 +1471,17 @@
       var rows = document.querySelectorAll('.schedule-row');
       var total = rows.length;
       var coveredCount = parseInt(document.getElementById('scheduleContent').getAttribute('data-covered-count'), 10) || 0;
-      var minutes = 0, selectedCount = 0;
+      var selectedCount = 0;
       rows.forEach(function (row) {
         var cb = row.querySelector('.schedule-checkbox');
         if (cb && cb.checked) {
           selectedCount++;
-          minutes += parseInt(row.getAttribute('data-duration-min'), 10) || 0;
         }
       });
-      var hours = (minutes / 60).toFixed(1);
+      var interval = getIntervalMin() || 0;
       document.getElementById('scheduleSummary').innerHTML =
-        '共 <b>' + total + '</b> 步（含已覆盖灰显 <b>' + coveredCount + '</b> 点，默认不勾选可强制勾回），预计总时长 <b>' +
-        minutes + ' 分钟（约 ' + hours + ' 小时）</b>；拟执行 <b>' + selectedCount + '</b> 步';
+        '共 <b>' + total + '</b> 步（含已覆盖灰显 <b>' + coveredCount + '</b> 点，默认不勾选可强制勾回）；拟执行 <b>' +
+        selectedCount + '</b> 步；统一间隔 <b>' + interval + ' 分钟</b>';
       updateExecButton();
     }
 
@@ -1384,7 +1489,7 @@
       cb.addEventListener('change', updateScheduleSummary);
     });
 
-    ['boundarySelect', 'simSelect', 'dispatchSelect', 'fallbackSelect'].forEach(function (id) {
+    ['simSelect', 'fallbackSelect', 'minTempDiffInput'].forEach(function (id) {
       document.getElementById(id).addEventListener('change', updateExecButton);
     });
 
@@ -1400,7 +1505,7 @@
       if (isViewMode) return;
       var interval = getIntervalMin();
       if (interval == null) {
-        showToast('请填写有效的排程间隔时长（须 > 0）');
+        showToast('请填写有效的间隔时长（须为正整数）');
         return;
       }
       applyIntervalToScheduleRows();
@@ -1409,7 +1514,7 @@
       scheduleGenerated = true;
       updateScheduleSummary();
       var coveredCount = parseInt(document.getElementById('scheduleContent').getAttribute('data-covered-count'), 10) || 0;
-      showToast('已生成执行计划：含 ' + coveredCount + ' 个已覆盖灰显点（默认不勾选，可强制勾回）；间隔 ' + interval + 'min，单步预计 ' + (interval + 10) + 'min');
+      showToast('已生成执行计划：含 ' + coveredCount + ' 个已覆盖灰显点（默认不勾选，可强制勾回）；统一间隔 ' + interval + ' 分钟');
       document.getElementById('sectionSchedule').scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
@@ -1430,11 +1535,57 @@
 
     document.getElementById('btnGotoExec').addEventListener('click', function () {
       if (isViewMode) {
-        location.href = '多工况探索-执行详情.html?ready=1';
+        var viewTarget = '多工况探索-执行详情.html';
+        if (new URLSearchParams(location.search).get('system') === 'wind') viewTarget += '?system=wind';
+        location.href = viewTarget;
         return;
       }
       if (!execReady()) return;
-      location.href = '多工况探索-执行详情.html?ready=1';
+      openModal('modalPrecheck');
+    });
+
+    function openModal(id) {
+      var modal = document.getElementById(id);
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeModal(id) {
+      var modal = document.getElementById(id);
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+
+    document.querySelectorAll('[data-close-modal]').forEach(function (button) {
+      button.addEventListener('click', function () { closeModal(button.getAttribute('data-close-modal')); });
+    });
+    document.querySelectorAll('.modal-mask').forEach(function (modal) {
+      modal.addEventListener('click', function (event) { if (event.target === modal) closeModal(modal.id); });
+    });
+
+    document.getElementById('btnConfirmPrecheck').addEventListener('click', function () {
+      closeModal('modalPrecheck');
+      document.getElementById('startPassword').value = '';
+      document.getElementById('passwordError').textContent = '';
+      openModal('modalPassword');
+      document.getElementById('startPassword').focus();
+    });
+
+    function confirmStart() {
+      var password = document.getElementById('startPassword').value;
+      if (!password) {
+        document.getElementById('passwordError').textContent = '请输入操作密码';
+        document.getElementById('startPassword').focus();
+        return;
+      }
+      var target = '多工况探索-执行详情.html';
+      if (new URLSearchParams(location.search).get('system') === 'wind') target += '?system=wind';
+      location.href = target;
+    }
+
+    document.getElementById('btnConfirmPassword').addEventListener('click', confirmStart);
+    document.getElementById('startPassword').addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') confirmStart();
     });
 
     /* 只读查看态（?mode=view） */
@@ -1455,16 +1606,16 @@
       genBtn.style.display = 'none';
       document.getElementById('btnSaveDraft').style.display = 'none';
       document.getElementById('btnGotoExec').disabled = false;
+      document.getElementById('btnGotoExec').textContent = '返回执行详情';
       document.getElementById('generateHint').style.display = 'none';
     }
 
     function initViewMode() {
-      var demoBaseline = { chwp: '30.00', cwp: '32.00', ct: '28.00', chiller: '9.00' };
+      var demoBaseline = { chwp: '30.0', schwp: '32.0', cwp: '32.0', ct: '28.0', chiller: '9.0' };
       document.getElementById('strategyNameInput').value = '冷冻泵变频探索-2026Q3';
-      document.getElementById('boundarySelect').value = '正常策略2';
       document.getElementById('simSelect').value = '1号集成冷站仿真';
-      document.getElementById('dispatchSelect').value = '手动下发';
       document.getElementById('fallbackSelect').value = '水泵、冷水主机故障安全回退策略';
+      document.getElementById('minTempDiffInput').value = '3.0';
       document.getElementById('intervalDurationInput').value = '15';
       document.querySelectorAll('.baseline-row').forEach(function (row) {
         var type = row.getAttribute('data-device-type');
@@ -1478,7 +1629,36 @@
       applyViewMode();
     }
 
+    function formatOneDecimal(input) {
+      var n = Number(input.value);
+      if (input.value !== '' && !isNaN(n)) input.value = n.toFixed(1);
+    }
+    document.querySelectorAll('.baseline-input, .range-min-input, .range-max-input, .step-input, #minTempDiffInput').forEach(function (input) {
+      input.addEventListener('blur', function () {
+        formatOneDecimal(input);
+        var row = input.closest('.baseline-row');
+        if (row) validateBaselineRow(row);
+        updateGenerateButtonState();
+        updateExecButton();
+      });
+    });
+
     var params = new URLSearchParams(location.search);
+    if (params.get('system') === 'wind') {
+      document.getElementById('systemInstanceInput').value = 'B路风冷冷水系统';
+      document.getElementById('minTempDiffGroup').style.display = 'none';
+      document.querySelectorAll('.device-group').forEach(function (group) {
+        var title = group.querySelector('.device-group-title').textContent;
+        if (title === '冷却泵' || title === '冷却塔') group.style.display = 'none';
+        if (title === '冷水主机') group.querySelector('.device-group-title').textContent = '风冷冷水机组';
+      });
+      document.querySelectorAll('.baseline-row').forEach(function (row) {
+        var type = row.getAttribute('data-device-type');
+        if (type === 'cwp' || type === 'ct') row.style.display = 'none';
+        if (type === 'chiller') row.querySelector('.type-cell-name').textContent = '风冷冷水机组';
+      });
+      updateGenerateButtonState();
+    }
     if (params.get('mode') === 'view') {
       initViewMode();
     } else {

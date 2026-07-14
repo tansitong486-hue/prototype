@@ -332,12 +332,19 @@ pages:
     version: v2.3
     role: subflow
   - id: page.safety_fallback
-    file: null
+    file: 安全回退策略.html
     nav_label: 安全回退策略
     nav_group: AI节能配置
     domain: safety_dispatch
-    version: null
-    role: placeholder
+    version: v1.6
+    role: entry
+  - id: page.safety_fallback_edit
+    file: 创建-编辑安全回退策略.html
+    nav_label: null
+    nav_group: AI节能配置
+    domain: safety_dispatch
+    version: v1.6
+    role: subflow
   - id: page.room_thermal_list
     file: 机房寻优-机房热力模型列表.html
     nav_label: 机房热力模型
@@ -372,7 +379,7 @@ pages:
 flows:
   - id: flow.multi_condition_explore
     name: 多工况探索
-    purpose: 主动补齐稀缺工况样本；列表→策略制定→执行详情→验证详情；验证不入库，可选回流机理重训
+    purpose: 主动补齐稀缺工况样本；默认范围可编辑、仅自动下发；兼容水冷一次/二次泵与风冷；列表→策略制定→执行详情→仿真校验式验证详情；验证不入库，可选回流机理重训
     steps:
       - page_id: page.multi_condition_list
       - page_id: page.multi_condition_strategy
@@ -386,9 +393,7 @@ flows:
       - page.multi_condition_verify
       - domain:multi_condition
       - page.system_sim           # 仿真实例绑定
-      - page.safety_boundary_list # 安全边界绑定
-      - page.dispatch_list        # 探索下发策略绑定
-      - page.safety_fallback      # 安全回退绑定（占位能力）
+      - page.safety_fallback      # 安全回退绑定
       - page.mechanism_train      # 验证后可选重训
 
   - id: flow.cold_station_opt_family
@@ -490,7 +495,7 @@ flows:
 
   - id: flow.config_crud_safety_dispatch
     name: 安全与下发配置
-    purpose: 安全边界与智控下发策略 CRUD；安全回退为侧栏占位能力（无独立 HTML）
+    purpose: 安全边界、智控下发、安全回退策略 CRUD
     steps:
       - page_id: page.safety_boundary_list
       - page_id: page.safety_boundary_create
@@ -498,6 +503,7 @@ flows:
       - page_id: page.dispatch_list
       - page_id: page.dispatch_edit
       - page_id: page.safety_fallback
+      - page_id: page.safety_fallback_edit
     binds:
       - domain:safety_dispatch
       - page.safety_boundary_list
@@ -506,6 +512,7 @@ flows:
       - page.dispatch_list
       - page.dispatch_edit
       - page.safety_fallback
+      - page.safety_fallback_edit
 
 requirements:
   - id: req.v25.energy_metering
@@ -555,7 +562,7 @@ requirements:
     upstream: [req.cross.safety_dispatch_base, req.v23.l0_l1_confidence]
     downstream: [req.v23.l0_l1_confidence]
     algo_vs_ui: mixed
-    notes: 策略/执行/验证三阶段；验证不入库；样本回流机理训练
+    notes: 策略/执行/验证三阶段；不绑定安全边界或下发策略，仅自动下发；水冷最低温差独立配置；兼容二次泵/风冷；验证复用仿真校验结构且不展示置信度
 
   - id: req.v24.global_opt_round_result
     version: v2.4
@@ -573,7 +580,7 @@ requirements:
     version: v2.3
     status: 开发中
     domain: sim_predict
-    prd_path: 04-需求文档/AI节能v2.3 版本/模型泛化性优化需求文档.md
+    prd_path: 04-需求文档/AI节能v2.3 版本/01-需求方案/模型泛化性优化需求文档.md
     prototype_pages:
       - 机理模型训练.html
       - 创建-编辑模型.html
@@ -642,10 +649,12 @@ requirements:
       - 安全边界-编辑.html
       - 智控下发策略管理.html
       - 创建-编辑智控下发策略.html
+      - 安全回退策略.html
+      - 创建-编辑安全回退策略.html
     upstream: []
     downstream: [req.v24.multi_condition, req.v24.global_opt_round_result]
     algo_vs_ui: mixed
-    notes: 安全边界+智控下发有页；安全回退能力散落、AI原型无独立页
+    notes: 安全边界、智控下发、安全回退策略均有独立页（列表+创建编辑）
 
 
 edges:
@@ -692,12 +701,6 @@ edges:
   - from: domain.safety_dispatch
     to: domain.cold_station_opt
     rel: binds
-  - from: page.safety_boundary_list
-    to: page.multi_condition_strategy
-    rel: binds
-  - from: page.dispatch_list
-    to: page.multi_condition_strategy
-    rel: binds
   # 置信贯穿冷站
   - from: req.v23.l0_l1_confidence
     to: page.cold_flex_opt
@@ -726,8 +729,6 @@ edges:
 noise:
   - id: noise.version_plan_stale
     note: 03-需求规划/01-版本计划.md 仅历史快照；版本范围/状态以 00-版本需求清单.md 为准
-  - id: noise.safety_fallback_missing_page
-    note: nav 有「安全回退策略」菜单项但 SIDEBAR_LINKS 无链接，AI 原型无独立页
   - id: noise.dual_data_quality
     note: 数据质量自检页并存 v2.1 实施期规则与 v2.5 表具 VEE，勿混为同一引擎
   - id: noise.manual_train_orphan

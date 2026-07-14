@@ -261,13 +261,6 @@
       color: var(--danger);
     }
 
-    .status-sub {
-      margin-top: 4px;
-      font-size: 11px;
-      color: var(--text-hint);
-      line-height: 1.5;
-    }
-
     .actions {
       display: inline-flex;
       align-items: center;
@@ -527,6 +520,14 @@
         align-items: flex-start;
       }
     }
+    @media (max-width: 720px) {
+      #app-sidebar, .sidebar { display: none !important; }
+      .body-wrap { display: block; }
+      .main { width: 100%; }
+      .page-shell { padding: 12px; }
+      .page-toolbar-left { flex-direction: column; align-items: stretch; }
+      .filter-select { width: 100%; }
+    }
   </style>
   <link rel="stylesheet" href="annotation-styles.css">
 </head>
@@ -545,8 +546,8 @@
             <span class="anno-tag">版本信息</span>
             <div class="anno-body">
               <p><b>当前版本：</b>v2.4</p>
-              <p><b>更新日期：</b>2026-07-02</p>
-              <p><b>变更概述：</b>新增独立模块「多工况探索」。四态：草稿/执行中/暂停中/已结束；执行中/暂停中/已结束以执行详情页为任务主页面；暂停中可断点续跑；新建须选目标系统。</p>
+              <p><b>更新日期：</b>2026-07-13</p>
+              <p><b>变更概述：</b>新增独立模块「多工况探索」。四态：草稿/执行中/暂停中/已结束；执行中/暂停中/已结束以执行详情页为任务主页面；暂停中可断点续跑；目标系统兼容水冷一次泵、二次泵及风冷冷水系统。</p>
               <p><b>本页说明：</b>本页是「多工况探索」模块的策略列表与生命周期管理入口，支持按策略名称搜索、按状态筛选、新建探索策略（须选择目标系统）；表格按状态显示操作入口；草稿仅制定/删除（无冻结、列表无执行按钮，开跑从制定页发起）；执行中/暂停中/已结束以执行详情页为主入口。</p>
             </div>
           </div>
@@ -561,7 +562,7 @@
                 <li>策略状态只有四个：草稿 / 执行中 / 暂停中 / 已结束。<b>无冻结步骤</b>；草稿仅「制定 / 删除」；开跑从策略制定页「发起执行」。</li>
                 <li><b>"验证"不是状态</b>：执行中/暂停中/已结束均以「执行详情」为任务主入口；验证仅能从执行详情「已记录」行进入。</li>
                 <li>草稿态是唯一允许"制定"与"删除"的状态；进入执行中及之后不再允许回到制定环节；执行中/暂停中/已结束以<strong>执行详情页为任务主页面</strong>；暂停中在执行详情页内断点续跑。</li>
-                <li>每条策略归属一个目标系统（水冷冷水系统对象），新建时必选且创建后不可改；开机组合、基准线与执行计划均锚定该目标系统（需求 §7.1）。</li>
+                <li>每条策略归属一个目标冷水系统（水冷或风冷），新建时必选且创建后不可改；开机组合自动回显当前开机设备并只读，基准线与执行计划均锚定该目标系统。</li>
                 <li>本页是模块唯一入口，需可跳转到策略制定、执行详情、验证详情三个子页，不额外新增其他入口。</li>
               </ul>
             </div>
@@ -690,7 +691,6 @@
                     <td>—</td>
                     <td class="status-cell">
                       <span class="status-tag draft">草稿</span>
-                      <div class="status-sub">排程未完成</div>
                     </td>
                     <td>赵工</td>
                     <td>2026-06-25</td>
@@ -708,7 +708,6 @@
                     <td>1号集成冷站仿真</td>
                     <td class="status-cell">
                       <span class="status-tag draft">草稿</span>
-                      <div class="status-sub">排程已就绪，可从制定页发起执行</div>
                     </td>
                     <td>赵工</td>
                     <td>2026-06-28</td>
@@ -726,7 +725,6 @@
                     <td>1号集成冷站仿真</td>
                     <td class="status-cell">
                       <span class="status-tag aborted">暂停中</span>
-                      <div class="status-sub">暂停原因：执行过程中检测到"开机设备发生变化"</div>
                     </td>
                     <td>李工</td>
                     <td>2026-01-15</td>
@@ -758,10 +756,10 @@
                   </thead>
                   <tbody>
                     <tr><td>策略名称</td><td>String</td><td>对应 <code>strategy_name</code>（需求 §4.1①）</td></tr>
-                    <tr><td>所属系统</td><td>String</td><td>策略归属的目标系统（水冷冷水系统对象），新建时必选、创建后不可改；开机组合与执行计划均锚定该系统（需求 §7.1）</td></tr>
-                    <tr><td>开机组合摘要</td><td>String（摘要）</td><td>对应 <code>device_combo</code> 开机组合快照的摘要展示（需求 §4.1①、§7.1）；草稿态尚未完成"确定开机组合"步骤时显示"—"。开机组合按设备类型（设备类型）设定，同类型所有开机实例同时下发相同设定值</td></tr>
+                    <tr><td>所属系统</td><td>String</td><td>策略归属的目标冷水系统（水冷或风冷），新建时必选、创建后不可改；开机组合与执行计划均锚定该系统</td></tr>
+                    <tr><td>开机组合摘要</td><td>String（摘要）</td><td>对应 <code>device_combo</code> 当前开机组合快照的摘要展示；进入策略制定页时自动读取并只读，未读取成功时显示"—"。同类型所有开机实例执行相同目标值</td></tr>
                     <tr><td>绑定仿真模型</td><td>String</td><td>对应 <code>sim_id</code>（需求 §4.1①、§7.1）；执行期每步记录与验证期对比查询均基于此模型</td></tr>
-                    <tr><td>状态</td><td>Enum</td><td>草稿 / 执行中 / 暂停中 / 已结束，四态定义见需求 §5.3。草稿副文案可提示「排程未完成」或「排程已就绪，可从制定页发起执行」；列表无「执行」按钮</td></tr>
+                    <tr><td>状态</td><td>Enum</td><td>草稿 / 执行中 / 暂停中 / 已结束，四态定义见需求 §5.3；列表仅展示状态标签，不附副文案；列表无「执行」按钮</td></tr>
                     <tr><td>创建人</td><td>String</td><td>对应 <code>created_by</code>（需求 §4.1①）</td></tr>
                     <tr><td>创建时间</td><td>Datetime</td><td>对应 <code>created_at</code></td></tr>
                     <tr><td>操作</td><td>Action</td><td>按状态显隐，见下方数据逻辑批注</td></tr>
@@ -803,7 +801,7 @@
               <div class="anno-body">
                 <p><b>关联模块：</b>表格行操作列</p>
                 <ul>
-                  <li><b>制定：</b>跳转多工况探索-策略制定.html，继续编辑该草稿的开机组合/基准线/执行计划（对应需求 §3.1 U1 策略制定工作台）；草稿可进入制定页继续编排并「发起执行」。</li>
+                  <li><b>制定：</b>跳转多工况探索-策略制定.html，查看只读开机组合并继续编辑基准线、探索参数和执行计划；草稿可进入制定页继续编排并「发起执行」。</li>
                   <li><b>执行详情：</b>跳转执行详情页（任务主页面，需求 §3.1 U2）。执行中 / 暂停中 / 已结束均可进入：执行中看实时进度与暂停/结束；暂停中可断点续跑或直接结束；已结束为只读终态。暂停中入口带 <code>?paused=1</code>，已结束带 <code>?ended=1</code>。验证在执行详情「已记录」行内「验证」进入（§9.0），列表不提供验证入口。</li>
                   <li><b>删除：</b>二次确认后从列表移除（示意）。</li>
                 </ul>
@@ -817,7 +815,7 @@
               <div class="anno-body">
                 <p><b>关联模块：</b>表格区域</p>
                 <ul>
-                  <li><b>默认态：</b>展示当前页策略列表（本原型静态展示 5 条示例，覆盖四态；草稿含「排程未完成」与「排程已就绪」两条演示）。</li>
+                  <li><b>默认态：</b>展示当前页策略列表（本原型静态展示 5 条示例，覆盖四态）。</li>
                   <li><b>空态：</b>搜索或筛选后无匹配数据时，表格区域展示"暂无匹配的探索策略"，并引导「新建探索策略」。</li>
                   <li><b>加载态：</b>真实环境下应展示骨架屏；本原型为静态数据，不模拟网络延迟。</li>
                 </ul>
@@ -876,7 +874,7 @@
                 <tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr>
               </thead>
               <tbody>
-                <tr><td>目标系统</td><td>单选下拉</td><td>是</td><td>策略归属的目标系统，选项只列水冷冷水系统对象、与真实系统冷站页签对齐（3#数据中心水冷冷水系统 / A路冷水系统 / C路冷水系统 / G1栋A路冷水系统 / G1栋B路冷水系统）；创建后不可改——需求 §7.1 开机组合锚定的是具体冷站系统</td></tr>
+                <tr><td>目标系统</td><td>单选下拉</td><td>是</td><td>策略归属的水冷或风冷冷水系统；创建后不可改。系统类型决定策略页展示的设备类型、默认探索范围及安全校验项</td></tr>
                 <tr><td>策略名称</td><td>文本输入</td><td>是</td><td>对应 <code>exploration_strategy.strategy_name</code>（需求 §4.1①）；创建后仍可在策略制定页继续修改</td></tr>
               </tbody>
             </table>
@@ -890,7 +888,7 @@
           <div class="anno-body">
             <p><b>关联模块：</b>新建探索策略弹窗</p>
             <ul>
-              <li><b>确定：</b>依次校验"目标系统已选择"与"策略名称非空"，通过后创建策略草稿并进入"策略制定"阶段（需求 §2.1 阶段一），跳转多工况探索-策略制定.html，由用户继续完成开机组合、基准线与执行计划编排；未选择目标系统或名称为空时给出提示，不跳转。</li>
+              <li><b>确定：</b>依次校验"目标系统已选择"与"策略名称非空"，通过后创建策略草稿并进入"策略制定"阶段；跳转后自动读取只读开机组合，由用户继续完成基准线与执行计划编排；未选择目标系统或名称为空时给出提示，不跳转。</li>
               <li><b>取消/关闭：</b>不创建策略，直接关闭弹窗。</li>
             </ul>
           </div>
@@ -917,13 +915,14 @@
             <option value="C路冷水系统">C路冷水系统</option>
             <option value="G1栋A路冷水系统">G1栋A路冷水系统</option>
             <option value="G1栋B路冷水系统">G1栋B路冷水系统</option>
+            <option value="B1栋风冷冷水系统" data-system-type="wind">B1栋风冷冷水系统</option>
           </select>
         </div>
         <div class="form-row">
           <label class="form-label" for="newStrategyName"><span class="req">*</span>策略名称</label>
           <input class="input-text" type="text" id="newStrategyName" placeholder="请输入策略名称，如「冷冻泵变频探索-2026Q3」">
         </div>
-        <div class="hint-block">创建后进入策略制定，完成开机组合、基准线与执行计划编排；目标系统创建后不可修改。</div>
+        <div class="hint-block">创建后进入策略制定，系统自动回显当前开机设备；用户完成基准线与执行计划编排，目标系统不可修改。</div>
       </div>
       <div class="modal-foot">
         <button type="button" class="btn btn-default" data-close>取 消</button>
@@ -1019,7 +1018,9 @@
           nameInput.focus();
           return;
         }
-        window.location.href = '多工况探索-策略制定.html';
+        var selectedOption = systemSelect.options[systemSelect.selectedIndex];
+        var query = selectedOption && selectedOption.getAttribute('data-system-type') === 'wind' ? '?system=wind' : '';
+        window.location.href = '多工况探索-策略制定.html' + query;
       });
 
       document.querySelectorAll('.action-link[data-action]').forEach(function (link) {
