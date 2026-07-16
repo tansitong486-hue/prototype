@@ -3,7 +3,7 @@
  * 视觉：深色顶栏（激活项与页面主按钮同色蓝）、浅色侧栏（激活项主色字+浅蓝底+左竖线）
  *
  *   <script src="components/nav.js"
- *     data-active-nav="运营管理"
+ *     data-active-nav="AI智能能效"
  *     data-active-sidebar="机房总览">
  *   </script>
  */
@@ -11,10 +11,9 @@
 (function () {
   'use strict';
 
-  const NAV_ITEMS = ['设施监控', '运营管理', '系统管理', '数据分析', '工程配置'];
+  const NAV_ITEMS = ['设施监控', 'AI智能能效', '系统管理', '数据分析', '工程配置'];
 
   const SIDEBAR_TREE = [
-    { label: '原型导航', href: 'index.html' },
     { label: '总览看板' },
     {
       group: '能耗分析',
@@ -24,27 +23,46 @@
     {
       group: '冷站能效优化',
       open: true,
-      children: ['冷站仿真对比', '冷站柔性寻优', '冷站全局寻优', '冷站长周期寻优', '多工况探索']
+      children: [
+        '冷站仿真对比',
+        '冷站柔性寻优',
+        '冷站全局寻优',
+        '冷站长周期寻优',
+        { label: '智能诊断', linkKey: '冷站智能诊断' }
+      ]
     },
     {
       group: '机房能效优化',
       open: true,
-      children: ['机房总览', '机房柔性寻优', '机房加减机寻优', '机房智能诊断']
+      children: [
+        '机房总览',
+        '机房柔性寻优',
+        '机房加减机寻优',
+        { label: '智能诊断', linkKey: '机房智能诊断' }
+      ]
     },
     {
-      group: '节能评估',
+      group: '节能效果评估',
       open: true,
       children: ['节能分析']
     },
     {
       group: '基础配置',
       open: true,
-      children: ['能效视图', '能源计费配置', '表具能耗明细']
+      children: ['能效视图', '能源计费配置']
     },
     {
       group: 'AI节能配置',
       open: true,
-      children: ['机理模型训练', '系统仿真建模', '安全边界', '智控下发策略', '安全回退策略', '机房热力模型']
+      children: [
+        '机理模型训练',
+        '系统仿真建模',
+        '安全边界',
+        '智控下发策略',
+        '安全回退策略',
+        '机房热力模型',
+        '冷站诊断规则'
+      ]
     }
   ];
 
@@ -54,7 +72,6 @@
     '用能对比分析': '用能对比分析.html',
     '能效视图': '能效视图.html',
     '能源计费配置': '能源配置.html',
-    '表具能耗明细': '能耗管理-表具明细.html',
     '机理模型训练': '机理模型训练.html',
     '系统仿真建模': '系统仿真建模.html',
     '机房总览': '机房总览.html',
@@ -65,13 +82,14 @@
     '冷站柔性寻优': '冷站柔性调优.html',
     '冷站全局寻优': '冷站全局寻优.html',
     '冷站长周期寻优': '冷站长周期寻优.html',
-    '多工况探索': '多工况探索-列表.html',
     '安全边界': '安全边界-列表.html',
     '智控下发策略': '智控下发策略管理.html',
     '安全回退策略': '安全回退策略.html',
     '节能分析': '节能分析.html',
     '用能定额考核': '用能定额考核.html',
-    '冷站仿真对比': '节能仿真对比-设定.html'
+    '冷站仿真对比': '节能仿真对比-设定.html',
+    '冷站智能诊断': '冷站智能诊断.html',
+    '冷站诊断规则': '冷站诊断规则.html'
   };
 
   /** 侧栏条目批注/原型版本角标；与 index.html 拓扑对应节点 version 对齐（同一菜单多页时以拓扑父/主节点为准） */
@@ -82,22 +100,22 @@
     '用能定额考核': 'v2.5',
     '能效视图': 'v2.5',
     '能源计费配置': 'v2.5',
-    '表具能耗明细': 'v2.5',
     '机理模型训练': 'v2.3',
     '系统仿真建模': 'v2.3',
     '机房总览': 'v1.9',
-    '机房柔性寻优': 'v1.7',
-    '机房加减机寻优': 'v1.7',
+    '机房柔性寻优': 'v2.6',
+    '机房加减机寻优': 'v2.6',
     '机房智能诊断': 'v1.9',
     '机房热力模型': 'v1.6',
     '冷站仿真对比': 'v2.3',
     '冷站柔性寻优': 'v2.3',
     '冷站全局寻优': 'v2.4',
     '冷站长周期寻优': 'v2.3',
-    '多工况探索': 'v2.4',
+    '冷站智能诊断': 'v1.5',
     '安全边界': 'v1.8',
     '智控下发策略': 'v1.0',
     '安全回退策略': 'v1.6',
+    '冷站诊断规则': 'v1.5',
     '节能分析': 'v2.5'
   };
 
@@ -114,7 +132,7 @@
     '能耗分析': ICON_CHART,
     '机房能效优化': ICON_SERVER,
     '冷站能效优化': ICON_COOL,
-    '节能评估': ICON_LEAF,
+    '节能效果评估': ICON_LEAF,
     'AI节能配置': ICON_GEAR,
     '基础配置': ICON_SLIDERS
   };
@@ -130,6 +148,17 @@
   }
 
   const config = getConfig();
+
+  function resolveSidebarChild(child) {
+    if (child && typeof child === 'object') {
+      return {
+        label: child.label,
+        linkKey: child.linkKey || child.label
+      };
+    }
+    return { label: child, linkKey: child };
+  }
+
 
   function injectStyles() {
     if (document.getElementById('nav-component-styles')) return;
@@ -721,8 +750,8 @@
     );
   }
 
-  function sidebarItemRowHtml(label) {
-    const ver = SIDEBAR_ITEM_VERSION[label];
+  function sidebarItemRowHtml(label, linkKey) {
+    const ver = SIDEBAR_ITEM_VERSION[linkKey || label];
     const verHtml = ver
       ? '<span class="sidebar-item-ver" title="页面批注/原型版本">' + ver + '</span>'
       : '';
@@ -742,8 +771,8 @@
     brand.className = 'sidebar-brand';
     brand.innerHTML =
       '<span class="sidebar-brand-mark" aria-hidden="true">AI</span>' +
-      '<span class="sidebar-brand-text">能效管理</span>';
-    brand.setAttribute('data-nav-tip', '能效管理');
+      '<span class="sidebar-brand-text">AI智能能效</span>';
+    brand.setAttribute('data-nav-tip', 'AI智能能效');
     aside.appendChild(brand);
 
     const scroll = document.createElement('div');
@@ -771,13 +800,15 @@
         });
 
         (node.children || []).forEach(function (child) {
-          const href = SIDEBAR_LINKS[child];
+          const resolved = resolveSidebarChild(child);
+          const href = SIDEBAR_LINKS[resolved.linkKey];
           const item = document.createElement(href ? 'a' : 'div');
           if (href) item.href = href;
-          item.className = 'sidebar-item' + (child === config.activeSidebar ? ' active' : '');
-          item.innerHTML = sidebarItemRowHtml(child);
-          item.setAttribute('data-nav-tip', child);
-          if (href) item.setAttribute('aria-label', child);
+          const isActive = resolved.linkKey === config.activeSidebar || resolved.label === config.activeSidebar;
+          item.className = 'sidebar-item' + (isActive ? ' active' : '');
+          item.innerHTML = sidebarItemRowHtml(resolved.label, resolved.linkKey);
+          item.setAttribute('data-nav-tip', resolved.label);
+          if (href) item.setAttribute('aria-label', resolved.label);
           childrenContainer.appendChild(item);
         });
 

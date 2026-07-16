@@ -20,7 +20,11 @@ domains:
   - id: domain.cold_station_opt
     name: 冷站 AI 节能
     value_prop: 整站最低能耗满足冷量
-    related_flows: [flow.cold_station_opt_family]
+    related_flows: [flow.cold_station_opt_family, flow.cold_station_diagnosis]
+  - id: domain.cold_station_diagnosis
+    name: 冷站智能诊断
+    value_prop: 设备与系统运行异常自动诊断与规则配置
+    related_flows: [flow.cold_station_diagnosis]
   - id: domain.room_opt
     name: 机房末端节能
     value_prop: 开几台、怎么调最省电
@@ -155,6 +159,13 @@ pages:
     domain: multi_condition
     version: v2.4
     role: subflow
+  - id: page.cold_diagnosis
+    file: 冷站智能诊断.html
+    nav_label: 冷站智能诊断
+    nav_group: 冷站能效优化
+    domain: cold_station_diagnosis
+    version: v1.5
+    role: entry
 
   # —— 机房能效优化 ——
   - id: page.room_overview
@@ -169,14 +180,14 @@ pages:
     nav_label: 机房柔性寻优
     nav_group: 机房能效优化
     domain: room_opt
-    version: v1.7
+    version: v2.6
     role: entry
   - id: page.room_add_remove_opt
     file: 机房寻优-加减机寻优.html
     nav_label: 机房加减机寻优
     nav_group: 机房能效优化
     domain: room_opt
-    version: v1.7
+    version: v2.6
     role: entry
   - id: page.room_diagnosis
     file: 机房智能诊断.html
@@ -345,6 +356,13 @@ pages:
     domain: safety_dispatch
     version: v1.6
     role: subflow
+  - id: page.cold_diagnosis_rules
+    file: 冷站诊断规则.html
+    nav_label: 冷站诊断规则
+    nav_group: AI节能配置
+    domain: cold_station_diagnosis
+    version: v1.5
+    role: entry
   - id: page.room_thermal_list
     file: 机房寻优-机房热力模型列表.html
     nav_label: 机房热力模型
@@ -416,6 +434,17 @@ flows:
       - page.safety_boundary_list
       - page.dispatch_list
       - page.safety_fallback
+
+  - id: flow.cold_station_diagnosis
+    name: 冷站智能诊断与规则
+    purpose: 冷站运行异常诊断结果查看，并在配置侧维护诊断规则与阈值
+    steps:
+      - page_id: page.cold_diagnosis
+      - page_id: page.cold_diagnosis_rules
+    binds:
+      - domain:cold_station_diagnosis
+      - page.cold_diagnosis
+      - page.cold_diagnosis_rules
 
   - id: flow.energy_config_to_consume
     name: 能耗配置到消费分析
@@ -638,6 +667,19 @@ requirements:
     algo_vs_ui: algo_only
     notes: 复用AirCooledPAC；L0/L1功率预测；只读接入健康检查/EER/节能量；无新页
 
+  - id: req.v26.room_opt_explainability
+    version: v2.6
+    status: 规划中
+    domain: room_opt
+    prd_path: 04-需求文档/AI节能v2.6 版本/末端寻优结果可解释性需求方案.md
+    prototype_pages:
+      - 机房寻优-加减机寻优.html
+      - 机房寻优-柔性寻优.html
+    upstream: []
+    downstream: []
+    algo_vs_ui: mixed
+    notes: 结论条（主标签+详细文案）+设备原因文案；算法仅补记场景码/原因码/参数，v1.6决策逻辑不变；3个UI落点（结论条/平面图浮窗/下发弹窗，设备原因两处同一套文案）
+
   - id: req.cross.safety_dispatch_base
     version: v1.6
     status: 已发布
@@ -725,6 +767,12 @@ edges:
   - from: req.v26.pac_power_predict
     to: domain.room_opt
     rel: enhances
+  - from: req.v26.room_opt_explainability
+    to: page.room_add_remove_opt
+    rel: enhances
+  - from: req.v26.room_opt_explainability
+    to: page.room_flex_opt
+    rel: enhances
 
 noise:
   - id: noise.version_plan_stale
@@ -736,4 +784,4 @@ noise:
   - id: noise.v24_explore_unlist_html
     note: 清单 v2.4 多工况条目仅链 PRD，未直链 4 个 HTML（拓扑/nav 已挂）
   - id: noise.v26_algo_only
-    note: v2.6 无新原型页；仅复用训练/同步弹窗，标 algo_only
+    note: v2.6 功率预测条目无新原型页（algo_only）；可解释性条目为既有加减机/柔性两页增量修改，非新建页

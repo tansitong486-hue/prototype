@@ -3,7 +3,7 @@
 > 原型侧入口。产品价值与域叙事见  
 > `07-产品文档/01-ai 节能/产品文档/00-产品全貌.md`。  
 > 机读关系：同目录 `product-graph.yaml`。  
-> 最后更新：2026-07-10
+> 最后更新：2026-07-16
 
 ---
 
@@ -48,6 +48,12 @@
 
 运行时绑定（非硬跳转）：仿真模型、安全边界、智控下发、安全回退。
 
+### 3.2.1 冷站智能诊断与规则 `flow.cold_station_diagnosis`
+
+`冷站智能诊断`（结果看板：待处理/全部、筛选、历史弹窗）⇄ 配置侧 `冷站诊断规则`（启用开关 + 规则配置阈值）
+
+对照现网 v1.5 已有能力补齐原型；侧栏分别在「冷站能效优化 / 智能诊断」与「AI节能配置 / 冷站诊断规则」。
+
 ### 3.3 能耗配置 → 消费 `flow.energy_config_to_consume`
 
 配置：`能效视图` / `能源配置` / `计费方案配置` / `能耗管理-表具明细` / `数据质量自检`  
@@ -65,6 +71,8 @@
 `机房总览` → 柔性 / 加减机；健康度 → `机房智能诊断`  
 `机房寻优-机房热力模型列表` → `创建机房模型` → `步骤2`（通道模式影响诊断是否可用）
 
+v2.6 可解释性：柔性 / 加减机两页均含「本轮寻优结论条（主标签徽章 + 详细文案）」，设备原因仅两处入口——平面图空调浮窗「调节原因」区块 + 手动下发弹窗设备行，两处展示同一段完整文案（无 chip 列、无独立解释弹窗），需求见 `04-需求文档/AI节能v2.6 版本/末端寻优结果可解释性需求方案.md`（req.v26.room_opt_explainability）。
+
 ### 3.6 安全与下发配置 `flow.config_crud_safety_dispatch`
 
 `安全边界-列表` → 创建/编辑  
@@ -81,7 +89,7 @@
 | `noise.dual_data_quality` | 同页自检：v2.1 实施期 vs v2.5 表具 VEE |
 | `noise.manual_train_orphan` | `手动训练.html` 未进 index 拓扑 |
 | `noise.v24_explore_unlist_html` | 清单多工况条目未直链 4 个 HTML |
-| `noise.v26_algo_only` | v2.6 无新原型页，标 algo_only |
+| `noise.v26_algo_only` | v2.6 功率预测条目无新原型页（algo_only）；可解释性条目改的是既有两页，非新建 |
 
 完整列表见 `product-graph.yaml` → `noise`。
 
@@ -94,6 +102,7 @@
 | 改多工况页 | flow.multi_condition_explore + v2.4 多工况 PRD 文首 |
 | 改总览/流向/定额 | flow.energy_config_to_consume + v2.5 两册 PRD |
 | 改冷站寻优/置信 | flow.cold_station_opt_family + v2.3 泛化性文档清单表 |
+| 改冷站诊断/规则 | flow.cold_station_diagnosis + 现网 `#/diagnosis-overview` / `#/diagnosis-rules` |
 | 改机房诊断 | flow.room_opt_diagnosis + v1.9 方案 §一–§二 |
 | 改模型训练/仿真 | flow.model_train_sim + v2.3/v2.2 相关条目 |
 
