@@ -157,7 +157,7 @@
     .exec-status-tag.pending { background:#F1F5F9; color:var(--text-hint); }
     .exec-status-tag.running { background:var(--primary-light); color:var(--primary); }
     .exec-status-tag.done { background:var(--success-light); color:var(--success); }
-    .exec-status-tag.aborted { background:var(--danger-light); color:var(--danger); }
+    .exec-status-tag.failed { background:var(--danger-light); color:var(--danger); }
     .fb-list { display:flex; flex-direction:column; gap:2px; }
     .fb-line { font-size:11.5px; color:var(--text-secondary); white-space:nowrap; font-variant-numeric:tabular-nums; }
     .ctrl-param { display:block; margin-top:4px; font-size:11.5px; color:var(--text-hint); }
@@ -427,9 +427,6 @@
       background:var(--primary-light); padding:2px 9px; border-radius:999px; flex-shrink:0;
     }
     .batch-name { font-size:13.5px; font-weight:700; color:var(--text-primary); }
-    .batch-tag { display:inline-flex; align-items:center; padding:2px 9px; border-radius:999px; font-size:11px; font-weight:600; }
-    .batch-tag.running { background:var(--primary-light); color:var(--primary); }
-    .batch-tag.pending { background:#F1F5F9; color:var(--text-hint); }
     .batch-guard-tag {
       display:inline-flex; align-items:center; gap:4px; padding:2px 9px; border-radius:999px;
       font-size:10.5px; font-weight:600; background:var(--warning-light); color:var(--warning);
@@ -715,7 +712,7 @@
             <div class="anno-body">
               <p><b>关联模块：</b>执行进度表格与批次折叠</p>
               <ul>
-                <li>当前正在执行的工况点高亮显示（浅蓝底 + 左侧色条），便于快速定位进度；批次标题栏点击可展开/收起，当前批次默认展开，其余批次默认收起并展示「待执行」占位行。</li>
+                <li>当前正在执行的工况点高亮显示（浅蓝底 + 左侧色条），便于快速定位进度；批次标题栏点击可展开/收起，当前批次默认展开，其余批次默认收起。</li>
                 <li>「已记录」状态的工况点提供「验证」，进入该归档点的验证详情（重训后预测 vs 归档实测）。其余状态不展示验证。</li>
               </ul>
             </div>
@@ -794,11 +791,13 @@
             <span class="anno-version">v2.4</span>
             <span class="anno-source" data-type="引用自需求文档">需求文档</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>排程明细与执行状态流转</p>
-              <p>本区每一行对应开跑时已勾选的一个工况点。行内序号、目标设定值与策略制定页保持一致；状态取自执行状态（待执行 / 执行中 / 已记录 / 暂停）；已记录行提供「验证」：</p>
+              <p><b>关联模块：</b>排程明细与执行状态流转（需求 §6.8）</p>
+              <p>本区每一行对应开跑时已勾选的一个工况点。行内序号、目标设定值与策略制定页保持一致；步骤执行状态共四态（待执行 / 执行中 / 已记录 / 执行失败）；已记录行提供「验证」：</p>
               <ul>
-                <li><b>待执行 → 执行中 → 已记录：</b>按批次内序号由系统自动流转；</li>
-                <li><b>暂停：</b>任务进入暂停中时，尚未采集的后续步统一置为「暂停」；可通过「断点续跑」新建 run 从剩余点继续；</li>
+                <li><b>待执行 → 执行中 → 已记录：</b>按批次内序号由系统自动流转，仅「下发到位 + 采集 + 归档」全部成功才置「已记录」；</li>
+                <li><b>执行失败：</b>步骤自身失败（下发失败 / 连续性超限 / 采集或归档失败）置「执行失败」，记录失败原因与当时反馈值，任务进入暂停中；</li>
+                <li><b>外部中断回待执行：</b>人工暂停 / 温差命中 / 安全回退导致暂停时，执行中步骤不计失败，计时作废回「待执行」；</li>
+                <li><b>断点续跑：</b>从首个非「已记录」步骤重新完整执行（重新下发 → 等待间隔 → 采集归档），「执行失败」步骤自动重试；已结束策略的剩余待执行步骤不再流转，失败与已记录步骤留痕；</li>
                 <li><b>行内「验证」：</b>仅「已记录」展示；点击进入该归档点的验证详情页（需求 §9），直接展示对比结果；</li>
                 <li>历史数据比对被排除的工况点不进入排程，本表无对应行。</li>
               </ul>
@@ -809,7 +808,6 @@
             <div class="batch-head">
               <span class="batch-index">批次 1/4</span>
               <span class="batch-name">冷冻泵变频探索</span>
-              <span class="batch-tag running">执行中</span>
             </div>
             <div class="batch-body">
               <div class="table-scroll-wrap">
@@ -893,7 +891,7 @@
                       <td class="cell-muted" id="contStep40">—</td>
                       <td class="cell-muted" id="collectStep40">—</td>
                       <td class="cell-muted" id="archStep40">—</td>
-                      <td id="statStep40"><span class="exec-status-tag pending">等待自动下发</span></td>
+                      <td id="statStep40"><span class="exec-status-tag pending">待执行</span></td>
                     </tr>
                   </tbody>
                 </table>
@@ -912,7 +910,6 @@
             <div class="batch-head" onclick="toggleBatch(this)">
               <span class="batch-index">批次 2/4</span>
               <span class="batch-name">冷却泵变频探索</span>
-              <span class="batch-tag pending">待执行</span>
               <span class="batch-toggle-icon">展开 ▾</span>
             </div>
             <div class="batch-body" style="display:none;">
@@ -989,7 +986,6 @@
             <div class="batch-head" onclick="toggleBatch(this)">
               <span class="batch-index">批次 3/4</span>
               <span class="batch-name">冷却塔变频探索</span>
-              <span class="batch-tag pending">待执行</span>
               <span class="batch-guard-tag">
                 <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
                 受最低冷冻冷却温差下限 3.0℃ 监测
@@ -1052,7 +1048,6 @@
             <div class="batch-head" onclick="toggleBatch(this)">
               <span class="batch-index">批次 4/4</span>
               <span class="batch-name">冷水主机出水温度探索</span>
-              <span class="batch-tag pending">待执行</span>
               <span class="batch-toggle-icon">展开 ▾</span>
             </div>
             <div class="batch-body" style="display:none;">
@@ -1118,15 +1113,15 @@
               <span class="anno-source" data-type="引用自需求文档">需求文档</span>
               <div class="anno-body">
                 <p><b>关联模块：</b>下发记录 Tab — 筛选条件与表格</p>
-                <p><b>下发记录：</b>记录本探索任务自动下发的方式、时间、执行主体、对象与属性、实际参数、下发参数和结果，并标记“主动激励来源”。</p>
+                <p><b>下发记录：</b>记录本探索任务自动下发的策略、时间、下发人、对象与属性、实际参数、下发参数和下发结果。可按策略、日期、关键词筛选（字段对齐冷站柔性寻优）。</p>
               </div>
             </div>
             <div class="filter-bar">
               <div class="filter-group">
-                <span class="filter-label">方式：</span>
-                <select class="filter-input" id="dispatchStrategyFilter" style="min-width:140px;">
+                <span class="filter-label">策略：</span>
+                <select class="filter-input" id="dispatchStrategyFilter" style="min-width:180px;">
                   <option value="">请选择</option>
-                  <option selected>自动下发</option>
+                  <option selected>多工况探索自动下发策略</option>
                 </select>
               </div>
               <div class="filter-group">
@@ -1144,7 +1139,7 @@
               <table class="data-table" id="dispatchTable" style="min-width:980px;">
                 <thead>
                   <tr>
-                    <th style="width:160px;">下发方式</th>
+                    <th style="width:200px;">下发策略</th>
                     <th style="width:160px;">下发时间</th>
                     <th style="width:80px;">下发人</th>
                     <th style="width:240px;">对象名称、下发属性</th>
@@ -1726,12 +1721,12 @@ function toggleBatch(headEl) {
 
 /* ---------- 下发记录（对齐冷站柔性寻优） ---------- */
 var DISPATCH_DATA = [
-  { strategy: '自动下发', time: '2026-06-28 09:20:00', user: '系统', target: '1号冷冻泵/频率设定', actual: '34.1', dispatch: '36.0', result: '成功' },
-  { strategy: '', time: '2026-06-28 09:20:00', user: '系统', target: '2号冷冻泵/频率设定', actual: '33.9', dispatch: '36.0', result: '成功' },
-  { strategy: '', time: '2026-06-28 09:20:00', user: '系统', target: '3号冷冻泵/频率设定', actual: '34.0', dispatch: '36.0', result: '成功' },
-  { strategy: '自动下发', time: '2026-06-28 09:42:00', user: '系统', target: '1号冷冻泵/频率设定', actual: '36.2', dispatch: '38.0', result: '成功' },
-  { strategy: '', time: '2026-06-28 09:42:00', user: '系统', target: '2号冷冻泵/频率设定', actual: '35.8', dispatch: '38.0', result: '成功' },
-  { strategy: '', time: '2026-06-28 09:42:00', user: '系统', target: '3号冷冻泵/频率设定', actual: '36.1', dispatch: '38.0', result: '成功' }
+  { strategy: '多工况探索自动下发策略', time: '2026-06-28 09:20:00', user: '系统管理员', target: '1号冷冻泵/频率设定', actual: '34.1', dispatch: '36.0', result: '成功' },
+  { strategy: '', time: '2026-06-28 09:20:00', user: '系统管理员', target: '2号冷冻泵/频率设定', actual: '33.9', dispatch: '36.0', result: '成功' },
+  { strategy: '', time: '2026-06-28 09:20:00', user: '系统管理员', target: '3号冷冻泵/频率设定', actual: '34.0', dispatch: '36.0', result: '成功' },
+  { strategy: '多工况探索自动下发策略', time: '2026-06-28 09:42:00', user: '系统管理员', target: '1号冷冻泵/频率设定', actual: '36.2', dispatch: '38.0', result: '成功' },
+  { strategy: '', time: '2026-06-28 09:42:00', user: '系统管理员', target: '2号冷冻泵/频率设定', actual: '35.8', dispatch: '38.0', result: '成功' },
+  { strategy: '', time: '2026-06-28 09:42:00', user: '系统管理员', target: '3号冷冻泵/频率设定', actual: '36.1', dispatch: '38.0', result: '成功' }
 ];
 
 function renderDispatchTable() {
