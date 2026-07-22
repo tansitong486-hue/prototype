@@ -665,7 +665,7 @@ requirements:
     upstream: [req.v23.l0_l1_confidence]
     downstream: []
     algo_vs_ui: algo_only
-    notes: 复用AirCooledPAC；L0/L1功率预测；只读接入健康检查/EER/节能量；无新页
+    notes: 复用AirCooledPAC；L0基础机理不依赖设备级电表，L1高阶模型依赖单机功率标签且可选；寻优消费由req.v26.room_opt_device_capability承接；无新页
 
   - id: req.v26.room_opt_explainability
     version: v2.6
@@ -678,7 +678,20 @@ requirements:
     upstream: []
     downstream: []
     algo_vs_ui: mixed
-    notes: 结论条（主标签+详细文案）+设备原因文案；算法仅补记场景码/原因码/参数，v1.6决策逻辑不变；3个UI落点（结论条/平面图浮窗/下发弹窗，设备原因两处同一套文案）
+    notes: 结论条（主标签+详细文案）+设备原因文案；解释功能仅补记场景码/原因码/参数，不改变实际引擎决策；水冷取v1.6字段，风冷取P_reference/Q_constraint等价能力字段；3个UI落点
+
+  - id: req.v26.room_opt_device_capability
+    version: v2.6
+    status: 规划中
+    domain: room_opt
+    prd_path: 04-需求文档/AI节能v2.6 版本/末端寻优设备能力抽象架构设计方案.md
+    prototype_pages:
+      - 机房寻优-加减机寻优.html
+      - 机房寻优-柔性寻优.html
+    upstream: []
+    downstream: []
+    algo_vs_ui: algo_only
+    notes: 通用内核+设备能力插件；基础PowerModel必备、高阶模型可选；按参考开机工况扩展风冷加减机，按v1.6反馈式Si扩展风冷柔性；动态冷量只允许收紧Qr×alpha；不实现混合编队
 
   - id: req.cross.safety_dispatch_base
     version: v1.6
@@ -766,6 +779,15 @@ edges:
     rel: reuses
   - from: req.v26.pac_power_predict
     to: domain.room_opt
+    rel: optionally_enhances
+  - from: req.v26.pac_power_predict
+    to: req.v26.room_opt_device_capability
+    rel: optionally_enhances
+  - from: req.v26.room_opt_device_capability
+    to: page.room_add_remove_opt
+    rel: enhances
+  - from: req.v26.room_opt_device_capability
+    to: page.room_flex_opt
     rel: enhances
   - from: req.v26.room_opt_explainability
     to: page.room_add_remove_opt
@@ -784,4 +806,4 @@ noise:
   - id: noise.v24_explore_unlist_html
     note: 清单 v2.4 多工况条目仅链 PRD，未直链 4 个 HTML（拓扑/nav 已挂）
   - id: noise.v26_algo_only
-    note: v2.6 功率预测条目无新原型页（algo_only）；可解释性条目为既有加减机/柔性两页增量修改，非新建页
+    note: v2.6 功率预测与设备能力架构条目均无新原型页（algo_only）；可解释性条目为既有加减机/柔性两页增量修改，非新建页

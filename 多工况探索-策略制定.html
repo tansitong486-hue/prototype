@@ -216,7 +216,7 @@
     .point-select:focus-visible {
       border-color:var(--primary); box-shadow:0 0 0 2px rgba(30,64,175,.15);
     }
-    .data-table.schedule-table { min-width: 1320px; }
+    .data-table.schedule-table { min-width: 1080px; }
     .data-table thead th {
       padding: 10px 12px;
       text-align: left;
@@ -262,8 +262,6 @@
       border-top: 1px dashed var(--border-light);
     }
     .interval-row .form-group { max-width: 280px; }
-    .batch-guard-cell { font-size: 12px; color: var(--text-secondary); line-height: 1.5; max-width: 200px; }
-
     .table-input {
       width: 76px;
       padding: 6px 8px;
@@ -495,8 +493,8 @@
             <span class="anno-tag">版本信息</span>
             <div class="anno-body">
               <p><b>当前版本：</b>v2.4</p>
-              <p><b>更新日期：</b>2026-07-13</p>
-              <p><b>变更概述：</b>按 2.4 最新口径重构：开机组合改为自动回显只读；移除安全边界和探索下发策略；探索范围改为内置默认值后可编辑；探索方向支持向上/向下；基准值、范围和步长统一 1 位小数；全策略统一间隔默认 15 分钟；水冷场景新增最低冷冻冷却温差下限；兼容二次泵和风冷冷水系统；执行计划移除单步预计时长。</p>
+              <p><b>更新日期：</b>2026-07-22</p>
+              <p><b>变更概述：</b>按 2.4 测试评审口径收口：执行计划清单改为临时生成，不随草稿保存；再次进入制定页重新生成并重新勾选；保存草稿后返回列表；计划表删除参数校验与安全校验列，校验仍作为生成和执行门禁；密码错误时保留当前弹窗并提示原因。</p>
               <p><b>本页说明：</b>本页面向实施人员，用于编排并启动一次自动探索策略：① 回显当前开机组合并绑定仿真模型/安全回退策略 → ② 配置基准值、方向和可编辑默认范围 → ③ 配置步长、统一间隔和水冷最低温差 → ④ 生成计划并审核勾选 → 开始执行。配置过程中不下发；完成执行前校验与密码确认后开始自动执行。</p>
             </div>
           </div>
@@ -521,7 +519,8 @@
               <p><b>关联模块：</b>整页状态（策略制定工作台）</p>
               <ul>
                 <li><b>新建态（默认，无 URL 参数）：</b>① 自动回显当前开机设备且只读；仿真模型/回退策略可选；② 基准值留空，范围带出默认值；③ 间隔默认 15；④ 清单空态；参数校验通过后可生成计划。</li>
-                <li><b>已生成排程（草稿）：</b>④ 展开展示排程（含已覆盖灰显行，默认不勾选）；可保存草稿、持续调整勾选与绑定；满足就绪条件后「开始执行」可用。</li>
+                <li><b>已生成排程（草稿）：</b>④ 展开展示临时排程（含已覆盖灰显行，默认不勾选）；保存草稿只保存策略配置并返回列表，不保存排程和勾选状态。</li>
+                <li><b>再次进入草稿：</b>加载已保存配置后主动重新生成清单；勾选按覆盖规则恢复默认值，用户需重新审核。</li>
                 <li><b>只读查看态（<code>?mode=view</code>）：</b>顶部只读提示；全部输入只读；仅保留「返回执行详情」。</li>
               </ul>
             </div>
@@ -1022,7 +1021,7 @@
               <ul>
                 <li><b>邻域窗口：</b>目标值 v ± 半个调整步长；窗口内数据完整、质量有效的样本 n ≥ 20 → 已覆盖（灰显、默认不勾选、可勾回）；n &lt; 20 → 空白/稀疏（默认勾选）。不执行稳态筛选。</li>
                 <li><b>间隔写入：</b>所有计划行使用同一间隔；采集规则 =「下发后第 {N} 分钟采集并进入下一步」。</li>
-                <li><b>安全校验：</b>水冷系统计划写入「冷冻冷却温差须高于策略配置下限」；风冷系统不执行此项。</li>
+                <li><b>安全校验：</b>水冷系统仍校验「冷冻冷却温差须高于策略配置下限」，但结果不在计划表中单独占列；风冷系统不执行此项。</li>
                 <li>已覆盖点<b>不从清单消失</b>，仅灰显且默认不勾选。</li>
               </ul>
             </div>
@@ -1058,8 +1057,6 @@
                         <th>目标设定值</th>
                         <th>补偿 / 步长</th>
                         <th>历史样本 n 值</th>
-                        <th>参数校验</th>
-                        <th>安全校验</th>
                         <th>定时采集规则</th>
                       </tr>
                     </thead>
@@ -1072,8 +1069,6 @@
                         <td>32.0 Hz</td>
                         <td>+2.0 Hz</td>
                         <td><span class="status-tag">n=42</span></td>
-                        <td><span class="status-tag pass">通过</span></td>
-                        <td class="batch-guard-cell">—</td>
                         <td class="dwell-cell">下发后第15分钟采集并进入下一步</td>
                       </tr>
                       <tr class="schedule-row row-covered" data-batch="chwp">
@@ -1084,8 +1079,6 @@
                         <td>34.0 Hz</td>
                         <td>+2.0 Hz</td>
                         <td><span class="status-tag">n=28</span></td>
-                        <td><span class="status-tag pass">通过</span></td>
-                        <td class="batch-guard-cell">—</td>
                         <td class="dwell-cell">下发后第15分钟采集并进入下一步</td>
                       </tr>
                       <tr class="schedule-row" data-batch="chwp">
@@ -1096,8 +1089,6 @@
                         <td>36.0 Hz</td>
                         <td>+2.0 Hz</td>
                         <td><span class="status-tag">n=8</span></td>
-                        <td><span class="status-tag pass">通过</span></td>
-                        <td class="batch-guard-cell">—</td>
                         <td class="dwell-cell">下发后第15分钟采集并进入下一步</td>
                       </tr>
                       <tr class="schedule-row" data-batch="chwp">
@@ -1108,8 +1099,6 @@
                         <td>38.0 Hz</td>
                         <td>+2.0 Hz</td>
                         <td><span class="status-tag">n=3</span></td>
-                        <td><span class="status-tag pass">通过</span></td>
-                        <td class="batch-guard-cell">—</td>
                         <td class="dwell-cell">下发后第15分钟采集并进入下一步</td>
                       </tr>
                       <tr class="schedule-row row-covered batch-start" data-batch="cwp">
@@ -1120,8 +1109,6 @@
                         <td>32.0 Hz</td>
                         <td>+2.0 Hz</td>
                         <td><span class="status-tag">n=35</span></td>
-                        <td><span class="status-tag pass">通过</span></td>
-                        <td class="batch-guard-cell">—</td>
                         <td class="dwell-cell">下发后第15分钟采集并进入下一步</td>
                       </tr>
                       <tr class="schedule-row" data-batch="cwp">
@@ -1132,8 +1119,6 @@
                         <td>34.0 Hz</td>
                         <td>+2.0 Hz</td>
                         <td><span class="status-tag">n=12</span></td>
-                        <td><span class="status-tag pass">通过</span></td>
-                        <td class="batch-guard-cell">—</td>
                         <td class="dwell-cell">下发后第15分钟采集并进入下一步</td>
                       </tr>
                       <tr class="schedule-row" data-batch="cwp">
@@ -1144,8 +1129,6 @@
                         <td>36.0 Hz</td>
                         <td>+2.0 Hz</td>
                         <td><span class="status-tag">n=5</span></td>
-                        <td><span class="status-tag pass">通过</span></td>
-                        <td class="batch-guard-cell">—</td>
                         <td class="dwell-cell">下发后第15分钟采集并进入下一步</td>
                       </tr>
                       <tr class="schedule-row" data-batch="cwp">
@@ -1156,8 +1139,6 @@
                         <td>38.0 Hz</td>
                         <td>+2.0 Hz</td>
                         <td><span class="status-tag">n=0</span></td>
-                        <td><span class="status-tag pass">通过</span></td>
-                        <td class="batch-guard-cell">—</td>
                         <td class="dwell-cell">下发后第15分钟采集并进入下一步</td>
                       </tr>
                       <tr class="schedule-row batch-start" data-batch="ct">
@@ -1168,8 +1149,6 @@
                         <td>32.0 Hz</td>
                         <td>+2.0 Hz</td>
                         <td><span class="status-tag">n=15</span></td>
-                        <td><span class="status-tag pass">通过</span></td>
-                        <td class="batch-guard-cell">冷冻冷却温差须 &gt; 3.0℃</td>
                         <td class="dwell-cell">下发后第15分钟采集并进入下一步</td>
                       </tr>
                       <tr class="schedule-row" data-batch="ct">
@@ -1180,8 +1159,6 @@
                         <td>34.0 Hz</td>
                         <td>+2.0 Hz</td>
                         <td><span class="status-tag">n=6</span></td>
-                        <td><span class="status-tag pass">通过</span></td>
-                        <td class="batch-guard-cell">冷冻冷却温差须 &gt; 3.0℃</td>
                         <td class="dwell-cell">下发后第15分钟采集并进入下一步</td>
                       </tr>
                       <tr class="schedule-row batch-start" data-batch="chiller">
@@ -1192,8 +1169,6 @@
                         <td>8.5 ℃</td>
                         <td>-0.5 ℃</td>
                         <td><span class="status-tag">n=18</span></td>
-                        <td><span class="status-tag pass">通过</span></td>
-                        <td class="batch-guard-cell">—</td>
                         <td class="dwell-cell">下发后第15分钟采集并进入下一步</td>
                       </tr>
                       <tr class="schedule-row" data-batch="chiller">
@@ -1204,8 +1179,6 @@
                         <td>8.0 ℃</td>
                         <td>-0.5 ℃</td>
                         <td><span class="status-tag">n=9</span></td>
-                        <td><span class="status-tag pass">通过</span></td>
-                        <td class="batch-guard-cell">—</td>
                         <td class="dwell-cell">下发后第15分钟采集并进入下一步</td>
                       </tr>
                     </tbody>
@@ -1235,8 +1208,6 @@
                   <tr><td>目标设定值</td><td>只读</td><td>—</td><td>—</td><td>基准 + 累计补偿</td><td>生成后随重新生成刷新；执行中锁定</td></tr>
                   <tr><td>补偿 / 步长</td><td>只读</td><td>—</td><td>—</td><td>取③步长</td><td>—</td></tr>
                   <tr><td>历史样本 n 值</td><td>只读</td><td>—</td><td>—</td><td>如 n=42 / n=8</td><td>n≥20 为已覆盖</td></tr>
-                  <tr><td>参数校验</td><td>只读</td><td>—</td><td>—</td><td>通过</td><td>校验目标值未超出用户配置范围</td></tr>
-                  <tr><td>安全校验</td><td>只读</td><td>—</td><td>—</td><td>水冷：冷冻冷却温差须高于配置下限；风冷：—</td><td>不引用安全边界</td></tr>
                   <tr><td>定时采集规则</td><td>只读</td><td>—</td><td>—</td><td>下发后第 {间隔} 分钟采集并进入下一步</td><td>随间隔时长写入/刷新；不判断稳态</td></tr>
                 </tbody>
               </table>
@@ -1251,7 +1222,8 @@
               <p><b>关联模块：</b>④ 执行计划清单</p>
               <ul>
                 <li><b>全选 / 清空勾选：</b>草稿态可用；全选会勾上已覆盖灰显行（强制勾回）。</li>
-                <li><b>保存草稿：</b>保存当前排程、勾选、仿真模型、回退策略及安全参数。</li>
+                <li><b>保存草稿：</b>只保存策略配置，不保存当前排程和勾选状态；保存成功后返回列表页。</li>
+                <li><b>重新进入：</b>加载已保存配置后主动重新生成清单，勾选恢复默认规则，用户需重新审核。</li>
                 <li><b>开始执行：</b>校验策略已就绪后，先弹出 4 项执行前校验；用户确认后输入操作密码，校验通过即跳转执行详情运行态。</li>
               </ul>
             </div>
@@ -1263,7 +1235,7 @@
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
               <p><b>关联模块：</b>④ 汇总条</p>
-              <p>「共 N 步」= 清单总行数（含已覆盖灰显）；「拟执行 K 步」随勾选变化；统一间隔取策略字段。清单和汇总均不展示单步预计时长。</p>
+              <p>「共 N 步」= 当前临时清单总行数（含已覆盖灰显）；「拟执行 K 步」随勾选变化；统一间隔取策略字段。清单和勾选不随草稿保存，且不展示参数校验、安全校验或单步预计时长。</p>
             </div>
           </div>
 
@@ -1329,7 +1301,7 @@
           <span class="anno-tag">字段说明</span><span class="anno-version">v2.4</span><span class="anno-source">需求文档</span>
           <div class="anno-body">
             <p><b>关联模块：</b>开始执行 - 密码校验弹窗</p>
-            <p>操作密码必填；校验通过后策略进入执行中并跳转执行详情，默认直接展示执行进度与下发记录模块。</p>
+            <p>操作密码必填；密码错误时停留在当前弹窗并显示失败原因，可重新输入；校验通过后策略进入执行中并跳转执行详情。</p>
           </div>
         </div>
         <label class="field-label" for="startPassword">请输入操作密码<span class="required">*</span></label>
@@ -1519,7 +1491,9 @@
     });
 
     document.getElementById('btnSaveDraft').addEventListener('click', function () {
-      showToast('已保存草稿，可随时回来继续编辑');
+      sessionStorage.setItem('multiConditionDraftSaved', '1');
+      showToast('草稿配置已保存，正在返回列表');
+      setTimeout(function () { location.href = '多工况探索-列表.html'; }, 700);
     });
 
     document.getElementById('btnGotoExec').addEventListener('click', function () {
@@ -1567,6 +1541,11 @@
         document.getElementById('startPassword').focus();
         return;
       }
+      if (password !== '123456') {
+        document.getElementById('passwordError').textContent = '密码错误，请重新输入';
+        document.getElementById('startPassword').select();
+        return;
+      }
       var target = '多工况探索-执行详情.html';
       if (new URLSearchParams(location.search).get('system') === 'wind') target += '?system=wind';
       location.href = target;
@@ -1575,6 +1554,9 @@
     document.getElementById('btnConfirmPassword').addEventListener('click', confirmStart);
     document.getElementById('startPassword').addEventListener('keydown', function (event) {
       if (event.key === 'Enter') confirmStart();
+    });
+    document.getElementById('startPassword').addEventListener('input', function () {
+      document.getElementById('passwordError').textContent = '';
     });
 
     /* 只读查看态（?mode=view） */
@@ -1618,6 +1600,22 @@
       applyViewMode();
     }
 
+    function initSavedDraftMode() {
+      var demoBaseline = { chwp: '30.0', schwp: '32.0', cwp: '32.0', ct: '28.0', chiller: '9.0' };
+      document.getElementById('strategyNameInput').value = '冷冻泵变频探索-2026Q3';
+      document.querySelectorAll('.baseline-row').forEach(function (row) {
+        var input = row.querySelector('.baseline-input');
+        input.value = demoBaseline[row.getAttribute('data-device-type')] || '';
+        validateBaselineRow(row);
+      });
+      document.querySelectorAll('.schedule-row').forEach(function (row) {
+        row.querySelector('.schedule-checkbox').checked = !row.classList.contains('row-covered');
+      });
+      updateGenerateButtonState();
+      document.getElementById('btnGenerateSchedule').click();
+      showToast('已按草稿配置重新生成执行计划，请重新审核勾选');
+    }
+
     function formatOneDecimal(input) {
       var n = Number(input.value);
       if (input.value !== '' && !isNaN(n)) input.value = n.toFixed(1);
@@ -1659,6 +1657,8 @@
     }
     if (params.get('mode') === 'view') {
       initViewMode();
+    } else if (sessionStorage.getItem('multiConditionDraftSaved') === '1') {
+      initSavedDraftMode();
     } else {
       updateExecButton();
     }

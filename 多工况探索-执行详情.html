@@ -148,8 +148,6 @@
     .cell-muted { color:var(--text-hint); }
     .continuity-pass { color:var(--success); font-weight:600; }
     .continuity-fail { color:var(--danger); font-weight:700; }
-    .collect-wait { color:var(--warning); }
-    .collect-done { color:var(--success); }
     .exec-status-tag {
       display:inline-flex; align-items:center; padding:2px 9px; border-radius:999px;
       font-size:11px; font-weight:600; white-space:nowrap;
@@ -537,8 +535,8 @@
           <span class="anno-tag">版本信息</span>
           <div class="anno-body">
             <p><b>当前版本：</b>v2.4</p>
-            <p><b>更新日期：</b>2026-07-13</p>
-            <p><b>变更概述：</b>执行改为本期唯一的自动下发模式：移除探索下发策略、策略切换和手动下发；间隔到点后直接定时采集归档，不再判断稳态；前置门禁校验自动下发能力和相关寻优停止；运行期使用策略配置的最低冷冻冷却温差下限；安全回退同时停止探索及同控制域相关寻优；保留执行进度与下发记录双 Tab。</p>
+            <p><b>更新日期：</b>2026-07-22</p>
+            <p><b>变更概述：</b>按 2.4 测试评审口径收口：人工暂停在当前步骤完成采集归档后生效，后续步骤不再调度；调整幅度允许偏差放宽为频率 ±2.0 Hz、温度 ±1.0 ℃；执行进度表删除“定时采集状态”列；失败原因只在下发记录详情查看；密码错误保留当前弹窗并提示；运行态数据每 5 秒自动刷新。</p>
             <p><b>本页说明：</b>策略制定页已完成“开始执行 → 执行前校验 → 密码校验”，进入本页时策略已是执行中，默认直接展示执行进度与下发记录。面包屑「多工况探索」返回列表页；「已记录」行「验证」跳转验证详情。</p>
           </div>
         </div>
@@ -548,7 +546,7 @@
           <span class="anno-version">v2.4</span>
           <span class="anno-source" data-type="引用自需求文档">需求文档</span>
           <div class="anno-body">
-            <p><b>本页做什么：</b>作为任务主页面展示探索任务、自动下发链路和安全回退；支持暂停、结束与断点续跑；按排程自动下发，间隔到点后定时采集归档；展示执行进度与系统下发记录。首次开始执行在策略制定页完成。</p>
+            <p><b>本页做什么：</b>作为任务主页面展示探索任务、自动下发链路和安全回退；支持暂停、结束与断点续跑；按排程自动下发并归档；执行中每 5 秒刷新状态，列表页不自动刷新。首次开始执行在策略制定页完成。</p>
             <p><b>本页不做：</b>不提供探索下发策略、手动下发或线上手动兜底；自动下发条件不满足时拦截执行并提示按线下 SOP 处理。</p>
           </div>
         </div>
@@ -559,7 +557,7 @@
           <span class="anno-source" data-type="引用自需求文档">需求文档</span>
           <div class="anno-body">
             <p><b>关联模块：</b>断点续跑口径（8.6）</p>
-            <p><b>暂停中可断点续跑，也可直接结束；已结束不可续跑</b>：人工暂停 / 安全回退触发 / 运行期硬校验 → <strong>暂停中</strong>，可断点续跑或手动「结束」。排程全部完成（自动）或执行中/暂停中手动「结束」→ <strong>已结束</strong>，不可续跑。续跑前须重过 8.1 前置校验并重新快照主表绑定。</p>
+            <p><b>暂停可断点续跑，也可直接结束；已结束不可续跑</b>：人工暂停通过密码校验后，当前步骤继续完成下发、等待、采集和归档，完成后进入<strong>暂停</strong>，后续步骤不再调度；安全回退和运行期硬校验仍按安全规则即时中断。续跑前须重新完成前置校验与密码校验。</p>
           </div>
         </div>
 
@@ -585,7 +583,7 @@
             <p><b>关联模块：</b>顶部三卡片（探索任务 / 自动下发 / 安全回退策略）</p>
             <ul>
               <li>布局、class 与配色直接复用冷站柔性调优、冷站全局寻优页的 <code>module-strip</code> / <code>module-card</code> 结构，保持三个寻优类页面顶部体验一致。</li>
-              <li><b>卡1 探索任务：</b>首次开始、执行前校验和密码确认均在策略制定页完成；进入本页后，执行中显示「暂停 / 结束」，暂停中显示「断点续跑 / 结束」，已结束为只读终态。断点续跑仍需重新执行前置校验和密码确认。验证从「已记录」行进入，不在任务卡提供策略级入口。</li>
+              <li><b>卡1 探索任务：</b>执行中显示「暂停 / 结束」；人工暂停确认后先完成当前步骤，再进入暂停并显示「断点续跑 / 结束」；已结束为只读终态。断点续跑仍需重新执行前置校验和密码确认。</li>
               <li><b>卡2 自动下发：</b>固定展示自动模式与链路状态，不提供策略切换。卡3保留一键回退与回退策略切换。</li>
             </ul>
           </div>
@@ -690,7 +688,7 @@
           <span class="anno-source" data-type="引用自需求文档">需求文档</span>
           <div class="anno-body">
             <p><b>关联模块：</b>暂停操作语义（8.6）</p>
-            <p>「暂停」→暂停中（可续跑或直接结束）；「结束」→已结束（不可续跑），执行中与暂停中均可点结束。二者均停止后续下发且不自动回送设定值。安全回退自动触发→暂停中（回送由回退策略执行）。排程全部完成→自动已结束。</p>
+            <p>「暂停」确认后先完成当前步骤，再进入暂停（可续跑或直接结束）；「结束」→已结束（不可续跑），执行中与暂停均可点结束。安全回退自动触发→暂停（回送由回退策略执行）。排程全部完成→自动已结束。</p>
           </div>
         </div>
 
@@ -742,13 +740,13 @@
               <table class="anno-table">
                 <thead><tr><th>设备类型</th><th>控制量</th><th>默认调整步长</th><th>连续性允许偏差</th></tr></thead>
                 <tbody>
-                  <tr><td>冷冻泵 / 二次泵</td><td>频率</td><td>2 Hz</td><td>± 1.0 Hz</td></tr>
-                  <tr><td>冷却泵</td><td>频率</td><td>2 Hz</td><td>± 1.0 Hz</td></tr>
-                  <tr><td>冷却塔</td><td>频率设定</td><td>2.0 Hz</td><td>± 1.0 Hz（水冷场景另受最低冷冻冷却温差校验）</td></tr>
-                  <tr><td>冷水主机</td><td>冷冻出水温度设定</td><td>0.5 ℃</td><td>± 0.5 ℃</td></tr>
+                  <tr><td>冷冻泵 / 二次泵</td><td>频率</td><td>2 Hz</td><td>± 2.0 Hz</td></tr>
+                  <tr><td>冷却泵</td><td>频率</td><td>2 Hz</td><td>± 2.0 Hz</td></tr>
+                  <tr><td>冷却塔</td><td>频率设定</td><td>2.0 Hz</td><td>± 2.0 Hz（水冷场景另受最低冷冻冷却温差校验）</td></tr>
+                  <tr><td>冷水主机</td><td>冷冻出水温度设定</td><td>0.5 ℃</td><td>± 1.0 ℃</td></tr>
                 </tbody>
               </table>
-              <p>例：应执行 +2 Hz、某实例实际反馈仅 +0.5 Hz → 超出 1.0 Hz 容差，停止下发并告警留痕。</p>
+              <p>例：应执行 +2 Hz、某实例实际反馈为 -0.5 Hz，二者偏差为 2.5 Hz → 超出 2.0 Hz 容差，停止下发并告警留痕。</p>
             </div>
           </div>
           <div class="anno anno-data" data-version="v2.4">
@@ -762,7 +760,7 @@
                 <li><b>采集时间：</b>等待本次 run 快照的统一间隔时长，默认 15 分钟；</li>
                 <li><b>到时动作：</b>立即采集一次实际反馈，并查询绑定仿真模型的最新结果；</li>
                 <li><b>归档推进：</b>保存实际值、预测值、目标值、采集时间和主动激励来源，成功后进入下一步；</li>
-                <li><b>不再判断：</b>不计算连续采样窗口、极差阈值或稳态状态。采集失败时当前步骤不记为已记录，任务进入暂停中。</li>
+                <li><b>不再判断：</b>不计算连续采样窗口、极差阈值或稳态状态。采集失败时当前步骤不记为已记录，任务进入暂停。</li>
               </ul>
               <p>等待期间仍持续执行开机组合、自动下发链路、水冷最低温差和安全回退监测；本次简化仅移除稳态判断。</p>
             </div>
@@ -773,7 +771,7 @@
             <span class="anno-source" data-type="引用自需求文档">需求文档</span>
             <div class="anno-body">
               <p><b>关联模块：</b>运行期持续监测规则</p>
-              <p>持续监测：① 开机组合漂移；② 自动下发链路异常；③ 水冷系统任一相关主机冷冻冷却温差 ≤ 策略配置下限。任一命中均停止后续自动下发并进入暂停中；风冷系统不执行第③项。</p>
+              <p>持续监测：① 开机组合漂移；② 自动下发链路异常；③ 水冷系统任一相关主机冷冻冷却温差 ≤ 策略配置下限。任一命中均停止后续自动下发并进入暂停；风冷系统不执行第③项。</p>
             </div>
           </div>
           <div class="anno anno-ux" data-version="v2.4">
@@ -782,7 +780,7 @@
             <span class="anno-source" data-type="引用自需求文档">需求文档</span>
             <div class="anno-body">
               <p><b>关联模块：</b>自动下发推进方式</p>
-              <p>本期仅支持自动下发：当前步骤达到统一间隔后直接定时采集归档，成功后系统自动下发下一步；采集失败或安全校验不通过时暂停，不降级为页面内手动下发。</p>
+              <p>本期仅支持自动下发：当前步骤达到统一间隔后直接定时采集归档，成功后系统自动下发下一步；采集状态不单独占用表格列。采集失败或安全校验不通过时暂停，不降级为页面内手动下发。</p>
             </div>
           </div>
 
@@ -795,9 +793,9 @@
               <p>本区每一行对应开跑时已勾选的一个工况点。行内序号、目标设定值与策略制定页保持一致；步骤执行状态共四态（待执行 / 执行中 / 已记录 / 执行失败）；已记录行提供「验证」：</p>
               <ul>
                 <li><b>待执行 → 执行中 → 已记录：</b>按批次内序号由系统自动流转，仅「下发到位 + 采集 + 归档」全部成功才置「已记录」；</li>
-                <li><b>执行失败：</b>步骤自身失败（下发失败 / 连续性超限 / 采集或归档失败）置「执行失败」，记录失败原因与当时反馈值，任务进入暂停中；</li>
-                <li><b>外部中断回待执行：</b>人工暂停 / 温差命中 / 安全回退导致暂停时，执行中步骤不计失败，计时作废回「待执行」；</li>
-                <li><b>断点续跑：</b>从首个非「已记录」步骤重新完整执行（重新下发 → 等待间隔 → 采集归档），「执行失败」步骤自动重试；已结束策略的剩余待执行步骤不再流转，失败与已记录步骤留痕；</li>
+                <li><b>执行失败：</b>步骤自身失败后置「执行失败」，任务进入暂停；主表只显示状态，失败原因与当时反馈值在下发记录详情查看；</li>
+                <li><b>人工暂停：</b>当前步骤继续完成采集归档并置「已记录」，完成后任务进入暂停，后续步骤保持「待执行」；温差命中 / 安全回退仍即时中断并将当前步骤退回「待执行」；</li>
+                <li><b>断点续跑：</b>有失败步骤时优先重试，否则从下一待执行步骤继续；已结束任务不可续跑；</li>
                 <li><b>行内「验证」：</b>仅「已记录」展示；点击进入该归档点的验证详情页（需求 §9），直接展示对比结果；</li>
                 <li>历史数据比对被排除的工况点不进入排程，本表无对应行。</li>
               </ul>
@@ -815,7 +813,7 @@
                   <thead>
                     <tr>
                       <th>序号</th><th>设备名称</th><th>目标值（下发测点）</th><th>实际反馈（反馈测点）</th>
-                      <th>调整幅度检查</th><th>定时采集状态</th><th>记录时间</th><th>状态</th>
+                      <th>调整幅度检查</th><th>记录时间</th><th>状态</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -841,7 +839,6 @@
                         </div>
                       </td>
                       <td class="continuity-pass">通过</td>
-                      <td class="collect-done">已采集</td>
                       <td class="mono-num">2026-06-28 09:42</td>
                       <td><span class="exec-status-tag done">已记录</span><a class="btn btn-xs" href="多工况探索-验证详情.html?step=36" style="margin-left:8px;">验证</a></td>
                     </tr>
@@ -867,7 +864,6 @@
                         </div>
                       </td>
                       <td class="continuity-pass">通过</td>
-                      <td class="collect-wait" id="collectStep38">等待采集中（已等待 12/15 min）</td>
                       <td class="cell-muted" id="archStep38">—</td>
                       <td id="statStep38"><span class="exec-status-tag running">执行中</span></td>
                     </tr>
@@ -889,7 +885,6 @@
                         <span>—</span>
                       </td>
                       <td class="cell-muted" id="contStep40">—</td>
-                      <td class="cell-muted" id="collectStep40">—</td>
                       <td class="cell-muted" id="archStep40">—</td>
                       <td id="statStep40"><span class="exec-status-tag pending">待执行</span></td>
                     </tr>
@@ -918,7 +913,7 @@
                   <thead>
                     <tr>
                       <th>序号</th><th>设备名称</th><th>目标值（下发测点）</th><th>实际反馈（反馈测点）</th>
-                      <th>调整幅度检查</th><th>定时采集状态</th><th>记录时间</th><th>状态</th>
+                      <th>调整幅度检查</th><th>记录时间</th><th>状态</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -937,7 +932,7 @@
                       <td class="cell-muted">
                         <div class="point-name feedback">频率反馈</div>
                         <span>—</span>
-                      </td><td class="cell-muted">—</td><td class="cell-muted">—</td><td class="cell-muted">—</td>
+                      </td><td class="cell-muted">—</td><td class="cell-muted">—</td>
                       <td><span class="exec-status-tag pending">待执行</span></td>
                     </tr>
                     <tr>
@@ -955,7 +950,7 @@
                       <td class="cell-muted">
                         <div class="point-name feedback">频率反馈</div>
                         <span>—</span>
-                      </td><td class="cell-muted">—</td><td class="cell-muted">—</td><td class="cell-muted">—</td>
+                      </td><td class="cell-muted">—</td><td class="cell-muted">—</td>
                       <td><span class="exec-status-tag pending">待执行</span></td>
                     </tr>
                     <tr>
@@ -973,7 +968,7 @@
                       <td class="cell-muted">
                         <div class="point-name feedback">频率反馈</div>
                         <span>—</span>
-                      </td><td class="cell-muted">—</td><td class="cell-muted">—</td><td class="cell-muted">—</td>
+                      </td><td class="cell-muted">—</td><td class="cell-muted">—</td>
                       <td><span class="exec-status-tag pending">待执行</span></td>
                     </tr>
                   </tbody>
@@ -998,7 +993,7 @@
                   <thead>
                     <tr>
                       <th>序号</th><th>设备名称</th><th>目标值（下发测点）</th><th>实际反馈（反馈测点）</th>
-                      <th>调整幅度检查</th><th>定时采集状态</th><th>记录时间</th><th>状态</th>
+                      <th>调整幅度检查</th><th>记录时间</th><th>状态</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1017,7 +1012,7 @@
                       <td class="cell-muted">
                         <div class="point-name feedback">频率反馈</div>
                         <span>—</span>
-                      </td><td class="cell-muted">—</td><td class="cell-muted">—</td><td class="cell-muted">—</td>
+                      </td><td class="cell-muted">—</td><td class="cell-muted">—</td>
                       <td><span class="exec-status-tag pending">待执行</span></td>
                     </tr>
                     <tr>
@@ -1035,7 +1030,7 @@
                       <td class="cell-muted">
                         <div class="point-name feedback">频率反馈</div>
                         <span>—</span>
-                      </td><td class="cell-muted">—</td><td class="cell-muted">—</td><td class="cell-muted">—</td>
+                      </td><td class="cell-muted">—</td><td class="cell-muted">—</td>
                       <td><span class="exec-status-tag pending">待执行</span></td>
                     </tr>
                   </tbody>
@@ -1056,7 +1051,7 @@
                   <thead>
                     <tr>
                       <th>序号</th><th>设备名称</th><th>目标值（下发测点）</th><th>实际反馈（反馈测点）</th>
-                      <th>调整幅度检查</th><th>定时采集状态</th><th>记录时间</th><th>状态</th>
+                      <th>调整幅度检查</th><th>记录时间</th><th>状态</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1075,7 +1070,7 @@
                       <td class="cell-muted">
                         <div class="point-name feedback">冷冻水出水温度</div>
                         <span>—</span>
-                      </td><td class="cell-muted">—</td><td class="cell-muted">—</td><td class="cell-muted">—</td>
+                      </td><td class="cell-muted">—</td><td class="cell-muted">—</td>
                       <td><span class="exec-status-tag pending">待执行</span></td>
                     </tr>
                     <tr>
@@ -1093,7 +1088,7 @@
                       <td class="cell-muted">
                         <div class="point-name feedback">冷冻水出水温度</div>
                         <span>—</span>
-                      </td><td class="cell-muted">—</td><td class="cell-muted">—</td><td class="cell-muted">—</td>
+                      </td><td class="cell-muted">—</td><td class="cell-muted">—</td>
                       <td><span class="exec-status-tag pending">待执行</span></td>
                     </tr>
                   </tbody>
@@ -1188,7 +1183,7 @@
         <div class="anno-body">
           <p><b>关联模块：</b>执行前校验弹窗（4 项运行门禁）</p>
           <ul>
-            <li><b>触发路径：</b>本页仅在暂停中点击「断点续跑」时弹出；首次开始执行的同类校验已前置到策略制定页。</li>
+            <li><b>触发路径：</b>本页仅在暂停状态点击「断点续跑」时弹出；首次开始执行的同类校验已前置到策略制定页。</li>
             <li><b>校验范围：</b>自动下发能力、相关寻优停止、开机组合一致和配置完整性。</li>
             <li><b>全部通过：</b>底部确认按钮可点，完成密码校验后进入执行中。本页演示 4 项均为 ✓。</li>
             <li><b>任一项不通过：</b>该项左侧图标变为 ✗（红色），文案下方追加具体不通过原因；只要有 1 项不通过，确认按钮即置灰不可点。</li>
@@ -1243,6 +1238,40 @@
   </div>
 </div>
 
+<!-- 弹窗：下发失败详情 -->
+<div class="modal-mask" id="modalDispatchFailure">
+  <div class="modal-box" style="max-width:520px;">
+    <div class="modal-head">
+      <span class="modal-title">下发失败详情</span>
+    </div>
+    <div class="modal-body">
+      <div class="anno anno-data" data-version="v2.4">
+        <span class="anno-tag">数据逻辑</span>
+        <span class="anno-version">v2.4</span>
+        <span class="anno-source">需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>下发记录 - 失败详情弹窗</p>
+          <p>执行进度主表只展示“执行失败”状态；失败时间、对象、目标值、实际反馈和失败原因统一在本弹窗查看。</p>
+        </div>
+      </div>
+      <table class="anno-table">
+        <tbody>
+          <tr><th>下发时间</th><td id="failureTime">—</td></tr>
+          <tr><th>对象 / 属性</th><td id="failureTarget">—</td></tr>
+          <tr><th>目标值</th><td id="failureDispatch">—</td></tr>
+          <tr><th>实际反馈</th><td id="failureActual">—</td></tr>
+          <tr><th>失败原因</th><td id="failureReason">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="modal-foot">
+      <div class="btn-group" style="margin-left:auto;">
+        <button class="btn btn-primary" onclick="closeModal('modalDispatchFailure')">确 定</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- 弹窗：密码权限校验（通用，覆盖开始/暂停/结束/续跑/回退） -->
 <div class="modal-mask" id="modalPwd">
   <div class="modal-box" style="max-width:400px;">
@@ -1267,12 +1296,13 @@
         <span class="anno-source" data-type="引用自需求文档">需求文档</span>
         <div class="anno-body">
           <p><b>关联模块：</b>密码权限校验弹窗（通用）</p>
-          <p><b>操作密码：</b>密文输入，必填；标题与提示文案随触发的操作动态变化。</p>
+          <p><b>操作密码：</b>密文输入，必填；密码错误时保留当前弹窗并显示失败原因，可重新输入；通过后才执行对应操作。</p>
         </div>
       </div>
       <div style="margin-bottom:12px;">
         <div class="form-label">请输入操作密码</div>
         <input type="password" class="form-control" id="pwdInput" placeholder="请输入密码">
+        <div id="pwdError" role="alert" style="min-height:18px; margin-top:6px; font-size:12px; color:var(--danger);"></div>
       </div>
       <div style="font-size:12px; color:var(--text-hint);" id="pwdHint">校验通过后操作即刻生效</div>
     </div>
@@ -1340,7 +1370,7 @@
         <span class="anno-source" data-type="对齐全局寻优">产品推断</span>
         <div class="anno-body">
           <p><b>关联模块：</b>一键回退确认弹窗（对齐冷站全局寻优）</p>
-          <p><b>入口：</b>顶部卡3「安全回退策略」的「一键回退」。确认后先停止探索，并向同控制域内同时运行的相关寻优下发停止指令，再回送安全值；探索进入暂停中。页面展示各任务停止结果，失败项升级告警。</p>
+          <p><b>入口：</b>顶部卡3「安全回退策略」的「一键回退」。确认后先停止探索，并向同控制域内同时运行的相关寻优下发停止指令，再回送安全值；探索进入暂停。页面展示各任务停止结果，失败项升级告警。</p>
         </div>
       </div>
       <div class="precheck-summary">将停止：当前多工况探索、冷站柔性寻优、冷站全局寻优</div>
@@ -1424,7 +1454,7 @@ function showToast(msg) {
   toastTimer = setTimeout(function () { t.classList.remove('show'); }, 2200);
 }
 
-var STATUS_TAG_TEXT = { running: '执行中', aborted: '暂停中', completed: '已结束' };
+var STATUS_TAG_TEXT = { running: '执行中', aborted: '暂停', completed: '已结束' };
 var STATUS_TAG_CLASS = { running: 'run', aborted: 'danger', completed: 'done' };
 
 var params = new URLSearchParams(window.location.search);
@@ -1441,7 +1471,7 @@ if (params.get('paused') === '1' || params.get('aborted') === '1' || params.get(
   state.runStatus = 'aborted';
   state.abortReason = '安全回退策略自动触发';
   state.abortTime = '2026-06-12 14:32';
-  state.progressText = '批次 1/4 · 暂停中';
+  state.progressText = '批次 1/4 · 暂停';
 }
 if (params.get('ended') === '1' || params.get('completed') === '1') {
   state.runStatus = 'completed';
@@ -1511,19 +1541,29 @@ function openPwd(action, title, hint) {
   document.getElementById('pwdTitle').textContent = title;
   document.getElementById('pwdHint').textContent = hint;
   document.getElementById('pwdInput').value = '';
+  document.getElementById('pwdError').textContent = '';
   openModal('modalPwd');
 }
 
 var ExecOps = {
-  pause: function () { openPwd('pause', '暂停 — 密码校验', '校验通过后停止后续下发并进入暂停中（不自动回送设定值）；之后可断点续跑'); },
+  pause: function () { openPwd('pause', '暂停 — 密码校验', '校验通过后当前步骤继续完成采集归档，完成后停止后续调度并进入暂停'); },
   end: function () { openPwd('end', '结束 — 密码校验', '校验通过后停止后续下发并进入已结束（不自动回送设定值）；未执行点不可再续跑'); },
   resume: function () { openPrecheckModal(); }
 };
 
 function onPwdConfirm() {
   var pwd = document.getElementById('pwdInput').value;
+  if (!pwd) {
+    document.getElementById('pwdError').textContent = '请输入操作密码';
+    document.getElementById('pwdInput').focus();
+    return;
+  }
+  if (pwd !== '123456') {
+    document.getElementById('pwdError').textContent = '密码错误，请重新输入';
+    document.getElementById('pwdInput').select();
+    return;
+  }
   closeModal('modalPwd');
-  if (!pwd) { return; }
   if (pendingAction === 'resume') {
     state.runStatus = 'running';
     state.abortReason = '';
@@ -1533,11 +1573,16 @@ function onPwdConfirm() {
       showToast('已断点续跑：新建 run，从剩余工况点继续');
     }
   } else if (pendingAction === 'pause') {
-    state.runStatus = 'aborted';
-    state.abortReason = '人工操作暂停';
-    state.abortTime = formatNow();
-    state.progressText = '批次 1/4 · 暂停中';
-    showToast('已进入暂停中：可断点续跑；如需安全工况请手动处理或依赖安全回退');
+    state.progressText = '批次 1/4 · 第 2 步（完成后暂停）';
+    showToast('暂停请求已提交：当前步骤完成后停止后续调度');
+    setTimeout(function () {
+      state.runStatus = 'aborted';
+      state.abortReason = '人工操作暂停';
+      state.abortTime = formatNow();
+      state.progressText = '批次 1/4 · 暂停';
+      renderAll();
+      showToast('当前步骤已完成并归档，任务已暂停');
+    }, 1000);
   } else if (pendingAction === 'end') {
     state.runStatus = 'completed';
     state.abortReason = '';
@@ -1556,6 +1601,14 @@ function onPwdConfirm() {
   pendingAction = null;
   renderAll();
 }
+
+document.getElementById('pwdInput').addEventListener('input', function () {
+  document.getElementById('pwdError').textContent = '';
+});
+
+setInterval(function () {
+  if (state.runStatus === 'running') renderAll();
+}, 5000);
 
 function formatNow() {
   var d = new Date();
@@ -1604,9 +1657,9 @@ function applyOneClickRollback() {
     state.runStatus = 'aborted';
     state.abortReason = '人工一键回退';
     state.abortTime = formatNow();
-    state.progressText = '批次 1/4 · 暂停中';
+    state.progressText = '批次 1/4 · 暂停';
   }
-  showToast('已一键回退：探索与相关寻优已停止，安全值已下发' + (state.runStatus === 'aborted' ? '，任务进入暂停中' : ''));
+  showToast('已一键回退：探索与相关寻优已停止，安全值已下发' + (state.runStatus === 'aborted' ? '，任务进入暂停' : ''));
 }
 
 /* ---------- 历史趋势（复用柔性/全局寻优组件） ---------- */
@@ -1726,8 +1779,20 @@ var DISPATCH_DATA = [
   { strategy: '', time: '2026-06-28 09:20:00', user: '系统管理员', target: '3号冷冻泵/频率设定', actual: '34.0', dispatch: '36.0', result: '成功' },
   { strategy: '多工况探索自动下发策略', time: '2026-06-28 09:42:00', user: '系统管理员', target: '1号冷冻泵/频率设定', actual: '36.2', dispatch: '38.0', result: '成功' },
   { strategy: '', time: '2026-06-28 09:42:00', user: '系统管理员', target: '2号冷冻泵/频率设定', actual: '35.8', dispatch: '38.0', result: '成功' },
-  { strategy: '', time: '2026-06-28 09:42:00', user: '系统管理员', target: '3号冷冻泵/频率设定', actual: '36.1', dispatch: '38.0', result: '成功' }
+  { strategy: '', time: '2026-06-28 09:42:00', user: '系统管理员', target: '3号冷冻泵/频率设定', actual: '36.1', dispatch: '38.0', result: '成功' },
+  { strategy: '多工况探索自动下发策略', time: '2026-06-28 10:05:00', user: '系统管理员', target: '2号冷却泵/频率设定', actual: '34.2', dispatch: '36.0', result: '失败', reason: '反馈值未在允许时间内到位' }
 ];
+
+function openDispatchFailure(index) {
+  var row = DISPATCH_DATA[index];
+  if (!row || row.result !== '失败') return;
+  document.getElementById('failureTime').textContent = row.time;
+  document.getElementById('failureTarget').textContent = row.target;
+  document.getElementById('failureDispatch').textContent = row.dispatch;
+  document.getElementById('failureActual').textContent = row.actual;
+  document.getElementById('failureReason').textContent = row.reason || '下发失败';
+  openModal('modalDispatchFailure');
+}
 
 function renderDispatchTable() {
   var tbody = document.getElementById('dispatchBody');
@@ -1735,9 +1800,9 @@ function renderDispatchTable() {
   var currentStrategy = '';
   var strategyFilter = (document.getElementById('dispatchStrategyFilter') || {}).value || '';
   var keyword = ((document.getElementById('dispatchKeyword') || {}).value || '').trim();
-  var sourceRows = DISPATCH_DATA.map(function (d) {
+  var sourceRows = DISPATCH_DATA.map(function (d, index) {
     if (d.strategy) currentStrategy = d.strategy;
-    return Object.assign({}, d, { strategyGroup: currentStrategy });
+    return Object.assign({}, d, { strategyGroup: currentStrategy, sourceIndex: index });
   }).filter(function (d) {
     if (strategyFilter && d.strategyGroup !== strategyFilter) return false;
     if (keyword && d.target.indexOf(keyword) < 0) return false;
@@ -1751,7 +1816,9 @@ function renderDispatchTable() {
   }
   tbody.innerHTML = sourceRows.map(function (d) {
     var showStrategy = d.strategy !== '';
-    var resultClass = d.result === '成功' ? 'color:#52C41A' : 'color:#FF4D4F';
+    var resultCell = d.result === '成功'
+      ? '<span style="color:#52C41A;font-weight:500">成功</span>'
+      : '<button type="button" class="btn btn-xs" onclick="openDispatchFailure(' + d.sourceIndex + ')">失败 · 查看</button>';
     return '<tr>' +
       '<td style="font-weight:' + (showStrategy ? 500 : 400) + ';color:' + (showStrategy ? 'var(--text-primary)' : 'transparent') + '">' + (showStrategy ? d.strategy : '') + '</td>' +
       '<td>' + d.time + '</td>' +
@@ -1759,7 +1826,7 @@ function renderDispatchTable() {
       '<td>' + d.target + '</td>' +
       '<td>' + d.actual + '</td>' +
       '<td>' + d.dispatch + '</td>' +
-      '<td style="' + resultClass + ';font-weight:500">' + d.result + '</td>' +
+      '<td>' + resultCell + '</td>' +
       '</tr>';
   }).join('');
 }

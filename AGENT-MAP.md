@@ -73,6 +73,8 @@
 
 v2.6 可解释性：柔性 / 加减机两页均含「本轮寻优结论条（主标签徽章 + 详细文案）」，设备原因仅两处入口——平面图空调浮窗「调节原因」区块 + 手动下发弹窗设备行，两处展示同一段完整文案（无 chip 列、无独立解释弹窗），需求见 `04-需求文档/AI节能v2.6 版本/末端寻优结果可解释性需求方案.md`（req.v26.room_opt_explainability）。
 
+v2.6 设备能力架构：加减机 / 柔性两页不新增入口，后端重构为基础能力必备、高阶功率模型可选的设备能力插件，并完成风冷加减机与柔性扩展；需求见 `04-需求文档/AI节能v2.6 版本/末端寻优设备能力抽象架构设计方案.md`（req.v26.room_opt_device_capability，algo_only）。
+
 ### 3.6 安全与下发配置 `flow.config_crud_safety_dispatch`
 
 `安全边界-列表` → 创建/编辑  
@@ -89,7 +91,7 @@ v2.6 可解释性：柔性 / 加减机两页均含「本轮寻优结论条（主
 | `noise.dual_data_quality` | 同页自检：v2.1 实施期 vs v2.5 表具 VEE |
 | `noise.manual_train_orphan` | `手动训练.html` 未进 index 拓扑 |
 | `noise.v24_explore_unlist_html` | 清单多工况条目未直链 4 个 HTML |
-| `noise.v26_algo_only` | v2.6 功率预测条目无新原型页（algo_only）；可解释性条目改的是既有两页，非新建 |
+| `noise.v26_algo_only` | v2.6 功率预测与设备能力架构均无新原型页（algo_only）；可解释性条目改的是既有两页，非新建 |
 
 完整列表见 `product-graph.yaml` → `noise`。
 
