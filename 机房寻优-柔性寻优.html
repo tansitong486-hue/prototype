@@ -601,13 +601,17 @@
     }
     .panel-overlay.open { opacity:1; pointer-events:auto; }
     .right-panel {
-      position:fixed; top:0; right:-480px; bottom:0; width:480px;
+      position:fixed; top:50%; left:50%; width:760px;
+      max-width:calc(100vw - 48px); max-height:86vh;
       background:var(--bg-card); z-index:210;
-      box-shadow:-8px 0 28px rgba(15,23,42,.12);
-      transition:right .35s cubic-bezier(.4,0,.2,1);
+      border:1px solid var(--border-light); border-radius:8px;
+      box-shadow:0 18px 48px rgba(15,23,42,.18);
+      transform:translate(-50%, calc(-50% + 16px)) scale(.98);
+      opacity:0; pointer-events:none;
+      transition:transform .25s cubic-bezier(.4,0,.2,1), opacity .2s;
       display:flex; flex-direction:column;
     }
-    .right-panel.open { right:0; }
+    .right-panel.open { transform:translate(-50%, -50%) scale(1); opacity:1; pointer-events:auto; }
     .panel-header {
       padding:14px 18px; border-bottom:1px solid var(--border-light);
       display:flex; align-items:center; justify-content:space-between;
@@ -629,7 +633,7 @@
     }
     .panel-tab:hover { color:var(--primary); }
     .panel-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
-    .panel-body { padding:18px; flex:1; overflow-y:auto; }
+    .panel-body { padding:18px 24px; flex:1; overflow-y:auto; }
     .panel-pane { display:block; }
     .panel-pane:not(.active) { display:none !important; }
     .form-group { margin-bottom:18px; }
@@ -680,6 +684,22 @@
     .form-group-sm { margin-bottom:12px; }
     .form-group-sm .form-label { font-size:12px; margin-bottom:4px; }
     .form-group-sm .form-control { padding:5px 10px; font-size:12px; }
+    .rule-table-wrap { border:1px solid var(--border-light); border-radius:6px; overflow:auto; margin-bottom:16px; }
+    .rule-table { width:100%; min-width:680px; border-collapse:collapse; table-layout:fixed; }
+    .rule-table th, .rule-table td { padding:10px 9px; border-bottom:1px solid var(--border-light); text-align:left; vertical-align:middle; font-size:12px; }
+    .rule-table th { background:#F7F9FC; color:var(--text-secondary); font-weight:600; }
+    .rule-table tr:last-child td { border-bottom:none; }
+    .rule-table .form-control { min-width:0; padding:5px 7px; font-size:12px; }
+    .device-type-name { font-weight:600; color:var(--text-primary); }
+    .device-type-note { display:block; margin-top:2px; color:var(--text-hint); font-size:10px; line-height:1.35; }
+    .obj-tags .device-type-note { flex-basis:100%; margin-top:0; }
+    .device-type-tag { display:inline-flex; align-items:center; min-height:20px; padding:1px 7px; border-radius:4px; background:#E6F4FF; color:#096DD9; font-size:10px; font-weight:600; white-space:nowrap; }
+    .device-type-tag.air { background:#FFF7E6; color:#C2410C; }
+    .result-facts { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); border:1px solid var(--border-light); border-radius:6px; background:#fff; margin:12px 0; overflow:hidden; }
+    .result-fact { min-width:0; padding:10px 12px; border-right:1px solid var(--border-light); }
+    .result-fact:last-child { border-right:none; }
+    .result-fact-label { font-size:11px; color:var(--text-hint); margin-bottom:4px; }
+    .result-fact-value { font-size:12px; color:var(--text-primary); font-weight:600; line-height:1.45; word-break:break-word; }
 
     .io-list { margin-bottom:8px; }
     .io-item {
@@ -842,7 +862,10 @@
     @media (max-width:1200px) { .sidebar { width:180px; } }
     @media (max-width:768px) {
       .sidebar { display:none; }
-      .right-panel { width:100%; right:-100%; }
+      .right-panel { width:calc(100vw - 24px); max-width:none; max-height:92vh; }
+      .result-facts { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+      .result-fact:nth-child(2) { border-right:none; }
+      .result-fact:nth-child(-n+2) { border-bottom:1px solid var(--border-light); }
     }
   </style>
   <link rel="stylesheet" href="annotation-styles.css">
@@ -884,7 +907,7 @@
       <div class="anno anno-version-header" data-version="v2.6">
         <span class="anno-tag">版本信息</span>
         <div class="anno-body">
-          <p><b>v2.6（2026-07-16）：</b>新增<strong>寻优结果可解释性</strong>：①「寻优记录」Tab 顶部新增<strong>本轮寻优结论条</strong>，结构为<strong>方向性主标签徽章 + 详细文案</strong>（如「节能调优」「保障模式」「紧急增冷」「维持现状」「本轮跳过」），随时间快照切换；②<strong>平面图空调浮窗</strong>末尾追加「调节原因」区块，展示该设备<strong>完整原因文案</strong>（仅本轮主控变量 V1——送风温度设定/回风温度设定/风机转速上限，项目级三选一——有调节量或被紧急增冷覆盖的设备）；③<strong>手动下发弹窗</strong>每台建议调节设备展示<strong>同一段完整原因文案</strong>。设备原因入口仅此两处，两处文案逐字相同；变量表不加原因列、不做独立解释弹窗。省电（减冷）类文案末尾附安全确认句，显性复述本轮已通过的 v1.6 硬约束（总冷量安全系数、安全边界与单次限幅、凝露防护），增冷类不附。无动作的设备（保持、被约束拦截、不参与）不输出原因。解释信息来自算法结果输出补记的「机房级场景码 + 设备级原因码 + 参数」，v1.6 寻优决策逻辑不变。详见《AI节能v2.6 末端寻优结果可解释性需求方案》。</p>
+          <p><b>v2.6（2026-07-23）：</b>新增<strong>寻优结果可解释性</strong>：①「寻优记录」Tab 顶部展示本轮模式、安全反馈冷量倍数、K_safe、真实信号分支和动作数量；②平面图浮窗与手动下发弹窗展示同一段设备原因。解释以 v2.6 L3 输出为唯一事实源，覆盖 common-mode、差异化、保障、紧急增冷和凝露部分恢复；本轮 V1 或 V2 任一实际变化均输出原因，V2-only 不再遗漏。普通分支遵守 V1 / V2 跨轮串行，同一设备只变化一个通道；紧急增冷可同轮 V1+V2。V2-only 收小水阀只表述为减少过度供冷和冷量再分配，不声称直接省电。省电安全确认只复述冷量门槛、热点禁省电、变量边界、单轮幅度和方向一致性，不再错误声称通过凝露防护。规则配置改为居中弹窗，按对象类型 / 控制通道生成模拟量规则；结果概览、变量表、平面图和手动下发同步展示水冷 / 风冷 DX 类型，风冷 DX 不展示水阀控制。</p>
         </div>
       </div>
 
@@ -909,7 +932,7 @@
         <span class="anno-source">引用自需求文档</span>
         <div class="anno-body">
           <p><b>关联模块：</b>顶部三卡片（寻优策略 / 智控下发策略 / 安全策略）</p>
-          <p><b>寻优策略：</b>停用/启用切换寻优开关；规则配置打开右侧面板，配置主控制（送风温度）、辅助控制（水阀开度）、K_safe 等。</p>
+          <p><b>寻优策略：</b>停用/启用切换寻优开关；规则配置打开居中弹窗，按对象类型配置主控制、适用的辅助控制及 K_safe。</p>
           <p><b>智控下发：</b>手动下发、工单下发、切换策略均需密码校验；手动下发展示调节方向及 V1、V2 建议值，可改为空值不下发。</p>
           <p><b>安全策略：</b>一键回退、切换回退策略；温度超限时按算法触发紧急增冷回退（见边界批注）。</p>
         </div>
@@ -1102,7 +1125,7 @@
         <span class="anno-source">引用自需求文档</span>
         <div class="anno-body">
           <p><b>关联模块：</b>平面图空调浮窗 —「调节原因」区块（v2.6 可解释性，两处入口之一）</p>
-          <p><b>展示规则：</b>悬停空调节点时，浮窗在现有内容（状态、V1/V2 前后值、送回风温度、风机转速）末尾以分隔线隔开，追加「调节原因」区块，展示该设备的<strong>完整原因文案</strong>（原因话术为主，水阀附注缀尾；调节量已在上方参数行展示，文案内不再重复）；仅本轮 V1 有调节量或被紧急增冷覆盖的设备显示，保持/被拦截/不参与设备浮窗不变。</p>
+          <p><b>展示规则：</b>悬停空调节点时，浮窗在现有内容末尾追加「调节原因」区块，展示实际 `signal_branch` 和 `action_channel` 对应的完整原因文案。只要 V1 或 V2 任一目标值实际变化就显示；保持、被拦截或不参与设备不显示。V2 是正式动作通道，不再作为 V1 原因后的附注。</p>
           <p><b>同一套文案：</b>与手动下发弹窗设备行展示的是<strong>同一段文案</strong>（同一原因码 + 参数按统一模板渲染），全站不做短语版/缩略版变体。</p>
         </div>
       </div>
@@ -1115,8 +1138,8 @@
           <div class="anno-body">
             <p><b>关联模块：</b>本轮寻优结论条（一句话层）</p>
             <p><b>结构：</b>醒目结论模块：左侧色条 + 抬头「本轮寻优结论」+ <strong>方向性主标签徽章</strong> + 详细文案。主标签是场景定性结论（≤5 字），详细文案给数字和依据。<strong>不展示本轮时间戳</strong>（与上方时间筛选重复，时间以筛选条为准）。</p>
-            <p><b>场景码与主标签：</b>RM_ADJUST=「节能调优」（绿，模板「冷量余量 X 倍：N 台省电、M 台增冷、K 台保持 —— {主导原因}」；主导原因取本轮已算 Si 中省电/增冷各 \|Si\| 最大一台拼句，仅供展示、不改决策）；RM_GUARD=「保障模式」（橙）；RM_EMERGENCY=「紧急增冷」（红）；RM_KEEP=「维持现状」（灰，「本轮未产生新的调节建议」）；RM_SKIP=「本轮跳过」（灰）；RM_ERROR=「执行异常」（红）。省电/增冷台数只统计主控变量 V1 有调节量的设备；判定取 7.2.3「调节方向」字段，不用 ΔV1 正负号。</p>
-            <p><b>联动：</b>随下方时间筛选切换，展示对应轮次的结论；该时刻无记录显示「该时刻无寻优记录」；v2.6 上线前的历史轮次显示「该轮寻优早于可解释性功能上线，无原因记录」。文案不出现 Si、Mc、λ 等算法符号；结论条各字段用途与来源逐项见需求方案 5.2「结论条模板字段字典」。兜底只有一条：算法侧参数取不到时不输出该解释对象并记录日志（无 fallback_text 双轨话术）；前端码 + 参数齐全按模板渲染，否则该处不展示解释内容（结论条位置显示「本轮无解释数据」），不做从句级降级。</p>
+            <p><b>场景码与主标签：</b>RM_ADJUST=「节能调优」，展示安全反馈冷量倍数、K_safe、common-mode / 差异化分支，以及 V1 省电、V1 增冷、V2 冷量调整和保持台数；不再用最大 |Si| 设备拼主导原因。RM_GUARD=「保障模式」，表示 `R_cool &lt; K_safe`，只统计实际增冷设备，不声称全部空调动作；RM_EMERGENCY=「紧急增冷」，其余设备保持当前值；RM_DEWPOINT_RECOVERY=「凝露恢复」；另有 RM_KEEP / RM_SKIP / RM_ERROR。</p>
+            <p><b>联动：</b>随下方时间筛选切换，展示对应轮次的结论；该时刻无记录显示「该时刻无寻优记录」；v2.6 上线前的历史轮次显示「该轮寻优早于可解释性功能上线，无原因记录」。文案不出现 Si、Mc、λ 等算法符号；字段以需求方案第五章和第七章为准。兜底只有一条：算法侧参数取不到时不输出该解释对象并记录日志；前端仅在码和参数完整时渲染，否则结论条显示「本轮无解释数据」，不做从句级降级。</p>
           </div>
         </div>
         <div class="records-time-bar" id="optRecordsTimeBar">
@@ -1138,6 +1161,12 @@
               <div class="opt-explain-text" id="optExplainText"></div>
             </div>
           </div>
+        </div>
+        <div class="result-facts" aria-label="本轮设备能力概览">
+          <div class="result-fact"><div class="result-fact-label">编队类型</div><div class="result-fact-value">混合编队（8 水冷 / 4 风冷 DX）</div></div>
+          <div class="result-fact"><div class="result-fact-label">安全反馈冷量</div><div class="result-fact-value">724.0 kW / R_cool 1.18</div></div>
+          <div class="result-fact"><div class="result-fact-label">当前估算冷量</div><div class="result-fact-value">746.0 kW</div></div>
+          <div class="result-fact"><div class="result-fact-label">数据质量</div><div class="result-fact-value">9 A / 2 B / 1 C</div></div>
         </div>
         <div class="room-scada-panel opt-record-viz-card" id="optRecordVizCard">
           <div class="opt-viz-card-head">
@@ -1169,6 +1198,8 @@
                   <div class="leg-item"><div class="leg-swatch outline" style="border-color:#BFBFBF;"></div>停机/投出</div>
                   <div class="leg-item"><div class="leg-swatch outline" style="border-color:#8D6E63;"></div>柱子</div>
                   <div class="leg-item" id="vizLegRack"><div class="leg-swatch outline" style="border-color:#D9DDE1;width:18px;height:12px;"></div>机柜列</div>
+                  <div class="leg-item"><span class="device-type-tag">水冷</span></div>
+                  <div class="leg-item"><span class="device-type-tag air">风冷 DX</span></div>
                   <div class="leg-item"><div class="leg-swatch" style="background:transparent;border:2px solid #EB2F96;border-radius:50%;"></div>冷通道传感器</div>
                   <div class="leg-item"><div class="leg-swatch" style="background:transparent;border:2px solid #722ED1;border-radius:50%;"></div>热通道传感器</div>
                   <div class="leg-item"><span style="display:inline-block;width:22px;height:3px;background:#007AFF;border-radius:2px;"></span>供冷关系</div>
@@ -1205,13 +1236,13 @@
           </div>
         </div>
 
-        <div class="anno anno-field" data-version="v1.6">
+        <div class="anno anno-field" data-version="v2.6">
           <span class="anno-tag">字段说明</span>
-          <span class="anno-version">v1.6</span>
+          <span class="anno-version">v2.6</span>
           <span class="anno-source">引用自需求文档</span>
           <div class="anno-body">
             <p><b>关联模块：</b>寻优记录 Tab — 时间/变量筛选与变量表</p>
-            <p><b>变量分类：</b>被控变量=Ts、Tr、Nfan、水阀反馈等；控制变量（寻优中）= V1、V2；控制变量（未寻优）= 投出或关机设备的 V1/V2；扰动变量=非寻优变量。</p>
+            <p><b>变量分类：</b>被控变量=Ts、Tr、Nfan及适用的水阀反馈；控制变量（寻优中）=各对象类型注册的 V1，水冷对象可另含 V2；控制变量（未寻优）=投出或关机设备已注册但本轮不参与的控制变量；扰动变量=非寻优变量。变量表只展示真实测点和实际控制点。</p>
             <p><b>表格列：</b>对象名称、变量名称（颜色表示分类，与上方筛选一致）、实际值、AI寻优值、寻优变化、历史趋势。</p>
           </div>
         </div>
@@ -1338,23 +1369,23 @@
           </select>
         </div>
 
-        <div class="anno anno-field" data-version="v1.6">
+        <div class="anno anno-field" data-version="v2.6">
           <span class="anno-tag">字段说明</span>
-          <span class="anno-version">v1.6</span>
+          <span class="anno-version">v2.6</span>
           <span class="anno-source">引用自需求文档</span>
           <div class="anno-body">
-            <p><b>关联模块：</b>规则配置右侧面板 —「寻优规则配置」Tab</p>
-            <p><b>业务要点：</b>主控制（送风温度设定等）通过调节风机转速实现节能；辅助控制（水阀最大开度）约束冷量输出上限。调节优先级：冷量不足先开水阀再调风机；冷量过剩先降风机再收水阀。</p>
-            <p><b>布局与交互：</b><b>寻优周期 T_opt</b>、<b>安全边界</b>置顶，<b>不随「寻优算法」折叠</b>；选定算法后展开主/辅控制及 K_safe 等。投入/投出见另一 Tab。</p>
+            <p><b>关联模块：</b>规则配置居中弹窗 —「寻优规则配置」Tab</p>
+            <p><b>业务要点：</b>模拟量规则按对象类型自动生成。水冷与风冷 DX 都配置主控制；只有注册水阀能力的水冷对象显示辅助控制，风冷 DX 不出现水阀规则。</p>
+            <p><b>布局与交互：</b><b>寻优周期 T_opt</b>、<b>安全边界</b>作为公共参数置顶；选定算法后按“设备类型 / 控制通道”成行配置控制变量、<b>寻优步长</b>和<b>寻优粒度</b>（命名对齐冷站柔性调优），再统一配置 K_safe。投入/投出仍由另一 Tab 按对象类型动态分组，本次不改变其逻辑。</p>
             <p><b>寻优周期 T_opt：</b>定时触发寻优计算的时间间隔（单位：分钟）。</p>
-            <p><b>安全边界：</b>单选，可选择当前末端水冷系统下的安全边界。</p>
+            <p><b>安全边界：</b>单选，可选择当前末端系统的安全边界。</p>
             <p><b>寻优算法：</b>必选；选定后展示主控制、辅助控制及安全约束参数等区域，未选时该区域折叠隐藏。</p>
-            <p><b>主控制变量类型：</b>送风温度设定/回风温度设定/风机转速上限设定，项目级统一；调高温度设定=省电方向。</p>
-            <p><b>调节步长 ΔV1_step：</b>主控制每次调节的最小精度。</p>
-            <p><b>单次最大幅度 ΔV1_max：</b>主控制每轮允许的最大调节量。</p>
-            <p><b>调节步长 ΔV2_step：</b>水阀最大开度每次调节精度（辅助控制）。</p>
-            <p><b>单次最大幅度 ΔV2_max：</b>水阀最大开度每轮允许的最大调节量（辅助控制）。</p>
-            <p><b>冷量安全系数 K_safe：</b>总冷量供给约束的安全倍数，要求估算总冷量 ≥ QIT × K_safe（Σ Q_est,i ≥ QIT × K_safe），防止集体降速导致冷量不足。</p>
+            <p><b>主控制变量类型：</b>按对象类型注册选择；水冷支持送风温度设定 / 回风温度设定 / 风机转速上限设定三选一，风冷支持送风 / 回风温度设定二选一，混合编队可按对象类型不同；省电方向由注册能力给出。</p>
+            <p><b>寻优步长 ΔV1_max：</b>主控制每轮允许的最大调节量（原「单次最大幅度」）。</p>
+            <p><b>寻优粒度 ΔV1_step：</b>主控制每次调节的最小精度（原「调节步长」）。</p>
+            <p><b>寻优步长 ΔV2_max：</b>水阀最大开度每轮允许的最大调节量（辅助控制）。</p>
+            <p><b>寻优粒度 ΔV2_step：</b>水阀最大开度每次调节精度（辅助控制）。</p>
+            <p><b>冷量安全系数 K_safe：</b>柔性省电门槛。仅当 `Q_feedback_safe = min(ΣQ_est,safe, ΣQ_constraint,running)` 满足 `Q_feedback_safe / QIT ≥ K_safe` 时允许省电方向动作。</p>
           </div>
         </div>
 
@@ -1363,14 +1394,46 @@
           <div class="form-label"><span class="required">*</span> 寻优算法</div>
           <select class="form-control" id="algoSelect" onchange="onAlgoChange(this)">
             <option value="">请选择寻优算法</option>
-            <option value="thermoflex">ThermoFlex™ 热力柔性寻优引擎</option>
+            <option value="thermoflex" selected>ThermoFlex™ 热力柔性寻优引擎</option>
           </select>
         </div>
 
-        <div id="algoConfigContent" style="display:none;">
+        <div id="algoConfigContent">
+
+          <div class="form-section">模拟量寻优规则</div>
+          <div class="rule-table-wrap">
+            <table class="rule-table" aria-label="按对象类型配置模拟量寻优规则">
+              <thead>
+                <tr><th style="width:170px;">设备类型 / 控制通道</th><th style="width:62px;">启用</th><th style="width:190px;">控制变量</th><th style="width:110px;">寻优步长</th><th style="width:110px;">寻优粒度</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="device-type-name">冷冻水型 · 主控制</span><span class="device-type-note">当前匹配 8 台设备</span></td>
+                  <td><label class="toggle-switch"><input type="checkbox" checked onchange="onRuleToggle(this)"><span class="toggle-slider"></span></label></td>
+                  <td><select class="form-control"><option selected>送风温度设定</option><option>回风温度设定</option><option>风机转速上限设定</option></select></td>
+                  <td><div class="form-row"><input type="number" class="form-control" value="2.00" step="0.01"><span class="form-suffix">℃</span></div></td>
+                  <td><div class="form-row"><input type="number" class="form-control" value="0.50" step="0.01"><span class="form-suffix">℃</span></div></td>
+                </tr>
+                <tr>
+                  <td><span class="device-type-name">风冷 DX · 主控制</span><span class="device-type-note">当前匹配 4 台设备</span></td>
+                  <td><label class="toggle-switch"><input type="checkbox" checked onchange="onRuleToggle(this)"><span class="toggle-slider"></span></label></td>
+                  <td><select class="form-control"><option>送风温度设定</option><option selected>回风温度设定</option></select></td>
+                  <td><div class="form-row"><input type="number" class="form-control" value="1.50" step="0.01"><span class="form-suffix">℃</span></div></td>
+                  <td><div class="form-row"><input type="number" class="form-control" value="0.50" step="0.01"><span class="form-suffix">℃</span></div></td>
+                </tr>
+                <tr>
+                  <td><span class="device-type-name">冷冻水型 · 辅助控制</span><span class="device-type-note">仅适用于注册水阀能力的对象</span></td>
+                  <td><label class="toggle-switch"><input type="checkbox" checked onchange="onRuleToggle(this)"><span class="toggle-slider"></span></label></td>
+                  <td><input class="form-control" value="水阀最大开度" data-fixed disabled></td>
+                  <td><div class="form-row"><input type="number" class="form-control" value="20"><span class="form-suffix">%</span></div></td>
+                  <td><div class="form-row"><input type="number" class="form-control" value="5"><span class="form-suffix">%</span></div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
           <!-- 主控制模块：开关 + 折叠配置 -->
-          <div class="ctrl-module" id="ctrlModuleMain">
+          <div class="ctrl-module" id="ctrlModuleMain" style="display:none;">
             <div class="ctrl-module-header">
               <div class="module-title">
                 主控制（送风温度）
@@ -1391,16 +1454,16 @@
                 </select>
               </div>
               <div class="form-group">
-                <div class="form-label"><span class="required">*</span> 调节步长 ΔV1_step</div>
+                <div class="form-label"><span class="required">*</span> 寻优步长 ΔV1_max</div>
                 <div class="form-row">
-                  <input type="number" class="form-control" value="0.50" step="0.01" style="width:140px;">
+                  <input type="number" class="form-control" value="2.00" step="0.01" style="width:140px;">
                   <span class="form-suffix">℃</span>
                 </div>
               </div>
               <div class="form-group">
-                <div class="form-label"><span class="required">*</span> 单次最大幅度 ΔV1_max</div>
+                <div class="form-label"><span class="required">*</span> 寻优粒度 ΔV1_step</div>
                 <div class="form-row">
-                  <input type="number" class="form-control" value="2.00" step="0.01" style="width:140px;">
+                  <input type="number" class="form-control" value="0.50" step="0.01" style="width:140px;">
                   <span class="form-suffix">℃</span>
                 </div>
               </div>
@@ -1408,7 +1471,7 @@
           </div>
 
           <!-- 辅助控制模块：开关 + 折叠配置 -->
-          <div class="ctrl-module" id="ctrlModuleAux">
+          <div class="ctrl-module" id="ctrlModuleAux" style="display:none;">
             <div class="ctrl-module-header">
               <div class="module-title">
                 辅助控制（水阀开度）
@@ -1421,16 +1484,16 @@
             </div>
             <div class="ctrl-module-body" id="auxCtrlBody" style="display:none;">
               <div class="form-group">
-                <div class="form-label"><span class="required">*</span> 调节步长 ΔV2_step</div>
+                <div class="form-label"><span class="required">*</span> 寻优步长 ΔV2_max</div>
                 <div class="form-row">
-                  <input type="number" class="form-control" value="5" style="width:140px;">
+                  <input type="number" class="form-control" value="20" style="width:140px;">
                   <span class="form-suffix">%</span>
                 </div>
               </div>
               <div class="form-group">
-                <div class="form-label"><span class="required">*</span> 单次最大幅度 ΔV2_max</div>
+                <div class="form-label"><span class="required">*</span> 寻优粒度 ΔV2_step</div>
                 <div class="form-row">
-                  <input type="number" class="form-control" value="20" style="width:140px;">
+                  <input type="number" class="form-control" value="5" style="width:140px;">
                   <span class="form-suffix">%</span>
                 </div>
               </div>
@@ -1456,8 +1519,9 @@
           <span class="anno-version">v1.6</span>
           <span class="anno-source">引用自需求文档</span>
           <div class="anno-body">
-            <p><b>关联模块：</b>规则配置右侧面板 —「投入/投出配置」Tab</p>
+            <p><b>关联模块：</b>规则配置弹窗 —「投入/投出配置」Tab</p>
             <p><b>投入/投出：</b>Fc=投入 的冷通道传感器参与 Mc、Ftrend、Tc,min 计算；Fh=投入 的热通道传感器参与对应；Fi=投入 且 s_i=1 的空调参与柔性寻优，Fi=投出 或 s_i=0 的空调控制参数保持不变。</p>
+            <p><b>分组方式：</b>对象列表沿用现有动态能力，按当前实例实际返回的对象类型自动分组；本次仅调整规则配置、结果与平面图，不改变投入/投出配置逻辑。</p>
           </div>
         </div>
 
@@ -1762,8 +1826,8 @@
         <span class="anno-source">引用自需求文档</span>
         <div class="anno-body">
           <p><b>关联模块：</b>下发/回退确认弹窗 — 设备行原因文案（v2.6 可解释性，两处入口之一）</p>
-          <p><b>展示规则：</b>每台省电/增冷设备在其参数行下方以<strong>整行灰字</strong>（跨全部列）展示该设备的<strong>完整原因文案</strong>（原因码 + 参数按统一模板渲染；调节量已在上方参数行展示，文案内不再重复），帮助操作人在确认下发前复核调节依据；不可点击、不挤占参数列宽。与平面图浮窗「调节原因」区块展示的是<strong>同一段文案</strong>，全站不做短语版/缩略版变体。</p>
-          <p><b>数据来源：</b>设备级解释对象（仅本轮 V1 有调节量或紧急增冷覆盖的设备）。柔性原因码 4 个：SAVE_MARGIN（省电·区域宽裕，文案末尾附<strong>安全确认句</strong>——显性复述本轮已通过的 v1.6 硬约束：总冷量安全系数、安全边界与单次限幅、凝露防护；减冷是唯一危险方向，仅此码附安全句）、COOL_URGENT、COOL_GUARD、COOL_EMERGENCY（增冷类为安全方向动作，不附安全句；水阀句仅 V2 启用时输出）。触发按 7.2.3「调节方向」。三类主控变量共用模板、不复述动作。B 级附注「按数据质量策略保守折减」。兜底：参数不齐不输出并记日志，无 fallback_text。</p>
+          <p><b>展示规则：</b>每台实际动作设备在其参数行下方以<strong>整行灰字</strong>展示完整原因文案；V1-only 只生成主控制行，V2-only 只生成水阀行，紧急 V1+V2 可生成两行。原因与平面图浮窗逐字相同，不可点击、不挤占参数列宽。</p>
+          <p><b>数据来源：</b>本轮 V1 或 V2 实际变化的设备均输出解释对象。原因码为 SAVE_ADJUST、COOL_ADJUST、COOL_EMERGENCY、DEWPOINT_RECOVERY；通过 `action_channel` 区分 V1 / V2 / V1+V2，通过 `signal_branch` 区分 common-mode / 差异化 / 保障 / 紧急 / 凝露恢复。普通分支单台只下发 V1 或 V2；V2-only 设备必须独立成行并展示原因。B 级附注使用本轮实际折减策略，不写死比例。参数不齐不输出并记日志，无 fallback_text。</p>
         </div>
       </div>
             <div class="dispatch-notice" role="note">
@@ -1880,18 +1944,18 @@ const tpl1f = {
     { text:'A-B冷通道', x:18.5, y:15.25 }, { text:'C-D冷通道', x:18.5, y:9.5 }, { text:'E-F冷通道', x:18.5, y:3.5 },
   ],
   acs: [
-    { id:'AC1',  x:0,  y:16.5, side:'L', Qc:127, P:17, Va:30000, Fi:'投入', si:1, V1:20.00, V1_ai:19.00, V2:80, V2_ai:90, Nfan:65, Ts:'16.0', Tr:'26.0', Ei:-0.117 },
-    { id:'AC2',  x:0,  y:14.0, side:'L', Qc:127, P:17, Va:30000, Fi:'投入', si:1, V1:19.50, V1_ai:19.00, V2:75, V2_ai:85, Nfan:70, Ts:'15.5', Tr:'25.0', Ei:-0.056 },
-    { id:'AC3',  x:0,  y:11.0, side:'L', Qc:127, P:17, Va:30000, Fi:'投出', si:1, V1:20.00, V1_ai:'-', V2:80, V2_ai:'-', Nfan:65, Ts:'20.5', Tr:'28.5', Ei:0 },
-    { id:'AC4',  x:0,  y:8.0,  side:'L', Qc:127, P:17, Va:30000, Fi:'投入', si:0, V1:'-', V1_ai:'-', V2:'-', V2_ai:'-', Nfan:0, Ts:'-', Tr:'-', Ei:0 },
-    { id:'AC5',  x:0,  y:5.0,  side:'L', Qc:127, P:17, Va:30000, Fi:'投入', si:1, V1:21.00, V1_ai:23.00, V2:85, V2_ai:65, Nfan:55, Ts:'17.0', Tr:'24.0', Ei:0.214 },
-    { id:'AC6',  x:0,  y:2.0,  side:'L', Qc:127, P:17, Va:30000, Fi:'投入', si:1, V1:20.00, V1_ai:19.00, V2:70, V2_ai:70, Nfan:60, Ts:'16.5', Tr:'25.5', Ei:-0.096 },
-    { id:'AC7',  x:24, y:16.5, side:'R', Qc:127, P:17, Va:30000, Fi:'投入', si:1, V1:18.50, V1_ai:18.50, V2:80, V2_ai:85, Nfan:75, Ts:'15.0', Tr:'27.0', Ei:-0.03 },
-    { id:'AC8',  x:24, y:14.0, side:'R', Qc:127, P:17, Va:30000, Fi:'投入', si:1, V1:18.50, V1_ai:19.00, V2:80, V2_ai:80, Nfan:75, Ts:'15.2', Tr:'26.5', Ei:0.05 },
-    { id:'AC9',  x:24, y:11.0, side:'R', Qc:127, P:17, Va:30000, Fi:'投入', si:1, V1:21.00, V1_ai:22.50, V2:75, V2_ai:65, Nfan:65, Ts:'17.5', Tr:'25.0', Ei:0.18 },
-    { id:'AC10', x:24, y:8.0,  side:'R', Qc:127, P:17, Va:30000, Fi:'投入', si:1, V1:22.00, V1_ai:23.50, V2:70, V2_ai:60, Nfan:60, Ts:'18.0', Tr:'24.5', Ei:0.21 },
-    { id:'AC11', x:24, y:5.0,  side:'R', Qc:127, P:17, Va:30000, Fi:'投入', si:1, V1:21.00, V1_ai:22.00, V2:75, V2_ai:70, Nfan:65, Ts:'17.2', Tr:'24.8', Ei:0.12 },
-    { id:'AC12', x:24, y:2.0,  side:'R', Qc:127, P:17, Va:30000, Fi:'投入', si:1, V1:20.00, V1_ai:19.50, V2:80, V2_ai:85, Nfan:70, Ts:'16.0', Tr:'26.0', Ei:-0.07 },
+    { id:'AC1',  x:0,  y:16.5, side:'L', deviceType:'water', typeLabel:'冷冻水型', controlVar:'送风温度设定', controlUnit:'℃', Qsafe:76, Qest:78, quality:'A', capability:'基础出值', Qc:127, P:17, Va:30000, Fi:'投入', si:1, V1:20.00, V1_ai:20.00, V2:80, V2_ai:90, Nfan:65, Ts:'16.0', Tr:'26.0', Ei:-0.117 },
+    { id:'AC2',  x:0,  y:14.0, side:'L', deviceType:'water', typeLabel:'冷冻水型', controlVar:'送风温度设定', controlUnit:'℃', Qsafe:76, Qest:78, quality:'A', capability:'基础出值', Qc:127, P:17, Va:30000, Fi:'投入', si:1, V1:19.50, V1_ai:19.50, V2:75, V2_ai:80, Nfan:70, Ts:'15.5', Tr:'25.0', Ei:-0.056 },
+    { id:'AC3',  x:0,  y:11.0, side:'L', deviceType:'water', typeLabel:'冷冻水型', controlVar:'送风温度设定', controlUnit:'℃', Qsafe:76, Qest:78, quality:'A', capability:'基础出值', Qc:127, P:17, Va:30000, Fi:'投出', si:1, V1:20.00, V1_ai:'-', V2:80, V2_ai:'-', Nfan:65, Ts:'20.5', Tr:'28.5', Ei:0 },
+    { id:'AC4',  x:0,  y:8.0,  side:'L', deviceType:'water', typeLabel:'冷冻水型', controlVar:'送风温度设定', controlUnit:'℃', Qsafe:76, Qest:78, quality:'C', capability:'能力不可用', Qc:127, P:17, Va:30000, Fi:'投入', si:0, V1:'-', V1_ai:'-', V2:'-', V2_ai:'-', Nfan:0, Ts:'-', Tr:'-', Ei:0 },
+    { id:'AC5',  x:0,  y:5.0,  side:'L', deviceType:'water', typeLabel:'冷冻水型', controlVar:'送风温度设定', controlUnit:'℃', Qsafe:76, Qest:78, quality:'A', capability:'基础出值', Qc:127, P:17, Va:30000, Fi:'投入', si:1, V1:21.00, V1_ai:23.00, V2:85, V2_ai:85, Nfan:55, Ts:'17.0', Tr:'24.0', Ei:0.214 },
+    { id:'AC6',  x:0,  y:2.0,  side:'L', deviceType:'water', typeLabel:'冷冻水型', controlVar:'送风温度设定', controlUnit:'℃', Qsafe:76, Qest:78, quality:'A', capability:'基础出值', Qc:127, P:17, Va:30000, Fi:'投入', si:1, V1:20.00, V1_ai:20.00, V2:70, V2_ai:80, Nfan:60, Ts:'16.5', Tr:'25.5', Ei:-0.096 },
+    { id:'AC7',  x:24, y:16.5, side:'R', deviceType:'water', typeLabel:'冷冻水型', controlVar:'送风温度设定', controlUnit:'℃', Qsafe:76, Qest:78, quality:'B', capability:'保守出值', Qc:127, P:17, Va:30000, Fi:'投入', si:1, V1:18.50, V1_ai:18.50, V2:80, V2_ai:85, Nfan:75, Ts:'15.0', Tr:'27.0', Ei:-0.03 },
+    { id:'AC8',  x:24, y:14.0, side:'R', deviceType:'water', typeLabel:'冷冻水型', controlVar:'送风温度设定', controlUnit:'℃', Qsafe:76, Qest:78, quality:'A', capability:'基础出值', Qc:127, P:17, Va:30000, Fi:'投入', si:1, V1:18.50, V1_ai:19.00, V2:80, V2_ai:80, Nfan:75, Ts:'15.2', Tr:'26.5', Ei:0.05 },
+    { id:'AC9',  x:24, y:11.0, side:'R', deviceType:'air', typeLabel:'风冷 DX', controlVar:'回风温度设定', controlUnit:'℃', Qsafe:67, Qest:69.5, quality:'A', capability:'基础出值', Qc:92, P:22.4, Va:30000, Fi:'投入', si:1, V1:21.00, V1_ai:22.50, V2:'-', V2_ai:'-', Nfan:65, Ts:'17.5', Tr:'25.0', Ei:0.18 },
+    { id:'AC10', x:24, y:8.0,  side:'R', deviceType:'air', typeLabel:'风冷 DX', controlVar:'回风温度设定', controlUnit:'℃', Qsafe:67, Qest:69.5, quality:'A', capability:'基础出值', Qc:92, P:22.4, Va:30000, Fi:'投入', si:1, V1:22.00, V1_ai:23.50, V2:'-', V2_ai:'-', Nfan:60, Ts:'18.0', Tr:'24.5', Ei:0.21 },
+    { id:'AC11', x:24, y:5.0,  side:'R', deviceType:'air', typeLabel:'风冷 DX', controlVar:'回风温度设定', controlUnit:'℃', Qsafe:67, Qest:69.5, quality:'A', capability:'基础出值', Qc:92, P:22.4, Va:30000, Fi:'投入', si:1, V1:21.00, V1_ai:22.00, V2:'-', V2_ai:'-', Nfan:65, Ts:'17.2', Tr:'24.8', Ei:0.12 },
+    { id:'AC12', x:24, y:2.0,  side:'R', deviceType:'air', typeLabel:'风冷 DX', controlVar:'回风温度设定', controlUnit:'℃', Qsafe:67, Qest:69.5, quality:'B', capability:'保守出值', Qc:92, P:22.4, Va:30000, Fi:'投入', si:1, V1:20.00, V1_ai:20.00, V2:'-', V2_ai:'-', Nfan:70, Ts:'16.0', Tr:'26.0', Ei:-0.07 },
   ],
   coldSensors: [
     { id:'c1',  x:4.0,  y:15.25, Tc:23.93, RH:42, area:'G-H冷通道' },
@@ -2477,7 +2541,7 @@ function paintRoomSvg(R, cfg) {
 
     const ox = ac.side === 'L' ? VIZ_AC_OX_L : VIZ_AC_OX_R;
     const acHalfH = VIZ_AC_BOX_H / 2;
-    s += `<rect x="${ax + ox}" y="${ay - acHalfH}" width="${VIZ_AC_BOX_W}" height="${VIZ_AC_BOX_H}" rx="3" fill="${fill}" stroke="${isOut ? '#999' : '#fff'}" stroke-width="2" class="viz-node" data-type="ac" data-id="${ac.id}" data-fi="${ac.Fi}" data-si="${ac.si}" data-v1="${ac.V1}" data-v1ai="${ac.V1_ai}" data-v2="${ac.V2}" data-v2ai="${ac.V2_ai}" data-nfan="${ac.Nfan}" data-ts="${ac.Ts}" data-tr="${ac.Tr}"/>`;
+    s += `<rect x="${ax + ox}" y="${ay - acHalfH}" width="${VIZ_AC_BOX_W}" height="${VIZ_AC_BOX_H}" rx="3" fill="${fill}" stroke="${isOut ? '#999' : '#fff'}" stroke-width="2" class="viz-node" data-type="ac" data-id="${ac.id}" data-fi="${ac.Fi}" data-si="${ac.si}" data-v1="${ac.V1}" data-v1ai="${ac.V1_ai}" data-v2="${ac.V2}" data-v2ai="${ac.V2_ai}" data-nfan="${ac.Nfan}" data-ts="${ac.Ts}" data-tr="${ac.Tr}" data-device-type="${ac.deviceType}" data-type-label="${ac.typeLabel}" data-control-var="${ac.controlVar}" data-control-unit="${ac.controlUnit}" data-qsafe="${ac.Qsafe}" data-qest="${ac.Qest}" data-quality="${ac.quality}" data-capability="${ac.capability}"/>`;
 
     const iconX = ax + ox + VIZ_AC_BOX_W / 2, iconY = ay;
     if (isOut || !isRunning) {
@@ -2489,7 +2553,8 @@ function paintRoomSvg(R, cfg) {
 
     const labelX = ac.side === 'L' ? ax + ox - 3 : ax + ox + VIZ_AC_BOX_W + 3;
     const anchor = ac.side === 'L' ? 'end' : 'start';
-    s += `<text x="${labelX}" y="${ay + 4}" font-size="11" fill="#262626" text-anchor="${anchor}" font-weight="600">${ac.id}</text>`;
+    s += `<text x="${labelX}" y="${ay}" font-size="11" fill="#262626" text-anchor="${anchor}" font-weight="600">${ac.id}</text>`;
+    s += `<text x="${labelX}" y="${ay + 11}" font-size="8" fill="${ac.deviceType === 'air' ? '#C2410C' : '#096DD9'}" text-anchor="${anchor}" font-weight="600">${ac.deviceType === 'air' ? 'DX' : '水冷'}</text>`;
 
     if (!isOut && isRunning && ac.V1_ai !== '-') {
       const v1d = parseFloat(ac.V1_ai) - parseFloat(ac.V1);
@@ -2536,12 +2601,23 @@ function paintRoomSvg(R, cfg) {
       } else if (d.type === 'hot') {
         html = `<b>热通道 ${d.id}</b><br>温度：<b>${parseFloat(d.th).toFixed(2)}℃</b><br>湿度：<b>${d.rh}%</b>`;
       } else if (d.type === 'ac') {
-        html = `<b>${d.id}</b>（${d.fi}）<br>`;
+        const displayName = d.id.startsWith('AC') ? `101空调-${d.id.slice(2)}` : d.id;
+        const deviceType = d.deviceType === 'air' ? '风冷 DX 空调' : '水冷空调';
+        html = `<b>${displayName}（${d.fi}）</b><br><br>`;
+        html += `设备类型：${deviceType}<br>`;
         html += `状态：${d.si === '1' ? '运行中' : '停机'}<br>`;
-        html += `送风温度设定：${d.v1}℃ → <b>${d.v1ai}℃</b><br>`;
-        html += `水阀最大开度：${d.v2}% → <b>${d.v2ai}%</b><br>`;
-        html += `送风温度：${d.ts}℃ | 回风温度：${d.tr}℃<br>`;
-        html += `风机转速：${d.nfan}%`;
+        const v1Actual = d.v1 === '-' ? '—' : d.v1 + d.controlUnit;
+        const v1Target = d.v1ai === '-' ? '—' : d.v1ai + d.controlUnit;
+        const v2Changed = d.deviceType === 'water' && d.v2 !== '-' && d.v2ai !== '-' && parseFloat(d.v2) !== parseFloat(d.v2ai);
+        const v1Changed = d.v1 !== '-' && d.v1ai !== '-' && Math.abs(parseFloat(d.v1) - parseFloat(d.v1ai)) > 0.01;
+        if (v2Changed && !v1Changed) {
+          html += `水阀最大开度：${d.v2}% → <b>${d.v2ai}%</b><br>`;
+        } else {
+          html += `${d.controlVar}：${v1Actual} → <b>${v1Target}</b><br>`;
+        }
+        html += `送风温度：${d.ts === '-' ? '—' : d.ts + ' ℃'}<br>`;
+        html += `回风温度：${d.tr === '-' ? '—' : d.tr + ' ℃'}<br>`;
+        html += '风机转速：- %';
         const reason = (typeof EXPLAIN_REASONS !== 'undefined') && EXPLAIN_REASONS[d.id];
         if (reason) html += `<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.25);max-width:280px;white-space:normal;"><b>调节原因：</b>${reason}</div>`;
       }
@@ -2600,64 +2676,66 @@ function renderRoomViz() {
 
 function buildDataFromRoom(acs) {
   return acs.map(ac => {
-  const isParticipating = ac.Fi === '投入' && ac.si === 1;
-  const isOut = ac.Fi === '投出';
-  const isStopped = ac.si === 0;
+    const isParticipating = ac.Fi === '投入' && ac.si === 1;
+    const unit = ac.controlUnit || '℃';
+    const vars = [];
+    vars.push({ name:'送风温度 Ts', type:'controlled', actual:ac.Ts !== '-' ? ac.Ts + '℃' : '—', ai:'-', change:'无变化' });
+    vars.push({ name:'回风温度 Tr', type:'controlled', actual:ac.Tr !== '-' ? ac.Tr + '℃' : '—', ai:'-', change:'无变化' });
+    vars.push({ name:'风机转速 Nfan', type:'controlled', actual:ac.Nfan ? ac.Nfan + '%' : '—', ai:'-', change:'无变化' });
+    if (ac.deviceType === 'water') {
+      vars.push({ name:'水阀开度反馈', type:'controlled', actual:ac.V2 !== '-' ? ac.V2 + '%' : '—', ai:'-', change:'无变化' });
+    }
 
-  const vars = [];
-  vars.push({ name:'送风温度 Ts',   type:'controlled',  actual: ac.Ts !== '-' ? ac.Ts + '℃' : '—',  ai:'-', change:'无变化' });
-  vars.push({ name:'回风温度 Tr',   type:'controlled',  actual: ac.Tr !== '-' ? ac.Tr + '℃' : '—',  ai:'-', change:'无变化' });
-  vars.push({ name:'风机转速 Nfan', type:'controlled',  actual: ac.Nfan ? ac.Nfan + '%' : '—',     ai:'-', change:'无变化' });
-  vars.push({ name:'水阀开度反馈',   type:'controlled',  actual: ac.V2 !== '-' ? ac.V2 + '%' : '—',  ai:'-', change:'无变化' });
+    const v1Name = (ac.controlVar || '送风温度设定') + '（V1）';
+    if (isParticipating) {
+      const v1Diff = ac.V1_ai !== '-' ? (parseFloat(ac.V1_ai) - parseFloat(ac.V1)) : 0;
+      const v1Change = v1Diff > 0.01 ? '+' + v1Diff.toFixed(2) + unit : (v1Diff < -0.01 ? v1Diff.toFixed(2) + unit : '无变化');
+      vars.push({ name:v1Name, type:'optimizing', actual:ac.V1 + unit, ai:ac.V1_ai + unit, change:v1Change });
+      if (ac.deviceType === 'water') {
+        const v2Diff = ac.V2_ai !== '-' ? (parseInt(ac.V2_ai) - parseInt(ac.V2)) : 0;
+        const v2Change = v2Diff > 0 ? '+' + v2Diff + '%' : (v2Diff < 0 ? v2Diff + '%' : '无变化');
+        vars.push({ name:'水阀最大开度（V2）', type:'optimizing', actual:ac.V2 + '%', ai:ac.V2_ai + '%', change:v2Change });
+      }
+    } else {
+      vars.push({ name:v1Name, type:'unopt', actual:ac.V1 !== '-' ? ac.V1 + unit : '—', ai:'-', change:'无变化' });
+      if (ac.deviceType === 'water') {
+        vars.push({ name:'水阀最大开度（V2）', type:'unopt', actual:ac.V2 !== '-' ? ac.V2 + '%' : '—', ai:'-', change:'无变化' });
+      }
+    }
 
-  if (isParticipating) {
-    const v1Diff = ac.V1_ai !== '-' ? (parseFloat(ac.V1_ai) - parseFloat(ac.V1)) : 0;
-    const v1Change = v1Diff > 0.01 ? '+' + v1Diff.toFixed(2) + '℃' : (v1Diff < -0.01 ? v1Diff.toFixed(2) + '℃' : '无变化');
-    vars.push({ name:'送风温度设定（V1）', type:'optimizing', actual: ac.V1 + '℃', ai: ac.V1_ai + '℃', change: v1Change });
-
-    const v2Diff = ac.V2_ai !== '-' ? (parseInt(ac.V2_ai) - parseInt(ac.V2)) : 0;
-    const v2Change = v2Diff > 0 ? '+' + v2Diff + '%' : (v2Diff < 0 ? v2Diff + '%' : '无变化');
-    vars.push({ name:'水阀最大开度（V2）', type:'optimizing', actual: ac.V2 + '%', ai: ac.V2_ai + '%', change: v2Change });
-  } else {
-    vars.push({ name:'送风温度设定（V1）', type:'unopt', actual: ac.V1 !== '-' ? ac.V1 + '℃' : '—', ai:'-', change:'无变化' });
-    vars.push({ name:'水阀最大开度（V2）', type:'unopt', actual: ac.V2 !== '-' ? ac.V2 + '%' : '—', ai:'-', change:'无变化' });
-  }
-
-
-  return {
-    name: '#' + ac.id.replace('AC','') + '精密空调',
-    acId: ac.id,
-    status: ac.si === 1 ? 'running' : 'stopped',
-    statusText: ac.si === 1 ? '运行中' : '停机中',
-    fi: ac.Fi === '投入' ? 'in' : 'out',
-    fiText: ac.Fi,
-    variables: vars
-  };
+    return {
+      name:'#' + ac.id.replace('AC','') + '精密空调',
+      acId:ac.id,
+      status:ac.si === 1 ? 'running' : 'stopped',
+      statusText:ac.si === 1 ? '运行中' : '停机中',
+      fi:ac.Fi === '投入' ? 'in' : 'out',
+      fiText:ac.Fi,
+      variables:vars
+    };
   });
 }
 
 // ===== v2.6 可解释性（演示数据，正式环境由算法结果输出渲染） =====
-// 结论条：方向性主标签 + 详细文案。本轮节能模式有调节 → RM_ADJUST，主标签「节能调优」（绿）
+// 结论条：v2.6 差异化分支；V1 与 V2 按跨轮串行只动作一个通道
 const ROOM_EXPLAIN = {
   sceneCode: 'RM_ADJUST',
   tag: '节能调优',
   tone: 'tone-success',
-  text: '冷量余量 <b>1.08</b> 倍：<b>5</b> 台省电、<b>4</b> 台增冷、<b>1</b> 台保持 —— AC5 所在 K-L 通道温度宽裕已释放节能；AC1 所在 I-J 通道逼近上限已加强供冷',
+  text: '安全反馈冷量为 IT 负载的 <b>1.18</b> 倍，高于 <b>1.10</b> 倍门槛；根据各区域温度裕量与趋势进行差异化小步调节：<b>5</b> 台主控制向省电方向调整、<b>4</b> 台水阀优先增加供冷、<b>1</b> 台保持',
   time: '2026-03-17 13:25:00'
 };
 
-// 设备级原因：一台设备一段完整文案（仅本轮 V1 有调节量的设备），
-// 平面图浮窗「调节原因」区块与手动下发弹窗展示同一段，无短语/缩略变体；水阀附注缀在末尾
+// 设备级原因：V1 或 V2 任一实际变化即输出；普通分支单台只动作一个通道
 const EXPLAIN_REASONS = {
-  'AC1':  '负责的 I-J 冷通道温度 26.0℃，距上限仅 1.0℃ 且仍在升温，需要加强供冷。（同步调整水阀最大开度 80%→90%，用于冷量再分配、不增加能耗）',
-  'AC2':  '负责的 I-J 冷通道温度 26.0℃，距上限仅 1.0℃，需要加强供冷。（同步调整水阀最大开度 75%→85%，用于冷量再分配、不增加能耗）',
-  'AC5':  '负责的 K-L 冷通道温度 23.1℃，距上限还有 3.9℃，冷量余量充足，可安全省电。安全确认：已通过冷量安全系数、调节边界与凝露防护校验。（同步调整水阀最大开度 85%→65%，用于冷量再分配、不增加能耗）',
-  'AC6':  '负责的 G-H 冷通道温度 25.2℃，距上限仅 1.8℃，需要加强供冷。',
-  'AC8':  '负责的 A-B 冷通道温度 23.1℃，距上限还有 3.9℃，冷量余量充足，可安全省电。安全确认：已通过冷量安全系数、调节边界与凝露防护校验。',
-  'AC9':  '负责的 C-D 冷通道温度 22.1℃，距上限还有 4.9℃，冷量余量充足，可安全省电。安全确认：已通过冷量安全系数、调节边界与凝露防护校验。（同步调整水阀最大开度 75%→65%，用于冷量再分配、不增加能耗）',
-  'AC10': '负责的 C-D 冷通道温度 22.1℃，距上限还有 4.9℃，冷量余量充足，可安全省电。安全确认：已通过冷量安全系数、调节边界与凝露防护校验。（同步调整水阀最大开度 70%→60%，用于冷量再分配、不增加能耗）',
-  'AC11': '负责的 E-F 冷通道温度 23.2℃，距上限还有 3.8℃，冷量余量充足，可安全省电。安全确认：已通过冷量安全系数、调节边界与凝露防护校验。（同步调整水阀最大开度 75%→70%，用于冷量再分配、不增加能耗）',
-  'AC12': '负责的 E-F 冷通道温度 23.7℃，距上限仅 3.3℃，需要加强供冷。（同步调整水阀最大开度 80%→85%，用于冷量再分配、不增加能耗）'
+  'AC1':  '本机关联冷通道当前温度 26.0℃，控制上限 27.0℃；本轮计算建议提高本机供冷能力。',
+  'AC2':  '本机关联冷通道当前温度 25.8℃，控制上限 27.0℃；本轮计算建议提高本机供冷能力。',
+  'AC5':  '本机关联冷通道当前温度 23.1℃，控制上限 27.0℃；本轮计算建议降低本机供冷能力。',
+  'AC6':  '本机关联冷通道当前温度 25.2℃，控制上限 27.0℃；本轮计算建议提高本机供冷能力。',
+  'AC7':  '本机关联冷通道当前温度 23.7℃，控制上限 27.0℃；本轮计算建议提高本机供冷能力。',
+  'AC8':  '本机关联冷通道当前温度 23.1℃，控制上限 27.0℃；本轮计算建议降低本机供冷能力。',
+  'AC9':  '本机关联冷通道当前温度 22.1℃，控制上限 27.0℃；本轮计算建议降低本机供冷能力。',
+  'AC10': '本机关联冷通道当前温度 22.1℃，控制上限 27.0℃；本轮计算建议降低本机供冷能力。',
+  'AC11': '本机关联冷通道当前温度 23.2℃，控制上限 27.0℃；本轮计算建议降低本机供冷能力。'
 };
 
 function renderExplainBar() {
@@ -2748,6 +2826,14 @@ function onCtrlToggle(type, checked) {
   tag.className = 'tag ' + (checked ? 'on' : 'off');
 }
 
+function onRuleToggle(input) {
+  const row = input.closest('tr');
+  if (!row) return;
+  row.querySelectorAll('select, input[type="number"], input[type="text"]:not([data-fixed])').forEach(control => {
+    control.disabled = !input.checked;
+  });
+}
+
 document.querySelectorAll('.tabs-bar .tab-item').forEach(tab => {
   tab.addEventListener('click', function() {
     this.parentElement.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
@@ -2828,7 +2914,9 @@ renderDispatchTable();
 
 document.querySelectorAll('.toggle-switch input').forEach(sw => {
   sw.addEventListener('change', function() {
-    const status = this.closest('.io-item').querySelector('.io-status');
+    const ioItem = this.closest('.io-item');
+    if (!ioItem) return;
+    const status = ioItem.querySelector('.io-status');
     if (this.checked) {
       status.textContent = '投入';
       status.className = 'io-status in';
@@ -2940,6 +3028,7 @@ function openDispatch(mode) {
 
   const saveDevices = [];
   const coolDevices = [];
+  const redistributeDevices = [];
   const cr = getRoomForOptTable();
   if (!cr || !cr.acs) {
     document.getElementById('dispatchModalBody').innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-hint);">暂无可下发的设备数据</div>';
@@ -2947,73 +3036,52 @@ function openDispatch(mode) {
     return;
   }
   cr.acs.forEach(ac => {
-    if (ac.Fi !== '投入' || ac.si !== 1 || ac.V1_ai === '-') return;
-    const delta = parseFloat(ac.V1_ai) - parseFloat(ac.V1);
-    if (delta > 0.01) saveDevices.push(ac);
-    else if (delta < -0.01) coolDevices.push(ac);
+    if (ac.Fi !== '投入' || ac.si !== 1) return;
+    const v1Delta = ac.V1_ai === '-' ? 0 : parseFloat(ac.V1_ai) - parseFloat(ac.V1);
+    const v2Delta = ac.V2_ai === '-' ? 0 : parseFloat(ac.V2_ai) - parseFloat(ac.V2);
+    if (Math.abs(v1Delta) > 0.01) {
+      (v1Delta > 0 ? saveDevices : coolDevices).push(ac);
+    } else if (v2Delta > 0) {
+      coolDevices.push(ac);
+    } else if (v2Delta < 0) {
+      redistributeDevices.push(ac);
+    }
   });
 
+  function renderDeviceRows(ac) {
+    const rows = [];
+    const v1Changed = ac.V1_ai !== '-' && Math.abs(parseFloat(ac.V1_ai) - parseFloat(ac.V1)) > 0.01;
+    const v2Changed = ac.V2_ai !== '-' && parseFloat(ac.V2_ai) !== parseFloat(ac.V2);
+    const controlUnit = ac.controlUnit || '℃';
+    if (v1Changed) rows.push({ name:ac.controlVar || '送风温度设定', actual:`${ac.V1}${controlUnit}`, target:`${ac.V1_ai}${controlUnit}`, value:ac.V1_ai });
+    if (v2Changed && ac.deviceType === 'water') rows.push({ name:'水阀最大开度', actual:`${ac.V2}%`, target:`${ac.V2_ai}%`, value:ac.V2_ai });
+    const reason = EXPLAIN_REASONS[ac.id];
+    let body = '';
+    rows.forEach((row, index) => {
+      body += '<tr>';
+      if (index === 0) body += `<td class="dev-name" rowspan="${rows.length}">${ac.id}<br><span style="font-weight:400;color:var(--text-hint);font-size:11px;">${ac.typeLabel}精密空调</span></td>`;
+      body += `<td class="param-name">${row.name}</td><td class="val-actual">${row.actual}</td><td class="val-ai">${row.target}</td><td><input class="dispatch-val" type="text" value="${row.value}"></td></tr>`;
+    });
+    if (reason) body += `<tr><td class="ds-reason-cell" colspan="5">原因：${reason}</td></tr>`;
+    return body;
+  }
+
+  function renderGroup(devices, badgeClass, badgeText, title) {
+    if (!devices.length) return '';
+    let group = `<div class="dispatch-section"><span class="ds-badge ${badgeClass}">${badgeText}</span> ${title}（${devices.length}台）</div>`;
+    group += `<table class="dispatch-table"><thead><tr>
+      <th>设备</th><th>下发属性</th><th>当前值</th><th>AI寻优值</th><th>下发值</th>
+      </tr></thead><tbody>`;
+    devices.forEach(ac => { group += renderDeviceRows(ac); });
+    return group + '</tbody></table>';
+  }
+
   let html = '';
+  html += renderGroup(saveDevices, 'save', '省电方向', 'AI建议调整主控制');
+  html += renderGroup(coolDevices, 'cool', '增冷', 'AI建议优先增加供冷');
+  html += renderGroup(redistributeDevices, 'save', '冷量调整', 'AI建议收小水阀');
 
-  if (saveDevices.length) {
-    html += `<div class="dispatch-section"><span class="ds-badge save">省电</span> AI建议调高设定（${saveDevices.length}台）</div>`;
-    html += `<table class="dispatch-table"><thead><tr>
-      <th>设备</th><th>下发属性</th><th>当前值</th><th>AI寻优值</th><th>下发值</th>
-    </tr></thead><tbody>`;
-    saveDevices.forEach(ac => {
-      const v2Changed = parseInt(ac.V2_ai) !== parseInt(ac.V2);
-      const rowspan = v2Changed ? 2 : 1;
-      const reason = EXPLAIN_REASONS[ac.id];
-      html += `<tr>
-        <td class="dev-name" rowspan="${rowspan}">${ac.id}<br><span style="font-weight:400;color:var(--text-hint);font-size:11px;">房间级精密空调</span></td>
-        <td class="param-name">送风温度设定</td>
-        <td class="val-actual">${ac.V1}℃</td>
-        <td class="val-ai">${ac.V1_ai}℃</td>
-        <td><input class="dispatch-val" type="text" value="${ac.V1_ai}"></td>
-      </tr>`;
-      if (v2Changed) {
-        html += `<tr>
-          <td class="param-name">水阀最大开度</td>
-          <td class="val-actual">${ac.V2}%</td>
-          <td class="val-ai">${ac.V2_ai}%</td>
-          <td><input class="dispatch-val" type="text" value="${ac.V2_ai}"></td>
-        </tr>`;
-      }
-      if (reason) html += `<tr><td class="ds-reason-cell" colspan="5">原因：${reason}</td></tr>`;
-    });
-    html += '</tbody></table>';
-  }
-
-  if (coolDevices.length) {
-    html += `<div class="dispatch-section"><span class="ds-badge cool">增冷</span> AI建议调低设定（${coolDevices.length}台）</div>`;
-    html += `<table class="dispatch-table"><thead><tr>
-      <th>设备</th><th>下发属性</th><th>当前值</th><th>AI寻优值</th><th>下发值</th>
-    </tr></thead><tbody>`;
-    coolDevices.forEach(ac => {
-      const v2Changed = parseInt(ac.V2_ai) !== parseInt(ac.V2);
-      const rowspan = v2Changed ? 2 : 1;
-      const reason = EXPLAIN_REASONS[ac.id];
-      html += `<tr>
-        <td class="dev-name" rowspan="${rowspan}">${ac.id}<br><span style="font-weight:400;color:var(--text-hint);font-size:11px;">房间级精密空调</span></td>
-        <td class="param-name">送风温度设定</td>
-        <td class="val-actual">${ac.V1}℃</td>
-        <td class="val-ai">${ac.V1_ai}℃</td>
-        <td><input class="dispatch-val" type="text" value="${ac.V1_ai}"></td>
-      </tr>`;
-      if (v2Changed) {
-        html += `<tr>
-          <td class="param-name">水阀最大开度</td>
-          <td class="val-actual">${ac.V2}%</td>
-          <td class="val-ai">${ac.V2_ai}%</td>
-          <td><input class="dispatch-val" type="text" value="${ac.V2_ai}"></td>
-        </tr>`;
-      }
-      if (reason) html += `<tr><td class="ds-reason-cell" colspan="5">原因：${reason}</td></tr>`;
-    });
-    html += '</tbody></table>';
-  }
-
-  if (!saveDevices.length && !coolDevices.length) {
+  if (!saveDevices.length && !coolDevices.length && !redistributeDevices.length) {
     html = '<div style="text-align:center;padding:30px;color:var(--text-hint);">当前无需下发变更</div>';
   }
 

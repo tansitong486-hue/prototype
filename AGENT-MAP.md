@@ -3,7 +3,7 @@
 > 原型侧入口。产品价值与域叙事见  
 > `07-产品文档/01-ai 节能/产品文档/00-产品全貌.md`。  
 > 机读关系：同目录 `product-graph.yaml`。  
-> 最后更新：2026-07-16
+> 最后更新：2026-07-23
 
 ---
 
@@ -71,9 +71,39 @@
 `机房总览` → 柔性 / 加减机；健康度 → `机房智能诊断`  
 `机房寻优-机房热力模型列表` → `创建机房模型` → `步骤2`（通道模式影响诊断是否可用）
 
-v2.6 可解释性：柔性 / 加减机两页均含「本轮寻优结论条（主标签徽章 + 详细文案）」，设备原因仅两处入口——平面图空调浮窗「调节原因」区块 + 手动下发弹窗设备行，两处展示同一段完整文案（无 chip 列、无独立解释弹窗），需求见 `04-需求文档/AI节能v2.6 版本/末端寻优结果可解释性需求方案.md`（req.v26.room_opt_explainability）。
+#### v2.6 设备能力架构（req.v26.room_opt_device_capability）
 
-v2.6 设备能力架构：加减机 / 柔性两页不新增入口，后端重构为基础能力必备、高阶功率模型可选的设备能力插件，并完成风冷加减机与柔性扩展；需求见 `04-需求文档/AI节能v2.6 版本/末端寻优设备能力抽象架构设计方案.md`（req.v26.room_opt_device_capability，algo_only）。
+四层生产架构，**不新增页面入口**，增强既有加减机 / 柔性两页：
+
+| 层 | 职责 |
+|----|------|
+| L1 | 空气侧环境感知 |
+| L2 | 设备能力插件：PowerModel / CoolingModel / OptimizationCapability |
+| L3 | 加减机 / 柔性决策（手动与自动共用，不复制两套算法） |
+| L4 | 调度承载：持久化建议与人工处理状态，生成执行上下文 |
+
+要点：
+
+- 覆盖水冷、风冷 DX、水冷+风冷混合编队；规则配置为居中弹窗 + 按对象类型生成规则表；投入/投出沿用动态对象类型分组。
+- PowerModel 仅加减机消费基础参考功率；CoolingModel 分离 `Q_constraint` 与 `Q_est`，风冷安全冷量按室外高温收紧且 `Q_est` 不重复折减。
+- 柔性以 `Q_feedback_safe = min(ΣQ_est,safe, ΣQ_constraint,running)` 对照 `K_safe` 门控；继续 common-mode / 差异化 `Si`、A~E 保护、质量折减、V1/V2 串行与超温紧急分支。
+- **执行闭环**：当前值只信本轮真实控制点回读；L3每轮根据真实控制值和真实物理反馈重新计算，不设置固定等待；手动 / 自动、写入结果与回读确认复用既有寻优记录、下发策略和设备级下发记录；L4负责真实回读确认及相同待生效目标去重，不暂停L3。
+- **保障模式**：按房间缺口分配最小步动作预算；含保障动作死区、最高冷通道温升触发、连续2个可调轮次退出；不引入 PID / 积分 / 残差累计 / 动作损耗目标。
+- 验收：18 热区 RC plant + 下发记录协调器；单元、记录闭环金标和 Gate 3 已通过，Gate 4A 当前 4/6，负荷升降场景方向反转超限；在该问题处理或明确接受前不进入 Gate 4B，也不开放现场自动下发。定频启停柔性、L1 高阶接入、定频窗口聚合分别见需求池 #24 / #23 / #25。
+- PRD：`04-需求文档/AI节能v2.6 版本/末端寻优设备能力抽象架构设计方案.html`
+
+#### v2.6 可解释性（req.v26.room_opt_explainability）
+
+以统一 L3 结果与实际决策轨迹为唯一事实源，**不改变** `zi / V1* / V2*`：
+
+- 加减机：记录真实决策轨迹（全局组合 / 基准修正 / 邻域动作），不做候选排名伪因果；`P_reference` 仅作方案比选用参考功率，不作实际节能量。
+- 柔性：按 `Q_feedback_safe / QIT` 与 `K_safe` 解释门控；覆盖 common-mode、差异化、保障、紧急增冷、凝露部分恢复及 V2-only 实际动作。
+- UI 落点：两页「本轮寻优结论条」；设备原因仅在平面图浮窗与手动下发弹窗展示同一段文案（无 chip 列、无独立解释弹窗）。
+- PRD：`04-需求文档/AI节能v2.6 版本/末端寻优结果可解释性需求方案.md`
+
+#### v2.6 风冷精密空调功率（req.v26.pac_power_predict）
+
+算法侧、无新原型页：复用 `AirCooledPAC`；L0 零数据可出值，L1 仅数码涡旋/变频；定频启停本期仅 L0。寻优消费由设备能力架构承接；物模型 / L0·L1 见 `04-需求文档/AI节能v2.6 版本/风冷精密空调功率预测模型需求文档.md`。
 
 ### 3.6 安全与下发配置 `flow.config_crud_safety_dispatch`
 
@@ -91,7 +121,7 @@ v2.6 设备能力架构：加减机 / 柔性两页不新增入口，后端重构
 | `noise.dual_data_quality` | 同页自检：v2.1 实施期 vs v2.5 表具 VEE |
 | `noise.manual_train_orphan` | `手动训练.html` 未进 index 拓扑 |
 | `noise.v24_explore_unlist_html` | 清单多工况条目未直链 4 个 HTML |
-| `noise.v26_algo_only` | v2.6 功率预测与设备能力架构均无新原型页（algo_only）；可解释性条目改的是既有两页，非新建 |
+| `noise.v26_no_new_page` | v2.6 三项均无新原型页：功率预测为 algo_only；设备能力与可解释性增强既有加减机 / 柔性两页 |
 
 完整列表见 `product-graph.yaml` → `noise`。
 
@@ -105,7 +135,9 @@ v2.6 设备能力架构：加减机 / 柔性两页不新增入口，后端重构
 | 改总览/流向/定额 | flow.energy_config_to_consume + v2.5 两册 PRD |
 | 改冷站寻优/置信 | flow.cold_station_opt_family + v2.3 泛化性文档清单表 |
 | 改冷站诊断/规则 | flow.cold_station_diagnosis + 现网 `#/diagnosis-overview` / `#/diagnosis-rules` |
+| 改机房加减机/柔性 | flow.room_opt_diagnosis §3.5 + req.v26.room_opt_device_capability / explainability |
 | 改机房诊断 | flow.room_opt_diagnosis + v1.9 方案 §一–§二 |
+| 改风冷精密空调功率 | req.v26.pac_power_predict（algo_only，无新页）+ 设备能力承接消费 |
 | 改模型训练/仿真 | flow.model_train_sim + v2.3/v2.2 相关条目 |
 
 读序总览：`00-产品全貌.md` §4。

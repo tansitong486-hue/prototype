@@ -594,20 +594,27 @@
 
     .obj-separator td { height:2px; padding:0; background:var(--bg-body); border:none; }
 
-    /* RIGHT PANEL */
+    /* 规则配置：沿用冷站柔性寻优的居中弹窗结构 */
     .panel-overlay {
       position:fixed; inset:0; background:rgba(0,0,0,.25);
       z-index:200; opacity:0; pointer-events:none; transition:opacity .3s;
     }
     .panel-overlay.open { opacity:1; pointer-events:auto; }
     .right-panel {
-      position:fixed; top:0; right:-440px; bottom:0; width:440px;
+      position:fixed; top:50%; left:50%; width:760px;
+      max-width:calc(100vw - 48px); max-height:86vh;
       background:var(--bg-card); z-index:210;
-      box-shadow:-8px 0 28px rgba(15,23,42,.12);
-      transition:right .35s cubic-bezier(.4,0,.2,1);
-      display:flex; flex-direction:column;
+      border:1px solid var(--border-light); border-radius:var(--radius-lg);
+      box-shadow:0 18px 42px rgba(15,23,42,.18);
+      transform:translate(-50%,-48%) scale(.98);
+      opacity:0; pointer-events:none;
+      transition:opacity .25s, transform .25s;
+      display:flex; flex-direction:column; overflow:hidden;
     }
-    .right-panel.open { right:0; }
+    .right-panel.open {
+      opacity:1; pointer-events:auto;
+      transform:translate(-50%,-50%) scale(1);
+    }
     .panel-header {
       padding:14px 18px; border-bottom:1px solid var(--border-light);
       display:flex; align-items:center; justify-content:space-between;
@@ -629,7 +636,7 @@
     }
     .panel-tab:hover { color:var(--primary); }
     .panel-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
-    .panel-body { padding:18px; flex:1; overflow-y:auto; }
+    .panel-body { padding:18px 24px; flex:1; overflow-y:auto; }
     .panel-pane { display:block; }
     .panel-pane:not(.active) { display:none !important; }
     .form-group { margin-bottom:18px; }
@@ -660,6 +667,38 @@
     .form-group-sm { margin-bottom:12px; }
     .form-group-sm .form-label { font-size:12px; margin-bottom:4px; }
     .form-group-sm .form-control { padding:5px 10px; font-size:12px; }
+    .rule-table-wrap {
+      border:1px solid var(--border); border-radius:var(--radius);
+      overflow:auto; margin-bottom:18px;
+    }
+    .rule-table { width:100%; min-width:650px; border-collapse:collapse; font-size:12px; }
+    .rule-table th {
+      background:#F8FAFC; padding:8px 10px; text-align:left;
+      font-size:11px; font-weight:600; color:var(--text-secondary);
+      border-bottom:1px solid var(--border); white-space:nowrap;
+    }
+    .rule-table td { padding:9px 10px; border-bottom:1px solid var(--border-light); vertical-align:middle; }
+    .rule-table tr:last-child td { border-bottom:none; }
+    .rule-table tbody tr:hover { background:#FAFCFF; }
+    .rule-table .form-control { min-width:110px; padding:5px 8px; font-size:12px; }
+    .device-type-name { font-weight:600; color:var(--text-primary); white-space:nowrap; }
+    .device-type-note { display:block; margin-top:2px; color:var(--text-hint); font-size:10.5px; }
+    .obj-tags .device-type-note { flex-basis:100%; margin-top:0; }
+    .device-type-tag {
+      display:inline-flex; align-items:center; padding:1px 6px;
+      border-radius:4px; font-size:10px; font-weight:600;
+      background:#EFF6FF; color:#2563EB; white-space:nowrap;
+    }
+    .device-type-tag.air { background:#FFF7ED; color:#C2410C; }
+    .result-facts {
+      display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
+      border:1px solid var(--border-light); border-radius:var(--radius);
+      background:#FBFCFE; margin:-6px 0 14px; overflow:hidden;
+    }
+    .result-fact { padding:9px 12px; min-width:0; border-right:1px solid var(--border-light); }
+    .result-fact:last-child { border-right:none; }
+    .result-fact-label { display:block; color:var(--text-hint); font-size:10.5px; margin-bottom:2px; }
+    .result-fact-value { color:var(--text-primary); font-size:12px; font-weight:600; line-height:1.4; }
 
     /* IO config */
     .io-list { margin-bottom:8px; }
@@ -825,7 +864,10 @@
     @media (max-width:1200px) { .sidebar { width:180px; } }
     @media (max-width:768px) {
       .sidebar { display:none; }
-      .right-panel { width:100%; right:-100%; }
+      .right-panel { width:calc(100vw - 24px); max-width:calc(100vw - 24px); }
+      .result-facts { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .result-fact:nth-child(2) { border-right:none; }
+      .result-fact:nth-child(-n+2) { border-bottom:1px solid var(--border-light); }
     }
   </style>
   <link rel="stylesheet" href="annotation-styles.css">
@@ -867,7 +909,7 @@
       <div class="anno anno-version-header" data-version="v2.6">
         <span class="anno-tag">版本信息</span>
         <div class="anno-body">
-          <p><b>v2.6（2026-07-16）：</b>新增<strong>寻优结果可解释性</strong>：①「寻优记录」Tab 顶部新增<strong>本轮寻优结论条</strong>，结构为<strong>方向性主标签徽章 + 详细文案</strong>（如「节能减机」「补冷加机」「组合调整」「维持现状」），随时间快照切换；②<strong>平面图空调浮窗</strong>末尾追加「调节原因」区块，展示该设备<strong>完整原因文案</strong>（仅本轮有开关机变动的设备）；③<strong>手动下发弹窗</strong>每台建议开/关机设备展示<strong>同一段完整原因文案</strong>。设备原因入口仅此两处，两处文案逐字相同；变量表不加原因列、不做独立解释弹窗。原因文案含「负责区域温度证据 + 全部可用开/关机候选内排名」双证据回答「为什么是这台」（区域取空间权重最大通道、定性由本轮紧迫度 Uc 相对比较判定）；关机（减机）类文案末尾附安全确认句，显性复述本轮已通过的 v1.6 硬约束（总供冷、冷通道覆盖——含关停后负责通道剩余供冷台数、最小开机台数、最小连续运行时长），开机类不附。无动作的设备（保持、被锁定、不参与）不输出原因。解释信息来自算法结果输出补记的「机房级场景码 + 设备级原因码 + 参数」，v1.6 寻优决策逻辑不变。详见《AI节能v2.6 末端寻优结果可解释性需求方案》。</p>
+          <p><b>v2.6（2026-07-23）：</b>新增<strong>寻优结果可解释性</strong>：①「寻优记录」Tab 顶部新增<strong>本轮寻优结论条</strong>，随时间快照展示方向、动作清单、安全冷量余量和参考功率项变化；②<strong>平面图空调浮窗</strong>末尾追加「调节原因」区块；③<strong>手动下发弹窗</strong>展示同一段设备原因。解释以 v2.6 L3 实际决策轨迹为唯一事实源：全局式说明设备属于满足全部约束且总目标最低的组合，增量式说明设备属于基准修正或实际采纳的邻域动作；不再用候选排名伪装单机因果。`P_reference` 只可表述为「参考功率项（仅用于方案比选）」，不得写成预计省电或节能量。关机文案只复述最终组合已通过的总供冷、通道覆盖、开机台数和连续运行约束。仅 `zi` 实际变化的设备显示原因；变量表只展示真实测点和实际控制点，不加原因列、不做独立解释弹窗。规则配置改为居中弹窗，按对象类型生成开机规则；配置和平面图同步展示水冷 / 风冷 DX 类型及对应能力口径。</p>
         </div>
       </div>
 
@@ -1005,7 +1047,7 @@
         <span class="anno-source">引用自需求文档</span>
         <div class="anno-body">
           <p><b>关联模块：</b>顶部三卡片（寻优策略 / 智控下发策略 / 安全策略）</p>
-          <p><b>寻优策略：</b>停用/启用按钮切换寻优开关；规则配置打开右侧面板，配置寻优算法与核心参数。</p>
+          <p><b>寻优策略：</b>停用/启用按钮切换寻优开关；规则配置打开居中弹窗，配置寻优算法与按对象类型生成的核心参数。</p>
           <p><b>智控下发：</b>手动下发、工单下发、切换策略均需密码校验；手动下发展示 AI 建议开关机与参数，可改为空值不下发。</p>
           <p><b>安全策略：</b>一键回退、切换策略均需确认；切换策略后绑定新的回退策略。</p>
         </div>
@@ -1132,7 +1174,7 @@
           <span class="anno-source">引用自需求文档</span>
           <div class="anno-body">
             <p><b>关联模块：</b>平面图空调浮窗 —「调节原因」区块（v2.6 可解释性，两处入口之一）</p>
-            <p><b>展示规则：</b>悬停空调节点时，浮窗在现有内容（状态、AI 建议、冷量/功率、送回风温度）末尾以分隔线隔开，追加「调节原因」区块，展示该设备的<strong>完整原因文案</strong>（含「负责区域温度证据 + 全部可用开/关机候选内排名」双证据回答「为什么是这台」；关机类文案末尾另有安全确认句，含关停后负责通道剩余供冷台数）；仅本轮有开关机变动的设备显示，保持/锁定/不参与设备浮窗不变。</p>
+            <p><b>展示规则：</b>悬停空调节点时，浮窗在现有内容末尾追加「调节原因」区块，展示该设备所属的实际联合决策阶段（全局最优组合 / 基准修正 / 邻域改进）和负责区域温度事实；不展示候选排名，不把区域事实表述为唯一选择原因。关机设备末尾复述最终组合已通过的约束；仅本轮有开关机变动的设备显示。</p>
             <p><b>同一套文案：</b>与手动下发弹窗设备行展示的是<strong>同一段文案</strong>（同一原因码 + 参数按统一模板渲染），全站不做短语版/缩略版变体。</p>
           </div>
         </div>
@@ -1143,9 +1185,9 @@
           <div class="anno-body">
             <p><b>关联模块：</b>本轮寻优结论条（一句话层）</p>
             <p><b>结构：</b>醒目结论模块：左侧色条 + 抬头「本轮寻优结论」+ <strong>方向性主标签徽章</strong> + 详细文案。主标签是场景定性结论（≤5 字），详细文案给数字和依据。<strong>不展示本轮时间戳</strong>（与上方时间筛选重复，时间以筛选条为准）。</p>
-            <p><b>场景码与主标签：</b>RM_SWITCH 按方向取主标签：净关机=「节能减机」（绿，「当前负载下冷量冗余，预计省电 X kW」）/ 净开机=「补冷加机」（橙，仅 gap_kw＞0 时说「现有开机冷量不足，冷量缺口 X kW」；gap_kw≤0 改说「按功耗与气流均衡调整开机组合」）/ 替换=「组合调整」（橙）；RM_KEEP=「维持现状」（灰，「本轮未产生新的开关机建议」）；RM_NO_FEASIBLE=「无可行方案」（红，中性表述，不单一归因冷量不足）；RM_ERROR=「执行异常」（红）。加减机<strong>不设 RM_SKIP</strong>。</p>
+            <p><b>场景码与主标签：</b>RM_SWITCH 按净关机 / 净开机 / 替换显示「节能减机 / 补冷加机 / 组合调整」；文案展示最终开机台数、动作清单、安全冷量余量和<strong>参考功率项变化（仅用于方案比选）</strong>。RM_KEEP=「维持现状」；RM_NO_FEASIBLE=「无可行方案」，只展示本轮实际记录的冲突类别，不单一归因冷量不足；RM_ERROR=「执行异常」。调度层未触发时仍按「该时刻无寻优记录」处理，不设 RM_SKIP。</p>
             <p><b>联动：</b>随下方时间筛选切换——切到哪个时间快照，即展示该轮寻优的结论；该时刻无记录时显示「该时刻无寻优记录」。v2.6 上线前的历史轮次无解释数据，显示「该轮寻优早于可解释性功能上线，无原因记录」。</p>
-            <p><b>实现硬约束：</b>字段取自算法本轮已有中间量；允许确定性比较/聚合/格式化（功耗按额定功率合计估算展示为「预计省电」）；禁止重跑寻优、反事实搜索或新增影响决策的阈值。文案不出现 Uc、G、λ 等算法符号。</p>
+            <p><b>实现硬约束：</b>字段取自算法本轮已有结果和实际决策轨迹；只允许确定性聚合与格式化，禁止重跑寻优、反事实搜索、事后候选排名或新增决策阈值。`P_reference` 不是实际耗电或节能量，页面不得出现由它生成的「预计省电 / 节省功率」。</p>
             <p><b>兜底（唯一规则）：</b>算法侧参数取不到时不输出该解释对象并记录日志（无 fallback_text 双轨话术）；前端码 + 参数齐全按模板渲染，其余任何情况该处不展示解释内容（结论条位置显示「本轮无解释数据」），不做从句级降级。</p>
           </div>
         </div>
@@ -1168,6 +1210,12 @@
               <div class="opt-explain-text" id="optExplainText"></div>
             </div>
           </div>
+        </div>
+        <div class="result-facts" aria-label="本轮设备能力概览">
+          <div class="result-fact"><div class="result-fact-label">编队类型</div><div class="result-fact-value">混合编队（8 水冷 / 4 风冷 DX）</div></div>
+          <div class="result-fact"><div class="result-fact-label">方案参考功率</div><div class="result-fact-value">186.2 kW（仅比选）</div></div>
+          <div class="result-fact"><div class="result-fact-label">总安全冷量</div><div class="result-fact-value">1,165.0 kW</div></div>
+          <div class="result-fact"><div class="result-fact-label">能力状态</div><div class="result-fact-value">11 基础出值 / 1 输入替代</div></div>
         </div>
         <div class="room-scada-panel opt-record-viz-card" id="optRecordVizCard">
           <div class="opt-viz-card-head">
@@ -1202,6 +1250,8 @@
                   <div class="leg-item" id="vizLegRack"><div class="leg-swatch outline" style="border-color:#D9DDE1;width:18px;height:12px;"></div>机柜列</div>
                   <div class="leg-item"><div class="leg-swatch outline" style="border-color:#52C41A;"></div>AI建议开机</div>
                   <div class="leg-item"><div class="leg-swatch outline" style="border-color:#F12000;"></div>AI建议关机</div>
+                  <div class="leg-item"><span class="device-type-tag">水冷</span></div>
+                  <div class="leg-item"><span class="device-type-tag air">风冷 DX</span></div>
                   <div class="leg-item"><div class="leg-swatch" style="background:transparent;border:2px solid #EB2F96;border-radius:50%;"></div>冷通道传感器</div>
                   <div class="leg-item"><div class="leg-swatch" style="background:transparent;border:2px solid #722ED1;border-radius:50%;"></div>热通道传感器</div>
                   <div class="leg-item"><span style="display:inline-block;width:22px;height:3px;background:#007AFF;border-radius:2px;"></span>供冷关系</div>
@@ -1388,7 +1438,7 @@
             <option selected>保守模式1</option>
             <option>标准模式</option>
           </select>
-          <div class="form-hint">单选，可选择当前末端水冷系统下的安全边界</div>
+          <div class="form-hint">单选，可选择当前末端系统下的安全边界</div>
         </div>
 
         <div class="anno anno-req" data-version="v1.0">
@@ -1396,35 +1446,34 @@
           <span class="anno-version">v1.0</span>
           <span class="anno-source">引用自需求文档</span>
           <div class="anno-body">
-            <p><b>关联模块：</b>规则配置右侧面板</p>
+            <p><b>关联模块：</b>加减机寻优规则配置弹窗</p>
             <p><b>需求目标：</b>承载加减机寻优运行所需的核心参数配置与投入范围配置，作为周期寻优、结果生成和执行下发的参数入口。</p>
             <p><b>配置范围：</b>包括 <code>T_opt</code>、安全边界、寻优算法、寻优模式、<code>Tset</code>、<code>α/β/γ</code>、<code>T_run,min</code> 以及设备和传感器的投入/投出状态。</p>
           </div>
         </div>
-        <div class="anno anno-ux" data-version="v1.0">
+        <div class="anno anno-ux" data-version="v2.6">
           <span class="anno-tag">交互说明</span>
-          <span class="anno-version">v1.0</span>
+          <span class="anno-version">v2.6</span>
           <span class="anno-source">基于文档推断</span>
           <div class="anno-body">
-            <p><b>关联模块：</b>规则配置右侧面板 —「寻优规则配置」Tab</p>
+            <p><b>关联模块：</b>规则配置弹窗 —「寻优规则配置」Tab</p>
             <p><b>入口：</b>顶部寻优策略卡片「规则配置」。</p>
-            <p><b>交互：</b>面板从右侧抽屉展开；取消直接关闭不保存；保存后关闭面板。未选择寻优算法前，核心参数区隐藏，选定后展开对应表单。</p>
+            <p><b>交互：</b>沿用冷站柔性寻优的居中配置弹窗；取消直接关闭不保存，保存后关闭弹窗。公共参数置顶，设备类型差异集中在「开机设备规则」表中。</p>
           </div>
         </div>
-        <div class="anno anno-field" data-version="v1.0">
+        <div class="anno anno-field" data-version="v2.6">
           <span class="anno-tag">字段说明</span>
-          <span class="anno-version">v1.0</span>
+          <span class="anno-version">v2.6</span>
           <span class="anno-source">引用自需求文档</span>
           <div class="anno-body">
-            <p><b>关联模块：</b>规则配置右侧面板 —「寻优规则配置」Tab</p>
-            <p><b>布局与交互：</b><b>寻优周期 T_opt</b>、<b>安全边界</b>为全局配置，置顶展示，<b>不随「寻优算法」选择而折叠或隐藏</b>；选定寻优算法后，仅展开「核心配置参数」区域（寻优模式、Tset、α/β/γ、T_run,min 等）。投入/投出见另一 Tab：Fi=投入 参与寻优，Fi=投出 不参与且 zi 强制为 0。</p>
+            <p><b>关联模块：</b>规则配置弹窗 —「寻优规则配置」Tab</p>
+            <p><b>布局与交互：</b><b>寻优周期 T_opt</b>、<b>安全边界</b>、<b>寻优算法</b>与<b>寻优模式</b>为机房级公共配置；开机初始控制变量、初始值和冷量衰减系数按当前机房实际包含的对象类型自动生成规则行。投入/投出沿用另一 Tab 已有的动态对象类型分组。</p>
             <p><b>寻优周期 T_opt：</b>定时触发寻优计算的时间间隔（单位：分钟）；若上一轮未完成则本周期跳过。</p>
-            <p><b>安全边界：</b>单选当前末端水冷系统下的安全边界模式；约束口径含 Nmin、Nmax、Tc,max,c、Th,max,h 等。</p>
+            <p><b>安全边界：</b>单选当前末端系统下的安全边界模式；约束口径含 Nmin、Nmax、Tc,max,c、Th,max,h 等。</p>
             <p><b>寻优算法：</b>必选；选定后展示对应「核心配置参数」表单，未选时该区域折叠隐藏。</p>
             <p><b>寻优模式：</b>全局式=穷举可行组合取最优；增量式=从当前状态逐步加减机迭代。</p>
-            <p><b>开机设备初始控制变量：</b>冷冻水型精密空调的设定点位（如送风温度设定），即开机后需调节的参数位。</p>
-            <p><b>开机设备初始控制值 Tset：</b>空调开机后该设定参数的初始值，保留两位小数；新开机下发此值。</p>
-            <p><b>冷量衰减系数 α：</b>空调实际输出相对额定制冷量的折扣比例，默认 0.60。<b>冷量冗余系数 β：</b>额外预留冷量比例，默认 0.08。<b>均衡权重系数 γ：</b>省电与气流均衡的权衡，可配置 0.01~0.50。</p>
+            <p><b>开机设备规则：</b>系统按对象类型自动生成。冷冻水型可选既有设定点位；风冷 DX 可选送风或回风温度设定。混合编队分别配置初始控制值 Tset 与冷量衰减系数 α。</p>
+            <p><b>冷量冗余系数 β：</b>额外预留冷量比例，默认 0.08。<b>均衡权重系数 γ：</b>省电与气流均衡的权衡，可配置 0.01~0.50。</p>
             <p><b>最小连续运行时长 T_run,min：</b>单台空调自本次开机起须连续运行的最短时间（单位：分钟），属寻优<strong>硬约束</strong>：未满该时长时，本轮寻优结果不得对该机下达关机（或等效减机）指令。用于抑制频繁启停、保护压缩机与末端气流稳定；与加减机策略、T_opt 周期触发及上一轮执行状态联动校验。</p>
           </div>
         </div>
@@ -1432,14 +1481,14 @@
           <div class="form-label"><span class="required">*</span> 寻优算法</div>
           <select class="form-control" id="algorithmSelect" onchange="toggleAlgorithmConfig()">
             <option value="">请选择寻优算法</option>
-            <option value="multi-obj-switch">多目标加减机寻优算法</option>
+            <option value="multi-obj-switch" selected>多目标加减机寻优算法</option>
           </select>
           <div class="form-hint">选定算法后展示对应的配置参数</div>
         </div>
 
-        <div id="algorithmConfigArea" style="display:none;">
+        <div id="algorithmConfigArea">
 
-          <div class="form-section">核心配置参数（需用户配置）</div>
+          <div class="form-section">公共参数</div>
 
           <div class="form-group">
             <div class="form-label"><span class="required">*</span> 寻优模式</div>
@@ -1449,7 +1498,37 @@
             </select>
             <div class="form-hint">全局式：从零开始搜索最优方案；增量式：在当前状态基础上微调</div>
           </div>
-          <div class="form-group">
+
+          <div class="form-section">开机设备规则</div>
+          <div class="rule-table-wrap">
+            <table class="rule-table">
+              <thead>
+                <tr>
+                  <th>设备类型</th>
+                  <th>开机初始控制变量<span class="required">*</span></th>
+                  <th>初始控制值 Tset<span class="required">*</span></th>
+                  <th>冷量衰减系数 α<span class="required">*</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="device-type-name">冷冻水型精密空调</span><span class="device-type-note">当前机房 8 台</span></td>
+                  <td><select class="form-control"><option selected>送风温度设定</option><option>回风温度设定</option><option>风机转速上限设定</option></select></td>
+                  <td><div class="form-row"><input type="number" class="form-control" value="24.50" step="0.01"><span class="form-suffix">℃</span></div></td>
+                  <td><input type="number" class="form-control" value="0.60" min="0.01" max="1" step="0.01"></td>
+                </tr>
+                <tr>
+                  <td><span class="device-type-name">风冷 DX 精密空调</span><span class="device-type-note">当前机房 4 台</span></td>
+                  <td><select class="form-control"><option selected>回风温度设定</option><option>送风温度设定</option></select></td>
+                  <td><div class="form-row"><input type="number" class="form-control" value="24.00" step="0.01"><span class="form-suffix">℃</span></div></td>
+                  <td><input type="number" class="form-control" value="0.55" min="0.01" max="1" step="0.01"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="form-section">目标与约束参数</div>
+          <div class="form-group" style="display:none;">
             <div class="form-label">开机设备初始控制变量</div>
             <select class="form-control">
               <option>请选择</option>
@@ -1457,7 +1536,7 @@
             </select>
             <div class="form-hint">可选择"冷冻水型精密空调"的设定点位，即空调开机后需要调节的具体参数位置</div>
           </div>
-          <div class="form-group">
+          <div class="form-group" style="display:none;">
             <div class="form-label">开机设备初始控制值 Tset</div>
             <div class="form-row">
               <input type="number" class="form-control" value="24.50" step="0.01" style="width:140px;">
@@ -1465,7 +1544,7 @@
             </div>
             <div class="form-hint">空调开机后调节参数的初始数值，需保留两位小数</div>
           </div>
-          <div class="form-group">
+          <div class="form-group" style="display:none;">
             <div class="form-label"><span class="required">*</span> 冷量衰减系数 α</div>
             <input type="number" class="form-control" value="0.60" step="0.01">
             <div class="form-hint">空调实际能发挥的冷量，是额定制冷量的百分比（默认60%）</div>
@@ -1511,8 +1590,9 @@
           <span class="anno-version">v1.0</span>
           <span class="anno-source">引用自需求文档</span>
           <div class="anno-body">
-            <p><b>关联模块：</b>规则配置右侧面板 —「投入/投出配置」Tab</p>
+            <p><b>关联模块：</b>规则配置弹窗 —「投入/投出配置」Tab</p>
             <p><b>投入/投出：</b>Fc=投入 的冷通道传感器参与 Uc 计算与冷通道覆盖约束；Fh=投入 的热通道传感器参与换热温差计算；Fi=投入 的空调参与寻优，Fi=投出 的空调 zi 强制为 0。</p>
+            <p><b>分组方式：</b>对象列表沿用现有动态能力，按当前实例实际返回的对象类型自动分组；本次仅调整规则配置、结果与平面图，不改变投入/投出配置逻辑。</p>
           </div>
         </div>
 
@@ -1836,7 +1916,7 @@
         <div class="anno-body">
           <p><b>关联模块：</b>下发/回退确认弹窗 — 设备行原因文案（v2.6 可解释性，两处入口之一）</p>
           <p><b>展示规则：</b>每台建议开/关机设备在其参数行下方以<strong>整行灰字</strong>（跨全部列）展示该设备的<strong>完整原因文案</strong>（原因码 + 参数按统一模板渲染），帮助操作人在确认下发前复核为什么动这台设备；不可点击、不挤占参数列宽。与平面图浮窗「调节原因」区块展示的是<strong>同一段文案</strong>，全站不做短语版/缩略版变体。</p>
-          <p><b>数据来源：</b>算法结果输出补记的设备级解释对象（仅本轮 zi 有变动的设备）。加减机原因码 2 个：OFF_SAVE（关机·冷量冗余 + 区域温度证据 + 候选内排名 + 省电估算 + <strong>安全确认句</strong>——显性复述本轮已通过的 v1.6 硬约束：总供冷、冷通道覆盖（含关停后负责通道剩余供冷台数）、最小开机台数、最小连续运行时长）、ON_DEMAND（开机；仅 gap_kw＞0 用缺口话术，gap_kw≤0 用替换固定句 + "更利于温度均衡"；开机是增冷方向安全动作，不附安全句）。单台归因为<strong>双证据</strong>：①区域温度证据——本机主要负责的冷通道（空间权重 wi,c 最大者）当前温度与距上限余量，定性词（富余/紧迫）由本轮供冷紧迫度 Uc 相对比较判定，不新增阈值；②<strong>全部可用开/关机候选</strong>内排名（增量式用 Si 优先级名次，全局式回退额定功率/冷量）。原因文案不复述动作、不重复结论条机房级数字（IT 负载、开机台数、冷量冗余/缺口只在结论条展示）。兜底：参数不齐不输出该对象并记日志，无 fallback_text。</p>
+          <p><b>数据来源：</b>仅本轮 `zi` 实际变化的设备输出解释对象。原因码为 OFF_SELECTED / ON_SELECTED；原因参数直接记录 `selection_stage`（全局最优组合 / 基准修正 / 邻域改进）及负责区域温度事实。设备文案不展示候选排名、单台 `Si` 名次或单台节能估算；关机设备复述最终组合已通过的四类硬约束，开机设备只说明属于本轮实际选中组合或动作。参数不齐时不输出该对象并记日志，无 fallback_text。</p>
         </div>
       </div>
             <div class="dispatch-notice" role="note">
@@ -2055,18 +2135,18 @@ const SCADA_BINDING_STORE_KEY = 'idc.flexOpt.scadaBinding.v1';
 
 const ROOM = {
   acs: [
-    { id:'AC1',  x:0,  y:16.5, side:'L', Qc:127, P:17, Fi:'投入', si:0, zi:1, Ts:'-',   Tr:'-'   },
-    { id:'AC2',  x:0,  y:14.0, side:'L', Qc:127, P:17, Fi:'投入', si:1, zi:1, Ts:'20.5', Tr:'27.8' },
-    { id:'AC3',  x:0,  y:11.0, side:'L', Qc:127, P:17, Fi:'投入', si:1, zi:1, Ts:'20.5', Tr:'28.5' },
-    { id:'AC4',  x:0,  y:8.0,  side:'L', Qc:127, P:17, Fi:'投入', si:1, zi:1, Ts:'20.5', Tr:'27.3' },
-    { id:'AC5',  x:0,  y:5.0,  side:'L', Qc:127, P:17, Fi:'投入', si:1, zi:0, Ts:'20.5', Tr:'28.9' },
-    { id:'AC6',  x:0,  y:2.0,  side:'L', Qc:127, P:17, Fi:'投入', si:1, zi:1, Ts:'20.5', Tr:'27.6' },
-    { id:'AC7',  x:24, y:16.5, side:'R', Qc:127, P:17, Fi:'投入', si:1, zi:1, Ts:'20.5', Tr:'28.1' },
-    { id:'AC8',  x:24, y:14.0, side:'R', Qc:127, P:17, Fi:'投入', si:1, zi:1, Ts:'20.5', Tr:'28.7' },
-    { id:'AC9',  x:24, y:11.0, side:'R', Qc:127, P:17, Fi:'投入', si:1, zi:1, Ts:'20.5', Tr:'27.4' },
-    { id:'AC10', x:24, y:8.0,  side:'R', Qc:127, P:17, Fi:'投入', si:1, zi:1, Ts:'20.5', Tr:'28.3' },
-    { id:'AC11', x:24, y:5.0,  side:'R', Qc:127, P:17, Fi:'投入', si:1, zi:0, Ts:'20.5', Tr:'27.9' },
-    { id:'AC12', x:24, y:2.0,  side:'R', Qc:127, P:17, Fi:'投入', si:0, zi:1, Ts:'-',    Tr:'-'   },
+    { id:'AC1',  x:0,  y:16.5, side:'L', deviceType:'water', typeLabel:'冷冻水型', Qc:127, P:17, powerSource:'额定功率', Fi:'投入', si:0, zi:1, Ts:'-',   Tr:'-'   },
+    { id:'AC2',  x:0,  y:14.0, side:'L', deviceType:'water', typeLabel:'冷冻水型', Qc:127, P:17, powerSource:'额定功率', Fi:'投入', si:1, zi:1, Ts:'20.5', Tr:'27.8' },
+    { id:'AC3',  x:0,  y:11.0, side:'L', deviceType:'water', typeLabel:'冷冻水型', Qc:127, P:17, powerSource:'额定功率', Fi:'投入', si:1, zi:1, Ts:'20.5', Tr:'28.5' },
+    { id:'AC4',  x:0,  y:8.0,  side:'L', deviceType:'water', typeLabel:'冷冻水型', Qc:127, P:17, powerSource:'额定功率', Fi:'投入', si:1, zi:1, Ts:'20.5', Tr:'27.3' },
+    { id:'AC5',  x:0,  y:5.0,  side:'L', deviceType:'water', typeLabel:'冷冻水型', Qc:127, P:17, powerSource:'额定功率', Fi:'投入', si:1, zi:0, Ts:'20.5', Tr:'28.9' },
+    { id:'AC6',  x:0,  y:2.0,  side:'L', deviceType:'water', typeLabel:'冷冻水型', Qc:127, P:17, powerSource:'额定功率', Fi:'投入', si:1, zi:1, Ts:'20.5', Tr:'27.6' },
+    { id:'AC7',  x:24, y:16.5, side:'R', deviceType:'water', typeLabel:'冷冻水型', Qc:127, P:17, powerSource:'额定功率', Fi:'投入', si:1, zi:1, Ts:'20.5', Tr:'28.1' },
+    { id:'AC8',  x:24, y:14.0, side:'R', deviceType:'water', typeLabel:'冷冻水型', Qc:127, P:17, powerSource:'额定功率', Fi:'投入', si:1, zi:1, Ts:'20.5', Tr:'28.7' },
+    { id:'AC9',  x:24, y:11.0, side:'R', deviceType:'air', typeLabel:'风冷 DX', Qc:92, P:22.4, powerSource:'基础模型', Todb:38.0, Fodb:0.955, Fi:'投入', si:1, zi:1, Ts:'20.5', Tr:'27.4' },
+    { id:'AC10', x:24, y:8.0,  side:'R', deviceType:'air', typeLabel:'风冷 DX', Qc:92, P:22.4, powerSource:'基础模型', Todb:38.0, Fodb:0.955, Fi:'投入', si:1, zi:1, Ts:'20.5', Tr:'28.3' },
+    { id:'AC11', x:24, y:5.0,  side:'R', deviceType:'air', typeLabel:'风冷 DX', Qc:89, P:27.6, powerSource:'输入替代', Todb:38.0, Fodb:0.955, Fi:'投入', si:1, zi:0, Ts:'20.5', Tr:'27.9' },
+    { id:'AC12', x:24, y:2.0,  side:'R', deviceType:'air', typeLabel:'风冷 DX', Qc:92, P:22.4, powerSource:'基础模型', Todb:38.0, Fodb:0.955, Fi:'投入', si:0, zi:1, Ts:'-',    Tr:'-'   },
   ],
   coldSensors: [
     { id:'c1',  x:4.0,  y:15.25, Tc:23.93, RH:42, area:'G-H冷通道' },
@@ -2652,7 +2732,7 @@ function renderRoomViz() {
     else if (!isOut && !isRunning && aiOn) fill = '#1890FF';
     const ox = ac.side === 'L' ? VIZ_AC_OX_L : VIZ_AC_OX_R;
 
-    s += `<rect x="${ax + ox}" y="${ay - acHalfH}" width="${VIZ_AC_BOX_W}" height="${VIZ_AC_BOX_H}" rx="3" fill="${fill}" stroke="${isOut ? '#999' : '#fff'}" stroke-width="2" class="viz-node" data-type="ac" data-id="${ac.id}" data-fi="${ac.Fi}" data-si="${ac.si}" data-zi="${ac.zi}" data-p="${ac.P}" data-qc="${ac.Qc}" data-ts="${ac.Ts}" data-tr="${ac.Tr}" filter="${changed ? 'url(#glow)' : ''}"/>`;
+    s += `<rect x="${ax + ox}" y="${ay - acHalfH}" width="${VIZ_AC_BOX_W}" height="${VIZ_AC_BOX_H}" rx="3" fill="${fill}" stroke="${isOut ? '#999' : '#fff'}" stroke-width="2" class="viz-node" data-type="ac" data-id="${ac.id}" data-fi="${ac.Fi}" data-si="${ac.si}" data-zi="${ac.zi}" data-p="${ac.P}" data-qc="${ac.Qc}" data-ts="${ac.Ts}" data-tr="${ac.Tr}" data-device-type="${ac.deviceType}" data-type-label="${ac.typeLabel}" data-power-source="${ac.powerSource}" data-todb="${ac.Todb || ''}" data-fodb="${ac.Fodb || ''}" filter="${changed ? 'url(#glow)' : ''}"/>`;
 
     const iconX = ax + ox + VIZ_AC_BOX_W / 2, iconY = ay;
     if (isOut) {
@@ -2664,7 +2744,8 @@ function renderRoomViz() {
 
     const labelX = ac.side === 'L' ? ax + ox - 3 : ax + ox + VIZ_AC_BOX_W + 3;
     const anchor = ac.side === 'L' ? 'end' : 'start';
-    s += `<text x="${labelX}" y="${ay + 4}" font-size="11" fill="#262626" text-anchor="${anchor}" font-weight="600">${ac.id}</text>`;
+    s += `<text x="${labelX}" y="${ay}" font-size="11" fill="#262626" text-anchor="${anchor}" font-weight="600">${ac.id}</text>`;
+    s += `<text x="${labelX}" y="${ay + 11}" font-size="8" fill="${ac.deviceType === 'air' ? '#C2410C' : '#096DD9'}" text-anchor="${anchor}" font-weight="600">${ac.deviceType === 'air' ? 'DX' : '水冷'}</text>`;
 
     if (changed) {
       const arrowX = ac.side === 'L' ? ax + ox + VIZ_AC_BOX_W + 5 : ax + ox - 5;
@@ -2715,9 +2796,18 @@ function renderRoomViz() {
         html = `<b>热通道 ${d.id}</b><br>温度：<b>${parseFloat(d.th).toFixed(2)}℃</b><br>湿度：<b>${d.rh}%</b>`;
       } else if (d.type === 'ac') {
         const st = d.si === '1' ? '运行中' : '停机';
-        const ai = d.zi === '1' ? '开机' : '关机';
-        const ch = d.si !== d.zi;
-        html = `<b>${d.id}</b>（${d.fi}）<br>状态：${st} → AI建议：<b style="color:${d.zi==='1'?'#52C41A':'#FF4D4F'}">${ai}</b>${ch ? ' ⚡' : ''}<br>额定冷量：${d.qc}kW | 功率：${d.p}kW<br>送风：${d.ts}℃ | 回风：${d.tr}℃`;
+        const displayName = d.id.startsWith('AC') ? `101空调-${d.id.slice(2)}` : d.id;
+        const deviceType = d.deviceType === 'air' ? '风冷 DX 空调' : '水冷空调';
+        const suggestion = d.zi === '1' ? 'AI建议开机' : 'AI建议关机';
+        const suggestionColor = d.zi === '1' ? '#1890FF' : '#FF4D4F';
+        const supplyTemp = d.ts === '-' ? '—' : `${d.ts} ℃`;
+        const returnTemp = d.tr === '-' ? '—' : `${d.tr} ℃`;
+        html = `<b>${displayName}（${d.fi}）</b><br><br>`;
+        html += `设备类型：${deviceType}<br>`;
+        html += `状态：${st} → <b style="color:${suggestionColor}">${suggestion}</b><br>`;
+        html += `送风温度：${supplyTemp}<br>`;
+        html += `回风温度：${returnTemp}<br>`;
+        html += '风机转速：- %';
         const reason = (typeof EXPLAIN_REASONS !== 'undefined') && EXPLAIN_REASONS[d.id];
         if (reason) html += `<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.25);max-width:280px;white-space:normal;"><b>调节原因：</b>${reason}</div>`;
       }
@@ -2764,15 +2854,10 @@ const DATA = [
       { name:'运行状态',           type:'controlled', actual:'运行中',  ai:'-',  change:'无变化' },
       { name:'送风温度',           type:'controlled', actual:'18.2℃',  ai:'-',  change:'无变化' },
       { name:'回风温度',           type:'controlled', actual:'26.1℃',  ai:'-',  change:'无变化' },
-      { name:'供水温度',           type:'controlled', actual:'15.8℃',  ai:'-',  change:'无变化' },
-      { name:'回水温度',           type:'controlled', actual:'21.0℃',  ai:'-',  change:'无变化' },
       { name:'风机转速',           type:'controlled', actual:'65%',    ai:'-',  change:'无变化' },
-      { name:'水阀开度',           type:'controlled', actual:'2%',     ai:'-',  change:'无变化' },
       { name:'开机',              type:'optimizing', actual:'1',      ai:'0',  change:'1 → 0' },
       { name:'关机',              type:'optimizing', actual:'0',      ai:'1',  change:'0 → 1' },
-      { name:'送风温度设定',       type:'unopt',      actual:'24.5℃',  ai:'-',  change:'无变化' },
-      { name:'【风机1】风机转速上限', type:'unopt',    actual:'80%',    ai:'-',  change:'无变化' },
-      { name:'【风机1】风机转速下限', type:'unopt',    actual:'30%',    ai:'-',  change:'无变化' },
+      { name:'回风温度设定',       type:'unopt',      actual:'24.0℃',  ai:'-',  change:'无变化' },
     ]
   },
   {
@@ -2781,15 +2866,10 @@ const DATA = [
       { name:'运行状态',           type:'controlled',  actual:'停机中',  ai:'-',  change:'无变化' },
       { name:'送风温度',           type:'controlled',  actual:'—',      ai:'-',  change:'无变化' },
       { name:'回风温度',           type:'controlled',  actual:'—',      ai:'-',  change:'无变化' },
-      { name:'供水温度',           type:'controlled',  actual:'—',      ai:'-',  change:'无变化' },
-      { name:'回水温度',           type:'controlled',  actual:'—',      ai:'-',  change:'无变化' },
       { name:'风机转速',           type:'controlled',  actual:'0%',     ai:'-',  change:'无变化' },
-      { name:'水阀开度',           type:'controlled',  actual:'0%',     ai:'-',  change:'无变化' },
       { name:'开机',              type:'disturbance', actual:'0',      ai:'-',  change:'无变化' },
       { name:'关机',              type:'disturbance', actual:'1',      ai:'-',  change:'无变化' },
-      { name:'送风温度设定',       type:'disturbance', actual:'—',      ai:'-',  change:'无变化' },
-      { name:'【风机1】风机转速上限', type:'disturbance', actual:'—',    ai:'-',  change:'无变化' },
-      { name:'【风机1】风机转速下限', type:'disturbance', actual:'—',    ai:'-',  change:'无变化' },
+      { name:'回风温度设定',       type:'disturbance', actual:'—',      ai:'-',  change:'无变化' },
     ]
   }
 ];
@@ -2807,17 +2887,17 @@ const ROOM_EXPLAIN = {
   sceneCode: 'RM_SWITCH',
   tag: '组合调整',
   tone: 'tone-warning',
-  text: '本轮建议开机 <b>10</b> 台，开启 <b>AC1、AC12</b>、关闭 <b>AC5、AC11</b> —— 按功耗与气流均衡重选开机组合，预计省电 <b>5.2kW</b>，冷量冗余 <b>96.4kW</b>',
+  text: '本轮建议开机 <b>10</b> 台，开启 <b>AC1、AC12</b>、关闭 <b>AC5、AC11</b>；安全冷量余量 <b>96.4kW</b>，参考功率项较当前组合降低 <b>5.2kW</b>（仅用于方案比选）',
   time: '2026-03-17 13:19:01'
 };
 
 // 设备级原因：一台设备一段完整文案（仅本轮 zi 有变动的设备），
 // 平面图浮窗「调节原因」区块与手动下发弹窗展示同一段，无短语/缩略变体
 const EXPLAIN_REASONS = {
-  'AC5':  '本机主要负责的 K-L 冷通道温度 23.4℃，距上限还有 3.6℃，区域冷量富余；在 10 台可关机空调中供冷优先级排第 1（越低越宜关），关停约省电 16kW/时（按额定功率估算）。安全确认：关停后 K-L 冷通道仍有 2 台空调供冷，已通过总供冷、通道覆盖、最小台数与连续运行校验。',
-  'AC11': '本机主要负责的 E-F 冷通道温度 23.7℃，距上限 3.3℃；在 10 台可关机空调中供冷优先级排第 2（越低越宜关），关停约省电 17kW/时（按额定功率估算）。安全确认：关停后 E-F 冷通道仍有 2 台空调供冷，已通过总供冷、通道覆盖、最小台数与连续运行校验。',
-  'AC1':  '本机主要负责的 G-H 冷通道温度 23.9℃，距上限 3.1℃，由本机就近供冷更利于功耗与气流均衡；在 2 台可开机空调中补冷优先级排第 1（越高越宜开），纳入开机。',
-  'AC12': '本机主要负责的 E-F 冷通道温度 23.7℃，距上限 3.3℃，由本机就近供冷更利于功耗与气流均衡；在 2 台可开机空调中补冷优先级排第 2，纳入开机。'
+  'AC5':  '本机关联冷通道当前温度 23.4℃，控制上限 27.0℃；本轮组合计算建议关闭本机，关闭后该通道仍有 2 台空调参与供冷。',
+  'AC11': '本机关联冷通道当前温度 23.7℃，控制上限 27.0℃；本轮组合计算建议关闭本机，关闭后该通道仍有 2 台空调参与供冷。',
+  'AC1':  '本机关联冷通道当前温度 23.9℃，控制上限 27.0℃；本轮组合计算建议开启本机，提高该通道供冷能力。',
+  'AC12': '本机关联冷通道当前温度 23.7℃，控制上限 27.0℃；本轮组合计算建议开启本机，提高该通道供冷能力。'
 };
 
 function renderExplainBar() {
@@ -2839,7 +2919,7 @@ function renderTable() {
       html += '<tr class="obj-separator"><td colspan="7"></td></tr>';
     }
     ac.variables.forEach((v, i) => {
-      const changeClass = v.change === '无变化' ? 'change-none' : 'change-positive';
+      const changeClass = v.change.includes('→') ? 'change-positive' : 'change-none';
       html += '<tr>';
       if (i === 0) {
         html += `<td class="obj-name-cell" rowspan="${ac.variables.length}">
@@ -3128,31 +3208,28 @@ function openDispatch(mode) {
     </tr></thead><tbody>`;
     onDevices.forEach(ac => {
       const reason = EXPLAIN_REASONS[ac.id];
-      html += `<tr>
-        <td class="dev-name" rowspan="4">${ac.id}<br><span style="font-weight:400;color:var(--text-hint);font-size:11px;">房间级精密空调</span></td>
-        <td class="param-name">开机指令</td>
-        <td class="val-actual">0（停机）</td>
-        <td class="val-ai">1（开机）</td>
-        <td><input class="dispatch-val" type="text" value="1"></td>
-      </tr>
-      <tr>
-        <td class="param-name">送风温度设定</td>
-        <td class="val-actual">—</td>
-        <td class="val-ai">24.5℃</td>
-        <td><input class="dispatch-val" type="text" value="24.5"></td>
-      </tr>
-      <tr>
-        <td class="param-name">风机转速上限</td>
-        <td class="val-actual">—</td>
-        <td class="val-ai">80%</td>
-        <td><input class="dispatch-val" type="text" value="80"></td>
-      </tr>
-      <tr>
-        <td class="param-name">风机转速下限</td>
-        <td class="val-actual">—</td>
-        <td class="val-ai">30%</td>
-        <td><input class="dispatch-val" type="text" value="30"></td>
-      </tr>`;
+      const initialRows = ac.deviceType === 'air'
+        ? [
+            ['开机指令', '0（停机）', '1（开机）', '1'],
+            ['回风温度设定', '—', '24.0℃', '24.0']
+          ]
+        : [
+            ['开机指令', '0（停机）', '1（开机）', '1'],
+            ['送风温度设定', '—', '24.5℃', '24.5'],
+            ['风机转速上限', '—', '80%', '80'],
+            ['风机转速下限', '—', '30%', '30']
+          ];
+      initialRows.forEach((row, rowIndex) => {
+        html += '<tr>';
+        if (rowIndex === 0) {
+          html += `<td class="dev-name" rowspan="${initialRows.length}">${ac.id}<br><span style="font-weight:400;color:var(--text-hint);font-size:11px;">${ac.typeLabel}精密空调</span></td>`;
+        }
+        html += `<td class="param-name">${row[0]}</td>
+          <td class="val-actual">${row[1]}</td>
+          <td class="val-ai">${row[2]}</td>
+          <td><input class="dispatch-val" type="text" value="${row[3]}"></td>
+        </tr>`;
+      });
       if (reason) html += `<tr><td class="ds-reason-cell" colspan="5">原因：${reason}</td></tr>`;
     });
     html += '</tbody></table>';
@@ -3166,7 +3243,7 @@ function openDispatch(mode) {
     offDevices.forEach(ac => {
       const reason = EXPLAIN_REASONS[ac.id];
       html += `<tr>
-        <td class="dev-name">${ac.id}<br><span style="font-weight:400;color:var(--text-hint);font-size:11px;">房间级精密空调</span></td>
+        <td class="dev-name">${ac.id}<br><span style="font-weight:400;color:var(--text-hint);font-size:11px;">${ac.typeLabel}精密空调</span></td>
         <td class="param-name">关机指令</td>
         <td class="val-actual">1（运行中）</td>
         <td class="val-ai">0（关机）</td>

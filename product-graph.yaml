@@ -1,7 +1,7 @@
 # AI 节能 — 产品关系图（机读）
 # 人读入口：AGENT-MAP.md（本目录）+ 07-产品文档/01-ai 节能/产品文档/00-产品全貌.md
 # 维护：改 nav.js / index 拓扑 / 主流程时同步本文件
-# 更新：2026-07-10
+# 更新：2026-07-23
 
 meta:
   product: ai-energy
@@ -675,23 +675,23 @@ requirements:
     prototype_pages:
       - 机房寻优-加减机寻优.html
       - 机房寻优-柔性寻优.html
-    upstream: []
+    upstream: [req.v26.room_opt_device_capability]
     downstream: []
     algo_vs_ui: mixed
-    notes: 结论条（主标签+详细文案）+设备原因文案；解释功能仅补记场景码/原因码/参数，不改变实际引擎决策；水冷取v1.6字段，风冷取P_reference/Q_constraint等价能力字段；3个UI落点
+    notes: 结论条（主标签+详细文案）+设备原因文案；以v2.6统一L3结果和实际决策轨迹为事实源，不改变zi/V1*/V2*；加减机不做候选排名伪因果，P_reference不作节能量；柔性覆盖common-mode/差异化/保障/紧急/凝露恢复及V2-only动作；执行结果复用寻优记录、下发策略和设备级下发记录，不在L3新增建议生命周期；3个UI落点
 
   - id: req.v26.room_opt_device_capability
     version: v2.6
     status: 规划中
     domain: room_opt
-    prd_path: 04-需求文档/AI节能v2.6 版本/末端寻优设备能力抽象架构设计方案.md
+    prd_path: 04-需求文档/AI节能v2.6 版本/末端寻优设备能力抽象架构设计方案.html
     prototype_pages:
       - 机房寻优-加减机寻优.html
       - 机房寻优-柔性寻优.html
     upstream: []
-    downstream: []
-    algo_vs_ui: algo_only
-    notes: 通用内核+设备能力插件；基础PowerModel必备、高阶模型可选；按参考开机工况扩展风冷加减机，按v1.6反馈式Si扩展风冷柔性；动态冷量只允许收紧Qr×alpha；不实现混合编队
+    downstream: [req.v26.room_opt_explainability]
+    algo_vs_ui: mixed
+    notes: 通用内核+设备能力插件；既有加减机/柔性页不新增入口，规则配置使用居中弹窗并按对象类型生成规则行，结果概览/变量表/平面图/手动下发展示水冷与风冷DX能力差异；投入投出沿用既有动态对象类型分组；基础PowerModel供加减机消费；CoolingModel分离Q_constraint与Q_est，风冷Q_constraint按室外高温收紧，柔性以两类运行总冷量取小门控并补全全局同向节能信号；支持水冷、风冷及混合编队；柔性L3每轮按真实值重算且不设置固定响应等待，L4复用既有记录做回读确认和待生效目标去重；连续巡游按离线压力、影子运行、现场受控试验分层验证
 
   - id: req.cross.safety_dispatch_base
     version: v1.6
@@ -784,6 +784,9 @@ edges:
     to: req.v26.room_opt_device_capability
     rel: optionally_enhances
   - from: req.v26.room_opt_device_capability
+    to: req.v26.room_opt_explainability
+    rel: provides_facts
+  - from: req.v26.room_opt_device_capability
     to: page.room_add_remove_opt
     rel: enhances
   - from: req.v26.room_opt_device_capability
@@ -805,5 +808,5 @@ noise:
     note: 手动训练.html 可从机理模型训练跳入，但未进 index.html topologyData
   - id: noise.v24_explore_unlist_html
     note: 清单 v2.4 多工况条目仅链 PRD，未直链 4 个 HTML（拓扑/nav 已挂）
-  - id: noise.v26_algo_only
-    note: v2.6 功率预测与设备能力架构条目均无新原型页（algo_only）；可解释性条目为既有加减机/柔性两页增量修改，非新建页
+  - id: noise.v26_no_new_page
+    note: v2.6 功率预测无新原型页；设备能力与可解释性均为既有加减机/柔性两页增量修改，非新建页
