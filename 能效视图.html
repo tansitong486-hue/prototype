@@ -524,6 +524,11 @@
     }
     .action-link:hover { text-decoration: underline; }
     .action-link.danger { color: var(--danger); }
+    .action-link:disabled {
+      color: var(--text-hint);
+      cursor: not-allowed;
+      text-decoration: none;
+    }
 
     /* 指标列表 */
     .metric-toolbar {
@@ -554,6 +559,24 @@
       background: var(--primary-tint);
       font-weight: 600;
     }
+    .metric-toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-left: auto;
+    }
+    .metric-visibility {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .metric-visibility-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+    .metric-visibility .metric-mode button { min-width: 64px; }
     .metric-range {
       display: flex;
       align-items: center;
@@ -891,6 +914,50 @@
       overflow: hidden;
     }
     .modal.modal-wide { width: 920px; }
+    .modal.modal-curve { width: 960px; }
+
+    .curve-toolbar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px 24px;
+      margin-bottom: 14px;
+    }
+    .curve-field {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .curve-field label { font-weight: 600; color: var(--text-secondary); }
+    .curve-field select {
+      height: 34px;
+      min-width: 120px;
+      padding: 0 28px 0 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--text-primary);
+      font: inherit;
+      font-size: 13px;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+    }
+    .curve-chart-box {
+      position: relative;
+      height: 360px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 8px 12px 4px;
+    }
+    .curve-chart-box canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
 
     .modal-head {
       display: flex;
@@ -1434,8 +1501,8 @@
                       <div class="anno-body">
                         <p><b>关联模块：</b>指标列表 — 实施核数与计算链路排查</p>
                         <ul>
-                          <li><b>实时指标：</b>不提供能源类型筛选，直接平铺当前对象已配置计量方案的各能源瞬时值，以及适用于该对象的 PUE / CLF / PLF / OLF / WUE；实时值只查当前、不落历史。</li>
-                          <li><b>时间段指标：</b>查询区只有起止时间。能源类型、计费时段固化进指标名称并整体平铺；无分时能源仅展示一条「费用（统一价）」，不再同时展示费用总额与统一价两条重复指标。</li>
+                          <li><b>实时指标：</b>不提供能源类型筛选。默认「仅有值」：只展示当前对象能算出结果的能源瞬时值；可切换「全部」查看适用指标全集，算不出的显示「待配置」，便于区分计量未配 / 测点缺值。PUE / CLF / PLF / OLF / WUE 仅在「园区」「数据中心单元」实例上适用。实时值只查当前、不落历史。操作列提供「曲线」，交互对齐测点列表。</li>
+                          <li><b>时间段指标：</b>查询区只有起止时间。能源类型、计费时段固化进指标名称；显隐同样受「仅有值 / 全部」开关控制。无分时能源仅展示一条「费用（统一价）」。时间段指标不提供曲线入口。</li>
                           <li><b>计算排查：</b>点击「计算口径」中的绿色表达式打开只读预览。拓扑展示指标定义及本次查询解析到的对象指标、表具核算明细或瞬时量测点；点选节点后，右侧展示其引用 ID / 属性、当前结果、下级节点和异常原因。页面不提供表达式编辑。</li>
                           <li><b>扩展规则：</b>列表与弹窗均按通用指标定义和计算节点渲染。新增能源、计费时段或能效指标时只增加指标定义及节点数据，不新增专用列或专用页面。</li>
                         </ul>
@@ -1446,22 +1513,32 @@
                         <button type="button" class="active" data-metric-mode="realtime" aria-pressed="true">实时指标</button>
                         <button type="button" data-metric-mode="period" aria-pressed="false">时间段指标</button>
                       </div>
-                      <div class="metric-range" id="metricRange" hidden>
-                        <input type="date" id="metricStart" value="2026-07-01" aria-label="开始日期">
-                        <span>至</span>
-                        <input type="date" id="metricEnd" value="2026-07-07" aria-label="结束日期">
-                        <button type="button" class="btn btn-primary" id="btnMetricQuery">查询</button>
+                      <div class="metric-toolbar-right">
+                        <div class="metric-visibility">
+                          <span class="metric-visibility-label">展示范围</span>
+                          <div class="metric-mode" aria-label="指标展示范围">
+                            <button type="button" class="active" data-metric-visibility="valued" aria-pressed="true">仅有值</button>
+                            <button type="button" data-metric-visibility="all" aria-pressed="false">全部</button>
+                          </div>
+                        </div>
+                        <div class="metric-range" id="metricRange" hidden>
+                          <input type="date" id="metricStart" value="2026-07-28" aria-label="开始日期">
+                          <span>至</span>
+                          <input type="date" id="metricEnd" value="2026-07-28" aria-label="结束日期">
+                          <button type="button" class="btn btn-primary" id="btnMetricQuery">查询</button>
+                        </div>
                       </div>
                     </div>
                     <div class="metric-table-wrap">
                       <table class="data-table metric-table">
                         <thead>
                           <tr>
-                            <th style="width:20%">指标名称</th>
-                            <th style="width:42%">计算口径</th>
-                            <th style="width:14%">指标值</th>
+                            <th style="width:18%">指标名称</th>
+                            <th style="width:38%">计算口径</th>
+                            <th style="width:12%">指标值</th>
                             <th style="width:8%">单位</th>
-                            <th style="width:16%">数据时间</th>
+                            <th style="width:14%">数据时间</th>
+                            <th style="width:10%">操作</th>
                           </tr>
                         </thead>
                         <tbody id="metricsBody"></tbody>
@@ -1641,6 +1718,41 @@
     </div>
   </div>
 
+  <!-- 曲线弹窗（对齐测点列表「曲线」） -->
+  <div class="modal-mask" id="curveModal" hidden>
+    <div class="modal modal-curve" role="dialog" aria-modal="true" aria-labelledby="curveModalTitle">
+      <div class="modal-head">
+        <span id="curveModalTitle">曲线</span>
+        <button type="button" class="modal-close" data-close="curveModal" aria-label="关闭">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="curve-toolbar">
+          <div class="curve-field">
+            <label for="curveRange">时间范围</label>
+            <select id="curveRange" aria-label="时间范围">
+              <option value="1h" selected>近一小时</option>
+              <option value="6h">近 6 小时</option>
+              <option value="24h">近 24 小时</option>
+              <option value="7d">近 7 天</option>
+            </select>
+          </div>
+          <div class="curve-field">
+            <label for="curveInterval">采集周期</label>
+            <select id="curveInterval" aria-label="采集周期">
+              <option value="1">1 分钟</option>
+              <option value="5" selected>5 分钟</option>
+              <option value="15">15 分钟</option>
+              <option value="60">1 小时</option>
+            </select>
+          </div>
+        </div>
+        <div class="curve-chart-box">
+          <canvas id="curveChart" role="img" aria-label="历史曲线"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 指标计算结果预览弹窗 -->
   <div class="modal-mask" id="metricCalcModal" hidden>
     <div class="modal calc-modal" role="dialog" aria-modal="true" aria-labelledby="calcModalTitle">
@@ -1720,11 +1832,115 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script>
     (function () {
       'use strict';
 
       /* ---------- 通用 ---------- */
+      var curveChart = null;
+      var curveContext = { name: '', value: null, unit: '' };
+
+      function parseCurveValue(value) {
+        if (value == null) return null;
+        var n = Number(String(value).replace(/,/g, ''));
+        return Number.isFinite(n) ? n : null;
+      }
+
+      function buildCurveSeries(baseValue, rangeKey, intervalMin) {
+        var hours = rangeKey === '7d' ? 24 * 7 : (rangeKey === '24h' ? 24 : (rangeKey === '6h' ? 6 : 1));
+        var step = Math.max(1, Number(intervalMin) || 5);
+        var points = Math.min(Math.floor((hours * 60) / step) + 1, 120);
+        var now = new Date('2026-07-28T16:55:00');
+        var labels = [];
+        var data = [];
+        var base = baseValue == null ? 47.75 : baseValue;
+        for (var i = points - 1; i >= 0; i--) {
+          var t = new Date(now.getTime() - i * step * 60000);
+          var hh = String(t.getHours()).padStart(2, '0');
+          var mm = String(t.getMinutes()).padStart(2, '0');
+          labels.push(hours >= 24
+            ? (String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0') + ' ' + hh + ':' + mm)
+            : (hh + ':' + mm));
+          /* 示意：围绕当前值小幅波动，贴近截图近乎平线的观感 */
+          var wobble = Math.sin(i / 3.2) * (Math.abs(base) * 0.008) + ((i % 5) - 2) * (Math.abs(base) * 0.0015);
+          data.push(Number((base + wobble).toFixed(3)));
+        }
+        return { labels: labels, data: data };
+      }
+
+      function renderCurveChart() {
+        var canvas = document.getElementById('curveChart');
+        if (!canvas || typeof Chart === 'undefined') return;
+        var rangeKey = document.getElementById('curveRange').value;
+        var intervalMin = document.getElementById('curveInterval').value;
+        var series = buildCurveSeries(curveContext.value, rangeKey, intervalMin);
+        var label = curveContext.name + (curveContext.unit ? '（' + curveContext.unit + '）' : '');
+        if (curveChart) {
+          curveChart.destroy();
+          curveChart = null;
+        }
+        curveChart = new Chart(canvas.getContext('2d'), {
+          type: 'line',
+          data: {
+            labels: series.labels,
+            datasets: [{
+              label: label,
+              data: series.data,
+              borderColor: '#3B82F6',
+              backgroundColor: 'rgba(59, 130, 246, 0.08)',
+              borderWidth: 2,
+              pointRadius: 0,
+              pointHoverRadius: 4,
+              pointHoverBackgroundColor: '#3B82F6',
+              tension: 0.15,
+              fill: false
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  title: function (items) {
+                    var idx = items[0] && items[0].dataIndex;
+                    return '2026-07-28 ' + (series.labels[idx] || '');
+                  },
+                  label: function (ctx) {
+                    var v = ctx.parsed.y;
+                    if (v == null || !Number.isFinite(v)) return curveContext.name + '：—';
+                    return curveContext.name + '：' + v + (curveContext.unit ? ' ' + curveContext.unit : '');
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                grid: { color: 'rgba(148, 163, 184, 0.16)' },
+                ticks: { color: '#94A3B8', maxTicksLimit: 8, font: { size: 11 } }
+              },
+              y: {
+                grid: { color: 'rgba(148, 163, 184, 0.16)' },
+                ticks: { color: '#64748B', font: { size: 11 } }
+              }
+            }
+          }
+        });
+      }
+
+      function openCurveModal(payload) {
+        curveContext = {
+          name: (payload && payload.name) || '实时值',
+          value: parseCurveValue(payload && payload.value),
+          unit: (payload && payload.unit) || ''
+        };
+        document.getElementById('curveModal').hidden = false;
+        renderCurveChart();
+      }
+
       function showToast(msg) {
         var t = document.getElementById('protoToast');
         if (!t) {
@@ -1844,16 +2060,18 @@
           calcNode(metricId, 'metric', '0_475 · ' + name, '对象 ID: 0_475 · 对象指标: ' + name + ' · 能源类型: ' + energy, result + ' ' + unit, 1, pointNodes.map(function (p) { return p.id; }), 'ok', '', '对象归集结果')
         ].concat(pointNodes);
         var formula = '沿当前计量拓扑递归 Σ输入瞬时量 − Σ输出瞬时量';
-        return metricRow(id, name, result, unit, formula, calcExpression(formula, result + ' ' + unit, nodes, [
+        var row = metricRow(id, name, result, unit, formula, calcExpression(formula, result + ' ' + unit, nodes, [
           '= (' + pointDefs.filter(function (p) { return p.direction === '输入'; }).map(function (p) { return p.value; }).join(' + ') + ') − (' + (pointDefs.filter(function (p) { return p.direction === '输出'; }).map(function (p) { return p.value; }).join(' + ') || '0') + ')',
           '= ' + result + ' ' + unit
         ]));
+        row.energy = energy;
+        return row;
       }
 
       function makeEfficiencyMetric(id, name, formula, numerator, denominator, result, unit, mode, pending) {
         var sourceKind = mode === 'realtime' ? 'point' : 'fact';
         var sourceLabel = mode === 'realtime' ? '瞬时量测点' : '表具核算明细';
-        var rangeRef = mode === 'period' ? ' · 时间: 2026-07-01~2026-07-07' : '';
+        var rangeRef = mode === 'period' ? ' · 时间: 2026-07-28~2026-07-28' : '';
         var numId = id + '-num';
         var denId = id + '-den';
         var numLeafId = id + '-num-leaf';
@@ -1865,13 +2083,16 @@
           calcNode(numLeafId, sourceKind, numerator.leafName, numerator.leafRef + rangeRef, pending ? '—' : (numerator.leafValue || numerator.value), 2, [], pending ? 'error' : 'ok', pending ? '未找到水侧瞬时量测点' : '', '分子输入'),
           calcNode(denLeafId, sourceKind, denominator.leafName, denominator.leafRef + rangeRef, denominator.leafValue || denominator.value, 2, [], 'ok', '', '分母输入')
         ];
-        return metricRow(id + '-' + mode, name, pending ? '待配置' : result, unit, formula, calcExpression(formula, pending ? '待配置' : result + (unit === '—' ? '' : ' ' + unit), nodes, pending ? [
+        var row = metricRow(id + '-' + mode, name, pending ? '待配置' : result, unit, formula, calcExpression(formula, pending ? '待配置' : result + (unit === '—' ? '' : ' ' + unit), nodes, pending ? [
           '= ' + numerator.name + ' ÷ ' + denominator.name,
           '= 待配置（' + sourceLabel + '未解析完整）'
         ] : [
           '= ' + numerator.value + ' ÷ ' + denominator.value,
           '= ' + result + (unit === '—' ? '' : ' ' + unit)
-        ]), mode === 'realtime' ? NOW : '2026-07-07 16:30:00');
+        ]), mode === 'realtime' ? NOW : '2026-07-28 16:30:00');
+        /* PUE/CLF/PLF/OLF/WUE 仅挂在园区、数据中心单元物模型实例上 */
+        row.campusDcOnly = true;
+        return row;
       }
 
       function makePeriodMetric(id, name, value, unit, formula, energy, field, periodType) {
@@ -1881,15 +2102,17 @@
         var children = [factA, factB];
         var nodes = [
           calcNode(id + '-formula', 'formula', name, '指标定义: metric.energy.' + id, value + ' ' + unit, 0, [objectMetricId], 'ok', '', '当前指标'),
-          calcNode(objectMetricId, 'metric', '0_475 · ' + name, '对象 ID: 0_475 · 能源类型: ' + energy + ' · 时间: 2026-07-01~2026-07-07', value + ' ' + unit, 1, children, 'ok', '', '对象统计分片'),
+          calcNode(objectMetricId, 'metric', '0_475 · ' + name, '对象 ID: 0_475 · 能源类型: ' + energy + ' · 时间: 2026-07-28~2026-07-28', value + ' ' + unit, 1, children, 'ok', '', '对象统计分片'),
           calcNode(factA, 'fact', 'AC_Meter_01 · 表具核算明细', '表具 ID: AC_Meter_01 · 字段: ' + field + ' · 粒度: 日', value + ' ' + unit, 2, [], 'ok', '', '输入方向'),
           calcNode(factB, periodType ? 'billing' : 'fact', periodType ? '计费时段 / 单价快照' : 'AC_Meter_02 · 表具核算明细', periodType ? '计费方案版本: BILL-' + energy + '-202607 · 时段: ' + periodType : '表具 ID: AC_Meter_02 · 字段: ' + field + ' · 粒度: 日', periodType || '0.00 ' + unit, 2, [], 'ok', '', periodType ? '计费参数' : '输出方向')
         ];
-        return metricRow(id, name, value, unit, formula, calcExpression(formula, value + ' ' + unit, nodes, [
-          '= 读取 2026-07-01 至 2026-07-07 已归档分片' + (periodType ? '（计费时段=' + periodType + '）' : ''),
+        var row = metricRow(id, name, value, unit, formula, calcExpression(formula, value + ' ' + unit, nodes, [
+          '= 读取 2026-07-28 至 2026-07-28 已归档分片' + (periodType ? '（计费时段=' + periodType + '）' : ''),
           '= 沿当前计量拓扑递归归集',
           '= ' + value + ' ' + unit
-        ]), '2026-07-07 16:30:00');
+        ]), '2026-07-28 16:30:00');
+        row.energy = energy;
+        return row;
       }
 
       function buildMetricDatasets() {
@@ -2175,25 +2398,86 @@
         document.getElementById('metricCalcModal').hidden = false;
       }
 
+      function isCampusOrDataCenterNode(node) {
+        if (!node) return false;
+        var model = String(node.model || '');
+        return model === '园区' || model === '数据中心单元';
+      }
+
+      var metricShowAll = false; /* false=仅有值（默认），true=全部（含待配置，便于排查） */
+
+      function nodeConfiguredEnergies(nodeId) {
+        return meteringConfigured[nodeId] || [];
+      }
+
+      /* 指标是否适用于当前对象（与有无值无关） */
+      function isMetricApplicable(row) {
+        if (row.campusDcOnly) return isCampusOrDataCenterNode(NODES[currentNode]);
+        return true;
+      }
+
+      /* 当前对象是否已能算出该指标 */
+      function isMetricCalculable(row) {
+        if (row.value === '待配置') return false;
+        if (row.energy) {
+          return nodeConfiguredEnergies(currentNode).indexOf(row.energy) !== -1;
+        }
+        return true;
+      }
+
+      function getVisibleMetrics(mode) {
+        var list = metricDatasets[mode] || [];
+        return list.filter(function (row) {
+          if (!isMetricApplicable(row)) return false;
+          if (metricShowAll) return true;
+          return isMetricCalculable(row);
+        }).map(function (row) {
+          if (metricShowAll && !isMetricCalculable(row) && row.value !== '待配置') {
+            return Object.assign({}, row, { value: '待配置' });
+          }
+          return row;
+        });
+      }
+
       function renderMetrics() {
         var body = document.getElementById('metricsBody');
         if (!body) return;
-        var rows = metricDatasets[metricMode];
-        body.innerHTML = rows.map(function (row) {
-          var pending = row.value === '待配置';
-          return '<tr>' +
-            '<td class="metric-name-cell">' + esc(row.name) + '</td>' +
-            '<td><button type="button" class="metric-expression" data-metric-id="' + esc(row.id) + '" title="查看计算结果预览"><span>' + esc(row.formula) + '</span></button></td>' +
-            '<td><span class="metric-value' + (pending ? ' pending' : '') + '">' + esc(row.value) + '</span></td>' +
-            '<td>' + esc(row.unit) + '</td>' +
-            '<td class="num-cell">' + esc(row.time) + '</td>' +
-          '</tr>';
-        }).join('');
-        document.getElementById('badgeMetrics').textContent = metricDatasets.realtime.length + metricDatasets.period.length;
+        var rows = getVisibleMetrics(metricMode);
+        var isRealtime = metricMode === 'realtime';
+        if (!rows.length) {
+          body.innerHTML = '<tr><td colspan="6" class="empty-cell">当前对象暂无适用指标</td></tr>';
+        } else {
+          body.innerHTML = rows.map(function (row) {
+            var pending = row.value === '待配置';
+            var actionCell = isRealtime
+              ? '<td><div class="points-actions"><button type="button" class="action-link metric-curve-act" data-metric-curve="' + esc(row.id) + '"' + (pending ? ' disabled title="待配置，暂无曲线"' : ' title="查看实时指标曲线"') + '>曲线</button></div></td>'
+              : '<td class="num-cell">—</td>';
+            return '<tr>' +
+              '<td class="metric-name-cell">' + esc(row.name) + '</td>' +
+              '<td><button type="button" class="metric-expression" data-metric-id="' + esc(row.id) + '" title="查看计算结果预览"><span>' + esc(row.formula) + '</span></button></td>' +
+              '<td><span class="metric-value' + (pending ? ' pending' : '') + '">' + esc(row.value) + '</span></td>' +
+              '<td>' + esc(row.unit) + '</td>' +
+              '<td class="num-cell">' + esc(row.time) + '</td>' +
+              actionCell +
+            '</tr>';
+          }).join('');
+        }
+        var badge = document.getElementById('badgeMetrics');
+        var visibleTotal = getVisibleMetrics('realtime').length + getVisibleMetrics('period').length;
+        badge.textContent = visibleTotal;
+        badge.classList.toggle('has', visibleTotal > 0);
         body.querySelectorAll('[data-metric-id]').forEach(function (button) {
           button.addEventListener('click', function () {
             var row = rows.find(function (candidate) { return candidate.id === button.getAttribute('data-metric-id'); });
             if (row) openMetricCalculation(row);
+          });
+        });
+        body.querySelectorAll('[data-metric-curve]').forEach(function (button) {
+          button.addEventListener('click', function () {
+            if (button.disabled) return;
+            var row = rows.find(function (candidate) { return candidate.id === button.getAttribute('data-metric-curve'); });
+            if (!row) return;
+            openCurveModal({ name: row.name, value: row.value, unit: row.unit === '—' ? '' : row.unit });
           });
         });
       }
@@ -2221,7 +2505,16 @@
           '</tr>';
         }).join('');
         body.querySelectorAll('.pt-act').forEach(function (el) {
-          el.addEventListener('click', function () { showToast('示意：' + el.textContent + '（测点历史曲线 / 编辑测点绑定）'); });
+          el.addEventListener('click', function () {
+            if (el.textContent.trim() === '曲线') {
+              var tr = el.closest('tr');
+              var name = tr ? (tr.children[2] ? tr.children[2].textContent.replace(/^\s*/, '').trim() : '测点') : '测点';
+              var value = tr && tr.children[4] ? tr.children[4].textContent.trim() : '';
+              openCurveModal({ name: name, value: value, unit: '' });
+              return;
+            }
+            showToast('示意：编辑测点绑定');
+          });
         });
         var checkAll = document.getElementById('pointCheckAll');
         if (checkAll) {
@@ -2404,6 +2697,18 @@
         });
       });
 
+      document.querySelectorAll('[data-metric-visibility]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          metricShowAll = button.getAttribute('data-metric-visibility') === 'all';
+          document.querySelectorAll('[data-metric-visibility]').forEach(function (peer) {
+            var on = peer === button;
+            peer.classList.toggle('active', on);
+            peer.setAttribute('aria-pressed', on ? 'true' : 'false');
+          });
+          renderMetrics();
+        });
+      });
+
       document.getElementById('btnMetricQuery').addEventListener('click', function () {
         var start = document.getElementById('metricStart').value;
         var end = document.getElementById('metricEnd').value;
@@ -2416,7 +2721,7 @@
             node.ref = node.ref.replace(/时间: [^·]+/, '时间: ' + start + '~' + end + ' ');
           });
           row.expression.steps[0] = '= 读取 ' + start + ' 至 ' + end + ' 已归档分片';
-          row.time = '2026-07-07 16:30:00';
+          row.time = end + ' 16:30:00';
         });
         renderMetrics();
         showToast('已按 ' + start + ' 至 ' + end + ' 查询时间段指标');
@@ -2526,9 +2831,16 @@
       /* ---------- 弹窗通用 ---------- */
       document.querySelectorAll('[data-close]').forEach(function (b) {
         b.addEventListener('click', function () {
-          document.getElementById(b.getAttribute('data-close')).hidden = true;
+          var id = b.getAttribute('data-close');
+          document.getElementById(id).hidden = true;
+          if (id === 'curveModal' && curveChart) {
+            curveChart.destroy();
+            curveChart = null;
+          }
         });
       });
+      document.getElementById('curveRange').addEventListener('change', renderCurveChart);
+      document.getElementById('curveInterval').addEventListener('change', renderCurveChart);
 
       /* ---------- 用能定额考核配置 ---------- */
       var quotaModal = document.getElementById('quotaModal');
