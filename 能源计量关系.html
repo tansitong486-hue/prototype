@@ -1,0 +1,2495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>能源计量关系</title>
+  <link rel="stylesheet" href="annotation-styles.css">
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-dark: #17358A;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --danger: #DC2626;
+      --success: #059669;
+      --warning: #D97706;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+      --tree-w: 300px;
+      --meter-w: 250px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+    body:not(.annotation-mode) .anno { display: none !important; }
+    body:not(.annotation-mode) .field-hint.field-hint-annoonly { display: none !important; }
+    button { border: none; background: none; font: inherit; }
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main { flex: 1; min-width: 0; overflow-y: auto; background: var(--bg-body); display: flex; flex-direction: column; }
+    .page-shell { padding: 14px 16px 20px; display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; }
+    .breadcrumb-bar { font-size: 13px; color: var(--text-secondary); }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      height: 32px; padding: 0 12px; border-radius: var(--radius);
+      cursor: pointer; transition: all var(--transition);
+      white-space: nowrap; font-size: 12px; font-weight: 600;
+    }
+    .btn-primary { color: #fff; background: var(--primary); }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-default { background: #fff; border: 1px solid var(--border); color: var(--text-primary); }
+    .btn-default:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-error-export { background: #fff; border: 1px solid #FCA5A5; color: #B91C1C; }
+    .btn-error-export:hover { background: #FEF2F2; border-color: #EF4444; }
+    .btn-link {
+      height: auto; padding: 0; color: var(--primary); font-weight: 600; font-size: 12px; cursor: pointer;
+    }
+    .btn-link:hover { text-decoration: underline; }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+
+    .page-top {
+      display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+      background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius-lg);
+      padding: 0 14px; box-shadow: var(--shadow-sm);
+    }
+    .energy-tabs { display: flex; gap: 0; }
+    .energy-tab {
+      padding: 12px 18px; font-size: 14px; color: var(--text-secondary);
+      border-bottom: 2px solid transparent; margin-bottom: -1px; cursor: pointer;
+    }
+    .energy-tab:hover { color: var(--primary); }
+    .energy-tab.active { color: var(--primary); font-weight: 700; border-bottom-color: var(--primary); }
+    .page-global-actions { display: flex; gap: 8px; padding: 10px 0; }
+
+    .workspace {
+      flex: 1; min-height: 560px;
+      display: grid;
+      grid-template-columns: var(--tree-w) minmax(0, 1fr) var(--meter-w);
+      gap: 12px;
+    }
+    .panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      display: flex; flex-direction: column; min-height: 0; overflow: hidden;
+    }
+    .panel-head {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      flex-shrink: 0;
+    }
+    .panel-title { font-size: 14px; font-weight: 700; }
+    .panel-sub { font-size: 12px; color: var(--text-hint); margin-top: 2px; }
+    .panel-body { flex: 1; min-height: 0; overflow: auto; }
+
+    .view-select-wrap { padding: 10px 12px; border-bottom: 1px solid var(--border-light); }
+    .view-select-wrap select,
+    .tree-search input,
+    .meter-filter input {
+      width: 100%; height: 32px; padding: 0 10px;
+      border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; background: #fff;
+    }
+    .view-select-wrap select:focus,
+    .tree-search input:focus,
+    .meter-filter input:focus { outline: none; border-color: var(--primary); }
+    .tree-search { padding: 8px 12px; border-bottom: 1px solid var(--border-light); }
+    .tree-scroll { padding: 8px; }
+    .tree-legend {
+      display: flex; gap: 12px; padding: 8px 12px 0; font-size: 11px; color: var(--text-secondary);
+    }
+    .tree-legend span { display: inline-flex; align-items: center; gap: 4px; }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0;
+    }
+    .dot.ok { background: var(--success); }
+    .dot.empty { background: #fff; border: 1.5px solid #94A3B8; }
+    .tree-row {
+      display: flex; align-items: center; gap: 4px;
+      padding: 6px 8px; border-radius: 6px; cursor: grab;
+      color: var(--text-secondary); user-select: none;
+    }
+    .tree-row:hover { background: rgba(30, 64, 175, 0.06); color: var(--text-primary); }
+    .tree-row.active { background: rgba(30, 64, 175, 0.12); color: var(--primary); font-weight: 600; }
+    .tree-row.dragging { opacity: .45; }
+    .tree-chevron { width: 14px; font-size: 10px; color: var(--text-hint); cursor: pointer; flex-shrink: 0; }
+    .tree-label { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+    .tree-children { padding-left: 14px; }
+    .tree-hint {
+      margin: 8px 12px 12px; padding: 8px 10px; border-radius: 8px;
+      background: #F8FAFC; border: 1px dashed var(--border);
+      font-size: 12px; color: var(--text-secondary); line-height: 1.6;
+    }
+
+    .center-toolbar {
+      padding: 10px 14px; border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex-shrink: 0;
+    }
+    .center-object { flex: 1; min-width: 180px; }
+    .center-object .kicker { font-size: 11px; color: var(--text-hint); }
+    .center-object .name { font-size: 16px; font-weight: 700; margin-top: 2px; }
+    .center-object .meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .center-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .validate-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      height: 28px; padding: 0 10px; border-radius: 999px;
+      font-size: 12px; font-weight: 600;
+      background: #F1F5F9; color: var(--text-secondary);
+    }
+    .validate-pill.ok { background: #ECFDF5; color: var(--success); }
+    .validate-pill.err { background: #FEF2F2; color: var(--danger); }
+
+    .center-scroll { flex: 1; min-height: 0; overflow: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 12px; }
+    .section-card {
+      border: 1px solid var(--border-light); border-radius: var(--radius); background: #FBFCFE; overflow: hidden;
+    }
+    .section-card.drag-over {
+      border-color: var(--primary);
+      box-shadow: inset 0 0 0 1px var(--primary);
+      background: #F5F8FF;
+    }
+    .section-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      padding: 8px 12px; background: #fff; border-bottom: 1px solid var(--border-light);
+    }
+    .section-title { font-size: 13px; font-weight: 700; }
+    .section-hint { font-size: 11px; color: var(--text-hint); }
+
+    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; }
+    .data-table thead th {
+      text-align: left; padding: 8px 12px; background: #F8FAFC;
+      border-bottom: 1px solid var(--border-light); color: var(--text-secondary); font-weight: 600; white-space: nowrap;
+    }
+    .data-table tbody td {
+      padding: 8px 12px; border-bottom: 1px solid var(--border-light); vertical-align: middle;
+    }
+    .data-table tbody tr:hover { background: #F8FAFC; }
+    .data-table tbody tr.row-flash { animation: relation-row-flash 1.2s ease; }
+    @keyframes relation-row-flash {
+      0%, 100% { background: #fff; }
+      25% { background: #DBEAFE; }
+    }
+    .data-table tbody tr.conflict { background: #FEF2F2; }
+    .data-table .num { font-variant-numeric: tabular-nums; text-align: right; }
+    .empty-row td { text-align: center; color: var(--text-hint); padding: 28px 12px; line-height: 1.7; }
+
+    .dir-switch {
+      display: inline-flex;
+      align-items: stretch;
+      height: 28px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      background: #F8FAFC;
+    }
+    .dir-switch button {
+      min-width: 44px;
+      padding: 0 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      transition: all var(--transition);
+    }
+    .dir-switch button + button { border-left: 1px solid var(--border); }
+    .dir-switch button:hover { color: var(--text-primary); background: #fff; }
+    .dir-switch button.active-in {
+      background: #EFF6FF;
+      color: var(--primary);
+    }
+    .dir-switch button.active-out {
+      background: #FFF7ED;
+      color: #C2410C;
+    }
+    .tag {
+      display: inline-flex; align-items: center; height: 20px; padding: 0 6px;
+      border-radius: 4px; font-size: 11px; font-weight: 600;
+    }
+    .tag-obj { background: #F1F5F9; color: var(--text-secondary); }
+    .tag-meter { background: #ECFDF5; color: var(--success); }
+    .tag-error { background: #FEF2F2; color: var(--danger); }
+    .tag-pending { background: #F1F5F9; color: var(--text-secondary); }
+    .btn-del {
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--danger);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-del:hover { background: #FEF2F2; border-color: #FECACA; }
+
+    .trial-summary {
+      display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 10px 12px; background: #fff;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .trial-kpi {
+      padding: 8px 10px; border-radius: 8px; background: #F8FAFC; border: 1px solid var(--border-light);
+    }
+    .trial-kpi .label { font-size: 11px; color: var(--text-hint); }
+    .trial-kpi .value { font-size: 18px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
+    .trial-kpi.warn .value { color: var(--warning); }
+    .trial-kpi.danger .value { color: var(--danger); }
+    .trial-kpi.ok .value { color: var(--success); }
+    .trial-alert {
+      margin: 0 12px 10px; padding: 8px 10px; border-radius: 8px;
+      background: #FFFBEB; border: 1px solid #FDE68A; color: #92400E; font-size: 12px; line-height: 1.5;
+    }
+    .trial-alert.danger { background: #FEF2F2; border-color: #FECACA; color: #991B1B; }
+
+    .meter-filter {
+      padding: 10px 12px; border-bottom: 1px solid var(--border-light);
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .meter-filter select,
+    .meter-filter input {
+      width: 100%; height: 32px; padding: 0 10px;
+      border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; background: #fff;
+    }
+    .meter-filter select:focus,
+    .meter-filter input:focus { outline: none; border-color: var(--primary); }
+    .meter-list { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+    .meter-item {
+      padding: 8px 10px; border: 1px solid var(--border-light); border-radius: 8px;
+      background: #fff; cursor: grab;
+    }
+    .meter-item:hover { border-color: var(--primary); }
+    .meter-item.disabled { opacity: .45; cursor: not-allowed; }
+    .meter-item.component { border-left: 3px solid #93C5FD; }
+    .meter-name { font-size: 12px; font-weight: 600; }
+    .meter-meta { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; font-size: 11px; color: var(--text-hint); align-items: center; }
+    .tag-comp { background: #EFF6FF; color: var(--primary); }
+    .tag-dev { background: #F1F5F9; color: var(--text-secondary); }
+    .tag-muted { background: #F1F5F9; color: var(--text-hint); }
+    .meter-list-foot {
+      flex-shrink: 0; border-top: 1px solid var(--border-light);
+      padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      background: #FBFCFE; font-size: 12px; color: var(--text-secondary);
+    }
+    .meter-pager { display: flex; align-items: center; gap: 6px; }
+    .meter-pager button {
+      height: 26px; min-width: 26px; padding: 0 8px; border-radius: 6px;
+      border: 1px solid var(--border); background: #fff; cursor: pointer; font-size: 12px;
+    }
+    .meter-pager button:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+    .meter-pager button:disabled { opacity: .4; cursor: not-allowed; }
+    .tree-row.not-draggable { cursor: pointer; }
+    .tree-row.not-draggable .tree-label { opacity: .85; }
+
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45);
+      z-index: 1000; align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-backdrop.show { display: flex; }
+    [hidden] { display: none !important; }
+    .modal {
+      width: min(720px, 100%); max-height: 86vh; overflow: hidden; display: flex; flex-direction: column;
+      background: #fff; border-radius: 12px; box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2);
+    }
+    .modal-head, .modal-foot {
+      padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .modal-foot { border-bottom: none; border-top: 1px solid var(--border-light); justify-content: flex-end; }
+    .modal-head, .modal-foot { flex: none; }
+    .modal-body { padding: 16px; min-height: 0; overflow-y: auto; }
+    .modal-close { width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-size: 18px; color: var(--text-hint); }
+    .steps { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+    .step { display: inline-flex; align-items: center; gap: 6px; color: var(--text-hint); font-size: 13px; }
+    .step.active { color: var(--primary); font-weight: 700; }
+    .step-no {
+      width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+      background: #F1F5F9; font-size: 11px; font-weight: 700;
+    }
+    .step.active .step-no { background: var(--primary); color: #fff; }
+    .step-line { flex: 1; height: 1px; background: var(--border-light); }
+    .upload-box { padding: 18px; border: 1px dashed var(--border); border-radius: 8px; text-align: center; }
+    .upload-title { margin-bottom: 12px; font-weight: 700; color: var(--text-primary); }
+    .upload-actions { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+    .upload-hint { margin-top: 10px; font-size: 12px; color: var(--text-hint); line-height: 1.7; }
+    .upload-columns { margin-top: 12px; display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
+    .upload-column {
+      padding: 3px 7px; border-radius: 4px; background: #F1F5F9;
+      color: var(--text-secondary); font-size: 11px; line-height: 18px;
+    }
+    .overwrite-warning {
+      margin-top: 12px; padding: 10px 12px; border: 1px solid #FED7AA; border-radius: 6px;
+      background: #FFF7ED; color: #9A3412; font-size: 12px; line-height: 1.6; text-align: left;
+    }
+    .overwrite-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0; }
+    .overwrite-stat { padding: 9px 10px; border: 1px solid var(--border-light); border-radius: 6px; background: #fff; }
+    .overwrite-stat-label { font-size: 11px; color: var(--text-hint); }
+    .overwrite-stat-value { margin-top: 3px; font-size: 18px; font-weight: 700; }
+    .overwrite-stat-value.add { color: var(--success); }
+    .overwrite-stat-value.change { color: var(--warning); }
+    .overwrite-stat-value.remove { color: var(--danger); }
+    .selected-file { margin-top: 10px; font-size: 12px; color: var(--text-secondary); }
+    .import-result { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+    .import-stat { padding: 10px; border-radius: 8px; background: #F8FAFC; text-align: center; }
+    .import-stat-label { font-size: 12px; color: var(--text-hint); }
+    .import-stat-value { font-size: 22px; font-weight: 700; margin-top: 2px; }
+    .import-stat-value.ok { color: var(--success); }
+    .import-stat-value.danger { color: var(--danger); }
+    .modal-note { margin-top: 10px; font-size: 12px; color: var(--text-secondary); }
+    .validation-errors {
+      margin-top: 10px; padding: 10px 12px; border: 1px solid #FECACA; border-radius: 6px;
+      background: #FEF2F2; color: #991B1B; font-size: 12px; line-height: 1.6;
+    }
+    .validation-error-list { margin: 6px 0 0; padding-left: 18px; }
+
+    .toast {
+      position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(20px);
+      background: #0F172A; color: #fff; padding: 10px 16px; border-radius: 8px;
+      opacity: 0; pointer-events: none; transition: all .2s; z-index: 1100; font-size: 13px;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .anno-toggle {
+      position: fixed; right: 18px; bottom: 18px; z-index: 1200;
+      height: 36px; padding: 0 14px; border-radius: 999px;
+      background: var(--primary); color: #fff; font-weight: 700; cursor: pointer;
+      box-shadow: 0 8px 20px rgba(30, 64, 175, 0.28);
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+        <div id="annoFilterBar" class="anno-filter-bar">
+          <span class="anno-filter-label">批注版本：</span>
+          <div class="anno-filter-tags" id="annoFilterTags"></div>
+        </div>
+        <div class="page-shell">
+          <div class="anno anno-version-info" data-version="v2.5">
+            <span class="anno-tag">版本信息</span>
+            <span class="anno-version">v2.5</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v2.5</p>
+              <p><b>更新日期：</b>2026-07-27</p>
+              <p><b>变更概述：</b>能源计量关系改版：① 全局能源 Tab；② 左树支持空间/容量/能效三视图，并按当前能源标注已配置/未配置；③ 导入按「全局导出当前关系 → 编辑导出文件 → 上传预校验 → 确认全量覆盖」执行，导出文件固定包含关系清单、三类视图对象与能源表具清单 5 个 Sheet；关系清单扩展为 8 列，并真实校验基础必填字段、组件名称与实例对照，失败时可导出附带问题原因列的原文件；④ 中间关系表支持拖拽；⑤ 下方提供叶子递归「今日试算」与表具明细跳转。</p>
+              <p><b>本页说明：</b>计量拓扑唯一写入口。查重键为「表具 + 能源类型」（同一能源下表具只能挂一次，不区分输入/输出占用）。对象用能量 = Σ输入 − Σ输出。</p>
+            </div>
+          </div>
+          <div class="anno anno-req" data-version="v2.5">
+            <span class="anno-tag">需求说明</span>
+            <span class="anno-version">v2.5</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>页面定位与范围（需求 4）：</b></p>
+              <ul>
+                <li>主路径：选能源 Tab → 选视图/对象 → 拖入下级对象或表具到关系表 → 改方向；点「今日试算」按当前拓扑重算叶子用量。</li>
+                <li>左树配置态仅看当前能源 Tab；中间表只展示当前对象的直接关系。</li>
+                <li>今日试算按拓扑递归展开到叶子表具后做有符号汇总（原型 mock）；按钮固定为「今日试算」，点击即重算。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="breadcrumb-bar">工程配置 / 能源配置 / 能源计量关系</div>
+
+          <div class="page-top">
+            <div class="energy-tabs" role="tablist" aria-label="能源类型">
+              <button type="button" class="energy-tab active" data-energy="电" role="tab" aria-selected="true">电</button>
+              <button type="button" class="energy-tab" data-energy="水" role="tab" aria-selected="false">水</button>
+              <button type="button" class="energy-tab" data-energy="冷量" role="tab" aria-selected="false">冷量</button>
+            </div>
+            <div class="page-global-actions">
+              <button type="button" class="btn btn-default" id="btnImport">导入</button>
+              <button type="button" class="btn btn-default" id="btnExport">导出</button>
+            </div>
+          </div>
+
+          <div class="anno anno-ux" data-version="v2.5">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v2.5</span>
+            <span class="anno-source">产品推断</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>能源 Tab · 多视图对象树 · 关系表 · 今日试算 · 表具池</p>
+              <ul>
+                <li><b>能源 Tab：</b>切换后左树配置态、中间表、表具池、今日试算全部跟随当前能源。</li>
+                <li><b>视图切换：</b>空间 / 容量 / 能效三套树，节点 ID 可跨视图复用；拖入关系表的是对象实例。</li>
+                <li><b>配置态：</b>● 当前能源已有 ≥1 条关系；○ 当前能源尚未配置。</li>
+                <li><b>类型：</b>仅「表具」「下级对象」两类；组件属于表具之下，名称列用「所属表具」标明，类型仍标「表具」。</li>
+                <li><b>拖拽：</b>左树仅<strong>已配置</strong>对象可拖入为下级；右池拖入表具（含其下组件）行；默认方向输入。</li>
+                <li><b>表具池：</b>默认只看未占用；可筛选已占用/全部；支持设备与组件；上千条时分页（每页 20）。</li>
+                <li><b>表具占用：</b>同一能源下一块表具/组件只能挂一次，标签统一为「已占用」。</li>
+                <li><b>今日试算：</b>结果区常显；点击「今日试算」按当前拓扑重算叶子有符号用量；可跳转表具能耗明细。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="workspace">
+            <aside class="panel" aria-label="对象树">
+              <div class="panel-head">
+                <div>
+                  <div class="panel-title">对象树</div>
+                </div>
+              </div>
+              <div class="view-select-wrap">
+                <select id="viewSelect" aria-label="对象树视图">
+                  <option value="space">空间视图</option>
+                  <option value="capacity">容量视图</option>
+                  <option value="efficiency" selected>能效视图</option>
+                </select>
+              </div>
+              <div class="tree-legend">
+                <span><i class="dot ok"></i>已配置</span>
+                <span><i class="dot empty"></i>未配置</span>
+              </div>
+              <div class="tree-search">
+                <input type="search" id="treeSearch" placeholder="搜索对象名称" aria-label="搜索对象">
+              </div>
+              <div class="panel-body">
+                <div class="tree-scroll" id="treeRoot"></div>
+              </div>
+            </aside>
+
+            <section class="panel" aria-label="计量关系配置">
+              <div class="center-toolbar">
+                <div class="center-object">
+                  <div class="name" id="currentObjectName">请选择左侧对象</div>
+                </div>
+              </div>
+              <div class="center-scroll">
+                <div class="section-card" id="relationDropzone">
+                  <div class="section-head">
+                    <div>
+                      <div class="section-title">计量关系</div>
+                      <div class="section-hint">鼠标拖入下级对象/表具</div>
+                    </div>
+                    <span class="section-hint" id="relationCount">0 条</span>
+                  </div>
+                  <table class="data-table" aria-label="计量关系表">
+                    <thead>
+                      <tr>
+                        <th style="width:88px">类型</th>
+                        <th>名称</th>
+                        <th style="width:128px">计量方向</th>
+                        <th style="width:72px">操作</th>
+                      </tr>
+                    </thead>
+                    <tbody id="relationBody">
+                      <tr class="empty-row"><td colspan="4">请先选择左侧对象</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="section-card" id="trialPanel">
+                  <div class="section-head">
+                    <div>
+                      <div class="section-title">今日试算</div>
+                    </div>
+                    <button type="button" class="btn btn-default" id="btnTrial" disabled>今日试算</button>
+                  </div>
+                  <div id="trialContent">
+                    <div class="trial-summary" id="trialSummary">
+                      <div class="trial-kpi"><div class="label">叶子表具数</div><div class="value">—</div></div>
+                      <div class="trial-kpi"><div class="label">今日对象用量</div><div class="value">—</div></div>
+                      <div class="trial-kpi"><div class="label">试算提示</div><div class="value" style="font-size:14px">先选对象</div></div>
+                    </div>
+                    <div id="trialAlert" hidden></div>
+                    <table class="data-table" aria-label="叶子表具明细">
+                      <thead>
+                        <tr>
+                          <th>叶子表具</th>
+                          <th class="num" style="width:140px">用量</th>
+                          <th style="width:88px">明细</th>
+                        </tr>
+                      </thead>
+                      <tbody id="trialBody">
+                        <tr class="empty-row"><td colspan="3">选中对象并配置关系后，这里展示递归展开的叶子表具</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <aside class="panel" aria-label="表具池">
+              <div class="panel-head">
+                <div>
+                  <div class="panel-title">表具池</div>
+                </div>
+              </div>
+              <div class="meter-filter">
+                <select id="meterOccupyFilter" aria-label="占用状态筛选">
+                  <option value="free" selected>未占用</option>
+                  <option value="taken">已占用</option>
+                  <option value="all">全部</option>
+                </select>
+                <input type="search" id="meterSearch" placeholder="搜索表具 / 组件名称或编码" aria-label="搜索表具">
+              </div>
+              <div class="panel-body">
+                <div class="meter-list" id="meterList"></div>
+              </div>
+              <div class="meter-list-foot" aria-label="表具分页">
+                <span id="meterPageSize">每页 20 条</span>
+                <div class="meter-pager">
+                  <button type="button" id="meterPrevPage" aria-label="上一页">‹</button>
+                  <span id="meterPageIndex">1 / 1</span>
+                  <button type="button" id="meterNextPage" aria-label="下一页">›</button>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="importModal" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-head">
+        <span>批量导入计量关系（全局）</span>
+        <button type="button" class="modal-close" data-close="importModal" aria-label="关闭">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="anno anno-ux" data-version="v2.5">
+          <span class="anno-tag">交互说明</span>
+          <span class="anno-version">v2.5</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>页头全局「导入」</p>
+            <ul>
+              <li>导入导出跨对象、跨能源；不绑定当前对象详情。当前全局拓扑由页头「导出」按钮下载；导入弹窗不重复提供导出，直接上传编辑后的全量配置文件。</li>
+              <li>导出工作簿固定包含 5 个 Sheet：关系清单、能效视图对象、空间视图对象、容量视图对象、能源表具清单。对象与表具均导出 `0_565` / `0_708` 这类业务实例 ID，不导出页面树节点 key 或 `AC_Meter_08` 这类内部编码。Sheet5 固定为“能源类型 / 表具实例 ID / 表具名称 / 组件名称 / 测点 ID”，组件名称仅组件型表具填写，测点 ID 为该表具或组件的具体累计量测点。</li>
+              <li>Sheet1「关系清单」是唯一配置编辑页；第 1 行固定展示写入规则，第 2 行为 8 列表头，第 3 行起填写关系。组件名称放在「成员名称」与「计量方向」之间；组件关系按“所属表具 + 组件名称”识别，如“列头柜 1 + 支路 1”，不重复所属表具名称。</li>
+              <li>必填校验：计量对象实例 ID、能源类型、成员类型、成员实例 ID、计量方向始终必填；成员为组件型表具时，组件名称条件必填且必须命中 Sheet5 对照项。</li>
+              <li>导入采用全量覆盖：Sheet1 未保留的现有关系视为删除；上传后真实校验工作簿结构、必填字段和对照关系，失败时展示 Sheet、行号与原因且禁止提交。预校验失败后可导出错误文件：保留上传文件内容，在问题所在 Sheet 末列增加「问题原因」，同一行的多个原因合并展示，修正后可直接重新上传。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="steps">
+          <span class="step active" id="importStep2Label"><span class="step-no">1</span>上传配置文件</span>
+          <span class="step-line"></span>
+          <span class="step" id="importStep3Label"><span class="step-no">2</span>预校验</span>
+        </div>
+        <div id="importStep2" hidden>
+          <div class="upload-box">
+            <div class="upload-title">上传编辑后的全量配置文件</div>
+            <div class="upload-actions">
+              <button type="button" class="btn btn-primary" id="btnPickFile">选择配置文件</button>
+              <input type="file" id="importFileInput" accept=".xlsx" hidden>
+            </div>
+            <div class="selected-file" id="selectedFileName">仅支持由页头「导出」下载的 xlsx 文件</div>
+            <div class="overwrite-warning"><b>全量覆盖：</b>导入后以 Sheet1「关系清单」为完整结果；未保留的现有关系会被删除。上传后先预校验，不会立即生效。</div>
+          </div>
+        </div>
+        <div id="importStep3" hidden>
+          <div class="import-result">
+            <div class="import-stat"><div class="import-stat-label">现有关系</div><div class="import-stat-value" id="existingRelationCount">0</div></div>
+            <div class="import-stat"><div class="import-stat-label">导入关系</div><div class="import-stat-value ok" id="importRelationCount">0</div></div>
+            <div class="import-stat"><div class="import-stat-label">失败</div><div class="import-stat-value ok" id="importFailureCount">0</div></div>
+          </div>
+          <div class="overwrite-summary" aria-label="全量覆盖影响">
+            <div class="overwrite-stat"><div class="overwrite-stat-label">新增</div><div class="overwrite-stat-value add" id="importAddCount">0</div></div>
+            <div class="overwrite-stat"><div class="overwrite-stat-label">变更</div><div class="overwrite-stat-value change" id="importChangeCount">0</div></div>
+            <div class="overwrite-stat"><div class="overwrite-stat-label">删除</div><div class="overwrite-stat-value remove" id="importRemoveCount">0</div></div>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>检查项</th><th>结果</th><th>影响范围</th><th>说明</th></tr></thead>
+            <tbody id="importCheckRows"></tbody>
+          </table>
+          <div class="validation-errors" id="importValidationErrors" hidden></div>
+          <div class="overwrite-warning" id="overwriteConfirmText"><b>覆盖确认：</b>通过全部预校验后才可提交。</div>
+          <div class="modal-note"><b>整批原子提交：</b>任一检查失败时不允许提交，不会部分生效。</div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-error-export" id="btnExportErrors" hidden>导出错误文件</button>
+        <button type="button" class="btn btn-default" data-close="importModal">取消</button>
+        <button type="button" class="btn btn-primary" id="btnImportSubmit" hidden>确认全量覆盖</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <button type="button" class="anno-toggle" id="annoToggle">批注</button>
+
+  <script>
+    (function () {
+      var ENERGIES = ['电', '水', '冷量'];
+      var UNIT = { '电': 'kWh', '水': 'm³', '冷量': 'kWh' };
+
+      var NODES = {
+        root:  { id: 'root', name: '人保北方信息中心工程', model: '工程集合' },
+        p39:   { id: 'p39', name: '0_39:人保北方信息中心项目', model: '数据中心单元' },
+        p530:  { id: 'p530', name: '0_530:合肥中行', model: '数据中心单元' },
+        p475:  { id: 'p475', name: '0_475:软POC项目', model: '数据中心单元' },
+        s476:  { id: 's476', name: '0_476:IT系统', model: '系统集合' },
+        s479:  { id: 's479', name: '0_479:其他系统', model: '系统集合' },
+        s477:  { id: 's477', name: '0_477:暖通空调系统', model: '系统集合' },
+        s478:  { id: 's478', name: '0_478:电力系统', model: '系统集合' },
+        s493:  { id: 's493', name: '0_493:3#数据中心水冷冷水系统', model: '水冷冷水系统' },
+        u495:  { id: 'u495', name: '0_495:制冷单元_1', model: '制冷单元' },
+        u496:  { id: 'u496', name: '0_496:制冷单元_2', model: '制冷单元' },
+        u497:  { id: 'u497', name: '0_497:制冷单元_3', model: '制冷单元' },
+        u498:  { id: 'u498', name: '0_498:制冷单元_4', model: '制冷单元' },
+        u499:  { id: 'u499', name: '0_499:制冷单元_5', model: '制冷单元' },
+        pl505: { id: 'pl505', name: '0_505:并联冷冻水泵管路_1', model: '并联冷冻水泵管路' },
+        pl508: { id: 'pl508', name: '0_508:并联冷冻水泵管路_4', model: '并联冷冻水泵管路' },
+        pl510: { id: 'pl510', name: '0_510:并联冷却塔管路_1', model: '并联冷却塔管路' },
+        pl500: { id: 'pl500', name: '0_500:并联冷却水泵管路_1', model: '并联冷却水泵管路' },
+        u494:  { id: 'u494', name: '0_494:蓄冷罐组', model: '蓄冷罐组' },
+        g486:  { id: 'g486', name: '0_486:3#数据中心水冷群控系统', model: '群控系统' },
+        d473:  { id: 'd473', name: '0_473:冷冻水泵-CHWP4', model: '冷冻水泵' },
+        tf1:   { id: 'tf1', name: '0_481:1#变压器', model: '变压器' },
+        tf2:   { id: 'tf2', name: '0_482:2#变压器', model: '变压器' },
+        ups1:  { id: 'ups1', name: '0_483:UPS-1', model: 'UPS' },
+        /* 空间 / 容量视图节点（截图示意） */
+        hf:    { id: 'hf', name: '0_565:合肥中行', model: '园区' },
+        g1:    { id: 'g1', name: '0_566:G1栋', model: '楼栋' },
+        b1:    { id: 'b1', name: '0_640:B1层', model: '楼层' },
+        f1:    { id: 'f1', name: '0_641:1F', model: '楼层' },
+        stA:   { id: 'stA', name: '0_570:A路制冷站', model: '制冷站' },
+        tank3: { id: 'tank3', name: '0_571:3#蓄冷罐', model: '蓄冷罐' },
+        chwp5: { id: 'chwp5', name: '0_572:5#冷冻水泵', model: '冷冻水泵' },
+        chw1:  { id: 'chw1', name: '0_573:冷水机组-1', model: '冷水机组' },
+        chw2:  { id: 'chw2', name: '0_574:冷水机组-2', model: '冷水机组' },
+        ctw1:  { id: 'ctw1', name: '0_575:冷却塔-1', model: '冷却塔' },
+        cwp3:  { id: 'cwp3', name: '0_576:3#冷却水泵', model: '冷却水泵' },
+        capIT: { id: 'capIT', name: '0_580:IT容量分区', model: '容量分区' },
+        capHVAC:{ id: 'capHVAC', name: '0_581:暖通容量分区', model: '容量分区' },
+        capPow:{ id: 'capPow', name: '0_582:电力容量分区', model: '容量分区' }
+      };
+
+      var TREES = {
+        efficiency: [
+          { id: 'root', children: [
+            { id: 'p39' }, { id: 'p530' },
+            { id: 'p475', children: [
+              { id: 's476' }, { id: 's479' },
+              { id: 's477', children: [
+                { id: 's493', children: [
+                  { id: 'u495' }, { id: 'u496' }, { id: 'u497' }, { id: 'u498' }, { id: 'u499' },
+                  { id: 'pl505' }, { id: 'pl508', children: [{ id: 'd473' }] },
+                  { id: 'pl510' }, { id: 'pl500' }, { id: 'u494' }, { id: 'g486' }
+                ]}
+              ]},
+              { id: 's478', children: [{ id: 'tf1' }, { id: 'tf2' }, { id: 'ups1' }] }
+            ]}
+          ]}
+        ],
+        space: [
+          { id: 'hf', children: [
+            { id: 'g1', children: [
+              { id: 'b1' },
+              { id: 'f1', children: [
+                { id: 'stA', children: [
+                  { id: 'tank3' }, { id: 'chwp5' }, { id: 'chw1' }, { id: 'chw2' },
+                  { id: 'ctw1' }, { id: 'cwp3' }, { id: 'u495' }, { id: 'd473' }
+                ]}
+              ]}
+            ]}
+          ]}
+        ],
+        capacity: [
+          { id: 'hf', children: [
+            { id: 'capIT', children: [{ id: 's476' }] },
+            { id: 'capHVAC', children: [
+              { id: 'stA', children: [{ id: 'chw1' }, { id: 'chw2' }, { id: 'chwp5' }, { id: 'tank3' }] }
+            ]},
+            { id: 'capPow', children: [{ id: 'tf1' }, { id: 'tf2' }, { id: 'ups1' }] }
+          ]}
+        ]
+      };
+
+      var METERS = [
+        { code: 'AC_Meter_01', name: '交流电表-市电进线1', energy: '电', kind: 'device' },
+        { code: 'AC_Meter_02', name: '交流电表-变压器出线1', energy: '电', kind: 'device' },
+        { code: 'AC_Meter_03', name: '交流电表-市电进线2', energy: '电', kind: 'device' },
+        { code: 'AC_Meter_04', name: '交流电表-变压器出线2', energy: '电', kind: 'device' },
+        { code: 'AC_Meter_05', name: '交流电表-UPS进线1', energy: '电', kind: 'device' },
+        { code: 'AC_Meter_06', name: '交流电表-UPS出线1', energy: '电', kind: 'device' },
+        { code: 'AC_Meter_07', name: '交流电表-冷站总进线', energy: '电', kind: 'device' },
+        { code: 'AC_Meter_08', name: '列头柜 1', energy: '电', kind: 'device' },
+        { code: 'AC_Meter_09', name: '交流电表-IT系统总表', energy: '电', kind: 'device' },
+        { code: 'AC_Meter_10', name: '交流电表-备用回路1', energy: '电', kind: 'device' },
+        { code: 'AC_Meter_11', name: '交流电表-制冷站进线', energy: '电', kind: 'device' },
+        { code: 'WM_01', name: '冷却水表-补水总管', energy: '水', kind: 'device' },
+        { code: 'WM_02', name: '冷却水表-排污回水', energy: '水', kind: 'device' },
+        { code: 'WM_03', name: '水表-绿化用水', energy: '水', kind: 'device' },
+        { code: 'CM_01', name: '冷量计-冷冻供回水总管', energy: '冷量', kind: 'device' }
+      ];
+      /* 列头柜 1 下 10 个支路组件 + 批量 mock，演示上千级规模的分页 */
+      (function seedMeters() {
+        for (var i = 1; i <= 10; i++) {
+          var code = 'PDU1_BR' + String(i).padStart(2, '0');
+          METERS.push({
+            code: code,
+            name: '支路 ' + i,
+            componentName: '支路 ' + i,
+            energy: '电',
+            kind: 'component',
+            parentCode: 'AC_Meter_08',
+            parentName: '列头柜 1'
+          });
+        }
+        for (var j = 12; j <= 48; j++) {
+          METERS.push({
+            code: 'AC_Meter_' + String(j).padStart(2, '0'),
+            name: '交流电表-回路' + j,
+            energy: '电',
+            kind: 'device'
+          });
+        }
+      })();
+
+      function cumulativePointId(meter) {
+        var base = meter.code.toLowerCase();
+        if (meter.energy === '水') return base + '_volume_total';
+        if (meter.energy === '冷量') return base + '_cooling_energy_total';
+        return base + '_active_energy_total';
+      }
+
+      /* 今日 mock 用量 */
+      var TODAY_USAGE = {
+        AC_Meter_01: 12840, AC_Meter_02: 12110, AC_Meter_03: 11960, AC_Meter_04: 11220,
+        AC_Meter_05: 9800, AC_Meter_06: 9420, AC_Meter_07: 8640, AC_Meter_08: 2100,
+        AC_Meter_09: 15600, AC_Meter_10: 120, AC_Meter_11: 7200,
+        WM_01: 86.4, WM_02: 12.8, WM_03: 4.2, CM_01: 18200
+      };
+      for (var bi = 1; bi <= 10; bi++) {
+        TODAY_USAGE['PDU1_BR' + String(bi).padStart(2, '0')] = 180 + bi * 12;
+      }
+
+      function shortName(n) { return (n || '').replace(/^[^:]*:/, ''); }
+
+      var relations = {
+        p475: {
+          '电': [
+            { type: 'object', id: 's478', name: shortName(NODES.s478.name), direction: 'in' },
+            { type: 'object', id: 's477', name: shortName(NODES.s477.name), direction: 'in' },
+            { type: 'object', id: 's476', name: shortName(NODES.s476.name), direction: 'in' }
+          ]
+        },
+        s478: {
+          '电': [
+            { type: 'object', id: 'tf1', name: shortName(NODES.tf1.name), direction: 'in' },
+            { type: 'object', id: 'tf2', name: shortName(NODES.tf2.name), direction: 'in' },
+            { type: 'object', id: 'ups1', name: shortName(NODES.ups1.name), direction: 'in' }
+          ]
+        },
+        tf1: {
+          '电': [
+            { type: 'meter', code: 'AC_Meter_01', name: '交流电表-市电进线1', direction: 'in' },
+            { type: 'meter', code: 'AC_Meter_02', name: '交流电表-变压器出线1', direction: 'out' }
+          ]
+        },
+        tf2: {
+          '电': [
+            { type: 'meter', code: 'AC_Meter_03', name: '交流电表-市电进线2', direction: 'in' },
+            { type: 'meter', code: 'AC_Meter_04', name: '交流电表-变压器出线2', direction: 'out' }
+          ]
+        },
+        ups1: {
+          '电': [
+            { type: 'meter', code: 'AC_Meter_05', name: '交流电表-UPS进线1', direction: 'in' },
+            { type: 'meter', code: 'AC_Meter_06', name: '交流电表-UPS出线1', direction: 'out' }
+          ]
+        },
+        s477: {
+          '电': [{ type: 'object', id: 's493', name: shortName(NODES.s493.name), direction: 'in' }],
+          '冷量': [{ type: 'object', id: 's493', name: shortName(NODES.s493.name), direction: 'in' }]
+        },
+        s493: {
+          '电': [
+            { type: 'meter', code: 'AC_Meter_07', name: '交流电表-冷站总进线', direction: 'in' },
+            { type: 'object', id: 'u495', name: shortName(NODES.u495.name), direction: 'in' }
+          ],
+          '水': [
+            { type: 'meter', code: 'WM_01', name: '冷却水表-补水总管', direction: 'in' },
+            { type: 'meter', code: 'WM_02', name: '冷却水表-排污回水', direction: 'out' }
+          ],
+          '冷量': [
+            { type: 'meter', code: 'CM_01', name: '冷量计-冷冻供回水总管', direction: 'out' }
+          ]
+        },
+        s476: {
+          '电': [{ type: 'meter', code: 'AC_Meter_09', name: '交流电表-IT系统总表', direction: 'in' }]
+        },
+        stA: {
+          '电': [
+            { type: 'meter', code: 'AC_Meter_11', name: '交流电表-制冷站进线', direction: 'in' },
+            { type: 'object', id: 'chw1', name: shortName(NODES.chw1.name), direction: 'in' }
+          ]
+        },
+        chw1: {
+          '电': [{ type: 'meter', code: 'PDU1_BR01', name: '支路 1', direction: 'in', meterKind: 'component', parentName: '列头柜 1' }]
+        }
+      };
+
+      function nodeIdentity(node) {
+        var matched = /^([^:]+):(.*)$/.exec((node || {}).name || '');
+        return {
+          instanceId: matched ? matched[1] : '',
+          name: matched ? matched[2] : ((node || {}).name || '')
+        };
+      }
+
+      function meterMetaByCode(code) {
+        return METERS.find(function (meter) { return meter.code === code; }) || {};
+      }
+
+      function meterInstanceIdByCode(code) {
+        var meter = meterMetaByCode(code);
+        if (meter.kind === 'component' && meter.parentCode) {
+          return meterInstanceIdByCode(meter.parentCode);
+        }
+        var matched = /^AC_Meter_(\d+)$/.exec(code || '');
+        if (matched) return '0_' + (700 + Number(matched[1]));
+        matched = /^WM_(\d+)$/.exec(code || '');
+        if (matched) return '0_' + (750 + Number(matched[1]));
+        matched = /^CM_(\d+)$/.exec(code || '');
+        if (matched) return '0_' + (760 + Number(matched[1]));
+        return code || '';
+      }
+
+      function buildRelationRows() {
+        var rows = [];
+        Object.keys(relations).forEach(function (objectId) {
+          ENERGIES.forEach(function (energy) {
+            ((relations[objectId] || {})[energy] || []).forEach(function (member) {
+              var objectIdentity = nodeIdentity(NODES[objectId] || {});
+              var meterMeta = member.type === 'meter' ? meterMetaByCode(member.code) : {};
+              var isComponent = member.type === 'meter' && ((member.meterKind || meterMeta.kind) === 'component');
+              var memberIdentity = member.type === 'meter'
+                ? {
+                    instanceId: meterInstanceIdByCode(isComponent ? (meterMeta.parentCode || member.parentCode || member.code) : member.code),
+                    name: isComponent ? (meterMeta.parentName || member.parentName || '') : (member.name || '')
+                  }
+                : nodeIdentity(NODES[member.id] || {});
+              rows.push([
+                objectIdentity.instanceId,
+                objectIdentity.name,
+                energy,
+                member.type === 'meter' ? '表具' : '下级对象',
+                memberIdentity.instanceId,
+                memberIdentity.name,
+                isComponent ? (member.name || meterMeta.name || '') : '',
+                member.direction === 'out' ? '输出' : '输入'
+              ]);
+            });
+          });
+        });
+        return rows;
+      }
+
+      var METER_PAGE_SIZE = 20;
+      var state = {
+        energy: '电',
+        view: 'efficiency',
+        current: 's493',
+        dirty: false,
+        drag: null,
+        meterPage: 1
+      };
+
+      var $ = function (id) { return document.getElementById(id); };
+      var RELATION_SHEET_RULE = '填写规则：仅编辑本 Sheet，每行填写 1 条关系；计量对象实例 ID、能源类型、成员类型、成员实例 ID、计量方向必填；组件型表具须填写组件名称，下级对象的组件名称留空；对象、表具和组件须来自 Sheet2–5；未保留的现有关系将在全量覆盖后删除。';
+      var IMPORT_SHEET_HEADERS = {
+        '关系清单': ['计量对象实例ID', '计量对象名称', '能源类型', '成员类型', '成员实例ID', '成员名称', '组件名称', '计量方向'],
+        '能效视图对象': ['实例ID', '对象名称', '物模型', '父级实例ID', '父级对象名称'],
+        '空间视图对象': ['实例ID', '对象名称', '物模型', '父级实例ID', '父级对象名称'],
+        '容量视图对象': ['实例ID', '对象名称', '物模型', '父级实例ID', '父级对象名称'],
+        '能源表具清单': ['能源类型', '表具实例ID', '表具名称', '组件名称', '测点 ID']
+      };
+      var latestImportResult = null;
+      var latestImportFileName = '';
+
+      function toast(msg) {
+        var el = $('toast');
+        el.textContent = msg;
+        el.classList.add('show');
+        clearTimeout(el._t);
+        el._t = setTimeout(function () { el.classList.remove('show'); }, 2600);
+      }
+
+      function xmlEscape(value) {
+        return String(value == null ? '' : value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&apos;');
+      }
+
+      function xlsxCell(ref, value, style) {
+        return '<c r="' + ref + '"' + (style ? ' s="' + style + '"' : '') +
+          ' t="inlineStr"><is><t xml:space="preserve">' + xmlEscape(value) + '</t></is></c>';
+      }
+
+      function xlsxRow(rowNo, values, styles, height) {
+        var cells = values.map(function (value, index) {
+          var style = Array.isArray(styles) ? styles[index] : styles;
+          var column = '';
+          var position = index + 1;
+          while (position > 0) {
+            position -= 1;
+            column = String.fromCharCode(65 + (position % 26)) + column;
+            position = Math.floor(position / 26);
+          }
+          return xlsxCell(column + rowNo, value, style || 0);
+        }).join('');
+        return '<row r="' + rowNo + '"' + (height ? ' ht="' + height + '" customHeight="1"' : '') + '>' + cells + '</row>';
+      }
+
+      function crc32(bytes) {
+        if (!crc32.table) {
+          crc32.table = [];
+          for (var n = 0; n < 256; n++) {
+            var c = n;
+            for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+            crc32.table[n] = c >>> 0;
+          }
+        }
+        var crc = 0xFFFFFFFF;
+        for (var i = 0; i < bytes.length; i++) crc = crc32.table[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+        return (crc ^ 0xFFFFFFFF) >>> 0;
+      }
+
+      function zipWorkbook(entries) {
+        var encoder = new TextEncoder();
+        var output = [];
+        var central = [];
+
+        function uint16(target, value) {
+          target.push(value & 0xFF, (value >>> 8) & 0xFF);
+        }
+        function uint32(target, value) {
+          target.push(value & 0xFF, (value >>> 8) & 0xFF, (value >>> 16) & 0xFF, (value >>> 24) & 0xFF);
+        }
+        function append(target, bytes) {
+          for (var i = 0; i < bytes.length; i++) target.push(bytes[i]);
+        }
+
+        var now = new Date();
+        var year = Math.max(1980, now.getFullYear());
+        var dosTime = (now.getHours() << 11) | (now.getMinutes() << 5) | Math.floor(now.getSeconds() / 2);
+        var dosDate = ((year - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
+
+        entries.forEach(function (entry) {
+          var name = encoder.encode(entry.name);
+          var data = entry.content instanceof Uint8Array ? entry.content : encoder.encode(entry.content);
+          var checksum = crc32(data);
+          var localOffset = output.length;
+
+          uint32(output, 0x04034B50);
+          uint16(output, 20);
+          uint16(output, 0x0800);
+          uint16(output, 0);
+          uint16(output, dosTime);
+          uint16(output, dosDate);
+          uint32(output, checksum);
+          uint32(output, data.length);
+          uint32(output, data.length);
+          uint16(output, name.length);
+          uint16(output, 0);
+          append(output, name);
+          append(output, data);
+
+          uint32(central, 0x02014B50);
+          uint16(central, 20);
+          uint16(central, 20);
+          uint16(central, 0x0800);
+          uint16(central, 0);
+          uint16(central, dosTime);
+          uint16(central, dosDate);
+          uint32(central, checksum);
+          uint32(central, data.length);
+          uint32(central, data.length);
+          uint16(central, name.length);
+          uint16(central, 0);
+          uint16(central, 0);
+          uint16(central, 0);
+          uint16(central, 0);
+          uint32(central, 0);
+          uint32(central, localOffset);
+          append(central, name);
+        });
+
+        var centralOffset = output.length;
+        append(output, central);
+        uint32(output, 0x06054B50);
+        uint16(output, 0);
+        uint16(output, 0);
+        uint16(output, entries.length);
+        uint16(output, entries.length);
+        uint32(output, central.length);
+        uint32(output, centralOffset);
+        uint16(output, 0);
+        return new Uint8Array(output);
+      }
+
+      function buildImportTemplate() {
+        var declaration = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+        var contentTypes = declaration +
+          '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+            '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+            '<Default Extension="xml" ContentType="application/xml"/>' +
+            '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+            '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
+            '<Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
+            '<Override PartName="/xl/worksheets/sheet3.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
+            '<Override PartName="/xl/worksheets/sheet4.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
+            '<Override PartName="/xl/worksheets/sheet5.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
+            '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+            '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>' +
+            '<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>' +
+          '</Types>';
+        var rootRels = declaration +
+          '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+            '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>' +
+            '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>' +
+            '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>' +
+          '</Relationships>';
+        var workbook = declaration +
+          '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+            '<bookViews><workbookView activeTab="0"/></bookViews>' +
+            '<sheets>' +
+              '<sheet name="关系清单" sheetId="1" r:id="rId1"/>' +
+              '<sheet name="能效视图对象" sheetId="2" r:id="rId2"/>' +
+              '<sheet name="空间视图对象" sheetId="3" r:id="rId3"/>' +
+              '<sheet name="容量视图对象" sheetId="4" r:id="rId4"/>' +
+              '<sheet name="能源表具清单" sheetId="5" r:id="rId5"/>' +
+            '</sheets>' +
+            '<calcPr calcId="191029"/>' +
+          '</workbook>';
+        var workbookRels = declaration +
+          '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+            '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>' +
+            '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/>' +
+            '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet3.xml"/>' +
+            '<Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet4.xml"/>' +
+            '<Relationship Id="rId5" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet5.xml"/>' +
+            '<Relationship Id="rId6" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' +
+          '</Relationships>';
+        var styles = declaration +
+          '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+            '<fonts count="5">' +
+              '<font><sz val="11"/><name val="Calibri"/><family val="2"/></font>' +
+              '<font><b/><color rgb="FFFFFFFF"/><sz val="11"/><name val="Calibri"/></font>' +
+              '<font><b/><color rgb="FF1D4ED8"/><sz val="16"/><name val="Calibri"/></font>' +
+              '<font><b/><color rgb="FF1E3A8A"/><sz val="11"/><name val="Calibri"/></font>' +
+              '<font><b/><color rgb="FF0F172A"/><sz val="11"/><name val="Calibri"/></font>' +
+            '</fonts>' +
+            '<fills count="5">' +
+              '<fill><patternFill patternType="none"/></fill>' +
+              '<fill><patternFill patternType="gray125"/></fill>' +
+              '<fill><patternFill patternType="solid"><fgColor rgb="FF1D4ED8"/><bgColor indexed="64"/></patternFill></fill>' +
+              '<fill><patternFill patternType="solid"><fgColor rgb="FFEFF6FF"/><bgColor indexed="64"/></patternFill></fill>' +
+              '<fill><patternFill patternType="solid"><fgColor rgb="FFF8FAFC"/><bgColor indexed="64"/></patternFill></fill>' +
+            '</fills>' +
+            '<borders count="2">' +
+              '<border><left/><right/><top/><bottom/><diagonal/></border>' +
+              '<border><left style="thin"><color rgb="FFE2E8F0"/></left><right style="thin"><color rgb="FFE2E8F0"/></right><top style="thin"><color rgb="FFE2E8F0"/></top><bottom style="thin"><color rgb="FFE2E8F0"/></bottom><diagonal/></border>' +
+            '</borders>' +
+            '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+            '<cellXfs count="7">' +
+              '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
+              '<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' +
+              '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment vertical="center"/></xf>' +
+              '<xf numFmtId="0" fontId="4" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
+              '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>' +
+              '<xf numFmtId="0" fontId="3" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>' +
+              '<xf numFmtId="0" fontId="0" fillId="4" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>' +
+            '</cellXfs>' +
+            '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>' +
+          '</styleSheet>';
+
+        function rowsXml(rows, startRow) {
+          startRow = startRow || 2;
+          return rows.map(function (row, index) {
+            return xlsxRow(index + startRow, row, 4, 24);
+          }).join('');
+        }
+
+        function viewRows(tree) {
+          var result = [];
+          var seen = {};
+          function walk(items, parentId) {
+            (items || []).forEach(function (item) {
+              var node = NODES[item.id] || {};
+              var identity = nodeIdentity(node);
+              if (!seen[item.id]) {
+                var parent = parentId ? (NODES[parentId] || {}) : {};
+                var parentIdentity = nodeIdentity(parent);
+                if (identity.instanceId) {
+                  result.push([
+                    identity.instanceId,
+                    identity.name,
+                    node.model || '',
+                    parentIdentity.instanceId,
+                    parentIdentity.name
+                  ]);
+                }
+                seen[item.id] = true;
+              }
+              walk(item.children, identity.instanceId ? item.id : parentId);
+            });
+          }
+          walk(tree, '');
+          return result;
+        }
+
+        var relationHeaders = ['计量对象实例ID', '计量对象名称', '能源类型', '成员类型', '成员实例ID', '成员名称', '组件名称', '计量方向'];
+        var relationRows = buildRelationRows();
+        var relationLastRow = Math.max(2, relationRows.length + 2);
+        var sheet1 = declaration +
+          '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+            '<sheetViews><sheetView workbookViewId="0"><pane ySplit="2" topLeftCell="A3" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>' +
+            '<sheetFormatPr defaultRowHeight="20"/>' +
+            '<cols><col min="1" max="1" width="22" customWidth="1"/><col min="2" max="2" width="34" customWidth="1"/><col min="3" max="4" width="15" customWidth="1"/><col min="5" max="5" width="22" customWidth="1"/><col min="6" max="6" width="30" customWidth="1"/><col min="7" max="7" width="24" customWidth="1"/><col min="8" max="8" width="15" customWidth="1"/></cols>' +
+            '<sheetData>' + xlsxRow(1, [RELATION_SHEET_RULE], 5, 42) + xlsxRow(2, relationHeaders, 1, 26) + rowsXml(relationRows, 3) + '</sheetData>' +
+            '<autoFilter ref="A2:H' + relationLastRow + '"/>' +
+            '<mergeCells count="1"><mergeCell ref="A1:H1"/></mergeCells>' +
+            '<dataValidations count="5">' +
+              '<dataValidation type="custom" allowBlank="0" showErrorMessage="1" errorTitle="计量对象实例 ID 必填" error="请填写计量对象实例 ID" sqref="A3:A5002"><formula1>LEN(TRIM(A3))&gt;0</formula1></dataValidation>' +
+              '<dataValidation type="list" allowBlank="0" showErrorMessage="0" showInputMessage="1" promptTitle="能源类型" prompt="请选择能源类型" sqref="C3:C5002"><formula1>&quot;' + ENERGIES.join(',') + '&quot;</formula1></dataValidation>' +
+              '<dataValidation type="list" allowBlank="0" showErrorMessage="1" errorTitle="成员类型不正确" error="仅支持表具或下级对象" sqref="D3:D5002"><formula1>&quot;表具,下级对象&quot;</formula1></dataValidation>' +
+              '<dataValidation type="custom" allowBlank="0" showErrorMessage="1" errorTitle="成员实例 ID 必填" error="请填写成员实例 ID" sqref="E3:E5002"><formula1>LEN(TRIM(E3))&gt;0</formula1></dataValidation>' +
+              '<dataValidation type="list" allowBlank="0" showErrorMessage="1" errorTitle="计量方向不正确" error="仅支持输入或输出" sqref="H3:H5002"><formula1>&quot;输入,输出&quot;</formula1></dataValidation>' +
+            '</dataValidations>' +
+            '<pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>' +
+          '</worksheet>';
+
+        var viewHeaders = ['实例ID', '对象名称', '物模型', '父级实例ID', '父级对象名称'];
+        function buildViewSheet(rows) {
+          var lastRow = Math.max(2, rows.length + 1);
+          return declaration +
+            '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+              '<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>' +
+              '<sheetFormatPr defaultRowHeight="20"/>' +
+              '<cols><col min="1" max="1" width="20" customWidth="1"/><col min="2" max="2" width="42" customWidth="1"/><col min="3" max="3" width="24" customWidth="1"/><col min="4" max="4" width="20" customWidth="1"/><col min="5" max="5" width="42" customWidth="1"/></cols>' +
+              '<sheetData>' + xlsxRow(1, viewHeaders, 1, 26) + rowsXml(rows) + '</sheetData>' +
+              '<autoFilter ref="A1:E' + lastRow + '"/>' +
+              '<pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>' +
+            '</worksheet>';
+        }
+        var sheet2 = buildViewSheet(viewRows(TREES.efficiency));
+        var sheet3 = buildViewSheet(viewRows(TREES.space));
+        var sheet4 = buildViewSheet(viewRows(TREES.capacity));
+
+        var meterHeaders = ['能源类型', '表具实例ID', '表具名称', '组件名称', '测点 ID'];
+        var meterRows = METERS.map(function (meter) {
+          var isComponent = meter.kind === 'component';
+          return [
+            meter.energy,
+            meterInstanceIdByCode(isComponent ? meter.parentCode : meter.code),
+            isComponent ? meter.parentName : meter.name,
+            isComponent ? (meter.componentName || meter.name) : '',
+            cumulativePointId(meter)
+          ];
+        });
+        var sheet5 = declaration +
+          '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+            '<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>' +
+            '<sheetFormatPr defaultRowHeight="20"/>' +
+            '<cols><col min="1" max="1" width="15" customWidth="1"/><col min="2" max="2" width="22" customWidth="1"/><col min="3" max="3" width="36" customWidth="1"/><col min="4" max="4" width="30" customWidth="1"/><col min="5" max="5" width="36" customWidth="1"/></cols>' +
+            '<sheetData>' + xlsxRow(1, meterHeaders, 1, 26) + rowsXml(meterRows) + '</sheetData>' +
+            '<autoFilter ref="A1:E' + Math.max(2, meterRows.length + 1) + '"/>' +
+            '<pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>' +
+          '</worksheet>';
+        var timestamp = new Date().toISOString();
+        var core = declaration +
+          '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">' +
+            '<dc:title>能源计量关系全量配置</dc:title><dc:creator>AI节能管理平台</dc:creator>' +
+            '<dcterms:created xsi:type="dcterms:W3CDTF">' + timestamp + '</dcterms:created>' +
+            '<dcterms:modified xsi:type="dcterms:W3CDTF">' + timestamp + '</dcterms:modified>' +
+          '</cp:coreProperties>';
+        var app = declaration +
+          '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">' +
+            '<Application>AI节能管理平台</Application><AppVersion>2.5</AppVersion>' +
+          '</Properties>';
+
+        return zipWorkbook([
+          { name: '[Content_Types].xml', content: contentTypes },
+          { name: '_rels/.rels', content: rootRels },
+          { name: 'docProps/app.xml', content: app },
+          { name: 'docProps/core.xml', content: core },
+          { name: 'xl/workbook.xml', content: workbook },
+          { name: 'xl/_rels/workbook.xml.rels', content: workbookRels },
+          { name: 'xl/styles.xml', content: styles },
+          { name: 'xl/worksheets/sheet1.xml', content: sheet1 },
+          { name: 'xl/worksheets/sheet2.xml', content: sheet2 },
+          { name: 'xl/worksheets/sheet3.xml', content: sheet3 },
+          { name: 'xl/worksheets/sheet4.xml', content: sheet4 },
+          { name: 'xl/worksheets/sheet5.xml', content: sheet5 }
+        ]);
+      }
+
+      function downloadGlobalConfiguration() {
+        var bytes = buildImportTemplate();
+        var blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = '能源计量关系全量配置_v2.5.xlsx';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+        toast('已导出当前全局能源计量关系');
+      }
+
+      function zipUint16(bytes, offset) {
+        return bytes[offset] | (bytes[offset + 1] << 8);
+      }
+
+      function zipUint32(bytes, offset) {
+        return (bytes[offset] | (bytes[offset + 1] << 8) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 24)) >>> 0;
+      }
+
+      async function unzipImportFile(file) {
+        var bytes = new Uint8Array(await file.arrayBuffer());
+        var minOffset = Math.max(0, bytes.length - 65557);
+        var endOffset = -1;
+        for (var i = bytes.length - 22; i >= minOffset; i--) {
+          if (zipUint32(bytes, i) === 0x06054B50) {
+            endOffset = i;
+            break;
+          }
+        }
+        if (endOffset < 0) throw new Error('不是有效的 xlsx 文件');
+
+        var entryCount = zipUint16(bytes, endOffset + 10);
+        var centralOffset = zipUint32(bytes, endOffset + 16);
+        var decoder = new TextDecoder('utf-8');
+        var entries = {};
+        for (var entryIndex = 0; entryIndex < entryCount; entryIndex++) {
+          if (zipUint32(bytes, centralOffset) !== 0x02014B50) throw new Error('xlsx 目录结构损坏');
+          var method = zipUint16(bytes, centralOffset + 10);
+          var compressedSize = zipUint32(bytes, centralOffset + 20);
+          var nameLength = zipUint16(bytes, centralOffset + 28);
+          var extraLength = zipUint16(bytes, centralOffset + 30);
+          var commentLength = zipUint16(bytes, centralOffset + 32);
+          var localOffset = zipUint32(bytes, centralOffset + 42);
+          var name = decoder.decode(bytes.slice(centralOffset + 46, centralOffset + 46 + nameLength));
+          var localNameLength = zipUint16(bytes, localOffset + 26);
+          var localExtraLength = zipUint16(bytes, localOffset + 28);
+          var dataStart = localOffset + 30 + localNameLength + localExtraLength;
+          var compressed = bytes.slice(dataStart, dataStart + compressedSize);
+          var data;
+          if (method === 0) {
+            data = compressed;
+          } else if (method === 8 && typeof DecompressionStream !== 'undefined') {
+            var stream = new Blob([compressed]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+            data = new Uint8Array(await new Response(stream).arrayBuffer());
+          } else {
+            throw new Error('xlsx 压缩方式不支持，请使用本页导出的文件编辑后导入');
+          }
+          entries[name] = data;
+          centralOffset += 46 + nameLength + extraLength + commentLength;
+        }
+        return entries;
+      }
+
+      function normalizeZipPath(path) {
+        var output = [];
+        path.split('/').forEach(function (part) {
+          if (!part || part === '.') return;
+          if (part === '..') output.pop();
+          else output.push(part);
+        });
+        return output.join('/');
+      }
+
+      function parseWorkbookXml(entries, path, required) {
+        if (!entries[path]) {
+          if (required !== false) throw new Error('缺少工作簿文件：' + path);
+          return null;
+        }
+        var xml = new TextDecoder('utf-8').decode(entries[path]);
+        var doc = new DOMParser().parseFromString(xml, 'application/xml');
+        if (doc.getElementsByTagName('parsererror').length) throw new Error('工作簿 XML 无法解析：' + path);
+        return doc;
+      }
+
+      function xmlText(node, localName) {
+        return Array.prototype.map.call(node.getElementsByTagNameNS('*', localName), function (item) {
+          return item.textContent || '';
+        }).join('');
+      }
+
+      function columnIndexFromRef(ref) {
+        var letters = String(ref || '').match(/^[A-Z]+/i);
+        if (!letters) return 0;
+        var index = 0;
+        letters[0].toUpperCase().split('').forEach(function (letter) {
+          index = index * 26 + letter.charCodeAt(0) - 64;
+        });
+        return index - 1;
+      }
+
+      function sheetRowsFromXml(doc, sharedStrings) {
+        var rows = [];
+        Array.prototype.forEach.call(doc.getElementsByTagNameNS('*', 'row'), function (rowNode) {
+          var rowIndex = Math.max(0, Number(rowNode.getAttribute('r') || rows.length + 1) - 1);
+          var row = [];
+          Array.prototype.forEach.call(rowNode.getElementsByTagNameNS('*', 'c'), function (cell) {
+            var columnIndex = columnIndexFromRef(cell.getAttribute('r'));
+            var type = cell.getAttribute('t');
+            var value = '';
+            if (type === 'inlineStr') {
+              value = xmlText(cell, 't');
+            } else {
+              var valueNodes = cell.getElementsByTagNameNS('*', 'v');
+              var raw = valueNodes.length ? valueNodes[0].textContent : '';
+              value = type === 's' ? (sharedStrings[Number(raw)] || '') : raw;
+            }
+            row[columnIndex] = value == null ? '' : String(value);
+          });
+          rows[rowIndex] = row;
+        });
+        return rows;
+      }
+
+      async function readImportWorkbook(file) {
+        var entries = await unzipImportFile(file);
+        var workbookDoc = parseWorkbookXml(entries, 'xl/workbook.xml');
+        var relsDoc = parseWorkbookXml(entries, 'xl/_rels/workbook.xml.rels');
+        var sharedDoc = parseWorkbookXml(entries, 'xl/sharedStrings.xml', false);
+        var sharedStrings = sharedDoc
+          ? Array.prototype.map.call(sharedDoc.getElementsByTagNameNS('*', 'si'), function (item) { return xmlText(item, 't'); })
+          : [];
+        var relTargets = {};
+        Array.prototype.forEach.call(relsDoc.getElementsByTagNameNS('*', 'Relationship'), function (rel) {
+          relTargets[rel.getAttribute('Id')] = rel.getAttribute('Target');
+        });
+        var sheets = {};
+        var sheetNames = [];
+        var sheetPaths = {};
+        Array.prototype.forEach.call(workbookDoc.getElementsByTagNameNS('*', 'sheet'), function (sheet) {
+          var name = sheet.getAttribute('name');
+          var relationId = sheet.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id') || sheet.getAttribute('r:id');
+          var target = relTargets[relationId] || '';
+          var path = target.charAt(0) === '/' ? target.slice(1) : normalizeZipPath('xl/' + target);
+          sheetNames.push(name);
+          sheetPaths[name] = path;
+          sheets[name] = sheetRowsFromXml(parseWorkbookXml(entries, path), sharedStrings);
+        });
+        return { sheetNames: sheetNames, sheets: sheets, sheetPaths: sheetPaths, entries: entries };
+      }
+
+      function xlsxColumnName(position) {
+        var column = '';
+        while (position > 0) {
+          position -= 1;
+          column = String.fromCharCode(65 + (position % 26)) + column;
+          position = Math.floor(position / 26);
+        }
+        return column;
+      }
+
+      function worksheetRow(doc, rowNumber, create) {
+        var rows = Array.prototype.slice.call(doc.getElementsByTagNameNS('*', 'row'));
+        for (var index = 0; index < rows.length; index++) {
+          if (Number(rows[index].getAttribute('r')) === rowNumber) return rows[index];
+        }
+        if (!create) return null;
+        var namespace = doc.documentElement.namespaceURI;
+        var row = doc.createElementNS(namespace, 'row');
+        row.setAttribute('r', rowNumber);
+        var sheetData = doc.getElementsByTagNameNS('*', 'sheetData')[0];
+        var inserted = false;
+        Array.prototype.slice.call(sheetData.children).forEach(function (item) {
+          if (!inserted && Number(item.getAttribute('r')) > rowNumber) {
+            sheetData.insertBefore(row, item);
+            inserted = true;
+          }
+        });
+        if (!inserted) sheetData.appendChild(row);
+        return row;
+      }
+
+      function worksheetCell(row, ref) {
+        var cells = Array.prototype.slice.call(row.getElementsByTagNameNS('*', 'c'));
+        for (var index = 0; index < cells.length; index++) {
+          if (cells[index].getAttribute('r') === ref) return cells[index];
+        }
+        return null;
+      }
+
+      function setWorksheetInlineCell(doc, row, ref, value, style) {
+        var oldCell = worksheetCell(row, ref);
+        if (oldCell) row.removeChild(oldCell);
+        var namespace = doc.documentElement.namespaceURI;
+        var cell = doc.createElementNS(namespace, 'c');
+        cell.setAttribute('r', ref);
+        cell.setAttribute('t', 'inlineStr');
+        if (style !== '' && style != null) cell.setAttribute('s', style);
+        var inlineString = doc.createElementNS(namespace, 'is');
+        var textNode = doc.createElementNS(namespace, 't');
+        textNode.setAttributeNS('http://www.w3.org/XML/1998/namespace', 'xml:space', 'preserve');
+        textNode.textContent = value;
+        inlineString.appendChild(textNode);
+        cell.appendChild(inlineString);
+
+        var targetColumn = columnIndexFromRef(ref);
+        var inserted = false;
+        Array.prototype.slice.call(row.getElementsByTagNameNS('*', 'c')).forEach(function (existing) {
+          if (!inserted && columnIndexFromRef(existing.getAttribute('r')) > targetColumn) {
+            row.insertBefore(cell, existing);
+            inserted = true;
+          }
+        });
+        if (!inserted) row.appendChild(cell);
+      }
+
+      function rowStyleForColumn(row, preferredRef, fallback) {
+        var preferred = worksheetCell(row, preferredRef);
+        if (preferred && preferred.hasAttribute('s')) return preferred.getAttribute('s');
+        var cells = Array.prototype.slice.call(row.getElementsByTagNameNS('*', 'c'));
+        for (var index = cells.length - 1; index >= 0; index--) {
+          if (cells[index].hasAttribute('s')) return cells[index].getAttribute('s');
+        }
+        return fallback;
+      }
+
+      function ensureWorksheetColumn(doc, columnNumber) {
+        var namespace = doc.documentElement.namespaceURI;
+        var root = doc.documentElement;
+        var sheetData = doc.getElementsByTagNameNS('*', 'sheetData')[0];
+        var cols = doc.getElementsByTagNameNS('*', 'cols')[0];
+        if (!cols) {
+          cols = doc.createElementNS(namespace, 'cols');
+          root.insertBefore(cols, sheetData);
+        }
+        var exactColumn = Array.prototype.slice.call(cols.getElementsByTagNameNS('*', 'col')).some(function (column) {
+          return Number(column.getAttribute('min')) === columnNumber && Number(column.getAttribute('max')) === columnNumber;
+        });
+        if (!exactColumn) {
+          var column = doc.createElementNS(namespace, 'col');
+          column.setAttribute('min', columnNumber);
+          column.setAttribute('max', columnNumber);
+          column.setAttribute('width', '52');
+          column.setAttribute('customWidth', '1');
+          cols.appendChild(column);
+        }
+      }
+
+      function expandWorksheetRange(doc, localName, endColumn, fallbackEndRow) {
+        var node = doc.getElementsByTagNameNS('*', localName)[0];
+        if (!node || !node.getAttribute('ref')) return;
+        var parts = node.getAttribute('ref').split(':');
+        var start = parts[0];
+        var end = parts[parts.length - 1];
+        var rowMatch = end.match(/(\d+)$/);
+        node.setAttribute('ref', start + ':' + endColumn + (rowMatch ? rowMatch[1] : fallbackEndRow));
+      }
+
+      function buildErrorWorkbook(workbookData, errors) {
+        var outputEntries = {};
+        Object.keys(workbookData.entries).forEach(function (name) {
+          outputEntries[name] = new Uint8Array(workbookData.entries[name]);
+        });
+        var fallbackSheet = workbookData.sheetPaths['关系清单'] ? '关系清单' : workbookData.sheetNames[0];
+        var grouped = {};
+        errors.forEach(function (error) {
+          var sheetName = error.sheetName && workbookData.sheetPaths[error.sheetName] ? error.sheetName : fallbackSheet;
+          if (!sheetName || !workbookData.sheetPaths[sheetName]) return;
+          var headerRowNumber = sheetName === '关系清单' ? 2 : 1;
+          var rowNumber = error.rowNumber || (sheetName === '关系清单' ? 1 : 2);
+          if (rowNumber === headerRowNumber) rowNumber = sheetName === '关系清单' ? 1 : 2;
+          grouped[sheetName] = grouped[sheetName] || {};
+          grouped[sheetName][rowNumber] = grouped[sheetName][rowNumber] || [];
+          var reason = error.reason || error.message;
+          if (grouped[sheetName][rowNumber].indexOf(reason) < 0) grouped[sheetName][rowNumber].push(reason);
+        });
+        if (!Object.keys(grouped).length) throw new Error('当前错误无法定位到可导出的工作表');
+
+        var encoder = new TextEncoder();
+        Object.keys(grouped).forEach(function (sheetName) {
+          var path = workbookData.sheetPaths[sheetName];
+          var doc = parseWorkbookXml(outputEntries, path);
+          var rows = workbookData.sheets[sheetName] || [];
+          var headerRowNumber = sheetName === '关系清单' ? 2 : 1;
+          var baseWidth = IMPORT_SHEET_HEADERS[sheetName]
+            ? IMPORT_SHEET_HEADERS[sheetName].length
+            : rows.reduce(function (max, row) { return Math.max(max, (row || []).length); }, 0);
+          var headerValues = rows[headerRowNumber - 1] || [];
+          var existingIssueIndex = headerValues.indexOf('问题原因');
+          var issueColumnNumber = existingIssueIndex >= 0 ? existingIssueIndex + 1 : baseWidth + 1;
+          var issueColumn = xlsxColumnName(issueColumnNumber);
+
+          Array.prototype.slice.call(doc.getElementsByTagNameNS('*', 'row')).forEach(function (row) {
+            var rowNumber = Number(row.getAttribute('r'));
+            var oldIssueCell = worksheetCell(row, issueColumn + rowNumber);
+            if (oldIssueCell) row.removeChild(oldIssueCell);
+          });
+
+          var headerRow = worksheetRow(doc, headerRowNumber, true);
+          var headerStyle = rowStyleForColumn(headerRow, xlsxColumnName(Math.max(1, baseWidth)) + headerRowNumber, '1');
+          setWorksheetInlineCell(doc, headerRow, issueColumn + headerRowNumber, '问题原因', headerStyle);
+
+          Object.keys(grouped[sheetName]).forEach(function (rowKey) {
+            var rowNumber = Number(rowKey);
+            var row = worksheetRow(doc, rowNumber, true);
+            var dataStyle = rowStyleForColumn(row, xlsxColumnName(Math.max(1, baseWidth)) + rowNumber, '4');
+            setWorksheetInlineCell(doc, row, issueColumn + rowNumber, grouped[sheetName][rowNumber].join('；'), dataStyle);
+          });
+
+          ensureWorksheetColumn(doc, issueColumnNumber);
+          var maxRow = Math.max(rows.length, headerRowNumber);
+          expandWorksheetRange(doc, 'dimension', issueColumn, maxRow);
+          expandWorksheetRange(doc, 'autoFilter', issueColumn, maxRow);
+          var xml = new XMLSerializer().serializeToString(doc);
+          if (xml.indexOf('<?xml') !== 0) xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + xml;
+          outputEntries[path] = encoder.encode(xml);
+        });
+
+        return zipWorkbook(Object.keys(outputEntries).map(function (name) {
+          return { name: name, content: outputEntries[name] };
+        }));
+      }
+
+      function downloadWorkbookBytes(bytes, fileName) {
+        var blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      }
+
+      function normalizedRow(row, width) {
+        var result = [];
+        for (var index = 0; index < width; index++) result.push(String((row || [])[index] || '').trim());
+        return result;
+      }
+
+      function rowHasValue(row) {
+        return (row || []).some(function (value) { return String(value || '').trim() !== ''; });
+      }
+
+      function relationBaseKey(row) {
+        return [row[0], row[2], row[3], row[4], row[6]].join('|');
+      }
+
+      function calculateImportImpact(importRows) {
+        var currentMap = {};
+        var importMap = {};
+        buildRelationRows().forEach(function (row) { currentMap[relationBaseKey(row)] = row[7]; });
+        importRows.forEach(function (row) { importMap[relationBaseKey(row)] = row[7]; });
+        var added = 0;
+        var changed = 0;
+        var removed = 0;
+        Object.keys(importMap).forEach(function (key) {
+          if (!Object.prototype.hasOwnProperty.call(currentMap, key)) added++;
+          else if (currentMap[key] !== importMap[key]) changed++;
+        });
+        Object.keys(currentMap).forEach(function (key) {
+          if (!Object.prototype.hasOwnProperty.call(importMap, key)) removed++;
+        });
+        return { added: added, changed: changed, removed: removed };
+      }
+
+      async function validateImportFile(file) {
+        var expectedNames = ['关系清单', '能效视图对象', '空间视图对象', '容量视图对象', '能源表具清单'];
+        var expectedHeaders = IMPORT_SHEET_HEADERS;
+        var workbookData = await readImportWorkbook(file);
+        var errors = [];
+        function addError(category, message, sheetName, rowNumber, reason) {
+          errors.push({ category: category, message: message, sheetName: sheetName || '', rowNumber: rowNumber || 0, reason: reason || message });
+        }
+
+        expectedNames.forEach(function (name) {
+          if (workbookData.sheetNames.indexOf(name) < 0) addError('structure', '缺少 Sheet「' + name + '」', '', 0, '缺少 Sheet「' + name + '」');
+        });
+        workbookData.sheetNames.forEach(function (name) {
+          if (expectedNames.indexOf(name) < 0) addError('structure', '存在未知 Sheet「' + name + '」', '', 0, '存在未知 Sheet「' + name + '」');
+        });
+        expectedNames.forEach(function (name) {
+          if (!workbookData.sheets[name]) return;
+          var headerRowIndex = name === '关系清单' ? 1 : 0;
+          var actual = normalizedRow(workbookData.sheets[name][headerRowIndex], expectedHeaders[name].length);
+          if (actual.join('|') !== expectedHeaders[name].join('|')) addError('structure', 'Sheet「' + name + '」表头不正确', name, headerRowIndex + 1, '表头不正确');
+        });
+        if (workbookData.sheets['关系清单']) {
+          var actualRule = normalizedRow(workbookData.sheets['关系清单'][0], 1)[0];
+          if (actualRule !== RELATION_SHEET_RULE) addError('structure', 'Sheet「关系清单」第 1 行写入规则缺失或已被修改', '关系清单', 1, '写入规则缺失或已被修改');
+        }
+
+        var objectIds = {};
+        ['能效视图对象', '空间视图对象', '容量视图对象'].forEach(function (name) {
+          (workbookData.sheets[name] || []).slice(1).forEach(function (row) {
+            var values = normalizedRow(row, 5);
+            if (values[0]) objectIds[values[0]] = true;
+          });
+        });
+
+        var meterKeys = {};
+        (workbookData.sheets['能源表具清单'] || []).slice(1).forEach(function (row, index) {
+          if (!rowHasValue(row)) return;
+          var values = normalizedRow(row, 5);
+          [0, 1, 2, 4].forEach(function (columnIndex) {
+            if (!values[columnIndex]) addError('required', 'Sheet「能源表具清单」第 ' + (index + 2) + ' 行缺少“' + expectedHeaders['能源表具清单'][columnIndex] + '”', '能源表具清单', index + 2, '缺少“' + expectedHeaders['能源表具清单'][columnIndex] + '”');
+          });
+          if (values[3] && values[2] && values[3].indexOf(values[2]) === 0) {
+            addError('reference', 'Sheet「能源表具清单」第 ' + (index + 2) + ' 行组件名称不应重复所属表具名称', '能源表具清单', index + 2, '组件名称不应重复所属表具名称');
+          }
+          var meterKey = [values[0], values[1], values[3]].join('|');
+          if (meterKeys[meterKey]) addError('reference', 'Sheet「能源表具清单」第 ' + (index + 2) + ' 行表具 / 组件对照重复', '能源表具清单', index + 2, '表具 / 组件对照重复');
+          meterKeys[meterKey] = true;
+        });
+
+        var relationRows = [];
+        var usage = {};
+        var requiredFields = [
+          { index: 0, name: '计量对象实例ID' },
+          { index: 2, name: '能源类型' },
+          { index: 3, name: '成员类型' },
+          { index: 4, name: '成员实例ID' },
+          { index: 7, name: '计量方向' }
+        ];
+        (workbookData.sheets['关系清单'] || []).slice(2).forEach(function (row, index) {
+          if (!rowHasValue(row)) return;
+          var values = normalizedRow(row, 8);
+          relationRows.push(values);
+          requiredFields.forEach(function (field) {
+            if (!values[field.index]) addError('required', 'Sheet「关系清单」第 ' + (index + 3) + ' 行缺少“' + field.name + '”', '关系清单', index + 3, '缺少“' + field.name + '”');
+          });
+          if (values[2] && ENERGIES.indexOf(values[2]) < 0) addError('reference', 'Sheet「关系清单」第 ' + (index + 3) + ' 行能源类型无效', '关系清单', index + 3, '能源类型无效');
+          if (values[3] && ['表具', '下级对象'].indexOf(values[3]) < 0) addError('reference', 'Sheet「关系清单」第 ' + (index + 3) + ' 行成员类型无效', '关系清单', index + 3, '成员类型无效');
+          if (values[7] && ['输入', '输出'].indexOf(values[7]) < 0) addError('reference', 'Sheet「关系清单」第 ' + (index + 3) + ' 行计量方向无效', '关系清单', index + 3, '计量方向无效');
+          if (values[0] && !objectIds[values[0]]) addError('reference', 'Sheet「关系清单」第 ' + (index + 3) + ' 行计量对象实例 ID 不在对象 Sheet 中', '关系清单', index + 3, '计量对象实例 ID 不在对象 Sheet 中');
+          if (values[3] === '下级对象') {
+            if (values[6]) addError('required', 'Sheet「关系清单」第 ' + (index + 3) + ' 行下级对象不应填写“组件名称”', '关系清单', index + 3, '下级对象不应填写“组件名称”');
+            if (values[4] && !objectIds[values[4]]) addError('reference', 'Sheet「关系清单」第 ' + (index + 3) + ' 行成员实例 ID 不在对象 Sheet 中', '关系清单', index + 3, '成员实例 ID 不在对象 Sheet 中');
+          }
+          if (values[3] === '表具' && values[2] && values[4]) {
+            var meterKey = [values[2], values[4], values[6]].join('|');
+            if (!meterKeys[meterKey]) {
+              addError('reference', 'Sheet「关系清单」第 ' + (index + 3) + ' 行未命中能源表具清单；组件型表具必须填写正确的“组件名称”', '关系清单', index + 3, '未命中能源表具清单；组件型表具必须填写正确的“组件名称”');
+            }
+            var usageKey = [values[2], values[4], values[6]].join('|');
+            if (usage[usageKey]) addError('graph', 'Sheet「关系清单」第 ' + (index + 3) + ' 行表具 / 组件在同一能源下重复占用', '关系清单', index + 3, '表具 / 组件在同一能源下重复占用');
+            usage[usageKey] = true;
+          }
+        });
+
+        var impact = calculateImportImpact(relationRows);
+        var checks = [
+          { name: '文件结构', category: 'structure', scope: '5 个 Sheet', success: '名称与表头完整' },
+          { name: '必填字段', category: 'required', scope: relationRows.length + ' 条关系', success: '基础必填与组件字段完整' },
+          { name: '成员有效性', category: 'reference', scope: relationRows.length + ' 条关系', success: '对象、表具与组件对照有效' },
+          { name: '全图约束', category: 'graph', scope: '受影响拓扑', success: '无表具 / 组件重复占用' }
+        ];
+        checks.forEach(function (check) {
+          check.errors = errors.filter(function (error) { return error.category === check.category; });
+          check.ok = check.errors.length === 0;
+        });
+        return {
+          valid: errors.length === 0,
+          errors: errors,
+          checks: checks,
+          relationCount: relationRows.length,
+          existingCount: buildRelationRows().length,
+          impact: impact,
+          workbookData: workbookData
+        };
+      }
+
+      function renderImportValidation(result) {
+        $('existingRelationCount').textContent = result.existingCount;
+        $('importRelationCount').textContent = result.relationCount;
+        $('importFailureCount').textContent = result.errors.length;
+        $('importFailureCount').className = 'import-stat-value ' + (result.valid ? 'ok' : 'danger');
+        $('importAddCount').textContent = result.impact.added;
+        $('importChangeCount').textContent = result.impact.changed;
+        $('importRemoveCount').textContent = result.impact.removed;
+        var checkBody = $('importCheckRows');
+        checkBody.innerHTML = '';
+        result.checks.forEach(function (check) {
+          var row = document.createElement('tr');
+          var resultCell = document.createElement('td');
+          var resultTag = document.createElement('span');
+          resultTag.className = 'tag ' + (check.ok ? 'tag-meter' : 'tag-error');
+          resultTag.textContent = check.ok ? '通过' : '失败';
+          resultCell.appendChild(resultTag);
+          [check.name, resultCell, check.scope, check.ok ? check.success : check.errors[0].message].forEach(function (value) {
+            if (value && value.nodeType) row.appendChild(value);
+            else {
+              var cell = document.createElement('td');
+              cell.textContent = value;
+              row.appendChild(cell);
+            }
+          });
+          checkBody.appendChild(row);
+        });
+        var errorBox = $('importValidationErrors');
+        errorBox.innerHTML = '';
+        errorBox.hidden = result.valid;
+        if (!result.valid) {
+          var title = document.createElement('b');
+          title.textContent = '需修正 ' + result.errors.length + ' 项：';
+          var list = document.createElement('ul');
+          list.className = 'validation-error-list';
+          result.errors.slice(0, 8).forEach(function (error) {
+            var item = document.createElement('li');
+            item.textContent = error.message;
+            list.appendChild(item);
+          });
+          if (result.errors.length > 8) {
+            var more = document.createElement('li');
+            more.textContent = '另有 ' + (result.errors.length - 8) + ' 项，请继续按行号修正';
+            list.appendChild(more);
+          }
+          errorBox.appendChild(title);
+          errorBox.appendChild(list);
+        }
+        $('overwriteConfirmText').innerHTML = result.valid
+          ? '<b>覆盖确认：</b>提交后将删除 ' + result.impact.removed + ' 条、新增 ' + result.impact.added + ' 条、变更 ' + result.impact.changed + ' 条关系，并按 ' + result.relationCount + ' 条导入关系重建当前全局拓扑。'
+          : '<b>不可提交：</b>存在预校验错误，可导出带“问题原因”的错误文件，修正后重新上传。';
+        $('btnImportSubmit').disabled = !result.valid;
+        $('btnImportSubmit').title = result.valid ? '' : '请先修正预校验错误';
+        showImportStep(2);
+        var canExportErrors = !result.valid && !!result.workbookData && result.errors.length > 0;
+        $('btnExportErrors').hidden = !canExportErrors;
+        $('btnExportErrors').disabled = !canExportErrors;
+      }
+
+      function showImportStep(step) {
+        $('importStep2').hidden = step !== 1;
+        $('importStep3').hidden = step !== 2;
+        $('importStep2Label').classList.toggle('active', step >= 1);
+        $('importStep3Label').classList.toggle('active', step >= 2);
+        $('btnImportSubmit').hidden = step !== 2;
+      }
+
+      function ensureRel(objId) {
+        if (!relations[objId]) relations[objId] = {};
+        ENERGIES.forEach(function (e) {
+          if (!relations[objId][e]) relations[objId][e] = [];
+        });
+        return relations[objId];
+      }
+
+      function isConfigured(objId, energy) {
+        return ((relations[objId] || {})[energy] || []).length > 0;
+      }
+
+      function allMeterUsage() {
+        var map = {};
+        Object.keys(relations).forEach(function (objId) {
+          ENERGIES.forEach(function (energy) {
+            (relations[objId][energy] || []).forEach(function (m) {
+              if (m.type !== 'meter') return;
+              var key = m.code + '|' + energy;
+              if (!map[key]) map[key] = [];
+              map[key].push({ objId: objId, direction: m.direction });
+            });
+          });
+        });
+        return map;
+      }
+
+      /* ---------- 树 ---------- */
+      function renderTree(nodes, parent) {
+        parent = parent || $('treeRoot');
+        if (parent === $('treeRoot')) parent.innerHTML = '';
+        nodes.forEach(function (n) {
+          var node = NODES[n.id];
+          if (!node) return;
+          var wrap = document.createElement('div');
+          var row = document.createElement('div');
+          var configured = isConfigured(n.id, state.energy);
+          row.className = 'tree-row' + (state.current === n.id ? ' active' : '') + (configured ? '' : ' not-draggable');
+          row.setAttribute('data-node', n.id);
+          row.draggable = configured;
+          var hasChild = n.children && n.children.length;
+          row.innerHTML =
+            '<span class="tree-chevron">' + (hasChild ? '▼' : '') + '</span>' +
+            '<i class="dot ' + (configured ? 'ok' : 'empty') + '" title="' + (configured ? '当前能源已配置，可拖入关系表' : '当前能源未配置，不可拖入') + '"></i>' +
+            '<span class="tree-label">' + node.name + '</span>';
+          wrap.appendChild(row);
+
+          var childBox = null;
+          if (hasChild) {
+            childBox = document.createElement('div');
+            childBox.className = 'tree-children';
+            renderTree(n.children, childBox);
+            wrap.appendChild(childBox);
+          }
+
+          row.querySelector('.tree-chevron').addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (!childBox) return;
+            var open = childBox.style.display !== 'none';
+            childBox.style.display = open ? 'none' : 'block';
+            this.textContent = open ? '▶' : '▼';
+          });
+          row.addEventListener('click', function () { selectObject(n.id); });
+          if (configured) {
+            row.addEventListener('dragstart', function (e) {
+              state.drag = { kind: 'object', id: n.id, name: shortName(node.name) };
+              row.classList.add('dragging');
+              e.dataTransfer.setData('text/plain', JSON.stringify(state.drag));
+              e.dataTransfer.effectAllowed = 'copy';
+            });
+            row.addEventListener('dragend', function () {
+              row.classList.remove('dragging');
+              // 延迟清空，避免部分浏览器 dragend 早于 drop 导致丢载荷
+              setTimeout(function () {
+                if (state.drag && state.drag.kind === 'object' && state.drag.id === n.id) {
+                  state.drag = null;
+                }
+              }, 50);
+              var zone = $('relationDropzone');
+              if (zone) zone.classList.remove('drag-over');
+            });
+          } else {
+            row.addEventListener('dragstart', function (e) {
+              e.preventDefault();
+              toast('仅已配置对象可拖入关系表');
+            });
+          }
+          parent.appendChild(wrap);
+        });
+      }
+
+      function refreshTree() {
+        renderTree(TREES[state.view] || TREES.efficiency);
+        filterTree();
+      }
+
+      function filterTree() {
+        var kw = ($('treeSearch').value || '').trim();
+        document.querySelectorAll('#treeRoot .tree-row').forEach(function (row) {
+          var show = !kw || row.textContent.indexOf(kw) > -1;
+          row.parentElement.style.display = show ? '' : 'none';
+        });
+      }
+
+      /* ---------- 表具池 ---------- */
+      function getFilteredMeters() {
+        var kw = ($('meterSearch').value || '').trim();
+        var occupy = ($('meterOccupyFilter') && $('meterOccupyFilter').value) || 'free';
+        var usage = allMeterUsage();
+        return METERS.filter(function (m) {
+          if (m.energy !== state.energy) return false;
+          var taken = (usage[m.code + '|' + m.energy] || []).length > 0;
+          if (occupy === 'free' && taken) return false;
+          if (occupy === 'taken' && !taken) return false;
+          if (kw) {
+            var hay = m.name + m.code + meterInstanceIdByCode(m.code) + (m.parentName || '') + (m.parentCode || '');
+            if (hay.indexOf(kw) === -1) return false;
+          }
+          return true;
+        });
+      }
+
+      function renderMeters() {
+        var usage = allMeterUsage();
+        var filtered = getFilteredMeters();
+        var totalPages = Math.max(1, Math.ceil(filtered.length / METER_PAGE_SIZE));
+        if (state.meterPage > totalPages) state.meterPage = totalPages;
+        if (state.meterPage < 1) state.meterPage = 1;
+        var start = (state.meterPage - 1) * METER_PAGE_SIZE;
+        var pageRows = filtered.slice(start, start + METER_PAGE_SIZE);
+        var list = $('meterList');
+        list.innerHTML = '';
+        pageRows.forEach(function (m) {
+          var taken = (usage[m.code + '|' + m.energy] || []).length > 0;
+          var item = document.createElement('div');
+          item.className = 'meter-item' + (taken ? ' disabled' : '') + (m.kind === 'component' ? ' component' : '');
+          item.draggable = !taken;
+          var kindTag = m.kind === 'component'
+            ? '<span class="tag tag-comp">组件</span>'
+            : '<span class="tag tag-dev">设备</span>';
+          var parentLine = m.kind === 'component'
+            ? '<div class="meter-meta">所属 ' + (m.parentName || m.parentCode) + '</div>'
+            : '';
+          item.innerHTML =
+            '<div class="meter-name">' + m.name + '</div>' +
+            '<div class="meter-meta">' +
+              kindTag +
+              '<span>' + meterInstanceIdByCode(m.code) + '</span>' +
+              (taken ? '<span class="tag tag-muted">已占用</span>' : '') +
+            '</div>' +
+            parentLine;
+          if (!taken) {
+            item.addEventListener('dragstart', function (e) {
+              state.drag = {
+                kind: 'meter',
+                code: m.code,
+                name: m.name,
+                energy: m.energy,
+                meterKind: m.kind || 'device',
+                parentName: m.parentName || ''
+              };
+              e.dataTransfer.setData('text/plain', JSON.stringify(state.drag));
+              e.dataTransfer.effectAllowed = 'copy';
+            });
+            item.addEventListener('dragend', function () {
+              setTimeout(function () {
+                if (state.drag && state.drag.kind === 'meter' && state.drag.code === m.code) {
+                  state.drag = null;
+                }
+              }, 50);
+              var zone = $('relationDropzone');
+              if (zone) zone.classList.remove('drag-over');
+            });
+          }
+          list.appendChild(item);
+        });
+        if (!list.children.length) {
+          list.innerHTML = '<div style="padding:16px;color:var(--text-hint);font-size:12px;text-align:center;">当前筛选下无匹配表具 / 组件</div>';
+        }
+        if ($('meterPageSize')) {
+          $('meterPageSize').textContent = '共 ' + filtered.length + ' 条 · 每页 ' + METER_PAGE_SIZE + ' 条';
+        }
+        if ($('meterPageIndex')) {
+          $('meterPageIndex').textContent = state.meterPage + ' / ' + totalPages;
+        }
+        if ($('meterPrevPage')) $('meterPrevPage').disabled = state.meterPage <= 1;
+        if ($('meterNextPage')) $('meterNextPage').disabled = state.meterPage >= totalPages;
+      }
+
+      /* ---------- 关系表 ---------- */
+      function selectObject(id) {
+        state.current = id;
+        ensureRel(id);
+        document.querySelectorAll('#treeRoot .tree-row').forEach(function (r) {
+          r.classList.toggle('active', r.getAttribute('data-node') === id);
+        });
+        var node = NODES[id];
+        $('currentObjectName').textContent = node.name;
+        $('btnTrial').disabled = false;
+        renderRelationTable();
+        renderTrial();
+      }
+
+      function currentMembers() {
+        if (!state.current) return [];
+        return ensureRel(state.current)[state.energy] || [];
+      }
+
+      function renderRelationTable(highlightKey) {
+        var body = $('relationBody');
+        if (!state.current) {
+          body.innerHTML = '<tr class="empty-row"><td colspan="4">请先选择左侧对象</td></tr>';
+          $('relationCount').textContent = '0 条';
+          return;
+        }
+        var members = currentMembers();
+        $('relationCount').textContent = members.length + ' 条';
+        if (!members.length) {
+          body.innerHTML = '<tr class="empty-row"><td colspan="4">暂无关系<br>从左侧拖入下级对象，或从右侧拖入表具</td></tr>';
+          return;
+        }
+        body.innerHTML = '';
+        members.forEach(function (m, idx) {
+          var tr = document.createElement('tr');
+          if (m.conflict) tr.className = 'conflict';
+          var rowKey = m.type === 'meter' ? ('meter:' + m.code) : ('object:' + m.id);
+          if (highlightKey && rowKey === highlightKey) tr.classList.add('row-flash');
+          var typeLabel = m.type === 'meter' ? '表具' : '下级对象';
+          var typeClass = m.type === 'meter' ? 'tag-meter' : 'tag-obj';
+          var isOut = m.direction === 'out';
+          var displayName = m.name;
+          if (m.type === 'object' && (!displayName || !String(displayName).trim()) && m.id && NODES[m.id]) {
+            displayName = shortName(NODES[m.id].name);
+            m.name = displayName;
+          }
+          if (m.type === 'meter' && (!displayName || !String(displayName).trim()) && m.code) {
+            var meterMeta0 = METERS.find(function (x) { return x.code === m.code; });
+            if (meterMeta0) {
+              displayName = meterMeta0.name;
+              m.name = displayName;
+              if (!m.meterKind) m.meterKind = meterMeta0.kind || 'device';
+              if (!m.parentName) m.parentName = meterMeta0.parentName || '';
+            }
+          }
+          var belongHint = '';
+          if (m.type === 'meter' && m.meterKind === 'component' && m.parentName) {
+            belongHint = '<div style="font-size:11px;color:var(--text-hint)">所属表具 · ' + m.parentName + '</div>';
+          } else if (m.type === 'meter' && m.parentName) {
+            belongHint = '<div style="font-size:11px;color:var(--text-hint)">所属 ' + m.parentName + '</div>';
+          } else if (m.type === 'object' && m.id && NODES[m.id]) {
+            belongHint = '<div style="font-size:11px;color:var(--text-hint)">' + (NODES[m.id].model || m.id) + '</div>';
+          }
+          tr.innerHTML =
+            '<td><span class="tag ' + typeClass + '">' + typeLabel + '</span></td>' +
+            '<td><div style="font-weight:600">' + (displayName || '（未命名）') + '</div>' +
+              belongHint +
+              (m.conflictReason ? '<div style="font-size:11px;color:var(--danger)">' + m.conflictReason + '</div>' : '') +
+            '</td>' +
+            '<td><div class="dir-switch" role="group" aria-label="计量方向">' +
+              '<button type="button" class="dir-in' + (!isOut ? ' active-in' : '') + '" data-dir="in">输入</button>' +
+              '<button type="button" class="dir-out' + (isOut ? ' active-out' : '') + '" data-dir="out">输出</button>' +
+            '</div></td>' +
+            '<td><button type="button" class="btn-del">删除</button></td>';
+          tr.querySelectorAll('.dir-switch button').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              var next = btn.getAttribute('data-dir');
+              if (m.direction === next) return;
+              m.direction = next;
+              state.dirty = true;
+              renderRelationTable();
+              renderMeters();
+              renderTrial();
+              refreshTree();
+              validateCurrent();
+            });
+          });
+          var delBtn = tr.querySelector('.btn-del');
+          if (delBtn) {
+            delBtn.addEventListener('click', function () {
+              var latest = currentMembers();
+              var at = latest.indexOf(m);
+              if (at < 0) {
+                at = latest.findIndex(function (x) {
+                  return m.type === 'meter'
+                    ? (x.type === 'meter' && x.code === m.code)
+                    : (x.type === 'object' && x.id === m.id);
+                });
+              }
+              if (at >= 0) latest.splice(at, 1);
+              state.dirty = true;
+              renderRelationTable();
+              renderMeters();
+              renderTrial();
+              refreshTree();
+              validateCurrent();
+              toast('已移除 1 条计量关系');
+            });
+          }
+          body.appendChild(tr);
+        });
+      }
+
+      function bindDrop() {
+        var zone = $('relationDropzone');
+        if (!zone) return;
+        ['dragenter', 'dragover'].forEach(function (ev) {
+          zone.addEventListener(ev, function (e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+            zone.classList.add('drag-over');
+          });
+        });
+        zone.addEventListener('dragleave', function (e) {
+          if (!zone.contains(e.relatedTarget)) zone.classList.remove('drag-over');
+        });
+        zone.addEventListener('drop', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          zone.classList.remove('drag-over');
+          if (!state.current) { toast('请先选择左侧对象'); return; }
+
+          // 优先读 dataTransfer；避免 dragend / 重绘抢先清空 state.drag
+          var payload = null;
+          try {
+            payload = JSON.parse(e.dataTransfer.getData('text/plain') || 'null');
+          } catch (err) {
+            payload = null;
+          }
+          if (!payload || !payload.kind) payload = state.drag;
+          // 拖拽源可能在 drop 同期被重绘销毁，先拷贝再清
+          var snapshot = payload ? {
+            kind: payload.kind,
+            id: payload.id,
+            code: payload.code,
+            name: payload.name,
+            energy: payload.energy,
+            meterKind: payload.meterKind,
+            parentName: payload.parentName
+          } : null;
+          state.drag = null;
+          if (!snapshot || !snapshot.kind) {
+            toast('未识别到拖入内容，请重试');
+            return;
+          }
+          // 等当前拖拽事件链（含 dragend）结束再改 DOM，避免多拖后行不刷新
+          setTimeout(function () { addMember(snapshot); }, 0);
+        });
+      }
+
+      function addMember(payload) {
+        var list = currentMembers();
+        var highlightKey = '';
+        if (payload.kind === 'object') {
+          if (payload.id === state.current) { toast('不能把对象拖到自己的拓扑里'); return; }
+          if (!isConfigured(payload.id, state.energy)) {
+            toast('仅已配置对象可拖入关系表'); return;
+          }
+          if (list.some(function (m) { return m.type === 'object' && m.id === payload.id; })) {
+            toast('该下级对象已在本能源关系中'); return;
+          }
+          var objNode = NODES[payload.id];
+          var objName = (payload.name && String(payload.name).trim())
+            || (objNode ? shortName(objNode.name) : payload.id);
+          list.push({ type: 'object', id: payload.id, name: objName, direction: 'in' });
+          highlightKey = 'object:' + payload.id;
+        } else if (payload.kind === 'meter') {
+          var meta = METERS.find(function (m) { return m.code === payload.code; }) || {};
+          var energy = payload.energy || meta.energy;
+          if (energy !== state.energy) { toast('表具能源类型与当前 Tab 不一致'); return; }
+          var usage = allMeterUsage();
+          if ((usage[payload.code + '|' + state.energy] || []).length) {
+            toast('该表具在当前能源下已被占用'); return;
+          }
+          if (list.some(function (m) { return m.type === 'meter' && m.code === payload.code; })) {
+            toast('该表具已在本对象关系中'); return;
+          }
+          list.push({
+            type: 'meter',
+            code: payload.code,
+            name: (payload.name && String(payload.name).trim()) || meta.name || payload.code,
+            direction: 'in',
+            meterKind: payload.meterKind || meta.kind || 'device',
+            parentName: payload.parentName || meta.parentName || ''
+          });
+          highlightKey = 'meter:' + payload.code;
+        } else {
+          toast('未识别到拖入内容，请重试');
+          return;
+        }
+        state.dirty = true;
+        renderRelationTable(highlightKey);
+        renderMeters();
+        renderTrial();
+        refreshTree();
+        validateCurrent();
+        toast('已添加 1 条计量关系');
+      }
+
+      /* ---------- 今日试算：递归叶子 ---------- */
+      function expandLeaves(objId, energy, coeff, path, bag, visiting) {
+        visiting = visiting || {};
+        if (visiting[objId]) return;
+        visiting[objId] = true;
+        var members = (relations[objId] || {})[energy] || [];
+        if (!members.length) return;
+        members.forEach(function (m) {
+          var nextCoeff = coeff * (m.direction === 'out' ? -1 : 1);
+          if (m.type === 'meter') {
+            var key = m.code;
+            if (!bag[key]) {
+              bag[key] = {
+                code: m.code,
+                name: m.name,
+                coeff: 0,
+                paths: []
+              };
+            }
+            bag[key].coeff += nextCoeff;
+            bag[key].paths.push(path.concat([m.name + '(' + (m.direction === 'out' ? '出' : '入') + ')']).join(' → '));
+          } else if (m.type === 'object') {
+            expandLeaves(m.id, energy, nextCoeff, path.concat([m.name]), bag, Object.assign({}, visiting));
+          }
+        });
+      }
+
+      function formatSigned(n, energy) {
+        if (n == null || isNaN(n)) return '—';
+        var digits = energy === '水' ? 1 : 0;
+        var abs = Math.abs(n).toLocaleString('zh-CN', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+        if (n > 0) return '+' + abs;
+        if (n < 0) return '−' + abs;
+        return abs;
+      }
+
+      function formatNum(n, energy) {
+        if (n == null || isNaN(n)) return '—';
+        var digits = energy === '水' ? 1 : 0;
+        return n.toLocaleString('zh-CN', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+      }
+
+      function renderTrial() {
+        var summary = $('trialSummary');
+        var body = $('trialBody');
+        var alertEl = $('trialAlert');
+        alertEl.hidden = true;
+        alertEl.className = 'trial-alert';
+        if (!state.current) {
+          summary.innerHTML =
+            '<div class="trial-kpi"><div class="label">叶子表具数</div><div class="value">—</div></div>' +
+            '<div class="trial-kpi"><div class="label">今日对象用量</div><div class="value">—</div></div>' +
+            '<div class="trial-kpi"><div class="label">试算提示</div><div class="value" style="font-size:14px">先选对象</div></div>';
+          body.innerHTML = '<tr class="empty-row"><td colspan="3">选中对象并配置关系后，这里展示递归展开的叶子表具</td></tr>';
+          return;
+        }
+        var bag = {};
+        expandLeaves(state.current, state.energy, 1, [shortName(NODES[state.current].name)], bag);
+        var leaves = Object.keys(bag).map(function (k) { return bag[k]; });
+        if (!leaves.length) {
+          summary.innerHTML =
+            '<div class="trial-kpi"><div class="label">叶子表具数</div><div class="value">0</div></div>' +
+            '<div class="trial-kpi"><div class="label">今日对象用量</div><div class="value">—</div></div>' +
+            '<div class="trial-kpi warn"><div class="label">试算提示</div><div class="value" style="font-size:14px">尚未挂到表具</div></div>';
+          body.innerHTML = '<tr class="empty-row"><td colspan="3">当前对象在本能源下尚未展开到任何叶子表具</td></tr>';
+          alertEl.hidden = false;
+          alertEl.className = 'trial-alert';
+          alertEl.textContent = '提示：直接成员若只有下级对象且下级也未配表具，今日试算为空。请继续下钻配置或直接挂表。';
+          return;
+        }
+
+        var total = 0;
+        leaves.forEach(function (leaf) {
+          var usage = TODAY_USAGE[leaf.code];
+          if (usage == null) usage = 0;
+          leaf.usage = usage;
+          leaf.contrib = usage * leaf.coeff;
+          total += leaf.contrib;
+        });
+        leaves.sort(function (a, b) { return Math.abs(b.contrib) - Math.abs(a.contrib); });
+
+        var tipClass = 'ok';
+        var tipText = '正常';
+        if (leaves.every(function (l) { return !l.usage; })) {
+          tipClass = 'warn'; tipText = '用量全 0';
+        } else if (total < 0 && Math.abs(total) > 100) {
+          tipClass = 'danger'; tipText = '结果偏负';
+        } else if (total === 0) {
+          tipClass = 'warn'; tipText = '结果为 0';
+        }
+
+        summary.innerHTML =
+          '<div class="trial-kpi"><div class="label">叶子表具数</div><div class="value">' + leaves.length + '</div></div>' +
+          '<div class="trial-kpi ' + tipClass + '"><div class="label">今日对象用量（' + UNIT[state.energy] + '）</div><div class="value">' + formatNum(total, state.energy) + '</div></div>' +
+          '<div class="trial-kpi ' + tipClass + '"><div class="label">试算提示</div><div class="value" style="font-size:14px">' + tipText + '</div></div>';
+
+        if (tipClass !== 'ok') {
+          alertEl.hidden = false;
+          alertEl.className = 'trial-alert' + (tipClass === 'danger' ? ' danger' : '');
+          alertEl.textContent = tipClass === 'danger'
+            ? '今日试算结果显著为负，请检查输出侧表具是否挂错、或输入侧是否缺失。'
+            : '今日试算结果异常（全 0 / 结果为 0），请核对表具是否有今日数据、拓扑是否配全。';
+        }
+
+        body.innerHTML = '';
+        leaves.forEach(function (leaf) {
+          var tr = document.createElement('tr');
+          var href = '能耗管理-表具明细.html?energy=' + encodeURIComponent(state.energy) +
+            '&meter=' + encodeURIComponent(leaf.code) +
+            '&q=' + encodeURIComponent(leaf.name);
+          tr.innerHTML =
+            '<td><div style="font-weight:600">' + leaf.name + '</div></td>' +
+            '<td class="num">' + formatSigned(leaf.contrib, state.energy) + '</td>' +
+            '<td><a class="btn-link" href="' + href + '">查看明细</a></td>';
+          body.appendChild(tr);
+        });
+      }
+
+      /* ---------- 图约束校验 ---------- */
+      function validateCurrent() {
+        if (!state.current) return false;
+        var members = currentMembers();
+        var usage = allMeterUsage();
+        var errors = 0;
+        members.forEach(function (m) {
+          m.conflict = false;
+          m.conflictReason = '';
+          if (m.type !== 'meter') return;
+          var key = m.code + '|' + state.energy;
+          var owners = usage[key] || [];
+          if (owners.length > 1) {
+            m.conflict = true;
+            m.conflictReason = '当前能源下表具已被多处占用';
+            errors++;
+          }
+        });
+        if (errors > 0)         renderRelationTable();
+        return errors === 0;
+      }
+
+      function switchEnergy(energy) {
+        state.energy = energy;
+        document.querySelectorAll('.energy-tab').forEach(function (tab) {
+          var on = tab.getAttribute('data-energy') === energy;
+          tab.classList.toggle('active', on);
+          tab.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+        state.meterPage = 1;
+        refreshTree();
+        renderMeters();
+        if (state.current) {
+          selectObject(state.current);
+        } else {
+          renderRelationTable();
+          $('btnTrial').disabled = true;
+          renderTrial();
+        }
+      }
+
+      /* ---------- 事件 ---------- */
+      document.querySelectorAll('.energy-tab').forEach(function (tab) {
+        tab.addEventListener('click', function () { switchEnergy(tab.getAttribute('data-energy')); });
+      });
+      $('viewSelect').addEventListener('change', function () {
+        state.view = this.value;
+        refreshTree();
+      });
+      $('treeSearch').addEventListener('input', filterTree);
+      $('meterSearch').addEventListener('input', function () {
+        state.meterPage = 1;
+        renderMeters();
+      });
+      $('meterOccupyFilter').addEventListener('change', function () {
+        state.meterPage = 1;
+        renderMeters();
+      });
+      $('meterPrevPage').addEventListener('click', function () {
+        if (state.meterPage <= 1) return;
+        state.meterPage -= 1;
+        renderMeters();
+      });
+      $('meterNextPage').addEventListener('click', function () {
+        state.meterPage += 1;
+        renderMeters();
+      });
+      $('btnTrial').addEventListener('click', function () {
+        if (!state.current) { toast('请先选择左侧对象'); return; }
+        renderTrial();
+        toast('已按当前拓扑重算今日用量');
+      });
+      $('btnExport').addEventListener('click', function () {
+        downloadGlobalConfiguration();
+      });
+      $('btnImport').addEventListener('click', function () {
+        $('importFileInput').value = '';
+        $('selectedFileName').textContent = '仅支持由页头「导出」下载的 xlsx 文件';
+        latestImportResult = null;
+        latestImportFileName = '';
+        $('btnExportErrors').hidden = true;
+        $('btnExportErrors').disabled = true;
+        $('btnImportSubmit').disabled = true;
+        $('btnImportSubmit').title = '请先上传并通过预校验';
+        showImportStep(1);
+        $('importModal').classList.add('show');
+      });
+      $('btnPickFile').addEventListener('click', function () {
+        $('importFileInput').click();
+      });
+      $('importFileInput').addEventListener('change', async function () {
+        if (!this.files || !this.files[0]) return;
+        var file = this.files[0];
+        latestImportFileName = file.name;
+        $('selectedFileName').textContent = file.name + '（预校验中…）';
+        $('btnPickFile').disabled = true;
+        try {
+          if (!/\.xlsx$/i.test(file.name)) throw new Error('仅支持 xlsx 文件');
+          var result = await validateImportFile(file);
+          latestImportResult = result;
+          $('selectedFileName').textContent = file.name;
+          renderImportValidation(result);
+          toast(result.valid ? '文件已上传，预校验通过' : '预校验失败，请按行号修正');
+        } catch (error) {
+          var message = error && error.message ? error.message : '文件无法解析';
+          $('selectedFileName').textContent = file.name;
+          latestImportResult = {
+            valid: false,
+            errors: [{ category: 'structure', message: message }],
+            checks: [{ name: '文件结构', category: 'structure', scope: '导入文件', success: '', errors: [{ message: message }], ok: false }],
+            relationCount: 0,
+            existingCount: buildRelationRows().length,
+            impact: { added: 0, changed: 0, removed: 0 }
+          };
+          renderImportValidation(latestImportResult);
+          toast('文件解析失败：' + message);
+        } finally {
+          $('btnPickFile').disabled = false;
+        }
+      });
+      $('btnExportErrors').addEventListener('click', function () {
+        if (this.disabled || !latestImportResult || !latestImportResult.workbookData) return;
+        this.disabled = true;
+        try {
+          var bytes = buildErrorWorkbook(latestImportResult.workbookData, latestImportResult.errors);
+          var baseName = (latestImportFileName || '能源计量关系全量配置').replace(/\.xlsx$/i, '');
+          downloadWorkbookBytes(bytes, baseName + '_错误明细.xlsx');
+          toast('已导出带问题原因的错误文件');
+        } catch (error) {
+          toast('错误文件导出失败：' + (error && error.message ? error.message : '未知原因'));
+        } finally {
+          this.disabled = false;
+        }
+      });
+      $('btnImportSubmit').addEventListener('click', function () {
+        if (this.disabled) return;
+        $('importModal').classList.remove('show');
+        toast('已按导入清单全量覆盖计量关系（原型）');
+      });
+      document.querySelectorAll('[data-close]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          $(btn.getAttribute('data-close')).classList.remove('show');
+        });
+      });
+
+      bindDrop();
+      switchEnergy('电');
+      selectObject('s493');
+    })();
+  </script>
+  <script src="components/nav.js" data-active-nav="工程配置" data-active-sidebar="能源计量关系"></script>
+  <script>
+    (function () {
+      var toggle = document.getElementById('annoToggle');
+      if (toggle) {
+        toggle.addEventListener('click', function () {
+          document.body.classList.toggle('annotation-mode');
+          toggle.textContent = document.body.classList.contains('annotation-mode') ? '退出批注' : '批注';
+          initAnnoVersionFilter();
+        });
+      }
+      function initAnnoVersionFilter() {
+        var bar = document.getElementById('annoFilterBar');
+        var tags = document.getElementById('annoFilterTags');
+        if (!bar || !tags) return;
+        if (!document.body.classList.contains('annotation-mode')) return;
+        var versions = [];
+        document.querySelectorAll('.anno[data-version]').forEach(function (a) {
+          var v = a.getAttribute('data-version');
+          if (v && versions.indexOf(v) === -1) versions.push(v);
+        });
+        tags.innerHTML = '';
+        versions.forEach(function (v, i) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'anno-filter-tag' + (i === 0 ? ' active' : '');
+          btn.textContent = v;
+          btn.addEventListener('click', function () {
+            tags.querySelectorAll('.anno-filter-tag').forEach(function (t) { t.classList.remove('active'); });
+            btn.classList.add('active');
+            document.querySelectorAll('.anno[data-version]').forEach(function (a) {
+              a.style.display = a.getAttribute('data-version') === v ? '' : 'none';
+            });
+          });
+          tags.appendChild(btn);
+        });
+        if (versions[0]) {
+          document.querySelectorAll('.anno[data-version]').forEach(function (a) {
+            a.style.display = a.getAttribute('data-version') === versions[0] ? '' : 'none';
+          });
+        }
+      }
+    })();
+  </script>
+</body>
+</html>

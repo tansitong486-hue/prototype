@@ -13,7 +13,23 @@
 
   const NAV_ITEMS = ['设施监控', 'AI智能能效', '系统管理', '数据分析', '工程配置'];
 
-  const SIDEBAR_TREE = [
+  /** 顶栏一级菜单默认落地页（「工程配置」走下拉，不直跳） */
+  const NAV_DEFAULT_HREF = {
+    'AI智能能效': '总览看板.html'
+  };
+
+  /**
+   * 顶栏「工程配置」下拉（两项直达）：
+   * - 能效视图 → 整页无左侧菜单
+   * - 能源配置 → 默认能源计费配置，左侧仅 3 子菜单
+   */
+  const PROJECT_CONFIG_DROPDOWN = [
+    { label: '能效视图', linkKey: '能效视图' },
+    { label: '能源配置', linkKey: '能源配置' }
+  ];
+
+  /** AI智能能效侧栏（配置类入口已迁至工程配置） */
+  const SIDEBAR_TREE_AI = [
     { label: '原型导航', href: 'index.html' },
     { label: '总览看板' },
     {
@@ -49,11 +65,6 @@
       children: ['节能分析']
     },
     {
-      group: '基础配置',
-      open: true,
-      children: ['能效视图', '能源计费配置', '表具能耗明细']
-    },
-    {
       group: 'AI节能配置',
       open: true,
       children: [
@@ -68,12 +79,23 @@
     }
   ];
 
+  /** 能源配置模块：左侧仅 3 个子菜单 */
+  const SIDEBAR_TREE_ENERGY = [
+    { label: '能源计费配置' },
+    { label: '能源计量关系' },
+    { label: '表具能耗明细' }
+  ];
+
+  const ENERGY_SIDEBAR_KEYS = ['能源配置', '能源计费配置', '能源计量关系', '表具能耗明细'];
+
   const SIDEBAR_LINKS = {
     '总览看板': '总览看板.html',
     '能耗流向分析': '能耗流向分析.html',
     '用能对比分析': '用能对比分析.html',
     '能效视图': '能效视图.html',
+    '能源配置': '能源配置.html',
     '能源计费配置': '能源配置.html',
+    '能源计量关系': '能源计量关系.html',
     '机理模型训练': '机理模型训练.html',
     '系统仿真建模': '系统仿真建模.html',
     '机房总览': '机房总览.html',
@@ -104,6 +126,7 @@
     '用能定额考核': 'v2.5',
     '能效视图': 'v2.5',
     '能源计费配置': 'v2.5',
+    '能源计量关系': 'v2.5',
     '机理模型训练': 'v2.3',
     '系统仿真建模': 'v2.3',
     '机房总览': 'v1.9',
@@ -140,7 +163,7 @@
     '冷站能效优化': ICON_COOL,
     '节能效果评估': ICON_LEAF,
     'AI节能配置': ICON_GEAR,
-    '基础配置': ICON_SLIDERS
+    '能源配置': ICON_SLIDERS
   };
 
   const USER = { name: '系统管理员', avatar: '管' };
@@ -154,6 +177,22 @@
   }
 
   const config = getConfig();
+
+  /** ai | energy | none（能效视图整页无侧栏） */
+  function getSidebarMode() {
+    if (config.activeNav !== '工程配置') return 'ai';
+    if (config.activeSidebar === '能效视图') return 'none';
+    if (ENERGY_SIDEBAR_KEYS.indexOf(config.activeSidebar) >= 0) return 'energy';
+    return 'energy';
+  }
+
+  function getSidebarTree() {
+    return getSidebarMode() === 'energy' ? SIDEBAR_TREE_ENERGY : SIDEBAR_TREE_AI;
+  }
+
+  function getSidebarBrandText() {
+    return getSidebarMode() === 'energy' ? '能源配置' : 'AI智能能效';
+  }
 
   function resolveSidebarChild(child) {
     if (child && typeof child === 'object') {
@@ -195,7 +234,9 @@
         padding: 0 12px 0 18px;
         color: #fff;
         flex-shrink: 0;
-        z-index: 100;
+        z-index: 10000;
+        position: relative;
+        overflow: visible;
         box-shadow: 0 1px 0 rgba(13,77,170,.22);
       }
       .header-logo {
@@ -216,18 +257,8 @@
         flex: 1;
         min-width: 0;
         height: 100%;
-        overflow-x: auto;
-        overflow-y: hidden;
+        overflow: visible;
         flex-wrap: nowrap;
-        scrollbar-width: thin;
-        scrollbar-color: rgba(255,255,255,.25) transparent;
-      }
-      .header-nav::-webkit-scrollbar {
-        height: 4px;
-      }
-      .header-nav::-webkit-scrollbar-thumb {
-        background: rgba(255,255,255,.22);
-        border-radius: 2px;
       }
       .header-nav-item {
         padding: 0 18px;
@@ -241,22 +272,77 @@
         position: relative;
         margin: 0 1px;
         border-radius: 0;
+        text-decoration: none;
+      }
+      a.header-nav-item,
+      a.header-nav-item:visited {
+        color: rgba(255,255,255,.88);
+        text-decoration: none;
       }
       .header-nav-item:hover {
         color: #fff;
         background: var(--nav-top-hover);
       }
+      a.header-nav-item:hover { color: #fff; }
       .header-nav-item.active {
-        color: var(--nav-primary);
+        color: var(--nav-primary) !important;
         font-weight: 600;
         background: var(--nav-body-bg);
       }
-      .header-nav-item.active::before {
-        display: none;
-      }
+      .header-nav-item.active::before { display: none; }
       .header-nav-item.active:hover {
         background: var(--nav-body-bg);
+        color: var(--nav-primary) !important;
       }
+      .header-nav-item.header-nav-item--dd-current {
+        color: #fff;
+        font-weight: 600;
+        background: rgba(255,255,255,.14);
+      }
+      .header-nav-item.header-nav-item--dd-current:hover {
+        background: rgba(255,255,255,.18);
+        color: #fff;
+      }
+
+      .header-nav-dropdown {
+        position: relative;
+        display: flex;
+        align-items: stretch;
+        height: 100%;
+      }
+      .header-nav-dd-panel {
+        display: none;
+        position: fixed;
+        min-width: 200px;
+        padding: 8px 0 6px;
+        background: #1f1f1f;
+        border-radius: 0 0 4px 4px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        z-index: 10050;
+      }
+      .header-nav-dd-panel::before {
+        content: '';
+        position: absolute;
+        left: 0; right: 0; top: -10px; height: 10px;
+      }
+      .header-nav-dd-panel.is-open { display: block; }
+      .header-nav-dd-link {
+        display: flex;
+        align-items: center;
+        padding: 9px 16px;
+        font-size: 13px;
+        color: rgba(255,255,255,.88);
+        text-decoration: none;
+        white-space: nowrap;
+        cursor: pointer;
+        line-height: 1.4;
+        background: transparent;
+      }
+      .header-nav-dd-link:hover {
+        background: rgba(255,255,255,.08);
+        color: #fff;
+      }
+      .header-nav-dd-link.active { color: #69b1ff; }
 
       .header-tools {
         margin-left: auto;
@@ -651,6 +737,105 @@
     document.head.appendChild(style);
   }
 
+  function isProjectConfigMenuActive(linkKey) {
+    if (linkKey === '能源配置') {
+      return ENERGY_SIDEBAR_KEYS.indexOf(config.activeSidebar) >= 0;
+    }
+    return linkKey === config.activeSidebar;
+  }
+
+  function buildProjectConfigDropdown() {
+    const wrap = document.createElement('div');
+    wrap.className = 'header-nav-dropdown';
+
+    const trigger = document.createElement('div');
+    trigger.className =
+      'header-nav-item' +
+      (config.activeNav === '工程配置' ? ' header-nav-item--dd-current' : '');
+    trigger.textContent = '工程配置';
+    trigger.setAttribute('role', 'button');
+    trigger.setAttribute('aria-haspopup', 'true');
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.tabIndex = 0;
+
+    const panel = document.createElement('div');
+    panel.className = 'header-nav-dd-panel';
+    panel.setAttribute('role', 'menu');
+
+    PROJECT_CONFIG_DROPDOWN.forEach(function (entry) {
+      const linkKey = entry.linkKey || entry.label;
+      const href = SIDEBAR_LINKS[linkKey];
+      const link = document.createElement(href ? 'a' : 'div');
+      if (href) link.href = href;
+      link.className =
+        'header-nav-dd-link' +
+        (isProjectConfigMenuActive(linkKey) ? ' active' : '');
+      link.textContent = entry.label;
+      link.setAttribute('role', 'menuitem');
+      panel.appendChild(link);
+    });
+
+    document.body.appendChild(panel);
+
+    var closeTimer = null;
+    function positionPanel() {
+      const r = trigger.getBoundingClientRect();
+      panel.style.left = Math.round(r.left) + 'px';
+      panel.style.top = Math.round(r.bottom) + 'px';
+    }
+    function clearCloseTimer() {
+      if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
+    }
+    function setOpen(open) {
+      clearCloseTimer();
+      wrap.classList.toggle('open', open);
+      panel.classList.toggle('is-open', open);
+      trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) positionPanel();
+    }
+    function scheduleClose() {
+      clearCloseTimer();
+      closeTimer = setTimeout(function () { setOpen(false); }, 180);
+    }
+
+    trigger.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      setOpen(!panel.classList.contains('is-open'));
+    });
+    trigger.addEventListener('mouseenter', function () {
+      clearCloseTimer();
+      positionPanel();
+      setOpen(true);
+    });
+    wrap.addEventListener('mouseleave', function (e) {
+      const to = e.relatedTarget;
+      if (to && (wrap.contains(to) || panel.contains(to))) return;
+      scheduleClose();
+    });
+    panel.addEventListener('mouseleave', function (e) {
+      const to = e.relatedTarget;
+      if (to && (wrap.contains(to) || panel.contains(to))) return;
+      scheduleClose();
+    });
+    panel.addEventListener('mouseenter', function () {
+      clearCloseTimer();
+      setOpen(true);
+    });
+    document.addEventListener('click', function (e) {
+      if (!wrap.contains(e.target) && !panel.contains(e.target)) setOpen(false);
+    });
+    window.addEventListener('resize', function () {
+      if (panel.classList.contains('is-open')) positionPanel();
+    }, { passive: true });
+    window.addEventListener('scroll', function () {
+      if (panel.classList.contains('is-open')) positionPanel();
+    }, true);
+
+    wrap.appendChild(trigger);
+    return wrap;
+  }
+
   function buildHeader() {
     const header = document.createElement('header');
     header.className = 'header';
@@ -662,7 +847,13 @@
     const nav = document.createElement('nav');
     nav.className = 'header-nav';
     NAV_ITEMS.forEach(function (text) {
-      const item = document.createElement('div');
+      if (text === '工程配置') {
+        nav.appendChild(buildProjectConfigDropdown());
+        return;
+      }
+      const href = NAV_DEFAULT_HREF[text];
+      const item = document.createElement(href ? 'a' : 'div');
+      if (href) item.href = href;
       item.className = 'header-nav-item' + (text === config.activeNav ? ' active' : '');
       item.textContent = text;
       nav.appendChild(item);
@@ -775,16 +966,19 @@
 
     const brand = document.createElement('div');
     brand.className = 'sidebar-brand';
+    const brandText = getSidebarBrandText();
     brand.innerHTML =
-      '<span class="sidebar-brand-mark" aria-hidden="true">AI</span>' +
-      '<span class="sidebar-brand-text">AI智能能效</span>';
-    brand.setAttribute('data-nav-tip', 'AI智能能效');
+      '<span class="sidebar-brand-mark" aria-hidden="true">' +
+      (getSidebarMode() === 'energy' ? '能' : 'AI') +
+      '</span>' +
+      '<span class="sidebar-brand-text">' + brandText + '</span>';
+    brand.setAttribute('data-nav-tip', brandText);
     aside.appendChild(brand);
 
     const scroll = document.createElement('div');
     scroll.className = 'sidebar-scroll';
 
-    SIDEBAR_TREE.forEach(function (node) {
+    getSidebarTree().forEach(function (node) {
       if (node.group) {
         const groupLabel = document.createElement('div');
         groupLabel.className = 'sidebar-group-label' + (node.open ? ' open' : '');
@@ -827,6 +1021,9 @@
         item.className = 'sidebar-item' + (node.label === config.activeSidebar ? ' active' : '');
         let icon = ICON_DASH;
         if (node.label === '总览看板') icon = ICON_GRID;
+        if (node.label === '能源计费配置' || node.label === '能源计量关系' || node.label === '表具能耗明细') {
+          icon = ICON_SLIDERS;
+        }
         item.innerHTML = icon + sidebarItemRowHtml(node.label);
         item.setAttribute('data-nav-tip', node.label);
         if (href) item.setAttribute('aria-label', node.label);
@@ -869,12 +1066,18 @@
 
     var headerSlot = document.getElementById('app-header');
     var sidebarSlot = document.getElementById('app-sidebar');
+    var mode = getSidebarMode();
 
     if (headerSlot) {
       headerSlot.replaceWith(buildHeader());
     }
     if (sidebarSlot) {
-      sidebarSlot.replaceWith(buildSidebar());
+      if (mode === 'none') {
+        sidebarSlot.remove();
+        document.documentElement.classList.add('nav-no-sidebar');
+      } else {
+        sidebarSlot.replaceWith(buildSidebar());
+      }
     }
     loadSharedIntegrityAlert();
   }

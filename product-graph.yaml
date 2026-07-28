@@ -1,7 +1,7 @@
 # AI 节能 — 产品关系图（机读）
 # 人读入口：AGENT-MAP.md（本目录）+ 07-产品文档/01-ai 节能/产品文档/00-产品全貌.md
 # 维护：改 nav.js / index 拓扑 / 主流程时同步本文件
-# 更新：2026-07-23
+# 更新：2026-07-24
 
 meta:
   product: ai-energy
@@ -214,6 +214,7 @@ pages:
     domain: asset_model
     version: v2.5
     role: entry
+    notes: 节点详情新增指标列表；实时指标平铺当前值，时间段指标仅按起止时间查询；计算口径可打开只读计算结果预览，追踪对象指标属性、表具核算明细、瞬时量测点 ID、计费快照和异常节点
   - id: page.create_collection
     file: 创建集合-能耗模型.html
     nav_label: null
@@ -256,6 +257,14 @@ pages:
     domain: energy_metering
     version: v2.5
     role: subflow
+  - id: page.metering_scheme_admin
+    file: 能源计量关系.html
+    nav_label: 能源计量关系
+    nav_group: 基础配置
+    domain: energy_metering
+    version: v2.5
+    role: entry
+    notes: 全局导入采用全量覆盖；先导出当前拓扑，再编辑 Sheet1 关系清单并上传预校验。工作簿固定含关系清单、能效/空间/容量视图对象、能源表具清单 5 个 Sheet；对象 Sheet 仅导出 0_565 这类业务实例 ID；能源表具清单为能源类型、表具实例 ID、表具名称、组件名称（仅组件型）、累计量测点 ID 五列；Sheet1 第 1 行为写入规则、第 2 行为八列表头、第 3 行起填写关系，计量对象实例 ID、能源类型、成员类型、成员实例 ID、计量方向始终必填，组件关系按所属表具实例 ID + 组件名称校验；预校验失败可在原上传文件的问题 Sheet 末列追加逐行问题原因并导出；未在 Sheet1 保留的现有关系视为删除
   - id: page.meter_detail
     file: 能耗管理-表具明细.html
     nav_label: 表具能耗明细
@@ -448,7 +457,7 @@ flows:
 
   - id: flow.energy_config_to_consume
     name: 能耗配置到消费分析
-    purpose: 计量拓扑与表具明细配置完成后，供总览/流向/对比/定额/节能分析 on-read 消费；区分实施期自检与运行期 VEE
+    purpose: 计量拓扑（含输入/输出方向，配置入口为《能源计量关系》独立页）与表具明细配置完成后，对象指标经指标工厂物化（ClickHouse），供总览/流向/对比/定额/节能分析统一消费；区分实施期自检与运行期 VEE
     steps:
       - page_id: page.efficiency_view
       - page_id: page.create_collection
@@ -456,6 +465,7 @@ flows:
       - page_id: page.energy_edit
       - page_id: page.billing_plan
       - page_id: page.billing_plan_edit
+      - page_id: page.metering_scheme_admin
       - page_id: page.meter_detail
       - page_id: page.data_quality_check
       - page_id: page.overview_dashboard
@@ -471,6 +481,7 @@ flows:
       - domain:overview
       - page.efficiency_view
       - page.energy_config
+      - page.metering_scheme_admin
       - page.meter_detail
       - page.data_quality_check
       - page.overview_dashboard
@@ -548,9 +559,10 @@ requirements:
     version: v2.5
     status: 规划中
     domain: energy_metering
-    prd_path: 04-需求文档/AI节能v2.5 版本/基于计费的能耗明细系统需求方案与架构.md
+    prd_path: 04-需求文档/AI节能v2.5 版本/基于计费的能耗明细系统需求方案与架构.html
     prototype_pages:
       - 能耗管理-表具明细.html
+      - 能源计量关系.html
       - 能源配置.html
       - 计费方案配置.html
       - 新增-编辑能源.html
@@ -560,7 +572,7 @@ requirements:
     upstream: [req.v21.data_quality_selfcheck]
     downstream: [req.v25.energy_consume]
     algo_vs_ui: mixed
-    notes: 需求1–6明细引擎；表具归档+VEE+计量拓扑+on-read；自检页仅跳转/分工说明
+    notes: 需求1–6明细引擎；能源类型拆分累计量/实时值单位并成对配置累积量/瞬时量测点；表具归档+VEE+能源计量关系独立页（全局能源Tab+多视图树+关系表拖拽+今日叶子试算，输入/输出计量方向 Σ输入−Σ输出，查重键表具+能源类型；全局Excel按导出当前拓扑→编辑Sheet1→上传预校验→确认全量覆盖，固定5个Sheet；对象Sheet使用业务实例ID，Sheet5含组件名称（仅组件型）和累计量测点ID；Sheet1第1行为写入规则、第2行为八列表头、第3行起填写关系并校验五个基础必填字段，组件关系按所属表具实例ID+组件名称校验；失败时在原上传文件追加逐行问题原因并导出；保存时图约束校验）+对象指标工厂物化(ClickHouse)；自检页仅跳转/分工说明；本期不做配置健康度总览页
 
   - id: req.v25.energy_consume
     version: v2.5
@@ -576,7 +588,7 @@ requirements:
     upstream: [req.v25.energy_metering]
     downstream: []
     algo_vs_ui: ui
-    notes: 存量四页切对象聚合接口；总览含明细/导出，不另开统计分析页
+    notes: 存量四页切指标工厂取数（历史读ClickHouse物化分片）；总览含明细/导出，不另开统计分析页
 
   - id: req.v24.multi_condition
     version: v2.4
@@ -678,7 +690,7 @@ requirements:
     upstream: [req.v26.room_opt_device_capability]
     downstream: []
     algo_vs_ui: mixed
-    notes: 结论条（主标签+详细文案）+设备原因文案；以v2.6统一L3结果和实际决策轨迹为事实源，不改变zi/V1*/V2*；加减机不做候选排名伪因果，P_reference不作节能量；柔性覆盖common-mode/差异化/保障/紧急/凝露恢复及V2-only动作；执行结果复用寻优记录、下发策略和设备级下发记录，不在L3新增建议生命周期；3个UI落点
+    notes: 结论条（主标签+详细文案）+设备原因文案；以v2.6统一L3结果和实际计算轨迹为事实源，不改变zi/V1*/V2*；解释对象只描述本轮建议，实际下发与回读仍由L4既有记录承载；加减机不做候选排名伪因果，P_reference不作节能量；柔性直接消费mode解释保障锁定与退出确认，覆盖目标带带上省电/带内保持/带下预防性增冷、热点增冷与热点在途保持、紧急、凝露恢复及V2-only建议；3个UI落点
 
   - id: req.v26.room_opt_device_capability
     version: v2.6
@@ -723,6 +735,9 @@ edges:
   - from: page.meter_detail
     to: page.overview_dashboard
     rel: produces
+  - from: page.metering_scheme_admin
+    to: domain.energy_metering
+    rel: binds
   - from: page.efficiency_view
     to: domain.energy_metering
     rel: binds

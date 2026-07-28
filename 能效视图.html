@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>能耗模型管理</title>
+  <title>能效视图</title>
   <style>
     :root {
       --primary: #1E40AF;
@@ -525,6 +525,96 @@
     .action-link:hover { text-decoration: underline; }
     .action-link.danger { color: var(--danger); }
 
+    /* 指标列表 */
+    .metric-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .metric-mode {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #fff;
+    }
+    .metric-mode button {
+      height: 34px;
+      padding: 0 15px;
+      color: var(--text-secondary);
+      border-right: 1px solid var(--border);
+      font-size: 12px;
+    }
+    .metric-mode button:last-child { border-right: 0; }
+    .metric-mode button.active {
+      color: var(--primary);
+      background: var(--primary-tint);
+      font-weight: 600;
+    }
+    .metric-range {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .metric-range input {
+      width: 130px;
+      height: 34px;
+      padding: 0 9px;
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      font: inherit;
+      font-size: 12px;
+    }
+    .metric-table-wrap {
+      flex: 1;
+      min-height: 260px;
+      overflow: auto;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      background: #fff;
+    }
+    .metric-table { min-width: 940px; }
+    .metric-name-cell { font-weight: 600; white-space: nowrap; }
+    .metric-value {
+      font-size: 15px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .metric-value.pending { color: var(--text-hint); font-size: 13px; }
+    .metric-expression {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      max-width: 100%;
+      min-height: 28px;
+      padding: 4px 9px;
+      color: #15803D;
+      border: 1px solid #86EFAC;
+      border-radius: 5px;
+      background: #F0FDF4;
+      font-size: 12px;
+      text-align: left;
+      line-height: 1.45;
+    }
+    .metric-expression:hover { border-color: #22C55E; background: #DCFCE7; }
+    .metric-expression::before {
+      content: '▦';
+      flex-shrink: 0;
+      font-size: 13px;
+    }
+    .metric-expression span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     /* 分页条 */
     .pager-bar {
       display: flex;
@@ -835,137 +925,193 @@
       border-top: 1px solid var(--border-light);
     }
 
-    .metering-table { min-width: 0; }
-    .metering-table td { vertical-align: middle; }
-    .metering-rule-cell { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .metering-rule-cell .toolbar-select { min-width: 168px; }
-    .metering-pick-btn { height: 32px; padding: 0 12px; font-weight: 500; }
-
-    /* 子节点多选（各子节点计量能耗） */
-    .child-select { position: relative; display: inline-block; }
-    .child-select-btn {
-      height: 32px;
-      min-width: 168px;
-      padding: 0 28px 0 10px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      font-size: 13px;
+    /* 指标计算结果预览：结构对齐现有 KE 表达式结果预览，保持只读 */
+    .calc-modal { width: 1120px; max-height: 92vh; }
+    .calc-modal .modal-head { padding: 14px 20px; }
+    .calc-modal-title { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+    .calc-modal-subtitle {
+      max-width: 440px;
+      overflow: hidden;
       color: var(--text-hint);
-      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center;
-      text-align: left;
-      cursor: pointer;
-    }
-    .child-select-btn.has-value { color: var(--text-primary); }
-    .child-pop {
-      position: absolute;
-      top: calc(100% + 4px);
-      left: 0;
-      z-index: 320;
-      min-width: 240px;
-      max-height: 220px;
-      overflow-y: auto;
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-card);
-      padding: 6px;
-    }
-    .child-pop[hidden] { display: none; }
-    .child-pop label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 7px 8px;
-      border-radius: 6px;
       font-size: 13px;
-      cursor: pointer;
+      font-weight: 400;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
-    .child-pop label:hover { background: #F5F8FD; }
-    .child-pop input[type="checkbox"] { accent-color: var(--primary); }
-    .child-pop .child-pop-empty { padding: 16px 0; text-align: center; color: var(--text-hint); font-size: 12px; }
-
-    /* 启用开关 */
-    .switch {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      width: 56px;
-      height: 24px;
-      border-radius: 999px;
-      background: #CBD5E1;
-      cursor: pointer;
-      transition: background var(--transition);
-    }
-    .switch::after {
-      content: '';
-      position: absolute;
-      left: 3px;
-      top: 3px;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: #fff;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.25);
-      transition: left var(--transition);
-    }
-    .switch .switch-text {
-      position: absolute;
-      right: 8px;
-      font-size: 11px;
-      color: #fff;
-      font-weight: 600;
-      user-select: none;
-    }
-    .switch.on { background: var(--primary); }
-    .switch.on::after { left: 35px; }
-    .switch.on .switch-text { right: auto; left: 8px; }
-
-    /* 选择应用范围 */
-    .scope-split { display: flex; gap: 16px; min-height: 340px; }
-    .scope-left { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-    .scope-right {
-      width: 230px;
-      flex-shrink: 0;
-      border-left: 1px solid var(--border-light);
-      padding-left: 16px;
-      display: flex;
-      flex-direction: column;
-    }
-    .scope-toolbar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-    .scope-toolbar .toolbar-search { width: 170px; }
-    .scope-table-wrap {
-      flex: 1;
-      min-height: 220px;
-      overflow: auto;
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius);
-    }
-    .scope-table { min-width: 0; }
-    .scope-table tr.disabled td { color: var(--text-hint); background: #FAFBFC; }
-    .scope-table tr.disabled .scope-occupied { font-size: 11px; color: var(--text-hint); }
-    .scope-right-head {
+    .calc-head-actions { display: flex; align-items: center; gap: 8px; }
+    .calc-modal .modal-body { padding: 14px 20px 18px; }
+    .calc-section-head {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 13px;
+      gap: 12px;
       margin-bottom: 10px;
+      flex-wrap: wrap;
     }
-    .scope-right-head strong { font-weight: 600; }
-    .scope-chips { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-    .scope-chip {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      padding: 7px 10px;
-      border: 1px solid var(--border-light);
-      border-radius: 6px;
-      background: #FAFBFD;
+    .calc-section-title { font-size: 14px; font-weight: 700; }
+    .calc-view-actions { display: flex; align-items: center; gap: 10px; }
+    .calc-seg {
+      display: inline-flex;
+      border: 1px solid #86EFAC;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .calc-seg button {
+      height: 28px;
+      padding: 0 12px;
+      color: #15803D;
+      border-right: 1px solid #86EFAC;
       font-size: 12px;
     }
-    .scope-chip button { color: var(--text-hint); font-size: 14px; line-height: 1; }
-    .scope-chip button:hover { color: var(--danger); }
-    .scope-chips-empty { color: var(--text-hint); font-size: 12px; text-align: center; padding: 24px 0; }
+    .calc-seg button:last-child { border-right: 0; }
+    .calc-seg button.active { color: #fff; background: #22C55E; }
+    .calc-frame {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #fff;
+    }
+    .calc-tools {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border-light);
+      flex-wrap: wrap;
+    }
+    .calc-counts, .calc-filters { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .calc-count {
+      display: inline-flex;
+      align-items: center;
+      height: 24px;
+      padding: 0 9px;
+      border-radius: 999px;
+      color: var(--text-secondary);
+      background: #F8FAFC;
+      border: 1px solid var(--border-light);
+      font-size: 11px;
+    }
+    .calc-count.ok { color: #15803D; background: #F0FDF4; border-color: #BBF7D0; }
+    .calc-count.bad { color: var(--danger); background: #FEF2F2; border-color: #FECACA; }
+    .calc-search {
+      width: 240px;
+      height: 30px;
+      padding: 0 9px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font: inherit;
+      font-size: 12px;
+    }
+    .calc-check { display: inline-flex; align-items: center; gap: 5px; color: var(--text-secondary); font-size: 12px; white-space: nowrap; }
+    .calc-check input { accent-color: #22C55E; }
+    .calc-id-toggle {
+      height: 28px;
+      padding: 0 9px;
+      color: #15803D;
+      border: 1px solid #86EFAC;
+      border-radius: 5px;
+      background: #F0FDF4;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .calc-id-toggle.off { color: var(--text-secondary); border-color: var(--border); background: #fff; }
+    .calc-workbench {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 270px;
+      min-height: 330px;
+    }
+    .calc-canvas {
+      position: relative;
+      min-width: 0;
+      overflow: auto;
+      padding: 28px 24px 36px;
+      background: #FCFDFE;
+      border-right: 1px solid var(--border-light);
+    }
+    .calc-graph {
+      display: grid;
+      grid-template-columns: minmax(190px, 1fr) 48px minmax(190px, 1fr) 48px minmax(190px, 1fr);
+      align-items: center;
+      min-width: 720px;
+      min-height: 240px;
+    }
+    .calc-column { display: grid; align-content: center; gap: 12px; }
+    .calc-connector { position: relative; height: 100%; min-height: 72px; }
+    .calc-connector::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      border-top: 1px solid #BFDBFE;
+    }
+    .calc-connector::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: calc(50% - 4px);
+      width: 7px;
+      height: 7px;
+      border-top: 1px solid #60A5FA;
+      border-right: 1px solid #60A5FA;
+      transform: rotate(45deg);
+    }
+    .calc-node {
+      display: grid;
+      gap: 5px;
+      min-height: 70px;
+      padding: 10px 11px;
+      text-align: left;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fff;
+      box-shadow: var(--shadow-sm);
+    }
+    .calc-node:hover, .calc-node.selected { border-color: #22C55E; box-shadow: 0 0 0 2px rgba(34, 197, 94, .10); }
+    .calc-node.error { border-color: #FCA5A5; }
+    .calc-node-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .calc-node-name { overflow: hidden; font-size: 12px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+    .calc-node-status { width: 7px; height: 7px; border-radius: 50%; background: #22C55E; flex-shrink: 0; }
+    .calc-node.error .calc-node-status { background: var(--danger); }
+    .calc-node-ref { overflow: hidden; color: var(--text-hint); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+    .calc-node-value { justify-self: end; padding: 2px 6px; color: var(--text-primary); background: #F1F5F9; border-radius: 4px; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .calc-inspector { min-width: 0; padding: 14px 12px; overflow: auto; }
+    .calc-inspector-kind { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; color: var(--text-secondary); font-size: 11px; }
+    .calc-kind-badge { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 4px; color: #15803D; background: #DCFCE7; font-weight: 700; }
+    .calc-inspector-name { margin-bottom: 5px; font-size: 13px; font-weight: 700; line-height: 1.45; }
+    .calc-inspector-ref { color: var(--text-hint); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; line-height: 1.55; overflow-wrap: anywhere; }
+    .calc-inspector-result { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; padding: 10px; border-radius: 6px; background: #F8FAFC; }
+    .calc-inspector-result span { display: grid; gap: 3px; color: var(--text-hint); font-size: 10px; }
+    .calc-inspector-result strong { color: var(--text-primary); font-size: 15px; font-variant-numeric: tabular-nums; }
+    .calc-inspector-row { padding: 9px 0; border-top: 1px solid var(--border-light); color: var(--text-secondary); font-size: 11px; line-height: 1.55; }
+    .calc-child-list { display: grid; gap: 0; margin-top: 8px; }
+    .calc-child-item { display: flex; justify-content: space-between; gap: 8px; padding: 7px 0; border-top: 1px solid var(--border-light); color: var(--text-secondary); font-size: 11px; }
+    .calc-child-item span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .calc-table-wrap { overflow: auto; min-height: 330px; }
+    .calc-table { min-width: 760px; }
+    .calc-status-ok { color: #15803D; }
+    .calc-status-error { color: var(--danger); }
+    .calc-result-block { margin-top: 16px; }
+    .calc-result-expression {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 5px 10px;
+      color: #15803D;
+      border: 1px solid #86EFAC;
+      border-radius: 5px;
+      background: #F0FDF4;
+      font-size: 12px;
+    }
+    .calc-result-steps { display: grid; gap: 5px; margin-top: 8px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 1.55; }
+    .calc-result-error { color: var(--danger); }
+
+    @media (max-width: 900px) {
+      .calc-workbench { grid-template-columns: 1fr; }
+      .calc-canvas { border-right: 0; border-bottom: 1px solid var(--border-light); }
+      .calc-inspector { max-height: 250px; }
+    }
 
     /* 用能定额考核弹窗 */
     .quota-year-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
@@ -1002,14 +1148,6 @@
       font-size: 12px;
     }
 
-    .page-note-bar {
-      padding: 10px 18px 14px;
-      font-size: 12px;
-      color: var(--text-secondary);
-      border-top: 1px solid var(--border-light);
-      background: #FAFBFD;
-    }
-
     @media (max-width: 960px) {
       .model-split { flex-direction: column; }
       .model-tree {
@@ -1020,8 +1158,6 @@
       }
       .info-split { flex-direction: column; }
       .info-nav { width: 100%; }
-      .scope-split { flex-direction: column; }
-      .scope-right { width: 100%; border-left: none; padding-left: 0; border-top: 1px solid var(--border-light); padding-top: 12px; }
     }
   </style>
   <link rel="stylesheet" href="annotation-styles.css">
@@ -1041,8 +1177,8 @@
             <span class="anno-tag">版本信息</span>
             <div class="anno-body">
               <p><b>当前版本：</b>v2.5</p>
-              <p><b>更新日期：</b>2026-07-07</p>
-              <p><b>变更概述：</b>按真实系统「运营管理 → 能效管理 → 基础配置 → <b>能耗模型管理</b>」整页重绘（原页面名「能效视图」，文件名保留 <code>能效视图.html</code>）：① 页头按钮随选中节点的物模型类型动态变化（集合 / 资产 / 根节点三套）；② 右侧详情增加「← 返回 + 节点名 | 物模型名」头部，返回后展示工程基础信息视图；③ 六个 Tab（测点列表 / 设备列表 / 详情信息 / 关系拓扑 / 设备履历 / 能效配置）与真实系统一致；④ <b>能耗计量方案与用能定额考核改为「能效配置」Tab 内的配置弹窗</b>（真实系统交互），不再是页头跳转入口；⑤ v2.5 增量「计量表具」列表移至能效配置 Tab 下方并保留「查看能耗明细」跳转。</p>
+              <p><b>更新日期：</b>2026-07-27</p>
+              <p><b>变更概述：</b>页面名称统一为「能效视图」；节点详情新增「指标列表」Tab。指标分为实时指标与时间段指标：实时指标直接平铺当前对象已配置能源的瞬时值及能效值；时间段指标仅按起止时间查询，能源类型、计费时段均固化进指标名称。列表只展示简明计算口径，点击后以只读弹窗查看计算拓扑、实际引用的对象属性 / 测点 ID、节点结果、异常节点和最终计算过程。</p>
             </div>
           </div>
 
@@ -1062,14 +1198,14 @@
             <div class="anno-body">
               <p><b>关联模块：</b>整页 — 对象树与计量拓扑的关系</p>
               <ul>
-                <li><b>对象树即计量对象树：</b>本页左侧对象树（工程 / 项目 / 系统 / 集合 / 设备）就是能耗计量的对象范围；「能耗计量方案」配置的产物是一棵计量拓扑（当前对象 ↔ 下级对象 / 表具），对象的能耗与成本查询时沿该拓扑对表具归档明细做 on-read 聚合（SUM），对象层不单独归档。</li>
-                <li><b>表具归属唯一：</b>一块表具只能归属一个计量对象，不得同时挂到两处拓扑；计量方案配置层强制查重（「选择应用范围」弹窗内已被占用的表具置灰不可选），从源头杜绝重复计量。</li>
+                <li><b>对象树即计量对象树：</b>本页左侧对象树（工程 / 项目 / 系统 / 集合 / 设备）就是能耗计量的对象范围；计量拓扑在《能源计量关系》中统一配置，产物是「能源类型 × 当前对象 ↔ 下级对象 / 表具」且每条关系带计量方向（输入 / 输出）；对象能耗 / 成本 / 能效指标由指标工厂按同一张拓扑物化；计量关系的配置与核对在《能源计量关系》完成，本页能效配置 Tab 仅保留用能定额考核。</li>
+                <li><b>同方向归属唯一：</b>查重键为「表具 + 能源类型 + 计量方向」——一块表具在同一能源类型下最多作为一个对象的输入、同时最多作为一个对象的输出；同方向重复占用在《能源计量关系》配置层强制拦截。</li>
                 <li><b>历史随当前拓扑（产品已接受口径）：</b>对象查询始终沿【当前】计量拓扑聚合；表具改绑计量对象后，其全部历史能耗 / 成本随之归到新对象名下、旧对象对应减少。本期不做计量拓扑生效版本。</li>
               </ul>
             </div>
           </div>
 
-          <section class="page-card" aria-label="能耗模型管理">
+          <section class="page-card" aria-label="能效视图">
             <div class="anno anno-ux" data-version="v2.5">
               <span class="anno-tag">交互说明</span>
               <span class="anno-version">v2.5</span>
@@ -1086,7 +1222,7 @@
               </div>
             </div>
             <div class="page-head">
-              <h1 class="page-title">能耗模型管理</h1>
+              <h1 class="page-title">能效视图</h1>
               <div class="page-head-actions" id="headActions"></div>
             </div>
 
@@ -1214,6 +1350,7 @@
 
                   <div class="main-tabs" role="tablist" aria-label="节点详情 Tab">
                     <button type="button" class="main-tab active" role="tab" aria-selected="true" data-tab="points">测点列表<span class="tab-badge" id="badgePoints">0</span></button>
+                    <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="metrics">指标列表<span class="tab-badge has" id="badgeMetrics">22</span></button>
                     <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="devices">设备列表<span class="tab-badge" id="badgeDevices">0</span></button>
                     <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="info">详情信息</button>
                     <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="topology">关系拓扑</button>
@@ -1228,34 +1365,26 @@
                       <span class="anno-version">v2.5</span>
                       <span class="anno-source">产品推断</span>
                       <div class="anno-body">
-                        <p><b>关联模块：</b>测点列表 Tab（工具栏与列口径对齐真实系统）</p>
+                        <p><b>关联模块：</b>测点列表 Tab</p>
                         <ul>
-                          <li><b>工具栏：</b>批量绑定（需先勾选测点）；测点类型筛选（全部 / 执行点 / 模拟执行点 / 状态执行点 / 读测点 / 遥测点 / 遥信点 / 设置点 / 遥调设置点 / 遥控设置点 / 计算状态 / 告警点）；刷新时间（0.5s / 1s / 5s / 10s / 30s / 1min / 5min，控制当前值自动刷新频率）；关键字搜索（组件名 / 测点ID / 测点名称）+「搜索」按钮；右侧「显示列」配置表格列显隐。</li>
-                          <li><b>表格列：</b>勾选 / 测点ID（可排序）/ 测点名称（可排序）/ 数据源 / 当前值 / 数据时间 / 操作（曲线、编辑）。数据源列展示测点取值来源：直连采集或表达式引用（蓝色标签展示引用的测点 / 取值方式）。</li>
-                          <li>Tab 标题角标展示当前节点测点总数；数据为示意值。</li>
+                          <li>只展示当前对象直接绑定的原始测点或表达式测点；对象 PUE、能耗与成本等业务指标统一进入相邻「指标列表」。</li>
+                          <li>支持测点类型、刷新频率与关键字筛选；角标展示当前对象测点总数。</li>
                         </ul>
                       </div>
                     </div>
                     <div class="points-toolbar" aria-label="测点列表工具栏">
                       <div class="points-toolbar-left">
-                        <button type="button" class="toolbar-link" id="btnBatchBind">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                          批量绑定
-                        </button>
+                        <button type="button" class="toolbar-link" id="btnBatchBind">批量绑定</button>
                         <label class="toolbar-field">
                           <span class="toolbar-label">测点类型</span>
                           <select class="toolbar-select" id="pointTypeFilter" aria-label="测点类型">
                             <option value="">请选择</option>
                             <option>全部</option>
                             <option>执行点</option>
-                            <option>模拟执行点</option>
-                            <option>状态执行点</option>
                             <option>读测点</option>
                             <option>遥测点</option>
                             <option>遥信点</option>
                             <option>设置点</option>
-                            <option>遥调设置点</option>
-                            <option>遥控设置点</option>
                             <option>计算状态</option>
                             <option>告警点</option>
                           </select>
@@ -1269,26 +1398,20 @@
                             <option>10s</option>
                             <option>30s</option>
                             <option>1min</option>
-                            <option>5min</option>
                           </select>
                         </label>
                         <input type="search" class="toolbar-search" id="pointSearch" placeholder="组件名/测点ID/测点名称" aria-label="搜索测点" autocomplete="off">
                         <button type="button" class="btn btn-primary" id="btnPointSearch">搜索</button>
                       </div>
                       <div class="points-toolbar-right">
-                        <button type="button" class="btn btn-ghost" id="btnColSettings">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" style="width:15px;height:15px;margin-right:5px" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                          显示列
-                        </button>
+                        <button type="button" class="btn btn-ghost" id="btnColSettings">显示列</button>
                       </div>
                     </div>
                     <div class="points-table-wrap">
                       <table class="data-table points-table" aria-label="测点列表">
                         <thead>
                           <tr>
-                            <th class="col-check" scope="col">
-                              <input type="checkbox" id="pointCheckAll" aria-label="全选测点" title="全选">
-                            </th>
+                            <th class="col-check" scope="col"><input type="checkbox" id="pointCheckAll" aria-label="全选测点" title="全选"></th>
                             <th scope="col">测点ID<span class="sort-icon">▲▼</span></th>
                             <th scope="col">测点名称<span class="sort-icon">▲▼</span></th>
                             <th scope="col">数据源</th>
@@ -1302,6 +1425,50 @@
                     </div>
                   </div>
 
+                  <!-- 指标列表 -->
+                  <div class="tab-panel" id="panel-metrics" role="tabpanel" hidden>
+                    <div class="anno anno-ux" data-version="v2.5">
+                      <span class="anno-tag">交互说明</span>
+                      <span class="anno-version">v2.5</span>
+                      <span class="anno-source">需求文档</span>
+                      <div class="anno-body">
+                        <p><b>关联模块：</b>指标列表 — 实施核数与计算链路排查</p>
+                        <ul>
+                          <li><b>实时指标：</b>不提供能源类型筛选，直接平铺当前对象已配置计量方案的各能源瞬时值，以及适用于该对象的 PUE / CLF / PLF / OLF / WUE；实时值只查当前、不落历史。</li>
+                          <li><b>时间段指标：</b>查询区只有起止时间。能源类型、计费时段固化进指标名称并整体平铺；无分时能源仅展示一条「费用（统一价）」，不再同时展示费用总额与统一价两条重复指标。</li>
+                          <li><b>计算排查：</b>点击「计算口径」中的绿色表达式打开只读预览。拓扑展示指标定义及本次查询解析到的对象指标、表具核算明细或瞬时量测点；点选节点后，右侧展示其引用 ID / 属性、当前结果、下级节点和异常原因。页面不提供表达式编辑。</li>
+                          <li><b>扩展规则：</b>列表与弹窗均按通用指标定义和计算节点渲染。新增能源、计费时段或能效指标时只增加指标定义及节点数据，不新增专用列或专用页面。</li>
+                        </ul>
+                      </div>
+                    </div>
+                    <div class="metric-toolbar">
+                      <div class="metric-mode" aria-label="指标时间类型">
+                        <button type="button" class="active" data-metric-mode="realtime" aria-pressed="true">实时指标</button>
+                        <button type="button" data-metric-mode="period" aria-pressed="false">时间段指标</button>
+                      </div>
+                      <div class="metric-range" id="metricRange" hidden>
+                        <input type="date" id="metricStart" value="2026-07-01" aria-label="开始日期">
+                        <span>至</span>
+                        <input type="date" id="metricEnd" value="2026-07-07" aria-label="结束日期">
+                        <button type="button" class="btn btn-primary" id="btnMetricQuery">查询</button>
+                      </div>
+                    </div>
+                    <div class="metric-table-wrap">
+                      <table class="data-table metric-table">
+                        <thead>
+                          <tr>
+                            <th style="width:20%">指标名称</th>
+                            <th style="width:42%">计算口径</th>
+                            <th style="width:14%">指标值</th>
+                            <th style="width:8%">单位</th>
+                            <th style="width:16%">数据时间</th>
+                          </tr>
+                        </thead>
+                        <tbody id="metricsBody"></tbody>
+                      </table>
+                    </div>
+                  </div>
+
                   <!-- 设备列表 -->
                   <div class="tab-panel" id="panel-devices" role="tabpanel" hidden>
                     <div class="anno anno-state" data-version="v2.5">
@@ -1310,11 +1477,7 @@
                       <span class="anno-source">产品推断</span>
                       <div class="anno-body">
                         <p><b>关联模块：</b>设备列表 Tab</p>
-                        <ul>
-                          <li>工具栏提供「批量移动」「批量编辑/绑定」「批量删除」，均需先勾选行。</li>
-                          <li>列：设备名称 / 所属分类 / 所属模型 / 厂家信息 / 上架/部署位置 / 资产描述 / 操作。</li>
-                          <li>无数据时表体展示「没有找到匹配的记录」，分页条展示「共 0 条 · 20条/页」。</li>
-                        </ul>
+                        <ul><li>展示当前集合下直接关联的设备；无数据时保留空状态与分页信息。</li></ul>
                       </div>
                     </div>
                     <div class="points-toolbar">
@@ -1326,29 +1489,11 @@
                     </div>
                     <div class="points-table-wrap">
                       <table class="data-table" aria-label="设备列表" style="min-width:980px">
-                        <thead>
-                          <tr>
-                            <th class="col-check" scope="col"><input type="checkbox" aria-label="全选设备"></th>
-                            <th scope="col">设备名称</th>
-                            <th scope="col">所属分类</th>
-                            <th scope="col">所属模型</th>
-                            <th scope="col">厂家信息</th>
-                            <th scope="col">上架/部署位置</th>
-                            <th scope="col">资产描述</th>
-                            <th scope="col">操作</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr><td colspan="8" class="empty-cell">没有找到匹配的记录</td></tr>
-                        </tbody>
+                        <thead><tr><th class="col-check" scope="col"><input type="checkbox" aria-label="全选设备"></th><th scope="col">设备名称</th><th scope="col">所属分类</th><th scope="col">所属模型</th><th scope="col">厂家信息</th><th scope="col">上架/部署位置</th><th scope="col">资产描述</th><th scope="col">操作</th></tr></thead>
+                        <tbody><tr><td colspan="8" class="empty-cell">没有找到匹配的记录</td></tr></tbody>
                       </table>
                     </div>
-                    <div class="pager-bar">
-                      <span>共 0 条</span>
-                      <span>20条/页</span>
-                      <span class="pager-num">1</span>
-                      <span>前往 1 页</span>
-                    </div>
+                    <div class="pager-bar"><span>共 0 条</span><span>20条/页</span><span class="pager-num">1</span><span>前往 1 页</span></div>
                   </div>
 
                   <!-- 详情信息 -->
@@ -1359,38 +1504,19 @@
                       <span class="anno-source">产品推断</span>
                       <div class="anno-body">
                         <p><b>关联模块：</b>详情信息 Tab</p>
-                        <ul>
-                          <li>左侧「信息」导航含：基础信息、关联信息（被监测 / 包含于 / 位于 / 有一部分 / 供电等关系条目）、拓扑视图、指令列表。</li>
-                          <li>右侧「基本信息」展示节点物模型定义的静态属性（设备节点为额定参数 / 资产信息 / 位置信息等；集合节点为名称、描述）；「编辑」进入编辑态，「属性策略」配置属性下发策略（本原型以提示示意）。</li>
-                          <li>字段取自物模型静态属性定义，随物模型类型不同而不同；本页以「冷冻水泵」为例。</li>
-                        </ul>
+                        <ul><li>字段取自当前对象的物模型静态属性；设备与集合展示不同的属性集合。</li></ul>
                       </div>
                     </div>
                     <div class="info-split">
                       <aside class="info-nav" aria-label="信息导航">
-                        <div class="info-nav-item active">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" style="width:14px;height:14px" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
-                          基础信息
-                        </div>
-                        <div class="info-nav-item">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" style="width:14px;height:14px" aria-hidden="true"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M8.5 8.5 15.5 15.5"/></svg>
-                          关联信息
-                        </div>
+                        <div class="info-nav-item active">基础信息</div>
+                        <div class="info-nav-item">关联信息</div>
                         <div id="infoRelList">
-                          <div class="info-nav-sub">被监测 · 未定义关系</div>
                           <div class="info-nav-sub">包含于 · 并联冷冻水泵管路_4</div>
                           <div class="info-nav-sub">位于 · 屋面层</div>
-                          <div class="info-nav-sub">有一部分 · 未定义关系</div>
-                          <div class="info-nav-sub">供电 · 未定义关系</div>
                         </div>
-                        <div class="info-nav-item">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" style="width:14px;height:14px" aria-hidden="true"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5V13M12 13l-5.5 4M12 13l5.5 4"/></svg>
-                          拓扑视图
-                        </div>
-                        <div class="info-nav-item">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" style="width:14px;height:14px" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
-                          指令列表
-                        </div>
+                        <div class="info-nav-item">拓扑视图</div>
+                        <div class="info-nav-item">指令列表</div>
                       </aside>
                       <div class="info-body">
                         <div class="info-body-head">
@@ -1413,12 +1539,8 @@
                       <span class="anno-version">v2.5</span>
                       <span class="anno-source">产品推断</span>
                       <div class="anno-body">
-                        <p><b>关联模块：</b>关系拓扑 Tab（对齐真实系统的双视图）</p>
-                        <ul>
-                          <li><b>列表视图 / 拓扑视图</b>切换：列表展示当前节点参与的全部关系（名称（源）/ 模型（源）/ 关系名称（源→目标）/ 名称（目标）/ 模型（目标）/ 约束（源→目标）/ 关系属性 / 操作）；拓扑视图以节点卡片 + 有向连线呈现，连线颜色区分关系类型（图例：包含、是..的位置）。</li>
-                          <li><b>新建关系：</b>为当前节点添加与其他对象的关系（选择关系类型 + 目标对象，本原型以提示示意）。</li>
-                          <li><b>删除：</b>删除该条关系记录，需二次确认。</li>
-                        </ul>
+                        <p><b>关联模块：</b>关系拓扑 Tab</p>
+                        <ul><li>列表与拓扑图展示当前对象关系；该对象拓扑不等同于能源计量关系，计量方向仍在独立页维护。</li></ul>
                       </div>
                     </div>
                     <div class="topo-head">
@@ -1430,64 +1552,26 @@
                     </div>
                     <div class="topo-table-wrap" id="topoListWrap">
                       <table class="data-table topo-table" aria-label="关系列表">
-                        <thead>
-                          <tr>
-                            <th scope="col">名称（源）</th>
-                            <th scope="col">模型（源）</th>
-                            <th scope="col">关系名称（源→目标）</th>
-                            <th scope="col">名称（目标）</th>
-                            <th scope="col">模型（目标）</th>
-                            <th scope="col">约束（源→目标）</th>
-                            <th scope="col">关系属性</th>
-                            <th scope="col">操作</th>
-                          </tr>
-                        </thead>
+                        <thead><tr><th scope="col">名称（源）</th><th scope="col">模型（源）</th><th scope="col">关系名称</th><th scope="col">名称（目标）</th><th scope="col">模型（目标）</th><th scope="col">约束</th><th scope="col">关系属性</th><th scope="col">操作</th></tr></thead>
                         <tbody id="topoBody"></tbody>
                       </table>
                     </div>
                     <div class="topo-canvas-wrap" id="topoGraphWrap" hidden>
-                      <div class="topo-legend">
-                        <span class="lg lg-contain"><i></i>包含</span>
-                        <span class="lg lg-loc"><i></i>是..的位置</span>
-                      </div>
+                      <div class="topo-legend"><span class="lg lg-contain"><i></i>包含</span><span class="lg lg-loc"><i></i>是..的位置</span></div>
                       <svg class="topo-svg" viewBox="0 0 760 300" xmlns="http://www.w3.org/2000/svg" aria-label="关系拓扑图">
-                        <defs>
-                          <marker id="arrowBlue" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-                            <path d="M0 0 L8 4 L0 8 z" fill="#2F78F6"/>
-                          </marker>
-                          <marker id="arrowGreen" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-                            <path d="M0 0 L8 4 L0 8 z" fill="#16A34A"/>
-                          </marker>
-                        </defs>
-                        <path class="topo-edge-contain" d="M250 78 C330 78 360 140 428 148" />
-                        <text class="topo-edge-label contain" x="330" y="96">包含</text>
-                        <path class="topo-edge-loc" d="M250 234 C330 234 360 176 428 160" />
-                        <text class="topo-edge-label loc" x="316" y="222">是..的位置</text>
-
-                        <rect class="topo-card-rect" x="70" y="48" width="180" height="58" rx="8" />
-                        <text class="topo-card-model" x="84" y="68" id="topoSrc1Model">并联冷冻水泵管路</text>
-                        <text class="topo-card-title" x="84" y="90" id="topoSrc1Name">并联冷冻水泵管路_4</text>
-
-                        <rect class="topo-card-rect" x="70" y="204" width="180" height="58" rx="8" />
-                        <text class="topo-card-model" x="84" y="224">楼顶</text>
-                        <text class="topo-card-title" x="84" y="246">屋面层</text>
-
-                        <rect class="topo-card-rect cur" x="430" y="124" width="200" height="60" rx="8" />
-                        <text class="topo-card-model" x="446" y="146" id="topoCurModel">冷冻水泵</text>
-                        <text class="topo-card-title" x="446" y="168" id="topoCurName">冷冻水泵-CHWP4</text>
+                        <defs><marker id="arrowBlue" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#2F78F6"/></marker><marker id="arrowGreen" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#16A34A"/></marker></defs>
+                        <path class="topo-edge-contain" d="M250 78 C330 78 360 140 428 148"/><text class="topo-edge-label contain" x="330" y="96">包含</text>
+                        <path class="topo-edge-loc" d="M250 234 C330 234 360 176 428 160"/><text class="topo-edge-label loc" x="316" y="222">是..的位置</text>
+                        <rect class="topo-card-rect" x="70" y="48" width="180" height="58" rx="8"/><text class="topo-card-model" x="84" y="68" id="topoSrc1Model">上级模型</text><text class="topo-card-title" x="84" y="90" id="topoSrc1Name">上级对象</text>
+                        <rect class="topo-card-rect" x="70" y="204" width="180" height="58" rx="8"/><text class="topo-card-model" x="84" y="224">楼顶</text><text class="topo-card-title" x="84" y="246">屋面层</text>
+                        <rect class="topo-card-rect cur" x="430" y="124" width="200" height="60" rx="8"/><text class="topo-card-model" x="446" y="146" id="topoCurModel">当前模型</text><text class="topo-card-title" x="446" y="168" id="topoCurName">当前对象</text>
                       </svg>
                     </div>
                   </div>
 
                   <!-- 设备履历 -->
                   <div class="tab-panel" id="panel-history" role="tabpanel" hidden>
-                    <div class="history-toolbar">
-                      <div class="seg" role="group" aria-label="时间范围">
-                        <button type="button" class="active">近7日</button>
-                        <button type="button">近10日</button>
-                        <button type="button">近15日</button>
-                      </div>
-                    </div>
+                    <div class="history-toolbar"><div class="seg" role="group" aria-label="时间范围"><button type="button" class="active">近7日</button><button type="button">近10日</button><button type="button">近15日</button></div></div>
                     <div class="panel-placeholder">没有找到匹配的记录</div>
                   </div>
 
@@ -1498,194 +1582,22 @@
                       <span class="anno-version">v2.5</span>
                       <span class="anno-source">需求文档</span>
                       <div class="anno-body">
-                        <p><b>关联模块：</b>能效配置 Tab — 配置入口（真实系统交互：弹窗承载，非独立页面）</p>
+                        <p><b>关联模块：</b>能效配置 Tab — 用能定额考核</p>
                         <ul>
-                          <li>本 Tab 对所有计量对象节点可见，包含两行配置入口：<b>用能定额考核</b>与<b>能耗计量方案</b>，点行尾「配置」打开对应弹窗。</li>
-                          <li><b>能耗计量方案</b>的配置产物是当前对象的计量拓扑（当前对象 ↔ 下级对象 / 表具），供对象能耗 / 成本 on-read 聚合查询使用（见页顶 v2.5 数据逻辑批注）。v2.5 方案稿中曾有独立页面承载该配置（原 <code>能耗计量方案.html</code>，已删除），现统一以本弹窗交互为准。</li>
-                          <li><b>用能定额考核</b>依赖能耗计量方案：未完成计量方案配置时，定额考核弹窗内提示前置校验、保存不可用。</li>
+                          <li>本期只保留用能定额考核入口；计量方案与表具归属已迁至独立《能源计量关系》页。</li>
+                          <li>当前对象尚未配置任一能源计量关系时，定额保存不可用。</li>
                         </ul>
                       </div>
                     </div>
-                    <div class="eff-row">
-                      <span class="eff-row-name">用能定额考核</span>
-                      <button type="button" class="action-link" id="btnQuotaConfig">配置</button>
-                    </div>
-                    <div class="eff-row">
-                      <span class="eff-row-name">能耗计量方案</span>
-                      <button type="button" class="action-link" id="btnMeteringConfig">配置</button>
-                    </div>
-
-                    <section class="meter-block" aria-label="计量表具">
-                      <div class="anno anno-data" data-version="v2.5">
-                        <span class="anno-tag">数据逻辑</span>
-                        <span class="anno-version">v2.5</span>
-                        <span class="anno-source">待确认</span>
-                        <div class="anno-body">
-                          <p><b>关联模块：</b>能效配置 Tab —「计量表具」列表（v2.5 增量，真实系统当前版本无此模块，展示位置待评审）</p>
-                          <ul>
-                            <li><b>数据来源：</b>展示归属当前计量对象的表具（能源配置中挂了累积量测点的物模型实例）；归属关系来自「能耗计量方案」产出的计量拓扑。一块表具只归属一个计量对象（配置层强制查重），故此列表各对象间无重复。</li>
-                            <li><b>是否已应用计费方案：</b>计费方案 1:1 应用在表具上。未应用方案的表具仍会自动生成电量明细，只是暂无表具成本；应用方案后可按时间范围补算此前区间成本。</li>
-                            <li><b>查看能耗明细：</b>跳转「能耗管理-表具明细」页（<code>能耗管理-表具明细.html</code>），查看该表具半小时 / 时 / 天 / 月能耗明细、数据质量标记与人工修正。</li>
-                          </ul>
-                        </div>
-                      </div>
-                      <div class="meter-block-head">
-                        <span class="meter-block-title">计量表具</span>
-                        <span class="meter-block-hint">归属当前计量对象的表具（物模型实例），来自能耗计量方案的计量拓扑</span>
-                      </div>
-                      <div class="meter-table-wrap">
-                        <table class="data-table meter-table" aria-label="计量表具列表">
-                          <thead>
-                            <tr>
-                              <th scope="col">表具名称（物模型实例）</th>
-                              <th scope="col">能源类型</th>
-                              <th scope="col">是否已应用计费方案</th>
-                              <th scope="col">操作</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr>
-                              <td>交流电表-市电进线1（AC_Meter_01）</td>
-                              <td>电</td>
-                              <td><span class="status-ok">已应用（峰平谷电价 V2）</span></td>
-                              <td><div class="points-actions"><a class="action-link" href="能耗管理-表具明细.html">查看能耗明细</a></div></td>
-                            </tr>
-                            <tr>
-                              <td>交流电表-冷站总进线（AC_Meter_07）</td>
-                              <td>电</td>
-                              <td><span class="status-ok">已应用（峰平谷电价 V2）</span></td>
-                              <td><div class="points-actions"><a class="action-link" href="能耗管理-表具明细.html">查看能耗明细</a></div></td>
-                            </tr>
-                            <tr>
-                              <td>冷量表-冷冻供回水（CL_Meter_02）</td>
-                              <td>冷量</td>
-                              <td><span class="status-muted">未应用</span></td>
-                              <td><div class="points-actions"><a class="action-link" href="能耗管理-表具明细.html">查看能耗明细</a></div></td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </section>
+                    <div class="eff-row"><span class="eff-row-name">用能定额考核</span><button type="button" class="action-link" id="btnQuotaConfig">配置</button></div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div class="page-note-bar">
-              侧栏入口为「能效视图」；页面文件名保留 能效视图.html。「创建集合」打开能耗模型集合创建页；能耗计量方案 / 用能定额考核在「能效配置」Tab 内以弹窗配置。
-            </div>
           </section>
         </div>
       </main>
-    </div>
-  </div>
-
-  <!-- 能耗计量方案配置弹窗 -->
-  <div class="modal-mask" id="meteringModal" hidden>
-    <div class="modal" role="dialog" aria-modal="true" aria-label="能耗计量方案配置">
-      <div class="modal-head">
-        <span>能耗计量方案配置</span>
-        <button type="button" class="modal-close" data-close="meteringModal" aria-label="关闭">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="anno anno-field" data-version="v2.5">
-          <span class="anno-tag">字段说明</span>
-          <span class="anno-version">v2.5</span>
-          <span class="anno-source">引用自古典原型</span>
-          <div class="anno-body">
-            <p><b>关联模块：</b>「能耗计量方案配置」弹窗（入口：能效配置 Tab → 能耗计量方案 → 配置）</p>
-            <ul>
-              <li><b>计量的能源：</b>行按「能源计费配置 → 能源类型」动态生成（当前环境为冷量 / 水 / 电），每行独立配置。</li>
-              <li><b>计量规则：</b>单选、非必选，未选择表示当前节点下无此能源介质的能耗计量。选项两个：
-                <b>仪表计量能耗</b>（由所选表具直接计量，选中后行内出现「计量对象选择(已选N个)」按钮，再次配置回显已选数量）；
-                <b>各子节点计量能耗</b>（由下级节点汇总，选中后行内出现子节点多选：仅可选下一级节点，且须为已启用对应能源计量方案的节点；子节点新增 / 删除时所选范围需联动调整）。</li>
-              <li><b>启用开关：</b>默认关闭。开启后该能源的计量方案生效，并在总览看板对应对象上自动勾选该能源类型的「能耗趋势」「能耗成本」图表；关闭则自动取消勾选。</li>
-              <li><b>保存：</b>校验通过后保存当前节点计量方案并生成 / 更新计量拓扑；保存时对表具归属强制查重（表具归属唯一）。</li>
-            </ul>
-          </div>
-        </div>
-        <table class="data-table metering-table" aria-label="能耗计量方案配置">
-          <thead>
-            <tr>
-              <th scope="col" style="width:120px">计量的能源</th>
-              <th scope="col">计量规则</th>
-              <th scope="col" style="width:110px;text-align:right">启用开关</th>
-            </tr>
-          </thead>
-          <tbody id="meteringBody"></tbody>
-        </table>
-      </div>
-      <div class="modal-foot">
-        <button type="button" class="btn btn-ghost" data-close="meteringModal">取消</button>
-        <button type="button" class="btn btn-primary" id="btnMeteringSave">保存</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 选择应用范围（计量对象选择）弹窗 -->
-  <div class="modal-mask" id="scopeModal" hidden style="z-index:240">
-    <div class="modal modal-wide" role="dialog" aria-modal="true" aria-label="选择应用范围">
-      <div class="modal-head">
-        <span>选择应用范围</span>
-        <button type="button" class="modal-close" data-close="scopeModal" aria-label="关闭">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="anno anno-ux" data-version="v2.5">
-          <span class="anno-tag">交互说明</span>
-          <span class="anno-version">v2.5</span>
-          <span class="anno-source">引用自古典原型</span>
-          <div class="anno-body">
-            <p><b>关联模块：</b>「选择应用范围」弹窗（入口：能耗计量方案配置 → 某能源行选「仪表计量能耗」→ 计量对象选择）</p>
-            <ul>
-              <li><b>数据来源：</b>查询当前能源类型在能源配置中定义的物模型，列出其下所有实例（表具）；若是组件则显示具体实例/组件名称。排序按创建时间倒序，分页 50 条/页。</li>
-              <li><b>筛选：</b>名称模糊搜索 + 物模型筛选（仅列当前能源类型配置的物模型）。</li>
-              <li><b>不可重复应用：</b>已被其他计量对象占用的表具置灰、不可勾选（表具归属唯一）。</li>
-              <li><b>右侧已选面板：</b>按选定顺序展示已选对象明细，点 ✕ 直接取消；「清除全部」一键清空。再次编辑时回显已选状态。</li>
-              <li><b>确定：</b>写回「计量对象选择(已选N个)」按钮的数量；<b>取消</b>放弃本次更改。</li>
-            </ul>
-          </div>
-        </div>
-        <div class="scope-split">
-          <div class="scope-left">
-            <div class="scope-toolbar">
-              <input type="search" class="toolbar-search" id="scopeSearch" placeholder="请输入名称" aria-label="按名称搜索表具">
-              <select class="toolbar-select" id="scopeModelFilter" aria-label="物模型筛选">
-                <option value="">请选择物模型</option>
-              </select>
-              <button type="button" class="btn btn-primary" id="btnScopeSearch">搜索</button>
-            </div>
-            <div class="scope-table-wrap">
-              <table class="data-table scope-table" aria-label="表具列表">
-                <thead>
-                  <tr>
-                    <th class="col-check" scope="col"><input type="checkbox" id="scopeCheckAll" aria-label="全选表具"></th>
-                    <th scope="col">名称</th>
-                    <th scope="col">物模型</th>
-                  </tr>
-                </thead>
-                <tbody id="scopeBody"></tbody>
-              </table>
-            </div>
-            <div class="pager-bar">
-              <span id="scopeTotal">共 0 条</span>
-              <span>50条/页</span>
-              <span class="pager-num">1</span>
-              <span>前往 1 页</span>
-            </div>
-          </div>
-          <div class="scope-right">
-            <div class="scope-right-head">
-              <strong>已选择（<span id="scopeSelCount">0</span>）</strong>
-              <button type="button" class="action-link danger" id="btnScopeClear">清除全部</button>
-            </div>
-            <div class="scope-chips" id="scopeChips"></div>
-          </div>
-        </div>
-      </div>
-      <div class="modal-foot">
-        <button type="button" class="btn btn-primary" id="btnScopeOk">确定</button>
-        <button type="button" class="btn btn-ghost" data-close="scopeModal">取消</button>
-      </div>
     </div>
   </div>
 
@@ -1705,8 +1617,8 @@
             <p><b>关联模块：</b>「用能定额考核配置」弹窗（入口：能效配置 Tab → 用能定额考核 → 配置）</p>
             <ul>
               <li><b>年份：</b>选择考核年度，默认当前年（2026），按年份分别维护定额。</li>
-              <li><b>前置校验：</b>当前节点未完成能耗计量方案配置（无任一能源启用）时，展示提示「请先完成能耗计量方案配置，配置后才可支持用能定额考核」，「保存」不可用。</li>
-              <li><b>已配置计量方案后：</b>按已启用的能源类型维护月度定额（示意为 12 个月定额输入）；考核结果在「用能定额考核」页查看。定额基于计量拓扑 + 能源类型（历史随当前拓扑口径见页顶数据逻辑批注）。</li>
+              <li><b>前置校验：</b>当前节点在《能源计量关系》中尚未配置任一能源类型的计量关系时，展示提示「请先完成能耗计量方案配置，配置后才可支持用能定额考核」，「保存」不可用；请到侧栏「能源计量关系」完成配置。</li>
+              <li><b>已配置计量方案后：</b>按已配置计量关系的能源类型维护月度定额（示意为 12 个月定额输入）；考核结果在「用能定额考核」页查看。定额基于《能源计量关系》产出的计量拓扑 + 能源类型（历史随当前拓扑口径见页顶数据逻辑批注）。</li>
             </ul>
           </div>
         </div>
@@ -1725,6 +1637,85 @@
       <div class="modal-foot">
         <button type="button" class="btn btn-ghost" data-close="quotaModal">取消</button>
         <button type="button" class="btn btn-primary" id="btnQuotaSave" disabled>保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 指标计算结果预览弹窗 -->
+  <div class="modal-mask" id="metricCalcModal" hidden>
+    <div class="modal calc-modal" role="dialog" aria-modal="true" aria-labelledby="calcModalTitle">
+      <div class="modal-head">
+        <div class="calc-modal-title">
+          <span id="calcModalTitle">指标计算结果预览</span>
+          <span class="calc-modal-subtitle" id="calcMetricName">—</span>
+        </div>
+        <div class="calc-head-actions">
+          <button type="button" class="btn btn-outline" data-close="metricCalcModal">关闭</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="anno anno-data" data-version="v2.5">
+          <span class="anno-tag">数据逻辑</span>
+          <span class="anno-version">v2.5</span>
+          <span class="anno-source">产品推断</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>指标计算结果预览（交互样式对齐现有 KE 表达式结果预览）</p>
+            <ul>
+              <li>弹窗展示的是指标工厂本次查询的已解析计算图，不是静态口径说明：节点必须能落到对象指标属性、表具核算明细字段、瞬时量测点 ID 或计费快照 ID。</li>
+              <li>拓扑默认展示当前节点与直接依赖；点选任一节点后在右侧继续查看其下级引用，避免叶子表具过多时一次性把整棵图铺满。表格模式用于检索全部节点。</li>
+              <li>只读消费页不提供「编辑表达式」。实施人员发现配置问题后，分别回到能效视图对象配置、能源计量关系或测点绑定处修正。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="calc-section-head">
+          <span class="calc-section-title">计算单元计算结果</span>
+          <div class="calc-view-actions">
+            <div class="calc-seg" aria-label="计算结果展示方式">
+              <button type="button" class="active" data-calc-view="graph" aria-pressed="true">拓扑</button>
+              <button type="button" data-calc-view="table" aria-pressed="false">表格</button>
+            </div>
+            <button type="button" class="btn btn-outline" id="btnRecalculate">重新计算</button>
+          </div>
+        </div>
+        <div class="calc-frame">
+          <div class="calc-tools">
+            <div class="calc-counts">
+              <span class="calc-count ok" id="calcNodeCount">节点 0</span>
+              <span class="calc-count" id="calcParamCount">参数 0</span>
+              <span class="calc-count bad" id="calcErrorCount">异常 0</span>
+            </div>
+            <div class="calc-filters">
+              <input type="search" class="calc-search" id="calcSearch" placeholder="搜索节点、测点 ID 或属性" aria-label="搜索计算节点">
+              <label class="calc-check"><input type="checkbox" id="calcOnlyError">仅异常</label>
+              <button type="button" class="calc-id-toggle" id="calcIdToggle" aria-pressed="true">&lt;/&gt; ID</button>
+            </div>
+          </div>
+          <div class="calc-workbench" id="calcGraphView">
+            <div class="calc-canvas">
+              <div class="calc-graph" id="calcGraph"></div>
+            </div>
+            <aside class="calc-inspector" id="calcInspector" aria-label="选中计算节点"></aside>
+          </div>
+          <div class="calc-table-wrap" id="calcTableView" hidden>
+            <table class="data-table calc-table">
+              <thead>
+                <tr>
+                  <th>节点名称</th>
+                  <th>类型</th>
+                  <th>引用 ID / 属性</th>
+                  <th>结果</th>
+                  <th>状态</th>
+                </tr>
+              </thead>
+              <tbody id="calcTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="calc-result-block">
+          <div class="calc-section-title">指标计算结果</div>
+          <div class="calc-result-expression" id="calcResultExpression">—</div>
+          <div class="calc-result-steps" id="calcResultSteps"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -1792,37 +1783,178 @@
           ] }
       };
 
-      var CHILD_LABELS = {
-        root: ['0_39:人保北方信息中心项目', '0_530:合肥中行', '0_475:软POC项目'],
-        p475: ['0_476:IT系统', '0_479:其他系统', '0_477:暖通空调系统', '0_478:电力系统'],
-        s477: ['0_493:3#数据中心水冷冷水系统'],
-        s493: ['0_495:制冷单元_1', '0_496:制冷单元_2', '0_497:制冷单元_3', '0_498:制冷单元_4', '0_499:制冷单元_5',
-               '0_505:并联冷冻水泵管路_1', '0_506:并联冷冻水泵管路_2', '0_507:并联冷冻水泵管路_3', '0_508:并联冷冻水泵管路_4', '0_509:并联冷冻水泵管路_5',
-               '0_510:并联冷却塔管路_1', '0_500:并联冷却水泵管路_1', '0_501:并联冷却水泵管路_2', '0_494:蓄冷罐组', '0_486:3#数据中心水冷群控系统'],
-        pl508: ['0_473:冷冻水泵-CHWP4']
+      /* 示意：哪些节点已在《能源计量关系》配置过计量关系（供定额考核前置校验演示） */
+      var meteringConfigured = {
+        p475: ['电', '冷量'],
+        s477: ['电', '水', '冷量'],
+        s493: ['电', '冷量'],
+        d473: ['电']
       };
 
-      /* 表具池（选择应用范围）：按能源类型区分物模型与实例 */
-      var METERS = {
-        '电': [
-          { name: '交流电表-市电进线1', model: '交流电表' },
-          { name: '交流电表-冷站总进线', model: '交流电表' },
-          { name: '交流电表-列头柜A路', model: '交流电表', occupiedBy: '0_476:IT系统' },
-          { name: '直流电表-IT配电屏', model: '直流电表' }
-        ],
-        '冷量': [
-          { name: '冷量表-冷冻供回水', model: '冷量表' },
-          { name: '冷量表-末端环路B', model: '冷量表' }
-        ],
-        '水': [
-          { name: '水表-冷却塔补水', model: '水表' },
-          { name: '水表-市政进水', model: '水表' }
-        ]
-      };
-      var ENERGIES = ['冷量', '水', '电'];
+      /* ---------- 指标定义与计算节点（示意数据，渲染结构为通用模型） ---------- */
+      function calcNode(id, kind, name, ref, value, depth, children, status, message, role) {
+        return {
+          id: id,
+          kind: kind,
+          name: name,
+          ref: ref,
+          value: value,
+          depth: depth,
+          children: children || [],
+          status: status || 'ok',
+          message: message || '',
+          role: role || ''
+        };
+      }
 
-      /* 每节点计量方案配置状态（会话内示意存储） */
-      var meteringState = {};
+      function calcExpression(formula, result, nodes, steps) {
+        return { formula: formula, result: result, nodes: nodes, steps: steps || [] };
+      }
+
+      function metricRow(id, name, value, unit, formula, expression, time) {
+        return {
+          id: id,
+          name: name,
+          value: value,
+          unit: unit,
+          formula: formula,
+          expression: expression,
+          time: time || NOW
+        };
+      }
+
+      function makeRealtimeMetric(id, name, energy, result, unit, pointDefs) {
+        var metricId = id + '-metric';
+        var pointNodes = pointDefs.map(function (p, index) {
+          return calcNode(
+            id + '-point-' + index,
+            'point',
+            p.name,
+            '测点 ID: ' + p.id + ' · 属性: ' + p.property,
+            p.value + ' ' + unit,
+            2,
+            [],
+            'ok',
+            '',
+            p.direction
+          );
+        });
+        var nodes = [
+          calcNode(id + '-formula', 'formula', name, '指标属性: metric.energy.current · energyType=' + energy, result + ' ' + unit, 0, [metricId], 'ok', '', '当前指标'),
+          calcNode(metricId, 'metric', '0_475 · ' + name, '对象 ID: 0_475 · 对象指标: ' + name + ' · 能源类型: ' + energy, result + ' ' + unit, 1, pointNodes.map(function (p) { return p.id; }), 'ok', '', '对象归集结果')
+        ].concat(pointNodes);
+        var formula = '沿当前计量拓扑递归 Σ输入瞬时量 − Σ输出瞬时量';
+        return metricRow(id, name, result, unit, formula, calcExpression(formula, result + ' ' + unit, nodes, [
+          '= (' + pointDefs.filter(function (p) { return p.direction === '输入'; }).map(function (p) { return p.value; }).join(' + ') + ') − (' + (pointDefs.filter(function (p) { return p.direction === '输出'; }).map(function (p) { return p.value; }).join(' + ') || '0') + ')',
+          '= ' + result + ' ' + unit
+        ]));
+      }
+
+      function makeEfficiencyMetric(id, name, formula, numerator, denominator, result, unit, mode, pending) {
+        var sourceKind = mode === 'realtime' ? 'point' : 'fact';
+        var sourceLabel = mode === 'realtime' ? '瞬时量测点' : '表具核算明细';
+        var rangeRef = mode === 'period' ? ' · 时间: 2026-07-01~2026-07-07' : '';
+        var numId = id + '-num';
+        var denId = id + '-den';
+        var numLeafId = id + '-num-leaf';
+        var denLeafId = id + '-den-leaf';
+        var nodes = [
+          calcNode(id + '-formula', 'formula', formula, '指标定义: metric.energy.' + id.replace(/-.*/, ''), pending ? '待配置' : result + (unit === '—' ? '' : ' ' + unit), 0, [numId, denId], pending ? 'error' : 'ok', pending ? '分子未解析到可用输入' : '', '当前指标'),
+          calcNode(numId, 'metric', numerator.name, numerator.ref + rangeRef, pending ? '待配置' : numerator.value, 1, [numLeafId], pending ? 'error' : 'ok', pending ? '当前对象未启用水侧实时计量或缺少可用瞬时值' : '', '分子'),
+          calcNode(denId, 'metric', denominator.name, denominator.ref + rangeRef, denominator.value, 1, [denLeafId], 'ok', '', '分母'),
+          calcNode(numLeafId, sourceKind, numerator.leafName, numerator.leafRef + rangeRef, pending ? '—' : (numerator.leafValue || numerator.value), 2, [], pending ? 'error' : 'ok', pending ? '未找到水侧瞬时量测点' : '', '分子输入'),
+          calcNode(denLeafId, sourceKind, denominator.leafName, denominator.leafRef + rangeRef, denominator.leafValue || denominator.value, 2, [], 'ok', '', '分母输入')
+        ];
+        return metricRow(id + '-' + mode, name, pending ? '待配置' : result, unit, formula, calcExpression(formula, pending ? '待配置' : result + (unit === '—' ? '' : ' ' + unit), nodes, pending ? [
+          '= ' + numerator.name + ' ÷ ' + denominator.name,
+          '= 待配置（' + sourceLabel + '未解析完整）'
+        ] : [
+          '= ' + numerator.value + ' ÷ ' + denominator.value,
+          '= ' + result + (unit === '—' ? '' : ' ' + unit)
+        ]), mode === 'realtime' ? NOW : '2026-07-07 16:30:00');
+      }
+
+      function makePeriodMetric(id, name, value, unit, formula, energy, field, periodType) {
+        var objectMetricId = id + '-object';
+        var factA = id + '-fact-a';
+        var factB = id + '-fact-b';
+        var children = [factA, factB];
+        var nodes = [
+          calcNode(id + '-formula', 'formula', name, '指标定义: metric.energy.' + id, value + ' ' + unit, 0, [objectMetricId], 'ok', '', '当前指标'),
+          calcNode(objectMetricId, 'metric', '0_475 · ' + name, '对象 ID: 0_475 · 能源类型: ' + energy + ' · 时间: 2026-07-01~2026-07-07', value + ' ' + unit, 1, children, 'ok', '', '对象统计分片'),
+          calcNode(factA, 'fact', 'AC_Meter_01 · 表具核算明细', '表具 ID: AC_Meter_01 · 字段: ' + field + ' · 粒度: 日', value + ' ' + unit, 2, [], 'ok', '', '输入方向'),
+          calcNode(factB, periodType ? 'billing' : 'fact', periodType ? '计费时段 / 单价快照' : 'AC_Meter_02 · 表具核算明细', periodType ? '计费方案版本: BILL-' + energy + '-202607 · 时段: ' + periodType : '表具 ID: AC_Meter_02 · 字段: ' + field + ' · 粒度: 日', periodType || '0.00 ' + unit, 2, [], 'ok', '', periodType ? '计费参数' : '输出方向')
+        ];
+        return metricRow(id, name, value, unit, formula, calcExpression(formula, value + ' ' + unit, nodes, [
+          '= 读取 2026-07-01 至 2026-07-07 已归档分片' + (periodType ? '（计费时段=' + periodType + '）' : ''),
+          '= 沿当前计量拓扑递归归集',
+          '= ' + value + ' ' + unit
+        ]), '2026-07-07 16:30:00');
+      }
+
+      function buildMetricDatasets() {
+        var realtime = [
+          makeRealtimeMetric('realtime-electric', '实时电功率', '电', '438.60', 'kW', [
+            { name: 'AC_Meter_01 · 有功功率-总', id: '0_473_1_102_0', property: 'activePowerTotal', value: '186.40', direction: '输入' },
+            { name: 'AC_Meter_02 · 有功功率-总', id: '0_493_1_1905_0', property: 'activePowerTotal', value: '252.20', direction: '输入' }
+          ]),
+          makeRealtimeMetric('realtime-cooling', '实时冷量', '冷量', '1,246.20', 'kW', [
+            { name: 'CM_01 · 瞬时冷量', id: '0_493_1_301_0', property: 'instantCooling', value: '1,246.20', direction: '输入' }
+          ]),
+          makeEfficiencyMetric('pue', 'PUE', '当前对象实时电功率 ÷ IT 系统实时电功率',
+            { name: '0_475 · 实时电功率', ref: '对象属性: metric.energy.current · objectId=0_475 · energyType=电', value: '438.60', leafName: 'AC_Meter_01 · 有功功率-总', leafRef: '测点 ID: 0_473_1_102_0 · 属性: activePowerTotal' },
+            { name: '0_476 · IT 系统实时电功率', ref: '系统类型: IT系统 → 对象 ID: 0_476 · 对象指标: 实时电功率', value: '317.83', leafName: 'IT_Meter_01 · 有功功率-总', leafRef: '测点 ID: 0_476_1_108_0 · 属性: activePowerTotal' }, '1.38', '—', 'realtime', false),
+          makeEfficiencyMetric('clf', 'CLF', '暖通空调系统实时电功率 ÷ IT 系统实时电功率',
+            { name: '0_477 · 暖通空调系统实时电功率', ref: '系统类型: 暖通空调系统 → 对象 ID: 0_477 · 对象指标: 实时电功率', value: '76.28', leafName: 'CH_Meter_01 · 有功功率-总', leafRef: '测点 ID: 0_493_1_1909_0 · 属性: activePowerTotal' },
+            { name: '0_476 · IT 系统实时电功率', ref: '系统类型: IT系统 → 对象 ID: 0_476 · 对象指标: 实时电功率', value: '317.83', leafName: 'IT_Meter_01 · 有功功率-总', leafRef: '测点 ID: 0_476_1_108_0 · 属性: activePowerTotal' }, '0.24', '—', 'realtime', false),
+          makeEfficiencyMetric('plf', 'PLF', '配电系统实时电功率 ÷ IT 系统实时电功率',
+            { name: '0_478 · 配电系统实时电功率', ref: '系统类型: 配电系统 → 对象 ID: 0_478 · 对象指标: 实时电功率', value: '25.43', leafName: 'PD_Meter_01 · 有功功率-总', leafRef: '测点 ID: 0_478_1_204_0 · 属性: activePowerTotal' },
+            { name: '0_476 · IT 系统实时电功率', ref: '系统类型: IT系统 → 对象 ID: 0_476 · 对象指标: 实时电功率', value: '317.83', leafName: 'IT_Meter_01 · 有功功率-总', leafRef: '测点 ID: 0_476_1_108_0 · 属性: activePowerTotal' }, '0.08', '—', 'realtime', false),
+          makeEfficiencyMetric('olf', 'OLF', '其他系统实时电功率 ÷ IT 系统实时电功率',
+            { name: '0_479 · 其他系统实时电功率', ref: '系统类型: 其他系统 → 对象 ID: 0_479 · 对象指标: 实时电功率', value: '19.06', leafName: 'OT_Meter_01 · 有功功率-总', leafRef: '测点 ID: 0_479_1_205_0 · 属性: activePowerTotal' },
+            { name: '0_476 · IT 系统实时电功率', ref: '系统类型: IT系统 → 对象 ID: 0_476 · 对象指标: 实时电功率', value: '317.83', leafName: 'IT_Meter_01 · 有功功率-总', leafRef: '测点 ID: 0_476_1_108_0 · 属性: activePowerTotal' }, '0.06', '—', 'realtime', false),
+          makeEfficiencyMetric('wue', 'WUE', '当前对象实时用水量 × 1,000 ÷ IT 系统实时电功率',
+            { name: '0_475 · 实时用水量', ref: '对象属性: metric.energy.current · objectId=0_475 · energyType=水', value: '—', leafName: '水侧瞬时量测点', leafRef: '未解析到测点 ID / 属性' },
+            { name: '0_476 · IT 系统实时电功率', ref: '系统类型: IT系统 → 对象 ID: 0_476 · 对象指标: 实时电功率', value: '317.83', leafName: 'IT_Meter_01 · 有功功率-总', leafRef: '测点 ID: 0_476_1_108_0 · 属性: activePowerTotal' }, '—', 'L/kWh', 'realtime', true)
+        ];
+
+        var period = [
+          makePeriodMetric('usage-electric', '电能消耗量', '482,910.36', 'kWh', '沿当前计量拓扑递归 Σ输入电量 − Σ输出电量', '电', 'usageAmount', ''),
+          makePeriodMetric('cost-electric', '电费总额', '436,820.17', '元', '沿当前计量拓扑递归归集电费成本，输出侧作减项', '电', 'costAmount', ''),
+          makePeriodMetric('cost-electric-tip', '尖时电费', '22,480.16', '元', '计费时段=尖的电费成本沿当前计量拓扑递归汇总', '电', 'costAmount', '尖'),
+          makePeriodMetric('cost-electric-peak', '峰时电费', '61,834.20', '元', '计费时段=峰的电费成本沿当前计量拓扑递归汇总', '电', 'costAmount', '峰'),
+          makePeriodMetric('cost-electric-flat', '平时电费', '58,960.48', '元', '计费时段=平的电费成本沿当前计量拓扑递归汇总', '电', 'costAmount', '平'),
+          makePeriodMetric('cost-electric-valley', '谷时电费', '35,629.38', '元', '计费时段=谷的电费成本沿当前计量拓扑递归汇总', '电', 'costAmount', '谷'),
+          makePeriodMetric('usage-water', '用水量', '18,904.60', 'm³', '沿当前计量拓扑递归 Σ输入水量 − Σ输出水量', '水', 'usageAmount', ''),
+          makePeriodMetric('cost-water-unified', '水费（统一价）', '52,156.70', '元', '统一价成本沿当前计量拓扑递归汇总', '水', 'costAmount', '统一'),
+          makePeriodMetric('usage-cooling', '冷量消耗量', '1,238,740.20', 'kWh', '沿当前计量拓扑递归 Σ输入冷量 − Σ输出冷量', '冷量', 'usageAmount', ''),
+          makePeriodMetric('cost-cooling-unified', '冷量费用（统一价）', '96,514.42', '元', '统一价成本沿当前计量拓扑递归汇总', '冷量', 'costAmount', '统一'),
+          makeEfficiencyMetric('pue', 'PUE', '当前对象 A1（电） ÷ IT 系统 A1（电）',
+            { name: '0_475 · A1（电）', ref: '对象属性: metric.energy.usage · objectId=0_475 · energyType=电', value: '482,910.36', leafName: 'AC_Meter_01 · 表具核算明细', leafRef: '表具 ID: AC_Meter_01 · 字段: usageAmount · 粒度: 日' },
+            { name: '0_476 · A1（电）', ref: '系统类型: IT系统 → 对象 ID: 0_476 · 指标: A1（电）', value: '349,934.32', leafName: 'IT_Meter_01 · 表具核算明细', leafRef: '表具 ID: IT_Meter_01 · 字段: usageAmount · 粒度: 日' }, '1.38', '—', 'period', false),
+          makeEfficiencyMetric('clf', 'CLF', '暖通空调系统 A1（电） ÷ IT 系统 A1（电）',
+            { name: '0_477 · A1（电）', ref: '系统类型: 暖通空调系统 → 对象 ID: 0_477 · 指标: A1（电）', value: '83,984.24', leafName: 'CH_Meter_01 · 表具核算明细', leafRef: '表具 ID: CH_Meter_01 · 字段: usageAmount · 粒度: 日' },
+            { name: '0_476 · A1（电）', ref: '系统类型: IT系统 → 对象 ID: 0_476 · 指标: A1（电）', value: '349,934.32', leafName: 'IT_Meter_01 · 表具核算明细', leafRef: '表具 ID: IT_Meter_01 · 字段: usageAmount · 粒度: 日' }, '0.24', '—', 'period', false),
+          makeEfficiencyMetric('plf', 'PLF', '配电系统 A1（电） ÷ IT 系统 A1（电）',
+            { name: '0_478 · A1（电）', ref: '系统类型: 配电系统 → 对象 ID: 0_478 · 指标: A1（电）', value: '27,994.75', leafName: 'PD_Meter_01 · 表具核算明细', leafRef: '表具 ID: PD_Meter_01 · 字段: usageAmount · 粒度: 日' },
+            { name: '0_476 · A1（电）', ref: '系统类型: IT系统 → 对象 ID: 0_476 · 指标: A1（电）', value: '349,934.32', leafName: 'IT_Meter_01 · 表具核算明细', leafRef: '表具 ID: IT_Meter_01 · 字段: usageAmount · 粒度: 日' }, '0.08', '—', 'period', false),
+          makeEfficiencyMetric('olf', 'OLF', '其他系统 A1（电） ÷ IT 系统 A1（电）',
+            { name: '0_479 · A1（电）', ref: '系统类型: 其他系统 → 对象 ID: 0_479 · 指标: A1（电）', value: '20,997.05', leafName: 'OT_Meter_01 · 表具核算明细', leafRef: '表具 ID: OT_Meter_01 · 字段: usageAmount · 粒度: 日' },
+            { name: '0_476 · A1（电）', ref: '系统类型: IT系统 → 对象 ID: 0_476 · 指标: A1（电）', value: '349,934.32', leafName: 'IT_Meter_01 · 表具核算明细', leafRef: '表具 ID: IT_Meter_01 · 字段: usageAmount · 粒度: 日' }, '0.06', '—', 'period', false),
+          makeEfficiencyMetric('wue', 'WUE', '当前对象 A1（水）× 1,000 ÷ IT 系统 A1（电）',
+            { name: '0_475 · A1（水）× 1,000', ref: '对象属性: metric.energy.usage · objectId=0_475 · energyType=水 · 单位换算: m³→L', value: '18,904,600', leafValue: '18,904.60 m³', leafName: 'WM_Meter_01 · 表具核算明细', leafRef: '表具 ID: WM_Meter_01 · 字段: usageAmount · 粒度: 日' },
+            { name: '0_476 · A1（电）', ref: '系统类型: IT系统 → 对象 ID: 0_476 · 指标: A1（电）', value: '349,934.32', leafName: 'IT_Meter_01 · 表具核算明细', leafRef: '表具 ID: IT_Meter_01 · 字段: usageAmount · 粒度: 日' }, '54.02', 'L/kWh', 'period', false)
+        ];
+        return { realtime: realtime, period: period };
+      }
+
+      var metricDatasets = buildMetricDatasets();
+      var metricMode = 'realtime';
+      var activeExpression = null;
+      var activeMetricName = '';
+      var selectedCalcNodeId = '';
+      var calcView = 'graph';
+      var calcShowIds = true;
 
       var currentNode = null;
 
@@ -1879,11 +2011,199 @@
         return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       }
 
+      function calcKindLabel(kind) {
+        return {
+          formula: '公式',
+          metric: '对象指标',
+          point: '瞬时量测点',
+          fact: '表具核算明细',
+          billing: '计费快照'
+        }[kind] || '计算节点';
+      }
+
+      function calcKindCode(kind) {
+        return { formula: 'F', metric: 'M', point: 'P', fact: 'D', billing: 'T' }[kind] || 'N';
+      }
+
+      function findCalcNode(id) {
+        if (!activeExpression) return null;
+        return activeExpression.nodes.find(function (node) { return node.id === id; }) || null;
+      }
+
+      function calcVisibleNodes() {
+        if (!activeExpression) return [];
+        var kw = document.getElementById('calcSearch').value.trim().toLowerCase();
+        var onlyError = document.getElementById('calcOnlyError').checked;
+        if (!kw && !onlyError) return activeExpression.nodes.slice();
+
+        var parentMap = {};
+        activeExpression.nodes.forEach(function (node) {
+          node.children.forEach(function (childId) { parentMap[childId] = node.id; });
+        });
+        var visible = {};
+        activeExpression.nodes.forEach(function (node) {
+          var haystack = (node.name + ' ' + node.ref + ' ' + node.role).toLowerCase();
+          var matches = (!kw || haystack.indexOf(kw) > -1) && (!onlyError || node.status === 'error');
+          if (!matches) return;
+          visible[node.id] = true;
+          var parentId = parentMap[node.id];
+          while (parentId) {
+            visible[parentId] = true;
+            parentId = parentMap[parentId];
+          }
+        });
+        return activeExpression.nodes.filter(function (node) { return visible[node.id]; });
+      }
+
+      function calcNodeMarkup(node) {
+        var selected = node.id === selectedCalcNodeId ? ' selected' : '';
+        var error = node.status === 'error' ? ' error' : '';
+        var ref = calcShowIds ? '<span class="calc-node-ref">' + esc(node.ref) + '</span>' : '';
+        return '<button type="button" class="calc-node' + selected + error + '" data-calc-node="' + esc(node.id) + '">' +
+          '<span class="calc-node-top"><span class="calc-node-name">' + esc(node.name) + '</span><span class="calc-node-status"></span></span>' +
+          ref +
+          '<span class="calc-node-value">' + esc(node.value) + '</span>' +
+        '</button>';
+      }
+
+      function renderCalcInspector() {
+        var inspector = document.getElementById('calcInspector');
+        var node = findCalcNode(selectedCalcNodeId) || (activeExpression && activeExpression.nodes[0]);
+        if (!node) {
+          inspector.innerHTML = '<div class="empty-cell">请选择计算节点</div>';
+          return;
+        }
+        selectedCalcNodeId = node.id;
+        var children = node.children.map(findCalcNode).filter(Boolean);
+        var childHtml = children.length ? '<div class="calc-child-list">' + children.map(function (child) {
+          return '<button type="button" class="calc-child-item" data-calc-node="' + esc(child.id) + '"><span>' + esc(child.name) + '</span><strong>' + esc(child.value) + '</strong></button>';
+        }).join('') + '</div>' : '<div class="calc-inspector-row">无下级节点</div>';
+        inspector.innerHTML =
+          '<div class="calc-inspector-kind"><span class="calc-kind-badge">' + calcKindCode(node.kind) + '</span><span>' + calcKindLabel(node.kind) + '</span><span class="' + (node.status === 'error' ? 'calc-status-error' : 'calc-status-ok') + '">● ' + (node.status === 'error' ? '异常' : '正常') + '</span></div>' +
+          '<div class="calc-inspector-name">' + esc(node.name) + '</div>' +
+          '<div class="calc-inspector-ref">' + esc(node.ref) + '</div>' +
+          '<div class="calc-inspector-result"><span>结果<strong>' + esc(node.value) + '</strong></span><span>下级<strong>' + children.length + '</strong></span></div>' +
+          (node.role ? '<div class="calc-inspector-row"><b>计算角色：</b>' + esc(node.role) + '</div>' : '') +
+          (node.message ? '<div class="calc-inspector-row calc-status-error"><b>异常原因：</b>' + esc(node.message) + '</div>' : '') +
+          childHtml;
+        inspector.querySelectorAll('[data-calc-node]').forEach(function (button) {
+          button.addEventListener('click', function () {
+            selectedCalcNodeId = button.getAttribute('data-calc-node');
+            renderCalcViews();
+          });
+        });
+      }
+
+      function renderCalcGraph() {
+        var graph = document.getElementById('calcGraph');
+        var visible = calcVisibleNodes();
+        var columns = [0, 1, 2].map(function (depth) {
+          var nodes = visible.filter(function (node) { return node.depth === depth; });
+          return '<div class="calc-column">' + (nodes.length ? nodes.map(calcNodeMarkup).join('') : '<span class="empty-cell">无匹配节点</span>') + '</div>';
+        });
+        graph.innerHTML = columns[0] + '<div class="calc-connector"></div>' + columns[1] + '<div class="calc-connector"></div>' + columns[2];
+        graph.querySelectorAll('[data-calc-node]').forEach(function (button) {
+          button.addEventListener('click', function () {
+            selectedCalcNodeId = button.getAttribute('data-calc-node');
+            renderCalcViews();
+          });
+        });
+      }
+
+      function renderCalcTable() {
+        var body = document.getElementById('calcTableBody');
+        var visible = calcVisibleNodes();
+        body.innerHTML = visible.length ? visible.map(function (node) {
+          return '<tr data-calc-node="' + esc(node.id) + '">' +
+            '<td><b>' + esc(node.name) + '</b><br><span style="color:var(--text-hint);font-size:11px">' + esc(node.role || '—') + '</span></td>' +
+            '<td>' + calcKindLabel(node.kind) + '</td>' +
+            '<td class="num-cell">' + (calcShowIds ? esc(node.ref) : '已隐藏') + '</td>' +
+            '<td class="num-cell">' + esc(node.value) + '</td>' +
+            '<td class="' + (node.status === 'error' ? 'calc-status-error' : 'calc-status-ok') + '">' + (node.status === 'error' ? '异常' : '正常') + '</td>' +
+          '</tr>';
+        }).join('') : '<tr><td colspan="5" class="empty-cell">无匹配节点</td></tr>';
+        body.querySelectorAll('[data-calc-node]').forEach(function (row) {
+          row.addEventListener('click', function () {
+            selectedCalcNodeId = row.getAttribute('data-calc-node');
+            calcView = 'graph';
+            document.querySelectorAll('[data-calc-view]').forEach(function (button) {
+              var on = button.getAttribute('data-calc-view') === 'graph';
+              button.classList.toggle('active', on);
+              button.setAttribute('aria-pressed', on ? 'true' : 'false');
+            });
+            renderCalcViews();
+          });
+        });
+      }
+
+      function renderCalcViews() {
+        if (!activeExpression) return;
+        var errorCount = activeExpression.nodes.filter(function (node) { return node.status === 'error'; }).length;
+        var paramCount = activeExpression.nodes.filter(function (node) { return node.kind === 'billing'; }).length;
+        document.getElementById('calcNodeCount').textContent = '节点 ' + activeExpression.nodes.length;
+        document.getElementById('calcParamCount').textContent = '参数 ' + paramCount;
+        document.getElementById('calcErrorCount').textContent = '异常 ' + errorCount;
+        document.getElementById('calcErrorCount').classList.toggle('bad', errorCount > 0);
+        document.getElementById('calcGraphView').hidden = calcView !== 'graph';
+        document.getElementById('calcTableView').hidden = calcView !== 'table';
+        renderCalcGraph();
+        renderCalcTable();
+        renderCalcInspector();
+      }
+
+      function openMetricCalculation(row) {
+        activeExpression = row.expression;
+        activeMetricName = row.name;
+        selectedCalcNodeId = activeExpression.nodes[0].id;
+        calcView = 'graph';
+        calcShowIds = true;
+        document.getElementById('calcSearch').value = '';
+        document.getElementById('calcOnlyError').checked = false;
+        document.getElementById('calcIdToggle').classList.remove('off');
+        document.getElementById('calcIdToggle').setAttribute('aria-pressed', 'true');
+        document.getElementById('calcMetricName').textContent = row.name;
+        document.getElementById('calcResultExpression').textContent = activeExpression.formula;
+        document.getElementById('calcResultSteps').innerHTML = activeExpression.steps.map(function (step) {
+          return '<span class="' + (activeExpression.result === '待配置' ? 'calc-result-error' : '') + '">' + esc(step) + '</span>';
+        }).join('');
+        document.querySelectorAll('[data-calc-view]').forEach(function (button) {
+          var on = button.getAttribute('data-calc-view') === 'graph';
+          button.classList.toggle('active', on);
+          button.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        renderCalcViews();
+        document.getElementById('metricCalcModal').hidden = false;
+      }
+
+      function renderMetrics() {
+        var body = document.getElementById('metricsBody');
+        if (!body) return;
+        var rows = metricDatasets[metricMode];
+        body.innerHTML = rows.map(function (row) {
+          var pending = row.value === '待配置';
+          return '<tr>' +
+            '<td class="metric-name-cell">' + esc(row.name) + '</td>' +
+            '<td><button type="button" class="metric-expression" data-metric-id="' + esc(row.id) + '" title="查看计算结果预览"><span>' + esc(row.formula) + '</span></button></td>' +
+            '<td><span class="metric-value' + (pending ? ' pending' : '') + '">' + esc(row.value) + '</span></td>' +
+            '<td>' + esc(row.unit) + '</td>' +
+            '<td class="num-cell">' + esc(row.time) + '</td>' +
+          '</tr>';
+        }).join('');
+        document.getElementById('badgeMetrics').textContent = metricDatasets.realtime.length + metricDatasets.period.length;
+        body.querySelectorAll('[data-metric-id]').forEach(function (button) {
+          button.addEventListener('click', function () {
+            var row = rows.find(function (candidate) { return candidate.id === button.getAttribute('data-metric-id'); });
+            if (row) openMetricCalculation(row);
+          });
+        });
+      }
+
       function renderPoints(node) {
         var body = document.getElementById('pointsBody');
         var pts = node.points || [];
         document.getElementById('badgePoints').textContent = pts.length;
         document.getElementById('badgePoints').classList.toggle('has', pts.length > 0);
+        if (!body) return;
         if (!pts.length) {
           body.innerHTML = '<tr><td colspan="7" class="empty-cell">暂无数据</td></tr>';
           return;
@@ -1904,8 +2224,10 @@
           el.addEventListener('click', function () { showToast('示意：' + el.textContent + '（测点历史曲线 / 编辑测点绑定）'); });
         });
         var checkAll = document.getElementById('pointCheckAll');
-        checkAll.checked = false;
-        checkAll.indeterminate = false;
+        if (checkAll) {
+          checkAll.checked = false;
+          checkAll.indeterminate = false;
+        }
       }
 
       var INFO_DEVICE = [
@@ -1937,6 +2259,7 @@
       function renderInfo(nodeId) {
         var node = NODES[nodeId];
         var grid = document.getElementById('infoGrid');
+        if (!grid) return;
         var rows;
         if (nodeId === 'd473') {
           rows = INFO_DEVICE;
@@ -1959,6 +2282,7 @@
       function renderTopo(nodeId) {
         var node = NODES[nodeId];
         var body = document.getElementById('topoBody');
+        if (!body) return;
         var rows = [];
         if (node.parent) {
           var parent = NODES[node.parent];
@@ -2003,6 +2327,7 @@
 
         renderHeadActions('node');
         renderPoints(node);
+        renderMetrics();
         renderInfo(nodeId);
         renderTopo(nodeId);
       }
@@ -2039,6 +2364,7 @@
       /* ---------- Tab 切换 ---------- */
       var panels = {
         points: document.getElementById('panel-points'),
+        metrics: document.getElementById('panel-metrics'),
         devices: document.getElementById('panel-devices'),
         info: document.getElementById('panel-info'),
         topology: document.getElementById('panel-topology'),
@@ -2056,25 +2382,94 @@
           });
           Object.keys(panels).forEach(function (k) {
             var on = k === key;
-            panels[k].classList.toggle('active', on);
-            panels[k].hidden = !on;
+            if (panels[k]) {
+              panels[k].classList.toggle('active', on);
+              panels[k].hidden = !on;
+            }
           });
         });
       });
 
-      /* ---------- 测点列表工具栏 ---------- */
-      var pointCheckAll = document.getElementById('pointCheckAll');
-      pointCheckAll.addEventListener('change', function () {
-        document.querySelectorAll('.point-row-check').forEach(function (cb) { cb.checked = pointCheckAll.checked; });
+      /* ---------- 指标列表与计算预览 ---------- */
+      document.querySelectorAll('[data-metric-mode]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          metricMode = button.getAttribute('data-metric-mode');
+          document.querySelectorAll('[data-metric-mode]').forEach(function (peer) {
+            var on = peer === button;
+            peer.classList.toggle('active', on);
+            peer.setAttribute('aria-pressed', on ? 'true' : 'false');
+          });
+          document.getElementById('metricRange').hidden = metricMode !== 'period';
+          renderMetrics();
+        });
       });
 
-      document.getElementById('btnBatchBind').addEventListener('click', function () {
+      document.getElementById('btnMetricQuery').addEventListener('click', function () {
+        var start = document.getElementById('metricStart').value;
+        var end = document.getElementById('metricEnd').value;
+        if (!start || !end || start > end) {
+          showToast('请选择正确的起止日期');
+          return;
+        }
+        metricDatasets.period.forEach(function (row) {
+          row.expression.nodes.forEach(function (node) {
+            node.ref = node.ref.replace(/时间: [^·]+/, '时间: ' + start + '~' + end + ' ');
+          });
+          row.expression.steps[0] = '= 读取 ' + start + ' 至 ' + end + ' 已归档分片';
+          row.time = '2026-07-07 16:30:00';
+        });
+        renderMetrics();
+        showToast('已按 ' + start + ' 至 ' + end + ' 查询时间段指标');
+      });
+
+      document.querySelectorAll('[data-calc-view]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          calcView = button.getAttribute('data-calc-view');
+          document.querySelectorAll('[data-calc-view]').forEach(function (peer) {
+            var on = peer === button;
+            peer.classList.toggle('active', on);
+            peer.setAttribute('aria-pressed', on ? 'true' : 'false');
+          });
+          renderCalcViews();
+        });
+      });
+
+      document.getElementById('calcSearch').addEventListener('input', renderCalcViews);
+      document.getElementById('calcOnlyError').addEventListener('change', renderCalcViews);
+      document.getElementById('calcIdToggle').addEventListener('click', function () {
+        calcShowIds = !calcShowIds;
+        this.classList.toggle('off', !calcShowIds);
+        this.setAttribute('aria-pressed', calcShowIds ? 'true' : 'false');
+        renderCalcViews();
+      });
+      document.getElementById('btnRecalculate').addEventListener('click', function () {
+        renderCalcViews();
+        showToast('已按当前对象、当前拓扑和本次查询条件重新计算');
+      });
+
+      renderMetrics();
+
+      /* ---------- 测点列表工具栏 ---------- */
+      var pointCheckAll = document.getElementById('pointCheckAll');
+      if (pointCheckAll) {
+        pointCheckAll.addEventListener('change', function () {
+          document.querySelectorAll('.point-row-check').forEach(function (cb) { cb.checked = pointCheckAll.checked; });
+        });
+      }
+
+      function bindOptional(id, eventName, handler) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener(eventName, handler);
+      }
+
+      bindOptional('btnBatchBind', 'click', function () {
         var n = document.querySelectorAll('.point-row-check:checked').length;
         showToast(n ? '示意：对已选 ' + n + ' 个测点批量绑定' : '示意：请先勾选测点后再批量绑定');
       });
 
-      document.getElementById('btnPointSearch').addEventListener('click', function () {
-        var kw = document.getElementById('pointSearch').value.trim();
+      bindOptional('btnPointSearch', 'click', function () {
+        var search = document.getElementById('pointSearch');
+        var kw = search ? search.value.trim() : '';
         var rows = document.querySelectorAll('#pointsBody tr');
         rows.forEach(function (tr) {
           if (tr.querySelector('.empty-cell')) return;
@@ -2083,13 +2478,13 @@
         showToast(kw ? '按「' + kw + '」过滤测点（示意）' : '已清空搜索条件');
       });
 
-      document.getElementById('pointTypeFilter').addEventListener('change', function () {
+      bindOptional('pointTypeFilter', 'change', function () {
         showToast('示意：按测点类型「' + (this.value || '全部') + '」过滤');
       });
-      document.getElementById('refreshInterval').addEventListener('change', function () {
+      bindOptional('refreshInterval', 'change', function () {
         showToast('刷新时间已切换为 ' + this.value);
       });
-      document.getElementById('btnColSettings').addEventListener('click', function () {
+      bindOptional('btnColSettings', 'click', function () {
         showToast('示意：打开显示列配置（勾选表格展示列）');
       });
 
@@ -2097,25 +2492,27 @@
         b.addEventListener('click', function () { showToast('示意：请先勾选设备行再执行「' + b.textContent + '」'); });
       });
 
-      document.getElementById('btnAttrPolicy').addEventListener('click', function () { showToast('示意：打开属性策略配置'); });
-      document.getElementById('btnInfoEdit').addEventListener('click', function () { showToast('示意：进入基本信息编辑态'); });
+      bindOptional('btnAttrPolicy', 'click', function () { showToast('示意：打开属性策略配置'); });
+      bindOptional('btnInfoEdit', 'click', function () { showToast('示意：进入基本信息编辑态'); });
 
       /* ---------- 关系拓扑视图切换 ---------- */
       var btnTopoList = document.getElementById('btnTopoList');
       var btnTopoGraph = document.getElementById('btnTopoGraph');
-      btnTopoList.addEventListener('click', function () {
-        btnTopoList.classList.add('active');
-        btnTopoGraph.classList.remove('active');
-        document.getElementById('topoListWrap').hidden = false;
-        document.getElementById('topoGraphWrap').hidden = true;
-      });
-      btnTopoGraph.addEventListener('click', function () {
-        btnTopoGraph.classList.add('active');
-        btnTopoList.classList.remove('active');
-        document.getElementById('topoListWrap').hidden = true;
-        document.getElementById('topoGraphWrap').hidden = false;
-      });
-      document.getElementById('btnNewRelation').addEventListener('click', function () {
+      if (btnTopoList && btnTopoGraph) {
+        btnTopoList.addEventListener('click', function () {
+          btnTopoList.classList.add('active');
+          btnTopoGraph.classList.remove('active');
+          document.getElementById('topoListWrap').hidden = false;
+          document.getElementById('topoGraphWrap').hidden = true;
+        });
+        btnTopoGraph.addEventListener('click', function () {
+          btnTopoGraph.classList.add('active');
+          btnTopoList.classList.remove('active');
+          document.getElementById('topoListWrap').hidden = true;
+          document.getElementById('topoGraphWrap').hidden = false;
+        });
+      }
+      bindOptional('btnNewRelation', 'click', function () {
         showToast('示意：新建关系（选择关系类型 + 目标对象）');
       });
 
@@ -2133,285 +2530,11 @@
         });
       });
 
-      /* ---------- 能耗计量方案配置 ---------- */
-      var meteringModal = document.getElementById('meteringModal');
-      var meteringBody = document.getElementById('meteringBody');
-      var meteringDraft = null; /* 打开弹窗时的编辑草稿 */
-      var scopeCtx = null;      /* 当前打开“选择应用范围”的能源行 */
-
-      function getNodeMetering(nodeId) {
-        if (!meteringState[nodeId]) {
-          meteringState[nodeId] = {};
-          ENERGIES.forEach(function (e) {
-            meteringState[nodeId][e] = { rule: '', targets: [], childSel: [], enabled: false };
-          });
-        }
-        return meteringState[nodeId];
-      }
-
-      function cloneState(s) { return JSON.parse(JSON.stringify(s)); }
-
-      function renderMeteringRows() {
-        meteringBody.innerHTML = '';
-        ENERGIES.forEach(function (energy) {
-          var row = meteringDraft[energy];
-          var tr = document.createElement('tr');
-
-          var tdE = document.createElement('td');
-          tdE.textContent = energy;
-          tr.appendChild(tdE);
-
-          var tdR = document.createElement('td');
-          var cell = document.createElement('div');
-          cell.className = 'metering-rule-cell';
-
-          var sel = document.createElement('select');
-          sel.className = 'toolbar-select';
-          sel.setAttribute('aria-label', energy + ' 计量规则');
-          ['', '仪表计量能耗', '各子节点计量能耗'].forEach(function (opt) {
-            var o = document.createElement('option');
-            o.value = opt;
-            o.textContent = opt || '请选择能源类型';
-            sel.appendChild(o);
-          });
-          sel.value = row.rule;
-          cell.appendChild(sel);
-
-          /* 仪表计量能耗：计量对象选择按钮 */
-          var pickBtn = document.createElement('button');
-          pickBtn.type = 'button';
-          pickBtn.className = 'btn btn-outline metering-pick-btn';
-          pickBtn.textContent = '计量对象选择(已选' + row.targets.length + '个)';
-          pickBtn.hidden = row.rule !== '仪表计量能耗';
-          pickBtn.addEventListener('click', function () {
-            openScopeModal(energy);
-          });
-          cell.appendChild(pickBtn);
-
-          /* 各子节点计量能耗：子节点多选 */
-          var childWrap = document.createElement('div');
-          childWrap.className = 'child-select';
-          childWrap.hidden = row.rule !== '各子节点计量能耗';
-          var childBtn = document.createElement('button');
-          childBtn.type = 'button';
-          childBtn.className = 'child-select-btn' + (row.childSel.length ? ' has-value' : '');
-          childBtn.textContent = row.childSel.length ? '已选 ' + row.childSel.length + ' 个子节点' : '请选择子节点';
-          var pop = document.createElement('div');
-          pop.className = 'child-pop';
-          pop.hidden = true;
-          pop.addEventListener('click', function (e) { e.stopPropagation(); });
-          var children = CHILD_LABELS[currentNode] || [];
-          if (!children.length) {
-            pop.innerHTML = '<div class="child-pop-empty">无数据</div>';
-          } else {
-            children.forEach(function (label) {
-              var lab = document.createElement('label');
-              var cb = document.createElement('input');
-              cb.type = 'checkbox';
-              cb.checked = row.childSel.indexOf(label) > -1;
-              cb.addEventListener('change', function () {
-                if (cb.checked) row.childSel.push(label);
-                else row.childSel = row.childSel.filter(function (x) { return x !== label; });
-                childBtn.textContent = row.childSel.length ? '已选 ' + row.childSel.length + ' 个子节点' : '请选择子节点';
-                childBtn.classList.toggle('has-value', row.childSel.length > 0);
-              });
-              lab.appendChild(cb);
-              lab.appendChild(document.createTextNode(label));
-              pop.appendChild(lab);
-            });
-          }
-          childBtn.addEventListener('click', function (e) {
-            e.stopPropagation();
-            document.querySelectorAll('.child-pop').forEach(function (p) { if (p !== pop) p.hidden = true; });
-            pop.hidden = !pop.hidden;
-          });
-          childWrap.appendChild(childBtn);
-          childWrap.appendChild(pop);
-          cell.appendChild(childWrap);
-
-          sel.addEventListener('change', function () {
-            row.rule = sel.value;
-            pickBtn.hidden = row.rule !== '仪表计量能耗';
-            childWrap.hidden = row.rule !== '各子节点计量能耗';
-          });
-
-          tdR.appendChild(cell);
-          tr.appendChild(tdR);
-
-          var tdS = document.createElement('td');
-          tdS.style.textAlign = 'right';
-          var sw = document.createElement('button');
-          sw.type = 'button';
-          sw.className = 'switch' + (row.enabled ? ' on' : '');
-          sw.setAttribute('role', 'switch');
-          sw.setAttribute('aria-checked', row.enabled ? 'true' : 'false');
-          sw.setAttribute('aria-label', energy + ' 启用开关');
-          sw.innerHTML = '<span class="switch-text">' + (row.enabled ? '开' : '关') + '</span>';
-          sw.addEventListener('click', function () {
-            row.enabled = !row.enabled;
-            sw.classList.toggle('on', row.enabled);
-            sw.setAttribute('aria-checked', row.enabled ? 'true' : 'false');
-            sw.querySelector('.switch-text').textContent = row.enabled ? '开' : '关';
-          });
-          tdS.appendChild(sw);
-          tr.appendChild(tdS);
-
-          meteringBody.appendChild(tr);
-        });
-      }
-
-      document.addEventListener('click', function () {
-        document.querySelectorAll('.child-pop').forEach(function (p) { p.hidden = true; });
-      });
-
-      document.getElementById('btnMeteringConfig').addEventListener('click', function () {
-        meteringDraft = cloneState(getNodeMetering(currentNode));
-        renderMeteringRows();
-        meteringModal.hidden = false;
-      });
-
-      document.getElementById('btnMeteringSave').addEventListener('click', function () {
-        var invalid = ENERGIES.filter(function (e) {
-          var r = meteringDraft[e];
-          if (!r.enabled) return false;
-          if (!r.rule) return true;
-          if (r.rule === '仪表计量能耗' && !r.targets.length) return true;
-          if (r.rule === '各子节点计量能耗' && !r.childSel.length) return true;
-          return false;
-        });
-        if (invalid.length) {
-          showToast('「' + invalid.join('、') + '」已开启但未完成计量规则 / 计量对象配置，请补全后保存');
-          return;
-        }
-        meteringState[currentNode] = cloneState(meteringDraft);
-        meteringModal.hidden = true;
-        showToast('已保存能耗计量方案（示意）：生成 / 更新当前对象计量拓扑，表具归属已查重');
-      });
-
-      /* ---------- 选择应用范围 ---------- */
-      var scopeModal = document.getElementById('scopeModal');
-      var scopeBody = document.getElementById('scopeBody');
-      var scopeSel = [];
-
-      function openScopeModal(energy) {
-        scopeCtx = energy;
-        scopeSel = meteringDraft[energy].targets.slice();
-        var modelFilter = document.getElementById('scopeModelFilter');
-        modelFilter.innerHTML = '<option value="">请选择物模型</option>';
-        var models = [];
-        (METERS[energy] || []).forEach(function (m) {
-          if (models.indexOf(m.model) === -1) models.push(m.model);
-        });
-        models.forEach(function (m) {
-          var o = document.createElement('option');
-          o.value = m; o.textContent = m;
-          modelFilter.appendChild(o);
-        });
-        document.getElementById('scopeSearch').value = '';
-        renderScopeTable();
-        renderScopeChips();
-        scopeModal.hidden = false;
-      }
-
-      function renderScopeTable() {
-        var kw = document.getElementById('scopeSearch').value.trim();
-        var model = document.getElementById('scopeModelFilter').value;
-        var list = (METERS[scopeCtx] || []).filter(function (m) {
-          if (kw && m.name.indexOf(kw) === -1) return false;
-          if (model && m.model !== model) return false;
-          return true;
-        });
-        document.getElementById('scopeTotal').textContent = '共 ' + list.length + ' 条';
-        if (!list.length) {
-          scopeBody.innerHTML = '<tr><td colspan="3" class="empty-cell">没有找到匹配的记录</td></tr>';
-          return;
-        }
-        scopeBody.innerHTML = '';
-        list.forEach(function (m) {
-          var tr = document.createElement('tr');
-          var occupied = !!m.occupiedBy;
-          if (occupied) tr.className = 'disabled';
-          var tdC = document.createElement('td');
-          tdC.className = 'col-check';
-          var cb = document.createElement('input');
-          cb.type = 'checkbox';
-          cb.disabled = occupied;
-          cb.checked = scopeSel.indexOf(m.name) > -1;
-          cb.setAttribute('aria-label', '选择 ' + m.name);
-          cb.addEventListener('change', function () {
-            if (cb.checked) scopeSel.push(m.name);
-            else scopeSel = scopeSel.filter(function (x) { return x !== m.name; });
-            renderScopeChips();
-          });
-          tdC.appendChild(cb);
-          tr.appendChild(tdC);
-          var tdN = document.createElement('td');
-          tdN.innerHTML = esc(m.name) + (occupied ? '<div class="scope-occupied">已被「' + esc(m.occupiedBy) + '」占用，不可重复应用</div>' : '');
-          tr.appendChild(tdN);
-          var tdM = document.createElement('td');
-          tdM.textContent = m.model;
-          tr.appendChild(tdM);
-          scopeBody.appendChild(tr);
-        });
-      }
-
-      function renderScopeChips() {
-        var chips = document.getElementById('scopeChips');
-        document.getElementById('scopeSelCount').textContent = scopeSel.length;
-        if (!scopeSel.length) {
-          chips.innerHTML = '<div class="scope-chips-empty">尚未选择计量对象</div>';
-          return;
-        }
-        chips.innerHTML = '';
-        scopeSel.forEach(function (name) {
-          var chip = document.createElement('div');
-          chip.className = 'scope-chip';
-          var span = document.createElement('span');
-          span.textContent = name;
-          var x = document.createElement('button');
-          x.type = 'button';
-          x.textContent = '✕';
-          x.setAttribute('aria-label', '移除 ' + name);
-          x.addEventListener('click', function () {
-            scopeSel = scopeSel.filter(function (n) { return n !== name; });
-            renderScopeTable();
-            renderScopeChips();
-          });
-          chip.appendChild(span);
-          chip.appendChild(x);
-          chips.appendChild(chip);
-        });
-      }
-
-      document.getElementById('btnScopeSearch').addEventListener('click', renderScopeTable);
-      document.getElementById('scopeModelFilter').addEventListener('change', renderScopeTable);
-      document.getElementById('scopeCheckAll').addEventListener('change', function () {
-        var on = this.checked;
-        (METERS[scopeCtx] || []).forEach(function (m) {
-          if (m.occupiedBy) return;
-          if (on && scopeSel.indexOf(m.name) === -1) scopeSel.push(m.name);
-          if (!on) scopeSel = scopeSel.filter(function (x) { return x !== m.name; });
-        });
-        renderScopeTable();
-        renderScopeChips();
-      });
-      document.getElementById('btnScopeClear').addEventListener('click', function () {
-        scopeSel = [];
-        renderScopeTable();
-        renderScopeChips();
-      });
-      document.getElementById('btnScopeOk').addEventListener('click', function () {
-        meteringDraft[scopeCtx].targets = scopeSel.slice();
-        scopeModal.hidden = true;
-        renderMeteringRows();
-      });
-
       /* ---------- 用能定额考核配置 ---------- */
       var quotaModal = document.getElementById('quotaModal');
 
       document.getElementById('btnQuotaConfig').addEventListener('click', function () {
-        var st = getNodeMetering(currentNode);
-        var enabled = ENERGIES.filter(function (e) { return st[e].enabled && st[e].rule; });
+        var enabled = meteringConfigured[currentNode] || [];
         var ok = enabled.length > 0;
         document.getElementById('quotaWarn').hidden = ok;
         document.getElementById('quotaGridWrap').hidden = !ok;
@@ -2492,6 +2615,6 @@
     el.classList.add('active');
   }
   </script>
-  <script src="components/nav.js" data-active-nav="AI智能能效" data-active-sidebar="能效视图"></script>
+  <script src="components/nav.js" data-active-nav="工程配置" data-active-sidebar="能效视图"></script>
 </body>
 </html>

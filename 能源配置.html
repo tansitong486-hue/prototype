@@ -228,17 +228,11 @@
 
     .page-foot {
       display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
+      align-items: center;
+      justify-content: flex-end;
       gap: 16px;
       padding: 16px 18px;
       flex-wrap: wrap;
-    }
-
-    .page-note {
-      font-size: 12px;
-      color: var(--text-secondary);
-      line-height: 1.75;
     }
 
     .pagination-wrap {
@@ -246,11 +240,6 @@
       flex-direction: column;
       align-items: flex-end;
       gap: 10px;
-    }
-
-    .pagination-total {
-      font-size: 12px;
-      color: var(--text-secondary);
     }
 
     .pagination {
@@ -359,8 +348,8 @@
             <span class="anno-tag">版本信息</span>
             <div class="anno-body">
               <p><b>当前版本：</b>v2.5</p>
-              <p><b>更新日期：</b>2026-07-07</p>
-              <p><b>变更概述：</b>明确「物模型实例 = 表具（累积量数据源）」口径，能源类型下的累积量测点配置成为表具能耗明细的生成输入。2026-07-07：表具能耗明细升级为「基础配置」独立二级菜单「表具能耗明细」（需求 3 §6.4），本页原「表具能耗明细」子页签入口移除。</p>
+              <p><b>更新日期：</b>2026-07-24</p>
+              <p><b>变更概述：</b>能源单位拆分为「累计量单位 + 实时值单位」，预置电为 kWh / kW、水为 m³ / m³/h、冷量为 kWh / kW；能源类型测点扩展为「累积量 + 瞬时量」成对定义，并明确物模型继承生效范围。2026-07-07：表具能耗明细升级为「基础配置」独立二级菜单「表具能耗明细」（需求 3 §6.4），本页原「表具能耗明细」子页签入口移除。</p>
             </div>
           </div>
 
@@ -394,16 +383,20 @@
             <span class="anno-version">v2.5</span>
             <span class="anno-source" data-type="需求文档">需求文档</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>能源类型与累积量测点（表具口径）</p>
+              <p><b>关联模块：</b>能源类型与累积量 / 瞬时量测点（表具口径）</p>
               <ul>
-                <li><b>累积量测点：</b>每个能源类型下配置累积量测点 =（物模型 + 测点），如交流电表→正向有功电能；该物模型的<b>每个实例即一块计量表具</b>（累积量数据源）。</li>
-                <li><b>自动生成明细：</b>v2.5 起系统对全部挂累积量测点的实例自动生成表具半小时能耗明细（无论是否绑定计量对象、是否应用计费方案）。</li>
-                <li><b>下游链路：</b>表具明细是对象能耗 on-read 聚合与表具成本计算的唯一输入；表具先投运、后补绑对象或补应用方案时，历史电量已在库、无需回填。</li>
+                <li><b>两套单位：</b>累计量单位用于累积量测点、表具核算、计费和历史统计；实时值单位用于瞬时量测点与当前值指标。两者均在能源类型内独立配置。</li>
+                <li><b>预置默认值：</b>电 = kWh / kW，水 = m³ / m³/h，冷量 = kWh / kW（累计量单位 / 实时值单位）。</li>
+                <li><b>成对测点：</b>每个能源类型下按物模型配置 =（物模型 + 累积量测点 + 瞬时量测点），如交流电表→正向有功电能 + 有功功率-总；命中累积量定义的实例 = 计量表具。</li>
+                <li><b>物模型继承：</b>子物模型继承父模型测点后，父模型上的成对定义对子模型实例同样生效，无需按子模型重复配置。</li>
+                <li><b>父 / 子互斥：</b>已配置父物模型时，其下级子物模型不可再单独配置。</li>
+                <li><b>自动生成明细：</b>v2.5 起系统对全部命中累积量定义的实例自动生成表具半小时能耗明细（无论是否绑定计量对象、是否应用计费方案）。瞬时量不进核算归档。</li>
+                <li><b>下游链路：</b>表具明细是对象能耗 on-read 聚合与表具成本计算的唯一输入；瞬时量测点供计量拓扑建立后对象侧查询瞬时功率。</li>
               </ul>
             </div>
           </div>
 
-          <div class="breadcrumb-bar" aria-label="面包屑">能源计费配置</div>
+          <div class="breadcrumb-bar" aria-label="面包屑">工程配置 / 能源配置 / 能源计费配置</div>
           <div class="subtabs" role="tablist" aria-label="能源计费子页">
             <a href="计费方案配置.html" class="subtab" role="tab" aria-selected="false">计费方案配置</a>
             <a href="能源配置.html" class="subtab active" role="tab" aria-selected="true">能源配置</a>
@@ -430,7 +423,7 @@
                   </thead>
                   <tbody>
                     <tr><td>能源类型</td><td>如电、水、冷量</td></tr>
-                    <tr><td>能源单位</td><td>如 KWH、m³</td></tr>
+                    <tr><td>能源单位</td><td>如 kWh、m³</td></tr>
                     <tr><td>度量类型</td><td>一次能源 / 工质等</td></tr>
                     <tr><td>标煤折算系数</td><td>折标煤计算用</td></tr>
                     <tr><td>二氧化碳折算系数</td><td>碳排折算用</td></tr>
@@ -441,12 +434,31 @@
               </div>
             </div>
 
+            <div class="anno anno-field" data-version="v2.5">
+              <span class="anno-tag">字段说明</span>
+              <span class="anno-version">v2.5</span>
+              <span class="anno-source" data-type="需求文档">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>表格列 — 累计量单位 / 实时值单位</p>
+                <table class="anno-table">
+                  <thead>
+                    <tr><th>列名</th><th>说明</th><th>预置值</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>累计量单位</td><td>累积量测点、核算、计费和历史统计使用</td><td>电 kWh；水 m³；冷量 kWh</td></tr>
+                    <tr><td>实时值单位</td><td>瞬时量测点及当前值指标使用</td><td>电 kW；水 m³/h；冷量 kW</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
             <div class="table-wrap">
               <table class="data-table" aria-label="能源类型列表">
                 <thead>
                   <tr>
                     <th>能源类型</th>
-                    <th>能源单位</th>
+                    <th>累计量单位</th>
+                    <th>实时值单位</th>
                     <th>度量类型</th>
                     <th>标煤折算系数</th>
                     <th>二氧化碳折算系数</th>
@@ -457,7 +469,8 @@
                 <tbody>
                   <tr data-init="1">
                     <td>电</td>
-                    <td>KWH</td>
+                    <td>kWh</td>
+                    <td>kW</td>
                     <td>一次能源</td>
                     <td class="num-cell">0.997</td>
                     <td class="num-cell">0.1229</td>
@@ -472,6 +485,7 @@
                   <tr data-init="1">
                     <td>水</td>
                     <td>m³</td>
+                    <td>m³/h</td>
                     <td>一次能源</td>
                     <td class="num-cell">0.91</td>
                     <td class="num-cell">0.000086</td>
@@ -485,7 +499,8 @@
                   </tr>
                   <tr data-init="1">
                     <td>冷量</td>
-                    <td>KWH</td>
+                    <td>kWh</td>
+                    <td>kW</td>
                     <td>工质</td>
                     <td class="num-cell">0.332</td>
                     <td class="num-cell">0.041</td>
@@ -502,12 +517,7 @@
             </div>
 
             <div class="page-foot">
-              <div class="page-note">
-                <div>排序：按照创建时间倒序排列</div>
-                <div>分页：10 条/页</div>
-              </div>
               <div class="pagination-wrap">
-                <div class="pagination-total">共 3 条记录　第 1 / 1 页</div>
                 <div class="pagination" aria-label="分页">
                   <span class="page-arrow" data-page="prev" title="上一页">‹</span>
                   <span class="page-item active">1</span>
@@ -634,6 +644,6 @@
     el.classList.add('active');
   }
   </script>
-  <script src="components/nav.js" data-active-nav="AI智能能效" data-active-sidebar="能源计费配置"></script>
+  <script src="components/nav.js" data-active-nav="工程配置" data-active-sidebar="能源计费配置"></script>
 </body>
 </html>
