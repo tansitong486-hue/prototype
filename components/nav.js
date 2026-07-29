@@ -11,11 +11,12 @@
 (function () {
   'use strict';
 
-  const NAV_ITEMS = ['设施监控', 'AI智能能效', '系统管理', '数据分析', '工程配置'];
+  const NAV_ITEMS = ['设施监控', 'AI智能能效', '系统管理', '数据分析', '工程配置', '原型导航'];
 
   /** 顶栏一级菜单默认落地页（「工程配置」走下拉，不直跳） */
   const NAV_DEFAULT_HREF = {
-    'AI智能能效': '总览看板.html'
+    'AI智能能效': '总览看板.html',
+    '原型导航': 'index.html'
   };
 
   /**
@@ -30,9 +31,8 @@
     { label: '物模型', linkKey: '物模型' }
   ];
 
-  /** AI智能能效侧栏（配置类入口已迁至工程配置） */
+  /** AI智能能效侧栏（配置类入口已迁至工程配置；「原型导航」在顶栏全局入口） */
   const SIDEBAR_TREE_AI = [
-    { label: '原型导航', href: 'index.html' },
     { label: '总览看板' },
     {
       group: '能耗分析',
@@ -160,8 +160,7 @@
     '安全回退策略': 'v1.6',
     '冷站诊断规则': 'v1.5',
     '表具能耗明细': 'v2.5',
-    '节能分析': 'v2.5',
-    '模型管理': 'v2.5'
+    '节能分析': 'v2.5'
   };
 
   const ICON_DASH = '<svg class="sidebar-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h16"/></svg>';
