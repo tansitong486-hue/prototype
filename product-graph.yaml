@@ -1,7 +1,7 @@
 # AI 节能 — 产品关系图（机读）
 # 人读入口：AGENT-MAP.md（本目录）+ 07-产品文档/01-ai 节能/产品文档/00-产品全貌.md
 # 维护：改 nav.js / index 拓扑 / 主流程时同步本文件
-# 更新：2026-07-24
+# 更新：2026-07-29
 
 meta:
   product: ai-energy
@@ -214,7 +214,7 @@ pages:
     domain: asset_model
     version: v2.5
     role: entry
-    notes: 节点详情新增指标列表；实时指标平铺当前值，时间段指标仅按起止时间查询；计算口径可打开只读计算结果预览，追踪对象指标属性、表具核算明细、瞬时量测点 ID、计费快照和异常节点
+    notes: 节点详情新增指标列表；实时指标平铺当前值，时间段指标仅按起止时间查询；计算口径可打开只读计算结果预览，追踪对象指标属性、表具核算明细、瞬时量测点 ID、计费快照和异常节点；能效配置 Tab 为配置项行清单（能源计量关系 / 用能定额考核各一行，摘要 + 「配置」进弹窗，后续按行扩展），能源计量关系弹窗做单对象配置，与《能源计量关系》同一份关系对象、同一套校验
   - id: page.create_collection
     file: 创建集合-能耗模型.html
     nav_label: null
@@ -272,6 +272,29 @@ pages:
     domain: energy_metering
     version: v2.5
     role: entry
+  - id: page.model_admin
+    file: 物模型-模型管理.html
+    nav_label: 模型管理
+    nav_group: 基础配置
+    domain: asset_model
+    version: v2.5
+    role: entry
+    notes: 对齐现网「工程配置 → 物模型 → 模型管理」，本期无功能改造（不加指标角标、不加指标筛选），仅作为 page.model_detail 的入口页
+  - id: page.model_detail
+    file: 物模型-模型详情.html
+    nav_label: null
+    nav_group: 基础配置
+    domain: asset_model
+    version: v2.5
+    role: subflow
+    notes: 需求 6 物模型层（类型层）唯一真源。新增「指标」Tab：只列这类对象有哪些具体指标，一行一个（含继承来的，不区分来源），按实时值/统计指标分两组，列为指标名称/指标标识/业务分类/时间查询/单位，工具栏仅关键字搜索 + 业务分类筛选。只读：现场不可新增或改口径；无口径详情弹窗；不显示指标值与「可算/待配置」（实例层在《能效视图》指标列表）；不与测点 Tab 的 PUE 1_107_0 等既有槽位互通；不产出模型级聚合值
+
+  # —— 平台侧数据项选择器（KE 报表 / 融合组态）——
+  # 需求 10–13 交互原型已迁入消费侧需求方案 HTML §4.5，不再作为 AI原型html 独立页。
+  # 真源：04-需求文档/AI节能v2.5 版本/存量页面消费与总览看板改造需求方案.html
+  #   #原型-报表选择测点弹窗（需求 10+11）
+  #   #原型-报表节点测点树选指标（需求 12）
+  #   #原型-融合组态变量树选指标（需求 13）
 
   # —— AI节能配置 ——
   - id: page.mechanism_train
@@ -457,7 +480,7 @@ flows:
 
   - id: flow.energy_config_to_consume
     name: 能耗配置到消费分析
-    purpose: 计量拓扑（含输入/输出方向，配置入口为《能源计量关系》独立页）与表具明细配置完成后，对象指标经指标工厂物化（ClickHouse），供总览/流向/对比/定额/节能分析统一消费；区分实施期自检与运行期 VEE
+    purpose: 计量拓扑（含输入/输出方向；批量作业入口为《能源计量关系》独立页，单对象配置入口为《能效视图》能效配置 Tab，同一份关系对象同一套校验）与表具明细配置完成后，对象指标经指标工厂物化（ClickHouse），供总览/流向/对比/定额/节能分析统一消费；区分实施期自检与运行期 VEE
     steps:
       - page_id: page.efficiency_view
       - page_id: page.create_collection
@@ -465,6 +488,8 @@ flows:
       - page_id: page.energy_edit
       - page_id: page.billing_plan
       - page_id: page.billing_plan_edit
+      - page_id: page.model_admin
+      - page_id: page.model_detail
       - page_id: page.metering_scheme_admin
       - page_id: page.meter_detail
       - page_id: page.data_quality_check
@@ -480,6 +505,8 @@ flows:
       - domain:energy_consume
       - domain:overview
       - page.efficiency_view
+      - page.model_admin
+      - page.model_detail
       - page.energy_config
       - page.metering_scheme_admin
       - page.meter_detail
@@ -570,15 +597,15 @@ requirements:
       - 能效视图.html
       - 数据质量自检.html
     upstream: [req.v21.data_quality_selfcheck]
-    downstream: [req.v25.energy_consume]
+    downstream: [req.v25.energy_consume, req.v25.metric_selector]
     algo_vs_ui: mixed
-    notes: 需求1–6明细引擎；能源类型拆分累计量/实时值单位并成对配置累积量/瞬时量测点；表具归档+VEE+能源计量关系独立页（全局能源Tab+多视图树+关系表拖拽+今日叶子试算，输入/输出计量方向 Σ输入−Σ输出，查重键表具+能源类型；全局Excel按导出当前拓扑→编辑Sheet1→上传预校验→确认全量覆盖，固定5个Sheet；对象Sheet使用业务实例ID，Sheet5含组件名称（仅组件型）和累计量测点ID；Sheet1第1行为写入规则、第2行为八列表头、第3行起填写关系并校验五个基础必填字段，组件关系按所属表具实例ID+组件名称校验；失败时在原上传文件追加逐行问题原因并导出；保存时图约束校验）+对象指标工厂物化(ClickHouse)；自检页仅跳转/分工说明；本期不做配置健康度总览页
+    notes: 需求1–6明细引擎；能源类型拆分累计量/实时值单位并成对配置累积量/瞬时量测点；表具归档+VEE+能源计量关系独立页（全局能源Tab+多视图树+关系表拖拽+今日叶子试算，输入/输出计量方向 Σ输入−Σ输出，查重键表具+能源类型；全局Excel按导出当前拓扑→编辑Sheet1→上传预校验→确认全量覆盖，固定5个Sheet；对象Sheet使用业务实例ID，Sheet5含组件名称（仅组件型）和累计量测点ID；Sheet1第1行为写入规则、第2行为八列表头、第3行起填写关系并校验五个基础必填字段，组件关系按所属表具实例ID+组件名称校验；失败时在原上传文件追加逐行问题原因并导出；保存时图约束校验）；单对象配置在能效视图「能效配置」Tab（Tab=配置项行清单，一行一配置项+摘要+「配置」进弹窗，后续按行扩展；弹窗内对象树+能源Tab+关系表拖拽+方向切换+今日试算+表具池，与独立页同一份关系对象、同一套校验；多视图树与Excel全局导入导出仍只在独立页），原能耗计量方案弹窗与计量表具只读列表下线；+对象指标工厂物化(ClickHouse)；自检页仅跳转/分工说明；本期不做配置健康度总览页
 
   - id: req.v25.energy_consume
     version: v2.5
     status: 规划中
     domain: energy_consume
-    prd_path: 04-需求文档/AI节能v2.5 版本/存量页面消费与总览看板改造需求方案.md
+    prd_path: 04-需求文档/AI节能v2.5 版本/存量页面消费与总览看板改造需求方案.html
     prototype_pages:
       - 总览看板.html
       - 能耗流向分析.html
@@ -588,7 +615,18 @@ requirements:
     upstream: [req.v25.energy_metering]
     downstream: []
     algo_vs_ui: ui
-    notes: 存量四页切指标工厂取数（历史读ClickHouse物化分片）；总览含明细/导出，不另开统计分析页
+    notes: 消费侧需求8（存量四页切指标工厂取数，实时与跨度均查询时按当前拓扑计算、对象层不落库不物化）+需求9（总览看板）；用能对比分析升级为标准化指标单选对比（A1/A2/B1–B5，命名沿用能效视图口径，无结果对象置灰不可选，含表格导出）；总览含明细/导出，不另开统计分析页。原编号7/8因需求7指标选取服务移入明细引擎册而顺延为8/9
+
+  - id: req.v25.metric_selector
+    version: v2.5
+    status: 规划中
+    domain: energy_consume
+    prd_path: 04-需求文档/AI节能v2.5 版本/存量页面消费与总览看板改造需求方案.html
+    prototype_pages: []
+    upstream: [req.v25.energy_metering]
+    downstream: []
+    algo_vs_ui: ui
+    notes: 平台侧（KE 报表报告 / 融合组态）把指标作为可选数据项开放给用户，消费侧需求10–13，公共约束见消费侧册 §四。交互原型已内嵌于消费侧需求方案 HTML §4.5（#原型-报表选择测点弹窗 / #原型-报表节点测点树选指标 / #原型-融合组态变量树选指标），不再维护 AI原型html 独立页。前置为需求7指标选取服务（明细引擎册）。核心口径：选择器升级为「数据项选择器」，测点与指标显式双类型并列、互不伪装；三处组件互相独立可分别派工，但指标清单命名与可算状态必须同源于需求7接口
 
   - id: req.v24.multi_condition
     version: v2.4
@@ -741,6 +779,16 @@ edges:
   - from: page.efficiency_view
     to: domain.energy_metering
     rel: binds
+  # 物模型层指标注册 → 实例层指标消费
+  - from: page.model_admin
+    to: page.model_detail
+    rel: binds
+  - from: page.model_detail
+    to: domain.asset_model
+    rel: binds
+  - from: page.model_detail
+    to: page.efficiency_view
+    rel: produces
   # 数据质量
   - from: domain.data_quality
     to: domain.energy_metering

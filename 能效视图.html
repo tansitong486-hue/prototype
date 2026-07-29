@@ -18,6 +18,8 @@
       --bg-card: #FFFFFF;
       --danger: #DC2626;
       --danger-border: #FCA5A5;
+      --success: #059669;
+      --warning: #D97706;
       --radius: 8px;
       --radius-lg: 12px;
       --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
@@ -602,8 +604,9 @@
       border-radius: var(--radius);
       background: #fff;
     }
-    .metric-table { min-width: 940px; }
+    .metric-table { min-width: 1020px; }
     .metric-name-cell { font-weight: 600; white-space: nowrap; }
+    .metric-biz-cell { white-space: nowrap; color: var(--text-secondary, #5c6b7a); }
     .metric-value {
       font-size: 15px;
       font-weight: 700;
@@ -1180,9 +1183,36 @@
       .calc-inspector { max-height: 250px; }
     }
 
-    /* 用能定额考核弹窗 */
-    .quota-year-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-    .quota-year-row .toolbar-select { min-width: 120px; }
+    /* 用能定额考核弹窗（交互对齐真实系统：按能源分块 + 开关 + 月度卡片） */
+    .modal.modal-quota { width: 720px; }
+
+    .quota-year-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .quota-year-picker {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      min-width: 140px;
+    }
+    .quota-year-picker .toolbar-select {
+      min-width: 140px;
+      width: 140px;
+      padding-right: 34px;
+      background-image: none;
+    }
+    .quota-year-picker::after {
+      content: '';
+      position: absolute;
+      right: 10px;
+      width: 14px;
+      height: 14px;
+      pointer-events: none;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Crect x='3' y='4' width='18' height='18' rx='2'/%3E%3Cpath d='M16 2v4M8 2v4M3 10h18'/%3E%3C/svg%3E") center / contain no-repeat;
+    }
 
     .banner-warn {
       display: flex;
@@ -1195,24 +1225,521 @@
       color: #92400E;
       font-size: 12px;
       line-height: 1.6;
+      margin-bottom: 4px;
     }
     .banner-warn::before { content: '⚠'; flex-shrink: 0; }
 
-    .quota-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px 14px;
-      margin-top: 14px;
+    .quota-energy-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 4px;
     }
-    .quota-cell { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
-    .quota-cell input {
-      flex: 1;
-      min-width: 0;
-      height: 30px;
-      padding: 0 8px;
+    .quota-energy-block {
+      border-top: 1px solid var(--border-light);
+      padding-top: 14px;
+    }
+    .quota-energy-block:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+    .quota-energy-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 28px;
+      margin-bottom: 0;
+    }
+    .quota-energy-head.is-on { margin-bottom: 12px; }
+    .quota-energy-title {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .quota-energy-unit {
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--text-hint);
+    }
+
+    .quota-switch {
+      position: relative;
+      display: inline-flex;
+      width: 40px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+    .quota-switch input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .quota-switch-slider {
+      position: absolute;
+      inset: 0;
+      border-radius: 999px;
+      background: #CBD5E1;
+      cursor: pointer;
+      transition: background var(--transition);
+    }
+    .quota-switch-slider::before {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      left: 2px;
+      top: 2px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.24);
+      transition: transform var(--transition);
+    }
+    .quota-switch input:checked + .quota-switch-slider { background: var(--primary); }
+    .quota-switch input:checked + .quota-switch-slider::before { transform: translateX(18px); }
+    .quota-switch input:focus-visible + .quota-switch-slider {
+      outline: 2px solid var(--primary-tint);
+      outline-offset: 2px;
+    }
+
+    .quota-month-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .quota-month-card {
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .quota-month-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 28px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .quota-month-card-body {
+      padding: 8px 6px;
+      background: #fff;
+    }
+    .quota-month-card-body input {
+      width: 100%;
+      height: 28px;
+      padding: 0 6px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 12px;
+      text-align: center;
+      color: var(--text-primary);
+      background: #fff;
+      -moz-appearance: textfield;
+    }
+    .quota-month-card-body input::-webkit-outer-spin-button,
+    .quota-month-card-body input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .quota-month-card-body input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary-tint);
+    }
+    .quota-month-card-body input:invalid {
+      border-color: var(--danger);
+    }
+
+    /* 能效配置行：一行一个配置项，点「配置」进弹窗（后续新增模块按行扩展） */
+    .eff-row-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+    .eff-row-state { font-size: 12px; color: var(--text-hint); line-height: 1.5; }
+    .eff-row-state.configured { color: var(--text-secondary); }
+
+    /* 能源计量关系弹窗（单对象；结构与交互对齐《能源计量关系》全量页） */
+    .mr-modal { width: 1180px; max-height: 92vh; }
+    .mr-modal .modal-body { padding: 14px 20px 18px; }
+    .mr-modal-title { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+    .mr-modal-subtitle {
+      max-width: 520px;
+      overflow: hidden;
+      color: var(--text-hint);
+      font-size: 13px;
+      font-weight: 400;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .mr-foot-hint { margin-right: auto; font-size: 12px; color: var(--text-hint); }
+
+    .mr-energy-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border-light);
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .mr-energy-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      cursor: pointer;
+      transition: color var(--transition);
+    }
+    .mr-energy-tab:hover { color: var(--primary); }
+    .mr-energy-tab.active { color: var(--primary); font-weight: 700; border-bottom-color: var(--primary); }
+    .mr-energy-badge {
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 9px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #F1F5F9;
+      color: var(--text-hint);
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .mr-energy-badge.has { background: var(--primary); color: #fff; }
+
+    .mr-workspace {
+      display: grid;
+      grid-template-columns: 252px minmax(0, 1fr) 250px;
+      gap: 12px;
+      align-items: start;
+    }
+    .mr-main { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+
+    .mr-card {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      background: #FBFCFE;
+      overflow: hidden;
+    }
+    .mr-card.drag-over {
+      border-color: var(--primary);
+      box-shadow: inset 0 0 0 1px var(--primary);
+      background: #F5F8FF;
+    }
+    .mr-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 12px;
+      background: #fff;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .mr-card-title { font-size: 13px; font-weight: 700; }
+    .mr-card-hint { font-size: 11px; color: var(--text-hint); }
+    .mr-scroll { max-height: 320px; overflow: auto; }
+
+    .mr-table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; }
+    .mr-table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      text-align: left;
+      padding: 8px 12px;
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border-light);
+      color: var(--text-secondary);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .mr-table tbody td { padding: 8px 12px; border-bottom: 1px solid var(--border-light); vertical-align: middle; }
+    .mr-table tbody tr:hover { background: #F8FAFC; }
+    .mr-table tbody tr.conflict { background: #FEF2F2; }
+    .mr-table tbody tr.row-flash { animation: mr-row-flash 1.2s ease; }
+    @keyframes mr-row-flash {
+      0%, 100% { background: #fff; }
+      25% { background: #DBEAFE; }
+    }
+    .mr-table .num { font-variant-numeric: tabular-nums; text-align: right; }
+    .mr-table .mr-empty td { text-align: center; color: var(--text-hint); padding: 26px 12px; line-height: 1.8; }
+    .mr-row-name { font-weight: 600; }
+    .mr-row-sub { font-size: 11px; color: var(--text-hint); margin-top: 2px; }
+    .mr-row-conflict { font-size: 11px; color: var(--danger); margin-top: 2px; }
+
+    .mr-tag {
+      display: inline-flex;
+      align-items: center;
+      height: 20px;
+      padding: 0 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .mr-tag-obj { background: #F1F5F9; color: var(--text-secondary); }
+    .mr-tag-meter { background: #ECFDF5; color: var(--success); }
+    .mr-tag-comp { background: #EFF6FF; color: var(--primary); }
+    .mr-tag-dev { background: #F1F5F9; color: var(--text-secondary); }
+    .mr-tag-muted { background: #F1F5F9; color: var(--text-hint); }
+
+    .mr-dir {
+      display: inline-flex;
+      align-items: stretch;
+      height: 28px;
       border: 1px solid var(--border);
       border-radius: 6px;
+      overflow: hidden;
+      background: #F8FAFC;
+    }
+    .mr-dir button {
+      min-width: 44px;
+      padding: 0 10px;
       font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: transparent;
+      transition: all var(--transition);
+    }
+    .mr-dir button + button { border-left: 1px solid var(--border); }
+    .mr-dir button:hover { color: var(--text-primary); background: #fff; }
+    .mr-dir button.active-in { background: #EFF6FF; color: var(--primary); }
+    .mr-dir button.active-out { background: #FFF7ED; color: #C2410C; }
+
+    .mr-del {
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--danger);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .mr-del:hover { background: #FEF2F2; border-color: #FECACA; }
+
+    .mr-trial-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px 12px;
+      background: #fff;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .mr-kpi { padding: 8px 10px; border-radius: 8px; background: #F8FAFC; border: 1px solid var(--border-light); }
+    .mr-kpi .label { font-size: 11px; color: var(--text-hint); }
+    .mr-kpi .value { font-size: 18px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
+    .mr-kpi.ok .value { color: var(--success); }
+    .mr-kpi.warn .value { color: var(--warning); }
+    .mr-kpi.danger .value { color: var(--danger); }
+    .mr-alert {
+      margin: 0 12px 10px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: #FFFBEB;
+      border: 1px solid #FDE68A;
+      color: #92400E;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .mr-alert.danger { background: #FEF2F2; border-color: #FECACA; color: #991B1B; }
+
+    /* 表具池 */
+    .mr-pool {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .mr-pool-head {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .mr-pool-filter {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      z-index: 6;
+    }
+    .mr-pool-filter select,
+    .mr-pool-filter input {
+      width: 100%;
+      height: 32px;
+      padding: 0 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      background: #fff;
+    }
+    .mr-pool-filter select:focus,
+    .mr-pool-filter input:focus { outline: none; border-color: var(--primary); }
+    .mr-field { display: flex; flex-direction: column; gap: 5px; }
+    .mr-field > label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+
+    .mr-space-select { position: relative; min-width: 0; }
+    .mr-space-trigger {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+      height: 32px;
+      padding: 0 10px 0 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      color: var(--text-secondary);
+      background: #fff;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .mr-space-trigger:hover { border-color: #94A3B8; }
+    .mr-space-select.open .mr-space-trigger {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.12);
+    }
+    .mr-space-trigger-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mr-space-arrow { flex: none; width: 12px; height: 12px; color: var(--text-hint); transition: transform var(--transition); }
+    .mr-space-select.open .mr-space-arrow { transform: rotate(180deg); }
+    .mr-space-panel {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      z-index: 40;
+      width: 100%;
+      max-height: 260px;
+      overflow: auto;
+      padding: 6px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+    }
+    .mr-space-select.open .mr-space-panel { display: block; }
+    .mr-space-all,
+    .mr-space-node {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      width: 100%;
+      min-height: 30px;
+      padding: 0 6px;
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      text-align: left;
+    }
+    .mr-space-all { min-height: 32px; padding: 0 8px; gap: 6px; }
+    .mr-space-all:hover,
+    .mr-space-node:hover { background: rgba(30, 64, 175, 0.06); color: var(--text-primary); }
+    .mr-space-all.active,
+    .mr-space-node.active { background: rgba(30, 64, 175, 0.12); color: var(--primary); font-weight: 600; }
+    .mr-space-children { padding-left: 14px; }
+    .mr-space-chevron { flex: none; width: 14px; font-size: 10px; color: var(--text-hint); line-height: 1; }
+    .mr-space-chevron.is-leaf { visibility: hidden; }
+    .mr-space-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .mr-pool-list { padding: 8px; display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow: auto; }
+    .mr-meter-item {
+      padding: 8px 10px;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      background: #fff;
+      cursor: grab;
+    }
+    .mr-meter-item:hover { border-color: var(--primary); }
+    .mr-meter-item.disabled { opacity: .45; cursor: not-allowed; }
+    .mr-meter-item.component { border-left: 3px solid #93C5FD; }
+    .mr-meter-name { font-size: 12px; font-weight: 600; }
+    .mr-meter-meta { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; font-size: 11px; color: var(--text-hint); align-items: center; }
+    .mr-pool-empty { padding: 16px; color: var(--text-hint); font-size: 12px; text-align: center; }
+    .mr-pool-foot {
+      border-top: 1px solid var(--border-light);
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      background: #FBFCFE;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .mr-pager { display: flex; align-items: center; gap: 6px; }
+    .mr-pager button {
+      height: 26px;
+      min-width: 26px;
+      padding: 0 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-size: 12px;
+    }
+    .mr-pager button:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+    .mr-pager button:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* 弹窗内对象树：只作为「下级对象」拖拽来源，不切换当前配置对象 */
+    .mr-tree {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .mr-tree-head {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .mr-tree-search { padding: 8px 10px; border-bottom: 1px solid var(--border-light); }
+    .mr-tree-search input {
+      width: 100%;
+      height: 32px;
+      padding: 0 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+    }
+    .mr-tree-search input:focus { outline: none; border-color: var(--primary); }
+    .mr-tree-body { padding: 6px; max-height: 384px; overflow: auto; }
+    .mr-tree-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 30px;
+      padding: 0 6px;
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: grab;
+    }
+    .mr-tree-row:hover { background: rgba(30, 64, 175, 0.06); color: var(--text-primary); }
+    .mr-tree-row.current { background: rgba(30, 64, 175, 0.1); color: var(--primary); font-weight: 700; cursor: default; }
+    .mr-tree-row.linked { color: var(--text-hint); cursor: not-allowed; }
+    .mr-tree-row.dragging { opacity: .45; }
+    .mr-tree-dot { flex: none; width: 6px; height: 6px; border-radius: 50%; background: #CBD5E1; }
+    .mr-tree-dot.on { background: var(--success); }
+    .mr-tree-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mr-tree-flag { flex: none; font-size: 11px; color: var(--text-hint); font-weight: 400; }
+    .mr-tree-children { padding-left: 14px; }
+    .mr-tree-empty { padding: 16px; font-size: 12px; color: var(--text-hint); text-align: center; }
+
+    @media (max-width: 1180px) {
+      .mr-workspace { grid-template-columns: 1fr; }
+      .mr-pool-list { max-height: 240px; }
+      .mr-tree-body { max-height: 220px; }
     }
 
     @media (max-width: 960px) {
@@ -1244,8 +1771,9 @@
             <span class="anno-tag">版本信息</span>
             <div class="anno-body">
               <p><b>当前版本：</b>v2.5</p>
-              <p><b>更新日期：</b>2026-07-27</p>
-              <p><b>变更概述：</b>页面名称统一为「能效视图」；节点详情新增「指标列表」Tab。指标分为实时指标与时间段指标：实时指标直接平铺当前对象已配置能源的瞬时值及能效值；时间段指标仅按起止时间查询，能源类型、计费时段均固化进指标名称。列表只展示简明计算口径，点击后以只读弹窗查看计算拓扑、实际引用的对象属性 / 测点 ID、节点结果、异常节点和最终计算过程。</p>
+              <p><b>更新日期：</b>2026-07-29</p>
+              <p><b>变更概述（2026-07-29 补充）：</b>「能效配置」Tab 统一为<b>配置项清单</b>形态——一个配置能力占一行（名称 + 当前配置摘要 + 「配置」），具体操作一律在弹窗内完成，后续新增配置模块按行追加，不在 Tab 内就地展开。本期两行：新增「能源计量关系」，支持配置<b>当前单个对象</b>的计量关系，弹窗内三栏对齐《能源计量关系》全量页——对象树（拖入即为下级对象，标注当前对象 / 已添加 / 该能源已配置）+ 计量关系表（表具池拖入表具 / 组件，方向输入 / 输出切换，删除即时生效）+ 今日试算（递归到叶子表具有符号汇总，可跳《表具能耗明细》）+ 表具池（空间位置树选父含子、未计量 / 已计量 / 全部、搜索、每页 20 分页），能源类型 Tab 跟随《能源配置》主数据、角标为该能源下关系条数；沿用「用能定额考核」行。与《能源计量关系》是同一份关系对象、同一套校验，本 Tab 只做单对象，跨对象批量作业与 Excel 全局导入导出仍在独立页。用能定额考核的前置校验改为读当前对象的实际计量关系。</p>
+              <p><b>变更概述（2026-07-27）：</b>页面名称统一为「能效视图」；节点详情新增「指标列表」Tab。指标分为实时指标与时间段指标：实时指标直接平铺当前对象已配置能源的瞬时值及能效值；时间段指标仅按起止时间查询，能源类型、计费时段均固化进指标名称。列表在指标名称后展示「业务分类」（本期均为「能效」），并展示简明计算口径，点击后以只读弹窗查看计算拓扑、实际引用的对象属性 / 测点 ID、节点结果、异常节点和最终计算过程。</p>
             </div>
           </div>
 
@@ -1265,8 +1793,9 @@
             <div class="anno-body">
               <p><b>关联模块：</b>整页 — 对象树与计量拓扑的关系</p>
               <ul>
-                <li><b>对象树即计量对象树：</b>本页左侧对象树（工程 / 项目 / 系统 / 集合 / 设备）就是能耗计量的对象范围；计量拓扑在《能源计量关系》中统一配置，产物是「能源类型 × 当前对象 ↔ 下级对象 / 表具」且每条关系带计量方向（输入 / 输出）；对象能耗 / 成本 / 能效指标由指标工厂按同一张拓扑物化；计量关系的配置与核对在《能源计量关系》完成，本页能效配置 Tab 仅保留用能定额考核。</li>
-                <li><b>同方向归属唯一：</b>查重键为「表具 + 能源类型 + 计量方向」——一块表具在同一能源类型下最多作为一个对象的输入、同时最多作为一个对象的输出；同方向重复占用在《能源计量关系》配置层强制拦截。</li>
+                <li><b>对象树即计量对象树：</b>本页左侧对象树（工程 / 项目 / 系统 / 集合 / 设备）就是能耗计量的对象范围；计量拓扑的产物是「能源类型 × 当前对象 ↔ 下级对象 / 表具」且每条关系带计量方向（输入 / 输出）；对象能耗 / 成本 / 能效指标由指标工厂按同一张拓扑物化。</li>
+                <li><b>两个配置入口、一份数据：</b>单对象配置在本页「能效配置」Tab 点「配置」进弹窗完成，跨对象批量作业（多视图树、Excel 全局导入导出）仍在《能源计量关系》；两处写同一份「能耗计量」关系对象、共用同一套图约束校验，不存在两套口径。</li>
+                <li><b>归属唯一：</b>查重键为「表具（含组件）+ 能源类型」——同一能源类型下一块表具只能挂到一个计量关系上，不按输入 / 输出拆分名额；计量方向只决定计算符号。重复占用在两个配置入口都强制拦截。</li>
                 <li><b>历史随当前拓扑（产品已接受口径）：</b>对象查询始终沿【当前】计量拓扑聚合；表具改绑计量对象后，其全部历史能耗 / 成本随之归到新对象名下、旧对象对应减少。本期不做计量拓扑生效版本。</li>
               </ul>
             </div>
@@ -1362,9 +1891,14 @@
                             <div class="tree-row" data-node="g486"><span class="tree-chevron" style="visibility:hidden">▸</span><span class="tree-label">0_486:3#数据中心水冷群控系统</span></div>
                           </div>
                         </div>
-                        <div class="tree-row" data-node="s478">
-                          <span class="tree-chevron">▸</span>
+                        <div class="tree-row" data-node="s478" data-expand>
+                          <span class="tree-chevron">▼</span>
                           <span class="tree-label">0_478:电力系统</span>
+                        </div>
+                        <div class="tree-children">
+                          <div class="tree-row" data-node="tf1"><span class="tree-chevron" style="visibility:hidden">▸</span><span class="tree-label">0_481:1#变压器</span></div>
+                          <div class="tree-row" data-node="tf2"><span class="tree-chevron" style="visibility:hidden">▸</span><span class="tree-label">0_482:2#变压器</span></div>
+                          <div class="tree-row" data-node="ups1"><span class="tree-chevron" style="visibility:hidden">▸</span><span class="tree-label">0_483:UPS-1</span></div>
                         </div>
                       </div>
                     </div>
@@ -1504,6 +2038,7 @@
                           <li><b>实时指标：</b>不提供能源类型筛选。默认「仅有值」：只展示当前对象能算出结果的能源瞬时值；可切换「全部」查看适用指标全集，算不出的显示「待配置」，便于区分计量未配 / 测点缺值。PUE / CLF / PLF / OLF / WUE 仅在「园区」「数据中心单元」实例上适用。实时值只查当前、不落历史。操作列提供「曲线」，交互对齐测点列表。</li>
                           <li><b>时间段指标：</b>查询区只有起止时间。能源类型、计费时段固化进指标名称；显隐同样受「仅有值 / 全部」开关控制。无分时能源仅展示一条「费用（统一价）」。时间段指标不提供曲线入口。</li>
                           <li><b>计算排查：</b>点击「计算口径」中的绿色表达式打开只读预览。拓扑展示指标定义及本次查询解析到的对象指标、表具核算明细或瞬时量测点；点选节点后，右侧展示其引用 ID / 属性、当前结果、下级节点和异常原因。页面不提供表达式编辑。</li>
+                          <li><b>业务分类：</b>列表展示「业务分类」列，筛选区提供业务分类选择器（默认「全部」）。本期指标（实时 / 时间段的能耗、成本、能效比值等）均归属「能效」；选其他分类时列表为空。后续扩展容量等分类时只增指标定义，不另开专用页面。</li>
                           <li><b>扩展规则：</b>列表与弹窗均按通用指标定义和计算节点渲染。新增能源、计费时段或能效指标时只增加指标定义及节点数据，不新增专用列或专用页面。</li>
                         </ul>
                       </div>
@@ -1514,6 +2049,14 @@
                         <button type="button" data-metric-mode="period" aria-pressed="false">时间段指标</button>
                       </div>
                       <div class="metric-toolbar-right">
+                        <label class="toolbar-field">
+                          <span class="toolbar-label">业务分类</span>
+                          <select class="toolbar-select" id="metricBizFilter" aria-label="业务分类">
+                            <option value="" selected>全部</option>
+                            <option value="能效">能效</option>
+                            <option value="容量">容量</option>
+                          </select>
+                        </label>
                         <div class="metric-visibility">
                           <span class="metric-visibility-label">展示范围</span>
                           <div class="metric-mode" aria-label="指标展示范围">
@@ -1533,12 +2076,13 @@
                       <table class="data-table metric-table">
                         <thead>
                           <tr>
-                            <th style="width:18%">指标名称</th>
-                            <th style="width:38%">计算口径</th>
+                            <th style="width:16%">指标名称</th>
+                            <th style="width:10%">业务分类</th>
+                            <th style="width:34%">计算口径</th>
                             <th style="width:12%">指标值</th>
                             <th style="width:8%">单位</th>
-                            <th style="width:14%">数据时间</th>
-                            <th style="width:10%">操作</th>
+                            <th style="width:12%">数据时间</th>
+                            <th style="width:8%">操作</th>
                           </tr>
                         </thead>
                         <tbody id="metricsBody"></tbody>
@@ -1659,14 +2203,50 @@
                       <span class="anno-version">v2.5</span>
                       <span class="anno-source">需求文档</span>
                       <div class="anno-body">
-                        <p><b>关联模块：</b>能效配置 Tab — 用能定额考核</p>
+                        <p><b>关联模块：</b>能效配置 Tab — 配置项清单（一行一个配置项，点「配置」进弹窗）</p>
                         <ul>
-                          <li>本期只保留用能定额考核入口；计量方案与表具归属已迁至独立《能源计量关系》页。</li>
-                          <li>当前对象尚未配置任一能源计量关系时，定额保存不可用。</li>
+                          <li><b>页面形态（后续可扩展）：</b>本 Tab 是当前对象的<strong>配置项清单</strong>，每个配置能力只占一行：左侧配置项名称 + 当前配置摘要，右侧「配置」。所有具体操作都在各自弹窗里完成，本 Tab 不就地展开表单，后续新增配置模块按行追加即可。</li>
+                          <li><b>本期两行：</b>「能源计量关系」（摘要为各能源已配置条数，未配置显示「未配置」）、「用能定额考核」。</li>
+                          <li><b>行内摘要来源：</b>读当前对象的实际配置数据实时生成，弹窗内改完关闭即刷新；切换左树对象时整个清单按新对象重算。</li>
+                          <li><b>两个入口一份数据：</b>本 Tab 的弹窗只配<strong>当前对象</strong>，《能源计量关系》做<strong>跨对象</strong>批量作业；两处写的是同一份「能耗计量」关系对象、共用同一套校验，任一处改动对另一处立即可见。</li>
+                          <li><b>弹窗里不做的：</b>多视图（空间 / 容量）树切换、Excel 全局导入导出、跨对象批量改方向或批量删除——这些仍只在《能源计量关系》，弹窗头部提供跳转。</li>
+                          <li><b>用能定额考核：</b>沿用原入口；当前对象在任一能源下都还没有计量关系时，定额保存不可用——可直接在上一行的计量关系弹窗补配，不必先跳走。</li>
                         </ul>
                       </div>
                     </div>
-                    <div class="eff-row"><span class="eff-row-name">用能定额考核</span><button type="button" class="action-link" id="btnQuotaConfig">配置</button></div>
+                    <div class="anno anno-data" data-version="v2.5">
+                      <span class="anno-tag">数据逻辑</span>
+                      <span class="anno-version">v2.5</span>
+                      <span class="anno-source">需求文档</span>
+                      <div class="anno-body">
+                        <p><b>关联模块：</b>能效配置 Tab — 配置项摘要与单对象计量关系口径</p>
+                        <ul>
+                          <li><b>行内摘要口径：</b>「能源计量关系」行按能源类型列出条数（如「电 3 条 · 水 2 条」，只列有关系的能源），一条都没有时显示「未配置」；摘要只统计当前对象的<strong>直接</strong>成员，不含下级对象自己的关系。</li>
+                          <li><b>产物形态：</b>「计量对象 × 能源类型 × 成员 × 计量方向」，与《能源计量关系》完全一致；同一对象在各能源下各有一套独立拓扑，禁止跨能源混配、混算。</li>
+                          <li><b>作用范围：</b>关系表只列当前对象在当前能源下的<strong>直接</strong>成员；下级对象的下级不在本表展开，需选中该下级对象后再看（计算侧仍递归整棵子树）。</li>
+                          <li><b>类型只有两种：</b>表具、下级对象。组件属于表具之下，名称列用「所属表具」标明，类型仍记「表具」。</li>
+                          <li><b>表具池随能源过滤：</b>只列当前能源下的表具 / 组件（电表不出现在「水」Tab）；默认只看未计量，可切已计量 / 全部；支持空间位置树（选父含子）与搜索，上千条时分页（每页 20）。</li>
+                          <li><b>归属唯一：</b>查重键为「表具（含组件）+ 能源类型」——同一能源下一块表具只能挂一次，不按输入 / 输出拆名额；已被占用的表具在池中标「已计量」且不可拖，冲突行在关系表内标红提示。</li>
+                          <li><b>今日试算口径：</b>沿当前能源拓扑递归到叶子表具，输入记 +1、输出记 −1，同一叶子多路径系数相加后与今日用量相乘汇总；单位取该能源在《能源配置》中的累计量单位。</li>
+                          <li><b>原型说明：</b>本页与《能源计量关系》各自维护演示数据，页面间状态不互通；真实系统是同一份关系对象。</li>
+                        </ul>
+                      </div>
+                    </div>
+
+                    <div class="eff-row">
+                      <div class="eff-row-main">
+                        <span class="eff-row-name">能源计量关系</span>
+                        <span class="eff-row-state" id="effMeteringState">未配置</span>
+                      </div>
+                      <button type="button" class="action-link" id="btnMeteringConfig">配置</button>
+                    </div>
+                    <div class="eff-row">
+                      <div class="eff-row-main">
+                        <span class="eff-row-name">用能定额考核</span>
+                        <span class="eff-row-state" id="effQuotaState">按已配置计量关系的能源类型维护月度定额</span>
+                      </div>
+                      <button type="button" class="action-link" id="btnQuotaConfig">配置</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1678,9 +2258,141 @@
     </div>
   </div>
 
+  <!-- 能源计量关系配置弹窗（单对象；入口：能效配置 Tab → 能源计量关系 → 配置） -->
+  <div class="modal-mask" id="meteringModal" hidden>
+    <div class="modal mr-modal" role="dialog" aria-modal="true" aria-label="能源计量关系配置">
+      <div class="modal-head">
+        <div class="mr-modal-title">
+          <span>能源计量关系配置</span>
+          <span class="mr-modal-subtitle" id="mrModalSubtitle"></span>
+        </div>
+        <div class="calc-head-actions">
+          <a class="btn btn-ghost" href="能源计量关系.html">批量配置</a>
+          <button type="button" class="modal-close" data-close="meteringModal" aria-label="关闭">✕</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="anno anno-ux" data-version="v2.5">
+          <span class="anno-tag">交互说明</span>
+          <span class="anno-version">v2.5</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>「能源计量关系配置」弹窗 — 只配当前对象，交互对齐《能源计量关系》全量页</p>
+            <ul>
+              <li><b>配置对象固定：</b>标题栏显示当前对象名称与物模型，弹窗内的一切操作都作用于该对象；要换对象请关闭弹窗后在左树重选。</li>
+              <li><b>能源类型 Tab：</b>选项跟随《能源配置》能源类型主数据动态生成（非本页写死），默认选中第一个；角标为当前对象在该能源下的关系条数，0 条表示该能源尚未配置。切换后关系表、对象树配置态、表具池、今日试算一起按该能源重绘。</li>
+              <li><b>加关系（两种拖拽，与全量页一致）：</b>从<strong>左栏对象树</strong>拖节点进关系表 = 加「下级对象」；从<strong>右栏表具池</strong>拖表具 / 组件进关系表 = 加「表具」。默认方向为输入。</li>
+              <li><b>左栏对象树：</b>只作拖拽来源，点击不切换配置对象；当前对象标「当前对象」且不可拖，已加为成员的节点置灰不可重复拖入，节点前的绿点表示该对象在当前能源下已有关系；支持按名称搜索。</li>
+              <li><b>改方向 / 删除：</b>点方向开关在输入 / 输出间切换，点「删除」移除该行；变更即时生效，弹窗底部只有「完成」，不存在「保存 / 取消」的暂存语义。</li>
+              <li><b>今日试算：</b>点「今日试算」按当前能源拓扑递归展开到叶子表具重算有符号用量，可跳《表具能耗明细》核对。</li>
+              <li><b>关闭后：</b>「能效配置」Tab 内该行摘要按最新关系条数刷新。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="mr-energy-tabs" id="mrEnergyTabs" role="tablist" aria-label="能源类型"></div>
+
+        <div class="mr-workspace">
+          <aside class="mr-tree" aria-label="对象树">
+            <div class="mr-tree-head">对象树（拖入即为下级对象）</div>
+            <div class="mr-tree-search">
+              <input type="search" id="mrTreeSearch" placeholder="搜索对象名称" aria-label="搜索对象">
+            </div>
+            <div class="mr-tree-body" id="mrTreeBody"></div>
+          </aside>
+
+          <div class="mr-main">
+            <div class="mr-card" id="mrDropzone">
+              <div class="mr-card-head">
+                <div>
+                  <div class="mr-card-title">计量关系</div>
+                  <div class="mr-card-hint">从左栏对象树拖入下级对象，或从右栏表具池拖入表具 / 组件</div>
+                </div>
+                <span class="mr-card-hint" id="mrRelationCount">0 条</span>
+              </div>
+              <div class="mr-scroll">
+                <table class="mr-table" aria-label="当前对象计量关系">
+                  <thead>
+                    <tr>
+                      <th style="width:88px">类型</th>
+                      <th>名称</th>
+                      <th style="width:128px">计量方向</th>
+                      <th style="width:72px">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="mrRelationBody">
+                    <tr class="mr-empty"><td colspan="4">请先在左侧对象树选择对象</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="mr-card">
+              <div class="mr-card-head">
+                <div class="mr-card-title">今日试算</div>
+                <button type="button" class="btn btn-ghost" id="mrBtnTrial">今日试算</button>
+              </div>
+              <div class="mr-trial-summary" id="mrTrialSummary"></div>
+              <div id="mrTrialAlert" hidden></div>
+              <div class="mr-scroll">
+                <table class="mr-table" aria-label="试算表具明细">
+                  <thead>
+                    <tr>
+                      <th>表具</th>
+                      <th class="num" style="width:140px">用量</th>
+                      <th style="width:88px">明细</th>
+                    </tr>
+                  </thead>
+                  <tbody id="mrTrialBody">
+                    <tr class="mr-empty"><td colspan="3">配置关系后，这里展示参与试算的表具</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <aside class="mr-pool" aria-label="表具池">
+            <div class="mr-pool-head">表具池</div>
+            <div class="mr-pool-filter">
+              <div class="mr-field">
+                <label for="mrSpaceTrigger">空间位置</label>
+                <div class="mr-space-select" id="mrSpaceSelect">
+                  <button type="button" class="mr-space-trigger" id="mrSpaceTrigger" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="mr-space-trigger-text" id="mrSpaceLabel">全部位置</span>
+                    <svg class="mr-space-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                  </button>
+                  <div class="mr-space-panel" id="mrSpacePanel" role="listbox" aria-label="空间树"></div>
+                </div>
+              </div>
+              <select id="mrOccupyFilter" aria-label="计量状态筛选">
+                <option value="free" selected>未计量</option>
+                <option value="taken">已计量</option>
+                <option value="all">全部</option>
+              </select>
+              <input type="search" id="mrMeterSearch" placeholder="搜索表具 / 组件名称或编码" aria-label="搜索表具">
+            </div>
+            <div class="mr-pool-list" id="mrMeterList"></div>
+            <div class="mr-pool-foot">
+              <span id="mrMeterPageSize">每页 20 条</span>
+              <div class="mr-pager">
+                <button type="button" id="mrMeterPrev" aria-label="上一页">‹</button>
+                <span id="mrMeterPageIndex">1 / 1</span>
+                <button type="button" id="mrMeterNext" aria-label="下一页">›</button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <span class="mr-foot-hint">拖拽、方向切换、删除均即时生效，无需保存</span>
+        <button type="button" class="btn btn-primary" data-close="meteringModal">完成</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 用能定额考核配置弹窗 -->
   <div class="modal-mask" id="quotaModal" hidden>
-    <div class="modal" role="dialog" aria-modal="true" aria-label="用能定额考核配置">
+    <div class="modal modal-quota" role="dialog" aria-modal="true" aria-label="用能定额考核配置">
       <div class="modal-head">
         <span>用能定额考核配置</span>
         <button type="button" class="modal-close" data-close="quotaModal" aria-label="关闭">✕</button>
@@ -1693,23 +2405,22 @@
           <div class="anno-body">
             <p><b>关联模块：</b>「用能定额考核配置」弹窗（入口：能效配置 Tab → 用能定额考核 → 配置）</p>
             <ul>
-              <li><b>年份：</b>选择考核年度，默认当前年（2026），按年份分别维护定额。</li>
-              <li><b>前置校验：</b>当前节点在《能源计量关系》中尚未配置任一能源类型的计量关系时，展示提示「请先完成能耗计量方案配置，配置后才可支持用能定额考核」，「保存」不可用；请到侧栏「能源计量关系」完成配置。</li>
-              <li><b>已配置计量方案后：</b>按已配置计量关系的能源类型维护月度定额（示意为 12 个月定额输入）；考核结果在「用能定额考核」页查看。定额基于《能源计量关系》产出的计量拓扑 + 能源类型（历史随当前拓扑口径见页顶数据逻辑批注）。</li>
+              <li><b>年份：</b>选择考核年度，默认当前年（2026），按年份分别维护定额；控件形态对齐真实系统年份选择（日历图标）。</li>
+              <li><b>前置校验：</b>当前节点尚未配置任一能源类型的计量关系时，展示提示「请先完成能耗计量方案配置，配置后才可支持用能定额考核」，下方能源分块不展示，「保存」不可用；可关闭本弹窗后在「能源计量关系」行点「配置」补配，也可到侧栏《能源计量关系》批量配置。</li>
+              <li><b>已配置计量方案后：</b>按已配置计量关系的能源类型分块展示（能源名 + 累计量单位 + 开关）。开关开启时展开该能源 12 个月定额卡片（表头月份 + 数值输入，默认 0）；关闭则收起月度区、该能源不参与本年度考核。至少保留一个能源开启才可保存。考核结果在「用能定额考核」页查看；定额基于计量拓扑 + 能源类型（历史随当前拓扑口径见页顶数据逻辑批注）。</li>
             </ul>
           </div>
         </div>
         <div class="quota-year-row">
-          <select class="toolbar-select" id="quotaYear" aria-label="考核年度">
-            <option selected>2026</option>
-            <option>2025</option>
-          </select>
+          <div class="quota-year-picker">
+            <select class="toolbar-select" id="quotaYear" aria-label="考核年度">
+              <option selected>2026</option>
+              <option>2025</option>
+            </select>
+          </div>
         </div>
         <div class="banner-warn" id="quotaWarn">请先完成能耗计量方案配置，配置后才可支持用能定额考核</div>
-        <div id="quotaGridWrap" hidden>
-          <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px">已启用能源：<span id="quotaEnergyList">—</span> · 月度定额（示意，单位随能源类型）</div>
-          <div class="quota-grid" id="quotaGrid"></div>
-        </div>
+        <div class="quota-energy-list" id="quotaEnergyList" hidden></div>
       </div>
       <div class="modal-foot">
         <button type="button" class="btn btn-ghost" data-close="quotaModal">取消</button>
@@ -1989,6 +2700,9 @@
         pl501: { name: '0_501:并联冷却水泵管路_2', model: '并联冷却水泵管路', kind: 'collection', parent: 's493' },
         u494:  { name: '0_494:蓄冷罐组', model: '蓄冷罐组', kind: 'collection', parent: 's493' },
         g486:  { name: '0_486:3#数据中心水冷群控系统', model: '群控系统', kind: 'device', parent: 's493' },
+        tf1:   { name: '0_481:1#变压器', model: '变压器', kind: 'device', parent: 's478' },
+        tf2:   { name: '0_482:2#变压器', model: '变压器', kind: 'device', parent: 's478' },
+        ups1:  { name: '0_483:UPS-1', model: 'UPS', kind: 'device', parent: 's478' },
         d473:  { name: '0_473:冷冻水泵-CHWP4', model: '冷冻水泵', kind: 'device', parent: 'pl508',
           points: [
             { id: '0_473_1_101_0', name: '频率反馈', tags: [], value: '47.50', time: NOW },
@@ -1999,12 +2713,149 @@
           ] }
       };
 
-      /* 示意：哪些节点已在《能源计量关系》配置过计量关系（供定额考核前置校验演示） */
-      var meteringConfigured = {
-        p475: ['电', '冷量'],
-        s477: ['电', '水', '冷量'],
-        s493: ['电', '冷量'],
-        d473: ['电']
+      /* ---------- 能源计量关系（单对象配置，口径与《能源计量关系》全量页一致） ---------- */
+      /* 能源类型主数据对齐《能源配置》：Tab 列表与试算单位均由此生成，非本页写死 */
+      var ENERGY_TYPES = [
+        { name: '电', unitTotal: 'kWh', unitRealtime: 'kW', preset: true },
+        { name: '水', unitTotal: 'm³', unitRealtime: 'm³/h', preset: true },
+        { name: '冷量', unitTotal: 'kWh', unitRealtime: 'kW', preset: true }
+      ];
+      var ENERGIES = ENERGY_TYPES.map(function (t) { return t.name; });
+      var ENERGY_UNIT = ENERGY_TYPES.reduce(function (acc, t) {
+        acc[t.name] = t.unitTotal;
+        return acc;
+      }, {});
+
+      var METERS = [
+        { code: 'AC_Meter_01', name: '交流电表-市电进线1', energy: '电', kind: 'device', space: 'G1栋' },
+        { code: 'AC_Meter_02', name: '交流电表-变压器出线1', energy: '电', kind: 'device', space: 'G1栋' },
+        { code: 'AC_Meter_03', name: '交流电表-市电进线2', energy: '电', kind: 'device', space: 'G1栋' },
+        { code: 'AC_Meter_04', name: '交流电表-变压器出线2', energy: '电', kind: 'device', space: 'G1栋' },
+        { code: 'AC_Meter_05', name: '交流电表-UPS进线1', energy: '电', kind: 'device', space: '1F' },
+        { code: 'AC_Meter_06', name: '交流电表-UPS出线1', energy: '电', kind: 'device', space: '1F' },
+        { code: 'AC_Meter_07', name: '交流电表-冷站总进线', energy: '电', kind: 'device', space: 'A路制冷站' },
+        { code: 'AC_Meter_08', name: '列头柜 1', energy: '电', kind: 'device', space: '1F' },
+        { code: 'AC_Meter_09', name: '交流电表-IT系统总表', energy: '电', kind: 'device', space: '1F' },
+        { code: 'AC_Meter_10', name: '交流电表-备用回路1', energy: '电', kind: 'device', space: '未绑定空间' },
+        { code: 'AC_Meter_11', name: '交流电表-制冷站进线', energy: '电', kind: 'device', space: 'A路制冷站' },
+        { code: 'WM_01', name: '冷却水表-补水总管', energy: '水', kind: 'device', space: 'A路制冷站' },
+        { code: 'WM_02', name: '冷却水表-排污回水', energy: '水', kind: 'device', space: 'A路制冷站' },
+        { code: 'WM_03', name: '水表-绿化用水', energy: '水', kind: 'device', space: '未绑定空间' },
+        { code: 'CM_01', name: '冷量计-冷冻供回水总管', energy: '冷量', kind: 'device', space: 'A路制冷站' }
+      ];
+      /* 列头柜 1 下 10 个支路组件 + 批量 mock，演示上千级规模的分页 */
+      (function seedMeters() {
+        for (var i = 1; i <= 10; i++) {
+          METERS.push({
+            code: 'PDU1_BR' + String(i).padStart(2, '0'),
+            name: '支路 ' + i,
+            componentName: '支路 ' + i,
+            energy: '电',
+            kind: 'component',
+            parentCode: 'AC_Meter_08',
+            parentName: '列头柜 1',
+            space: '1F'
+          });
+        }
+        var loopSpaces = ['G1栋', 'B1层', '1F', 'A路制冷站', '未绑定空间'];
+        for (var j = 12; j <= 48; j++) {
+          METERS.push({
+            code: 'AC_Meter_' + String(j).padStart(2, '0'),
+            name: '交流电表-回路' + j,
+            energy: '电',
+            kind: 'device',
+            space: loopSpaces[j % loopSpaces.length]
+          });
+        }
+      })();
+
+      /* 今日 mock 用量 */
+      var TODAY_USAGE = {
+        AC_Meter_01: 12840, AC_Meter_02: 12110, AC_Meter_03: 11960, AC_Meter_04: 11220,
+        AC_Meter_05: 9800, AC_Meter_06: 9420, AC_Meter_07: 8640, AC_Meter_08: 2100,
+        AC_Meter_09: 15600, AC_Meter_10: 120, AC_Meter_11: 7200,
+        WM_01: 86.4, WM_02: 12.8, WM_03: 4.2, CM_01: 18200
+      };
+      for (var usageIndex = 1; usageIndex <= 10; usageIndex++) {
+        TODAY_USAGE['PDU1_BR' + String(usageIndex).padStart(2, '0')] = 180 + usageIndex * 12;
+      }
+
+      /* 表具池空间位置筛选（选父含子）；与《能源计量关系》空间视图同一批空间实例 */
+      var SPACE_TREE = [
+        { id: 'hf', name: '合肥中行', space: '合肥中行', children: [
+          { id: 'g1', name: 'G1栋', space: 'G1栋', children: [
+            { id: 'b1', name: 'B1层', space: 'B1层' },
+            { id: 'f1', name: '1F', space: '1F', children: [
+              { id: 'stA', name: 'A路制冷站', space: 'A路制冷站' }
+            ] }
+          ] }
+        ] },
+        { id: 'unbound', name: '未绑定空间', space: '未绑定空间' }
+      ];
+
+      function shortName(name) { return (name || '').replace(/^[^:]*:/, ''); }
+
+      /* 计量关系 mock：对象 → 能源类型 → 成员（下级对象 / 表具 + 计量方向） */
+      var relations = {
+        p475: {
+          '电': [
+            { type: 'object', id: 's478', name: shortName(NODES.s478.name), direction: 'in' },
+            { type: 'object', id: 's477', name: shortName(NODES.s477.name), direction: 'in' },
+            { type: 'object', id: 's476', name: shortName(NODES.s476.name), direction: 'in' }
+          ],
+          '冷量': [
+            { type: 'object', id: 's477', name: shortName(NODES.s477.name), direction: 'in' }
+          ]
+        },
+        s478: {
+          '电': [
+            { type: 'object', id: 'tf1', name: shortName(NODES.tf1.name), direction: 'in' },
+            { type: 'object', id: 'tf2', name: shortName(NODES.tf2.name), direction: 'in' },
+            { type: 'object', id: 'ups1', name: shortName(NODES.ups1.name), direction: 'in' }
+          ]
+        },
+        tf1: {
+          '电': [
+            { type: 'meter', code: 'AC_Meter_01', name: '交流电表-市电进线1', direction: 'in' },
+            { type: 'meter', code: 'AC_Meter_02', name: '交流电表-变压器出线1', direction: 'out' }
+          ]
+        },
+        tf2: {
+          '电': [
+            { type: 'meter', code: 'AC_Meter_03', name: '交流电表-市电进线2', direction: 'in' },
+            { type: 'meter', code: 'AC_Meter_04', name: '交流电表-变压器出线2', direction: 'out' }
+          ]
+        },
+        ups1: {
+          '电': [
+            { type: 'meter', code: 'AC_Meter_05', name: '交流电表-UPS进线1', direction: 'in' },
+            { type: 'meter', code: 'AC_Meter_06', name: '交流电表-UPS出线1', direction: 'out' }
+          ]
+        },
+        s477: {
+          '电': [{ type: 'object', id: 's493', name: shortName(NODES.s493.name), direction: 'in' }],
+          '水': [{ type: 'object', id: 's493', name: shortName(NODES.s493.name), direction: 'in' }],
+          '冷量': [{ type: 'object', id: 's493', name: shortName(NODES.s493.name), direction: 'in' }]
+        },
+        s493: {
+          '电': [
+            { type: 'meter', code: 'AC_Meter_07', name: '交流电表-冷站总进线', direction: 'in' },
+            { type: 'object', id: 'u495', name: shortName(NODES.u495.name), direction: 'in' }
+          ],
+          '水': [
+            { type: 'meter', code: 'WM_01', name: '冷却水表-补水总管', direction: 'in' },
+            { type: 'meter', code: 'WM_02', name: '冷却水表-排污回水', direction: 'out' }
+          ],
+          '冷量': [
+            { type: 'meter', code: 'CM_01', name: '冷量计-冷冻供回水总管', direction: 'out' }
+          ]
+        },
+        s476: {
+          '电': [{ type: 'meter', code: 'AC_Meter_09', name: '交流电表-IT系统总表', direction: 'in' }]
+        },
+        d473: {
+          '电': [{ type: 'meter', code: 'PDU1_BR01', name: '支路 1', direction: 'in', meterKind: 'component', parentName: '列头柜 1' }]
+        }
       };
 
       /* ---------- 指标定义与计算节点（示意数据，渲染结构为通用模型） ---------- */
@@ -2031,6 +2882,7 @@
         return {
           id: id,
           name: name,
+          bizCategory: '能效',
           value: value,
           unit: unit,
           formula: formula,
@@ -2224,6 +3076,7 @@
         nodeView.hidden = true;
         renderHeadActions('home');
         document.querySelectorAll('.tree-row').forEach(function (r) { r.classList.remove('active'); });
+        refreshMeteringBlock();
       }
 
       document.getElementById('btnNodeBack').addEventListener('click', showHome);
@@ -2405,10 +3258,7 @@
       }
 
       var metricShowAll = false; /* false=仅有值（默认），true=全部（含待配置，便于排查） */
-
-      function nodeConfiguredEnergies(nodeId) {
-        return meteringConfigured[nodeId] || [];
-      }
+      var metricBizFilter = ''; /* ''=全部；本期数据均为「能效」 */
 
       /* 指标是否适用于当前对象（与有无值无关） */
       function isMetricApplicable(row) {
@@ -2420,15 +3270,21 @@
       function isMetricCalculable(row) {
         if (row.value === '待配置') return false;
         if (row.energy) {
-          return nodeConfiguredEnergies(currentNode).indexOf(row.energy) !== -1;
+          return configuredEnergies(currentNode).indexOf(row.energy) !== -1;
         }
         return true;
+      }
+
+      function matchesBizFilter(row) {
+        if (!metricBizFilter) return true;
+        return (row.bizCategory || '能效') === metricBizFilter;
       }
 
       function getVisibleMetrics(mode) {
         var list = metricDatasets[mode] || [];
         return list.filter(function (row) {
           if (!isMetricApplicable(row)) return false;
+          if (!matchesBizFilter(row)) return false;
           if (metricShowAll) return true;
           return isMetricCalculable(row);
         }).map(function (row) {
@@ -2445,7 +3301,10 @@
         var rows = getVisibleMetrics(metricMode);
         var isRealtime = metricMode === 'realtime';
         if (!rows.length) {
-          body.innerHTML = '<tr><td colspan="6" class="empty-cell">当前对象暂无适用指标</td></tr>';
+          var emptyMsg = metricBizFilter
+            ? '当前业务分类下暂无适用指标'
+            : '当前对象暂无适用指标';
+          body.innerHTML = '<tr><td colspan="7" class="empty-cell">' + emptyMsg + '</td></tr>';
         } else {
           body.innerHTML = rows.map(function (row) {
             var pending = row.value === '待配置';
@@ -2454,6 +3313,7 @@
               : '<td class="num-cell">—</td>';
             return '<tr>' +
               '<td class="metric-name-cell">' + esc(row.name) + '</td>' +
+              '<td class="metric-biz-cell">' + esc(row.bizCategory || '能效') + '</td>' +
               '<td><button type="button" class="metric-expression" data-metric-id="' + esc(row.id) + '" title="查看计算结果预览"><span>' + esc(row.formula) + '</span></button></td>' +
               '<td><span class="metric-value' + (pending ? ' pending' : '') + '">' + esc(row.value) + '</span></td>' +
               '<td>' + esc(row.unit) + '</td>' +
@@ -2623,6 +3483,7 @@
         renderMetrics();
         renderInfo(nodeId);
         renderTopo(nodeId);
+        refreshMeteringBlock();
       }
 
       /* 树：展开/收起 与 选中 */
@@ -2680,6 +3541,7 @@
               panels[k].hidden = !on;
             }
           });
+          if (key === 'eff') refreshMeteringBlock();
         });
       });
 
@@ -2707,6 +3569,11 @@
           });
           renderMetrics();
         });
+      });
+
+      document.getElementById('metricBizFilter').addEventListener('change', function () {
+        metricBizFilter = this.value || '';
+        renderMetrics();
       });
 
       document.getElementById('btnMetricQuery').addEventListener('click', function () {
@@ -2842,33 +3709,897 @@
       document.getElementById('curveRange').addEventListener('change', renderCurveChart);
       document.getElementById('curveInterval').addEventListener('change', renderCurveChart);
 
-      /* ---------- 用能定额考核配置 ---------- */
+      /* ---------- 用能定额考核配置（按能源分块 + 开关 + 月度卡片，对齐真实系统） ---------- */
       var quotaModal = document.getElementById('quotaModal');
+      var quotaEnergyListEl = document.getElementById('quotaEnergyList');
+      var quotaWarnEl = document.getElementById('quotaWarn');
+      var btnQuotaSave = document.getElementById('btnQuotaSave');
+      /* 演示态：对象 × 年度 × 能源 → { on, months[12] }；未写过则默认开启且定额 0 */
+      var quotaStore = {};
 
-      document.getElementById('btnQuotaConfig').addEventListener('click', function () {
-        var enabled = meteringConfigured[currentNode] || [];
-        var ok = enabled.length > 0;
-        document.getElementById('quotaWarn').hidden = ok;
-        document.getElementById('quotaGridWrap').hidden = !ok;
-        document.getElementById('btnQuotaSave').disabled = !ok;
-        if (ok) {
-          document.getElementById('quotaEnergyList').textContent = enabled.join('、');
-          var grid = document.getElementById('quotaGrid');
-          grid.innerHTML = '';
-          for (var m = 1; m <= 12; m++) {
-            var cell = document.createElement('div');
-            cell.className = 'quota-cell';
-            cell.innerHTML = '<span>' + m + '月</span><input type="text" placeholder="定额" aria-label="' + m + '月定额">';
-            grid.appendChild(cell);
+      function quotaStoreKey(objId, year) {
+        return (objId || '') + '::' + (year || '');
+      }
+
+      function quotaEnsureState(objId, year, energies) {
+        var key = quotaStoreKey(objId, year);
+        if (!quotaStore[key]) quotaStore[key] = {};
+        var state = quotaStore[key];
+        energies.forEach(function (energy) {
+          if (!state[energy]) {
+            state[energy] = {
+              on: true,
+              months: Array(12).fill('0')
+            };
           }
+        });
+        return state;
+      }
+
+      function quotaSyncSaveEnabled() {
+        var switches = quotaEnergyListEl.querySelectorAll('.quota-switch input');
+        var anyOn = false;
+        switches.forEach(function (input) {
+          if (input.checked) anyOn = true;
+        });
+        var ok = !quotaEnergyListEl.hidden && switches.length > 0 && anyOn;
+        btnQuotaSave.disabled = !ok;
+      }
+
+      function quotaRenderMonthGrid(energy, months) {
+        var grid = document.createElement('div');
+        grid.className = 'quota-month-grid';
+        grid.setAttribute('data-energy', energy);
+        for (var m = 1; m <= 12; m++) {
+          var card = document.createElement('div');
+          card.className = 'quota-month-card';
+          var val = months[m - 1] != null ? String(months[m - 1]) : '0';
+          card.innerHTML =
+            '<div class="quota-month-card-head">' + m + '月</div>' +
+            '<div class="quota-month-card-body">' +
+              '<input type="number" min="0" step="any" value="' + esc(val) + '" aria-label="' + energy + m + '月定额">' +
+            '</div>';
+          grid.appendChild(card);
+        }
+        return grid;
+      }
+
+      function renderQuotaEnergyBlocks(energies) {
+        var year = document.getElementById('quotaYear').value;
+        var state = quotaEnsureState(currentNode, year, energies);
+        quotaEnergyListEl.innerHTML = '';
+        energies.forEach(function (energy) {
+          var item = state[energy];
+          var block = document.createElement('div');
+          block.className = 'quota-energy-block';
+          block.setAttribute('data-energy', energy);
+
+          var head = document.createElement('div');
+          head.className = 'quota-energy-head' + (item.on ? ' is-on' : '');
+          var unit = ENERGY_UNIT[energy] || '';
+          head.innerHTML =
+            '<div class="quota-energy-title">' + esc(energy) +
+              (unit ? '<span class="quota-energy-unit">（' + esc(unit) + '）</span>' : '') +
+            '</div>' +
+            '<label class="quota-switch" title="' + (item.on ? '关闭该能源考核' : '开启该能源考核') + '">' +
+              '<input type="checkbox"' + (item.on ? ' checked' : '') + ' aria-label="启用' + energy + '定额考核">' +
+              '<span class="quota-switch-slider"></span>' +
+            '</label>';
+
+          block.appendChild(head);
+          if (item.on) {
+            block.appendChild(quotaRenderMonthGrid(energy, item.months));
+          }
+
+          var toggle = head.querySelector('input');
+          toggle.addEventListener('change', function () {
+            item.on = toggle.checked;
+            head.classList.toggle('is-on', item.on);
+            head.querySelector('.quota-switch').title = item.on ? '关闭该能源考核' : '开启该能源考核';
+            var existing = block.querySelector('.quota-month-grid');
+            if (item.on) {
+              if (!existing) {
+                /* 打开时把当前输入（若曾打开过）或默认 0 写入 */
+                block.appendChild(quotaRenderMonthGrid(energy, item.months));
+              }
+            } else if (existing) {
+              /* 关闭前把输入写回 store，便于再次打开不丢值 */
+              var inputs = existing.querySelectorAll('input');
+              item.months = Array.prototype.map.call(inputs, function (inp) {
+                return inp.value === '' ? '0' : inp.value;
+              });
+              existing.remove();
+            }
+            quotaSyncSaveEnabled();
+          });
+
+          quotaEnergyListEl.appendChild(block);
+        });
+        quotaSyncSaveEnabled();
+      }
+
+      function openQuotaModal() {
+        var energies = configuredEnergies(currentNode);
+        var ok = energies.length > 0;
+        quotaWarnEl.hidden = ok;
+        quotaEnergyListEl.hidden = !ok;
+        if (ok) {
+          renderQuotaEnergyBlocks(energies);
+        } else {
+          quotaEnergyListEl.innerHTML = '';
+          btnQuotaSave.disabled = true;
         }
         quotaModal.hidden = false;
+      }
+
+      document.getElementById('btnQuotaConfig').addEventListener('click', openQuotaModal);
+
+      document.getElementById('quotaYear').addEventListener('change', function () {
+        if (quotaModal.hidden || quotaEnergyListEl.hidden) return;
+        var energies = configuredEnergies(currentNode);
+        if (energies.length) renderQuotaEnergyBlocks(energies);
       });
 
-      document.getElementById('btnQuotaSave').addEventListener('click', function () {
+      btnQuotaSave.addEventListener('click', function () {
+        var year = document.getElementById('quotaYear').value;
+        var energies = configuredEnergies(currentNode);
+        var state = quotaEnsureState(currentNode, year, energies);
+        var enabledNames = [];
+        quotaEnergyListEl.querySelectorAll('.quota-energy-block').forEach(function (block) {
+          var energy = block.getAttribute('data-energy');
+          var on = block.querySelector('.quota-switch input').checked;
+          var grid = block.querySelector('.quota-month-grid');
+          if (grid) {
+            state[energy].months = Array.prototype.map.call(grid.querySelectorAll('input'), function (inp) {
+              return inp.value === '' ? '0' : inp.value;
+            });
+          }
+          state[energy].on = on;
+          if (on) enabledNames.push(energy);
+        });
+        var quotaState = document.getElementById('effQuotaState');
+        if (quotaState) {
+          quotaState.textContent = enabledNames.length
+            ? ('可考核能源：' + enabledNames.join('、') + ' · ' + year + ' 年已配置')
+            : '需先配置能源计量关系';
+        }
         quotaModal.hidden = true;
-        showToast('已保存用能定额（示意）：考核结果在「用能定额考核」页查看');
+        showToast('已保存 ' + year + ' 年用能定额（' + enabledNames.join('、') + '）：考核结果在「用能定额考核」页查看');
       });
+
+      /* ---------- 能效配置 · 单对象计量关系（结构与交互对齐《能源计量关系》全量页） ---------- */
+      var MR_PAGE_SIZE = 20;
+      var mrState = { energy: ENERGIES[0] || '电', meterPage: 1, spaceId: 'all', drag: null };
+      var mrSpaceExpanded = { hf: true, g1: true, f1: true };
+
+      function mrEnsureRelations(objId) {
+        if (!relations[objId]) relations[objId] = {};
+        ENERGIES.forEach(function (energy) {
+          if (!relations[objId][energy]) relations[objId][energy] = [];
+        });
+        return relations[objId];
+      }
+
+      function mrMembers() {
+        if (!currentNode) return [];
+        return mrEnsureRelations(currentNode)[mrState.energy] || [];
+      }
+
+      function configuredEnergies(objId) {
+        if (!objId || !relations[objId]) return [];
+        return ENERGIES.filter(function (energy) {
+          return (relations[objId][energy] || []).length > 0;
+        });
+      }
+
+      function mrMeterByCode(code) {
+        return METERS.find(function (meter) { return meter.code === code; }) || {};
+      }
+
+      function mrMeterInstanceId(code) {
+        var meter = mrMeterByCode(code);
+        if (meter.kind === 'component' && meter.parentCode) return mrMeterInstanceId(meter.parentCode);
+        var matched = /^AC_Meter_(\d+)$/.exec(code || '');
+        if (matched) return '0_' + (700 + Number(matched[1]));
+        matched = /^WM_(\d+)$/.exec(code || '');
+        if (matched) return '0_' + (750 + Number(matched[1]));
+        matched = /^CM_(\d+)$/.exec(code || '');
+        if (matched) return '0_' + (760 + Number(matched[1]));
+        return code || '';
+      }
+
+      /* 表具占用：查重键为「表具（含组件）+ 能源类型」，不按输入 / 输出拆名额 */
+      function mrMeterUsage() {
+        var map = {};
+        Object.keys(relations).forEach(function (objId) {
+          ENERGIES.forEach(function (energy) {
+            ((relations[objId] || {})[energy] || []).forEach(function (member) {
+              if (member.type !== 'meter') return;
+              var key = member.code + '|' + energy;
+              if (!map[key]) map[key] = [];
+              map[key].push({ objId: objId, direction: member.direction });
+            });
+          });
+        });
+        return map;
+      }
+
+      function mrFormatNum(value, energy) {
+        if (value == null || isNaN(value)) return '—';
+        var digits = energy === '水' ? 1 : 0;
+        return value.toLocaleString('zh-CN', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+      }
+
+      function mrFormatSigned(value, energy) {
+        if (value == null || isNaN(value)) return '—';
+        var digits = energy === '水' ? 1 : 0;
+        var abs = Math.abs(value).toLocaleString('zh-CN', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+        if (value > 0) return '+' + abs;
+        if (value < 0) return '−' + abs;
+        return abs;
+      }
+
+      /* ---------- 表具池空间筛选（选父含子） ---------- */
+      function mrFindSpaceNode(id, nodes) {
+        var list = nodes || SPACE_TREE;
+        for (var i = 0; i < list.length; i++) {
+          if (list[i].id === id) return list[i];
+          if (list[i].children) {
+            var hit = mrFindSpaceNode(id, list[i].children);
+            if (hit) return hit;
+          }
+        }
+        return null;
+      }
+
+      function mrSelectedSpaceKeys() {
+        if (mrState.spaceId === 'all') return null;
+        var keys = [];
+        (function collect(node) {
+          if (!node) return;
+          if (node.space && keys.indexOf(node.space) === -1) keys.push(node.space);
+          (node.children || []).forEach(collect);
+        })(mrFindSpaceNode(mrState.spaceId));
+        return keys;
+      }
+
+      function renderMrSpacePanel() {
+        var panel = document.getElementById('mrSpacePanel');
+        if (!panel) return;
+        function renderNodes(nodes) {
+          return (nodes || []).map(function (node) {
+            var hasChild = !!(node.children && node.children.length);
+            var expanded = !!mrSpaceExpanded[node.id];
+            var html = '<button type="button" class="mr-space-node' + (mrState.spaceId === node.id ? ' active' : '') + '" data-space-id="' + node.id + '">' +
+              '<span class="mr-space-chevron' + (hasChild ? '' : ' is-leaf') + '" data-space-toggle="' + node.id + '" aria-hidden="true">' + (hasChild ? (expanded ? '▼' : '▶') : '') + '</span>' +
+              '<span class="mr-space-label">' + esc(node.name) + '</span>' +
+              '</button>';
+            if (hasChild && expanded) html += '<div class="mr-space-children">' + renderNodes(node.children) + '</div>';
+            return html;
+          }).join('');
+        }
+        panel.innerHTML =
+          '<button type="button" class="mr-space-all' + (mrState.spaceId === 'all' ? ' active' : '') + '" data-space-id="all">全部位置</button>' +
+          renderNodes(SPACE_TREE);
+      }
+
+      function setMrSpaceOpen(open) {
+        var wrap = document.getElementById('mrSpaceSelect');
+        var trigger = document.getElementById('mrSpaceTrigger');
+        if (!wrap || !trigger) return;
+        wrap.classList.toggle('open', !!open);
+        trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      }
+
+      function setMrSpaceSelection(id) {
+        mrState.spaceId = id || 'all';
+        var node = mrState.spaceId === 'all' ? null : mrFindSpaceNode(mrState.spaceId);
+        document.getElementById('mrSpaceLabel').textContent = node ? node.name : '全部位置';
+        renderMrSpacePanel();
+        setMrSpaceOpen(false);
+        mrState.meterPage = 1;
+        renderMrMeters();
+      }
+
+      /* ---------- 表具池 ---------- */
+      function mrFilteredMeters() {
+        var keyword = (document.getElementById('mrMeterSearch').value || '').trim();
+        var occupy = document.getElementById('mrOccupyFilter').value || 'free';
+        var spaceKeys = mrSelectedSpaceKeys();
+        var usage = mrMeterUsage();
+        return METERS.filter(function (meter) {
+          if (meter.energy !== mrState.energy) return false;
+          if (spaceKeys && spaceKeys.indexOf(meter.space || '未绑定空间') === -1) return false;
+          var taken = (usage[meter.code + '|' + meter.energy] || []).length > 0;
+          if (occupy === 'free' && taken) return false;
+          if (occupy === 'taken' && !taken) return false;
+          if (keyword) {
+            var haystack = meter.name + meter.code + mrMeterInstanceId(meter.code) + (meter.parentName || '') + (meter.parentCode || '');
+            if (haystack.indexOf(keyword) === -1) return false;
+          }
+          return true;
+        });
+      }
+
+      function renderMrMeters() {
+        var list = document.getElementById('mrMeterList');
+        if (!list) return;
+        var usage = mrMeterUsage();
+        var filtered = mrFilteredMeters();
+        var totalPages = Math.max(1, Math.ceil(filtered.length / MR_PAGE_SIZE));
+        if (mrState.meterPage > totalPages) mrState.meterPage = totalPages;
+        if (mrState.meterPage < 1) mrState.meterPage = 1;
+        var start = (mrState.meterPage - 1) * MR_PAGE_SIZE;
+        list.innerHTML = '';
+        filtered.slice(start, start + MR_PAGE_SIZE).forEach(function (meter) {
+          var taken = (usage[meter.code + '|' + meter.energy] || []).length > 0;
+          var item = document.createElement('div');
+          item.className = 'mr-meter-item' + (taken ? ' disabled' : '') + (meter.kind === 'component' ? ' component' : '');
+          item.draggable = !taken;
+          var displayName = meter.kind === 'component'
+            ? ((meter.parentName || meter.parentCode || '') + '-' + meter.name)
+            : meter.name;
+          item.innerHTML =
+            '<div class="mr-meter-name">' + esc(displayName) + '</div>' +
+            '<div class="mr-meter-meta">' +
+              '<span class="mr-tag ' + (meter.kind === 'component' ? 'mr-tag-comp">组件' : 'mr-tag-dev">设备') + '</span>' +
+              '<span>' + esc(mrMeterInstanceId(meter.code)) + '</span>' +
+              (taken ? '<span class="mr-tag mr-tag-muted">已计量</span>' : '') +
+            '</div>';
+          if (!taken) {
+            item.addEventListener('dragstart', function (event) {
+              mrState.drag = {
+                kind: 'meter',
+                code: meter.code,
+                name: meter.name,
+                energy: meter.energy,
+                meterKind: meter.kind || 'device',
+                parentName: meter.parentName || ''
+              };
+              event.dataTransfer.setData('text/plain', JSON.stringify(mrState.drag));
+              event.dataTransfer.effectAllowed = 'copy';
+            });
+            item.addEventListener('dragend', function () {
+              setTimeout(function () {
+                if (mrState.drag && mrState.drag.kind === 'meter' && mrState.drag.code === meter.code) mrState.drag = null;
+              }, 50);
+              var zone = document.getElementById('mrDropzone');
+              if (zone) zone.classList.remove('drag-over');
+            });
+          }
+          list.appendChild(item);
+        });
+        if (!list.children.length) {
+          list.innerHTML = '<div class="mr-pool-empty">当前筛选下无匹配表具 / 组件</div>';
+        }
+        document.getElementById('mrMeterPageSize').textContent = '共 ' + filtered.length + ' 条 · 每页 ' + MR_PAGE_SIZE + ' 条';
+        document.getElementById('mrMeterPageIndex').textContent = mrState.meterPage + ' / ' + totalPages;
+        document.getElementById('mrMeterPrev').disabled = mrState.meterPage <= 1;
+        document.getElementById('mrMeterNext').disabled = mrState.meterPage >= totalPages;
+      }
+
+      /* ---------- 计量关系表 ---------- */
+      function renderMrRelationTable(highlightKey) {
+        var body = document.getElementById('mrRelationBody');
+        if (!body) return;
+        if (!currentNode) {
+          body.innerHTML = '<tr class="mr-empty"><td colspan="4">请先在左侧对象树选择对象</td></tr>';
+          document.getElementById('mrRelationCount').textContent = '0 条';
+          return;
+        }
+        var members = mrMembers();
+        document.getElementById('mrRelationCount').textContent = members.length + ' 条';
+        if (!members.length) {
+          body.innerHTML = '<tr class="mr-empty"><td colspan="4">当前对象在「' + esc(mrState.energy) + '」下暂无计量关系<br>从左栏对象树拖入下级对象，或从右栏表具池拖入表具</td></tr>';
+          return;
+        }
+        body.innerHTML = '';
+        members.forEach(function (member) {
+          var tr = document.createElement('tr');
+          if (member.conflict) tr.className = 'conflict';
+          var rowKey = member.type === 'meter' ? ('meter:' + member.code) : ('object:' + member.id);
+          if (highlightKey && rowKey === highlightKey) tr.classList.add('row-flash');
+          var isOut = member.direction === 'out';
+          var displayName = member.name;
+          if (member.type === 'object' && !String(displayName || '').trim() && NODES[member.id]) {
+            displayName = shortName(NODES[member.id].name);
+            member.name = displayName;
+          }
+          if (member.type === 'meter' && !String(displayName || '').trim()) {
+            var meta = mrMeterByCode(member.code);
+            displayName = meta.name || member.code;
+            member.name = displayName;
+            if (!member.meterKind) member.meterKind = meta.kind || 'device';
+            if (!member.parentName) member.parentName = meta.parentName || '';
+          }
+          var subHint = '';
+          if (member.type === 'meter' && member.meterKind === 'component' && member.parentName) {
+            subHint = '<div class="mr-row-sub">所属表具 · ' + esc(member.parentName) + '</div>';
+          } else if (member.type === 'meter') {
+            subHint = '<div class="mr-row-sub">' + esc(mrMeterInstanceId(member.code)) + '</div>';
+          } else if (member.type === 'object' && NODES[member.id]) {
+            subHint = '<div class="mr-row-sub">' + esc(NODES[member.id].model || member.id) + '</div>';
+          }
+          tr.innerHTML =
+            '<td><span class="mr-tag ' + (member.type === 'meter' ? 'mr-tag-meter">表具' : 'mr-tag-obj">下级对象') + '</span></td>' +
+            '<td><div class="mr-row-name">' + esc(displayName || '（未命名）') + '</div>' + subHint +
+              (member.conflictReason ? '<div class="mr-row-conflict">' + esc(member.conflictReason) + '</div>' : '') +
+            '</td>' +
+            '<td><div class="mr-dir" role="group" aria-label="计量方向">' +
+              '<button type="button" class="' + (isOut ? '' : 'active-in') + '" data-dir="in">输入</button>' +
+              '<button type="button" class="' + (isOut ? 'active-out' : '') + '" data-dir="out">输出</button>' +
+            '</div></td>' +
+            '<td><button type="button" class="mr-del">删除</button></td>';
+          tr.querySelectorAll('.mr-dir button').forEach(function (button) {
+            button.addEventListener('click', function () {
+              var next = button.getAttribute('data-dir');
+              if (member.direction === next) return;
+              member.direction = next;
+              refreshMeteringBlock();
+              showToast('已切换为「' + (next === 'out' ? '输出' : '输入') + '」（示意：变更即时生效）');
+            });
+          });
+          tr.querySelector('.mr-del').addEventListener('click', function () {
+            var list = mrMembers();
+            var at = list.indexOf(member);
+            if (at < 0) {
+              at = list.findIndex(function (item) {
+                return member.type === 'meter'
+                  ? (item.type === 'meter' && item.code === member.code)
+                  : (item.type === 'object' && item.id === member.id);
+              });
+            }
+            if (at >= 0) list.splice(at, 1);
+            refreshMeteringBlock();
+            showToast('已移除 1 条计量关系');
+          });
+          body.appendChild(tr);
+        });
+      }
+
+      /* ---------- 今日试算：沿当前能源拓扑递归到叶子表具 ---------- */
+      function mrExpandLeaves(objId, energy, coeff, bag, visiting) {
+        if (visiting[objId]) return;
+        visiting[objId] = true;
+        ((relations[objId] || {})[energy] || []).forEach(function (member) {
+          var nextCoeff = coeff * (member.direction === 'out' ? -1 : 1);
+          if (member.type === 'meter') {
+            if (!bag[member.code]) bag[member.code] = { code: member.code, name: member.name, coeff: 0 };
+            bag[member.code].coeff += nextCoeff;
+          } else if (member.type === 'object') {
+            mrExpandLeaves(member.id, energy, nextCoeff, bag, Object.assign({}, visiting));
+          }
+        });
+      }
+
+      function renderMrTrial() {
+        var summary = document.getElementById('mrTrialSummary');
+        var body = document.getElementById('mrTrialBody');
+        var alertEl = document.getElementById('mrTrialAlert');
+        if (!summary || !body || !alertEl) return;
+        alertEl.hidden = true;
+        alertEl.className = 'mr-alert';
+        if (!currentNode) {
+          summary.innerHTML =
+            '<div class="mr-kpi"><div class="label">表具数</div><div class="value">—</div></div>' +
+            '<div class="mr-kpi"><div class="label">今日对象用量</div><div class="value">—</div></div>' +
+            '<div class="mr-kpi"><div class="label">试算提示</div><div class="value" style="font-size:14px">先选对象</div></div>';
+          body.innerHTML = '<tr class="mr-empty"><td colspan="3">选中对象并配置关系后，这里展示参与试算的表具</td></tr>';
+          return;
+        }
+        var bag = {};
+        mrExpandLeaves(currentNode, mrState.energy, 1, bag, {});
+        var leaves = Object.keys(bag).map(function (key) { return bag[key]; });
+        if (!leaves.length) {
+          summary.innerHTML =
+            '<div class="mr-kpi"><div class="label">表具数</div><div class="value">0</div></div>' +
+            '<div class="mr-kpi"><div class="label">今日对象用量</div><div class="value">—</div></div>' +
+            '<div class="mr-kpi warn"><div class="label">试算提示</div><div class="value" style="font-size:14px">尚未挂到表具</div></div>';
+          body.innerHTML = '<tr class="mr-empty"><td colspan="3">当前对象在「' + esc(mrState.energy) + '」下尚未关联到任何表具</td></tr>';
+          alertEl.hidden = false;
+          alertEl.textContent = '提示：直接成员若只有下级对象且下级也未配表具，今日试算为空。请继续下钻配置或直接挂表。';
+          return;
+        }
+        var total = 0;
+        leaves.forEach(function (leaf) {
+          leaf.usage = TODAY_USAGE[leaf.code] == null ? 0 : TODAY_USAGE[leaf.code];
+          leaf.contrib = leaf.usage * leaf.coeff;
+          total += leaf.contrib;
+        });
+        leaves.sort(function (a, b) { return Math.abs(b.contrib) - Math.abs(a.contrib); });
+
+        var tipClass = 'ok';
+        var tipText = '正常';
+        if (leaves.every(function (leaf) { return !leaf.usage; })) {
+          tipClass = 'warn';
+          tipText = '用量全 0';
+        } else if (total < 0 && Math.abs(total) > 100) {
+          tipClass = 'danger';
+          tipText = '结果偏负';
+        } else if (total === 0) {
+          tipClass = 'warn';
+          tipText = '结果为 0';
+        }
+        summary.innerHTML =
+          '<div class="mr-kpi"><div class="label">表具数</div><div class="value">' + leaves.length + '</div></div>' +
+          '<div class="mr-kpi ' + tipClass + '"><div class="label">今日对象用量（' + esc(ENERGY_UNIT[mrState.energy]) + '）</div><div class="value">' + mrFormatNum(total, mrState.energy) + '</div></div>' +
+          '<div class="mr-kpi ' + tipClass + '"><div class="label">试算提示</div><div class="value" style="font-size:14px">' + tipText + '</div></div>';
+        if (tipClass !== 'ok') {
+          alertEl.hidden = false;
+          alertEl.className = 'mr-alert' + (tipClass === 'danger' ? ' danger' : '');
+          alertEl.textContent = tipClass === 'danger'
+            ? '今日试算结果显著为负，请检查输出侧表具是否挂错、或输入侧是否缺失。'
+            : '今日试算结果异常（全 0 / 结果为 0），请核对表具是否有今日数据、拓扑是否配全。';
+        }
+        body.innerHTML = '';
+        leaves.forEach(function (leaf) {
+          var href = '能耗管理-表具明细.html?energy=' + encodeURIComponent(mrState.energy) +
+            '&meter=' + encodeURIComponent(leaf.code) +
+            '&q=' + encodeURIComponent(leaf.name);
+          var tr = document.createElement('tr');
+          tr.innerHTML =
+            '<td><div class="mr-row-name">' + esc(leaf.name) + '</div></td>' +
+            '<td class="num">' + mrFormatSigned(leaf.contrib, mrState.energy) + '</td>' +
+            '<td><a class="action-link" href="' + href + '">查看明细</a></td>';
+          body.appendChild(tr);
+        });
+      }
+
+      /* ---------- 图约束校验：同一能源下表具不得被多处占用 ---------- */
+      function mrValidateCurrent() {
+        if (!currentNode) return true;
+        var usage = mrMeterUsage();
+        var conflicts = 0;
+        mrMembers().forEach(function (member) {
+          member.conflict = false;
+          member.conflictReason = '';
+          if (member.type !== 'meter') return;
+          if ((usage[member.code + '|' + mrState.energy] || []).length > 1) {
+            member.conflict = true;
+            member.conflictReason = '当前能源下该表具已被多处占用';
+            conflicts++;
+          }
+        });
+        return conflicts === 0;
+      }
+
+      /* ---------- 拖入成员 ---------- */
+      function mrAddMember(payload) {
+        var list = mrMembers();
+        var highlightKey = '';
+        if (payload.kind === 'object') {
+          if (payload.id === currentNode) {
+            showToast('不能把对象拖到自己的拓扑里');
+            return;
+          }
+          if (list.some(function (member) { return member.type === 'object' && member.id === payload.id; })) {
+            showToast('该下级对象已在本能源关系中');
+            return;
+          }
+          var objectNode = NODES[payload.id];
+          list.push({
+            type: 'object',
+            id: payload.id,
+            name: String(payload.name || '').trim() || (objectNode ? shortName(objectNode.name) : payload.id),
+            direction: 'in'
+          });
+          highlightKey = 'object:' + payload.id;
+        } else if (payload.kind === 'meter') {
+          var meta = mrMeterByCode(payload.code);
+          var energy = payload.energy || meta.energy;
+          if (energy !== mrState.energy) {
+            showToast('表具能源类型与当前 Tab 不一致');
+            return;
+          }
+          if ((mrMeterUsage()[payload.code + '|' + mrState.energy] || []).length) {
+            showToast('该表具在当前能源下已被计量');
+            return;
+          }
+          list.push({
+            type: 'meter',
+            code: payload.code,
+            name: String(payload.name || '').trim() || meta.name || payload.code,
+            direction: 'in',
+            meterKind: payload.meterKind || meta.kind || 'device',
+            parentName: payload.parentName || meta.parentName || ''
+          });
+          highlightKey = 'meter:' + payload.code;
+        } else {
+          showToast('未识别到拖入内容，请重试');
+          return;
+        }
+        mrValidateCurrent();
+        renderMrRelationTable(highlightKey);
+        renderMrTree();
+        renderMrMeters();
+        renderMrTrial();
+        updateMrEnergyTabs();
+        renderEffConfigRows();
+        showToast('已添加 1 条计量关系');
+      }
+
+      function bindMrDropzone() {
+        var zone = document.getElementById('mrDropzone');
+        if (!zone) return;
+        ['dragenter', 'dragover'].forEach(function (eventName) {
+          zone.addEventListener(eventName, function (event) {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'copy';
+            zone.classList.add('drag-over');
+          });
+        });
+        zone.addEventListener('dragleave', function (event) {
+          if (!zone.contains(event.relatedTarget)) zone.classList.remove('drag-over');
+        });
+        zone.addEventListener('drop', function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+          zone.classList.remove('drag-over');
+          if (!currentNode) {
+            showToast('请先在左侧对象树选择对象');
+            return;
+          }
+          var payload = null;
+          try {
+            payload = JSON.parse(event.dataTransfer.getData('text/plain') || 'null');
+          } catch (error) {
+            payload = null;
+          }
+          if (!payload || !payload.kind) payload = mrState.drag;
+          /* 拖拽源可能在 drop 同期被重绘销毁，先拷贝再清空 */
+          var snapshot = payload ? {
+            kind: payload.kind,
+            id: payload.id,
+            code: payload.code,
+            name: payload.name,
+            energy: payload.energy,
+            meterKind: payload.meterKind,
+            parentName: payload.parentName
+          } : null;
+          mrState.drag = null;
+          if (!snapshot || !snapshot.kind) {
+            showToast('未识别到拖入内容，请重试');
+            return;
+          }
+          setTimeout(function () { mrAddMember(snapshot); }, 0);
+        });
+      }
+
+      /* ---------- 弹窗内对象树：只作「下级对象」拖拽来源，不切换配置对象 ---------- */
+      var MR_TREE_ROOTS = [];
+      var MR_TREE_CHILDREN = {};
+      Object.keys(NODES).forEach(function (nodeId) {
+        var parent = NODES[nodeId].parent;
+        if (!parent || !NODES[parent]) {
+          MR_TREE_ROOTS.push(nodeId);
+          return;
+        }
+        if (!MR_TREE_CHILDREN[parent]) MR_TREE_CHILDREN[parent] = [];
+        MR_TREE_CHILDREN[parent].push(nodeId);
+      });
+
+      function mrTreeMatched(keyword) {
+        if (!keyword) return null;
+        var hit = {};
+        Object.keys(NODES).forEach(function (nodeId) {
+          if (shortName(NODES[nodeId].name).indexOf(keyword) === -1) return;
+          hit[nodeId] = true;
+          var parent = NODES[nodeId].parent;
+          while (parent && NODES[parent]) {
+            hit[parent] = true;
+            parent = NODES[parent].parent;
+          }
+        });
+        return hit;
+      }
+
+      function renderMrTree() {
+        var host = document.getElementById('mrTreeBody');
+        if (!host) return;
+        var keyword = (document.getElementById('mrTreeSearch').value || '').trim();
+        var matched = mrTreeMatched(keyword);
+        var linked = {};
+        mrMembers().forEach(function (member) {
+          if (member.type === 'object') linked[member.id] = true;
+        });
+
+        function buildRow(nodeId) {
+          var node = NODES[nodeId];
+          var isCurrent = nodeId === currentNode;
+          var isLinked = !!linked[nodeId];
+          var configured = (((relations[nodeId] || {})[mrState.energy]) || []).length > 0;
+          var row = document.createElement('div');
+          row.className = 'mr-tree-row' + (isCurrent ? ' current' : '') + (isLinked ? ' linked' : '');
+          row.title = shortName(node.name) + ' · ' + (node.model || nodeId);
+          row.innerHTML =
+            '<span class="mr-tree-dot' + (configured ? ' on' : '') + '" aria-hidden="true"></span>' +
+            '<span class="mr-tree-label">' + esc(shortName(node.name)) + '</span>' +
+            (isCurrent ? '<span class="mr-tree-flag">当前对象</span>' : (isLinked ? '<span class="mr-tree-flag">已添加</span>' : ''));
+          if (!isCurrent && !isLinked) {
+            row.draggable = true;
+            row.addEventListener('dragstart', function (event) {
+              mrState.drag = { kind: 'object', id: nodeId, name: shortName(node.name) };
+              row.classList.add('dragging');
+              event.dataTransfer.setData('text/plain', JSON.stringify(mrState.drag));
+              event.dataTransfer.effectAllowed = 'copy';
+            });
+            row.addEventListener('dragend', function () {
+              row.classList.remove('dragging');
+              setTimeout(function () {
+                if (mrState.drag && mrState.drag.kind === 'object' && mrState.drag.id === nodeId) mrState.drag = null;
+              }, 50);
+              var zone = document.getElementById('mrDropzone');
+              if (zone) zone.classList.remove('drag-over');
+            });
+          } else {
+            row.addEventListener('click', function () {
+              showToast(isCurrent ? '这是当前配置对象，不能拖给自己' : '该下级对象已在本能源关系中');
+            });
+          }
+          return row;
+        }
+
+        function buildBranch(nodeId, container) {
+          if (matched && !matched[nodeId]) return;
+          container.appendChild(buildRow(nodeId));
+          var children = MR_TREE_CHILDREN[nodeId] || [];
+          if (!children.length) return;
+          var wrap = document.createElement('div');
+          wrap.className = 'mr-tree-children';
+          children.forEach(function (childId) { buildBranch(childId, wrap); });
+          if (wrap.children.length) container.appendChild(wrap);
+        }
+
+        host.innerHTML = '';
+        MR_TREE_ROOTS.forEach(function (rootId) { buildBranch(rootId, host); });
+        if (!host.children.length) host.innerHTML = '<div class="mr-tree-empty">无匹配对象</div>';
+      }
+
+      /* ---------- 能源 Tab ---------- */
+      function renderMrEnergyTabs() {
+        var host = document.getElementById('mrEnergyTabs');
+        if (!host) return;
+        host.innerHTML = ENERGY_TYPES.map(function (type) {
+          return '<button type="button" class="mr-energy-tab" role="tab" aria-selected="false" data-energy="' + esc(type.name) + '">' +
+            esc(type.name) + '<span class="mr-energy-badge">0</span></button>';
+        }).join('');
+        host.querySelectorAll('.mr-energy-tab').forEach(function (tab) {
+          tab.addEventListener('click', function () { switchMrEnergy(tab.getAttribute('data-energy')); });
+        });
+      }
+
+      function updateMrEnergyTabs() {
+        document.querySelectorAll('#mrEnergyTabs .mr-energy-tab').forEach(function (tab) {
+          var energy = tab.getAttribute('data-energy');
+          var on = energy === mrState.energy;
+          tab.classList.toggle('active', on);
+          tab.setAttribute('aria-selected', on ? 'true' : 'false');
+          var count = currentNode ? (((relations[currentNode] || {})[energy] || []).length) : 0;
+          var badge = tab.querySelector('.mr-energy-badge');
+          badge.textContent = count;
+          badge.classList.toggle('has', count > 0);
+        });
+      }
+
+      function switchMrEnergy(energy) {
+        mrState.energy = ENERGIES.indexOf(energy) < 0 ? (ENERGIES[0] || '电') : energy;
+        mrState.meterPage = 1;
+        refreshMeteringBlock();
+      }
+
+      /* ---------- 能效配置行摘要：一行一个配置项，摘要读实际配置数据 ---------- */
+      function meteringSummary(objId) {
+        if (!objId) return '';
+        return ENERGIES.map(function (energy) {
+          var count = ((relations[objId] || {})[energy] || []).length;
+          return count ? (energy + ' ' + count + ' 条') : '';
+        }).filter(Boolean).join(' · ');
+      }
+
+      function renderEffConfigRows() {
+        var meteringState = document.getElementById('effMeteringState');
+        if (meteringState) {
+          var summary = meteringSummary(currentNode);
+          meteringState.textContent = summary || '未配置';
+          meteringState.classList.toggle('configured', !!summary);
+        }
+        var quotaState = document.getElementById('effQuotaState');
+        if (quotaState) {
+          var enabled = configuredEnergies(currentNode);
+          quotaState.textContent = enabled.length
+            ? ('可考核能源：' + enabled.join('、'))
+            : '需先配置能源计量关系';
+        }
+      }
+
+      function refreshMeteringBlock() {
+        renderEffConfigRows();
+        if (!meteringModal || meteringModal.hidden) return;
+        if (currentNode) mrEnsureRelations(currentNode);
+        mrValidateCurrent();
+        updateMrEnergyTabs();
+        renderMrTree();
+        renderMrRelationTable();
+        renderMrMeters();
+        renderMrTrial();
+        document.getElementById('mrBtnTrial').disabled = !currentNode;
+      }
+
+      var meteringModal = document.getElementById('meteringModal');
+
+      document.getElementById('btnMeteringConfig').addEventListener('click', function () {
+        if (!currentNode) {
+          showToast('请先在左侧对象树选择对象');
+          return;
+        }
+        var node = NODES[currentNode] || {};
+        document.getElementById('mrModalSubtitle').textContent = shortName(node.name || currentNode) + ' · ' + (node.model || '');
+        var configured = configuredEnergies(currentNode);
+        mrState.energy = configured[0] || ENERGIES[0] || '电';
+        mrState.meterPage = 1;
+        document.getElementById('mrTreeSearch').value = '';
+        meteringModal.hidden = false;
+        refreshMeteringBlock();
+      });
+
+      /* 关闭即回填行摘要（弹窗内变更已即时生效，不存在放弃保存的语义） */
+      meteringModal.querySelectorAll('[data-close="meteringModal"]').forEach(function (button) {
+        button.addEventListener('click', renderEffConfigRows);
+      });
+
+      renderMrEnergyTabs();
+      renderMrSpacePanel();
+      bindMrDropzone();
+
+      document.getElementById('mrTreeSearch').addEventListener('input', renderMrTree);
+
+      document.getElementById('mrSpaceTrigger').addEventListener('click', function (event) {
+        event.stopPropagation();
+        setMrSpaceOpen(!document.getElementById('mrSpaceSelect').classList.contains('open'));
+      });
+      document.getElementById('mrSpacePanel').addEventListener('click', function (event) {
+        var toggle = event.target.closest('[data-space-toggle]');
+        if (toggle) {
+          event.stopPropagation();
+          var toggleId = toggle.getAttribute('data-space-toggle');
+          mrSpaceExpanded[toggleId] = !mrSpaceExpanded[toggleId];
+          renderMrSpacePanel();
+          return;
+        }
+        var option = event.target.closest('[data-space-id]');
+        if (option) setMrSpaceSelection(option.getAttribute('data-space-id'));
+      });
+      document.addEventListener('click', function (event) {
+        var wrap = document.getElementById('mrSpaceSelect');
+        if (wrap && !wrap.contains(event.target)) setMrSpaceOpen(false);
+      });
+      document.getElementById('mrOccupyFilter').addEventListener('change', function () {
+        mrState.meterPage = 1;
+        renderMrMeters();
+      });
+      document.getElementById('mrMeterSearch').addEventListener('input', function () {
+        mrState.meterPage = 1;
+        renderMrMeters();
+      });
+      document.getElementById('mrMeterPrev').addEventListener('click', function () {
+        if (mrState.meterPage <= 1) return;
+        mrState.meterPage -= 1;
+        renderMrMeters();
+      });
+      document.getElementById('mrMeterNext').addEventListener('click', function () {
+        mrState.meterPage += 1;
+        renderMrMeters();
+      });
+      document.getElementById('mrBtnTrial').addEventListener('click', function () {
+        if (!currentNode) {
+          showToast('请先在左侧对象树选择对象');
+          return;
+        }
+        renderMrTrial();
+        showToast('已按当前能源拓扑重算今日用量');
+      });
+
+      refreshMeteringBlock();
 
       /* ---------- 初始态：与真实系统一致，进入页面默认展示工程基础信息 ---------- */
       showHome();

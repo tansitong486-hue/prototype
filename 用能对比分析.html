@@ -126,6 +126,18 @@
     }
     .cmp-tree li { margin: 2px 0; }
     .cmp-tree li[data-tree-match="0"] { display: none; }
+    .cmp-tree-row { display: flex; align-items: stretch; gap: 2px; }
+    .cmp-tree-row .cmp-tree-node { flex: 1; min-width: 0; }
+    .cmp-tree-toggle {
+      width: 22px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius);
+      transition: background var(--transition);
+    }
+    .cmp-tree-toggle:hover { background: #fff; }
     .cmp-tree-node {
       display: flex;
       align-items: center;
@@ -137,18 +149,21 @@
       border: 1px solid transparent;
       background: transparent;
       color: var(--text-primary);
+      cursor: pointer;
       transition: background var(--transition), border-color var(--transition);
     }
-    .cmp-tree-node:hover:not(.is-disabled) { background: #fff; }
-    .cmp-tree-node.is-leaf.cmp-selected {
+    .cmp-tree-node:hover:not(.is-disabled):not(.is-blocked) { background: #fff; }
+    .cmp-tree-node.cmp-selected {
       background: var(--primary-tint);
       border-color: rgba(30, 64, 175, 0.35);
     }
-    .cmp-tree-node.is-disabled {
+    .cmp-tree-node.is-disabled,
+    .cmp-tree-node.is-blocked {
       opacity: 0.45;
       cursor: not-allowed;
       color: var(--text-hint);
     }
+    .cmp-tree-node.is-blocked input[type="checkbox"] { cursor: not-allowed; }
     .cmp-tree-caret {
       width: 0; height: 0;
       border-left: 4px solid transparent;
@@ -174,9 +189,10 @@
       flex-direction: column;
       background: #fff;
     }
+    /* 两行结构：第一行 标题 + 右侧操作（图表/表格切换、导出），第二行 时间段整行 */
     .cmp-content-head {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
       gap: 12px;
@@ -201,8 +217,7 @@
     }
     .cmp-head-right {
       display: flex;
-      flex-direction: column;
-      align-items: flex-end;
+      align-items: center;
       gap: 10px;
     }
     .cmp-seg {
@@ -223,38 +238,46 @@
     .cmp-seg button:hover { color: var(--text-primary); background: #FAFAFA; }
     .cmp-seg button.active { color: #fff; background: var(--primary); font-weight: 600; }
 
-    .cmp-ranges-block {
-      width: 100%;
-      max-width: 520px;
-    }
+    .cmp-ranges-block { width: 100%; }
     .cmp-ranges-label {
       font-size: 12px;
       color: var(--text-secondary);
       font-weight: 600;
-      margin-bottom: 8px;
     }
-    .cmp-range-row {
+    /* 时间段选择单行排布：添加按钮 + 各时间段 + 查询 同行，节省纵向空间 */
+    .cmp-ranges-line {
       display: flex;
       align-items: center;
       flex-wrap: wrap;
       gap: 8px;
-      margin-bottom: 8px;
     }
-    .cmp-range-row .cmp-input { width: auto; min-width: 132px; height: 32px; }
+    #cmpRanges { display: contents; }
+    .cmp-range-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0 4px 0 6px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      background: #fff;
+    }
+    .cmp-range-row .cmp-input {
+      width: 108px;
+      min-width: 0;
+      height: 30px;
+      border: none;
+      background: transparent;
+      padding: 0 2px;
+    }
     .cmp-range-sep { font-size: 13px; color: var(--text-hint); }
     .cmp-range-remove {
-      font-size: 12px;
+      font-size: 14px;
+      line-height: 1;
       color: #FF4D4F;
-      padding: 4px 8px;
+      padding: 4px 6px;
       border-radius: var(--radius);
     }
     .cmp-range-remove:hover { background: #FFF1F0; }
-    .cmp-range-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 4px;
-    }
     .btn {
       display: inline-flex;
       align-items: center;
@@ -274,6 +297,8 @@
       border: 1px solid var(--border-light);
     }
     .btn-ghost:hover { color: var(--primary-dark); border-color: rgba(30, 64, 175, .35); }
+    .btn-export { color: #fff; background: #16A34A; }
+    .btn-export:hover { background: #15803D; }
 
     .cmp-panel {
       flex: 1;
@@ -282,39 +307,13 @@
       background: linear-gradient(180deg, var(--primary-soft) 0%, #fff 28%);
     }
     .cmp-panel[hidden] { display: none !important; }
-    .cmp-chart-svg {
-      width: 100%;
-      max-width: 960px;
-      height: auto;
-      min-height: 360px;
-      display: block;
-      margin: 0 auto;
-    }
+    #cmpChartMount { width: 100%; height: 460px; }
     .cmp-empty {
       text-align: center;
       padding: 80px 24px;
       color: var(--text-hint);
       font-size: 14px;
       line-height: 1.6;
-    }
-    .cmp-legend {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 16px;
-      justify-content: center;
-      margin-top: 12px;
-    }
-    .cmp-legend-item {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      color: var(--text-secondary);
-    }
-    .cmp-legend-swatch {
-      width: 12px;
-      height: 12px;
-      border-radius: 2px;
     }
 
     .data-table {
@@ -340,24 +339,6 @@
     }
     .data-table tbody tr:last-child td { border-bottom: none; }
     .data-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
-
-    /* v2.5 完整性标记：汇总结果含坏值/缺失半小时槽时展示 */
-    .integrity-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      height: 18px;
-      padding: 0 7px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 600;
-      color: #C2410C;
-      background: #FFF7ED;
-      border: 1px solid #FDBA74;
-      cursor: help;
-      white-space: nowrap;
-      vertical-align: middle;
-    }
 
     .anno-toggle {
       position: fixed;
@@ -389,6 +370,7 @@
     }
   </style>
   <link rel="stylesheet" href="annotation-styles.css">
+  <script src="assets/echarts.min.js"></script>
 </head>
 <body>
   <div class="layout">
@@ -405,8 +387,8 @@
             <span class="anno-tag">版本信息</span>
             <div class="anno-body">
               <p><b>当前版本：</b>v2.5</p>
-              <p><b>更新日期：</b>2026-07-02</p>
-              <p><b>变更概述：</b>对接「基于计费的能耗明细系统」对象层 on-read 聚合：① 对比时间段区新增时间粒度选择（半小时 / 时 / 天 / 月）；② 表格「1 号楼」行汇总值旁新增「含异常/缺失」完整性标记示例；③ 新增对象能耗数据口径批注（不归档、沿当前计量拓扑 on-read 递归 SUM）；④ 对比结果支持电量 / 成本双口径切换（成本直接汇总表具核算明细金额，前端不重算电价；无计费方案对象展示「—」）。</p>
+              <p><b>更新日期：</b>2026-07-29</p>
+              <p><b>变更概述：</b>对接需求 6 指标工厂产出：页面统一消费对象指标（历史区间读物化统计分片），前端不重算电价与能效。2026-07-28：本页去掉「含异常/缺失」完整性标记，完整性提示改由总览看板等承接。2026-07-29：对比维度升级为<b>标准化指标单选</b>——① 移除「能源类型 / 统计维度（电量/成本） / 时间粒度」三个控件，能源类型与统计维度并入指标目录，时间粒度收敛为取数实现细节不再暴露；② 左栏新增「对比指标」选择（能耗 / 成本 / 能效三组），<b>指标名称沿用能效视图「指标列表」口径</b>（能源类型固化进名称：电能消耗量 / 用水量 / 电费总额 / 水费（统一价）…）；③ 对象树升级为园区 / 数据中心 / 系统 / 楼栋全层级可勾选，展示对象全集，<b>仅当前指标有结果的对象可勾选</b>，无结果对象置灰、悬停展示原因；④ 时间段选择收敛为单行排布（添加按钮与各时间段同行，对齐存量页面）；⑤ 新增「导出」——导出当前对比表格（对齐存量页面右上角导出能力）；⑥ 每个单元格取值为该对象在该时间段的指标跨度值。</p>
             </div>
           </div>
 
@@ -435,25 +417,36 @@
             <span class="anno-version">v2.5</span>
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>对比时间段（时间粒度）、统计维度（电量 / 成本）与对比结果取数口径</p>
+              <p><b>关联模块：</b>对比指标目录与对比结果取数口径</p>
               <ul>
-                <li><b>对象能耗口径：</b>对象能耗/成本不归档，查询时沿当前计量拓扑对表具归档明细 on-read 递归 SUM；支持半小时/时/天/月，时/天/月读表具对应粒度 rollup、不重算差值；跨天/跨月按本地时间切分。</li>
-                <li><b>取数切换：</b>v2.5 起对比结果全部改走对象能耗 / 成本多粒度查询（需求 6）；电量与成本均沿当前计量拓扑对<b>表具核算明细</b> on-read 汇总，<b>不再</b>直读原始累积量或旧统计表。</li>
-                <li><b>成本对比口径：</b>「成本」视图下表格与柱状图展示各节点、各时间段的成本汇总（表具核算明细成本金额直接求和），单位为元；<b>不在前端用单价 × 电量重算</b>。对象未应用计费方案时对应单元格展示「—」并提示无成本数据。</li>
-                <li><b>展示切换：</b>主区「电量 / 成本」切换仅改变读取字段与单位，对比节点、时间段、时间粒度筛选条件不变。</li>
-                <li><b>时间粒度选择：</b>新增「时间粒度」下拉（半小时 / 时 / 天 / 月），默认「天」；粒度对所有对比时间段统一生效，决定各节点电量读取的表具归档粒度。</li>
-                <li><b>完整性标记：</b>某节点在某时间段内存在坏值或缺失半小时槽时，对应柱顶/表格单元格旁展示橙色「含异常/缺失」标记（本页在表格「1 号楼」行给出示例）；坏值/缺失槽不参与聚合、不作 0 处理，结果可能偏低。本原型在表格「1 号楼」首个时间段给出标记示例；柱状图柱顶、其余单元格按同一规则展示。</li>
+                <li><b>指标目录：</b>来自指标工厂首版清单——能耗指标（电能消耗量 / 用水量）、成本指标（电费总额 / 水费（统一价））、能效指标（PUE / CLF / PLF / OLF / WUE）。<b>指标名称与单位沿用能效视图「指标列表」同一份口径</b>，能源类型固化进指标名称，不另立命名；能耗 / 成本类按对象已启用计量的能源类型展开，未启用的能源类型不出现。</li>
+                <li><b>取数口径：</b>每个单元格 = 该对象在该时间段的指标<b>跨度查询</b>结果（起止 = 时间段起止）：能耗 / 成本为区间累计，能效为区间比值（分子 / 分母各自区间累计后再比）。历史区间读指标工厂物化统计分片，页面不暴露时间粒度概念，<b>不在前端重算电价或能效</b>，不直读原始累计量或旧统计表。</li>
+                <li><b>成本口径：</b>成本金额 = 表具核算明细成本金额沿当前计量拓扑归集（输出侧作减项），单位为元；未应用计费方案的对象在成本指标下无结果、不可选。</li>
+                <li><b>对象可选性：</b>只有当前指标<b>有结果（有值）</b>的对象可勾选参与对比；不可选的三类原因悬停可见——① 指标未注册到该对象类型（如楼栋查 PUE）；② 未启用对应能源计量；③ 有注册但算不出（待配置：缺系统对象电量输入；或成本指标未应用计费方案）。</li>
+                <li><b>「—」语义：</b>可选对象均有结果，「—」仅出现在个别时间段无数据时，悬停提示「所选时间段暂无数据」。</li>
+                <li><b>数值格式：</b>单位与小数位随指标——能耗整数（kWh / m³ 一位小数）、成本 2 位小数（元）、PUE / CLF / PLF / OLF 3 位小数（无量纲）、WUE 2 位小数（L/kWh）；柱状图 Y 轴刻度随指标量级自动保留小数。</li>
+                <li><b>本期不进对比页：</b>A3 分时成本（尖 / 峰 / 平 / 谷时电费，分时构成语义由总览看板能耗成本卡承接）；C1 实时能耗值（仅实时语义，无时间段对比意义）；风险评估类指标（指标工厂暂无风险类真源，沉淀需求池待注册后复核）。</li>
+                <li><b>完整性：</b>坏值 / 缺失槽仍不参与聚合、不作 0；本页<strong>不展示</strong>「含异常/缺失」角标（表格 / 柱状图均不出现），完整性提示由总览看板等承接。</li>
               </ul>
             </div>
           </div>
 
-          <div class="anno anno-state" data-version="v2.5">
-            <span class="anno-tag">状态说明</span>
+          <div class="anno anno-ux" data-version="v2.5">
+            <span class="anno-tag">交互说明</span>
             <span class="anno-version">v2.5</span>
-            <span class="anno-source">待确认</span>
+            <span class="anno-source">需求文档</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>「含异常/缺失」完整性标记的展示形态</p>
-              <p>最终展示形态待确认：「坏值」与「缺失」是否用不同颜色/图标区分，还是统一按「含异常/缺失」占位展示。本原型暂用统一橙色标记 + 悬停说明示意。</p>
+              <p><b>关联模块：</b>左栏「对比指标」选择、对象树勾选与结果导出</p>
+              <ul>
+                <li><b>指标单选：</b>「对比指标」下拉分能耗 / 成本 / 能效三组，一次只对比一个指标，默认「电能消耗量」；切换指标即整体刷新单位、图表与表格，对象勾选与时间段筛选保持不变（无结果对象除外）。</li>
+                <li><b>对象可选性：</b>切换指标后按「该对象是否有该指标结果」刷新对象树——PUE / WUE 仅园区 / 数据中心；CLF / PLF / OLF 为园区 / 数据中心及对应系统对象（暖通空调 / 电力 / 其他系统）；能耗 / 成本类按对象是否启用该能源计量、成本另要求已应用计费方案。无结果对象不可勾选，已勾选的自动取消勾选。</li>
+                <li><b>对象树：</b>始终展示对象全集（不做「仅有值」过滤），园区 / 数据中心 / 系统 / 楼栋全层级均可勾选参与对比；无结果对象置灰、悬停展示原因（未注册 / 未启用计量 / 待配置 / 未应用计费方案）。左侧箭头仅负责展开 / 收起，不影响勾选；上级对象与其下级对象可同时入选（各自独立取指标值）。</li>
+                <li><b>时间段选择：</b>单行排布——「+ 添加时间段」按钮与各时间段同行（对齐存量页面），上限 3 组，超出即时提示。</li>
+                <li><b>柱状图：</b>分组柱状图（与能耗流向分析 / 节能分析同一图表方案）——X 轴为对比对象、系列为时间段；悬停显示该对象各时间段数值（空值显示「—」）、柱顶常显数值标签；图表标题带当前指标名，Y 轴标注单位。</li>
+                <li><b>表格视图：</b>列结构 = 对比对象 + 对比指标（名称 + 单位，如「电能消耗量（kWh）」）+ 各时间段跨度值，切换指标后「对比指标」列同步刷新。</li>
+                <li><b>导出：</b>右上角「导出」输出当前对比表格，列结构与页面表格一致（对比对象 + 对比指标 + 各时间段，「—」原样导出）；未勾选对象时点击导出给出提示。</li>
+                <li><b>上限：</b>对比对象最多 5 个，超出即时提示。</li>
+              </ul>
             </div>
           </div>
 
@@ -461,10 +454,25 @@
             <aside class="cmp-sider" aria-label="筛选与对比节点">
               <div class="cmp-sider-inner">
                 <div class="cmp-field">
-                  <label for="cmpEnergy">能源类型</label>
-                  <select class="cmp-select" id="cmpEnergy" aria-label="能源类型">
-                    <option value="elec" selected>电</option>
+                  <label for="cmpMetric">对比指标</label>
+                  <select class="cmp-select" id="cmpMetric" aria-label="对比指标">
+                    <optgroup label="能耗指标">
+                      <option value="a1-elec" selected>电能消耗量</option>
+                      <option value="a1-water">用水量</option>
+                    </optgroup>
+                    <optgroup label="成本指标">
+                      <option value="a2-elec">电费总额</option>
+                      <option value="a2-water">水费（统一价）</option>
+                    </optgroup>
+                    <optgroup label="能效指标">
+                      <option value="b1-pue">PUE</option>
+                      <option value="b2-clf">CLF</option>
+                      <option value="b3-plf">PLF</option>
+                      <option value="b4-olf">OLF</option>
+                      <option value="b5-wue">WUE</option>
+                    </optgroup>
                   </select>
+                  <p class="cmp-hint" id="cmpMetricHint">全部已启用电计量的对象可选。</p>
                 </div>
                 <div class="cmp-field">
                   <label for="cmpView">视图选择</label>
@@ -477,36 +485,58 @@
                   <label for="cmpSearch">搜索</label>
                   <input class="cmp-input" type="search" id="cmpSearch" placeholder="请输入关键字" autocomplete="off" aria-label="筛选节点关键字">
                 </div>
-                <p class="cmp-hint" id="cmpSelectHint">已选 <strong id="cmpCount">0</strong> / 5 个节点</p>
+                <p class="cmp-hint" id="cmpSelectHint">已选 <strong id="cmpCount">0</strong> / 5 个对象</p>
                 <div class="cmp-tree-wrap">
                   <ul class="cmp-tree" id="cmpTreeRoot">
                     <li data-tree-label="华东园区 互盟 数据中心">
-                      <button type="button" class="cmp-tree-node" data-branch="park-east">
-                        <span class="cmp-tree-caret open" aria-hidden="true"></span>
-                        <span class="cmp-tree-label">华东园区</span>
-                      </button>
+                      <div class="cmp-tree-row">
+                        <button type="button" class="cmp-tree-toggle" aria-label="展开 / 收起 华东园区">
+                          <span class="cmp-tree-caret open" aria-hidden="true"></span>
+                        </button>
+                        <label class="cmp-tree-node">
+                          <input type="checkbox" name="cmpNode" value="pe" data-label="华东园区" aria-label="勾选 华东园区 参与对比">
+                          <span class="cmp-tree-label">华东园区</span>
+                        </label>
+                      </div>
                       <ul class="cmp-tree-children">
                         <li data-tree-label="互盟数据中心 华东">
-                          <button type="button" class="cmp-tree-node" data-branch="humeng">
-                            <span class="cmp-tree-caret open" aria-hidden="true"></span>
-                            <span class="cmp-tree-label">互盟数据中心</span>
-                          </button>
+                          <div class="cmp-tree-row">
+                            <button type="button" class="cmp-tree-toggle" aria-label="展开 / 收起 互盟数据中心">
+                              <span class="cmp-tree-caret open" aria-hidden="true"></span>
+                            </button>
+                            <label class="cmp-tree-node">
+                              <input type="checkbox" name="cmpNode" value="humeng" data-label="互盟数据中心" aria-label="勾选 互盟数据中心 参与对比">
+                              <span class="cmp-tree-label">互盟数据中心</span>
+                            </label>
+                          </div>
                           <ul class="cmp-tree-children">
+                            <li data-tree-label="IT系统 IT 系统">
+                              <label class="cmp-tree-node is-leaf">
+                                <input type="checkbox" name="cmpNode" value="sys-it" data-label="IT 系统" aria-label="勾选 IT 系统 参与对比">
+                                <span class="cmp-tree-label">IT 系统</span>
+                              </label>
+                            </li>
+                            <li data-tree-label="暖通空调系统">
+                              <label class="cmp-tree-node is-leaf">
+                                <input type="checkbox" name="cmpNode" value="sys-hvac" data-label="暖通空调系统" aria-label="勾选 暖通空调系统 参与对比">
+                                <span class="cmp-tree-label">暖通空调系统</span>
+                              </label>
+                            </li>
                             <li data-tree-label="1号楼">
                               <label class="cmp-tree-node is-leaf">
-                                <input type="checkbox" name="cmpNode" value="b1" data-label="1号楼" aria-label="勾选 1 号楼 参与对比">
+                                <input type="checkbox" name="cmpNode" value="b1" data-label="1号楼" aria-label="勾选 1 号楼 参与对比" checked>
                                 <span class="cmp-tree-label">1 号楼</span>
                               </label>
                             </li>
                             <li data-tree-label="2号楼">
                               <label class="cmp-tree-node is-leaf">
-                                <input type="checkbox" name="cmpNode" value="b2" data-label="2号楼" aria-label="勾选 2 号楼 参与对比">
+                                <input type="checkbox" name="cmpNode" value="b2" data-label="2号楼" aria-label="勾选 2 号楼 参与对比" checked>
                                 <span class="cmp-tree-label">2 号楼</span>
                               </label>
                             </li>
                             <li data-tree-label="3号楼">
                               <label class="cmp-tree-node is-leaf">
-                                <input type="checkbox" name="cmpNode" value="b3" data-label="3号楼" aria-label="勾选 3 号楼 参与对比">
+                                <input type="checkbox" name="cmpNode" value="b3" data-label="3号楼" aria-label="勾选 3 号楼 参与对比" checked>
                                 <span class="cmp-tree-label">3 号楼</span>
                               </label>
                             </li>
@@ -515,10 +545,15 @@
                       </ul>
                     </li>
                     <li data-tree-label="华北 华北1号楼">
-                      <button type="button" class="cmp-tree-node" data-branch="park-north">
-                        <span class="cmp-tree-caret open" aria-hidden="true"></span>
-                        <span class="cmp-tree-label">华北园区</span>
-                      </button>
+                      <div class="cmp-tree-row">
+                        <button type="button" class="cmp-tree-toggle" aria-label="展开 / 收起 华北园区">
+                          <span class="cmp-tree-caret open" aria-hidden="true"></span>
+                        </button>
+                        <label class="cmp-tree-node">
+                          <input type="checkbox" name="cmpNode" value="pn" data-label="华北园区" aria-label="勾选 华北园区 参与对比">
+                          <span class="cmp-tree-label">华北园区</span>
+                        </label>
+                      </div>
                       <ul class="cmp-tree-children">
                         <li data-tree-label="华北1号楼">
                           <label class="cmp-tree-node is-leaf">
@@ -529,10 +564,15 @@
                       </ul>
                     </li>
                     <li data-tree-label="华南 华南1号楼">
-                      <button type="button" class="cmp-tree-node" data-branch="park-south">
-                        <span class="cmp-tree-caret open" aria-hidden="true"></span>
-                        <span class="cmp-tree-label">华南园区</span>
-                      </button>
+                      <div class="cmp-tree-row">
+                        <button type="button" class="cmp-tree-toggle" aria-label="展开 / 收起 华南园区">
+                          <span class="cmp-tree-caret open" aria-hidden="true"></span>
+                        </button>
+                        <label class="cmp-tree-node">
+                          <input type="checkbox" name="cmpNode" value="ps" data-label="华南园区" aria-label="勾选 华南园区 参与对比">
+                          <span class="cmp-tree-label">华南园区</span>
+                        </label>
+                      </div>
                       <ul class="cmp-tree-children">
                         <li data-tree-label="华南1号楼">
                           <label class="cmp-tree-node is-leaf">
@@ -552,38 +592,23 @@
 
             <div class="cmp-content">
               <header class="cmp-content-head">
-                <div>
-                  <div class="cmp-title-row">
-                    <h1 class="cmp-title">用能对比分析</h1>
-                    <span class="cmp-unit" id="cmpUnit">单位：kWh</span>
-                  </div>
-                  <div class="cmp-ranges-block" style="margin-top:14px;">
-                    <div class="cmp-range-row">
-                      <span class="cmp-ranges-label" style="margin-bottom:0;">时间粒度</span>
-                      <select class="cmp-select" id="cmpGranularity" aria-label="时间粒度" style="width:auto;min-width:96px;">
-                        <option value="halfhour">半小时</option>
-                        <option value="hour">时</option>
-                        <option value="day" selected>天</option>
-                        <option value="month">月</option>
-                      </select>
-                      <span class="cmp-ranges-label" style="margin-bottom:0;margin-left:4px;">统计维度</span>
-                      <div class="cmp-seg" id="cmpMetricSeg" style="height:32px;" role="tablist" aria-label="统计维度（电量 / 成本）">
-                        <button type="button" class="active" role="tab" aria-selected="true" id="cmpMetricEnergy" data-metric="energy">电量</button>
-                        <button type="button" role="tab" aria-selected="false" id="cmpMetricCost" data-metric="cost">成本</button>
-                      </div>
-                    </div>
-                    <div class="cmp-ranges-label">对比时间段（最多 3 组）</div>
-                    <div id="cmpRanges"></div>
-                    <div class="cmp-range-actions">
-                      <button type="button" class="btn btn-ghost" id="cmpAddRange">添加时间段</button>
-                      <button type="button" class="btn btn-primary" id="cmpQuery">查询</button>
-                    </div>
-                  </div>
+                <div class="cmp-title-row">
+                  <h1 class="cmp-title">用能对比分析</h1>
+                  <span class="cmp-unit" id="cmpUnit">单位：kWh</span>
                 </div>
                 <div class="cmp-head-right">
                   <div class="cmp-seg" role="tablist" aria-label="展示方式">
                     <button type="button" class="active" role="tab" aria-selected="true" id="cmpTabChart">柱状图</button>
                     <button type="button" role="tab" aria-selected="false" id="cmpTabTable">表格</button>
+                  </div>
+                  <button type="button" class="btn btn-export" id="cmpExport" aria-label="导出对比表格">导出</button>
+                </div>
+                <div class="cmp-ranges-block">
+                  <div class="cmp-ranges-line">
+                    <span class="cmp-ranges-label" title="最多 3 组时间段">对比时间段</span>
+                    <button type="button" class="btn btn-ghost" id="cmpAddRange">+ 添加时间段</button>
+                    <div id="cmpRanges"></div>
+                    <button type="button" class="btn btn-primary" id="cmpQuery">查询</button>
                   </div>
                 </div>
               </header>
@@ -613,33 +638,174 @@
     const MAX_NODES = 5
     const MAX_RANGES = 3
 
-    const DEMO_DATA = {
-      b1: [522, 1036],
-      b2: [1566, 3031],
-      b3: [329, 593],
-      hb1: [1528, 4176],
-      hn1: [337, 525]
+    // ---- 对比指标目录（指标工厂首版清单：A1 / A2 按能源类型展开 + B1–B5；A3 / C1 / 风险类不进本页）----
+    // 指标名称沿用能效视图「指标列表」口径：能源类型固化进名称（电能消耗量 / 用水量 / 电费总额 / 水费（统一价））
+    // scope: elec=已启用电计量对象 / water=已启用水计量对象 / bench=园区、数据中心 / bench-xxx=园区、数据中心及对应系统对象
+    const METRICS = {
+      'a1-elec': { label: '电能消耗量', unit: 'kWh', decimals: 0, kind: 'energy', scope: 'elec' },
+      'a1-water': { label: '用水量', unit: 'm³', decimals: 1, kind: 'energy', scope: 'water' },
+      'a2-elec': { label: '电费总额', unit: '元', decimals: 2, kind: 'cost', scope: 'elec', base: 'a1-elec', factor: 0.72 },
+      'a2-water': { label: '水费（统一价）', unit: '元', decimals: 2, kind: 'cost', scope: 'water', base: 'a1-water', factor: 4.1 },
+      'b1-pue': { label: 'PUE', unit: '', decimals: 3, kind: 'eff', scope: 'bench' },
+      'b2-clf': { label: 'CLF', unit: '', decimals: 3, kind: 'eff', scope: 'bench-hvac' },
+      'b3-plf': { label: 'PLF', unit: '', decimals: 3, kind: 'eff', scope: 'bench-power' },
+      'b4-olf': { label: 'OLF', unit: '', decimals: 3, kind: 'eff', scope: 'bench-other' },
+      'b5-wue': { label: 'WUE', unit: 'L/kWh', decimals: 2, kind: 'eff', scope: 'bench-water' }
     }
 
-    // v2.5 成本演示数据规则：成本 = 电量演示值 × 0.72，保留 2 位小数；
-    // 华南1号楼(hn1) 演示「无计费方案对象无成本」，成本视图下展示「—」
-    const COST_FACTOR = 0.72
-    const NO_BILLING_NODES = ['hn1']
-    let currentMetric = 'energy'
+    // ---- 对象属性（type: park 园区 / dc 数据中心 / system 系统 / building 楼栋）----
+    const NODES = {
+      pe: { label: '华东园区', type: 'park', water: true },
+      humeng: { label: '互盟数据中心', type: 'dc', water: true },
+      'sys-it': { label: 'IT 系统', type: 'system', sysType: 'it' },
+      'sys-hvac': { label: '暖通空调系统', type: 'system', sysType: 'hvac' },
+      b1: { label: '1号楼', type: 'building', water: true },
+      b2: { label: '2号楼', type: 'building' },
+      b3: { label: '3号楼', type: 'building' },
+      pn: { label: '华北园区', type: 'park' },
+      hb1: { label: '华北1号楼', type: 'building' },
+      ps: { label: '华南园区', type: 'park', noBilling: true },
+      hn1: { label: '华南1号楼', type: 'building', noBilling: true }
+    }
 
-    function getMetricValue(nodeId, rangeIdx) {
-      const series = DEMO_DATA[nodeId]
-      const raw = series && series[rangeIdx] != null ? series[rangeIdx] : null
-      if (raw == null) return null
-      if (currentMetric === 'cost') {
-        if (NO_BILLING_NODES.indexOf(nodeId) !== -1) return null
-        return Math.round(raw * COST_FACTOR * 100) / 100
+    // ---- 示意数据：指标 × 对象 × 时间段（楼栋电量沿用古典示意：1号楼 522/1036 kWh 等）----
+    const DEMO = {
+      'a1-elec': {
+        pe: [8930, 17680, 13240],
+        humeng: [8420, 16730, 12480],
+        'sys-it': [5210, 10390, 7760],
+        'sys-hvac': [2130, 4260, 3180],
+        b1: [522, 1036, 780],
+        b2: [1566, 3031, 2270],
+        b3: [329, 593, 452],
+        pn: [1892, 5230, 3540],
+        hb1: [1528, 4176, 2860],
+        ps: [420, 655, 512],
+        hn1: [337, 525, 410]
+      },
+      'a1-water': {
+        pe: [820.4, 1615.2, 1224.8],
+        humeng: [655.0, 1290.3, 976.5],
+        b1: [96.2, 189.5, 143.0]
+      },
+      'b1-pue': {
+        pe: [1.714, 1.702, 1.706],
+        humeng: [1.616, 1.610, 1.608],
+        pn: [1.512, 1.487, 1.503],
+        ps: [1.538, 1.521, 1.529]
+      },
+      'b2-clf': {
+        pe: [0.409, 0.410, 0.410],
+        humeng: [0.409, 0.410, 0.410],
+        'sys-hvac': [0.409, 0.410, 0.410]
+      },
+      'b3-plf': {
+        pe: [0.121, 0.118, 0.119],
+        humeng: [0.121, 0.118, 0.119]
+      },
+      'b4-olf': {
+        pe: [0.184, 0.174, 0.177],
+        humeng: [0.086, 0.082, 0.080]
+      },
+      'b5-wue': {
+        pe: [1.42, 1.38, 1.40],
+        humeng: [1.28, 1.25, 1.26]
       }
-      return raw
+    }
+    // 成本示意 = 对应用量 × 演示单价（电 0.72 元/kWh、水 4.1 元/m³）；真实系统直接读 A2 成本指标，不在前端重算电价
+    Object.keys(METRICS).forEach(function (mid) {
+      const m = METRICS[mid]
+      if (!m.base) return
+      DEMO[mid] = {}
+      Object.keys(DEMO[m.base]).forEach(function (nid) {
+        DEMO[mid][nid] = DEMO[m.base][nid].map(function (v) {
+          return v == null ? null : Math.round(v * m.factor * 100) / 100
+        })
+      })
+    })
+
+    // 华北 / 华南园区未配置系统对象电量输入 → CLF / PLF / OLF 待配置
+    const PENDING = {
+      'b2-clf': { pn: 1, ps: 1 },
+      'b3-plf': { pn: 1, ps: 1 },
+      'b4-olf': { pn: 1, ps: 1 }
+    }
+
+    let currentMetric = 'a1-elec'
+
+    function metricApplicable(nodeId, metricId) {
+      const n = NODES[nodeId]
+      const m = METRICS[metricId]
+      if (!n || !m) return { ok: false, reason: '对象未启用能耗计量' }
+      const isBench = n.type === 'park' || n.type === 'dc'
+      if (m.scope === 'elec') return { ok: true }
+      if (m.scope === 'water') {
+        return n.water ? { ok: true } : { ok: false, reason: '该对象未启用水计量' }
+      }
+      if (m.scope === 'bench') {
+        return isBench ? { ok: true } : { ok: false, reason: m.label + ' 仅适用于园区 / 数据中心对象' }
+      }
+      if (m.scope === 'bench-water') {
+        if (!isBench) return { ok: false, reason: 'WUE 仅适用于园区 / 数据中心对象' }
+        return n.water ? { ok: true } : { ok: false, reason: '该对象未启用水计量，无法计算 WUE' }
+      }
+      if (m.scope === 'bench-hvac') {
+        if (isBench || n.sysType === 'hvac') return { ok: true }
+        return { ok: false, reason: 'CLF 仅适用于园区 / 数据中心及暖通空调系统对象' }
+      }
+      if (m.scope === 'bench-power') {
+        return isBench ? { ok: true } : { ok: false, reason: 'PLF 仅适用于园区 / 数据中心及电力系统对象' }
+      }
+      if (m.scope === 'bench-other') {
+        return isBench ? { ok: true } : { ok: false, reason: 'OLF 仅适用于园区 / 数据中心及其他系统对象' }
+      }
+      return { ok: true }
+    }
+
+    // 可选性 = 指标适用 且 当前有值：不适用 / 未启用计量 / 无计费方案 / 待配置的对象不可勾选
+    function selectableInfo(nodeId, metricId) {
+      const app = metricApplicable(nodeId, metricId)
+      if (!app.ok) return app
+      const m = METRICS[metricId]
+      if (m.kind === 'cost' && NODES[nodeId] && NODES[nodeId].noBilling) {
+        return { ok: false, reason: '该对象未应用计费方案，暂无成本结果' }
+      }
+      if (PENDING[metricId] && PENDING[metricId][nodeId]) {
+        return { ok: false, reason: '该指标待配置：缺少系统对象电量计算输入' }
+      }
+      const series = DEMO[metricId] && DEMO[metricId][nodeId]
+      if (!series) return { ok: false, reason: '该对象当前无该指标结果' }
+      return { ok: true }
+    }
+
+    // 单元格 = 该对象在该时间段的指标跨度值；可选对象均有结果，「—」仅出现在所选时间段无数据时
+    function getCell(nodeId, rangeIdx) {
+      const series = DEMO[currentMetric] && DEMO[currentMetric][nodeId]
+      const raw = series && series[rangeIdx] != null ? series[rangeIdx] : null
+      if (raw == null) return { v: null, reason: '所选时间段暂无数据' }
+      return { v: raw }
     }
 
     function formatMetricValue(v) {
-      return currentMetric === 'cost' ? v.toFixed(2) : String(v)
+      const d = METRICS[currentMetric].decimals
+      return d > 0 ? v.toFixed(d) : String(Math.round(v))
+    }
+
+    function unitText() {
+      const m = METRICS[currentMetric]
+      return m.unit ? '单位：' + m.unit : '比值指标（无量纲）'
+    }
+
+    const METRIC_HINTS = {
+      'a1-elec': '已启用电计量且有结果的对象可选。',
+      'a1-water': '仅已启用水计量的对象有该指标，其余对象不可选。',
+      'a2-elec': '已启用电计量且已应用计费方案的对象可选。',
+      'a2-water': '已启用水计量且已应用计费方案的对象可选。',
+      'b1-pue': 'PUE 仅园区 / 数据中心对象可选。',
+      'b2-clf': 'CLF 仅园区 / 数据中心及暖通空调系统对象可选。',
+      'b3-plf': 'PLF 仅园区 / 数据中心及电力系统对象可选（本示例未建电力系统对象）。',
+      'b4-olf': 'OLF 仅园区 / 数据中心及其他系统对象可选（本示例未建其他系统对象）。',
+      'b5-wue': 'WUE 仅已启用水计量的园区 / 数据中心可选。'
     }
 
     const rangesEl = document.getElementById('cmpRanges')
@@ -652,7 +818,8 @@
     const tabChart = document.getElementById('cmpTabChart')
     const tabTable = document.getElementById('cmpTabTable')
     const unitEl = document.getElementById('cmpUnit')
-    const metricSeg = document.getElementById('cmpMetricSeg')
+    const metricSelect = document.getElementById('cmpMetric')
+    const metricHint = document.getElementById('cmpMetricHint')
 
     function formatRangeLabel(start, end) {
       const a = start.replace(/-/g, '/')
@@ -667,7 +834,7 @@
         '<input class="cmp-input" type="date" aria-label="时间段开始" value="' + startVal + '">' +
         '<span class="cmp-range-sep">至</span>' +
         '<input class="cmp-input" type="date" aria-label="时间段结束" value="' + endVal + '">' +
-        '<button type="button" class="cmp-range-remove" aria-label="移除此时间段">移除</button>'
+        '<button type="button" class="cmp-range-remove" aria-label="移除此时间段" title="移除此时间段">&times;</button>'
       const rm = row.querySelector('.cmp-range-remove')
       rm.addEventListener('click', function () {
         if (rangesEl.children.length <= 1) return
@@ -691,26 +858,14 @@
 
     const treeRoot = document.getElementById('cmpTreeRoot')
     treeRoot.addEventListener('click', function (e) {
-      const t = e.target
-      if (t.closest('label.cmp-tree-node')) return
-      const caret = t.closest('.cmp-tree-caret')
-      const btn = t.closest('button.cmp-tree-node')
-      if (caret && btn) {
-        e.stopPropagation()
-        const ul = btn.nextElementSibling
-        if (ul && ul.classList.contains('cmp-tree-children')) {
-          ul.hidden = !ul.hidden
-          caret.classList.toggle('open', !ul.hidden)
-        }
-        return
-      }
-      if (btn) {
-        const ul = btn.nextElementSibling
-        if (ul && ul.classList.contains('cmp-tree-children')) {
-          ul.hidden = !ul.hidden
-          const c = btn.querySelector('.cmp-tree-caret')
-          if (c) c.classList.toggle('open', !ul.hidden)
-        }
+      const tg = e.target.closest('.cmp-tree-toggle')
+      if (!tg) return
+      const row = tg.closest('.cmp-tree-row')
+      const ul = row && row.nextElementSibling
+      if (ul && ul.classList.contains('cmp-tree-children')) {
+        ul.hidden = !ul.hidden
+        const c = tg.querySelector('.cmp-tree-caret')
+        if (c) c.classList.toggle('open', !ul.hidden)
       }
     })
 
@@ -718,20 +873,86 @@
       cb.addEventListener('change', function () {
         if (treeRoot.querySelectorAll('input[name="cmpNode"]:checked').length > MAX_NODES) {
           cb.checked = false
-          window.alert('最多同时对比 ' + MAX_NODES + ' 个节点')
+          window.alert('最多同时对比 ' + MAX_NODES + ' 个对象')
         }
-        countEl.textContent = String(treeRoot.querySelectorAll('input[name="cmpNode"]:checked').length)
+        syncCount()
         syncLeafHighlight()
         renderAll()
       })
     })
 
+    function syncCount() {
+      countEl.textContent = String(treeRoot.querySelectorAll('input[name="cmpNode"]:checked').length)
+    }
+
     function syncLeafHighlight() {
-      treeRoot.querySelectorAll('label.cmp-tree-node.is-leaf').forEach(function (lab) {
+      treeRoot.querySelectorAll('label.cmp-tree-node').forEach(function (lab) {
         const inp = lab.querySelector('input[type="checkbox"]')
-        lab.classList.toggle('cmp-selected', inp && inp.checked)
+        lab.classList.toggle('cmp-selected', !!(inp && inp.checked))
       })
     }
+
+    // 指标切换后：对象树始终展示全集，无该指标结果的对象置灰不可勾选并自动取消勾选（悬停说明原因）
+    function applyMetricApplicability() {
+      treeRoot.querySelectorAll('input[name="cmpNode"]').forEach(function (cb) {
+        const nodeEl = cb.closest('.cmp-tree-node')
+        const info = selectableInfo(cb.value, currentMetric)
+        if (info.ok) {
+          cb.disabled = false
+          nodeEl.classList.remove('is-blocked')
+          nodeEl.removeAttribute('title')
+        } else {
+          cb.checked = false
+          cb.disabled = true
+          nodeEl.classList.add('is-blocked')
+          nodeEl.setAttribute('title', info.reason + '，不可参与本指标对比')
+        }
+      })
+      syncCount()
+      syncLeafHighlight()
+    }
+
+    // 指标单选切换：整体刷新单位、对象可选性与对比结果；对象、时间段筛选保持不变
+    metricSelect.addEventListener('change', function () {
+      currentMetric = metricSelect.value
+      unitEl.textContent = unitText()
+      metricHint.textContent = METRIC_HINTS[currentMetric] || ''
+      applyMetricApplicability()
+      renderAll()
+    })
+
+    // 「对比指标」列单元格：指标名 + 单位（无量纲指标只显示名称）
+    function metricDisplayName() {
+      const m = METRICS[currentMetric]
+      return m.label + (m.unit ? '（' + m.unit + '）' : '')
+    }
+
+    // 导出当前对比表格为 CSV（列结构与页面表格一致：对比对象 + 对比指标 + 各时间段，「—」原样导出）
+    document.getElementById('cmpExport').addEventListener('click', function () {
+      const nodes = getSelectedNodes()
+      if (nodes.length === 0) {
+        window.alert('请先勾选左侧对象再导出')
+        return
+      }
+      const m = METRICS[currentMetric]
+      const ranges = getRanges()
+      const rows = []
+      rows.push(['对比对象', '对比指标'].concat(ranges.map(function (r) { return formatRangeLabel(r.start, r.end) })))
+      nodes.forEach(function (node) {
+        rows.push([node.label, metricDisplayName()].concat(ranges.map(function (_, i) {
+          const cell = getCell(node.id, i)
+          return cell.v == null ? '—' : cell.v.toFixed(m.decimals)
+        })))
+      })
+      const csv = '\ufeff' + rows.map(function (r) { return r.join(',') }).join('\r\n')
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }))
+      a.download = '用能对比分析-' + m.label + '.csv'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(a.href)
+    })
 
     function getRanges() {
       const rows = rangesEl.querySelectorAll('.cmp-range-row')
@@ -755,7 +976,7 @@
       const nodes = getSelectedNodes()
       const ranges = getRanges()
       const thead = document.createElement('tr')
-      thead.innerHTML = '<th>对比节点</th>' + ranges.map(function (r) {
+      thead.innerHTML = '<th>对比对象</th><th>对比指标</th>' + ranges.map(function (r) {
         return '<th class="num">' + formatRangeLabel(r.start, r.end) + '</th>'
       }).join('')
       tableHead.innerHTML = ''
@@ -763,97 +984,115 @@
       tableBody.innerHTML = ''
       if (nodes.length === 0) {
         const tr = document.createElement('tr')
-        tr.innerHTML = '<td colspan="' + (ranges.length + 1) + '" style="text-align:center;color:var(--text-hint);padding:28px;">请勾选左侧节点后查询</td>'
+        tr.innerHTML = '<td colspan="' + (ranges.length + 2) + '" style="text-align:center;color:var(--text-hint);padding:28px;">请勾选左侧对象后查询</td>'
         tableBody.appendChild(tr)
         return
       }
       nodes.forEach(function (node) {
         const row = document.createElement('tr')
-        const noBilling = currentMetric === 'cost' && NO_BILLING_NODES.indexOf(node.id) !== -1
         const cells = ranges.map(function (_, i) {
-          // v2.5 完整性标记示例：1 号楼第一个时间段内存在坏值/缺失半小时槽（电量/成本视图同规则）
-          const tag = (node.id === 'b1' && i === 0)
-            ? ' <span class="integrity-tag" title="统计区间内存在坏值或缺失的半小时槽，坏值/缺失不参与聚合，结果可能偏低">含异常/缺失</span>'
-            : ''
-          if (noBilling) {
-            return '<td class="num" title="该对象下无表具应用计费方案，无成本数据">—' + tag + '</td>'
+          const cell = getCell(node.id, i)
+          if (cell.v == null) {
+            return '<td class="num" title="' + (cell.reason || '暂无数据') + '">—</td>'
           }
-          const v = getMetricValue(node.id, i)
-          return '<td class="num">' + (v == null ? '—' : formatMetricValue(v)) + tag + '</td>'
+          return '<td class="num">' + formatMetricValue(cell.v) + '</td>'
         }).join('')
-        row.innerHTML = '<td>' + node.label + '</td>' + cells
+        row.innerHTML = '<td>' + node.label + '</td><td>' + metricDisplayName() + '</td>' + cells
         tableBody.appendChild(row)
       })
     }
 
+    // ECharts 分组柱状图（与能耗流向分析 / 节能分析同一图表方案，本地 assets/echarts.min.js）
+    let chartInst = null
+    new ResizeObserver(function () { if (chartInst) chartInst.resize() }).observe(chartMount)
+
     function renderChart() {
       const nodes = getSelectedNodes()
       const ranges = getRanges()
+      const metric = METRICS[currentMetric]
       if (nodes.length === 0) {
-        chartMount.innerHTML = '<div class="cmp-empty">请勾选左侧节点（最多 ' + MAX_NODES + ' 个）进行用能对比<br>时间段列将随上方日期范围生成</div>'
+        if (chartInst) { chartInst.dispose(); chartInst = null }
+        chartMount.innerHTML = '<div class="cmp-empty">请勾选左侧对象（最多 ' + MAX_NODES + ' 个）进行指标对比<br>时间段列将随上方日期范围生成</div>'
         return
       }
-
-      const W = 720
-      const H = 380
-      const padL = 56
-      const padR = 24
-      const padT = 36
-      const padB = 56
-      const innerW = W - padL - padR
-      const innerH = H - padT - padB
-
-      let maxV = 1
-      nodes.forEach(function (n) {
-        ranges.forEach(function (_, i) {
-          var v = getMetricValue(n.id, i)
-          if (v != null) maxV = Math.max(maxV, v)
-        })
-      })
-      maxV *= 1.08
-
-      const groupW = innerW / nodes.length
-      const barSlot = groupW * 0.72
-      const barW = barSlot / Math.max(ranges.length, 1)
-      const gap = (groupW - barSlot) / 2
-
-      let svg = '<svg class="cmp-chart-svg" viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" aria-label="用能对比柱状图">'
-      svg += '<text x="' + (W / 2) + '" y="22" text-anchor="middle" font-size="11" fill="#BFBFBF">示意数据 · 按节点与时间段汇总' + (currentMetric === 'cost' ? '成本（元）' : '电量（kWh）') + '</text>'
-
-      for (var g = 0; g <= 4; g++) {
-        var y = padT + (innerH * g / 4)
-        var val = Math.round(maxV * (1 - g / 4))
-        svg += '<line x1="' + padL + '" y1="' + y + '" x2="' + (W - padR) + '" y2="' + y + '" stroke="#F0F0F0" stroke-width="1"/>'
-        svg += '<text x="' + (padL - 8) + '" y="' + (y + 4) + '" text-anchor="end" font-size="11" fill="#8C8C8C">' + val + '</text>'
+      if (!chartInst) {
+        chartMount.innerHTML = ''
+        chartInst = echarts.init(chartMount)
       }
 
-      nodes.forEach(function (node, ni) {
-        var gx = padL + ni * groupW + gap
-        ranges.forEach(function (_, ri) {
-          var v = getMetricValue(node.id, ri)
-          if (v == null) return
-          var h = (v / maxV) * innerH
-          var x = gx + ri * barW + barW * 0.08
-          var y = padT + innerH - h
-          var fill = ri === 0 ? '#1E40AF' : (ri === 1 ? '#16A34A' : '#EA580C')
-          svg += '<rect x="' + x + '" y="' + y + '" width="' + (barW * 0.84) + '" height="' + h + '" rx="3" fill="' + fill + '" opacity="0.9"/>'
-          svg += '<text x="' + (x + barW * 0.42) + '" y="' + (y - 4) + '" text-anchor="middle" font-size="10" fill="#595959">' + formatMetricValue(v) + '</text>'
+      let maxV = 0
+      nodes.forEach(function (n) {
+        ranges.forEach(function (_, i) {
+          const cell = getCell(n.id, i)
+          if (cell.v != null) maxV = Math.max(maxV, cell.v)
         })
-        var cx = padL + ni * groupW + groupW / 2
-        var label = node.label.length > 6 ? node.label.slice(0, 5) + '…' : node.label
-        svg += '<text x="' + cx + '" y="' + (H - 22) + '" text-anchor="middle" font-size="12" fill="#262626" font-weight="600">' + label + '</text>'
       })
+      // 能效类比值量级小（0.0x~1.x），Y 轴刻度按量级保留小数
+      function axisFmt(val) {
+        if (maxV <= 5) return Number(val).toFixed(2)
+        if (maxV <= 50) return Number(val).toFixed(1)
+        return Math.round(val).toLocaleString('zh-CN')
+      }
 
-      svg += '</svg>'
-
-      var leg = '<div class="cmp-legend">'
-      ranges.forEach(function (r, i) {
-        var fill = i === 0 ? '#1E40AF' : (i === 1 ? '#16A34A' : '#EA580C')
-        leg += '<span class="cmp-legend-item"><span class="cmp-legend-swatch" style="background:' + fill + '"></span>' + formatRangeLabel(r.start, r.end) + '</span>'
-      })
-      leg += '</div>'
-
-      chartMount.innerHTML = svg + leg
+      chartInst.setOption({
+        color: ['#1E40AF', '#16A34A', '#EA580C'],
+        title: {
+          text: '「' + metric.label + '」对象 × 时间段对比',
+          subtext: '示意数据',
+          left: 0,
+          top: 0,
+          itemGap: 4,
+          textStyle: { fontSize: 13, fontWeight: 600, color: '#0F172A' },
+          subtextStyle: { fontSize: 11, color: '#94A3B8' }
+        },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: { type: 'shadow' },
+          valueFormatter: function (v) {
+            return v == null ? '—' : formatMetricValue(v) + (metric.unit ? ' ' + metric.unit : '')
+          }
+        },
+        legend: {
+          top: 4,
+          right: 0,
+          itemWidth: 12,
+          itemHeight: 8,
+          itemGap: 16,
+          textStyle: { fontSize: 12, color: '#475569' }
+        },
+        grid: { left: 8, right: 8, top: 72, bottom: 8, containLabel: true },
+        xAxis: {
+          type: 'category',
+          data: nodes.map(function (n) { return n.label }),
+          axisTick: { show: false },
+          axisLine: { lineStyle: { color: '#E5EAF0' } },
+          axisLabel: { color: '#667485', fontSize: 12, interval: 0 }
+        },
+        yAxis: {
+          type: 'value',
+          name: metric.unit ? '单位：' + metric.unit : '比值指标（无量纲）',
+          nameTextStyle: { color: '#8B98A8', fontSize: 11, align: 'left', padding: [0, 0, 4, 0] },
+          splitLine: { lineStyle: { color: '#E5EAF0' } },
+          axisLabel: { color: '#8B98A8', fontSize: 11, formatter: axisFmt }
+        },
+        series: ranges.map(function (r, ri) {
+          return {
+            name: formatRangeLabel(r.start, r.end),
+            type: 'bar',
+            barMaxWidth: 36,
+            barGap: '30%',
+            itemStyle: { borderRadius: [4, 4, 0, 0] },
+            label: {
+              show: true,
+              position: 'top',
+              fontSize: 11,
+              color: '#667485',
+              formatter: function (p) { return p.value == null ? '' : formatMetricValue(p.value) }
+            },
+            data: nodes.map(function (n) { return getCell(n.id, ri).v })
+          }
+        })
+      }, true)
     }
 
     function renderAll() {
@@ -870,6 +1109,7 @@
       tabTable.setAttribute('aria-selected', 'false')
       panelChart.hidden = false
       panelTable.hidden = true
+      if (chartInst) chartInst.resize()
     })
     tabTable.addEventListener('click', function () {
       tabTable.classList.add('active')
@@ -879,22 +1119,6 @@
       panelChart.hidden = true
       panelTable.hidden = false
       renderTable()
-    })
-
-    // v2.5 电量 / 成本 维度切换：仅改变读取字段与单位，节点、时间段、时间粒度筛选不变
-    metricSeg.querySelectorAll('button[data-metric]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var metric = btn.getAttribute('data-metric')
-        if (metric === currentMetric) return
-        currentMetric = metric
-        metricSeg.querySelectorAll('button[data-metric]').forEach(function (b) {
-          var on = b === btn
-          b.classList.toggle('active', on)
-          b.setAttribute('aria-selected', on ? 'true' : 'false')
-        })
-        unitEl.textContent = '单位：' + (currentMetric === 'cost' ? '元' : 'kWh')
-        renderAll()
-      })
     })
 
     const search = document.getElementById('cmpSearch')
@@ -925,7 +1149,9 @@
       })
     })
 
-    syncLeafHighlight()
+    unitEl.textContent = unitText()
+    metricHint.textContent = METRIC_HINTS[currentMetric] || ''
+    applyMetricApplicability()
     renderAll()
   })()
 

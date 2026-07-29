@@ -19,13 +19,15 @@
   };
 
   /**
-   * 顶栏「工程配置」下拉（两项直达）：
+   * 顶栏「工程配置」下拉（三项直达）：
    * - 能效视图 → 整页无左侧菜单
    * - 能源配置 → 默认能源计费配置，左侧仅 3 子菜单
+   * - 物模型   → 默认模型管理，左侧 7 子菜单
    */
   const PROJECT_CONFIG_DROPDOWN = [
     { label: '能效视图', linkKey: '能效视图' },
-    { label: '能源配置', linkKey: '能源配置' }
+    { label: '能源配置', linkKey: '能源配置' },
+    { label: '物模型', linkKey: '物模型' }
   ];
 
   /** AI智能能效侧栏（配置类入口已迁至工程配置） */
@@ -88,6 +90,19 @@
 
   const ENERGY_SIDEBAR_KEYS = ['能源配置', '能源计费配置', '能源计量关系', '表具能耗明细'];
 
+  /** 物模型模块：左侧 7 个子菜单（与现网「工程配置 → 物模型」一致；本原型只实现「模型管理」） */
+  const SIDEBAR_TREE_MODEL = [
+    { label: '关系查询' },
+    { label: '模型管理' },
+    { label: '分类管理' },
+    { label: '关系管理' },
+    { label: '属性库' },
+    { label: '测点库' },
+    { label: '实例管理' }
+  ];
+
+  const MODEL_SIDEBAR_KEYS = ['物模型', '关系查询', '模型管理', '分类管理', '关系管理', '属性库', '测点库', '实例管理'];
+
   const SIDEBAR_LINKS = {
     '总览看板': '总览看板.html',
     '能耗流向分析': '能耗流向分析.html',
@@ -115,7 +130,9 @@
     '冷站智能诊断': '冷站智能诊断.html',
     '冷站诊断规则': '冷站诊断规则.html',
     '多工况探索': '多工况探索-列表.html',
-    '表具能耗明细': '能耗管理-表具明细.html'
+    '表具能耗明细': '能耗管理-表具明细.html',
+    '物模型': '物模型-模型管理.html',
+    '模型管理': '物模型-模型管理.html'
   };
 
   /** 侧栏条目批注/原型版本角标；与 index.html 拓扑对应节点 version 对齐（同一菜单多页时以拓扑父/主节点为准） */
@@ -145,7 +162,8 @@
     '安全回退策略': 'v1.6',
     '冷站诊断规则': 'v1.5',
     '表具能耗明细': 'v2.5',
-    '节能分析': 'v2.5'
+    '节能分析': 'v2.5',
+    '模型管理': 'v2.5'
   };
 
   const ICON_DASH = '<svg class="sidebar-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h16"/></svg>';
@@ -178,20 +196,27 @@
 
   const config = getConfig();
 
-  /** ai | energy | none（能效视图整页无侧栏） */
+  /** ai | energy | model | none（能效视图整页无侧栏） */
   function getSidebarMode() {
     if (config.activeNav !== '工程配置') return 'ai';
     if (config.activeSidebar === '能效视图') return 'none';
+    if (MODEL_SIDEBAR_KEYS.indexOf(config.activeSidebar) >= 0) return 'model';
     if (ENERGY_SIDEBAR_KEYS.indexOf(config.activeSidebar) >= 0) return 'energy';
     return 'energy';
   }
 
   function getSidebarTree() {
-    return getSidebarMode() === 'energy' ? SIDEBAR_TREE_ENERGY : SIDEBAR_TREE_AI;
+    const mode = getSidebarMode();
+    if (mode === 'energy') return SIDEBAR_TREE_ENERGY;
+    if (mode === 'model') return SIDEBAR_TREE_MODEL;
+    return SIDEBAR_TREE_AI;
   }
 
   function getSidebarBrandText() {
-    return getSidebarMode() === 'energy' ? '能源配置' : 'AI智能能效';
+    const mode = getSidebarMode();
+    if (mode === 'energy') return '能源配置';
+    if (mode === 'model') return '物模型';
+    return 'AI智能能效';
   }
 
   function resolveSidebarChild(child) {
@@ -741,6 +766,9 @@
     if (linkKey === '能源配置') {
       return ENERGY_SIDEBAR_KEYS.indexOf(config.activeSidebar) >= 0;
     }
+    if (linkKey === '物模型') {
+      return MODEL_SIDEBAR_KEYS.indexOf(config.activeSidebar) >= 0;
+    }
     return linkKey === config.activeSidebar;
   }
 
@@ -967,9 +995,10 @@
     const brand = document.createElement('div');
     brand.className = 'sidebar-brand';
     const brandText = getSidebarBrandText();
+    const brandMark = { energy: '能', model: '模' }[getSidebarMode()] || 'AI';
     brand.innerHTML =
       '<span class="sidebar-brand-mark" aria-hidden="true">' +
-      (getSidebarMode() === 'energy' ? '能' : 'AI') +
+      brandMark +
       '</span>' +
       '<span class="sidebar-brand-text">' + brandText + '</span>';
     brand.setAttribute('data-nav-tip', brandText);
@@ -1024,6 +1053,7 @@
         if (node.label === '能源计费配置' || node.label === '能源计量关系' || node.label === '表具能耗明细') {
           icon = ICON_SLIDERS;
         }
+        if (getSidebarMode() === 'model') icon = ICON_GRID;
         item.innerHTML = icon + sidebarItemRowHtml(node.label);
         item.setAttribute('data-nav-tip', node.label);
         if (href) item.setAttribute('aria-label', node.label);

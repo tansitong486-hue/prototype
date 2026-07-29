@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>模型详情</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-dark: #17358A;
+      --primary-tint: #EEF4FF;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --danger: #DC2626;
+      --danger-border: #FCA5A5;
+      --success: #059669;
+      --warning: #D97706;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button { border: none; background: none; font: inherit; cursor: pointer; }
+
+    [hidden] { display: none !important; }
+
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main { flex: 1; min-width: 0; overflow-y: auto; background: var(--bg-body); }
+
+    .page-shell { padding: 18px 20px 24px; }
+
+    .page-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      padding: 0 18px 20px;
+    }
+
+    /* 详情页头 */
+    .detail-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 0 12px;
+      flex-wrap: wrap;
+    }
+    .detail-crumb { display: inline-flex; align-items: center; gap: 10px; min-width: 0; }
+    .crumb-back {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      color: var(--text-secondary);
+      text-decoration: none;
+    }
+    .crumb-back:hover { background: var(--primary-tint); color: var(--primary); }
+    .crumb-title { font-size: 17px; font-weight: 700; }
+    .crumb-sep { width: 1px; height: 16px; background: var(--border); }
+    .crumb-model { font-size: 14px; color: var(--text-secondary); }
+
+    .detail-head-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 32px;
+      padding: 0 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all var(--transition);
+      white-space: nowrap;
+    }
+    .btn-primary { color: #fff; background: var(--primary); }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-outline { color: var(--primary); background: #fff; border: 1px solid var(--primary); }
+    .btn-outline:hover { background: var(--primary-tint); }
+    .btn-ghost { color: var(--text-primary); background: #fff; border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-danger-outline { color: var(--danger); background: #fff; border: 1px solid var(--danger-border); }
+    .btn-danger-outline:hover { background: #FEF2F2; }
+    .btn-sq { border-radius: var(--radius); }
+    .btn[disabled] { opacity: .5; cursor: not-allowed; }
+
+    /* Tabs */
+    .main-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-light);
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .main-tab {
+      display: inline-flex;
+      align-items: center;
+      padding: 10px 18px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color var(--transition), border-color var(--transition);
+    }
+    .main-tab:hover { color: var(--primary); }
+    .main-tab.active { color: var(--primary); font-weight: 600; border-bottom-color: var(--primary); }
+
+    .tab-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 5px;
+      margin-left: 6px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 600;
+      color: #fff;
+      background: var(--text-hint);
+    }
+    .tab-badge.has { background: var(--primary); }
+    .tab-badge.warn { background: var(--warning); }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .panel-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 220px;
+      color: var(--text-hint);
+      font-size: 13px;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      background: #FAFBFD;
+    }
+
+    /* 基本信息 */
+    .basic-wrap { display: flex; gap: 18px; padding: 8px 4px 4px; }
+    .basic-ico {
+      width: 48px;
+      height: 48px;
+      flex-shrink: 0;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #3B82F6, #1E40AF);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+    .basic-ico svg { width: 24px; height: 24px; }
+    .basic-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px 40px;
+    }
+    .basic-field { display: flex; gap: 12px; font-size: 13px; }
+    .basic-label { width: 92px; flex-shrink: 0; text-align: right; color: var(--text-secondary); }
+    .basic-value { color: var(--text-primary); word-break: break-all; }
+
+    /* 通用表格 */
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      background: #fff;
+    }
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table thead th {
+      padding: 11px 14px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .data-table tbody td {
+      padding: 11px 14px;
+      font-size: 13px;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+    }
+    .data-table tbody tr:hover { background: #FBFCFE; }
+    .data-table .empty-cell { text-align: center; color: var(--text-hint); padding: 48px 0; }
+    .group-row td {
+      background: #F8FAFC;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+    .group-row .group-count { font-weight: 500; color: var(--text-hint); margin-left: 6px; }
+
+    .action-link {
+      font-size: 13px;
+      color: var(--primary);
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .action-link:hover { text-decoration: underline; }
+    .action-link.danger { color: var(--danger); }
+    .action-link:disabled { color: var(--text-hint); cursor: not-allowed; text-decoration: none; }
+    .row-actions { display: inline-flex; gap: 12px; white-space: nowrap; }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .tag-code { color: var(--primary); background: var(--primary-tint); border: 1px solid #C7D8F8; font-weight: 600; }
+    .tag-own { color: #15803D; background: #F0FDF4; border: 1px solid #86EFAC; }
+    .tag-inherit { color: var(--text-secondary); background: #F1F5F9; border: 1px solid var(--border); }
+    .tag-p0 { color: var(--danger); background: #FEF2F2; border: 1px solid var(--danger-border); }
+    .tag-p1 { color: var(--warning); background: #FFFBEB; border: 1px solid #FCD34D; }
+    .tag-rt { color: #0E7490; background: #ECFEFF; border: 1px solid #A5F3FC; }
+    .tag-pd { color: #7C3AED; background: #F5F3FF; border: 1px solid #DDD6FE; }
+
+    /* 指标 Tab */
+    .metric-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .toolbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .toolbar-field { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-secondary); }
+    .toolbar-select {
+      height: 32px;
+      padding: 0 26px 0 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 12px;
+      color: var(--text-primary);
+      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 9px center;
+      appearance: none;
+      cursor: pointer;
+      min-width: 104px;
+    }
+    .toolbar-select:focus, .toolbar-search:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.12);
+    }
+    .toolbar-search {
+      width: 200px;
+      height: 32px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 12px;
+    }
+
+    .metric-table { min-width: 760px; }
+    .metric-name { font-weight: 600; white-space: nowrap; }
+    .metric-key { font-size: 12px; color: var(--text-hint); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; }
+
+    @media (max-width: 900px) {
+      .basic-grid { grid-template-columns: 1fr; }
+      .basic-wrap { flex-direction: column; }
+    }
+  </style>
+  <link rel="stylesheet" href="annotation-styles.css">
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+        <div class="anno-filter-bar" id="annoFilterBar">
+          <span class="anno-filter-label">批注版本：</span>
+          <div class="anno-filter-tags" id="annoFilterTags"></div>
+        </div>
+        <div class="page-shell">
+
+          <div class="anno anno-version-header" data-version="v2.5">
+            <span class="anno-tag">版本信息</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v2.5</p>
+              <p><b>更新日期：</b>2026-07-29</p>
+              <p><b>变更概述：</b>按现网「工程配置 → 物模型 → 模型管理 → 模型详情」补齐原型，并<b>新增「指标」Tab</b>——承接需求 6「对象指标定义与指标工厂查询计算」的<b>物模型层（类型层）</b>，只回答「这类对象有哪些指标」：一行一个具体指标，标出指标标识、业务分类、实时 / 时间段与单位。本 Tab <b>只读</b>：指标由产品预置、随 KE 标准包发布，现场与实施不可新增、不可改口径。原有 8 个 Tab（基本信息 / 属性 / 测点 / 组件 / 关系 / 指令 / 事件 / 拓扑）为现网既有能力，本原型按现网形态做结构对齐与轻量占位，本期不改造。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-req" data-version="v2.5">
+            <span class="anno-tag">需求说明</span>
+            <span class="anno-version">v2.5</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>本页是做什么的：</b>看一个物模型（一类对象）的完整定义。本期在原有「属性 / 测点」之外，补上第三类定义——<b>对象指标</b>，回答「这类对象有哪些指标」。</p>
+              <ul>
+                <li><b>支持的场景：</b>①产品与实施核对某类对象应该有哪些指标；②排查「页面上某个指标没出现」时，先在这里确认类型层有没有这条指标。</li>
+                <li><b>两层分工（需求 6 §7.2）：</b>本页是<b>物模型层</b>——只讲「这类对象有这些指标」，<b>不显示任何指标值</b>；某个具体对象「现在能不能算、值是多少」属于<b>实例层</b>，在《能效视图》节点详情的「指标列表」里看。</li>
+                <li><b>本期不覆盖：</b>不开放现场向物模型配置指标（变更只随标准包升级发布）；不做自由公式指标；不产出「该模型全部实例的合计 / 平均」这类模型级聚合值。</li>
+              </ul>
+            </div>
+          </div>
+
+          <section class="page-card" aria-label="模型详情">
+            <div class="detail-head">
+              <div class="detail-crumb">
+                <a class="crumb-back" href="物模型-模型管理.html" aria-label="返回模型管理">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+                </a>
+                <span class="crumb-title">模型详情</span>
+                <span class="crumb-sep"></span>
+                <span class="crumb-model" id="crumbModel">数据中心单元</span>
+              </div>
+              <div class="detail-head-actions">
+                <button type="button" class="btn btn-danger-outline">删除模型</button>
+                <button type="button" class="btn btn-ghost">导出</button>
+                <button type="button" class="btn btn-ghost">发布</button>
+                <button type="button" class="btn btn-ghost">权限设置</button>
+                <button type="button" class="btn btn-primary">编辑</button>
+              </div>
+            </div>
+
+            <div class="main-tabs" role="tablist" aria-label="模型详情 Tab">
+              <button type="button" class="main-tab active" role="tab" aria-selected="true" data-tab="basic">基本信息</button>
+              <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="attr">属性<span class="tab-badge has" id="badgeAttr">21</span></button>
+              <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="point">测点<span class="tab-badge has" id="badgePoint">32</span></button>
+              <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="metrics">指标<span class="tab-badge has" id="badgeMetrics">14</span></button>
+              <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="comp">组件</button>
+              <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="rel">关系</button>
+              <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="cmd">指令</button>
+              <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="event">事件</button>
+              <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="topo">拓扑</button>
+            </div>
+
+            <!-- 基本信息 -->
+            <div class="tab-panel active" id="panel-basic" role="tabpanel">
+              <div class="anno anno-data" data-version="v2.5">
+                <span class="anno-tag">数据逻辑</span>
+                <span class="anno-version">v2.5</span>
+                <span class="anno-source">产品推断</span>
+                <div class="anno-body">
+                  <p><b>关联模块：</b>基本信息 Tab</p>
+                  <ul><li>字段取自模型自身定义，与现网一致；「父模型」标识表示该模型继承自上级模型，属性 / 测点 / 指标都会沿这条继承链向下生效。本期不改造本 Tab。</li></ul>
+                </div>
+              </div>
+              <div class="basic-wrap">
+                <span class="basic-ico">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                </span>
+                <div class="basic-grid" id="basicGrid"></div>
+              </div>
+            </div>
+
+            <!-- 属性 -->
+            <div class="tab-panel" id="panel-attr" role="tabpanel">
+              <div class="anno anno-data" data-version="v2.5">
+                <span class="anno-tag">数据逻辑</span>
+                <span class="anno-version">v2.5</span>
+                <span class="anno-source">产品推断</span>
+                <div class="anno-body">
+                  <p><b>关联模块：</b>属性 Tab（现网既有，本期不改造）</p>
+                  <ul><li>本原型只做结构占位，列与操作沿用现网。需求 6 <b>不在物模型上新增属性</b>，指标不会出现在本 Tab。</li></ul>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table class="data-table" style="min-width:960px" aria-label="模型属性">
+                  <thead><tr><th>名称</th><th>ID</th><th>值类型</th><th>物理属性</th><th>单位</th><th>来源</th><th>操作</th></tr></thead>
+                  <tbody id="attrBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 测点 -->
+            <div class="tab-panel" id="panel-point" role="tabpanel">
+              <div class="anno anno-edge" data-version="v2.5">
+                <span class="anno-tag">边界与异常</span>
+                <span class="anno-version">v2.5</span>
+                <span class="anno-source">需求文档</span>
+                <div class="anno-body">
+                  <p><b>关联模块：</b>测点 Tab —— 与「指标」Tab 的边界（重点，评审必看）</p>
+                  <ul>
+                    <li><b>两个 Tab 是两条独立链路：</b>测点是物模型上的<b>数据槽位</b>；指标是<b>指标工厂里的口径定义</b>。需求 6 明确<b>不在物模型上新增测点</b>，指标不会占用测点槽位。</li>
+                    <li><b>同名不等于同一个东西：</b>本 Tab 里已有的「实时 PUE <code>1_107_0</code>」等能耗 / 能效槽位（含 POE、CF 这类别名）是历史既有能力，指标工厂<b>既不回写也不读取</b>，算法与配置方式保持原样。它和「指标」Tab 里的 PUE 数值不一致<b>不算缺陷</b>，排查时不要互相对数。</li>
+                    <li><b>为什么指标不能塞进测点：</b>能耗用量、分时成本这类指标带「时间跨度 + 能源类型 + 计费时段」入参，一个单值测点槽位在结构上承载不了；按粒度铺虚拟测点会造成测点爆炸。</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table class="data-table" style="min-width:1040px" aria-label="模型测点">
+                  <thead><tr><th>名称</th><th>ID</th><th>类型</th><th>来源</th><th>值类型</th><th>物理类型</th><th>精度</th><th>单位</th><th>表达式</th><th>操作</th></tr></thead>
+                  <tbody id="pointBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 指标（本期新增） -->
+            <div class="tab-panel" id="panel-metrics" role="tabpanel">
+
+              <div class="anno anno-req" data-version="v2.5">
+                <span class="anno-tag">需求说明</span>
+                <span class="anno-version">v2.5</span>
+                <span class="anno-source">需求文档</span>
+                <div class="anno-body">
+                  <p><b>关联模块：</b>指标 Tab（本期新增）—— 这类对象有哪些指标</p>
+                  <ul>
+                    <li><b>解决什么问题：</b>过去「哪类对象有哪些指标」散落在代码和各页面的对象类型白名单里，谁也说不清。本期收回到物模型上定义一次，该模型及其继承子模型的实例自动具备，新建实例即刻生效。</li>
+                    <li><b>本 Tab 只回答一件事：</b>这个模型上有哪些指标。<b>不回答</b>「某个对象现在算不算得出」「值是多少」——那是实例层的事，在《能效视图》节点详情的「指标列表」里看。</li>
+                    <li><b>只读：</b>指标由产品预置、随 KE 标准包发布，现场与实施不可新增、不可改口径，因此本 Tab 没有新增 / 编辑 / 删除入口。</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="anno anno-ux" data-version="v2.5">
+                <span class="anno-tag">交互说明</span>
+                <span class="anno-version">v2.5</span>
+                <span class="anno-source">需求文档</span>
+                <div class="anno-body">
+                  <p><b>关联模块：</b>指标列表</p>
+                  <ul>
+                    <li><b>一行一个指标：</b>列表直接列出这类对象可用的具体指标（如电能消耗量、用水量、尖 / 峰 / 平 / 谷时电费），与下游选择器里能勾到的选项一致，不需要再选参数。</li>
+                    <li><b>分两组：</b>实时值指标只查当前值，统计指标按起止时间查询。</li>
+                    <li><b>筛选：</b>关键字（指标名称 / 标识）与业务分类，输入即筛选、清空恢复全部。</li>
+                    <li><b>只读：</b>不提供新增 / 编辑 / 删除，也不提供逐条的口径详情弹窗；要看某条指标的实际取值，去《能效视图》选具体对象。</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="anno anno-field" data-version="v2.5">
+                <span class="anno-tag">字段说明</span>
+                <span class="anno-version">v2.5</span>
+                <span class="anno-source">产品推断</span>
+                <div class="anno-body">
+                  <p><b>关联模块：</b>指标列表工具栏与表格列</p>
+                  <table class="anno-table">
+                    <thead>
+                      <tr><th>字段</th><th>类型</th><th>可选值 / 取值</th><th>默认值</th><th>说明</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>搜索</td><td>文本输入</td><td>—</td><td>空</td>
+                        <td>按指标名称或标识模糊匹配，输入即筛选</td>
+                      </tr>
+                      <tr>
+                        <td>业务分类（筛选）</td><td>下拉选择</td><td>全部 / 能效 / 容量</td><td>全部</td>
+                        <td>本版指标都在「能效」分类；「容量」为后续扩展预留，当前筛出为空</td>
+                      </tr>
+                      <tr>
+                        <td>指标名称</td><td>列</td><td>—</td><td>—</td>
+                        <td>下游选择器里显示给用户的名字</td>
+                      </tr>
+                      <tr>
+                        <td>指标标识</td><td>列</td><td>—</td><td>—</td>
+                        <td>指标的唯一标识；同一族指标（如各能源的消耗量）共用一个标识，靠入参区分</td>
+                      </tr>
+                      <tr>
+                        <td>时间查询</td><td>列</td><td>实时 / 时间段</td><td>—</td>
+                        <td>实时只查当前值不落历史；时间段接受半小时及以上任意跨度</td>
+                      </tr>
+                      <tr>
+                        <td>单位</td><td>列</td><td>—</td><td>—</td>
+                        <td>随指标固定，能效类比值无单位显示「—」</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="metric-toolbar">
+                <div class="toolbar-right">
+                  <input type="search" class="toolbar-search" id="metricSearch" placeholder="指标名称、标识" aria-label="搜索指标">
+                  <label class="toolbar-field"><span>业务分类</span>
+                    <select class="toolbar-select" id="filterBiz">
+                      <option value="">全部</option>
+                      <option value="能效">能效</option>
+                      <option value="容量">容量</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+
+              <div class="anno anno-state" data-version="v2.5">
+                <span class="anno-tag">状态说明</span>
+                <span class="anno-version">v2.5</span>
+                <span class="anno-source">需求文档</span>
+                <div class="anno-body">
+                  <p><b>关联模块：</b>指标列表空态</p>
+                  <ul>
+                    <li><b>该模型没有指标：</b>显示「该物模型上没有对象指标」，并说明能耗 / 成本类指标在空间、集合、资产三棵继承链上，能效指标在园区、数据中心单元与暖通空调 / 电力 / 其他系统上——不是缺陷，不需要现场处理。</li>
+                    <li><b>筛选无结果：</b>显示「没有找到匹配的指标」，保留筛选条件不自动清空。</li>
+                    <li><b>不展示指标值，也不展示「可算 / 待配置」：</b>这两者都是实例层状态，本页只回答「这类对象有这个指标」。</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="anno anno-edge" data-version="v2.5">
+                <span class="anno-tag">边界与异常</span>
+                <span class="anno-version">v2.5</span>
+                <span class="anno-source">需求文档</span>
+                <div class="anno-body">
+                  <p><b>关联模块：</b>指标清单的构成规则（评审重点）</p>
+                  <ul>
+                    <li><b>清单含继承：</b>列表是本模型自己定义的 + 沿继承链从父模型拿到的，合在一起展示，不区分来源；同一条指标不会在父子模型上重复定义。</li>
+                    <li><b>同名两条不是重复：</b>PUE 这类能效指标会同时出现实时和统计两条，靠「时间查询」列区分。</li>
+                    <li><b>条数随工程变化：</b>各能源的消耗量、各时段电费是按当前工程已启用的能源与计费档位列出来的，换一个只用电的工程条数会更少。</li>
+                    <li><b>与「测点」Tab 不互通：</b>指标不占用物模型测点槽位，与测点里同名 / 别名的 PUE、POE、CLF、CF 等既有槽位互不回写、互不读取，两个数不一致不算缺陷。</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="table-wrap">
+                <table class="data-table metric-table" aria-label="物模型对象指标">
+                  <thead id="metricHead"></thead>
+                  <tbody id="metricBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 其余 Tab 占位 -->
+            <div class="tab-panel" id="panel-comp" role="tabpanel"><div class="panel-placeholder">组件（现网既有能力，本原型未展开）</div></div>
+            <div class="tab-panel" id="panel-rel" role="tabpanel"><div class="panel-placeholder">关系（现网既有能力，本原型未展开）</div></div>
+            <div class="tab-panel" id="panel-cmd" role="tabpanel"><div class="panel-placeholder">指令（现网既有能力，本原型未展开）</div></div>
+            <div class="tab-panel" id="panel-event" role="tabpanel"><div class="panel-placeholder">事件（现网既有能力，本原型未展开）</div></div>
+            <div class="tab-panel" id="panel-topo" role="tabpanel"><div class="panel-placeholder">拓扑（现网既有能力，本原型未展开）</div></div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      /* ---------- 通用指标：空间 / 集合 / 资产三棵继承链上的对象都有 ----------
+         能源类型与计费时段是入参，这里按当前工程已启用的能源（电 / 水 / 冷量）与电的分时档位列出具体指标 */
+      function baseMetrics() {
+        return [
+          { name: '实时电功率', key: 'metric.energy.current', biz: '能效', timeType: 'realtime', unit: 'kW' },
+          { name: '实时用水量', key: 'metric.energy.current', biz: '能效', timeType: 'realtime', unit: 'm³/h' },
+          { name: '实时冷量', key: 'metric.energy.current', biz: '能效', timeType: 'realtime', unit: 'kW' },
+          { name: '电能消耗量', key: 'metric.energy.usage', biz: '能效', timeType: 'period', unit: 'kWh' },
+          { name: '用水量', key: 'metric.energy.usage', biz: '能效', timeType: 'period', unit: 'm³' },
+          { name: '冷量消耗量', key: 'metric.energy.usage', biz: '能效', timeType: 'period', unit: 'kWh' },
+          { name: '电费总额', key: 'metric.energy.cost', biz: '能效', timeType: 'period', unit: '元' },
+          { name: '水费', key: 'metric.energy.cost', biz: '能效', timeType: 'period', unit: '元' },
+          { name: '冷量费用', key: 'metric.energy.cost', biz: '能效', timeType: 'period', unit: '元' },
+          { name: '尖时电费', key: 'metric.energy.cost.tou', biz: '能效', timeType: 'period', unit: '元' },
+          { name: '峰时电费', key: 'metric.energy.cost.tou', biz: '能效', timeType: 'period', unit: '元' },
+          { name: '平时电费', key: 'metric.energy.cost.tou', biz: '能效', timeType: 'period', unit: '元' },
+          { name: '谷时电费', key: 'metric.energy.cost.tou', biz: '能效', timeType: 'period', unit: '元' }
+        ];
+      }
+
+      /* ---------- 能效指标 B1–B5：园区 / 数据中心单元绑定，或系统自身绑定 ---------- */
+      var B_DEF = {
+        B1: { name: 'PUE', key: 'metric.efficiency.pue', unit: '—' },
+        B2: { name: 'CLF', key: 'metric.efficiency.clf', unit: '—' },
+        B3: { name: 'PLF', key: 'metric.efficiency.plf', unit: '—' },
+        B4: { name: 'OLF', key: 'metric.efficiency.olf', unit: '—' },
+        B5: { name: 'WUE', key: 'metric.efficiency.wue', unit: 'L/kWh' }
+      };
+
+      function bMetric(code, timeType) {
+        var d = B_DEF[code];
+        var rt = timeType === 'realtime';
+        return {
+          name: d.name + (rt ? '' : '（周期值）'),
+          key: d.key + (rt ? '.current' : ''),
+          biz: '能效', timeType: timeType, unit: d.unit
+        };
+      }
+
+      /* ---------- 模型库 ---------- */
+      var MODEL_LIB = {
+        'dtdl:collection:DCUnit': {
+          name: '数据中心单元', cls: '对象/集合/空间集合/有机整体', resType: '普通模型', ver: '70', tags: '21',
+          parent: '集合', parentId: 'core:Collection', desc: '数据中心单元',
+          bs: ['B1', 'B2', 'B3', 'B4', 'B5'],
+          attrCount: 21, pointCount: 32
+        },
+        'space:Land': {
+          name: '园区', cls: '对象/空间/地块', resType: '普通模型', ver: '46', tags: '12',
+          parent: '空间', parentId: 'core:Space', desc: '园区',
+          bs: ['B1', 'B2', 'B3', 'B4', 'B5'],
+          attrCount: 12, pointCount: 18
+        },
+        'dtdl:collection:HVACSystem': {
+          name: '暖通空调系统', cls: '对象/集合/系统集合', resType: '普通模型', ver: '58', tags: '16',
+          parent: '集合', parentId: 'core:Collection', desc: '暖通空调系统',
+          bs: ['B2'],
+          attrCount: 9, pointCount: 24
+        },
+        'dtdl:collection:ElectricalSystem': {
+          name: '电力系统', cls: '对象/集合/系统集合', resType: '普通模型', ver: '52', tags: '14',
+          parent: '集合', parentId: 'core:Collection', desc: '电力系统（现场实例常命名为「配电系统」，按类型识别）',
+          bs: ['B3'],
+          attrCount: 8, pointCount: 20
+        },
+        'dtdl:collection:OtherSystem': {
+          name: '其他系统', cls: '对象/集合/系统集合', resType: '普通模型', ver: '40', tags: '9',
+          parent: '集合', parentId: 'core:Collection', desc: '其他系统',
+          bs: ['B4'],
+          attrCount: 6, pointCount: 12
+        },
+        'core:Collection': {
+          name: '集合', cls: '对象/集合', resType: '普通模型', ver: '88', tags: '30',
+          parent: '—', parentId: '', desc: '集合（数据中心单元、系统、设备组等集合类继承链根）',
+          bs: [],
+          attrCount: 6, pointCount: 8
+        },
+        'core:Space': {
+          name: '空间', cls: '对象/空间', resType: '普通模型', ver: '76', tags: '22',
+          parent: '—', parentId: '', desc: '空间（园区 / 楼栋 / 楼层 / 房间等空间类继承链根）',
+          bs: [],
+          attrCount: 5, pointCount: 6
+        },
+        'core:Asset': {
+          name: '资产', cls: '对象/资产', resType: '普通模型', ver: '94', tags: '35',
+          parent: '—', parentId: '', desc: '资产（设备与表具本体等资产类继承链根）',
+          bs: [],
+          attrCount: 8, pointCount: 10
+        },
+        'dtdl:collection:ITSystem': {
+          name: 'IT 系统', cls: '对象/集合/系统集合', resType: '普通模型', ver: '44', tags: '11',
+          parent: '集合', parentId: 'core:Collection', desc: 'IT 系统（能效指标的 IT 侧分母来源）',
+          bs: [],
+          attrCount: 7, pointCount: 14
+        },
+        'core:Agent': {
+          name: '角色', cls: '对象/角色', resType: '普通模型', ver: '12', tags: '4',
+          parent: '—', parentId: '', desc: '角色',
+          noBase: true, bs: [],
+          attrCount: 3, pointCount: 0
+        }
+      };
+
+      function getModel(id) {
+        if (MODEL_LIB[id]) return MODEL_LIB[id];
+        return MODEL_LIB['dtdl:collection:DCUnit'];
+      }
+
+      function buildMetrics(model) {
+        var list = model.noBase ? [] : baseMetrics();
+        (model.bs || []).forEach(function (code) { list.push(bMetric(code, 'realtime')); });
+        (model.bs || []).forEach(function (code) { list.push(bMetric(code, 'period')); });
+        return list;
+      }
+
+      /* ---------- 页面状态 ---------- */
+      var params = new URLSearchParams(window.location.search);
+      var modelId = params.get('model') || 'dtdl:collection:DCUnit';
+      var model = getModel(modelId);
+      if (!MODEL_LIB[modelId]) modelId = 'dtdl:collection:DCUnit';
+      var metrics = buildMetrics(model);
+
+      document.title = model.name + ' · 模型详情';
+      document.getElementById('crumbModel').textContent = model.name;
+      document.getElementById('badgeAttr').textContent = model.attrCount;
+      document.getElementById('badgePoint').textContent = model.pointCount;
+
+      var badgeMetrics = document.getElementById('badgeMetrics');
+      badgeMetrics.textContent = metrics.length;
+      badgeMetrics.className = 'tab-badge' + (metrics.length ? ' has' : '');
+
+      /* ---------- 基本信息 ---------- */
+      (function renderBasic() {
+        var parentHtml = model.parentId
+          ? model.name + '　<span class="tag tag-inherit">继承自 ' + model.parent + '</span>'
+          : model.name + '　<span class="tag tag-own">继承链根</span>';
+        var fields = [
+          ['模型ID', modelId],
+          ['模型类型', parentHtml],
+          ['模型分类', model.cls],
+          ['资源类型', model.resType],
+          ['创建者', '-'],
+          ['最新版本标签', model.ver + '　<span class="tag tag-inherit">' + model.tags + ' 个</span>'],
+          ['说明', model.desc]
+        ];
+        document.getElementById('basicGrid').innerHTML = fields.map(function (f) {
+          return '<div class="basic-field"><span class="basic-label">' + f[0] + '</span><span class="basic-value">' + f[1] + '</span></div>';
+        }).join('');
+      })();
+
+      /* ---------- 属性 / 测点占位数据 ---------- */
+      (function renderAttrPoint() {
+        var attrs = [
+          ['电力设计容量', 'power_design_capacity', '浮点', '　', 'kilowatt', model.name],
+          ['已上电数量', 'cabinetPoweredNumber', '整数', '-', '　', model.name],
+          ['未上电数量', 'cabinetUnpoweredNumber', '整数', '-', '　', model.name],
+          ['机柜上电率', 'cabinetPoweredRate', '浮点', '-', '　', model.name],
+          ['机柜位总数', 'cabinetPositionNumber', '整数', '-', '　', model.name],
+          ['可用机柜位', 'availableCabinetPosition', '整数', '-', '　', model.name]
+        ];
+        document.getElementById('attrBody').innerHTML =
+          '<tr class="group-row"><td colspan="7">本体<span class="group-count">枚举</span></td></tr>'
+          + attrs.map(function (a) {
+            return '<tr><td>' + a[0] + '</td><td>' + a[1] + '</td><td>' + a[2] + '</td><td>' + a[3] + '</td><td>' + a[4] + '</td><td>' + a[5]
+              + '</td><td><span class="row-actions"><button type="button" class="action-link">查看</button><button type="button" class="action-link">编辑</button><button type="button" class="action-link danger">删除</button></span></td></tr>';
+          }).join('');
+
+        var points = [
+          ['总电能', '1_100_0', '-', '<span class="tag tag-inherit">父模型</span>', 'float', '-', '-', '-', ''],
+          ['可用制冷量', '1_102_0', '-', model.name, 'float', '有功功率', '2', 'kW', ''],
+          ['制冷负载率', '1_103_0', '-', model.name, 'float', '百分比', '2', '%', ''],
+          ['IT负载', '1_105_0', '-', model.name, 'float', '有功功率', '2', 'kW', '策略表达式'],
+          ['实时PUE', '1_107_0', '-', model.name, 'float', '-', '3', '-', '策略表达式'],
+          ['市电进线实时有功功率', '1_108_0', '-', model.name, 'float', '有功功率', '2', 'kW', '']
+        ];
+        document.getElementById('pointBody').innerHTML =
+          '<tr class="group-row"><td colspan="10">本体</td></tr>'
+          + points.map(function (p) {
+            return '<tr>' + p.map(function (c) { return '<td>' + c + '</td>'; }).join('')
+              + '<td><span class="row-actions"><button type="button" class="action-link">查看</button><button type="button" class="action-link">编辑</button><button type="button" class="action-link danger">删除</button></span></td></tr>';
+          }).join('');
+      })();
+
+      /* ---------- 指标列表 ---------- */
+      var METRIC_HEAD = '<tr>'
+        + '<th style="width:200px">指标名称</th>'
+        + '<th>指标标识</th>'
+        + '<th style="width:100px">业务分类</th>'
+        + '<th style="width:110px">时间查询</th>'
+        + '<th style="width:110px">单位</th></tr>';
+
+      function timeTag(t) {
+        return t === 'realtime'
+          ? '<span class="tag tag-rt">实时</span>'
+          : '<span class="tag tag-pd">时间段</span>';
+      }
+      function currentFilters() {
+        return {
+          kw: document.getElementById('metricSearch').value.trim().toLowerCase(),
+          biz: document.getElementById('filterBiz').value
+        };
+      }
+
+      function matches(m, f) {
+        if (f.biz && m.biz !== f.biz) return false;
+        if (f.kw && (m.name + m.key).toLowerCase().indexOf(f.kw) < 0) return false;
+        return true;
+      }
+
+      function renderMetrics() {
+        var body = document.getElementById('metricBody');
+        document.getElementById('metricHead').innerHTML = METRIC_HEAD;
+
+        if (!metrics.length) {
+          body.innerHTML = '<tr><td class="empty-cell" colspan="5">'
+            + '该物模型上没有对象指标。<br><span style="font-size:12px">能耗量 / 费用类指标在「空间」「集合」「资产」三棵继承链上；PUE / CLF / PLF / OLF / WUE 在园区、数据中心单元与暖通空调 / 电力 / 其他系统上。不属于这些范围的模型没有指标属正常情况。</span>'
+            + '</td></tr>';
+          return;
+        }
+
+        var f = currentFilters();
+        var hit = metrics.filter(function (m) { return matches(m, f); });
+        if (!hit.length) {
+          body.innerHTML = '<tr><td class="empty-cell" colspan="5">没有找到匹配的指标</td></tr>';
+          return;
+        }
+
+        var groups = [
+          { key: 'realtime', label: '实时值指标', hint: '只查当前值' },
+          { key: 'period', label: '统计指标', hint: '按起止时间查询' }
+        ];
+
+        var html = '';
+        groups.forEach(function (g) {
+          var rows = hit.filter(function (m) { return m.timeType === g.key; });
+          if (!rows.length) return;
+          html += '<tr class="group-row"><td colspan="5">' + g.label
+            + '<span class="group-count">' + rows.length + ' 条 · ' + g.hint + '</span></td></tr>';
+          rows.forEach(function (m) {
+            html += '<tr>'
+              + '<td><span class="metric-name">' + m.name + '</span></td>'
+              + '<td><span class="metric-key">' + m.key + '</span></td>'
+              + '<td>' + m.biz + '</td>'
+              + '<td>' + timeTag(m.timeType) + '</td>'
+              + '<td>' + m.unit + '</td>'
+              + '</tr>';
+          });
+        });
+        body.innerHTML = html;
+      }
+
+      /* ---------- 事件绑定 ---------- */
+      document.querySelectorAll('.main-tab').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          var key = tab.getAttribute('data-tab');
+          document.querySelectorAll('.main-tab').forEach(function (t) {
+            t.classList.toggle('active', t === tab);
+            t.setAttribute('aria-selected', t === tab ? 'true' : 'false');
+          });
+          document.querySelectorAll('.tab-panel').forEach(function (p) {
+            p.classList.toggle('active', p.id === 'panel-' + key);
+          });
+        });
+      });
+
+      ['metricSearch', 'filterBiz'].forEach(function (id) {
+        var el = document.getElementById(id);
+        el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', renderMetrics);
+      });
+
+      renderMetrics();
+
+      var wantTab = params.get('tab');
+      if (wantTab) {
+        var target = document.querySelector('.main-tab[data-tab="' + wantTab + '"]');
+        if (target) target.click();
+      }
+    })();
+  </script>
+
+  <button type="button" class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+  <script>
+  function initAnnoVersionFilter() {
+    var bar = document.getElementById('annoFilterBar');
+    var tags = document.getElementById('annoFilterTags');
+    if (!document.body.classList.contains('annotation-mode')) return;
+    var annos = document.querySelectorAll('.anno[data-version]');
+    var versions = [];
+    annos.forEach(function (el) {
+      var v = el.getAttribute('data-version');
+      if (v && versions.indexOf(v) < 0) versions.push(v);
+    });
+    versions.sort(function (a, b) { return b.localeCompare(a, 'zh-CN', { numeric: true }); });
+    if (tags.childElementCount) return;
+    var all = document.createElement('button');
+    all.type = 'button';
+    all.className = 'anno-filter-tag active';
+    all.textContent = '全部';
+    all.addEventListener('click', function () { filterAnno('all', all); });
+    tags.appendChild(all);
+    versions.forEach(function (v) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'anno-filter-tag';
+      b.textContent = v;
+      b.addEventListener('click', function () { filterAnno(v, b); });
+      tags.appendChild(b);
+    });
+    bar.hidden = false;
+  }
+
+  function filterAnno(version, el) {
+    document.querySelectorAll('.anno[data-version]').forEach(function (a) {
+      a.style.display = (version === 'all' || a.getAttribute('data-version') === version) ? '' : 'none';
+    });
+    document.querySelectorAll('.anno-filter-tag').forEach(function (t) { t.classList.remove('active'); });
+    el.classList.add('active');
+  }
+  </script>
+  <script src="components/nav.js" data-active-nav="工程配置" data-active-sidebar="模型管理"></script>
+</body>
+</html>

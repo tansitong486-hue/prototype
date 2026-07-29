@@ -335,21 +335,22 @@
       background: #fff;
       border-radius: var(--radius-lg);
       box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18), var(--shadow-card);
-      max-width: 720px;
+      max-width: 960px;
       width: 100%;
-      max-height: min(90vh, 720px);
+      max-height: min(90vh, 680px);
       overflow: hidden;
       display: flex;
       flex-direction: column;
     }
 
     .modal-head {
-      padding: 16px 20px;
+      padding: 14px 20px;
       border-bottom: 1px solid var(--border-light);
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
+      flex-shrink: 0;
     }
 
     .modal-title { font-size: 16px; font-weight: 700; }
@@ -365,11 +366,22 @@
       justify-content: center;
       font-size: 20px;
       line-height: 1;
+      border: none;
+      background: transparent;
     }
 
     .modal-close:hover { background: #F1F5F9; color: var(--text-primary); }
 
-    .modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+    .modal-body {
+      padding: 12px 16px;
+      overflow: hidden;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .modal-body > .anno { flex-shrink: 0; margin-bottom: 10px; }
 
     .modal-foot {
       padding: 12px 20px;
@@ -377,54 +389,235 @@
       display: flex;
       justify-content: flex-end;
       gap: 10px;
+      flex-shrink: 0;
     }
 
-    .modal-toolbar {
+    /* 选择应用范围：左右分栏（对齐现网交互） */
+    .apply-split {
+      display: flex;
+      gap: 12px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .apply-pane {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .apply-pane-left { flex: 1.35; min-width: 0; }
+    .apply-pane-right { flex: 1; min-width: 220px; }
+
+    .apply-filters {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 14px;
+      gap: 8px;
+      padding: 10px;
+      border-bottom: 1px solid var(--border-light);
       flex-wrap: wrap;
+      flex-shrink: 0;
     }
 
-    .modal-toolbar .input-text { min-width: 220px; flex: 1; }
+    .apply-filters .input-text {
+      flex: 1;
+      min-width: 140px;
+    }
 
-    .modal .data-table { min-width: 100%; }
-    .modal .data-table tbody tr.disabled-row { background: #F8FAFC; }
-    .modal .data-table tbody tr.disabled-row td { color: var(--text-hint); }
+    .apply-filters .select-native {
+      width: 120px;
+      min-width: 120px;
+      flex-shrink: 0;
+    }
 
-    .check-cell { text-align: center; width: 72px; }
+    .apply-table-wrap {
+      flex: 1;
+      overflow: auto;
+      min-height: 0;
+      position: relative;
+    }
+
+    .apply-pane .data-table { min-width: 100%; }
+    .apply-pane .data-table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .apply-pane .data-table tbody tr.disabled-row { background: #F8FAFC; }
+    .apply-pane .data-table tbody tr.disabled-row td { color: var(--text-hint); }
+
+    .check-cell { text-align: center; width: 48px; }
     .check-cell input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
+      width: 15px;
+      height: 15px;
       cursor: pointer;
+      accent-color: var(--primary);
     }
     .check-cell input[type="checkbox"]:disabled { cursor: not-allowed; }
 
-    .recalc-field {
+    .apply-empty {
+      display: none;
+      position: absolute;
+      inset: 0;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 10px;
+      color: var(--text-hint);
+      font-size: 13px;
+      background: #fff;
+    }
+
+    .apply-empty.show { display: flex; }
+
+    .apply-empty-icon {
+      width: 72px;
+      height: 56px;
+      border-radius: 8px;
+      background:
+        linear-gradient(180deg, #E8EEF5 0%, #D5DEE9 100%);
+      position: relative;
+      box-shadow: inset 0 0 0 1px #C9D4E2;
+    }
+
+    .apply-empty-icon::after {
+      content: '';
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      top: 16px;
+      height: 8px;
+      border-radius: 4px;
+      background: #B8C5D6;
+      box-shadow: 0 12px 0 #B8C5D6, 0 24px 0 #B8C5D6;
+      opacity: .7;
+    }
+
+    .apply-pagebar {
       display: flex;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 10px 12px;
-      margin-bottom: 14px;
-    }
-
-    .recalc-label {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      white-space: nowrap;
-    }
-
-    .recalc-scope { font-size: 13px; color: var(--text-primary); }
-
-    .recalc-note {
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 10px;
+      border-top: 1px solid var(--border-light);
       font-size: 12px;
       color: var(--text-secondary);
-      line-height: 1.7;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
+    .apply-pagebar-right {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .apply-pagebar select {
+      height: 28px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      background: #fff;
+    }
+
+    .apply-pagebar .page-arrow,
+    .apply-pagebar .page-item {
+      width: 28px;
+      height: 28px;
+      border-radius: 4px;
+    }
+
+    .apply-selected-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       padding: 10px 12px;
-      background: #F8FAFC;
-      border-radius: var(--radius);
+      border-bottom: 1px solid var(--border-light);
+      flex-shrink: 0;
+    }
+
+    .apply-selected-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .apply-clear-all {
+      font-size: 12px;
+      color: var(--primary);
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+
+    .apply-clear-all:hover { opacity: .85; }
+    .apply-clear-all:disabled {
+      color: var(--text-hint);
+      cursor: not-allowed;
+      opacity: 1;
+    }
+
+    .apply-selected-list {
+      flex: 1;
+      overflow: auto;
+      min-height: 0;
+      padding: 4px 0;
+    }
+
+    .apply-selected-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+
+    .apply-selected-item:hover { background: #F8FAFC; }
+
+    .apply-selected-meta {
+      font-size: 12px;
+      color: var(--text-hint);
+      margin-left: 6px;
+    }
+
+    .apply-selected-remove {
+      width: 22px;
+      height: 22px;
+      border: none;
+      background: transparent;
+      color: var(--text-hint);
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 16px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .apply-selected-remove:hover {
+      background: #F1F5F9;
+      color: var(--danger);
+    }
+
+    .apply-selected-empty {
+      padding: 24px 12px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-hint);
+    }
+
+    @media (max-width: 720px) {
+      .apply-split { flex-direction: column; }
+      .apply-pane-right { min-height: 160px; }
     }
 
     .toast {
@@ -469,9 +662,9 @@
             <span class="anno-tag">版本信息</span>
             <div class="anno-body">
               <p><b>当前版本：</b>v2.5</p>
-              <p><b>更新日期：</b>2026-07-07</p>
-              <p><b>变更概述：</b>「应用」口径由测点改为<b>表具</b>（计费方案 1:1 应用在表具）；列表列「应用测点数」改为「应用表具数」；行操作新增「重算成本」（按时间范围重算表具成本）。2026-07-07：表具能耗明细升级为「基础配置」独立二级菜单「表具能耗明细」（需求 3 §6.4），本页原「表具能耗明细」子页签入口移除。</p>
-              <p><b>本页说明（v2.5 增补）：</b>计费方案应用到表具后，系统按【当时生效计费方案】自动归档表具半小时成本；对象成本沿计量拓扑 on-read 聚合，随表具成本自动一致，无需对象层单独重算。</p>
+              <p><b>更新日期：</b>2026-07-28</p>
+              <p><b>变更概述：</b>「应用」口径由测点改为<b>表具</b>（计费方案 1:1 应用在表具）；列表列「应用测点数」改为「应用表具数」。2026-07-07：表具能耗明细升级为「基础配置」独立二级菜单「表具能耗明细」（需求 3 §4.4），本页原「表具能耗明细」子页签入口移除。2026-07-28：① 列表行操作「重算成本」移除，重算统一在「表具能耗明细」；② 「应用」弹窗改为现网同款左右分栏「选择应用范围」（关键字 / 物模型筛选 / 已选清单）。</p>
+              <p><b>本页说明（v2.5 增补）：</b>本页负责计费方案定义与应用到表具；方案生效后系统按【当时生效计费方案】自动归档表具半小时成本。需要补算 / 重算历史区间时，到「表具能耗明细」用「按时间范围重算」。对象成本沿计量拓扑聚合，随表具成本自动一致，无需对象层单独重算。</p>
             </div>
           </div>
 
@@ -516,10 +709,10 @@
             <span class="anno-version">v2.5</span>
             <span class="anno-source" data-type="需求文档">需求文档</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>列表操作列（应用 / 重算成本）与「应用表具」弹窗</p>
+              <p><b>关联模块：</b>列表操作列（编辑 / 应用 / 删除）与「应用表具」弹窗</p>
               <ul>
-                <li><b>应用（v2.5 改口径）：</b>打开「应用表具」弹窗，勾选需应用本方案的<b>表具</b>（物模型实例）；计费方案 <b>1:1 应用在表具</b>上，已被其他方案应用的表具置灰不可选。弹窗列展示：物模型 / 表具名称 / 归属计量对象 / 选择；未绑定计量对象的表具同样可应用（先应用方案、后补绑对象，成本经重算补齐）。</li>
-                <li><b>重算成本（v2.5 新增）：</b>打开「重算成本」弹窗：表具范围固定为本方案已应用表具，选择开始 / 结束日期后确认；按【当时生效计费方案】重算该区间表具成本，电量明细不受影响、历史电价不被改写。确认后 toast 提示已提交重算。</li>
+                <li><b>应用（v2.5 改口径）：</b>打开「选择应用范围」弹窗（左右分栏，对齐现网交互），勾选需应用本方案的<b>表具</b>（物模型实例）；计费方案 <b>1:1 应用在表具</b>上，已被其他方案应用的表具置灰不可选。未绑定计量对象的表具同样可应用（先应用方案、后补绑对象，成本经「表具能耗明细」按时间范围重算补齐）。</li>
+                <li><b>不提供「重算成本」行操作：</b>人工发起的按时间范围重算统一在「表具能耗明细」工具栏操作，一次完成用量核算与计费属性重刷；本页仅定义方案并应用到表具。</li>
               </ul>
             </div>
           </div>
@@ -533,7 +726,7 @@
               <ul>
                 <li><b>应用口径：</b>计费方案 1:1 应用在表具（物模型实例）；「应用表具数」列即本方案当前已应用的表具数量。</li>
                 <li><b>表具成本归档：</b>表具半小时成本 = 表具半小时电量 × 该半小时所属时段在【当时生效计费方案】下的单价，按半小时归档（与计量拓扑无关）。</li>
-                <li><b>按范围重算的三种触发场景（§8.3）：</b>① 历史电量被人工修正 → 对受影响时间窗重算成本；② 表具晚应用 / 新应用计费方案 → 从方案生效日起补算此前无成本的区间；③ 新增未来生效版本 → 自生效日起自然切换，不回改此前区间。三种场景均不修改历史电价。</li>
+                <li><b>按范围重算的三种触发场景（§6.3）：</b>① 历史用量被人工修正 → 对受影响时间窗重算成本；② 表具晚应用 / 新应用计费方案 → 从方案生效日起补算此前无成本的区间（人工补算入口在「表具能耗明细」）；③ 新增未来生效版本 → 自生效日起自然切换，不回改此前区间。三种场景均不修改历史电价。</li>
                 <li><b>对象成本：</b>沿计量拓扑 on-read 聚合 SUM(表具成本)，表具成本更新后对象成本下次查询自动一致，无单独的对象成本重算任务。</li>
               </ul>
             </div>
@@ -585,7 +778,6 @@
                       <div class="actions">
                         <span class="action-link" tabindex="0" role="button" data-act="edit">编辑</span>
                         <span class="action-link" tabindex="0" role="button" data-act="apply" data-scheme="市电单一电价方案">应用</span>
-                        <span class="action-link" tabindex="0" role="button" data-act="recalc" data-scheme="市电单一电价方案">重算成本</span>
                         <span class="action-link danger" tabindex="0" role="button" data-act="del">删除</span>
                       </div>
                     </td>
@@ -599,7 +791,6 @@
                       <div class="actions">
                         <span class="action-link" tabindex="0" role="button" data-act="edit">编辑</span>
                         <span class="action-link" tabindex="0" role="button" data-act="apply" data-scheme="柴油发电方案">应用</span>
-                        <span class="action-link" tabindex="0" role="button" data-act="recalc" data-scheme="柴油发电方案">重算成本</span>
                         <span class="action-link danger" tabindex="0" role="button" data-act="del">删除</span>
                       </div>
                     </td>
@@ -613,7 +804,6 @@
                       <div class="actions">
                         <span class="action-link" tabindex="0" role="button" data-act="edit">编辑</span>
                         <span class="action-link" tabindex="0" role="button" data-act="apply" data-scheme="冷量单价方案">应用</span>
-                        <span class="action-link" tabindex="0" role="button" data-act="recalc" data-scheme="冷量单价方案">重算成本</span>
                         <span class="action-link danger" tabindex="0" role="button" data-act="del">删除</span>
                       </div>
                     </td>
@@ -641,71 +831,8 @@
   <div class="modal-backdrop" id="modalApply" aria-hidden="true">
     <div class="modal" role="dialog" aria-labelledby="applyModalTitle" aria-modal="true">
       <div class="modal-head">
-        <div class="modal-title" id="applyModalTitle">应用表具</div>
+        <div class="modal-title" id="applyModalTitle">选择应用范围</div>
         <button type="button" class="modal-close" id="applyModalClose" aria-label="关闭">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="anno anno-field" data-version="v2.5">
-          <span class="anno-tag">字段说明</span>
-          <span class="anno-version">v2.5</span>
-          <span class="anno-source" data-type="需求文档">需求文档</span>
-          <div class="anno-body">
-            <p><b>关联模块：</b>「应用表具」弹窗；入口：列表行操作「应用」</p>
-            <ul>
-              <li><b>表具范围：</b>当前能源类型下所有挂了累积量测点的物模型实例（=表具）；支持按表具名称模糊搜索。</li>
-              <li><b>归属计量对象：</b>展示该表具当前在计量拓扑中的归属（如「水冷冷水系统-1F」）；未挂拓扑的展示「未绑定」，仍可应用方案。</li>
-              <li><b>选择：</b>计费方案 1:1 应用在表具，已被其他计费方案应用的表具置灰不可选。</li>
-            </ul>
-          </div>
-        </div>
-        <div class="modal-toolbar">
-          <input type="search" class="input-text" id="modalPointSearch" placeholder="支持表具名称模糊搜索" aria-label="表具名称搜索">
-        </div>
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>物模型</th>
-                <th>表具名称</th>
-                <th>归属计量对象</th>
-                <th class="check-cell">选择</th>
-              </tr>
-            </thead>
-            <tbody id="applyPointBody">
-              <tr data-name="1号电表">
-                <td>交流电表</td>
-                <td>1号电表</td>
-                <td>水冷冷水系统-1F</td>
-                <td class="check-cell"><input type="checkbox" aria-label="选择 1号电表"></td>
-              </tr>
-              <tr class="disabled-row" data-name="1级电表" title="该表具已被其他计费方案应用">
-                <td>交流电表</td>
-                <td>1级电表</td>
-                <td>水冷冷水系统-2F</td>
-                <td class="check-cell"><input type="checkbox" disabled aria-label="1级电表 不可选"></td>
-              </tr>
-              <tr data-name="2号电表">
-                <td>直流电表</td>
-                <td>2号电表</td>
-                <td>未绑定</td>
-                <td class="check-cell"><input type="checkbox" aria-label="选择 2号电表"></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <div class="modal-foot">
-        <button type="button" class="btn btn-default" id="applyModalCancel">取消</button>
-        <button type="button" class="btn btn-primary" id="applyModalOk">确定</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="modalRecalc" aria-hidden="true">
-    <div class="modal" role="dialog" aria-labelledby="recalcModalTitle" aria-modal="true">
-      <div class="modal-head">
-        <div class="modal-title" id="recalcModalTitle">重算成本</div>
-        <button type="button" class="modal-close" id="recalcModalClose" aria-label="关闭">&times;</button>
       </div>
       <div class="modal-body">
         <div class="anno anno-ux" data-version="v2.5">
@@ -713,29 +840,68 @@
           <span class="anno-version">v2.5</span>
           <span class="anno-source" data-type="需求文档">需求文档</span>
           <div class="anno-body">
-            <p><b>关联模块：</b>「重算成本」弹窗；入口：列表行操作「重算成本」</p>
+            <p><b>关联模块：</b>「选择应用范围」弹窗；入口：列表行操作「应用」</p>
             <ul>
-              <li><b>表具范围：</b>固定为本方案已应用的全部表具，不支持单独勾选。</li>
-              <li><b>时间范围：</b>开始 / 结束日期均必选，结束不得早于开始；确认后对该区间表具成本幂等重算覆盖。</li>
-              <li><b>确认后：</b>toast 提示已提交重算；重算结果对对象成本查询自动生效。</li>
+              <li><b>布局：</b>左右分栏。左侧为候选表具（关键字 + 物模型筛选 + 搜索、勾选列表、分页）；右侧为「已选择 (N)」清单，支持单项移除与「清除全部」。</li>
+              <li><b>表具范围：</b>当前能源类型下挂了累积量测点的物模型实例；列展示「名称 / 物模型」（与现网一致）。</li>
+              <li><b>选择规则：</b>计费方案 1:1 应用在表具；已被其他方案占用的表具置灰不可选。未绑定计量对象的表具仍可应用。</li>
+              <li><b>确定：</b>保存本方案应用表具关系并关闭；取消 / 关闭不保存本次勾选变更。</li>
             </ul>
           </div>
         </div>
-        <div class="recalc-field">
-          <span class="recalc-label">表具范围</span>
-          <span class="recalc-scope" id="recalcScope">本方案已应用表具（全部）</span>
+        <div class="apply-split">
+          <div class="apply-pane apply-pane-left">
+            <div class="apply-filters">
+              <input type="text" class="input-text" id="applyKeyword" placeholder="请输入关键字" aria-label="关键字">
+              <select class="select-native" id="applyModelFilter" aria-label="物模型筛选">
+                <option value="">请选择</option>
+                <option value="交流电表">交流电表</option>
+                <option value="直流电表">直流电表</option>
+              </select>
+              <button type="button" class="btn btn-primary" id="applySearchBtn">搜索</button>
+            </div>
+            <div class="apply-table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th class="check-cell"><input type="checkbox" id="applyCheckAll" aria-label="全选当前页"></th>
+                    <th>名称</th>
+                    <th>物模型</th>
+                  </tr>
+                </thead>
+                <tbody id="applyMeterBody"></tbody>
+              </table>
+              <div class="apply-empty" id="applyEmpty" aria-live="polite">
+                <div class="apply-empty-icon" aria-hidden="true"></div>
+                <div>没有找到匹配的记录</div>
+              </div>
+            </div>
+            <div class="apply-pagebar">
+              <span id="applyTotalText">共 0 条</span>
+              <div class="apply-pagebar-right">
+                <select id="applyPageSize" aria-label="每页条数">
+                  <option value="50" selected>50条/页</option>
+                  <option value="20">20条/页</option>
+                  <option value="10">10条/页</option>
+                </select>
+                <button type="button" class="page-arrow" id="applyPrevPage" aria-label="上一页">‹</button>
+                <button type="button" class="page-item active" id="applyPageNum" aria-current="page">1</button>
+                <button type="button" class="page-arrow" id="applyNextPage" aria-label="下一页">›</button>
+              </div>
+            </div>
+          </div>
+          <div class="apply-pane apply-pane-right">
+            <div class="apply-selected-head">
+              <span class="apply-selected-title" id="applySelectedTitle">已选择 (0)</span>
+              <button type="button" class="apply-clear-all" id="applyClearAll">清除全部</button>
+            </div>
+            <div class="apply-selected-list" id="applySelectedList"></div>
+          </div>
         </div>
-        <div class="recalc-field">
-          <label class="recalc-label" for="recalcStart">开始日期</label>
-          <input type="date" class="input-text" id="recalcStart" style="min-width: 160px;">
-          <label class="recalc-label" for="recalcEnd">结束日期</label>
-          <input type="date" class="input-text" id="recalcEnd" style="min-width: 160px;">
-        </div>
-        <p class="recalc-note">按【当时生效计费方案】重算该区间表具成本，电量明细不受影响、历史电价不被改写；对象成本下次查询自动一致。</p>
       </div>
       <div class="modal-foot">
-        <button type="button" class="btn btn-default" id="recalcModalCancel">取消</button>
-        <button type="button" class="btn btn-primary" id="recalcModalOk">确定</button>
+        <button type="button" class="btn btn-primary" id="applyModalOk">确定</button>
+        <button type="button" class="btn btn-default" id="applyModalCancel">取消</button>
       </div>
     </div>
   </div>
@@ -762,8 +928,39 @@
       let toastTimer = null;
       const modal = document.getElementById('modalApply');
       const applyTitle = document.getElementById('applyModalTitle');
-      const pointBody = document.getElementById('applyPointBody');
-      const searchInput = document.getElementById('modalPointSearch');
+      const meterBody = document.getElementById('applyMeterBody');
+      const emptyEl = document.getElementById('applyEmpty');
+      const keywordInput = document.getElementById('applyKeyword');
+      const modelFilter = document.getElementById('applyModelFilter');
+      const checkAll = document.getElementById('applyCheckAll');
+      const selectedList = document.getElementById('applySelectedList');
+      const selectedTitle = document.getElementById('applySelectedTitle');
+      const clearAllBtn = document.getElementById('applyClearAll');
+      const totalText = document.getElementById('applyTotalText');
+      const pageSizeSelect = document.getElementById('applyPageSize');
+      const pageNumBtn = document.getElementById('applyPageNum');
+
+      const METERS = [
+        { id: 'm1', name: '1号电表', model: '交流电表', locked: false },
+        { id: 'm2', name: '1级电表', model: '交流电表', locked: true },
+        { id: 'm3', name: '2号电表', model: '直流电表', locked: false },
+        { id: 'm4', name: '3号电表', model: '交流电表', locked: false },
+        { id: 'm5', name: 'IT负载电表', model: '交流电表', locked: false },
+        { id: 'm6', name: '冷机配电表', model: '交流电表', locked: false },
+        { id: 'm7', name: '备用直流表', model: '直流电表', locked: false }
+      ];
+
+      const SCHEME_PRESELECT = {
+        '市电单一电价方案': ['m1', 'm4', 'm5'],
+        '柴油发电方案': ['m3'],
+        '冷量单价方案': ['m6']
+      };
+
+      let selectedIds = new Set();
+      let filtered = METERS.slice();
+      let page = 1;
+      let pageSize = 50;
+      let activeScheme = '';
 
       const showToast = (message) => {
         toast.textContent = message;
@@ -772,10 +969,93 @@
         toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
       };
 
+      const meterById = (id) => METERS.find((m) => m.id === id);
+
+      const renderSelected = () => {
+        const ids = Array.from(selectedIds);
+        selectedTitle.textContent = '已选择 (' + ids.length + ')';
+        clearAllBtn.disabled = ids.length === 0;
+        if (!ids.length) {
+          selectedList.innerHTML = '<div class="apply-selected-empty">暂无已选表具</div>';
+          return;
+        }
+        selectedList.innerHTML = ids.map((id) => {
+          const m = meterById(id);
+          if (!m) return '';
+          return (
+            '<div class="apply-selected-item" data-id="' + m.id + '">' +
+              '<span>' + m.name + '<span class="apply-selected-meta">' + m.model + '</span></span>' +
+              '<button type="button" class="apply-selected-remove" data-remove="' + m.id + '" aria-label="移除 ' + m.name + '">&times;</button>' +
+            '</div>'
+          );
+        }).join('');
+      };
+
+      const updateCheckAll = (pageRows) => {
+        const selectable = pageRows.filter((m) => !m.locked);
+        if (!selectable.length) {
+          checkAll.checked = false;
+          checkAll.indeterminate = false;
+          checkAll.disabled = true;
+          return;
+        }
+        checkAll.disabled = false;
+        const checkedCount = selectable.filter((m) => selectedIds.has(m.id)).length;
+        checkAll.checked = checkedCount === selectable.length;
+        checkAll.indeterminate = checkedCount > 0 && checkedCount < selectable.length;
+      };
+
+      const renderLeft = () => {
+        const total = filtered.length;
+        const maxPage = Math.max(1, Math.ceil(total / pageSize) || 1);
+        if (page > maxPage) page = maxPage;
+        const start = (page - 1) * pageSize;
+        const pageRows = filtered.slice(start, start + pageSize);
+
+        totalText.textContent = '共 ' + total + ' 条';
+        pageNumBtn.textContent = String(page);
+        emptyEl.classList.toggle('show', total === 0);
+
+        meterBody.innerHTML = pageRows.map((m) => {
+          const checked = selectedIds.has(m.id) ? ' checked' : '';
+          const disabled = m.locked ? ' disabled' : '';
+          const rowClass = m.locked ? ' class="disabled-row"' : '';
+          const title = m.locked ? ' title="该表具已被其他计费方案应用"' : '';
+          return (
+            '<tr' + rowClass + title + ' data-id="' + m.id + '">' +
+              '<td class="check-cell"><input type="checkbox" data-id="' + m.id + '"' + checked + disabled + ' aria-label="选择 ' + m.name + '"></td>' +
+              '<td>' + m.name + '</td>' +
+              '<td>' + m.model + '</td>' +
+            '</tr>'
+          );
+        }).join('');
+
+        updateCheckAll(pageRows);
+      };
+
+      const applyFilter = () => {
+        const q = keywordInput.value.trim().toLowerCase();
+        const model = modelFilter.value;
+        filtered = METERS.filter((m) => {
+          const hitName = !q || m.name.toLowerCase().includes(q);
+          const hitModel = !model || m.model === model;
+          return hitName && hitModel;
+        });
+        page = 1;
+        renderLeft();
+      };
+
       const openApplyModal = (schemeName) => {
-        applyTitle.textContent = '应用表具 — ' + schemeName;
-        searchInput.value = '';
-        pointBody.querySelectorAll('tr').forEach((tr) => { tr.style.display = ''; });
+        activeScheme = schemeName || '计费方案';
+        applyTitle.textContent = '选择应用范围 ' + activeScheme;
+        keywordInput.value = '';
+        modelFilter.value = '';
+        pageSize = parseInt(pageSizeSelect.value, 10) || 50;
+        page = 1;
+        selectedIds = new Set(SCHEME_PRESELECT[activeScheme] || []);
+        filtered = METERS.slice();
+        renderSelected();
+        renderLeft();
         modal.classList.add('show');
         modal.setAttribute('aria-hidden', 'false');
         document.body.classList.add('modal-open');
@@ -791,69 +1071,80 @@
       document.getElementById('applyModalClose').addEventListener('click', closeApplyModal);
       document.getElementById('applyModalCancel').addEventListener('click', closeApplyModal);
       document.getElementById('applyModalOk').addEventListener('click', () => {
+        const count = selectedIds.size;
         closeApplyModal();
-        showToast('示意：保存应用表具并刷新列表');
+        showToast('示意：已保存应用表具 ' + count + ' 个');
       });
 
       modal.addEventListener('click', (e) => {
         if (e.target === modal) closeApplyModal();
       });
 
-      const recalcModal = document.getElementById('modalRecalc');
-      const recalcTitle = document.getElementById('recalcModalTitle');
-      const recalcScope = document.getElementById('recalcScope');
-      const recalcStart = document.getElementById('recalcStart');
-      const recalcEnd = document.getElementById('recalcEnd');
-
-      const openRecalcModal = (schemeName) => {
-        recalcTitle.textContent = '重算成本 — ' + schemeName;
-        recalcScope.textContent = '「' + schemeName + '」已应用表具（全部）';
-        recalcStart.value = '';
-        recalcEnd.value = '';
-        recalcModal.classList.add('show');
-        recalcModal.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('modal-open');
-        document.getElementById('recalcModalClose').focus();
-      };
-
-      const closeRecalcModal = () => {
-        recalcModal.classList.remove('show');
-        recalcModal.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('modal-open');
-      };
-
-      document.getElementById('recalcModalClose').addEventListener('click', closeRecalcModal);
-      document.getElementById('recalcModalCancel').addEventListener('click', closeRecalcModal);
-      document.getElementById('recalcModalOk').addEventListener('click', () => {
-        if (!recalcStart.value || !recalcEnd.value) {
-          showToast('请选择开始与结束日期');
-          return;
-        }
-        if (recalcEnd.value < recalcStart.value) {
-          showToast('结束日期不得早于开始日期');
-          return;
-        }
-        closeRecalcModal();
-        showToast('示意：已提交重算，按当时生效计费方案重算 ' + recalcStart.value + ' 至 ' + recalcEnd.value + ' 表具成本');
-      });
-
-      recalcModal.addEventListener('click', (e) => {
-        if (e.target === recalcModal) closeRecalcModal();
-      });
-
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-          if (modal.classList.contains('show')) closeApplyModal();
-          if (recalcModal.classList.contains('show')) closeRecalcModal();
+        if (e.key === 'Escape' && modal.classList.contains('show')) closeApplyModal();
+      });
+
+      document.getElementById('applySearchBtn').addEventListener('click', applyFilter);
+      keywordInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          applyFilter();
         }
       });
 
-      searchInput.addEventListener('input', () => {
-        const q = searchInput.value.trim().toLowerCase();
-        pointBody.querySelectorAll('tr').forEach((tr) => {
-          const name = (tr.getAttribute('data-name') || '').toLowerCase();
-          tr.style.display = !q || name.includes(q) ? '' : 'none';
+      checkAll.addEventListener('change', () => {
+        const start = (page - 1) * pageSize;
+        const pageRows = filtered.slice(start, start + pageSize);
+        pageRows.forEach((m) => {
+          if (m.locked) return;
+          if (checkAll.checked) selectedIds.add(m.id);
+          else selectedIds.delete(m.id);
         });
+        renderSelected();
+        renderLeft();
+      });
+
+      meterBody.addEventListener('change', (e) => {
+        const input = e.target.closest('input[type="checkbox"][data-id]');
+        if (!input || input.disabled) return;
+        const id = input.getAttribute('data-id');
+        if (input.checked) selectedIds.add(id);
+        else selectedIds.delete(id);
+        renderSelected();
+        updateCheckAll(filtered.slice((page - 1) * pageSize, page * pageSize));
+      });
+
+      selectedList.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-remove]');
+        if (!btn) return;
+        selectedIds.delete(btn.getAttribute('data-remove'));
+        renderSelected();
+        renderLeft();
+      });
+
+      clearAllBtn.addEventListener('click', () => {
+        selectedIds.clear();
+        renderSelected();
+        renderLeft();
+      });
+
+      pageSizeSelect.addEventListener('change', () => {
+        pageSize = parseInt(pageSizeSelect.value, 10) || 50;
+        page = 1;
+        renderLeft();
+      });
+
+      document.getElementById('applyPrevPage').addEventListener('click', () => {
+        if (page <= 1) return;
+        page -= 1;
+        renderLeft();
+      });
+
+      document.getElementById('applyNextPage').addEventListener('click', () => {
+        const maxPage = Math.max(1, Math.ceil(filtered.length / pageSize) || 1);
+        if (page >= maxPage) return;
+        page += 1;
+        renderLeft();
       });
 
       document.getElementById('btnAdd').addEventListener('click', () => {
@@ -892,17 +1183,6 @@
         });
       });
 
-      document.querySelectorAll('.action-link[data-act="recalc"]').forEach((el) => {
-        const go = () => openRecalcModal(el.getAttribute('data-scheme') || '计费方案');
-        el.addEventListener('click', go);
-        el.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            go();
-          }
-        });
-      });
-
       document.querySelectorAll('.action-link[data-act="del"]').forEach((el) => {
         const row = el.closest('tr');
         const go = () => {
@@ -922,7 +1202,7 @@
         });
       });
 
-      document.querySelectorAll('.page-item, .page-arrow').forEach((item) => {
+      document.querySelectorAll('.page-card .page-item, .page-card .page-arrow').forEach((item) => {
         item.addEventListener('click', () => showToast('分页为静态示意'));
       });
     })();

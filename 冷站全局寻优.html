@@ -879,6 +879,9 @@
     .qty-radio-label input[type="radio"] { accent-color:var(--success); width:13px; height:13px; flex-shrink:0; }
     .qty-radio-text { color:var(--text-secondary); }
     .qty-radio-text.active { color:var(--success); font-weight:500; }
+    .qty-radio-stack { display:flex; flex-direction:column; gap:7px; }
+    .qty-rule-table .spec-select { width:108px; padding:4px 8px; font-size:11.5px; }
+    .qty-rule-table .spec-select:disabled { background:#F5F7FA; color:var(--text-hint); cursor:not-allowed; }
 
     /* ── 智能推荐按钮 ── */
     .smart-recommend-btn {
@@ -978,7 +981,7 @@
         <div class="anno-body">
           <p><b>当前版本：</b>v2.4</p>
           <p><b>更新日期：</b>2026-07-10</p>
-          <p><b>变更概述：</b>新增「本轮搜索结果」模块（候选组合最优功率/COP 对比 + 不合规原因码）。点击可行组合可切换下方最优指标与控制策略，默认展示本轮推荐。收益指标下沉到所选组合下方。「控制策略 × 功率变化」改为分类功率贡献条 + 嵌入真实工程 fixture demo 组态（Water-Cooled Chiller System 3D Visualization），去掉旧五类分类卡与手绘拓扑。全局寻优耗时长：支持过程监控——主动刷新更新进度；进行中仅展示至本轮搜索结果，下方指标/策略/明细隐藏，结束后再展开。</p>
+          <p><b>变更概述：</b>新增「本轮搜索结果」模块（候选组合最优功率/COP 对比 + 不合规原因码）。点击可行组合可切换下方最优指标与控制策略，默认展示本轮推荐。收益指标下沉到所选组合下方。「控制策略 × 功率变化」改为分类功率贡献条 + 嵌入真实工程 fixture demo 组态（Water-Cooled Chiller System 3D Visualization），去掉旧五类分类卡与手绘拓扑。全局寻优耗时长：支持过程监控——主动刷新更新进度；进行中仅展示至本轮搜索结果，下方指标/策略/明细隐藏，结束后再展开。规则配置弹窗对齐现网真实交互（依据线上系统截图）：Tab 名统一为「寻优规则配置」；寻优器参数为最大迭代代数与种群规模；设备数量寻优规则扩为五列——主机/板换按行配置默认开机设备（跟随实际/指定，选「指定」激活指定设备下拉），水泵/冷却塔按行配置寻优范围（全局式/增量式开机组合寻优），选中单选项绿色高亮；模拟量寻优规则增加「寻优精度」列；设备行按当前水冷口径展示。</p>
         </div>
       </div>
 
@@ -3108,7 +3111,7 @@
       <span class="modal-close" onclick="closeRuleModal()">&times;</span>
     </div>
     <div class="modal-tabs">
-      <div class="modal-tab-item active" data-mtab="planConfig" onclick="switchModalTab(this)">寻优规划配置</div>
+      <div class="modal-tab-item active" data-mtab="planConfig" onclick="switchModalTab(this)">寻优规则配置</div>
       <div class="modal-tab-item" data-mtab="ioConfig" onclick="switchModalTab(this)">投入/投出配置</div>
     </div>
 
@@ -3150,19 +3153,15 @@
         </select>
       </div>
 
-      <!-- L-SHADE 专属参数 -->
+      <!-- L-SHADE 专属参数（对齐现网：最大迭代代数 + 种群规模） -->
       <div id="globalParams-lshade">
         <div class="form-group">
-          <div class="form-label"><span class="required">*</span> 种群初始化数量</div>
-          <input type="number" class="form-control" value="50.0" step="1" min="1">
+          <div class="form-label"><span class="required">*</span> 最大迭代代数</div>
+          <input type="number" class="form-control" value="20.0" step="1" min="1">
         </div>
         <div class="form-group">
-          <div class="form-label"><span class="required">*</span> 种群最终数量</div>
-          <input type="number" class="form-control" value="10.0" step="1" min="1">
-        </div>
-        <div class="form-group">
-          <div class="form-label"><span class="required">*</span> 最大迭代数</div>
-          <input type="number" class="form-control" value="50.0" step="1" min="1">
+          <div class="form-label"><span class="required">*</span> 种群规模</div>
+          <input type="number" class="form-control" value="30.0" step="1" min="1">
         </div>
       </div>
 
@@ -3178,38 +3177,97 @@
         </div>
       </div>
 
-      <!-- 设备数量寻优规则 -->
+      <!-- 设备数量寻优规则（对齐现网交互） -->
       <div class="form-section">设备数量寻优规则</div>
+      <div class="anno anno-ux" data-version="v2.4" style="margin-bottom:12px;">
+        <span class="anno-tag">交互说明</span>
+        <span class="anno-version">v2.4</span>
+        <span class="anno-source">开发对照</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>规则配置弹窗 —「设备数量寻优规则」「模拟量寻优规则」</p>
+          <p><b>对齐现网真实交互：</b>设备数量规则五列——规则名称 / 启用开关 / 默认开机设备 / 指定设备 / 寻优范围。主机与板换按行配置<b>默认开机设备</b>（跟随实际开机设备 / 指定开机设备，选「指定」时激活右侧指定设备下拉）；水泵与冷却塔按行配置<b>寻优范围</b>（全局式开机组合寻优=穷举可行组合，增量式开机组合寻优=基于当前开机状态微调）。选中单选项绿色高亮。</p>
+          <p><b>模拟量寻优规则：</b>在步长与默认值之外增加<b>寻优精度</b>列（搜索结果的最小分辨率）。启用开关关闭的行不参与本轮寻优。</p>
+        </div>
+      </div>
       <div class="form-group">
         <div class="qty-rule-wrap">
           <table class="qty-rule-table">
             <thead>
               <tr>
-                <th style="width:180px;">规则名称</th>
-                <th style="width:70px;">启用开关</th>
-                <th>默认开机设备</th>
-                <th>指定设备<span class="required">*</span></th>
+                <th>规则名称</th>
+                <th style="width:64px;">启用开关</th>
+                <th style="width:160px;">默认开机设备</th>
+                <th style="width:118px;">指定设备<span class="required">*</span></th>
+                <th style="width:170px;">寻优范围</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td><span class="rule-device">风冷冷水机组</span><span class="rule-param" style="color:var(--text-secondary);">运行状态</span></td>
+                <td><span class="rule-device">水冷冷水机组</span><span class="rule-param" style="color:var(--text-secondary);">运行状态</span></td>
                 <td><label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label></td>
-                <td><label class="qty-radio-label"><input type="radio" name="devRule0" value="follow" checked> <span class="dot-green"></span><span class="qty-radio-text active">跟随实际开机设备</span></label></td>
-                <td><label class="qty-radio-label"><input type="radio" name="devRule0" value="specify"> <span class="qty-radio-text">指定开机设备</span></label></td>
+                <td>
+                  <div class="qty-radio-stack">
+                    <label class="qty-radio-label"><input type="radio" name="devRule0" value="follow"> <span class="qty-radio-text">跟随实际开机设备</span></label>
+                    <label class="qty-radio-label"><input type="radio" name="devRule0" value="specify" checked> <span class="qty-radio-text active">指定开机设备</span></label>
+                  </div>
+                </td>
+                <td><select class="form-control spec-select"><option value="" selected>请选择</option><option>1#水冷冷水机组</option><option>2#水冷冷水机组</option></select></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td><span class="rule-device">板式换热器</span><span class="rule-param" style="color:var(--text-secondary);">运行状态</span></td>
+                <td><label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label></td>
+                <td>
+                  <div class="qty-radio-stack">
+                    <label class="qty-radio-label"><input type="radio" name="devRule1" value="follow" checked> <span class="qty-radio-text active">跟随实际开机设备</span></label>
+                    <label class="qty-radio-label"><input type="radio" name="devRule1" value="specify"> <span class="qty-radio-text">指定开机设备</span></label>
+                  </div>
+                </td>
+                <td><select class="form-control spec-select" disabled><option value="" selected>请选择</option><option>1#板式换热器</option><option>2#板式换热器</option></select></td>
+                <td></td>
               </tr>
               <tr>
                 <td><span class="rule-device">冷冻水泵</span><span class="rule-param" style="color:var(--text-secondary);">运行状态</span></td>
-                <td><label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label></td>
-                <td><label class="qty-radio-label"><input type="radio" name="devRule1" value="follow" checked> <span class="dot-green"></span><span class="qty-radio-text active">跟随实际开机设备</span></label></td>
-                <td><label class="qty-radio-label"><input type="radio" name="devRule1" value="specify"> <span class="qty-radio-text">指定开机设备</span></label></td>
+                <td><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></td>
+                <td></td>
+                <td></td>
+                <td>
+                  <div class="qty-radio-stack">
+                    <label class="qty-radio-label"><input type="radio" name="scopeRule0" value="global" checked> <span class="qty-radio-text active">全局式开机组合寻优</span></label>
+                    <label class="qty-radio-label"><input type="radio" name="scopeRule0" value="incremental"> <span class="qty-radio-text">增量式开机组合寻优</span></label>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="rule-device">冷却水泵</span><span class="rule-param" style="color:var(--text-secondary);">运行状态</span></td>
+                <td><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></td>
+                <td></td>
+                <td></td>
+                <td>
+                  <div class="qty-radio-stack">
+                    <label class="qty-radio-label"><input type="radio" name="scopeRule1" value="global" checked> <span class="qty-radio-text active">全局式开机组合寻优</span></label>
+                    <label class="qty-radio-label"><input type="radio" name="scopeRule1" value="incremental"> <span class="qty-radio-text">增量式开机组合寻优</span></label>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="rule-device">冷却塔</span><span class="rule-param" style="color:var(--text-secondary);">运行状态</span></td>
+                <td><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></td>
+                <td></td>
+                <td></td>
+                <td>
+                  <div class="qty-radio-stack">
+                    <label class="qty-radio-label"><input type="radio" name="scopeRule2" value="global" checked> <span class="qty-radio-text active">全局式开机组合寻优</span></label>
+                    <label class="qty-radio-label"><input type="radio" name="scopeRule2" value="incremental"> <span class="qty-radio-text">增量式开机组合寻优</span></label>
+                  </div>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <!-- 模拟量寻优规则 -->
+      <!-- 模拟量寻优规则（对齐现网：步长 + 精度 + 默认值） -->
       <div class="form-section">模拟量寻优规则</div>
       <div class="form-group">
         <div class="analog-rule-wrap">
@@ -3217,23 +3275,40 @@
             <thead>
               <tr>
                 <th>规则名称</th>
-                <th style="width:70px;">启用开关</th>
-                <th style="width:88px;">寻优步长<span class="required">*</span></th>
-                <th style="width:88px;">默认值<span class="required">*</span></th>
+                <th style="width:64px;">启用开关</th>
+                <th style="width:78px;">寻优步长<span class="required">*</span></th>
+                <th style="width:78px;">寻优精度<span class="required">*</span></th>
+                <th style="width:78px;">默认值<span class="required">*</span></th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td><span class="rule-device">风冷冷水机组</span><span class="rule-param">冷冻水出水温度</span></td>
+                <td><span class="rule-device">水冷冷水机组</span><span class="rule-param">冷冻水出水温度</span></td>
                 <td><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></td>
-                <td><input type="number" class="form-control rule-num" value="1"></td>
+                <td><input type="number" class="form-control rule-num" value="3"></td>
+                <td><input type="number" class="form-control rule-num" value="0.2"></td>
                 <td><input type="number" class="form-control rule-num" value="16"></td>
               </tr>
               <tr>
                 <td><span class="rule-device">冷冻水泵</span><span class="rule-param">频率反馈</span></td>
                 <td><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></td>
                 <td><input type="number" class="form-control rule-num" value="1"></td>
+                <td><input type="number" class="form-control rule-num" value="0.5"></td>
                 <td><input type="number" class="form-control rule-num" value="30"></td>
+              </tr>
+              <tr>
+                <td><span class="rule-device">冷却水泵</span><span class="rule-param">频率反馈</span></td>
+                <td><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></td>
+                <td><input type="number" class="form-control rule-num" value="1"></td>
+                <td><input type="number" class="form-control rule-num" value="0.5"></td>
+                <td><input type="number" class="form-control rule-num" value="30"></td>
+              </tr>
+              <tr>
+                <td><span class="rule-device">冷却塔</span><span class="rule-param">风机频率反馈</span></td>
+                <td><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></td>
+                <td><input type="number" class="form-control rule-num" value="1"></td>
+                <td><input type="number" class="form-control rule-num" value="0.5"></td>
+                <td><input type="number" class="form-control rule-num" value="35"></td>
               </tr>
             </tbody>
           </table>
@@ -3452,14 +3527,20 @@
     }, 800);
   };
 
-  /* 单选按钮切换时同步文字颜色 */
+  /* 单选按钮切换：选中项绿色高亮；主机/板换行联动激活「指定设备」下拉 */
   document.querySelectorAll('.qty-rule-table input[type="radio"]').forEach(function (radio) {
     radio.addEventListener('change', function () {
       var name = this.getAttribute('name');
       document.querySelectorAll('[name="' + name + '"]').forEach(function (r) {
         var txt = r.closest('.qty-radio-label').querySelector('.qty-radio-text');
-        txt.classList.toggle('active', r.checked && r.value === 'follow');
+        txt.classList.toggle('active', r.checked);
       });
+      var row = this.closest('tr');
+      var spec = row && row.querySelector('.spec-select');
+      if (spec) {
+        var specifyRadio = row.querySelector('input[type="radio"][value="specify"]');
+        spec.disabled = !(specifyRadio && specifyRadio.checked);
+      }
     });
   });
 })();

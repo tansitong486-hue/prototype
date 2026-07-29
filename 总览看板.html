@@ -355,10 +355,9 @@
       border-color: rgba(214, 225, 233, .96);
     }
     .dash-card--wide { grid-column: 1 / -1; }
-    /* 用能总览 → 能耗趋势与分项 → 能耗成本（批注块同序；order 兜底） */
-    #gridA .dash-card[data-comp="overview"] { order: 1; }
-    #gridA .dash-card[data-comp="trend"] { order: 2; }
-    #gridA .dash-card[data-comp="cost"] { order: 3; }
+    /* 能耗趋势与分项 → 能耗成本（批注块同序；order 兜底） */
+    #gridA .dash-card[data-comp="trend"] { order: 1; }
+    #gridA .dash-card[data-comp="cost"] { order: 2; }
     .dash-card[hidden] { display: none !important; }
 
     .card-head {
@@ -444,11 +443,10 @@
       flex-shrink: 0;
       min-width: 0;
     }
-    .energy-item-head .integrity-tag,
     .energy-item-head .over-quota-tag {
       flex-shrink: 0;
     }
-    /* 定额超限标签：与「含异常/缺失」同级，红色警示 */
+    /* 定额超限标签（历史用能总览用，当前卡已下线） */
     .over-quota-tag {
       display: inline-flex;
       align-items: center;
@@ -609,29 +607,6 @@
     .energy-trend.up { color: #F5222D; background: #FFF1F0; }
     .energy-trend.down { color: var(--success); background: var(--success-light); }
     .energy-trend.neutral { color: var(--text-hint); background: #F5F5F5; }
-    /* v2.5 完整性标记：汇总结果含坏值/缺失半小时槽时展示 */
-    .integrity-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      height: 18px;
-      padding: 0 7px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 600;
-      color: #C2410C;
-      background: #FFF7ED;
-      border: 1px solid #FDBA74;
-      cursor: help;
-      white-space: nowrap;
-      align-self: center;
-    }
-    .integrity-tag[hidden] { display: none !important; }
-    /* 可点击形态：承接“哪块表出了问题”的追查入口 */
-    .integrity-tag.clickable { cursor: pointer; transition: background var(--transition), border-color var(--transition); }
-    .integrity-tag.clickable:hover { background: #FFEDD5; border-color: #FB923C; }
-    .integrity-tag.clickable::after { content: "›"; font-weight: 800; margin-left: 1px; }
-
     /* ── 卡内能源 Tab（能耗成本 / 能耗趋势按能源分组展示） ── */
     .card-tabs[hidden] { display: none !important; }
     .card-tabs {
@@ -952,281 +927,6 @@
       .standard-current { grid-template-columns: 1fr; }
       .standard-table th,
       .standard-table td { padding: 8px 7px; }
-    }
-
-    /* ── 表具完整性弹层（用能总览「含异常/缺失」标签承接） ── */
-    .meter-panel { width: min(660px, calc(100vw - 48px)); }
-    .meter-summary {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 22px;
-      padding: 10px 12px;
-      margin-bottom: 12px;
-      background: #FFF7ED;
-      border: 1px solid #FDBA74;
-      border-radius: 10px;
-      font-size: 12px;
-      color: #9A3412;
-    }
-    .meter-summary b { font-weight: 800; }
-    .meter-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    .meter-table th {
-      text-align: left;
-      font-weight: 600;
-      color: var(--text-hint);
-      padding: 7px 8px;
-      border-bottom: 1px solid var(--border-light);
-      font-size: 11px;
-      white-space: nowrap;
-    }
-    .meter-table td {
-      padding: 9px 8px;
-      border-bottom: 1px solid #F1F5F9;
-      color: var(--text-secondary);
-    }
-    .meter-table th:last-child,
-    .meter-table td:last-child {
-      text-align: right;
-      white-space: nowrap;
-    }
-    .meter-table tr:last-child td { border-bottom: none; }
-    .meter-table tbody tr { transition: background var(--transition); }
-    .meter-table tbody tr:hover { background: var(--primary-soft); }
-    .meter-name { font-weight: 700; color: var(--text-primary); white-space: nowrap; }
-    .meter-loc { color: var(--text-hint); font-size: 11px; }
-    .meter-num-warn { color: #C2410C; font-weight: 700; }
-    .meter-state {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 11px;
-      font-weight: 600;
-      padding: 1px 8px;
-      border-radius: 999px;
-      white-space: nowrap;
-    }
-    .meter-state.warn { color: #C2410C; background: #FFF7ED; border: 1px solid #FDBA74; }
-    .meter-state.ok { color: var(--success); background: var(--success-light); border: 1px solid #B7EB8F; }
-    .meter-action {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 44px;
-      height: 24px;
-      padding: 0 10px;
-      border-radius: 999px;
-      border: 1px solid #BFDBFE;
-      background: #EFF6FF;
-      color: #1D4ED8;
-      font-size: 12px;
-      font-weight: 700;
-      text-decoration: none;
-      white-space: nowrap;
-      transition: background var(--transition), border-color var(--transition), color var(--transition);
-    }
-    .meter-action:hover {
-      background: #DBEAFE;
-      border-color: #93C5FD;
-      color: #1E40AF;
-    }
-    .meter-action:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
-    .meter-foot {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      margin-top: 12px;
-      flex-wrap: wrap;
-    }
-
-    /* ── 能耗明细（总览看板底部承接，替代独立菜单页） ── */
-    .detail-card-body { padding: 14px 16px 16px; }
-    #detailTabs {
-      margin-left: 2px;
-      vertical-align: middle;
-    }
-    #detailTabs button {
-      min-width: 38px;
-      padding: 0 13px;
-    }
-    .detail-export {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      height: 30px;
-      padding: 0 12px;
-      border-radius: 4px;
-      border: 1px solid var(--primary);
-      background: #fff;
-      color: var(--primary);
-      font-size: 12px;
-      font-weight: 700;
-      transition: background var(--transition), color var(--transition), border-color var(--transition);
-    }
-    .detail-export:hover {
-      background: #F7FBFF;
-      color: var(--primary-dark);
-    }
-    .detail-export:disabled {
-      opacity: .62;
-      cursor: default;
-    }
-    .detail-export svg { flex-shrink: 0; }
-    .detail-export.is-loading svg { animation: dashSpin .7s linear infinite; }
-    .detail-table-scroll {
-      overflow-x: auto;
-      border: 1px solid #E5EAF0;
-      border-radius: 6px;
-      background: #fff;
-    }
-    .detail-table {
-      width: 100%;
-      min-width: 960px;
-      border-collapse: collapse;
-      font-size: 13px;
-      background: #fff;
-    }
-    .detail-table th,
-    .detail-table td {
-      padding: 10px 12px;
-      border-bottom: 1px solid #E5EAF0;
-      text-align: left;
-      vertical-align: middle;
-    }
-    .detail-table th {
-      background: #F7F9FB;
-      color: #667485;
-      font-size: 12px;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-    .detail-table th.num,
-    .detail-table td.num {
-      text-align: right;
-      font-variant-numeric: tabular-nums;
-    }
-    .detail-table .detail-kwh-head,
-    .detail-table td.detail-kwh-cell {
-      position: relative;
-      padding-right: 106px;
-    }
-    .detail-table tbody tr:hover td { background: #F7FBFF; }
-    .detail-table tbody tr:last-child td { border-bottom: none; }
-    .detail-table tr.row-total td {
-      background: #F8FAFC;
-      border-top: 1px solid #D8DEE8;
-      font-weight: 800;
-      color: var(--text-primary);
-    }
-    .detail-sort {
-      cursor: pointer;
-      user-select: none;
-      transition: background var(--transition);
-    }
-    .detail-sort:hover { background: #EEF6FF; }
-    .detail-sort:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--focus-ring); }
-    .detail-sort::after {
-      content: "";
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      margin-left: 5px;
-      vertical-align: -2px;
-      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238B98A8' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 9.5l5-5.5 5 5.5'/%3E%3Cpath d='M7 14.5l5 5.5 5-5.5'/%3E%3C/svg%3E") center / contain no-repeat;
-    }
-    .detail-sort[data-sortdir="desc"]::after {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23007AFF' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 5v14'/%3E%3Cpath d='M6 13l6 6 6-6'/%3E%3C/svg%3E");
-    }
-    .detail-sort[data-sortdir="asc"]::after {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23007AFF' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 19V5'/%3E%3Cpath d='M6 11l6-6 6 6'/%3E%3C/svg%3E");
-    }
-    .detail-tree-cell {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      min-width: 0;
-    }
-    .detail-toggle {
-      width: 18px;
-      height: 18px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 4px;
-      color: #8B98A8;
-      flex-shrink: 0;
-      font-size: 10px;
-      transition: transform var(--transition), background var(--transition), color var(--transition);
-    }
-    .detail-toggle:hover {
-      background: #F1F5F9;
-      color: var(--text-primary);
-    }
-    .detail-toggle.collapsed { transform: rotate(-90deg); }
-    .detail-toggle-placeholder {
-      width: 18px;
-      flex-shrink: 0;
-    }
-    .detail-node-current {
-      color: var(--text-primary);
-      font-weight: 800;
-    }
-    .detail-node-name {
-      color: #007AFF;
-      font-weight: 700;
-      text-align: left;
-      padding: 1px 2px;
-      border-radius: 3px;
-    }
-    .detail-node-name:hover {
-      color: #0063CC;
-      text-decoration: underline;
-    }
-    .detail-integrity {
-      display: inline-flex;
-      align-items: center;
-      height: 18px;
-      margin-left: 0;
-      padding: 0 7px;
-      border-radius: 999px;
-      border: 1px solid #FDBA74;
-      background: #FFF7ED;
-      color: #C2410C;
-      font-size: 11px;
-      font-weight: 700;
-      vertical-align: middle;
-      white-space: nowrap;
-    }
-    .detail-kwh-cell .detail-integrity {
-      position: absolute;
-      right: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-    }
-    .detail-pct {
-      display: inline-flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 4px;
-      min-width: 84px;
-    }
-    .detail-pct-track {
-      width: 84px;
-      height: 5px;
-      border-radius: 999px;
-      background: #EEF3F7;
-      overflow: hidden;
-    }
-    .detail-pct-fill {
-      display: block;
-      height: 100%;
-      border-radius: 999px;
-      background: linear-gradient(90deg, #60A5FA, #007AFF);
-    }
-    @media (max-width: 780px) {
-      .detail-card-body { padding: 12px; }
-      .detail-table th,
-      .detail-table td { padding: 9px 10px; }
     }
 
     /* ── 能耗成本（分能源） ── */
@@ -1940,8 +1640,7 @@
       padding: 0 10px 0 12px;
     }
     .date-pop,
-    .settings-panel,
-    .meter-panel {
+    .settings-panel {
       border-radius: 6px;
       box-shadow: 0 16px 40px rgba(0, 24, 51, .16);
     }
@@ -1975,14 +1674,6 @@
       background: #007AFF;
     }
     .card-body { padding: 14px 16px 16px; }
-    .energy-foot-row .integrity-tag,
-    .energy-foot-row .integrity-tag.clickable {
-      justify-self: flex-end;
-      align-self: center;
-    }
-    .energy-foot-row .integrity-tag.clickable::after { content: "›"; font-weight: 800; margin-left: 1px; }
-    .energy-foot-row .integrity-tag.clickable:hover { background: #FFEDD5; border-color: #FB923C; }
-    .energy-foot-row .integrity-tag.clickable { cursor: pointer; transition: background var(--transition), border-color var(--transition); }
     .energy-item,
     .eff-tile,
     .cost-chart-panel,
@@ -2026,9 +1717,9 @@
             <div class="anno-body">
               <p><b>当前版本：</b>v2.5</p>
               <p><b>更新日期：</b>2026-07-09</p>
-              <p><b>变更概述：</b>按《存量页面消费与总览看板改造需求方案》整页改造：能耗/成本走对象层聚合；组件按出现规则自动生成（不满足不渲染）；取消双 Tab 与看板配置；卡片顺序为能效指标 → 用能总览 → 趋势分项 → 能耗成本 → 明细。</p>
+              <p><b>变更概述：</b>按《存量页面消费与总览看板改造需求方案》整页改造：能耗/成本走对象层聚合；组件按出现规则自动生成（不满足不渲染）；取消双 Tab 与看板配置。2026-07-28：移除「用能总览」「能耗明细」及完整性弹层；标准煤 / 碳排放迁入「能效指标总览」（仅园区/数据中心）；卡片顺序为能效指标 → 趋势分项 → 能耗成本。</p>
               <p><b>本页演示：</b>园区 / 数据中心 / 系统三个对象，切换可观察组件集变化。</p>
-              <p><b>评审迭代（2026-07-09）：</b>① 用能总览取消「能耗/折算」Tab，总成本、各能源、标准煤、碳排放平铺；② 能源用量瓦片加定额虚线与「已超限」；③ 迷你趋势统一 Chart.js 外部浮层；④ 工具条吸顶、大数值万级缩写、完整性并入用能总览、能效指标瓦片矩阵（PUE=1+CLF+PLF+OLF）。</p>
+              <p><b>评审迭代（2026-07-09）：</b>迷你趋势统一 Chart.js；工具条吸顶、大数值万级缩写；能效指标瓦片矩阵（PUE=1+CLF+PLF+OLF）。2026-07-28：用能总览、能耗明细与完整性弹层已删除；折算指标并入能效指标总览。</p>
             </div>
           </div>
 
@@ -2061,17 +1752,15 @@
             <span class="anno-version">v2.5</span>
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>组件出现规则总表（渲染顺序：能效 → 用能总览 → 趋势分项 → 能耗成本 → 明细）</p>
+              <p><b>关联模块：</b>组件出现规则总表（渲染顺序：能效指标总览 → 趋势分项 → 能耗成本）</p>
               <table class="anno-table">
                 <tr><th>组件</th><th>出现规则</th></tr>
                 <tr><td>PUE</td><td>园区/数据中心 + IT 节点 + 可计算</td></tr>
                 <tr><td>CLF / PLF / OLF</td><td>园区/数据中心 + 对应系统前提；缺输入时瓦片「待配置」</td></tr>
                 <tr><td>WUE</td><td>园区/数据中心 + 水计量 + IT + 可计算</td></tr>
-                <tr><td>用能总览</td><td>≥1 能源启用计量；有计费时追加总成本瓦片</td></tr>
-                <tr><td>数据完整性</td><td>并入能源瓦片「含异常/缺失」标签，正常不展示</td></tr>
+                <tr><td>能效指标总览</td><td>任一能效瓦片或标准煤/碳排放满足出现规则</td></tr>
                 <tr><td>能耗趋势与分项</td><td>≥1 能源有趋势；卡内能源 Tab；≥2 分项才出环形</td></tr>
                 <tr><td>能耗成本</td><td>≥1 能源同时启用计量且有计费；卡内能源 Tab</td></tr>
-                <tr><td>能耗明细</td><td>≥1 能源有可展示明细；卡内能源 Tab</td></tr>
               </table>
               <p>「不渲染也不占位」≠「卡片在但暂无数据」。</p>
             </div>
@@ -2153,7 +1842,7 @@
               <ul>
                 <li><b>能耗：</b>沿计量拓扑对表具明细 on-read SUM；年→月、月→日、日/时段→小时。</li>
                 <li><b>成本：</b>SUM(表具核算明细.成本金额)，前端不重算电价。</li>
-                <li><b>完整性：</b>区间含坏值/缺失时能源瓦片出「含异常/缺失」，点击开表具清单；坏值/缺失不参与聚合。</li>
+                <li><b>聚合：</b>坏值/缺失槽不参与聚合、不作 0。</li>
               </ul>
             </div>
           </div>
@@ -2166,7 +1855,7 @@
               <p><b>关联模块：</b>加载态与完整性标记</p>
               <ul>
                 <li><b>加载：</b>切换对象/粒度/日期后，可见卡短骨架；隐藏卡不加载。</li>
-                <li><b>待确认：</b>坏值与缺失是否分色；本原型统一橙色标签，清单内分列计数。</li>
+                <li><b>坏值/缺失分色：</b>仍待确认（看板无完整性角标落点）。</li>
               </ul>
             </div>
           </div>
@@ -2279,75 +1968,6 @@
           <!-- ══════════ 分区一：用能与成本 ══════════ -->
           <div class="dash-section" id="sec-usage-cost">
             <div class="dash-grid" id="gridA">
-
-              <div class="anno anno-data" data-version="v2.5">
-                <span class="anno-tag">图元说明</span>
-                <span class="anno-version">v2.5</span>
-                <span class="anno-source">需求文档</span>
-                <div class="anno-body">
-                  <p><b>关联模块：</b>用能总览图元</p>
-                  <ul>
-                    <li><b>瓦片：</b>总成本（有计费才出）+ 各启用能源用量 + 标准煤 + 碳排放，全部平铺；未启用能源不出格。</li>
-                    <li><b>折算：</b>Σ(用量×系数)；冷量等二次能源系数默认 0，防重复计量。</li>
-                    <li><b>定额：</b>仅能源用量瓦片。年/月→月额度档，日/时段→日额度档；无定额不画线、无标签。虚线与分桶同量纲（年→月线，月→日线，日/时段→日÷24）。超限=周期累计 vs 周期额度，出红色「已超限」。</li>
-                    <li><b>迷你趋势：</b>Chart.js；年→近12月，月→按日，日→小时，时段→均匀小时；悬停看时间/用量/额度。</li>
-                    <li><b>展示：</b>≥1 万缩写「万+单位」、悬停精确值；环比逐格；完整性见下块。</li>
-                  </ul>
-                </div>
-              </div>
-
-              <div class="anno anno-data" data-version="v1.0">
-                <span class="anno-tag">图元说明</span>
-                <span class="anno-version">v1.0</span>
-                <span class="anno-source" data-type="引用自古典原型">引用自古典原型</span>
-                <div class="anno-body">
-                  <p><b>关联模块：</b>用能总览图元</p>
-                  <ul>
-                    <li><b>用途：</b>汇总电/水/标煤/碳排放与环比，看用能规模与波动。</li>
-                    <li><b>古典：</b>固定四格；已被 v2.5 动态瓦片取代。</li>
-                  </ul>
-                </div>
-              </div>
-
-              <!-- 1. 用能总览（全宽，动态格） -->
-              <section class="dash-card dash-card--wide" data-comp="overview" aria-labelledby="t-energy">
-                <div class="card-head">
-                  <div class="card-title">
-                    <span class="card-title-dot"></span><span id="t-energy">用能总览</span>
-                    <span class="card-tabs" id="overviewTabs" role="tablist" aria-label="用能总览口径切换" hidden></span>
-                  </div>
-                </div>
-                <div class="card-body">
-                  <div class="energy-row" id="energyRow"></div>
-                </div>
-              </section>
-
-              <div class="anno anno-data" data-version="v2.5">
-                <span class="anno-tag">图元说明</span>
-                <span class="anno-version">v2.5</span>
-                <span class="anno-source">需求文档</span>
-                <div class="anno-body">
-                  <p><b>关联模块：</b>数据完整性（并入用能总览）</p>
-                  <ul>
-                    <li><b>形态：</b>独立卡下线；有坏值/缺失时能源瓦片出可点「含异常/缺失」，正常不展示。</li>
-                    <li><b>链路：</b>点标签 → 表具清单（完整率、缺失/坏值/人工修正）→ 行内「查看」进表具能耗明细。</li>
-                    <li><b>口径：</b>完整率=有效槽÷应有槽；坏值/缺失不参与聚合。</li>
-                  </ul>
-                </div>
-              </div>
-
-              <div class="anno anno-data" data-version="v2.5">
-                <span class="anno-tag">图元说明</span>
-                <span class="anno-version">v2.5</span>
-                <span class="anno-source">需求文档</span>
-                <div class="anno-body">
-                  <p><b>关联模块：</b>总成本瓦片（并入用能总览）</p>
-                  <ul>
-                    <li><b>内容：</b>本期总成本 + 环比；无计费方案时不出瓦片。</li>
-                    <li><b>细节：</b>分时/单一构成下沉到「能耗成本」卡，总览不重复展开。</li>
-                  </ul>
-                </div>
-              </div>
 
               <div class="anno anno-data" data-version="v2.5">
                 <span class="anno-tag">图元说明</span>
@@ -2596,8 +2216,9 @@
                   <ul>
                     <li><b>形态：</b>单卡瓦片：值、环比、迷你趋势、构成；首行 PUE/CLF/PLF/OLF 带「=1+/+」扫读。</li>
                     <li><b>WUE：</b>=用水量(L)÷IT(kWh)，1 m³=1000 L；有水计量才出。OLF 参与公式，缺输入「待配置」。</li>
-                    <li><b>标签：</b>PUE/WUE 点开国标等级；CLF/PLF/OLF 点开诊断档位（无标准来源）。待配置无入口。</li>
-                    <li><b>环比：</b>越低越好（降绿升红）。迷你趋势规则同用能总览。</li>
+                    <li><b>折算指标（本期迁入）：</b>标准煤、碳排放并入本模块（原用能总览下线）；仅园区 / 数据中心展示；标准煤=Σ(用量×标煤系数)，碳排放=Σ(用量×CO₂系数)；冷量等二次能源系数默认 0。</li>
+                    <li><b>标签：</b>PUE/WUE 点开国标等级；CLF/PLF/OLF 点开诊断档位（无标准来源）。待配置无入口；折算指标无等级标签。</li>
+                    <li><b>环比：</b>越低越好（降绿升红）。</li>
                   </ul>
                 </div>
               </div>
@@ -2629,96 +2250,8 @@
             </div>
           </div>
 
-          <!-- ══════════ 分区三：能耗明细 ══════════ -->
-          <div class="dash-section" id="sec-detail">
-            <div class="dash-grid" id="gridDetail">
-              <div class="anno anno-data" data-version="v2.5">
-                <span class="anno-tag">数据与交互</span>
-                <span class="anno-version">v2.5</span>
-                <span class="anno-source">需求文档</span>
-                <div class="anno-body">
-                  <p><b>关联模块：</b>能耗明细（并入看板底部）</p>
-                  <ul>
-                    <li><b>定位：</b>承接当前对象与时间；可导出树状明细；独立「能耗统计分析」页下线。</li>
-                    <li><b>字段：</b>累计量/成本/日均/占比；无计费时成本列「–」。</li>
-                    <li><b>交互：</b>默认展开；收起、同层排序、点名称切对象；导出带当前对象与日期。</li>
-                  </ul>
-                </div>
-              </div>
-
-              <section class="dash-card dash-card--wide" data-comp="detail" aria-labelledby="t-detail">
-                <div class="card-head">
-                  <div class="card-title">
-                    <span class="card-title-dot"></span><span id="t-detail">能耗明细</span>
-                    <span class="card-tabs" id="detailTabs" role="tablist" aria-label="能耗明细能源类型切换"></span>
-                  </div>
-                  <div class="card-head-right">
-                    <button type="button" class="detail-export" id="detailExportBtn">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                      导出报表
-                    </button>
-                  </div>
-                </div>
-                <div class="card-body detail-card-body">
-                  <div class="detail-table-scroll">
-                    <table class="detail-table" id="detailTable" aria-label="能耗明细表">
-                      <thead>
-                        <tr>
-                          <th style="min-width:220px;">对象名称</th>
-                          <th class="num detail-sort detail-kwh-head" data-sortkey="kwh" tabindex="0" aria-sort="none">累计能耗量（kWh）</th>
-                          <th class="num detail-sort" data-sortkey="cost" tabindex="0" aria-sort="none">累计能耗成本（元）</th>
-                          <th class="num detail-sort" data-sortkey="avg" tabindex="0" aria-sort="none">日均能耗量（kWh）</th>
-                          <th class="num">能耗占比（%）</th>
-                        </tr>
-                      </thead>
-                      <tbody id="detailBody"></tbody>
-                    </table>
-                  </div>
-                </div>
-              </section>
-
-            </div>
-          </div>
-
         </div>
       </main>
-    </div>
-  </div>
-
-  <!-- 数据完整性 · 表具清单弹层（用能总览「含异常/缺失」标签承接） -->
-  <div class="settings-mask" id="meterMask" hidden>
-    <div class="settings-panel meter-panel" role="dialog" aria-modal="true" aria-label="数据完整性表具清单">
-      <div class="settings-head">
-        <div>
-          <div class="settings-title" id="meterTitle">数据完整性</div>
-          <div class="settings-sub" id="meterSub">—</div>
-        </div>
-        <button type="button" class="settings-close" id="meterClose" aria-label="关闭">×</button>
-      </div>
-      <div class="settings-body">
-        <div class="anno anno-ux" data-version="v2.5">
-          <span class="anno-tag">交互说明</span>
-          <span class="anno-version">v2.5</span>
-          <span class="anno-source">需求文档</span>
-          <div class="anno-body">
-            <p><b>关联模块：</b>表具清单弹层（入口：能源瓦片「含异常/缺失」）</p>
-            <ul>
-              <li><b>内容：</b>当前对象×该能源的叶子表具：完整率、缺失/坏值/人工修正槽数；异常行高亮。</li>
-              <li><b>操作：</b>行内「查看」跳转表具能耗明细（带对象/能源/区间/表具）；点遮罩或 × 关闭。</li>
-            </ul>
-          </div>
-        </div>
-        <div class="meter-summary" id="meterSummary"></div>
-        <table class="meter-table">
-          <thead>
-            <tr><th>计量表具</th><th>安装位置</th><th>缺失槽</th><th>坏值槽</th><th>人工修正</th><th>状态</th><th>操作</th></tr>
-          </thead>
-          <tbody id="meterRows"></tbody>
-        </table>
-        <div class="meter-foot">
-          <span class="integ-note">完整率 = 有效半小时槽 ÷ 应有半小时槽 × 100%；坏值/缺失不参与聚合，汇总结果可能偏低</span>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -3231,9 +2764,6 @@
           hasIT: true, hasHVAC: true, hasPower: true,
           data: {
             overview: [
-              { ico: 'elec', name: '用电量', value: '24,758,920', unit: 'kWh', trend: 'up', trendText: '↑ +8.4% 环比', integrity: true, quotaMonth: 22000000, quotaDay: 710000 },
-              { ico: 'water', name: '用水量', value: '38,450', unit: 'm³', trend: 'down', trendText: '↓ -2.1% 环比', quotaMonth: 45000, quotaDay: 1500 },
-              { ico: 'cooling', name: '冷量', value: '5,842,300', unit: 'kWh', trend: 'up', trendText: '↑ +4.7% 环比', integrity: true },
               { ico: 'coal', name: '标准煤', value: '3,046.2', unit: 'tce', trend: 'up', trendText: '↑ +8.2% 环比' },
               { ico: 'carbon', name: '碳排放', value: '13,806.9', unit: 'tCO₂', trend: 'up', trendText: '↑ +8.1% 环比' }
             ],
@@ -3243,7 +2773,7 @@
                 { name: '电', cost: '20,743,551.60 元', pct: 98.8, color: '#3B82F6' },
                 { name: '水', cost: '249,925.40 元', pct: 1.2, color: '#0891B2' }
               ],
-              /* 成本明细仍由「能耗成本」卡承接；用能总览只取 total + mix 做摘要瓦片 */
+              /* 成本明细由「能耗成本」卡承接 */
               schemes: [
                 {
                   energy: '电', type: 'tou', typeLabel: '分时 · 尖峰平谷',
@@ -3260,11 +2790,11 @@
                 }
               ]
             },
-            costElec: { total: '20,743,551.60', integrity: true, scale: 300 },
+            costElec: { total: '20,743,551.60', scale: 300 },
             costWater: { total: '249,925.40', scale: 3.6 },
             trends: {
               elec: {
-                total: '24,758,920', integrity: true, scale: 354, axisUnit: '万kWh',
+                total: '24,758,920', scale: 354, axisUnit: '万kWh',
                 labels: ['互盟数据中心', '华东一号', '综合配套', '其他'],
                 colors: ['#9BB8EA', '#7EC8D6', '#B0A8DC', '#D4BCE4'],
                 bases: [0.52, 0.32, 0.11, 0.05]
@@ -3311,23 +2841,6 @@
                 suffix: ' kWh'
               }
             },
-            integrity: [
-              { energy: '电', rate: '99.2%', warn: true, missing: 23, bad: 5, fixed: 2 },
-              { energy: '水', rate: '100%', warn: false, missing: 0, bad: 0, fixed: 0 },
-              { energy: '冷量', rate: '98.7%', warn: true, missing: 31, bad: 0, fixed: 0 }
-            ],
-            meters: {
-              elec: [
-                { name: '110kV 市电进线总表', loc: '总降压站高压室', missing: 8, bad: 5, fixed: 2 },
-                { name: '能源站低压总表', loc: '能源站 10kV 配电室', missing: 15, bad: 0, fixed: 0 },
-                { name: '华东一号楼总表', loc: '华东一号 B1 强电间', missing: 0, bad: 0, fixed: 0 },
-                { name: '综合配套区总表', loc: '综合楼配电间', missing: 0, bad: 0, fixed: 0 }
-              ],
-              cooling: [
-                { name: '板换冷量表', loc: '能源站板换机房', missing: 31, bad: 0, fixed: 0 },
-                { name: '能源站冷量总表', loc: '能源站出水总管', missing: 0, bad: 0, fixed: 0 }
-              ]
-            },
             /* PUE = 总电耗 ÷ IT；演示数：24,758,920 / 20,014,210 ≈ 1.237 */
             pueEnergy: { s1: '24,758,920kWh', s2: '20,014,210kWh', s3: '2级', reading: '1.237', value: 1.237, delta: '↓ -1.2% 环比', deltaDir: 'good' },
             clf: {
@@ -3363,7 +2876,6 @@
           hasIT: true, hasHVAC: true, hasPower: true,
           data: {
             overview: [
-              { ico: 'elec', name: '用电量', value: '21,458,300', unit: 'kWh', trend: 'up', trendText: '↑ +5.2% 环比', integrity: true, quotaMonth: 25000000, quotaDay: 810000 },
               { ico: 'coal', name: '标准煤', value: '2,637.2', unit: 'tce', trend: 'up', trendText: '↑ +5.2% 环比' },
               { ico: 'carbon', name: '碳排放', value: '11,948.0', unit: 'tCO₂', trend: 'up', trendText: '↑ +5.2% 环比' }
             ],
@@ -3384,11 +2896,11 @@
                 }
               ]
             },
-            costElec: { total: '17,894,562.30', integrity: true, scale: 260 },
+            costElec: { total: '17,894,562.30', scale: 260 },
             costWater: null,
             trends: {
               elec: {
-                total: '21,458,300', integrity: true, scale: 307, axisUnit: '万kWh',
+                total: '21,458,300', scale: 307, axisUnit: '万kWh',
                 labels: ['IT 耗电', '制冷耗电', '配电耗电', '其他耗电'],
                 colors: ['#9BB8EA', '#7EC8D6', '#B0A8DC', '#D4BCE4'],
                 bases: [0.81, 0.14, 0.035, 0.015]
@@ -3405,16 +2917,6 @@
                 ],
                 suffix: ' kWh'
               }
-            },
-            integrity: [
-              { energy: '电', rate: '98.6%', warn: true, missing: 214, bad: 38, fixed: 12 }
-            ],
-            meters: {
-              elec: [
-                { name: 'IT 总配电柜电表', loc: '2F 高压直流配电室', missing: 126, bad: 20, fixed: 8 },
-                { name: '冷站总表', loc: 'B1 冷冻站', missing: 88, bad: 18, fixed: 4 },
-                { name: '市电进线计量表', loc: '10kV 高压室', missing: 0, bad: 0, fixed: 0 }
-              ]
             },
             /* PUE = 总电耗 ÷ IT；演示数：21,458,300 / 17,352,400 ≈ 1.237；CLF/PLF/OLF 置空演示「待配置」 */
             pueEnergy: { s1: '21,458,300kWh', s2: '17,352,400kWh', s3: '2级', reading: '1.237', value: 1.237, delta: '↓ -1.6% 环比', deltaDir: 'good' },
@@ -3433,7 +2935,6 @@
           hasIT: false, hasHVAC: false, hasPower: false,
           data: {
             overview: [
-              { ico: 'elec', name: '用电量', value: '3,048,900', unit: 'kWh', trend: 'down', trendText: '↓ -3.8% 环比' },
               { ico: 'coal', name: '标准煤', value: '374.7', unit: 'tce', trend: 'down', trendText: '↓ -3.8% 环比' },
               { ico: 'carbon', name: '碳排放', value: '1,697.6', unit: 'tCO₂', trend: 'down', trendText: '↓ -3.8% 环比' }
             ],
@@ -3460,9 +2961,6 @@
                 suffix: ' kWh'
               }
             },
-            integrity: [
-              { energy: '电', rate: '100%', warn: false, missing: 0, bad: 0, fixed: 0 }
-            ],
             pueEnergy: null, clf: null, plf: null,
             wue: null, olf: null
           }
@@ -3470,44 +2968,13 @@
       }
 
       var COMP_META = {
-        'overview': { name: '用能总览', sec: 'A' },
         'trend': { name: '能耗趋势与分项', sec: 'A' },
         'cost': { name: '能耗成本', sec: 'A' },
-        'efficiency': { name: '能效指标总览', sec: 'B' },
-        'detail': { name: '能耗明细', sec: 'D' }
+        'efficiency': { name: '能效指标总览', sec: 'B' }
       }
 
       function metered (o, e) { return o.energies.indexOf(e) !== -1 }
       function isParkOrDc (o) { return o.type === 'park' || o.type === 'dc' }
-      function fmtDetailNum (n, digits) {
-        var d = typeof digits === 'number' ? digits : 2
-        return (Number(n) || 0).toLocaleString('zh-CN', { minimumFractionDigits: d, maximumFractionDigits: d })
-      }
-      function dateRangeLabel () {
-        var el = document.getElementById('datePillLabel')
-        return el ? el.textContent : '2026-07'
-      }
-      function detailCurrentDim () {
-        var api = window.__dashboardChartsApi
-        return api && api.getDim ? api.getDim() : 'month'
-      }
-      function detailRangeFactor () {
-        var dim = detailCurrentDim()
-        if (dim === 'year') return 12
-        if (dim === 'day') return 1 / 30
-        if (dim === 'period') return 7 / 30
-        return 1
-      }
-      function detailElapsedDays () {
-        var dim = detailCurrentDim()
-        if (dim === 'year') return 365
-        if (dim === 'day') return 1
-        if (dim === 'period') return 7
-        return 8
-      }
-      function detailFileRange () {
-        return dateRangeLabel().replace(/[^\d]+/g, '') || '202607'
-      }
       function energyScheme (o, energyLabel) {
         var schemes = o.data.costOverview && o.data.costOverview.schemes
         if (!Array.isArray(schemes)) return null
@@ -3558,17 +3025,22 @@
         return o.energies.filter(function (e) { return !!(o.data.trends && o.data.trends[e]) })
       }
 
-      function detailEnergies (o) {
-        return o.energies.filter(function (e) { return e === 'elec' || !!(o.data.trends && o.data.trends[e]) })
-      }
-
       /* 能效指标瓦片级规则（沿用规则总表，逐指标判定；整卡 = 任一瓦片满足） */
+      function hasConversionMetric (o, ico) {
+        var list = (o.data && o.data.overview) || []
+        for (var i = 0; i < list.length; i++) {
+          if (list[i].ico === ico) return true
+        }
+        return false
+      }
       var EFF_TILE_RULES = {
         'pue-energy': function (o) { return isParkOrDc(o) && o.hasIT && !!o.data.pueEnergy },
         'clf': function (o) { return isParkOrDc(o) && o.hasHVAC && o.hasIT },
         'plf': function (o) { return isParkOrDc(o) && o.hasPower && o.hasIT },
         'wue': function (o) { return isParkOrDc(o) && metered(o, 'water') && o.hasIT && !!o.data.wue },
-        'olf': function (o) { return isParkOrDc(o) && o.hasIT }
+        'olf': function (o) { return isParkOrDc(o) && o.hasIT },
+        'coal': function (o) { return isParkOrDc(o) && hasConversionMetric(o, 'coal') },
+        'carbon': function (o) { return isParkOrDc(o) && hasConversionMetric(o, 'carbon') }
       }
       function effTileList (o) {
         return Object.keys(EFF_TILE_RULES).filter(function (id) { return EFF_TILE_RULES[id](o) })
@@ -3576,102 +3048,12 @@
 
       /* 出现规则总表（§3.3 + 评审迭代的展示层聚合）：判定输入 = 对象类型 × 各能源计量拓扑 × 计费方案 */
       var RULES = {
-        'overview': function (o) { return o.energies.length >= 1 },
         'cost': function (o) { return costEnergies(o).length >= 1 },
         'trend': function (o) { return trendEnergies(o).length >= 1 },
-        'efficiency': function (o) { return effTileList(o).length >= 1 },
-        'detail': function (o) { return detailEnergies(o).length >= 1 }
+        'efficiency': function (o) { return effTileList(o).length >= 1 }
       }
 
       var currentKey = 'hvac'
-      var detailEnergy = ''
-      var detailSort = { key: '', dir: '' }
-      var detailCollapsed = {}
-      var DETAIL_PRICE = { elec: 0.65, water: 6.5, cooling: 0.28 }
-      var DETAIL_UNIT = { elec: 'kWh', water: 'm³', cooling: 'kWh' }
-      var DETAIL_TREE = {
-        park: {
-          elec: {
-            id: 'park',
-            name: '云谷园区',
-            kwh: 24758920,
-            children: [
-              {
-                id: 'dc',
-                name: '互盟数据中心',
-                kwh: 21458300,
-                integrity: true,
-                children: [
-                  { id: 'it-system', name: 'IT 系统', kwh: 17352400 },
-                  { id: 'hvac', name: 'AI路冷水系统', kwh: 3048900 },
-                  { id: 'power-system', name: '配电系统', kwh: 742100 },
-                  { id: 'other-load', name: '其他用电', kwh: 314900, integrity: true }
-                ]
-              },
-              { id: 'huadong-1', name: '华东一号', kwh: 2374200 },
-              { id: 'supporting', name: '综合配套', kwh: 926420 }
-            ]
-          },
-          water: {
-            id: 'park',
-            name: '云谷园区',
-            kwh: 38450,
-            children: [
-              { id: 'dc', name: '互盟数据中心', kwh: 23530 },
-              { id: 'supporting', name: '综合配套', kwh: 10540 },
-              { id: 'municipal-green', name: '绿化市政', kwh: 4380 }
-            ]
-          },
-          cooling: {
-            id: 'park',
-            name: '云谷园区',
-            kwh: 5842300,
-            integrity: true,
-            children: [
-              { id: 'hvac', name: 'AI路冷水系统', kwh: 3048900 },
-              { id: 'terminal-cooling', name: '末端冷量', kwh: 1869500 },
-              { id: 'plate-exchanger', name: '板换冷量', kwh: 923900, integrity: true }
-            ]
-          }
-        },
-        dc: {
-          elec: {
-            id: 'dc',
-            name: '互盟数据中心',
-            kwh: 21458300,
-            integrity: true,
-            children: [
-              { id: 'it-system', name: 'IT 系统', kwh: 17352400 },
-              {
-                id: 'hvac',
-                name: 'AI路冷水系统',
-                kwh: 3048900,
-                children: [
-                  { id: 'chiller-group', name: '冷水机组', kwh: 1780560 },
-                  { id: 'pump-group', name: '水泵群', kwh: 576242 },
-                  { id: 'cooling-tower', name: '冷却塔', kwh: 371966 },
-                  { id: 'terminal-ac', name: '空调末端', kwh: 320132 }
-                ]
-              },
-              { id: 'power-system', name: '配电系统', kwh: 742100 },
-              { id: 'other-load', name: '其他用电', kwh: 314900, integrity: true }
-            ]
-          }
-        },
-        hvac: {
-          elec: {
-            id: 'hvac',
-            name: 'AI路冷水系统',
-            kwh: 3048900,
-            children: [
-              { id: 'chiller-group', name: '冷水机组', kwh: 1780560 },
-              { id: 'pump-group', name: '水泵群', kwh: 576242 },
-              { id: 'cooling-tower', name: '冷却塔', kwh: 371966 },
-              { id: 'terminal-ac', name: '空调末端', kwh: 320132 }
-            ]
-          }
-        }
-      }
       var STANDARD_LEVEL_CLASS = {
         '1级': 'level-good',
         '一级': 'level-good',
@@ -3790,258 +3172,6 @@
       function energyColor (key) {
         return { elec: '#3B82F6', water: '#0891B2', cooling: '#8B5CF6', coal: '#F59E0B', carbon: '#10B981', cost: '#3B82F6' }[key] || '#64748B'
       }
-      function isConversionEnergy (ico) {
-        return ico === 'coal' || ico === 'carbon'
-      }
-      function costMixSummary (d) {
-        if (!d || !d.mix || !d.mix.length) return '—'
-        return d.mix.map(function (m) { return m.name + ' ' + m.pct + '%' }).join(' · ')
-      }
-      function costMixTitle (d) {
-        if (!d || !d.mix || !d.mix.length) return ''
-        return d.mix.map(function (m) { return m.name + '：' + m.cost + '（' + m.pct + '%）' }).join('；')
-      }
-      function overviewChartCanvasId (key) {
-        return 'chartOverview_' + String(key || 'x').replace(/[^a-zA-Z0-9_-]/g, '_')
-      }
-      function overviewTrendSpark (cfg) {
-        var id = overviewChartCanvasId(cfg.chartKey)
-        return '<div class="mini-trend-plot" aria-label="' + escapeHtml((cfg.name || '指标') + '趋势图，鼠标悬停数据点查看时间和值') + '">'
-          + '<canvas id="' + id + '" data-overview-chart="' + escapeHtml(cfg.chartKey) + '"></canvas>'
-          + '</div>'
-      }
-      function energyTileHtml (cfg) {
-        var rows = (cfg.rows || []).map(function (r) {
-          var value = r[2]
-            ? '<span class="' + r[2] + '"' + (r[3] ? ' ' + r[3] : '') + '>' + r[1] + '</span>'
-            : '<b' + (r[3] ? ' ' + r[3] : '') + '>' + r[1] + '</b>'
-          return '<div class="energy-foot-row"><span>' + r[0] + '</span>' + value + '</div>'
-        }).join('')
-        var badges = cfg.headBadge || ''
-        return '<div class="energy-item" style="--tile-color:' + cfg.color + '"'
-          + (cfg.chartKey ? ' data-overview-tile="' + escapeHtml(cfg.chartKey) + '"' : '') + '>'
-          + '<div class="energy-item-head">'
-          + '<span class="energy-name">' + cfg.name + '</span>'
-          + (badges ? '<span class="energy-head-badges">' + badges + '</span>' : '')
-          + '</div>'
-          + '<div class="energy-value-wrap"' + (cfg.title ? ' title="' + cfg.title + '"' : '') + '>'
-          + '<span class="energy-value">' + cfg.value + '</span>'
-          + (cfg.unit ? '<span class="energy-unit">' + cfg.unit + '</span>' : '')
-          + '<span class="energy-trend ' + cfg.trend + '">' + cfg.trendText + '</span>'
-          + '</div>'
-          + '<div class="energy-spark">' + overviewTrendSpark(cfg) + '</div>'
-          + (rows ? '<div class="energy-foot">' + rows + '</div>' : '')
-          + '</div>'
-      }
-
-      /* 额度：年/月 → 月额度档；日/时段 → 日额度档。无定额则不展示虚线与超限标签。
-         超限按「当前筛选周期累计用量 vs 周期对应额度」：
-         年 = 月额度×12；月 = 月额度；日 = 日额度；时段 = 日额度×区间天数。
-         迷你趋势虚线与分桶同量纲：年→月额度；月→日额度；日/时段→日额度÷24。 */
-      function overviewQuotaContext (item) {
-        if (!item || (item.quotaMonth == null && item.quotaDay == null)) return null
-        var dim = detailCurrentDim()
-        var monthQ = item.quotaMonth
-        var dayQ = item.quotaDay
-        if (dayQ == null && monthQ != null) dayQ = monthQ / 30
-        if (monthQ == null && dayQ != null) monthQ = dayQ * 30
-        var periodQuota
-        var periodLabel
-        var bucketQuota
-        var sparkLabel
-        var tip
-        if (dim === 'year') {
-          periodQuota = monthQ * 12
-          periodLabel = '年额度（月额度×12）'
-          bucketQuota = monthQ
-          sparkLabel = '月额度'
-          tip = formatQuotaTip(monthQ, item.unit) + '（年视图按月对照）'
-        } else if (dim === 'month') {
-          periodQuota = monthQ
-          periodLabel = '月额度'
-          bucketQuota = dayQ
-          sparkLabel = '日额度'
-          tip = formatQuotaTip(dayQ, item.unit) + '（月视图按日对照）'
-        } else if (dim === 'day') {
-          periodQuota = dayQ
-          periodLabel = '日额度'
-          bucketQuota = dayQ / 24
-          sparkLabel = '小时额度'
-          tip = formatQuotaTip(bucketQuota, item.unit) + '（由日额度 ' + formatQuotaTip(dayQ, item.unit) + ' ÷ 24）'
-        } else {
-          var days = Math.max(1, detailElapsedDays())
-          periodQuota = dayQ * days
-          periodLabel = '时段额度（日额度×' + days + '天）'
-          bucketQuota = dayQ / 24
-          sparkLabel = '小时额度'
-          tip = formatQuotaTip(bucketQuota, item.unit) + '（由日额度折算）'
-        }
-        if (periodQuota == null || !Number.isFinite(periodQuota) || !Number.isFinite(bucketQuota)) return null
-        var usage = parseFloat(String(item.value).replace(/,/g, '')) || 0
-        /* 演示数据是月口径基准；按顶栏粒度缩放用量，避免年/日视图误判 */
-        var usageFactor = 1
-        if (dim === 'year') usageFactor = 12
-        else if (dim === 'day') usageFactor = 1 / 30
-        else if (dim === 'period') usageFactor = Math.max(1, detailElapsedDays()) / 30
-        var scaledUsage = usage * usageFactor
-        var over = scaledUsage > periodQuota
-        return {
-          periodQuota: periodQuota,
-          periodLabel: periodLabel,
-          bucketQuota: bucketQuota,
-          sparkLabel: sparkLabel,
-          sparkTip: tip,
-          over: over,
-          usage: scaledUsage,
-          sparkBase: bucketQuota * (over ? 1.15 : 0.85)
-        }
-      }
-      function formatQuotaTip (n, unit) {
-        var text = Number(n).toLocaleString('zh-CN', { maximumFractionDigits: 2 })
-        return text + (unit ? ' ' + unit : '')
-      }
-      function overQuotaBadgeHtml (ctx) {
-        if (!ctx || !ctx.over) return ''
-        var tip = '本期用量 ' + formatQuotaTip(ctx.usage, '') + ' 已超过' + ctx.periodLabel + ' '
-          + formatQuotaTip(ctx.periodQuota, '') + '（来自用能定额考核）'
-        return '<span class="over-quota-tag" title="' + escapeHtml(tip.trim()) + '">已超限</span>'
-      }
-
-      /* ── 渲染：用能总览瓦片矩阵（总成本 + 能源用量 + 折算指标，全部平铺） ── */
-      var overviewChartTiles = []
-      function renderOverview (o) {
-        var host = document.getElementById('energyRow')
-        if (!host) return
-        var html = ''
-        overviewChartTiles = []
-        var cost = o.data.costOverview
-        if (cost && hasAnyBilling(o)) {
-          var cf = fmtWan(cost.total)
-          var costKey = 'cost'
-          var costVal = parseFloat(String(cost.total).replace(/,/g, '')) || 1
-          overviewChartTiles.push({
-            key: costKey,
-            name: '总成本',
-            color: energyColor('cost'),
-            unit: '元',
-            base: costVal,
-            trendDown: cost.trend !== 'up',
-            quota: null
-          })
-          html += energyTileHtml({
-            chartKey: costKey,
-            name: '总成本',
-            value: cf.wan ? cf.text : cost.total,
-            unit: cf.wan ? '万元' : '元',
-            title: cf.wan ? cost.total + ' 元' : '',
-            trend: cost.trend,
-            trendText: cost.trendText,
-            color: energyColor('cost'),
-            rows: []
-          })
-        }
-        o.data.overview.forEach(function (c) {
-          var f = fmtWan(c.value)
-          var exact = c.value + ' ' + c.unit
-          var quotaCtx = (!isConversionEnergy(c.ico)) ? overviewQuotaContext(c) : null
-          var badges = ''
-          if (c.integrity) {
-            badges += '<button type="button" class="integrity-tag clickable" data-integrity-native="true" data-energy="' + c.ico + '" title="' + INTEG_TITLE + '；点击查看表具清单">含异常/缺失</button>'
-          }
-          if (quotaCtx) badges += overQuotaBadgeHtml(quotaCtx)
-          var chartKey = c.ico
-          var rawVal = parseFloat(String(c.value).replace(/,/g, '')) || 1
-          overviewChartTiles.push({
-            key: chartKey,
-            name: c.name,
-            color: energyColor(c.ico),
-            unit: c.unit,
-            base: quotaCtx ? quotaCtx.sparkBase : rawVal,
-            trendDown: c.trend !== 'up',
-            quota: quotaCtx ? {
-              value: quotaCtx.bucketQuota,
-              label: quotaCtx.sparkLabel,
-              tip: quotaCtx.sparkTip,
-              unit: c.unit
-            } : null
-          })
-          html += energyTileHtml({
-            chartKey: chartKey,
-            name: c.name,
-            value: f.wan ? f.text : c.value,
-            unit: f.wan ? '万' + c.unit : c.unit,
-            title: f.wan ? exact : '',
-            trend: c.trend,
-            trendText: c.trendText,
-            color: energyColor(c.ico),
-            headBadge: badges,
-            rows: []
-          })
-        })
-        host.innerHTML = html
-        if (window.IntegrityAlert) window.IntegrityAlert.enhance(host)
-        host.querySelectorAll('.integrity-tag.clickable').forEach(function (btn) {
-          btn.addEventListener('click', function (event) {
-            event.preventDefault()
-            event.stopPropagation()
-            openMeterModal(o, btn.getAttribute('data-energy'))
-          })
-        })
-      }
-      window.__dashOverviewApi = {
-        tiles: function () { return overviewChartTiles },
-        canvasId: overviewChartCanvasId,
-        trendSeries: trendSeries
-      }
-
-      /* ── 完整性承接：表具清单弹层 → 表具明细页 ── */
-      var meterMask = document.getElementById('meterMask')
-      function meterDetailUrl (o, energyKey, meter) {
-        var rangeEl = document.getElementById('datePillLabel')
-        var url = '能耗管理-表具明细.html'
-          + '?object=' + encodeURIComponent(o.label)
-          + '&energy=' + encodeURIComponent(ENERGY_LABEL[energyKey] || energyKey)
-          + '&range=' + encodeURIComponent(rangeEl ? rangeEl.textContent : '')
-        if (meter && meter.name) url += '&meter=' + encodeURIComponent(meter.name)
-        return url
-      }
-      function openMeterModal (o, energyKey) {
-        var rows = (o.meters || o.data.meters || {})[energyKey] || []
-        var label = ENERGY_LABEL[energyKey] || energyKey
-        var integ = (o.data.integrity || []).filter(function (r) { return r.energy === label })[0]
-        document.getElementById('meterTitle').textContent = '数据完整性 · ' + label
-        var rangeEl = document.getElementById('datePillLabel')
-        document.getElementById('meterSub').textContent =
-          '对象「' + o.label + '」 · 统计区间 ' + (rangeEl ? rangeEl.textContent : '—') + ' · 沿计量拓扑覆盖 ' + rows.length + ' 块叶子表具'
-        var sum = document.getElementById('meterSummary')
-        if (integ) {
-          sum.innerHTML = '<span>完整率 <b>' + integ.rate + '</b></span>'
-            + '<span>缺失槽 <b>' + integ.missing + '</b></span>'
-            + '<span>坏值槽 <b>' + integ.bad + '</b></span>'
-            + '<span>人工修正 <b>' + integ.fixed + '</b></span>'
-          sum.hidden = false
-        } else {
-          sum.hidden = true
-        }
-        var h = ''
-        rows.forEach(function (r) {
-          var warn = r.missing > 0 || r.bad > 0
-          var href = meterDetailUrl(o, energyKey, r)
-          h += '<tr>'
-            + '<td class="meter-name">' + r.name + '</td>'
-            + '<td class="meter-loc">' + r.loc + '</td>'
-            + '<td>' + (r.missing > 0 ? '<span class="meter-num-warn">' + r.missing + '</span>' : r.missing) + '</td>'
-            + '<td>' + (r.bad > 0 ? '<span class="meter-num-warn">' + r.bad + '</span>' : r.bad) + '</td>'
-            + '<td>' + r.fixed + '</td>'
-            + '<td><span class="meter-state ' + (warn ? 'warn' : 'ok') + '">' + (warn ? '异常' : '正常') + '</span></td>'
-            + '<td><a class="meter-action" href="' + href + '" title="查看「' + r.name + '」表具能耗明细">查看</a></td>'
-            + '</tr>'
-        })
-        document.getElementById('meterRows').innerHTML = h
-        meterMask.hidden = false
-      }
-      document.getElementById('meterClose').addEventListener('click', function () { meterMask.hidden = true })
-      meterMask.addEventListener('click', function (e) { if (e.target === meterMask) meterMask.hidden = true })
       var standardMask = document.getElementById('standardMask')
       var standardClose = document.getElementById('standardClose')
       if (standardClose) standardClose.addEventListener('click', closeStandardPanel)
@@ -4208,12 +3338,24 @@
       function metricPrecision (tile) {
         var standard = EFF_STANDARDS[tile.id]
         if (standard && typeof standard.precision === 'number') return standard.precision
+        if (tile && tile.conversion) return 1
         return tile.id === 'wue' ? 2 : 3
       }
 
       function formatMetricValue (value, tile) {
         if (value == null || !Number.isFinite(value)) return '—'
+        if (tile && tile.conversion) {
+          var f = fmtWan(String(value))
+          var unit = tile.unit || ''
+          return (f.wan ? f.text + '万' : f.text) + (unit ? unit : '')
+        }
         return value.toFixed(metricPrecision(tile)) + (tile.unit ? ' ' + tile.unit : '')
+      }
+
+      function conversionDeltaBadge (m) {
+        if (!m || !m.trendText) return ''
+        var cls = m.trend === 'down' ? 'down' : (m.trend === 'up' ? 'up' : 'neutral')
+        return '<span class="energy-trend ' + cls + '">' + escapeHtml(m.trendText) + '</span>'
       }
 
       function effChartCanvasId (tile) {
@@ -4372,8 +3514,32 @@
           value: function (m) { return m.value },
           unit: 'L/kWh',
           rows: function (m) { return [['周期用水量', m.water], ['IT 电量', m.it]] }
+        },
+        {
+          id: 'coal', name: '标准煤', color: '#F59E0B', trendDown: true, conversion: true,
+          tip: '标准煤 = Σ(各能源用量 × 标煤折算系数)；冷量等二次能源系数默认 0',
+          get: function (d) { return overviewItemByIco(d, 'coal') },
+          value: function (m) { return m.value },
+          unit: 'tce',
+          rows: function () { return [['口径', '各能源折算合计']] }
+        },
+        {
+          id: 'carbon', name: '碳排放', color: '#10B981', trendDown: true, conversion: true,
+          tip: '碳排放 = Σ(各能源用量 × CO₂ 折算系数)；冷量等二次能源系数默认 0',
+          get: function (d) { return overviewItemByIco(d, 'carbon') },
+          value: function (m) { return m.value },
+          unit: 'tCO₂',
+          rows: function () { return [['口径', '各能源折算合计']] }
         }
       ]
+
+      function overviewItemByIco (d, ico) {
+        var list = (d && d.overview) || []
+        for (var i = 0; i < list.length; i++) {
+          if (list[i].ico === ico) return list[i]
+        }
+        return null
+      }
 
       window.__dashEfficiencyApi = {
         tiles: EFF_TILES,
@@ -4394,16 +3560,26 @@
             var pending = !m
             var rows = pending ? effPendingRows(t) : t.rows(m)
             var valueText = pending ? '待配置' : t.value(m)
-            var badgeHtml = pending ? '' : effStandardBadge(t, m, valueText)
+            var displayVal = valueText
+            var displayUnit = t.unit || ''
+            var titleAttr = ''
+            if (!pending && t.conversion) {
+              var f = fmtWan(valueText)
+              displayVal = f.wan ? f.text : valueText
+              displayUnit = f.wan ? ('万' + (m.unit || t.unit || '')) : (m.unit || t.unit || '')
+              if (f.wan) titleAttr = ' title="' + escapeHtml(String(valueText).replace(/,/g, '') + ' ' + (m.unit || t.unit || '')) + '"'
+            }
+            var badgeHtml = pending || t.conversion ? '' : effStandardBadge(t, m, valueText)
+            var deltaHtml = pending ? '' : (t.conversion ? conversionDeltaBadge(m) : effDeltaBadge(m))
             h += '<div class="eff-tile' + (pending ? ' is-pending' : '') + '" data-eff="' + t.id + '" style="--tile-color:' + t.color + '"' + (t.formula ? ' data-formula="' + t.formula + '"' : '') + '>'
               + '<div class="eff-tile-head">'
               + '<span class="eff-tile-name" title="' + t.tip + '">' + t.name + '</span>'
               + badgeHtml
               + '</div>'
-              + '<div class="eff-tile-value-row">'
-              + '<span class="eff-tile-value' + (pending ? ' is-pending' : '') + '">' + valueText + '</span>'
-              + (!pending && t.unit ? '<span class="eff-tile-unit">' + t.unit + '</span>' : '')
-              + (pending ? '' : effDeltaBadge(m))
+              + '<div class="eff-tile-value-row"' + titleAttr + '>'
+              + '<span class="eff-tile-value' + (pending ? ' is-pending' : '') + '">' + displayVal + '</span>'
+              + (!pending && displayUnit ? '<span class="eff-tile-unit">' + displayUnit + '</span>' : '')
+              + deltaHtml
               + '</div>'
               + (pending ? '<div class="eff-spark eff-spark--empty" aria-hidden="true"></div>' : '<div class="eff-spark">' + effTrendSpark(t, o, m, valueText) + '</div>')
               + '<div class="eff-tile-foot">'
@@ -4417,238 +3593,11 @@
         }
       }
 
-      function activeDetailEnergy (o) {
-        if (detailEnergy && metered(o, detailEnergy) && DETAIL_TREE[currentKey] && DETAIL_TREE[currentKey][detailEnergy]) return detailEnergy
-        if (metered(o, 'elec') && DETAIL_TREE[currentKey] && DETAIL_TREE[currentKey].elec) {
-          detailEnergy = 'elec'
-          return 'elec'
-        }
-        var list = detailEnergies(o)
-        for (var i = 0; i < list.length; i++) {
-          if (DETAIL_TREE[currentKey] && DETAIL_TREE[currentKey][list[i]]) {
-            detailEnergy = list[i]
-            return list[i]
-          }
-        }
-        detailEnergy = ''
-        return ''
-      }
-
-      function renderDetailTabs (o) {
-        var host = document.getElementById('detailTabs')
-        if (!host) return
-        var items = detailEnergies(o).filter(function (e) { return DETAIL_TREE[currentKey] && DETAIL_TREE[currentKey][e] })
-        if (!items.length) {
-          host.innerHTML = ''
-          host.hidden = true
-          detailEnergy = ''
-          return
-        }
-        if (!detailEnergy || items.indexOf(detailEnergy) === -1) {
-          detailEnergy = items.indexOf('elec') !== -1 ? 'elec' : items[0]
-        }
-        host.hidden = items.length <= 1
-        host.innerHTML = items.map(function (key) {
-          var active = key === detailEnergy
-          return '<button type="button" role="tab" data-detail-energy="' + key + '" aria-selected="' + (active ? 'true' : 'false') + '" class="' + (active ? 'active' : '') + '">' + (ENERGY_LABEL[key] || key) + '</button>'
-        }).join('')
-      }
-
-      function cloneDetailNode (node) {
-        return {
-          id: node.id,
-          name: node.name,
-          kwh: node.kwh,
-          integrity: !!node.integrity,
-          children: (node.children || []).map(cloneDetailNode)
-        }
-      }
-
-      function scaledDetailTree (node, factor) {
-        var copy = cloneDetailNode(node)
-        function walk(n) {
-          n.kwh = n.kwh * factor
-          ;(n.children || []).forEach(walk)
-        }
-        walk(copy)
-        return copy
-      }
-
-      function syncDetailSortHeads () {
-        document.querySelectorAll('#detailTable .detail-sort').forEach(function (th) {
-          var on = detailSort.dir && th.getAttribute('data-sortkey') === detailSort.key
-          if (on) th.setAttribute('data-sortdir', detailSort.dir)
-          else th.removeAttribute('data-sortdir')
-          th.setAttribute('aria-sort', on ? (detailSort.dir === 'desc' ? 'descending' : 'ascending') : 'none')
-        })
-      }
-
-      function hasDetailBilling (o, energy) {
-        return !!(o && o.billing && o.billing[energy])
-      }
-
-      function sortDetailChildren (children, hasCost, price, elapsed) {
-        if (!detailSort.dir) return children
-        var arr = children.slice()
-        arr.sort(function (a, b) {
-          var av
-          var bv
-          if (detailSort.key === 'cost') {
-            if (!hasCost) return 0
-            av = a.kwh * price
-            bv = b.kwh * price
-          } else if (detailSort.key === 'avg') {
-            av = a.kwh / elapsed
-            bv = b.kwh / elapsed
-          } else {
-            av = a.kwh
-            bv = b.kwh
-          }
-          return detailSort.dir === 'desc' ? bv - av : av - bv
-        })
-        return arr
-      }
-
-      function renderDetailTable (o) {
-        var body = document.getElementById('detailBody')
-        if (!body) return
-        renderDetailTabs(o)
-        var energy = activeDetailEnergy(o)
-        var source = energy && DETAIL_TREE[currentKey] ? DETAIL_TREE[currentKey][energy] : null
-        if (!source) {
-          body.innerHTML = '<tr><td colspan="5">当前对象暂无可展示的能耗明细</td></tr>'
-          return
-        }
-        var unit = DETAIL_UNIT[energy] || 'kWh'
-        var hasCost = hasDetailBilling(o, energy)
-        var price = hasCost ? (DETAIL_PRICE[energy] || DETAIL_PRICE.elec) : 0
-        var root = scaledDetailTree(source, detailRangeFactor())
-        var rootTotal = root.kwh || 0
-        var elapsed = detailElapsedDays()
-        var rows = []
-        function costCell (kwh) {
-          return hasCost
-            ? fmtDetailNum(kwh * price)
-            : '<span title="当前对象该能源未应用计费方案，无成本数据">–</span>'
-        }
-        function rowHtml(node, depth, isRoot) {
-          var hasChildren = node.children && node.children.length
-          var collapsed = !!detailCollapsed[node.id]
-          var toggle = hasChildren
-            ? '<button type="button" class="detail-toggle' + (collapsed ? ' collapsed' : '') + '" data-detail-toggle="' + node.id + '" aria-label="展开或收起 ' + escapeHtml(node.name) + '">▼</button>'
-            : '<span class="detail-toggle-placeholder"></span>'
-          var canJump = DEMO_OBJECTS[node.id] && node.id !== currentKey
-          var name = isRoot
-            ? '<span class="detail-node-current">' + escapeHtml(node.name) + '</span>'
-            : (canJump
-              ? '<button type="button" class="detail-node-name" data-detail-jump="' + node.id + '">' + escapeHtml(node.name) + '</button>'
-              : '<span class="detail-node-name">' + escapeHtml(node.name) + '</span>')
-          var pct = rootTotal > 0 ? node.kwh / rootTotal * 100 : 0
-          var pctBar = '<span class="detail-pct"><span>' + fmtDetailNum(pct) + '</span><span class="detail-pct-track"><span class="detail-pct-fill" style="width:' + Math.max(0, Math.min(100, pct)).toFixed(2) + '%"></span></span></span>'
-          var integrity = node.integrity ? '<span class="detail-integrity" title="统计区间含坏值或缺失槽，聚合结果可能偏低">含异常/缺失</span>' : ''
-          rows.push('<tr>'
-            + '<td><span class="detail-tree-cell" style="padding-left:' + (depth * 22) + 'px">' + toggle + name + '</span></td>'
-            + '<td class="num detail-kwh-cell">' + fmtDetailNum(node.kwh) + integrity + '</td>'
-            + '<td class="num">' + costCell(node.kwh) + '</td>'
-            + '<td class="num">' + fmtDetailNum(node.kwh / elapsed) + '</td>'
-            + '<td class="num">' + pctBar + '</td>'
-            + '</tr>')
-          if (hasChildren && !collapsed) {
-            sortDetailChildren(node.children, hasCost, price, elapsed).forEach(function (child) { rowHtml(child, depth + 1, false) })
-          }
-        }
-        rowHtml(root, 0, true)
-        rows.push('<tr class="row-total">'
-          + '<td>合计</td>'
-          + '<td class="num detail-kwh-cell">' + fmtDetailNum(rootTotal) + '</td>'
-          + '<td class="num">' + costCell(rootTotal) + '</td>'
-          + '<td class="num">' + fmtDetailNum(rootTotal / elapsed) + '</td>'
-          + '<td class="num">100.00</td>'
-          + '</tr>')
-        body.innerHTML = rows.join('')
-        document.querySelectorAll('#detailTable th').forEach(function (th) {
-          th.textContent = th.textContent.replace(/累计能耗量（.*?）/, '累计能耗量（' + unit + '）').replace(/日均能耗量（.*?）/, '日均能耗量（' + unit + '）')
-        })
-        syncDetailSortHeads()
-      }
-
-      function initDetailInteractions () {
-        document.querySelectorAll('#detailTable .detail-sort').forEach(function (th) {
-          function cycle () {
-            var key = th.getAttribute('data-sortkey')
-            if (detailSort.key !== key || !detailSort.dir) { detailSort.key = key; detailSort.dir = 'desc' }
-            else if (detailSort.dir === 'desc') detailSort.dir = 'asc'
-            else { detailSort.key = ''; detailSort.dir = '' }
-            renderDetailTable(DEMO_OBJECTS[currentKey])
-          }
-          th.addEventListener('click', cycle)
-          th.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
-              e.preventDefault()
-              cycle()
-            }
-          })
-        })
-        var body = document.getElementById('detailBody')
-        if (body) {
-          body.addEventListener('click', function (e) {
-            var toggle = e.target.closest('[data-detail-toggle]')
-            if (toggle) {
-              var id = toggle.getAttribute('data-detail-toggle')
-              detailCollapsed[id] = !detailCollapsed[id]
-              renderDetailTable(DEMO_OBJECTS[currentKey])
-              return
-            }
-            var jump = e.target.closest('[data-detail-jump]')
-            if (jump) {
-              var key = jump.getAttribute('data-detail-jump')
-              if (DEMO_OBJECTS[key]) {
-                setObject(key)
-                showToast('已切换到 <b>' + DEMO_OBJECTS[key].label + '</b>', false)
-              }
-            }
-          })
-        }
-        var tabs = document.getElementById('detailTabs')
-        if (tabs) {
-          tabs.addEventListener('click', function (e) {
-            var btn = e.target.closest('[data-detail-energy]')
-            if (!btn) return
-            detailEnergy = btn.getAttribute('data-detail-energy')
-            detailCollapsed = {}
-            renderDetailTable(DEMO_OBJECTS[currentKey])
-          })
-        }
-        var exportBtn = document.getElementById('detailExportBtn')
-        if (exportBtn) {
-          var idle = exportBtn.innerHTML
-          exportBtn.addEventListener('click', function () {
-            if (exportBtn.disabled) return
-            var o = DEMO_OBJECTS[currentKey]
-            var energy = activeDetailEnergy(o)
-            var fileName = '能耗明细-' + (ENERGY_LABEL[energy] || energy || '能耗') + '-' + o.label + '-' + detailFileRange() + '.xlsx'
-            exportBtn.disabled = true
-            exportBtn.classList.add('is-loading')
-            exportBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-6.36 2.64"/></svg>生成中...'
-            setTimeout(function () {
-              exportBtn.disabled = false
-              exportBtn.classList.remove('is-loading')
-              exportBtn.innerHTML = idle
-              showToast('报表已生成：<b>' + fileName + '</b>', false)
-            }, reduceMotion() ? 30 : 700)
-          })
-        }
-      }
-
       function renderAllData (o) {
-        var overviewTabs = document.getElementById('overviewTabs')
-        if (overviewTabs) overviewTabs.hidden = true
-        renderOverview(o)
         renderCostCards(o)
         renderTrendCards(o)
         renderSubitems(o)
         renderEfficiency(o)
-        renderDetailTable(o)
       }
 
       /* ── 规则引擎：推导卡片集 ── */
@@ -4668,10 +3617,8 @@
         })
         var emptyA = document.getElementById('secEmptyA')
         var sectionB = document.getElementById('sec-efficiency')
-        var sectionDetail = document.getElementById('sec-detail')
         if (emptyA) emptyA.hidden = countA > 0
         if (sectionB) sectionB.hidden = countB === 0 && !document.body.classList.contains('annotation-mode')
-        if (sectionDetail) sectionDetail.hidden = !RULES.detail(o) && !document.body.classList.contains('annotation-mode')
         if (typeof window.refreshDashCharts === 'function') {
           window.refreshDashCharts()
         }
@@ -4717,8 +3664,6 @@
       }
       function setObject (key) {
         currentKey = key
-        detailEnergy = ''
-        detailCollapsed = {}
         var o = DEMO_OBJECTS[key]
         syncObjectNavigation(key)
         renderObjectChildren()
@@ -4804,7 +3749,6 @@
         if (e.key === 'Escape') {
           if (!panel.hidden) setPanelOpen(false)
           if (historyPanel && !historyPanel.hidden) setHistoryOpen(false)
-          if (meterMask && !meterMask.hidden) meterMask.hidden = true
           if (standardMask && !standardMask.hidden) closeStandardPanel()
         }
       })
@@ -4850,7 +3794,6 @@
       })
       /* 初始渲染（图表模块加载后会再统一刷新）：首屏入场 + 数字滚动 */
       syncSectionOrder()
-      initDetailInteractions()
       setObject('park')
       enterCards()
       runCountUps()
@@ -5354,54 +4297,6 @@
         })
       }
 
-      function formatOverviewY (y, unit) {
-        if (!Number.isFinite(y)) return '—'
-        var abs = Math.abs(y)
-        var text
-        if (abs >= 10000) text = (y / 10000).toFixed(1) + '万'
-        else if (abs >= 100) text = Math.round(y).toLocaleString('zh-CN')
-        else text = Number(y).toLocaleString('zh-CN', { maximumFractionDigits: 2 })
-        return text + (unit ? ' ' + unit : '')
-      }
-
-      function refreshOverviewCharts (o, seed) {
-        var api = window.__dashOverviewApi
-        if (!api || typeof api.tiles !== 'function') return
-        var labels = getEfficiencyLabels()
-        var tiles = api.tiles() || []
-        var alive = {}
-        tiles.forEach(function (tile) {
-          var key = 'overview:' + tile.key
-          alive[key] = true
-          var data = api.trendSeries(
-            'overview|' + tile.key + '|' + o.label + '|' + labels.join('|') + '|' + seed,
-            tile.base || 1,
-            !!tile.trendDown,
-            labels.length
-          )
-          ensureMiniLine({
-            key: key,
-            canvasId: api.canvasId(tile.key),
-            labels: labels,
-            data: data,
-            color: tile.color,
-            seriesLabel: tile.name,
-            quota: tile.quota,
-            formatY: function (y) { return formatOverviewY(y, tile.unit) },
-            tooltipLabel: function (ctx) {
-              if (ctx.dataset && ctx.dataset._isQuota) {
-                var q = tile.quota
-                return (q && q.label ? q.label : '额度') + '：' + (q && q.tip ? q.tip : formatOverviewY(ctx.parsed.y, tile.unit))
-              }
-              return tile.name + '：' + formatOverviewY(ctx.parsed.y, tile.unit)
-            }
-          })
-        })
-        Object.keys(charts).forEach(function (k) {
-          if (k.indexOf('overview:') === 0 && !alive[k]) destroyChart(k)
-        })
-      }
-
       function refreshEfficiencyCharts (o, seed) {
         var effApi = window.__dashEfficiencyApi
         if (!effApi || !Array.isArray(effApi.tiles)) return
@@ -5493,7 +4388,6 @@
           }
         }
         refreshEfficiencyCharts(o, seed)
-        refreshOverviewCharts(o, seed)
 
         /* 卡片/Tab 显隐切换后，让可见图表重新量测尺寸 */
         requestAnimationFrame(function () {
@@ -5513,7 +4407,7 @@
             if (cv && cv.offsetParent !== null) charts[k].chart.resize()
           })
         })
-        document.querySelectorAll('.cost-chart-panel, .trend-chart-panel, .eff-grid, #energyRow').forEach(function (el) {
+        document.querySelectorAll('.cost-chart-panel, .trend-chart-panel, .eff-grid').forEach(function (el) {
           ro.observe(el)
         })
       }

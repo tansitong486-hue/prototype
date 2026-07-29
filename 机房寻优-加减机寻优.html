@@ -652,6 +652,8 @@
     }
     .form-control:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(24,144,255,.08); }
     .form-hint { font-size:12px; color:var(--text-hint); margin-top:4px; line-height:1.5; }
+    /* 规则类说明仅批注模式显示，默认演示界面保持干净 */
+    body:not(.annotation-mode) .form-hint.field-hint-annoonly { display:none !important; }
     .form-row { display:flex; gap:10px; align-items:center; }
     .form-suffix { font-size:13px; color:var(--text-secondary); white-space:nowrap; }
     .panel-footer {
@@ -667,20 +669,35 @@
     .form-group-sm { margin-bottom:12px; }
     .form-group-sm .form-label { font-size:12px; margin-bottom:4px; }
     .form-group-sm .form-control { padding:5px 10px; font-size:12px; }
-    .rule-table-wrap {
-      border:1px solid var(--border); border-radius:var(--radius);
-      overflow:auto; margin-bottom:18px;
+    /* 规则表：对齐冷站全局寻优规则配置弹窗 */
+    .qty-rule-wrap, .analog-rule-wrap {
+      border:1px solid var(--border); border-radius:6px;
+      overflow:hidden; margin-bottom:18px;
     }
-    .rule-table { width:100%; min-width:650px; border-collapse:collapse; font-size:12px; }
-    .rule-table th {
-      background:#F8FAFC; padding:8px 10px; text-align:left;
+    .qty-rule-table, .analog-rule-table { width:100%; border-collapse:collapse; }
+    .qty-rule-table th, .analog-rule-table th {
+      background:#F8FAFC; padding:6px 10px; text-align:left;
       font-size:11px; font-weight:600; color:var(--text-secondary);
       border-bottom:1px solid var(--border); white-space:nowrap;
     }
-    .rule-table td { padding:9px 10px; border-bottom:1px solid var(--border-light); vertical-align:middle; }
-    .rule-table tr:last-child td { border-bottom:none; }
-    .rule-table tbody tr:hover { background:#FAFCFF; }
-    .rule-table .form-control { min-width:110px; padding:5px 8px; font-size:12px; }
+    .qty-rule-table td, .analog-rule-table td {
+      padding:7px 10px; font-size:12px;
+      border-bottom:1px solid var(--border-light); vertical-align:middle;
+    }
+    .qty-rule-table tr:last-child td, .analog-rule-table tr:last-child td { border-bottom:none; }
+    .qty-rule-table tbody tr:hover td, .analog-rule-table tbody tr:hover td { background:#FAFCFF; }
+    .rule-device { font-weight:600; font-size:11.5px; color:var(--text-secondary); margin-right:4px; }
+    .rule-param { font-size:11.5px; color:var(--text-primary); }
+    .analog-rule-table .form-control { padding:5px 8px; font-size:12px; }
+    .rule-num { width:88px !important; padding:3px 6px; text-align:center; }
+    .qty-radio-label {
+      display:inline-flex; align-items:center; gap:5px;
+      cursor:pointer; font-size:11.5px; white-space:nowrap; user-select:none;
+    }
+    .qty-radio-label input[type="radio"] { accent-color:var(--success); width:13px; height:13px; flex-shrink:0; }
+    .qty-radio-text { color:var(--text-secondary); }
+    .qty-radio-text.active { color:var(--success); font-weight:500; }
+    .qty-radio-stack { display:flex; flex-direction:column; gap:7px; }
     .device-type-name { font-weight:600; color:var(--text-primary); white-space:nowrap; }
     .device-type-note { display:block; margin-top:2px; color:var(--text-hint); font-size:10.5px; }
     .obj-tags .device-type-note { flex-basis:100%; margin-top:0; }
@@ -909,7 +926,7 @@
       <div class="anno anno-version-header" data-version="v2.6">
         <span class="anno-tag">版本信息</span>
         <div class="anno-body">
-          <p><b>v2.6（2026-07-24）：</b>新增<strong>寻优结果可解释性</strong>：①「寻优记录」Tab 顶部新增<strong>本轮寻优结论条</strong>，随时间快照展示建议方向、目标变化设备、安全冷量余量和参考功率项变化；②<strong>平面图空调浮窗</strong>末尾追加「调节原因」区块；③<strong>手动下发弹窗</strong>展示同一段设备原因。解释以 v2.6 L3 实际计算轨迹为唯一事实源：全局式说明设备属于满足全部约束且总目标最低的组合，增量式说明设备属于基准修正或实际采纳的邻域动作；不再用候选排名伪装单机因果。所有文案只描述本轮建议，不代表已经下发或生效，实际执行结果仍在 L4 既有下发记录中查看。`P_reference` 只可表述为「参考功率项（仅用于方案比选）」，不得写成预计省电或节能量。关机建议只复述目标组合已通过的总供冷、通道覆盖、开机台数和连续运行约束。仅 `zi` 建议目标相对真实状态变化的设备显示原因；变量表只展示真实测点和实际控制点，不加原因列、不做独立解释弹窗。规则配置改为居中弹窗，按对象类型生成开机规则；配置和平面图同步展示水冷 / 风冷 DX 类型及对应能力口径。</p>
+          <p><b>v2.6（2026-07-24）：</b>新增<strong>寻优结果可解释性</strong>：①「寻优记录」Tab 顶部新增<strong>本轮寻优结论条</strong>，随时间快照展示建议方向、目标变化设备、安全冷量余量和参考功率项变化；②<strong>平面图空调浮窗</strong>末尾追加「调节原因」区块；③<strong>手动下发弹窗</strong>展示同一段设备原因。解释以 v2.6 L3 实际计算轨迹为唯一事实源：全局式说明设备属于满足全部约束且总目标最低的组合，增量式说明设备属于基准修正或实际采纳的邻域动作；不再用候选排名伪装单机因果。所有文案只描述本轮建议，不代表已经下发或生效，实际执行结果仍在 L4 既有下发记录中查看。`P_reference` 只可表述为「参考功率项（仅用于方案比选）」，不得写成预计省电或节能量。关机建议只复述目标组合已通过的总供冷、通道覆盖、开机台数和连续运行约束。仅 `zi` 建议目标相对真实状态变化的设备显示原因；变量表只展示真实测点和实际控制点，不加原因列、不做独立解释弹窗。规则配置改为居中弹窗并对齐冷站全局寻优规则配置（现网交互）的两段式结构：上部「设备状态寻优规则」按对象类型行配置启用开关与寻优范围（全局式/增量式开机组合寻优单选、选中项绿色高亮，原公共参数「寻优模式」下拉取消），下部「模拟量初始值规则」配置开机初始控制变量与开机初始值（默认值）；冷量衰减系数 α 收敛为机房级单一超参数（安装/老化/系统侧综合衰减，默认 0.60），风冷高温差异由 F_odb 动态折减承接、不再按机型拆分；配置和平面图同步展示水冷 / 风冷 DX 类型及对应能力口径。</p>
         </div>
       </div>
 
@@ -1429,7 +1446,7 @@
             <input type="number" class="form-control" value="60" style="width:140px;">
             <span class="form-suffix">分钟</span>
           </div>
-          <div class="form-hint">定时触发寻优计算的时间间隔</div>
+          <div class="form-hint field-hint-annoonly">定时触发寻优计算的时间间隔</div>
         </div>
         <div class="form-group">
           <div class="form-label"><span class="required">*</span> 安全边界</div>
@@ -1438,7 +1455,7 @@
             <option selected>保守模式1</option>
             <option>标准模式</option>
           </select>
-          <div class="form-hint">单选，可选择当前末端系统下的安全边界</div>
+          <div class="form-hint field-hint-annoonly">单选，可选择当前末端系统下的安全边界</div>
         </div>
 
         <div class="anno anno-req" data-version="v1.0">
@@ -1458,7 +1475,7 @@
           <div class="anno-body">
             <p><b>关联模块：</b>规则配置弹窗 —「寻优规则配置」Tab</p>
             <p><b>入口：</b>顶部寻优策略卡片「规则配置」。</p>
-            <p><b>交互：</b>沿用冷站柔性寻优的居中配置弹窗；取消直接关闭不保存，保存后关闭弹窗。公共参数置顶，设备类型差异集中在「开机设备规则」表中。</p>
+            <p><b>交互：</b>沿用冷站柔性寻优的居中配置弹窗；取消直接关闭不保存，保存后关闭弹窗。规则区对齐冷站全局寻优规则配置弹窗（现网交互）的两段式结构：上部「设备状态寻优规则」按行配置启用开关与寻优范围单选（全局式/增量式开机组合寻优，选中项绿色高亮），下部「模拟量初始值规则」配置各类型设备的开机初始控制变量与开机初始值（默认值）；α/β/γ/T_run,min 收拢到「超参数配置」区统一填写。</p>
           </div>
         </div>
         <div class="anno anno-field" data-version="v2.6">
@@ -1467,13 +1484,13 @@
           <span class="anno-source">引用自需求文档</span>
           <div class="anno-body">
             <p><b>关联模块：</b>规则配置弹窗 —「寻优规则配置」Tab</p>
-            <p><b>布局与交互：</b><b>寻优周期 T_opt</b>、<b>安全边界</b>、<b>寻优算法</b>与<b>寻优模式</b>为机房级公共配置；开机初始控制变量、初始值和冷量衰减系数按当前机房实际包含的对象类型自动生成规则行。投入/投出沿用另一 Tab 已有的动态对象类型分组。</p>
+            <p><b>布局与交互：</b><b>寻优周期 T_opt</b>、<b>安全边界</b>与<b>寻优算法</b>为机房级公共配置；寻优范围（全局式/增量式）跟随设备状态规则行按对象类型配置，不再作为公共参数；设备状态与模拟量初始值规则行按当前机房实际包含的对象类型自动生成。投入/投出沿用另一 Tab 已有的动态对象类型分组。</p>
             <p><b>寻优周期 T_opt：</b>定时触发寻优计算的时间间隔（单位：分钟）；若上一轮未完成则本周期跳过。</p>
             <p><b>安全边界：</b>单选当前末端系统下的安全边界模式；约束口径含 Nmin、Nmax、Tc,max,c、Th,max,h 等。</p>
             <p><b>寻优算法：</b>必选；选定后展示对应「核心配置参数」表单，未选时该区域折叠隐藏。</p>
-            <p><b>寻优模式：</b>全局式=穷举可行组合取最优；增量式=从当前状态逐步加减机迭代。</p>
-            <p><b>开机设备规则：</b>系统按对象类型自动生成。冷冻水型可选既有设定点位；风冷 DX 可选送风或回风温度设定。混合编队分别配置初始控制值 Tset 与冷量衰减系数 α。</p>
-            <p><b>冷量冗余系数 β：</b>额外预留冷量比例，默认 0.08。<b>均衡权重系数 γ：</b>省电与气流均衡的权衡，可配置 0.01~0.50。</p>
+            <p><b>设备状态寻优规则（上部）：</b>系统按对象类型自动生成，每行配置启用开关与寻优范围。启用开关：开启表示该类型设备参与本机房加减机开关机寻优，关闭则该类设备保持现状、本轮不生成开关机建议。寻优范围单选：全局式开机组合寻优=穷举该类设备可行开机组合取最优；增量式开机组合寻优=从当前开机状态逐步加减机迭代；选中项绿色高亮，交互对齐冷站全局寻优现网弹窗。</p>
+            <p><b>模拟量初始值规则（下部）：</b>按对象类型配置开机初始控制变量与开机初始值（默认值）。冷冻水型可选既有设定点位；风冷 DX 可选送风或回风温度设定。被寻优开机的空调按该值写入初始设定，需保留两位小数。</p>
+            <p><b>冷量衰减系数 α：</b>机房级单一超参数（默认 0.60），表示安装、老化与系统侧综合衰减，不再按机型分别配置：风冷 DX 高温能力下降已由室外温度折减系数 F_odb 动态承接（水冷恒为 1），避免同一差异重复折减。<b>冷量冗余系数 β：</b>额外预留冷量比例，默认 0.08。<b>均衡权重系数 γ：</b>省电与气流均衡的权衡，可配置 0.01~0.50。</p>
             <p><b>最小连续运行时长 T_run,min：</b>单台空调自本次开机起须连续运行的最短时间（单位：分钟），属寻优<strong>硬约束</strong>：未满该时长时，本轮寻优结果不得对该机下达关机（或等效减机）指令。用于抑制频繁启停、保护压缩机与末端气流稳定；与加减机策略、T_opt 周期触发及上一轮执行状态联动校验。</p>
           </div>
         </div>
@@ -1483,81 +1500,86 @@
             <option value="">请选择寻优算法</option>
             <option value="multi-obj-switch" selected>多目标加减机寻优算法</option>
           </select>
-          <div class="form-hint">选定算法后展示对应的配置参数</div>
+          <div class="form-hint field-hint-annoonly">选定算法后展示对应的配置参数</div>
         </div>
 
         <div id="algorithmConfigArea">
 
-          <div class="form-section">公共参数</div>
-
-          <div class="form-group">
-            <div class="form-label"><span class="required">*</span> 寻优模式</div>
-            <select class="form-control">
-              <option>全局式寻优</option>
-              <option>增量式寻优</option>
-            </select>
-            <div class="form-hint">全局式：从零开始搜索最优方案；增量式：在当前状态基础上微调</div>
-          </div>
-
-          <div class="form-section">开机设备规则</div>
-          <div class="rule-table-wrap">
-            <table class="rule-table">
+          <div class="form-section">设备状态寻优规则</div>
+          <div class="qty-rule-wrap">
+            <table class="qty-rule-table">
               <thead>
                 <tr>
-                  <th>设备类型</th>
-                  <th>开机初始控制变量<span class="required">*</span></th>
-                  <th>初始控制值 Tset<span class="required">*</span></th>
-                  <th>冷量衰减系数 α<span class="required">*</span></th>
+                  <th>规则名称</th>
+                  <th style="width:76px;">启用开关</th>
+                  <th style="width:180px;">寻优范围</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td><span class="device-type-name">冷冻水型精密空调</span><span class="device-type-note">当前机房 8 台</span></td>
-                  <td><select class="form-control"><option selected>送风温度设定</option><option>回风温度设定</option><option>风机转速上限设定</option></select></td>
-                  <td><div class="form-row"><input type="number" class="form-control" value="24.50" step="0.01"><span class="form-suffix">℃</span></div></td>
-                  <td><input type="number" class="form-control" value="0.60" min="0.01" max="1" step="0.01"></td>
+                  <td><span class="rule-device">冷冻水型精密空调</span><span class="rule-param" style="color:var(--text-secondary);">运行状态</span><span class="device-type-note">当前机房 8 台</span></td>
+                  <td><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></td>
+                  <td>
+                    <div class="qty-radio-stack">
+                      <label class="qty-radio-label"><input type="radio" name="jjScope0" value="global" checked> <span class="qty-radio-text active">全局式开机组合寻优</span></label>
+                      <label class="qty-radio-label"><input type="radio" name="jjScope0" value="incremental"> <span class="qty-radio-text">增量式开机组合寻优</span></label>
+                    </div>
+                  </td>
                 </tr>
                 <tr>
-                  <td><span class="device-type-name">风冷 DX 精密空调</span><span class="device-type-note">当前机房 4 台</span></td>
-                  <td><select class="form-control"><option selected>回风温度设定</option><option>送风温度设定</option></select></td>
-                  <td><div class="form-row"><input type="number" class="form-control" value="24.00" step="0.01"><span class="form-suffix">℃</span></div></td>
-                  <td><input type="number" class="form-control" value="0.55" min="0.01" max="1" step="0.01"></td>
+                  <td><span class="rule-device">风冷 DX 精密空调</span><span class="rule-param" style="color:var(--text-secondary);">运行状态</span><span class="device-type-note">当前机房 4 台</span></td>
+                  <td><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></td>
+                  <td>
+                    <div class="qty-radio-stack">
+                      <label class="qty-radio-label"><input type="radio" name="jjScope1" value="global" checked> <span class="qty-radio-text active">全局式开机组合寻优</span></label>
+                      <label class="qty-radio-label"><input type="radio" name="jjScope1" value="incremental"> <span class="qty-radio-text">增量式开机组合寻优</span></label>
+                    </div>
+                  </td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          <div class="form-section">目标与约束参数</div>
-          <div class="form-group" style="display:none;">
-            <div class="form-label">开机设备初始控制变量</div>
-            <select class="form-control">
-              <option>请选择</option>
-              <option selected>送风温度设定</option>
-            </select>
-            <div class="form-hint">可选择"冷冻水型精密空调"的设定点位，即空调开机后需要调节的具体参数位置</div>
+          <div class="form-section">模拟量初始值规则</div>
+          <div class="analog-rule-wrap">
+            <table class="analog-rule-table">
+              <thead>
+                <tr>
+                  <th style="width:150px;">设备类型</th>
+                  <th>开机初始控制变量<span class="required">*</span></th>
+                  <th style="width:136px;">开机初始值（默认值）<span class="required">*</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="rule-device">冷冻水型精密空调</span></td>
+                  <td><select class="form-control"><option selected>送风温度设定</option><option>回风温度设定</option><option>风机转速上限设定</option></select></td>
+                  <td><div class="form-row" style="gap:6px;"><input type="number" class="form-control rule-num" value="24.50" step="0.01"><span class="form-suffix">℃</span></div></td>
+                </tr>
+                <tr>
+                  <td><span class="rule-device">风冷 DX 精密空调</span></td>
+                  <td><select class="form-control"><option selected>回风温度设定</option><option>送风温度设定</option></select></td>
+                  <td><div class="form-row" style="gap:6px;"><input type="number" class="form-control rule-num" value="24.00" step="0.01"><span class="form-suffix">℃</span></div></td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <div class="form-group" style="display:none;">
-            <div class="form-label">开机设备初始控制值 Tset</div>
-            <div class="form-row">
-              <input type="number" class="form-control" value="24.50" step="0.01" style="width:140px;">
-              <span class="form-suffix">℃</span>
-            </div>
-            <div class="form-hint">空调开机后调节参数的初始数值，需保留两位小数</div>
-          </div>
-          <div class="form-group" style="display:none;">
+
+          <div class="form-section">超参数配置</div>
+          <div class="form-group">
             <div class="form-label"><span class="required">*</span> 冷量衰减系数 α</div>
-            <input type="number" class="form-control" value="0.60" step="0.01">
-            <div class="form-hint">空调实际能发挥的冷量，是额定制冷量的百分比（默认60%）</div>
+            <input type="number" class="form-control" value="0.60" min="0.01" max="1" step="0.01">
+            <div class="form-hint field-hint-annoonly">机房统一配置：实际可发挥冷量占额定制冷量的比例（默认 0.60），表示安装、老化与系统侧综合衰减；风冷 DX 高温影响由室外温度折减系数 F_odb 自动收紧，不在此按机型区分</div>
           </div>
           <div class="form-group">
             <div class="form-label"><span class="required">*</span> 冷量冗余系数 β</div>
             <input type="number" class="form-control" value="0.08" step="0.01">
-            <div class="form-hint">额外预留的冷量比例（默认8%）</div>
+            <div class="form-hint field-hint-annoonly">额外预留的冷量比例（默认8%）</div>
           </div>
           <div class="form-group">
             <div class="form-label"><span class="required">*</span> 均衡权重系数 γ</div>
             <input type="number" class="form-control" value="0.10" step="0.01" min="0.01" max="0.50">
-            <div class="form-hint">控制"省电"与"气流均衡"的权衡程度，值越大越重视气流均衡，可配置范围 0.01~0.50</div>
+            <div class="form-hint field-hint-annoonly">控制"省电"与"气流均衡"的权衡程度，值越大越重视气流均衡，可配置范围 0.01~0.50</div>
           </div>
           <div class="form-group">
             <div class="form-label"><span class="required">*</span> 最小连续运行时长 T_run,min</div>
@@ -1565,7 +1587,7 @@
               <input type="number" class="form-control" value="20" style="width:100px;">
               <span class="form-suffix">分钟</span>
             </div>
-            <div class="form-hint">空调开机后允许关机前需满足的最短连续运行时间</div>
+            <div class="form-hint field-hint-annoonly">空调开机后允许关机前需满足的最短连续运行时间</div>
           </div>
 
           <div class="anno anno-field" data-version="v1.0" style="margin-top:4px;">
@@ -3044,7 +3066,9 @@ renderDispatchTable();
 
 document.querySelectorAll('.toggle-switch input').forEach(sw => {
   sw.addEventListener('change', function() {
-    const status = this.closest('.io-item').querySelector('.io-status');
+    const io = this.closest('.io-item');
+    if (!io) return;
+    const status = io.querySelector('.io-status');
     if (this.checked) {
       status.textContent = '投入';
       status.className = 'io-status in';
@@ -3052,6 +3076,17 @@ document.querySelectorAll('.toggle-switch input').forEach(sw => {
       status.textContent = '投出';
       status.className = 'io-status out';
     }
+  });
+});
+
+// 设备状态寻优规则：寻优范围单选选中项绿色高亮（对齐冷站全局寻优现网交互）
+document.querySelectorAll('.qty-rule-table input[type="radio"]').forEach(radio => {
+  radio.addEventListener('change', function() {
+    const name = this.getAttribute('name');
+    document.querySelectorAll('[name="' + name + '"]').forEach(r => {
+      const txt = r.closest('.qty-radio-label').querySelector('.qty-radio-text');
+      txt.classList.toggle('active', r.checked);
+    });
   });
 });
 
