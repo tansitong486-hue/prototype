@@ -1,0 +1,2907 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 节能 v2.5 — 指标工厂消费侧需求方案（存量页面 / 总览看板 / 平台数据项选择器）</title>
+<link rel="icon" href="data:,">
+<style>
+:root {
+  --bg: #f5f7f8;
+  --surface: #ffffff;
+  --surface-muted: #f8fafb;
+  --text: #20262d;
+  --muted: #68727d;
+  --line: #dce2e7;
+  --line-strong: #c8d0d7;
+  --accent: #087f78;
+  --accent-soft: #e7f6f4;
+  --blue: #2563a6;
+  --blue-soft: #edf5fc;
+  --amber: #a65d08;
+  --amber-soft: #fff6e7;
+  --red: #b33a3a;
+  --red-soft: #fff0f0;
+  --purple: #6d4ea0;
+  --code-bg: #18212b;
+  --sidebar: 292px;
+  --content: 980px;
+  --font: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+  --mono: "SFMono-Regular", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  color: var(--text);
+  background: var(--bg);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.72;
+}
+button, input { font: inherit; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 100;
+  transform: translateY(-140%);
+  background: var(--text);
+  color: #fff;
+  padding: 7px 10px;
+  border-radius: 4px;
+}
+.skip-link:focus { transform: translateY(0); }
+.layout {
+  display: grid;
+  grid-template-columns: var(--sidebar) minmax(0, 1fr);
+  min-height: 100vh;
+}
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: auto;
+  padding: 20px 14px 28px;
+  color: #d9e0e5;
+  background: #1d252d;
+  border-right: 1px solid #111820;
+}
+.brand {
+  padding: 0 10px 16px;
+  border-bottom: 1px solid #38424c;
+  margin-bottom: 14px;
+}
+.brand strong {
+  display: block;
+  color: #f7fafc;
+  font-size: 15px;
+  font-weight: 650;
+}
+.brand span {
+  display: block;
+  color: #94a3af;
+  font-size: 12px;
+  margin-top: 3px;
+}
+.toc-kicker {
+  padding: 0 10px 7px;
+  color: #8c9aa6;
+  font-size: 11px;
+  font-weight: 650;
+}
+#TOC ul { list-style: none; margin: 0; padding: 0; }
+#TOC li { position: relative; margin: 1px 0; }
+#TOC li > ul { display: none; padding-left: 12px; }
+#TOC li.is-open > ul { display: block; }
+#TOC a {
+  display: block;
+  min-height: 30px;
+  padding: 5px 8px 5px 28px;
+  border-radius: 5px;
+  color: #c8d1d8;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+#TOC > ul > li > a { color: #edf2f5; font-weight: 620; }
+#TOC a:hover, #TOC a.is-active {
+  color: #fff;
+  background: rgba(33, 169, 156, .2);
+  text-decoration: none;
+}
+.toc-toggle {
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  width: 22px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  color: #8fa0ad;
+  background: transparent;
+  cursor: pointer;
+}
+.toc-toggle::before { content: "›"; display: block; font-size: 18px; line-height: 20px; }
+li.is-open > .toc-toggle::before { transform: rotate(90deg); }
+.toc-toggle:hover { color: #fff; }
+.main { min-width: 0; }
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+  padding: 8px 18px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 255, 255, .96);
+  backdrop-filter: blur(10px);
+}
+.icon-btn, .utility-btn {
+  height: 34px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+.icon-btn {
+  display: none;
+  width: 34px;
+  padding: 0;
+  font-size: 20px;
+  border-radius: 5px;
+}
+.utility-btn { padding: 0 10px; border-radius: 5px; font-size: 12.5px; white-space: nowrap; }
+.icon-btn:hover, .utility-btn:hover { border-color: var(--accent); color: var(--accent); }
+.search {
+  position: relative;
+  flex: 1 1 260px;
+  max-width: 390px;
+}
+.search input {
+  width: 100%;
+  height: 34px;
+  padding: 6px 12px 6px 32px;
+  color: var(--text);
+  background: var(--surface-muted);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  outline: none;
+}
+.search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(8, 127, 120, .12); }
+.search::before {
+  content: "⌕";
+  position: absolute;
+  left: 10px;
+  top: 3px;
+  color: var(--muted);
+  font-size: 20px;
+  pointer-events: none;
+}
+.search-results {
+  position: absolute;
+  top: 39px;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  max-height: 360px;
+  overflow: auto;
+  padding: 5px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  box-shadow: 0 12px 30px rgba(27, 39, 49, .16);
+}
+.search-results[hidden] { display: none; }
+.search-result {
+  display: block;
+  width: 100%;
+  padding: 8px 9px;
+  border: 0;
+  border-radius: 4px;
+  color: var(--text);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.search-result:hover, .search-result.is-active { background: var(--accent-soft); }
+.search-result strong { display: block; font-size: 12.5px; }
+.search-result span { display: block; color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+.segmented {
+  display: inline-flex;
+  flex: 0 0 auto;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface-muted);
+}
+.segmented button {
+  min-height: 28px;
+  padding: 3px 8px;
+  border: 0;
+  border-radius: 4px;
+  color: var(--muted);
+  background: transparent;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.segmented button:hover { color: var(--text); }
+.segmented button[aria-pressed="true"] { color: #fff; background: var(--accent); }
+.top-meta { margin-left: auto; color: var(--muted); font-size: 12px; white-space: nowrap; }
+.content {
+  max-width: calc(var(--content) + 80px);
+  margin: 0 auto;
+  padding: 34px 40px 90px;
+}
+#document {
+  min-width: 0;
+  padding: 0 4px;
+}
+h1, h2, h3, h4, section[id] { letter-spacing: 0; scroll-margin-top: 72px; }
+h1 {
+  max-width: 800px;
+  margin: 0 0 18px;
+  font-size: 30px;
+  line-height: 1.32;
+  font-weight: 700;
+}
+h2 {
+  margin: 50px 0 16px;
+  padding-top: 14px;
+  border-top: 2px solid var(--line);
+  font-size: 23px;
+  line-height: 1.4;
+}
+section.level2:first-of-type h2 { margin-top: 26px; }
+h3 { margin: 30px 0 12px; font-size: 18px; line-height: 1.45; }
+h4 { margin: 22px 0 9px; font-size: 15.5px; line-height: 1.5; color: #38434d; }
+p { margin: 0 0 12px; }
+ul, ol { margin: 0 0 14px; padding-left: 1.35em; }
+li { margin: 4px 0; }
+hr { margin: 30px 0; border: 0; border-top: 1px dashed var(--line-strong); }
+strong { font-weight: 650; }
+code {
+  padding: .08em .32em;
+  border: 1px solid #dce4e8;
+  border-radius: 4px;
+  color: #214b55;
+  background: #f1f6f7;
+  font-family: var(--mono);
+  font-size: .9em;
+}
+pre {
+  margin: 14px 0 20px;
+  padding: 14px 16px;
+  overflow: auto;
+  border-radius: 6px;
+  color: #dce7ef;
+  background: var(--code-bg);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.58;
+}
+pre code { padding: 0; border: 0; color: inherit; background: transparent; }
+blockquote {
+  margin: 14px 0 18px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--blue);
+  border-radius: 6px;
+  background: var(--blue-soft);
+}
+blockquote p:last-child, blockquote ul:last-child { margin-bottom: 0; }
+blockquote.callout-meta { border-left-color: #667786; background: var(--surface-muted); }
+blockquote.callout-guide { border-left-color: var(--accent); background: var(--accent-soft); }
+blockquote.callout-boundary { border-left-color: var(--amber); background: var(--amber-soft); }
+blockquote.callout-open { border-left-color: var(--red); background: var(--red-soft); }
+.table-wrap { width: 100%; margin: 14px 0 20px; overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+.table-wrap table { width: 100%; margin: 0; border-collapse: collapse; font-size: 13.2px; }
+th, td { min-width: 90px; padding: 9px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { color: #35414b; background: #f0f3f5; font-weight: 650; }
+tr:last-child td { border-bottom: 0; }
+tbody tr:nth-child(even) td { background: #fbfcfc; }
+.mermaid-shell {
+  margin: 16px 0 22px;
+  padding: 16px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+}
+.mermaid-shell pre.mermaid,
+.mermaid-shell .mermaid {
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  color: var(--text);
+  background: transparent;
+}
+.mermaid-shell svg { display: block; max-width: none; margin: 0 auto; }
+.fold-control {
+  min-height: 30px;
+  margin: 1px 0 10px;
+  padding: 4px 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  color: var(--accent);
+  background: var(--surface);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.fold-control:hover { background: var(--accent-soft); }
+.foldable.is-collapsed > :not(h3):not(h4):not(.fold-control) { display: none; }
+.focus-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 22px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--muted);
+  background: var(--surface-muted);
+  font-size: 12.5px;
+}
+.focus-banner[hidden] { display: none; }
+.focus-banner button { border: 0; color: var(--accent); background: transparent; cursor: pointer; }
+section[hidden] { display: none !important; }
+.backdrop { display: none; }
+.search-focus { outline: 3px solid rgba(8, 127, 120, .22); outline-offset: 5px; }
+@media (max-width: 1120px) {
+  .top-meta { display: none; }
+  .segmented button { padding-inline: 6px; }
+}
+@media (max-width: 920px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 60;
+    width: min(86vw, 320px);
+    transform: translateX(-105%);
+    transition: transform .18s ease;
+  }
+  body.nav-open .sidebar { transform: translateX(0); }
+  body.nav-open .backdrop { display: block; position: fixed; inset: 0; z-index: 50; background: rgba(20, 28, 35, .48); }
+  .icon-btn { display: inline-block; }
+  .topbar { flex-wrap: wrap; padding: 8px 10px; }
+  .search { max-width: none; flex: 1 1 240px; }
+  .segmented { order: 3; width: 100%; overflow-x: auto; }
+  .segmented button { flex: 1 0 auto; }
+  .content { padding: 26px 18px 70px; }
+  h1 { font-size: 27px; }
+}
+@media (max-width: 560px) {
+  body { font-size: 14.5px; }
+  .utility-btn { padding-inline: 8px; }
+  .content { padding: 22px 13px 60px; }
+  h1 { font-size: 24px; }
+  h2 { margin-top: 42px; font-size: 20px; }
+  h3 { font-size: 17px; }
+  th, td { padding: 8px; min-width: 110px; }
+  .focus-banner { align-items: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .sidebar { transition: none; }
+}
+@media print {
+  body { background: #fff; font-size: 11pt; }
+  .layout { display: block; }
+  .sidebar, .topbar, .backdrop, .focus-banner, .fold-control { display: none !important; }
+  .content { max-width: none; padding: 0; }
+  #document { padding: 0; }
+  section[hidden], .foldable.is-collapsed > * { display: block !important; }
+  h2, h3, h4 { break-after: avoid; }
+  table, blockquote, .mermaid-shell { break-inside: avoid; }
+}
+
+.proto-embed {
+  margin: 18px 0 28px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.proto-embed-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-muted);
+}
+.proto-embed-head strong { font-size: 13.5px; }
+.proto-embed-head span { color: var(--muted); font-size: 12px; }
+.proto-embed-head .proto-tag {
+  display: inline-flex; align-items: center; height: 20px; padding: 0 7px;
+  border-radius: 4px; background: var(--accent-soft); color: var(--accent);
+  font-size: 11px; font-weight: 650;
+}
+.proto-fs-btn {
+  margin-left: auto; height: 30px; padding: 0 12px;
+  border: 1px solid var(--line-strong); border-radius: 5px;
+  background: var(--surface); color: var(--text); font-size: 12.5px;
+  cursor: pointer; white-space: nowrap;
+}
+.proto-fs-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.proto-frame {
+  display: block; width: 100%; height: min(78vh, 920px);
+  border: 0; background: #fff;
+}
+.proto-gallery > .proto-embed { margin-top: 14px; }
+.proto-embed:fullscreen,
+.proto-embed.is-fs {
+  position: fixed; inset: 0; z-index: 200; width: 100vw; height: 100vh;
+  margin: 0; border: 0; border-radius: 0; display: flex; flex-direction: column;
+  background: #fff;
+}
+.proto-embed:fullscreen .proto-embed-head,
+.proto-embed.is-fs .proto-embed-head { flex-shrink: 0; }
+.proto-embed:fullscreen .proto-frame,
+.proto-embed.is-fs .proto-frame { flex: 1 1 auto; height: auto !important; min-height: 0; }
+body.proto-fs-open { overflow: hidden; }
+@media print {
+  .proto-embed { break-inside: avoid; }
+  .proto-frame { height: 640px; }
+  .proto-fs-btn { display: none !important; }
+}
+
+</style>
+</head>
+<body>
+<a class="skip-link" href="#document">跳到正文</a>
+<div class="backdrop" id="backdrop"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <strong>AI 节能 v2.5</strong>
+      <span>消费侧 · 存量页面 / 总览看板 / 选择器</span>
+    </div>
+    <div class="toc-kicker">文档目录</div>
+    <nav id="TOC" role="doc-toc" aria-label="文档目录">
+
+<ul>
+<li><a
+href="#ai-节能-v2.5-指标工厂消费侧需求方案存量页面-总览看板-平台数据项选择器"
+id="toc-ai-节能-v2.5-指标工厂消费侧需求方案存量页面-总览看板-平台数据项选择器">AI
+节能 v2.5 — 指标工厂消费侧需求方案（存量页面 / 总览看板 /
+平台数据项选择器）</a>
+<ul>
+<li><a href="#一背景与文档定位"
+id="toc-一背景与文档定位">一、背景与文档定位</a>
+<ul>
+<li><a href="#拆分说明" id="toc-拆分说明">1.1 拆分说明</a></li>
+<li><a href="#消费面划分应用内-vs-平台侧"
+id="toc-消费面划分应用内-vs-平台侧">1.2 消费面划分：应用内 vs
+平台侧</a></li>
+<li><a href="#总览看板定位" id="toc-总览看板定位">1.3
+总览看板定位</a></li>
+</ul></li>
+<li><a href="#二需求-8存量页面消费需求-5-指标工厂产出"
+id="toc-二需求-8存量页面消费需求-5-指标工厂产出">二、需求
+8：存量页面消费需求 5 指标工厂产出</a>
+<ul>
+<li><a href="#逐页消费清单" id="toc-逐页消费清单">2.1 逐页消费清单</a>
+<ul>
+<li><a href="#三个存量页面" id="toc-三个存量页面">三个存量页面</a></li>
+</ul></li>
+<li><a href="#共性消费要求" id="toc-共性消费要求">2.2
+共性消费要求</a></li>
+<li><a href="#移除用能趋势预测伪需求本版下线"
+id="toc-移除用能趋势预测伪需求本版下线">2.3
+移除「用能趋势预测」（伪需求，本版下线）</a></li>
+<li><a href="#用能对比分析标准化指标对比改版"
+id="toc-用能对比分析标准化指标对比改版">2.4
+用能对比分析：标准化指标对比改版</a>
+<ul>
+<li><a href="#背景与目标" id="toc-背景与目标">2.4.1 背景与目标</a></li>
+<li><a href="#控件调整移除三项新增两项"
+id="toc-控件调整移除三项新增两项">2.4.2
+控件调整：移除三项、新增两项</a></li>
+<li><a href="#指标目录首版" id="toc-指标目录首版">2.4.3
+指标目录（首版）</a></li>
+<li><a href="#对象可选性与交互" id="toc-对象可选性与交互">2.4.4
+对象可选性与交互</a></li>
+<li><a href="#数据口径" id="toc-数据口径">2.4.5 数据口径</a></li>
+<li><a href="#本期不做" id="toc-本期不做">2.4.6 本期不做</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#三需求-9总览看板" id="toc-三需求-9总览看板">三、需求
+9：总览看板</a>
+<ul>
+<li><a href="#页面目标" id="toc-页面目标">3.1 页面目标</a></li>
+<li><a href="#页面结构" id="toc-页面结构">3.2 页面结构</a></li>
+<li><a href="#顶部筛选区" id="toc-顶部筛选区">3.3 顶部筛选区</a></li>
+<li><a href="#自动生成规则" id="toc-自动生成规则">3.4
+自动生成规则</a></li>
+<li><a href="#能耗成本" id="toc-能耗成本">3.5 能耗成本</a></li>
+<li><a href="#能耗趋势与流向" id="toc-能耗趋势与流向">3.6
+能耗趋势与流向</a>
+<ul>
+<li><a href="#type-趋势分析与流向分析"
+id="toc-type-趋势分析与流向分析">3.6.1 Type：趋势分析 /
+流向分析</a></li>
+<li><a href="#流向分析与顶部对象联动"
+id="toc-流向分析与顶部对象联动">3.6.2
+流向分析与顶部对象联动</a></li>
+<li><a href="#趋势与流向共用规则" id="toc-趋势与流向共用规则">3.6.3
+共用规则</a></li>
+</ul></li>
+<li><a href="#能效指标总览" id="toc-能效指标总览">3.7
+能效指标总览</a></li>
+<li><a href="#能效等级标准弹层" id="toc-能效等级标准弹层">3.8
+能效等级标准弹层</a></li>
+<li><a href="#数据口径-1" id="toc-数据口径-1">3.9 数据口径</a></li>
+</ul></li>
+<li><a href="#四平台侧消费指标工厂需求-1012-总览"
+id="toc-四平台侧消费指标工厂需求-1012-总览">四、平台侧消费指标工厂：需求
+10–12 总览</a>
+<ul>
+<li><a href="#现状基线" id="toc-现状基线">4.1 现状基线</a></li>
+<li><a href="#拆分与依赖" id="toc-拆分与依赖">4.2 拆分与依赖</a></li>
+<li><a href="#公共约束需求-1012-共同遵守"
+id="toc-公共约束需求-1012-共同遵守">4.3 公共约束（需求 10–12
+共同遵守）</a>
+<ul>
+<li><a href="#核心原则指标与测点并列不互相伪装"
+id="toc-核心原则指标与测点并列不互相伪装">4.3.1
+核心原则：指标与测点并列，不互相伪装</a></li>
+<li><a href="#沿用能效视图已定的指标呈现口径"
+id="toc-沿用能效视图已定的指标呈现口径">4.3.2
+沿用《能效视图》已定的指标呈现口径</a></li>
+<li><a href="#数据项模型与树上挂载" id="toc-数据项模型与树上挂载">4.3.3
+数据项模型与树上挂载</a></li>
+</ul></li>
+<li><a href="#整组不做项需求-1012-共同"
+id="toc-整组不做项需求-1012-共同">4.4 整组不做项（需求 10–12
+共同）</a></li>
+<li><a href="#原型与需求对照" id="toc-原型与需求对照">4.5
+原型与需求对照</a></li>
+</ul></li>
+<li><a href="#五需求-10报表选择测点弹窗"
+id="toc-五需求-10报表选择测点弹窗">五、需求
+10：报表「选择测点」弹窗</a>
+<ul>
+<li><a href="#原型-报表选择测点弹窗" id="toc-原型-报表选择测点弹窗">5.1
+原型（对照看批注）</a></li>
+<li><a href="#外层已选清单" id="toc-外层已选清单">5.2
+场景①：外层已选清单</a></li>
+<li><a href="#按实例添加" id="toc-按实例添加">5.3
+场景②：按实例添加</a></li>
+<li><a href="#按模型添加" id="toc-按模型添加">5.4
+场景③：按模型添加</a></li>
+<li><a href="#参数查询语义收敛" id="toc-参数查询语义收敛">5.5
+场景④：参数查询语义收敛</a></li>
+<li><a href="#查询方案配置" id="toc-查询方案配置">5.6
+查询方案配置</a></li>
+</ul></li>
+<li><a href="#六需求-11报表节点-测点树"
+id="toc-六需求-11报表节点-测点树">六、需求 11：报表节点-测点树</a>
+<ul>
+<li><a href="#原型-报表节点测点树选指标"
+id="toc-原型-报表节点测点树选指标">6.1 原型（对照看批注）</a></li>
+<li><a href="#原始数据查询" id="toc-原始数据查询">6.2
+场景①：原始数据查询</a></li>
+<li><a href="#运行极值查询" id="toc-运行极值查询">6.3
+场景②：运行极值查询</a></li>
+<li><a href="#两页共用规则" id="toc-两页共用规则">6.4
+两页共用规则</a></li>
+</ul></li>
+<li><a href="#七需求-12融合组态变量树"
+id="toc-七需求-12融合组态变量树">七、需求 12：融合组态变量树</a>
+<ul>
+<li><a href="#原型-融合组态变量树选指标"
+id="toc-原型-融合组态变量树选指标">7.1 原型（对照看批注）</a></li>
+<li><a href="#变量树与属性面板" id="toc-变量树与属性面板">7.2
+场景①：变量树与图元绑定</a></li>
+<li><a href="#图元兼容矩阵" id="toc-图元兼容矩阵">7.3
+场景②：图元兼容矩阵</a></li>
+<li><a href="#刷新与失效" id="toc-刷新与失效">7.4 刷新与失效</a></li>
+</ul></li>
+<li><a href="#八待确认问题"
+id="toc-八待确认问题">八、待确认问题</a></li>
+<li><a href="#九验收标准初稿"
+id="toc-九验收标准初稿">九、验收标准（初稿）</a>
+<ul>
+<li><a href="#需求-8-9" id="toc-需求-8-9">需求 8 / 9</a></li>
+<li><a href="#验收-需求-10" id="toc-验收-需求-10">需求
+10：报表「选择测点」弹窗</a></li>
+<li><a href="#验收-需求-11" id="toc-验收-需求-11">需求
+11：报表节点-测点树</a></li>
+<li><a href="#验收-需求-12" id="toc-验收-需求-12">需求
+12：融合组态变量树</a></li>
+<li><a href="#需求-1012-公共" id="toc-需求-1012-公共">需求 10–12
+公共</a></li>
+</ul></li>
+</ul></li>
+</ul>
+
+    </nav>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn" id="menu-toggle" type="button" aria-label="打开目录" title="目录">≡</button>
+      <div class="search">
+        <input id="doc-search" type="search" placeholder="搜索章节、规则或原型" autocomplete="off" aria-label="搜索文档">
+        <div class="search-results" id="search-results" role="listbox" hidden></div>
+      </div>
+      <div class="segmented" id="focus-filter" role="group" aria-label="交付范围筛选">
+        <button type="button" data-view="all" aria-pressed="true">全部</button>
+        <button type="button" data-view="new" aria-pressed="false">新增</button>
+        <button type="button" data-view="changed" aria-pressed="false">改造</button>
+        <button type="button" data-view="open" aria-pressed="false">未决</button>
+      </div>
+      <button class="utility-btn" id="detail-toggle" type="button">展开细则</button>
+      <span class="top-meta">初稿 · 2026-07-29 流向并入总览</span>
+    </header>
+    <div class="content">
+      <div class="focus-banner" id="focus-banner" hidden>
+        <span id="focus-copy"></span>
+        <button type="button" id="focus-reset">显示全部</button>
+      </div>
+      <article id="document">
+
+<section
+id="ai-节能-v2.5-指标工厂消费侧需求方案存量页面-总览看板-平台数据项选择器"
+class="level1">
+<h1>AI 节能 v2.5 — 指标工厂消费侧需求方案（存量页面 / 总览看板 /
+平台数据项选择器）</h1>
+<blockquote>
+<p>版本：v2.5 状态：初稿 / 原型已内嵌（需求 10–12
+的原型嵌在各自需求章内，说明写在原型下方，对照看即可） 维护方式：本 HTML
+为唯一维护源；<code>05-原型/AI原型html/</code> 不再保留对应独立页。
+范围：v2.5 需求 8（存量页面消费指标工厂产出）、需求 9（总览看板）、需求
+10–12（平台侧报表与融合组态消费指标工厂，<strong>按三份原型拆为 3
+条</strong>：弹窗 / 节点-测点树 / 组态变量树）。上游”累计量 →
+表具核算明细（归档）→ 对象指标（能耗 / 成本 /
+能效，注册指标工厂，查询时按当前拓扑计算）“的明细引擎与面向选择器的指标选取服务（需求
+1–7）见同版本另册<a
+href="./基于计费的能耗明细系统需求方案与架构.html">《基于计费的能耗明细系统需求方案与架构》</a>
+<strong>修订（2026-07-29）：</strong>原独立页「能耗流向分析」侧栏入口移除，桑基流向能力并入需求
+9「能耗趋势与流向」卡（type：趋势分析 / 流向分析）；流向节点点击切换顶部分析对象，不做组件内下钻。
+前置依赖（均由明细引擎册交付）：</p>
+<ul>
+<li>需求 1：能源类型与累积量测点（含标煤 / CO₂ 折算系数）</li>
+<li>需求 3：「能耗计量」关系对象 / 按能源类型分域的计量拓扑（关系带输入
+/ 输出计量方向）</li>
+<li>需求
+4：计费方案应用与表具核算明细成本属性（含单价快照、分时时段）</li>
+<li>需求 5：对象指标定义与指标工厂查询计算——首版清单见明细引擎册
+§6.3（P0：A1 能耗用量 / A2 能耗成本 / A3 分时成本；P1：B1–B5
+PUE/CLF/PLF/OLF/WUE 实时值+周期值 + C1
+实时能耗值）；实时值与统计指标均查询时按当前拓扑计算、对象层不落库（含完整性标记）；页面统一消费指标工厂产出</li>
+<li>需求 5 指标两层定义（明细引擎册
+§6.2）：指标定义<strong>按物模型（类型）注册</strong>并对继承子模型实例生效，实例指标自动派生；消费方可按
+<code>(物模型, 指标)</code> 或 <code>(实例, 指标, 入参)</code>
+两种方式选取同一指标。本册的组件出现规则与「按对象类型批量添加」据此成立，不再各自维护对象类型白名单</li>
+<li>需求 6：指标选取服务（明细引擎册
+§七）——面向选择器的指标目录查询、可算状态批量判定、入参展开、引用有效性校验四类接口。<strong>需求
+10 / 11 / 12 指标部分的直接前置</strong>（需求 10
+的视图扩展部分不依赖），三处选择器的指标清单、命名与可算状态均同源于此</li>
+</ul>
+<p>平台侧口径依据（需求 10–12）：<a
+href="./R5-KE%20平台-数据工厂/11-数据工厂产品思路（面聊结论整合版）.md">《数据工厂产品思路（面聊结论整合版）》</a>、<a
+href="./R5-KE%20平台-数据工厂/08-现场扩展与统计矩阵边界设计.md">《现场扩展与统计矩阵边界设计》</a>；指标呈现口径沿用<a
+href="../../05-原型/AI原型html/能效视图.html">能效视图</a>节点详情「指标列表」Tab
+面向对象：用户-运维 / 能源管理员 / 管理人员、内部-实施人员 优先级：需求
+8 ★★★★☆（P0）／ 需求 9 ★★★★☆（P1）／ 需求 10 ★★★☆☆（P1）／ 需求 11
+★★☆☆☆（P2）／ 需求 12 ★★☆☆☆（P2）</p>
+</blockquote>
+<hr />
+<section id="一背景与文档定位" class="level2">
+<h2>一、背景与文档定位</h2>
+<section id="拆分说明" class="level3">
+<h3>1.1 拆分说明</h3>
+<p>v2.5
+原以单册《基于计费的能耗明细系统需求方案与架构》统一承载全部需求。其中<strong>数据生产侧</strong>（表具核算明细归档、VEE、计量拓扑（含计量方向）、计费属性、对象指标注册指标工厂并查询时计算，以及面向选择器的指标选取服务）与<strong>消费侧</strong>（存量页面改造取数口径、总览看板、平台侧选择器扩展）关注点不同、评审对象不同、开发归属不同，自本稿起拆分：</p>
+<ul>
+<li><strong>明细引擎册</strong>（需求
+1–7）：数据如何从累计读数变成指标工厂内可直接查看、可消费的对象指标（能耗
+/ 成本 / 能效），以及这些指标如何以稳定契约被选择器取用；</li>
+<li><strong>本册</strong>（需求
+8–12）：页面如何消费指标工厂产出，包括节能管理应用内的存量分析页与总览看板，以及平台侧报表
+/ 融合组态的数据项选择器扩展。</li>
+</ul>
+<p>v2.5 需求编号全版本连续（1–12），跨册引用时直接以”需求 N”指代。</p>
+<p>平台侧消费最初写作单条需求，因横跨指标工厂服务端、报表前端两套独立组件、融合组态前端共三个开发归属，现拆为<strong>三条消费侧需求（10–12）</strong>+
+一条生产侧服务（需求 6，已归入明细引擎册）。<strong>三条消费侧需求与三份原型一一对应</strong>——一条需求
+= 一个可独立派工的组件 =
+一份原型，需求说明直接写在原型下方，评审时对照原型看，不再另立平行长文；拆分依据与依赖见
+§4.2。<strong>需求 6
+之所以放在明细引擎册而不留在本册</strong>：它是指标工厂对外暴露的服务能力，产出方是数据工厂服务端，与本册”页面如何消费”不属同一评审对象；留在消费侧会让服务端开发去读一本满是页面交互的册子。</p>
+<p><strong>与 2026-07-29 前稿的编号对照</strong>（旧评审意见按此换算）：原需求
+10（弹窗视图扩展）与原需求 11（弹窗接入指标）是同一套弹窗组件，合并为<strong>需求
+10</strong>，视图与指标两部分仍可分批交付、分别验收；原需求 12
+→ <strong>需求 11</strong>；原需求 13 → <strong>需求 12</strong>。</p>
+<p><strong>跨册章节引用</strong>：需求 5
+在明细引擎册中位于<strong>第六章</strong>（§6.1–§6.5，2026-07-29
+整章重写后的编号）。两节最常被本册引用：</p>
+<ul>
+<li><strong>§6.2 指标分层：物模型层与实例层</strong>——§6.2.1
+物模型层（类型层）/ §6.2.2 实例层 / §6.2.3 两层生效规则；</li>
+<li><strong>§6.3 指标清单：实时值指标与统计指标</strong>——§6.3.1
+实时值指标 / §6.3.2 统计指标 / §6.3.3 能效类指标共用解析规则 / §6.3.4
+明确不进指标工厂。</li>
+</ul>
+<p>本册正文引用已全部改写为 2026-07-29
+重写后的编号，直接按上面两节定位即可。历史稿件对照（仅供比对旧版评审意见用）：§9.x
+→ §6.x；§6.8 → §6.2；§6.8.1 → §6.2.3；§6.8.2「注册矩阵」→ §6.3
+各表「注册物模型」列；§6.8.3「模板化绑定」→ §6.2.3 第 6 条；§6.9 →
+§6.3；§6.9.1 → §6.3.1；§6.9.2 → §6.3.2；§6.9.3 → §6.3.4。</p>
+</section>
+<section id="消费面划分应用内-vs-平台侧" class="level3">
+<h3>1.2 消费面划分：应用内 vs 平台侧</h3>
+<p>指标工厂是 <strong>KE
+数据工厂的平台级能力</strong>，不是节能管理应用的私有能力。本册按消费方所在模块划分为两层：</p>
+<table>
+<colgroup>
+<col style="width: 12%" />
+<col style="width: 25%" />
+<col style="width: 37%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>层</th>
+<th>需求</th>
+<th>消费方</th>
+<th>落点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>节能管理应用内</td>
+<td>需求 8 / 9</td>
+<td>用能对比分析、用能定额考核、节能分析、总览看板（含原「能耗流向分析」桑基，并入「能耗趋势与流向」）</td>
+<td>页面取数口径整体切换到指标工厂；除用能对比分析升级为显式指标对比（§2.4，命名沿用能效视图口径）外，其余页面用户无需感知指标概念</td>
+</tr>
+<tr>
+<td>平台侧通用模块</td>
+<td>需求 10–12</td>
+<td>指标工厂选取服务；报表报告（参数查询、查询方案配置、原始数据查询、运行极值查询）；融合组态编辑</td>
+<td>在既有「选择测点」能力上并列开放指标，用户显式选择数据项</td>
+</tr>
+</tbody>
+</table>
+<p>两层的关键差异：需求 8 / 9
+以<strong>页面替换取数来源</strong>为主，指标概念仅在用能对比分析以「对比指标」单选形式露出（复用能效视图命名与可见性口径，不涉及数据项选择器）；需求
+10–12
+是<strong>把指标作为可选数据项暴露给用户</strong>，因此必须处理指标的入参、时间语义约束和与测点的边界，见
+§四 及后续各章。</p>
+</section>
+<section id="总览看板定位" class="level3">
+<h3>1.3 总览看板定位</h3>
+<p>总览看板是 v2.5
+面向能源管理员和管理人员的一屏总览入口，用于按当前分析对象和时间范围，集中展示周期能效（含折算指标）、成本，以及用量的<strong>趋势分析 / 流向分析</strong>。</p>
+<p>页面以对象类型、能源计量拓扑、计费方案和下级系统关系为输入，自动生成可展示内容；用户只负责选择视图、对象、能源和时间范围，不需要配置卡片。原独立菜单「能耗流向分析」不再作为侧栏入口，桑基能力落在「能耗趋势与流向」卡内 type「流向分析」。</p>
+<hr />
+</section>
+</section>
+<section id="二需求-8存量页面消费需求-5-指标工厂产出" class="level2">
+<h2>二、需求 8：存量页面消费需求 5 指标工厂产出</h2>
+<blockquote>
+<p>开发范围：</p>
+<ul>
+<li>已有复用：用能对比分析、用能定额考核、节能分析页面。</li>
+<li>本期范围：切换能耗量 / 成本数据到需求 5
+注册的指标工厂产出（历史区间与实时值均查询时按当前拓扑计算）；统一对象 ×
+能源类型口径；用能对比分析升级为标准化指标对比（指标单选 A1 / A2 /
+B1–B5，指标名称沿用能效视图口径，移除能源类型 / 统计维度 /
+时间粒度控件，见 §2.4）。</li>
+<li>本期入口调整：原独立页「能耗流向分析」<strong>侧栏入口移除</strong>，桑基流向能力<strong>并入需求
+9</strong>总览看板「能耗趋势与流向」· type「流向分析」（取数与交互见
+§3.6）；原型页可保留作对照 / 深链，正式产品菜单不挂。</li>
+<li>本期下线：移除「用能趋势预测」入口与页面。</li>
+<li>本期不做：页面内自行重算电价；直读原始累计量或旧统计表；绕过指标工厂直连内部查询接口；对比页接入
+A3 分时成本、C1 实时能耗值与风险评估类指标（见 §2.4.6，风险类沉淀需求池
+#27）。</li>
+</ul>
+</blockquote>
+<p>需求 5 将对象能耗 / 成本 / 能效等统一注册进指标工厂后，需求 8
+仅覆盖用能对比分析、用能定额考核、节能分析<strong>三个</strong>存量页面的取数口径改造；原「能耗流向分析」消费点随入口并入需求
+9，不在需求 8 逐页清单重复验收。总览看板为需求 9
+实现，不纳入需求 8 逐页消费清单。页面内直接看单表具明细的场景走「表具能耗明细」管理页面（明细引擎册
+§3.7），不在本清单。</p>
+<section id="逐页消费清单" class="level3">
+<h3>2.1 逐页消费清单</h3>
+<section id="三个存量页面" class="level4">
+<h4>三个存量页面</h4>
+<table>
+<colgroup>
+<col style="width: 18%" />
+<col style="width: 27%" />
+<col style="width: 54%" />
+</colgroup>
+<thead>
+<tr>
+<th>页面</th>
+<th>消费点</th>
+<th>消费的指标工厂产出</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>用能对比分析</td>
+<td>多对象 × 多时段 × 标准化指标对比（指标单选，改版见 §2.4）</td>
+<td>A1 能耗用量 + A2 能耗成本 + B1–B5 能效指标跨度值（需求 5 §6.3.2
+统计指标，B 类口径见明细引擎册 §6.3.3 能效类指标共用解析规则）</td>
+</tr>
+<tr>
+<td>用能定额考核</td>
+<td>对象 × 能源类型的实际用量 vs 定额</td>
+<td>A1 能耗用量；历史归属随当前拓扑（需求 5 §6.4
+上游变更，页内加产品说明）；废弃测点维度，统一”对象 × 能源类型”</td>
+</tr>
+<tr>
+<td>节能分析（月 / 年）</td>
+<td>节电量核算、基准 / 实际 / 目标能效对比中的周期能耗输入</td>
+<td>A1 能耗用量多粒度取数（节能量 = 基准 −
+实际，能耗输入统一走指标工厂）</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>原「能耗流向分析」：</strong>侧栏入口移除。各层级对象能耗流向 /
+桑基图的消费点（A1 能耗用量，按能源类型沿计量拓扑逐层取数）改由需求 9
+§3.6「能耗趋势与流向」· type「流向分析」承接；验收见 §九 场景 7a /
+7b。</p>
+</blockquote>
+</section>
+</section>
+<section id="共性消费要求" class="level3">
+<h3>2.2 共性消费要求</h3>
+<ol type="1">
+<li><strong>数据口径</strong>：统一消费指标工厂对象指标（首版清单见明细引擎册
+§6.3）——历史区间与实时值均由指标工厂查询时按当前计量拓扑计算（口径 =
+表具核算明细沿拓扑 Σ输入 −
+Σ输出；实时值只查当前、不跨时间范围）；不直读原始累计量或旧统计表。</li>
+<li><strong>粒度</strong>：补齐 半小时 / 时 / 天 / 月 / 年
+查询粒度（需求 5 §6.3.2）；四页主用 A1 能耗用量，用能对比分析另消费 A2
+能耗成本与 B1–B5 能效指标跨度值（§2.4）。</li>
+<li><strong>完整性标记</strong>：<strong>总览看板不包含</strong>完整性角标与表具清单弹层（含并入看板的流向桑基）。<strong>用能对比分析、用能定额考核本页不展示</strong>「含异常
+/ 缺失」角标。坏值 / 缺失槽仍不参与聚合、不作
+0；节能分析等其他存量页是否展示跟随原页规则。</li>
+<li><strong>成本口径</strong>：所有成本展示取自指标工厂 A2 / A3（口径 =
+表具核算明细.成本金额沿拓扑归集，输出侧作减项；分时构成走 A3
+分时成本），不在前端重算电价。</li>
+</ol>
+</section>
+<section id="移除用能趋势预测伪需求本版下线" class="level3">
+<h3>2.3 移除「用能趋势预测」（伪需求，本版下线）</h3>
+<ul>
+<li>原「能耗能效分析」菜单下的《用能趋势预测》确认为<strong>伪需求</strong>，本版<strong>移除</strong>：不纳入需求
+5 指标工厂消费清单，删除导航入口与页面（AI 原型同步删除
+<code>用能趋势预测.html</code> 及 <code>index.html</code> /
+<code>nav.js</code> 挂载；古典原型只读不动）。</li>
+<li>原沉淀至需求池 #21
+的「能耗趋势分析」诉求，本期不再以独立「能耗统计分析」页面交付，亦不并入总览看板；异常趋势自动识别等扩展能力继续留需求池后续复核。</li>
+</ul>
+</section>
+<section id="用能对比分析标准化指标对比改版" class="level3">
+<h3>2.4 用能对比分析：标准化指标对比改版</h3>
+<section id="背景与目标" class="level4">
+<h4>2.4.1 背景与目标</h4>
+<p>原页面只能对比「能耗量」单一维度（v2.5 初稿曾扩展为电量 / 成本切换 +
+时间粒度选择）。需求 5 将对象能耗 / 成本 /
+能效统一注册进指标工厂后，各指标具备一致的对象绑定、时间语义与查询能力；能效视图「指标列表」Tab
+又已确立消费侧的指标命名与可见性口径（§4.3.2）。本版把对比维度升级为<strong>标准化指标单选</strong>：不同对象在不同时间段内，对指标目录中任一指标进行对比。</p>
+</section>
+<section id="控件调整移除三项新增两项" class="level4">
+<h4>2.4.2 控件调整：移除三项、新增两项</h4>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>调整</th>
+<th>控件</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>移除</td>
+<td>能源类型（左栏下拉）</td>
+<td>能源维度并入指标名称（电能消耗量 / 用水量 / 电费总额…，口径同
+§4.3.2「能源类型与计费时段固化进指标名称」），不再先选能源再看数据</td>
+</tr>
+<tr>
+<td>移除</td>
+<td>统计维度（电量 / 成本切换）</td>
+<td>电量、成本本质是两个指标，并入指标目录后该控件冗余</td>
+</tr>
+<tr>
+<td>移除</td>
+<td>时间粒度（半小时 / 时 / 天 / 月）</td>
+<td>对比结果是各时间段的<strong>跨度值</strong>（区间累计 /
+区间比值），底层按哪个粒度查询是取数实现细节，不再暴露</td>
+</tr>
+<tr>
+<td>新增</td>
+<td>对比指标（左栏分组单选）</td>
+<td>能耗 / 成本 /
+能效三组，默认「电能消耗量」；一次只对比一个指标，切换即整体刷新单位与图表，对象、时间段筛选保持不变</td>
+</tr>
+<tr>
+<td>调整</td>
+<td>时间段选择</td>
+<td>收敛为单行排布：「+
+添加时间段」按钮与各时间段同行（对齐存量页面布局），节省纵向空间；上限仍
+3 组</td>
+</tr>
+<tr>
+<td>新增</td>
+<td>导出</td>
+<td>对齐存量页面右上角导出能力：导出当前对比表格，列结构与页面表格一致（对比对象
++ 对比指标 +
+各时间段跨度值，「—」原样导出）；未勾选对象时点击给出提示</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="指标目录首版" class="level4">
+<h4>2.4.3 指标目录（首版）</h4>
+<p>指标名称、单位、分组与能效视图「指标列表」为<strong>同一份清单</strong>（§4.3.2，不另立命名）；本页只收录<strong>时间段指标</strong>：</p>
+<table>
+<colgroup>
+<col style="width: 8%" />
+<col style="width: 30%" />
+<col style="width: 26%" />
+<col style="width: 34%" />
+</colgroup>
+<thead>
+<tr>
+<th>分组</th>
+<th>指标（名称示例）</th>
+<th>指标工厂来源</th>
+<th>有结果的对象条件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>能耗指标</td>
+<td>电能消耗量 / 用水量 / 冷量消耗量</td>
+<td>A1 能耗用量（按对象已启用能源类型展开）</td>
+<td>启用对应能源计量</td>
+</tr>
+<tr>
+<td>成本指标</td>
+<td>电费总额 / 水费（统一价）/ 冷量费用（统一价）</td>
+<td>A2 能耗成本（按对象已启用能源类型展开）</td>
+<td>启用对应能源计量 且 已应用计费方案</td>
+</tr>
+<tr>
+<td>能效指标</td>
+<td>PUE / WUE</td>
+<td>B1 / B5 跨度值</td>
+<td>按 §6.3 各表「注册物模型」列为园区 / 数据中心单元；WUE
+另需启用水计量</td>
+</tr>
+<tr>
+<td>能效指标</td>
+<td>CLF / PLF / OLF</td>
+<td>B2 / B3 / B4 跨度值</td>
+<td>园区 / 数据中心单元及对应系统（暖通空调 / 电力 /
+其他系统）；缺分子分母输入为「待配置」</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="对象可选性与交互" class="level4">
+<h4>2.4.4 对象可选性与交互</h4>
+<ul>
+<li>对比矩阵不变：对象最多 5 个 × 时间段最多 3 组；对象树升级为园区 /
+数据中心 / 系统 /
+楼栋全层级可勾选，上级与下级可同时入选（各自独立取指标值）。</li>
+<li><strong>只有当前指标有结果（有值）的对象可勾选</strong>。不可选原因三类，悬停可见：①
+指标未注册到该对象类型（如楼栋查 PUE）；② 未启用对应能源计量；③
+已注册但算不出（能效待配置 /
+成本未应用计费方案）。可算状态判定口径与需求 6 接口
+3（批量可算状态）一致，见 §九 待确认 14。</li>
+<li>对象树始终展示对象全集：无结果对象置灰不可勾选、悬停展示原因（不做「仅有值
+/ 全部」展示范围开关，保持控件简单）。</li>
+<li>切换指标后，已勾选的无结果对象自动取消勾选。</li>
+<li>单位与数值格式随指标：能耗（kWh / m³）、成本（元，2 位小数）、PUE /
+CLF / PLF / OLF（无量纲，3 位小数）、WUE（L/kWh，2 位小数）；柱状图 Y
+轴刻度随指标量级保留小数。「—」仅表示所选时间段无数据。</li>
+<li>表格视图列结构 = 对比对象 + <strong>对比指标</strong>（名称 +
+单位，如「电能消耗量（kWh）」，切换指标同步刷新）+
+各时间段跨度值，表格离开页面语境（截图 / 导出）后仍可自释义。</li>
+</ul>
+</section>
+<section id="数据口径" class="level4">
+<h4>2.4.5 数据口径</h4>
+<ul>
+<li>每个单元格 = 该对象在该时间段的指标跨度查询结果（起止 =
+时间段起止）：A1 / A2 为区间累计，B1–B5 为区间比值（分子 /
+分母各自区间累计后再比，口径见明细引擎册 §6.3.3）。</li>
+<li>历史区间由指标工厂查询时按当前拓扑归集；不在前端重算电价或能效，不直读原始累计量或旧统计表。</li>
+</ul>
+</section>
+<section id="本期不做" class="level4">
+<h4>2.4.6 本期不做</h4>
+<ul>
+<li><strong>A3 分时成本（尖 / 峰 / 平 /
+谷时电费）</strong>：产出按计费时段归组，语义是「一个时间段内的构成」，与本页「多时间段横向对比」不匹配，分时构成由总览看板能耗成本卡承接。</li>
+<li><strong>C1 实时能耗值与 B1–B5
+实时值</strong>：仅实时语义，无时间段对比意义。</li>
+<li><strong>风险评估类指标</strong>：指标工厂首版清单无风险 /
+健康类真源（已有的机房健康度评分尚未注册为对象指标），沉淀需求池
+#27，待注册后按指标目录扩展规则接入。</li>
+<li><strong>多指标同屏对比</strong>：保持单图单指标结构；多指标同屏由总览看板承接。</li>
+</ul>
+<hr />
+</section>
+</section>
+</section>
+<section id="三需求-9总览看板" class="level2">
+<h2>三、需求 9：总览看板</h2>
+<section id="页面目标" class="level3">
+<h3>3.1 页面目标</h3>
+<p>总览看板用于按当前分析对象展示周期能效（含折算指标）、成本与用量趋势 /
+流向。页面默认按规则生成内容，不提供卡片配置、隐藏、排序能力。标准煤 /
+碳排放并入「能效指标总览」（仅园区 /
+数据中心）；能源用量看「能耗趋势与流向」（默认趋势分析，可切换流向分析桑基），成本看「能耗成本」卡。</p>
+<p>本版从”配出来”改为”长出来”：打开看板时按对象类型、各能源类型计量拓扑、叶子表具计费方案和必要数据前提实时推导组件集；规则不满足的组件不渲染也不占位，区别于卡片已出现但取数失败时的「暂无数据」。</p>
+<p>本版不包含：用能总览、能耗明细、完整性角标 / 表具清单弹层、对象级 /
+项目级看板配置、卡片拖拽排序、卡片隐藏偏好、冷站 COP / EER
+组件、节能收益组件。</p>
+</section>
+<section id="页面结构" class="level3">
+<h3>3.2 页面结构</h3>
+<table>
+<thead>
+<tr>
+<th>区域</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>顶部筛选区</td>
+<td>视图选择、对象选择、时间粒度、日期选择</td>
+</tr>
+<tr>
+<td>能效指标总览</td>
+<td>PUE、CLF、PLF、OLF、WUE，以及标准煤、碳排放</td>
+</tr>
+<tr>
+<td>能耗趋势与流向</td>
+<td>按能源 Tab；卡内 type 切换「趋势分析 / 流向分析」——趋势为分项构成 +
+时序堆叠，流向为桑基能流图（原独立「能耗流向分析」并入）</td>
+</tr>
+<tr>
+<td>能耗成本</td>
+<td>按能源 Tab 展示成本趋势和计费时段构成</td>
+</tr>
+</tbody>
+</table>
+<p>页面不展示「用能与成本」「能效指标」等可见分组标题；卡片按表内顺序连续呈现。若某张卡不满足出现规则，则不渲染、不占位。</p>
+</section>
+<section id="顶部筛选区" class="level3">
+<h3>3.3 顶部筛选区</h3>
+<ul>
+<li><strong>视图选择</strong>：支持空间视图、能效视图。</li>
+<li><strong>对象选择</strong>：使用 NavigationBar
+风格对象路径选择，支持园区、数据中心、系统、设备组、设备等对象；对象树来源于能效视图对象体系，支持从当前对象面板选择下级对象。流向分析桑基中可点节点切换对象时，与本控件为<strong>同一当前分析对象</strong>（见
+§3.6.2）。</li>
+<li><strong>时间粒度</strong>：支持年、月、日、时段。</li>
+<li><strong>日期选择</strong>：点击日期 pill
+打开自绘日期选择弹层；年展示年份快选格，月选择月份，日选择日期，时段选择开始
+/
+结束日期，结束早于开始时自动对调；本期时段只精确到日期，不展示自然日内起止时刻。</li>
+<li><strong>吸顶</strong>：页面滚动时顶部筛选区保持吸顶，用户可在任意滚动位置切换对象和时间。</li>
+</ul>
+</section>
+<section id="自动生成规则" class="level3">
+<h3>3.4 自动生成规则</h3>
+<p><strong>通用规则（唯一判据，不在本册维护对象类型白名单）</strong>：</p>
+<blockquote>
+<p>某能效指标瓦片是否出现，只看一条——<strong>当前对象所属物模型（含继承链）上是否注册了该指标</strong>；注册了就出现，未注册就不渲染、不占位。是否算得出结果只决定瓦片内容是显示指标值还是「待配置」，不决定瓦片是否出现。</p>
+<p>注册关系的唯一真源是明细引擎册 <strong>§6.3
+指标清单各表的「注册物模型」列</strong>。新增一类对象（如楼栋、包间、冷站）或调整某指标的适用范围时，只改该列，本册规则与页面代码不变。</p>
+</blockquote>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 66%" />
+</colgroup>
+<thead>
+<tr>
+<th>内容</th>
+<th>出现规则</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>能耗趋势与流向</td>
+<td>当前对象至少 1 种能源启用计量且有趋势 /
+流向数据；符合规则的能源生成卡内 Tab；卡内 type 默认「趋势分析」</td>
+</tr>
+<tr>
+<td>能耗成本</td>
+<td>当前对象至少 1
+种能源同时启用计量且存在计费方案；符合规则的能源生成卡内 Tab</td>
+</tr>
+<tr>
+<td>能效指标总览</td>
+<td>当前对象至少有 1 个已注册的能效指标（B1–B5），或满足折算指标（标准煤
+/ 碳排放）的出现规则</td>
+</tr>
+<tr>
+<td>PUE / CLF / PLF / OLF / WUE</td>
+<td>当前对象所属物模型上注册了该指标（§6.3
+各表「注册物模型」列）。按当前注册关系：<strong>B1 PUE、B5 WUE</strong>
+注册在园区 / 数据中心单元；<strong>B2 CLF、B3 PLF、B4 OLF</strong>
+另注册在暖通空调系统 / 电力系统 /
+其他系统，因此这三张瓦片在对应系统实例上也会出现。缺计算输入时瓦片保留并显示「待配置」（WUE
+另需启用水计量）</td>
+</tr>
+<tr>
+<td>标准煤</td>
+<td>园区 /
+数据中心对象，且可产出标准煤折算结果；系统及其他对象类型不展示</td>
+</tr>
+<tr>
+<td>碳排放</td>
+<td>园区 /
+数据中心对象，且可产出碳排放折算结果；系统及其他对象类型不展示</td>
+</tr>
+</tbody>
+</table>
+<p>折算指标（标准煤 / 碳排放）不是指标工厂注册指标，而是页面按各能源 A1
+× 折算系数汇总，因此仍按对象类型判定，不走注册矩阵。</p>
+</section>
+<section id="能耗成本" class="level3">
+<h3>3.5 能耗成本</h3>
+<ul>
+<li>能耗成本按能源生成 Tab。</li>
+<li>单一计价能源展示总成本和成本趋势。</li>
+<li>分时计价能源左侧展示计费时段成本构成环形图，右侧展示尖 / 峰 / 平 /
+谷分时堆叠趋势图；卡头角标随当前能源展示计价形态。</li>
+<li>成本金额取自指标工厂 A2 能耗成本；分时构成取自 A3 分时成本（口径 =
+表具核算明细.成本金额沿拓扑归集，输出侧作减项；按时段类型归组）。</li>
+<li>分时时段类型与单价快照口径与表具核算明细计费属性一致。</li>
+<li>成本金额 ≥1 万元时按「万元」缩写展示，悬停显示精确值。</li>
+<li>页面不根据电价重新计算成本。</li>
+</ul>
+</section>
+<section id="能耗趋势与流向" class="level3">
+<h3>3.6 能耗趋势与流向</h3>
+<p>单卡承接用量时序与能流桑基。卡标题为「能耗趋势与流向」；卡头左侧为能源
+Tab，右侧为分析 type 切换。原独立菜单「能耗流向分析」侧栏入口移除，能力并入本卡
+type「流向分析」。</p>
+<section id="type-趋势分析与流向分析" class="level4">
+<h4>3.6.1 Type：趋势分析 / 流向分析</h4>
+<ul>
+<li><strong>默认</strong>：「趋势分析」。</li>
+<li><strong>趋势分析</strong>：按时序展示——左侧分项构成环形（分项名称、用量、占比、总量），右侧堆叠趋势图；仅
+0 / 1
+个分项时不展示环形，改在趋势区顶部内联展示总量，避免单分项环形误读。</li>
+<li><strong>流向分析</strong>：同能源 Tab
+下展示桑基能流图（源 → 一级分项 →
+二级末端）；带宽与节点值取自指标工厂 A1 能耗用量，沿当前计量拓扑对表具核算明细
+on-read 逐层汇总（需求 5 §6.1.2 / §6.3.2）。</li>
+<li>切换 type 不重置能源 Tab、不重置顶部对象 /
+时间；仅切换本卡主图形态。</li>
+</ul>
+</section>
+<section id="流向分析与顶部对象联动" class="level4">
+<h4>3.6.2 流向分析与顶部对象联动</h4>
+<ul>
+<li>桑基<strong>根节点 = 顶部筛选区当前分析对象</strong>；一级 /
+二级分项为该对象在计量拓扑下的下级构成（下级对象或计量对象，规则同趋势分项维度）。</li>
+<li><strong>节点点击切换顶部对象</strong>：可下钻的下级对象节点（界面以
+「›」等可点暗示）点击后，切换顶部 NavigationBar
+当前分析对象，整页（含能效、趋势 / 流向、成本）按新对象重算；<strong>不在本卡内做面包屑路径下钻或组件内返回上级</strong>。</li>
+<li>不可选为分析对象的末端分项节点仅展示用量与占比，点击不切换对象。</li>
+<li>当前对象无下级可选对象时，提示用户通过顶部对象路径返回上级；桑基仍展示当前对象下的流向构成。</li>
+<li>顶栏对象 / 时间 / 能源与趋势分析共用同一套筛选。</li>
+</ul>
+</section>
+<section id="趋势与流向共用规则" class="level4">
+<h4>3.6.3 共用规则</h4>
+<ul>
+<li>按能源生成 Tab；未启用当前能源计量的下级对象不参与统计。</li>
+<li>分项维度由计量拓扑规则决定，可为下级对象或计量对象。</li>
+<li>时间刻度规则（趋势分析）：≤3 天按小时，&gt;3 且 ≤90 天按天，&gt;90
+天按月；流向分析取数窗口与顶栏时间范围一致，节点值为窗口内用量汇总。</li>
+<li>用量 ≥1 万时按「万+单位」缩写展示，悬停显示精确值（与看板其他卡一致）。</li>
+<li>本卡不展示「含异常 / 缺失」完整性角标（与总览看板整体约定一致）。</li>
+</ul>
+</section>
+</section>
+<section id="能效指标总览" class="level3">
+<h3>3.7 能效指标总览</h3>
+<ul>
+<li>能效指标总览以瓦片矩阵展示
+PUE、CLF、PLF、OLF、WUE，以及标准煤、碳排放。</li>
+<li><strong>指标来源</strong>：PUE / CLF / PLF / OLF / WUE 对应指标工厂
+§6.3
+B1–B5——实时值与各周期值由指标工厂产出，页面只消费指标值、周期趋势与分子
+/ 分母构成，不在前端计算；下方公式为指标口径说明。标准煤 /
+碳排放由各能源用量 × 折算系数汇总产出，页面不重算系数。</li>
+<li>能效类指标瓦片展示指标值、等级 / 诊断标签、环比、近 12
+期迷你趋势、分子 /
+分母构成；折算类瓦片展示指标值、环比、迷你趋势与口径说明，<strong>无等级
+/ 诊断标签</strong>。</li>
+<li>桌面端首行固定展示 PUE、CLF、PLF、OLF 四张公式卡（园区 /
+数据中心且满足规则时），并在卡片间表达 PUE = 1 + CLF + PLF +
+OLF；WUE、标准煤、碳排放等补充指标展示在后续行。</li>
+<li>PUE = 总电耗 ÷ IT 系统电量。</li>
+<li>CLF = 暖通空调系统电量 ÷ IT 系统电量。</li>
+<li>PLF = 配电系统电量 ÷ IT 系统电量。</li>
+<li>OLF = 其他系统电量 ÷ IT 系统电量。</li>
+<li>WUE = 周期用水量(L) ÷ IT 系统电量(kWh)；页面水量默认以 m³
+汇总时，计算前按 1 m³ = 1,000 L 折算。</li>
+<li>标准煤 = Σ(各能源用量 × 标煤折算系数)；碳排放 = Σ(各能源用量 × CO₂
+折算系数)；冷量等二次能源系数默认 0。</li>
+<li><strong>下级系统解析</strong>：上式中的 IT / 暖通空调 / 配电 /
+其他系统，取当前园区 /
+数据中心在能效视图对象树下按系统类型匹配的结果，<strong>下级含下下级（递归整棵子树）</strong>，不得只取直接一层子节点；同一类型多实例先
+Σ 再代入。完整解析与实时/跨度口径见明细引擎册 §6.3.3。</li>
+<li>PUE、CLF、PLF、OLF、WUE 均为越低越好；折算量 ≥1
+万时按「万+单位」缩写展示，悬停显示精确值。</li>
+<li>PUE 展示「能效 + 等级」标签，WUE 展示「水效 + 等级」标签，CLF / PLF
+/ OLF 展示「诊断 + 档位」标签。</li>
+<li>近 12 期迷你趋势随当前时间粒度联动：年粒度展示近 12 月，月粒度展示近
+12 日，日粒度展示近 12
+小时；鼠标悬停或键盘聚焦数据点时展示「期次：指标值」。</li>
+<li>待配置指标不展示等级 / 诊断入口，趋势区展示占位。</li>
+<li><strong>系统自身注册的能效指标（对齐 §6.3
+各表「注册物模型」列）</strong>：
+<ul>
+<li><strong>暖通空调系统 / 电力系统 / 其他系统</strong>对象上展示各自的
+<strong>CLF / PLF / OLF</strong>
+单张瓦片（该系统类型对应的那一个），不展示 PUE / WUE / 标准煤 /
+碳排放，也不展示 <code>PUE = 1 + CLF + PLF + OLF</code>
+的首行公式关系。</li>
+<li>系统自身的 CLF / PLF / OLF 口径为「该系统实例自身电量 ÷
+上溯至最近的数据中心单元 / 园区下 IT 系统电量」（明细引擎册
+§6.3.3），瓦片分子 /
+分母构成需据此标注为<strong>本系统实例</strong>，避免与数据中心单元 /
+园区级同名指标混读。</li>
+<li>同一数据中心单元（或园区）下，单元级 CLF =
+Σ(其下各暖通空调系统的系统级
+CLF)——分母相同，故可加。存在多个同类型系统时单元级与系统级数值不等属<strong>口径差异，不是缺陷</strong>；瓦片需以文案说明当前口径主体。</li>
+<li>上溯不到数据中心单元 / 园区、或其下无 IT
+系统时，该瓦片显示「待配置」并提示缺失项。</li>
+</ul></li>
+<li>设备组、设备等<strong>未注册任何 B1–B5
+指标</strong>的对象类型不展示能效指标，整张能效指标总览卡隐藏。判定依据是
+§6.3 各表「注册物模型」列，不是写死的「非园区 / 数据中心即隐藏」。</li>
+</ul>
+</section>
+<section id="能效等级标准弹层" class="level3">
+<h3>3.8 能效等级标准弹层</h3>
+<ul>
+<li>触发入口：能效指标瓦片上的等级 / 诊断标签。</li>
+<li>弹层展示当前指标、当前对象、当前值、当前等级 /
+档位、分级标准或诊断档位、水平说明和优化方向。</li>
+<li>PUE 按 GB 40879-2021 展示能效等级；WUE 按 GB/T 32910.6-2025 的 WUEev
+水效等级展示，本期原型示例暂按 WUE 值代入演示，真实系统需补齐 WUEev
+水源修正输入后再判定。</li>
+<li>CLF / PLF / OLF 展示诊断档位，但弹层不展示标准来源说明。</li>
+<li>待配置指标不展示等级入口。</li>
+</ul>
+</section>
+<section id="数据口径-1" class="level3">
+<h3>3.9 数据口径</h3>
+<ul>
+<li>对象能耗、成本、能效指标均消费需求 5
+注册的指标工厂产出：历史区间与实时值均查询时按当前拓扑计算；实时值只查当前、不跨时间范围；对象层不落库。</li>
+<li>拓扑或表具明细变更后，下次查询自然用最新事实与当前拓扑，页面无需感知对象层重算任务。</li>
+<li>支持半小时、时、天、月、年查询粒度。</li>
+<li>时、天、月分片读取表具对应粒度 rollup
+归集，年由对象月分片累加，均不重新计算差值。</li>
+<li>跨天、跨月按本地时间切分。</li>
+<li>顶栏粒度与查询 /
+图表粒度映射：年视图按月，月视图按日，日视图按小时，时段视图按起止日期范围内小时刻度展示；底层按对应粒度向指标工厂发起查询，由指标工厂读表具归档分片现场归集。</li>
+<li>对象切换、时间粒度或日期变化后，当前可见卡片展示加载态；不满足出现规则而隐藏的卡片不展示加载态。</li>
+</ul>
+<hr />
+</section>
+</section>
+<section id="四平台侧消费指标工厂需求-1012-总览" class="level2">
+<h2>四、平台侧消费指标工厂：需求 10–12 总览</h2>
+<p>指标工厂是 <strong>KE
+数据工厂的平台级能力</strong>，产出不应只被节能管理应用消费。需求 8 / 9
+解决的是节能应用内页面换取数来源；需求 10–12
+解决的是<strong>平台通用模块把指标作为可选数据项开放给用户</strong>，让运维和实施在报表、组态里能直接取到对象级的能耗
+/ 成本 / 能效结果，而不是只能选原始测点后自己算。</p>
+<p>这组需求横跨三个由不同开发负责的模块（报表弹窗、报表节点-测点树、融合组态），三者是<strong>三套互不相干的组件</strong>（实测确认，见
+§4.1），因此<strong>一个组件一条需求、一条需求一份原型</strong>：需求
+10 弹窗、需求 11 节点-测点树、需求
+12 组态变量树，各章正文即该份原型的批注。本章只放三条共享的内容：现状基线（§4.1）、拆分与依赖（§4.2）、公共约束（§4.3）、整组不做项（§4.4）、原型与需求对照（§4.5）。</p>
+<section id="现状基线" class="level3">
+<h3>4.1 现状基线</h3>
+<blockquote>
+<p>2026-07-29 实测环境 <code>V300R005C21_CP015</code>，覆盖需求 10–12
+涉及的五个改造点。</p>
+</blockquote>
+<table>
+<colgroup>
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 19%" />
+<col style="width: 31%" />
+<col style="width: 9%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr>
+<th>组件</th>
+<th>位置</th>
+<th>视图切换</th>
+<th>树结构 / 面板</th>
+<th>缺口</th>
+<th>对应需求</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>选择测点弹窗 — 按实例添加</td>
+<td>参数查询 / 查询方案配置</td>
+<td><strong>无，仅空间树</strong></td>
+<td>左：搜索 + 工程 → 对象 → 设备 → 组件 →
+测点（叶子带勾选框）；右：已选择（N）+ 清除全部</td>
+<td>视图 + 指标</td>
+<td>需求 10</td>
+</tr>
+<tr>
+<td>选择测点弹窗 — 按模型添加</td>
+<td>参数查询 / 查询方案配置</td>
+<td><strong>无，仅「选择空间」</strong></td>
+<td>三栏：选择空间 / 选择设备分类（IT 设备、场地设施、备品备件、软件）/
+设备测点列表</td>
+<td>视图 + 指标</td>
+<td>需求 10</td>
+</tr>
+<tr>
+<td>节点-测点树</td>
+<td>原始数据查询</td>
+<td><strong>已支持</strong> 空间 / 容量 / 能效</td>
+<td>视图下拉 + 搜索 + 工程 → 对象 → 设备 → 组件 →
+测点（叶子带勾选框）</td>
+<td>仅缺指标</td>
+<td>需求 11</td>
+</tr>
+<tr>
+<td>节点-测点树</td>
+<td>运行极值查询</td>
+<td><strong>已支持</strong> 空间 / 容量 / 能效</td>
+<td>同上；右侧按日报 / 月报 / 年报查询</td>
+<td>仅缺指标</td>
+<td>需求 11</td>
+</tr>
+<tr>
+<td>测点变量树</td>
+<td>融合组态编辑页左下</td>
+<td><strong>已支持</strong> 空间 / 能效 / 容量</td>
+<td>视图下拉 + 搜索 + 工程 → 对象 → 测点；与系统变量 / 当前空间 /
+自定义变量 / 温湿度 / 设备 / 时间选择并列为变量分组</td>
+<td>仅缺指标</td>
+<td>需求 12</td>
+</tr>
+</tbody>
+</table>
+<p>三点结论，直接决定了拆分方式：</p>
+<ol type="1">
+<li><strong>视图扩展只需改报表「选择测点」弹窗</strong>。三处节点-测点树已具备三视图切换，弹窗用的是另一套只认空间树的选择组件——要求两者的视图能力对齐，而不是各自再造一份。视图扩展<strong>不依赖指标工厂</strong>，可在弹窗需求内先行交付（→
+需求 10 的视图部分）。</li>
+<li><strong>五处都缺指标</strong>，且都以「叶子节点 /
+列表项」形态承载可选数据项，数据项模型可共用；但<strong>组件实现分属三处</strong>——弹窗、节点-测点树、组态变量树各一套，不能当成一个改造点派工（→
+需求 10 / 11 / 12 各一条）。</li>
+<li><strong>五处都需要同一个「列出某对象可选哪些指标、各自能不能算」的服务</strong>。若各消费方自行拼装，能源类型与计费时段的展开逻辑会出现三份不一致实现，因此抽为统一前置（→
+需求 6）。</li>
+</ol>
+</section>
+<section id="拆分与依赖" class="level3">
+<h3>4.2 拆分与依赖</h3>
+<table style="width:100%;">
+<colgroup>
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 39%" />
+<col style="width: 9%" />
+<col style="width: 32%" />
+</colgroup>
+<thead>
+<tr>
+<th>需求</th>
+<th>名称（= 对应原型）</th>
+<th>归属模块 / 负责方</th>
+<th>依赖</th>
+<th>优先级（初稿）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>需求 6</td>
+<td>指标选取服务（目录 / 状态 / 校验接口）</td>
+<td>指标工厂（数据工厂服务端）</td>
+<td>需求 3 / 4 / 5</td>
+<td>P1，<strong>阻塞三条需求的指标部分</strong></td>
+</tr>
+<tr>
+<td>需求 10</td>
+<td>报表「选择测点」弹窗（视图扩展 + 接入指标）</td>
+<td>报表报告前端 · 弹窗选择组件</td>
+<td>视图部分无依赖；指标部分依赖需求 6</td>
+<td>P1</td>
+</tr>
+<tr>
+<td>需求 11</td>
+<td>报表节点-测点树（原始数据查询 / 运行极值查询）</td>
+<td>报表报告前端 · 节点-测点树组件</td>
+<td>需求 6</td>
+<td>P2</td>
+</tr>
+<tr>
+<td>需求 12</td>
+<td>融合组态变量树（选指标 + 图元绑定）</td>
+<td>融合组态前端</td>
+<td>需求 6</td>
+<td>P2</td>
+</tr>
+</tbody>
+</table>
+<p>依赖关系：</p>
+<pre class="text"><code>需求 3/4/5（明细引擎册）
+        │
+        ▼
+   需求 6 指标选取服务 ──┬──▶ 需求 10 弹窗（指标部分）◀── 需求 10 弹窗（视图部分，无前置）
+                        ├──▶ 需求 11 节点-测点树
+                        └──▶ 需求 12 融合组态变量树</code></pre>
+<p>排期含义：</p>
+<ul>
+<li><strong>需求 10 的视图扩展无前置</strong>，可与明细引擎并行启动、先行上线；同一条需求内的指标部分等需求
+6。两部分<strong>验收可分离</strong>——先验三视图，再验指标。</li>
+<li>需求 6 交付后，<strong>需求 10 / 11 / 12
+可并行分派给三个开发</strong>，三者之间无先后约束、组件互不相干。</li>
+</ul>
+</section>
+<section id="公共约束需求-1012-共同遵守" class="level3">
+<h3>4.3 公共约束（需求 10–12 共同遵守）</h3>
+<section id="核心原则指标与测点并列不互相伪装" class="level4">
+<h4>4.3.1 核心原则：指标与测点并列，不互相伪装</h4>
+<p>R5
+数据工厂已收敛唯一判据（《数据工厂产品思路》§1）：<strong>要告警就是测点，只统计查询就是指标</strong>。并明确三条红线：</p>
+<ul>
+<li>指标不进物模型、不能转测点、不能被告警规则或控制联动选择（《数据工厂产品思路》§5.3）；</li>
+<li>消费端只持稳定 key，分 point key 与 metric key
+两套（《数据工厂产品思路》§3.3）；</li>
+<li>不做「每个粒度一个虚拟测点」的爆炸（《现场扩展与统计矩阵边界设计》§5.1）。</li>
+</ul>
+<p>因此需求 10–12
+<strong>不采用</strong>「把指标注册成虚拟测点、让存量组件无感」的兼容路线（该路线见边界设计
+§7 待确认
+5，原文已定性为<strong>妥协</strong>）。改为把选择器从「测点选择器」升级为<strong>「数据项选择器」</strong>：同一棵对象树内，测点与指标并列为两类可选项，选中项携带类型标记，下游按类型分流取数。</p>
+<p>三条理由：</p>
+<ol type="1">
+<li><strong>指标的时间语义约束，测点契约装不下</strong>。参数查询中时间段指标只支持 1 小时及以上采样周期；有值聚合复用「求和」，选平均 / 最大等时结果为空值（已按粒度预聚合）；实时指标可选且档位 / 聚合同测点，但需查询计算后出数。伪装成测点后这些约束无处表达，用户会选出查不出数或口径错误的组合。</li>
+<li><strong>伪装即穿透判据</strong>。指标一旦在 UI
+上与测点无异，配告警只是时间问题，与《数据工厂产品思路》§10「从
+UI、API、权限三层禁止指标成为告警源」直接冲突。</li>
+<li><strong>改造面可控</strong>。显式双类型影响 3 套选择组件 + 5
+个消费点，一次性成本明确；伪装路线的成本会以「口径错乱和越权告警」的形式长期摊在后面。</li>
+</ol>
+<p><strong>红线（对需求 10 / 11 / 12
+同等生效）</strong>：告警规则、联动策略、控制下发、数据补录等写入 /
+告警类场景的测点选择器<strong>不得</strong>接入指标分支。只开放报表查询与组态展示这类只读消费场景。</p>
+</section>
+<section id="沿用能效视图已定的指标呈现口径" class="level4">
+<h4>4.3.2 沿用《能效视图》已定的指标呈现口径</h4>
+<p>能效视图节点详情已于 v2.5 新增「指标列表」Tab（与「测点列表」并列，见
+<code>05-原型/AI原型html/能效视图.html</code>），其口径已评审通过。<strong>需求
+10–12 直接沿用，不另立一套</strong>：</p>
+<table>
+<colgroup>
+<col style="width: 29%" />
+<col style="width: 14%" />
+<col style="width: 55%" />
+</colgroup>
+<thead>
+<tr>
+<th>已定口径</th>
+<th>内容</th>
+<th>对需求 10–12 的含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>指标与测点并列成两个列表</td>
+<td>「只展示当前对象直接绑定的原始测点或表达式测点；对象
+PUE、能耗与成本等业务指标统一进入相邻「指标列表」」</td>
+<td>选择器同样分「测点 / 指标」两类，不混为一谈</td>
+</tr>
+<tr>
+<td>一级分类为<strong>实时指标 / 时间段指标</strong></td>
+<td>与《数据工厂产品思路》§2.2 一致</td>
+<td>选择器按这两类分组；页面按自身时间语义决定开放哪类</td>
+</tr>
+<tr>
+<td><strong>能源类型与计费时段固化进指标名称</strong></td>
+<td>时间段指标「查询区只有起止时间」；无分时能源仅一条「费用（统一价）」</td>
+<td><strong>选择器不需要二次参数面板</strong>：勾中指标即已确定能源与时段</td>
+</tr>
+<tr>
+<td><strong>业务分类</strong>筛选器</td>
+<td>本期指标均归「能效」，后续可扩容量等</td>
+<td>按实例添加本期<strong>不提供</strong>业务分类筛选；外层已选清单亦不展示业务分类列。能效视图指标列表仍保留该维度供查阅</td>
+</tr>
+<tr>
+<td><strong>仅有值 / 全部</strong>（无开关，按入口定默认）</td>
+<td>按实例添加默认仅有值；按模型添加默认全部</td>
+<td>弹窗两入口均<strong>不暴露</strong>展示范围开关：按实例添加固定仅有值（算不出的不出现在树上）；按模型添加固定全部（含待配置，便于按类型批量勾选）。节点-测点树（需求
+11）与组态变量树（需求
+12）同样不暴露开关、固定仅有值；节点-测点树另<strong>过滤时段类型指标</strong>（不展示）</td>
+</tr>
+<tr>
+<td>扩展规则</td>
+<td>「新增能源、计费时段或能效指标时只增加指标定义及节点数据，不新增专用列或专用页面」</td>
+<td>选择器按通用指标定义渲染，不为具体指标写死分支</td>
+</tr>
+</tbody>
+</table>
+<p>首版可选指标即能效视图指标列表的同一份清单（对应需求 5 §6.3 的 A1 /
+A2 / A3 / B1–B5 / C1
+在各能源与时段上的展开）。下表「注册物模型」列取自明细引擎册 §6.3
+各表的同名列，选择器按该列决定某对象节点下挂哪些指标叶子，<strong>不写死对象类型分支</strong>：</p>
+<table style="width:100%;">
+<colgroup>
+<col style="width: 11%" />
+<col style="width: 34%" />
+<col style="width: 31%" />
+<col style="width: 22%" />
+</colgroup>
+<thead>
+<tr>
+<th>类别</th>
+<th>指标名称示例</th>
+<th>对应 §6.3</th>
+<th>注册物模型（§6.3 各表同名列）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>实时指标</td>
+<td>实时电功率、实时冷量、实时用水量</td>
+<td>C1 实时能耗值</td>
+<td>可作计量对象 / 表具角色的全部物模型</td>
+</tr>
+<tr>
+<td>实时指标</td>
+<td>PUE、WUE</td>
+<td>B1 / B5 实时</td>
+<td>园区 <code>space:Land</code>、数据中心单元
+<code>dtdl:collection:DCUnit</code></td>
+</tr>
+<tr>
+<td>实时指标</td>
+<td>CLF、PLF、OLF</td>
+<td>B2 / B3 / B4 实时</td>
+<td>园区、数据中心单元、暖通空调系统
+<code>dtdl:collection:HVACSystem</code>、电力系统
+<code>ElectricalSystem</code>、其他系统 <code>OtherSystem</code></td>
+</tr>
+<tr>
+<td>时间段指标</td>
+<td>电能消耗量、用水量、冷量消耗量</td>
+<td>A1 能耗用量</td>
+<td>同 C1</td>
+</tr>
+<tr>
+<td>时间段指标</td>
+<td>电费总额、水费（统一价）、冷量费用（统一价）</td>
+<td>A2 能耗成本</td>
+<td>同 C1</td>
+</tr>
+<tr>
+<td>时间段指标</td>
+<td>尖时电费、峰时电费、平时电费、谷时电费</td>
+<td>A3 分时成本</td>
+<td>同 C1</td>
+</tr>
+<tr>
+<td>时间段指标</td>
+<td>PUE、WUE</td>
+<td>B1 / B5 跨度</td>
+<td>同 B1 / B5 实时</td>
+</tr>
+<tr>
+<td>时间段指标</td>
+<td>CLF、PLF、OLF</td>
+<td>B2 / B3 / B4 跨度</td>
+<td>同 B2 / B3 / B4 实时</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="数据项模型与树上挂载" class="level4">
+<h4>4.3.3 数据项模型与树上挂载</h4>
+<p>以下为需求 10 / 11 / 12
+共用的数据项契约，三处组件必须一致实现，不各自定义。选中项统一为一种结构，测点与指标共用：</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>字段</th>
+<th>测点</th>
+<th>指标</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>类型</td>
+<td><code>测点</code></td>
+<td><code>指标</code></td>
+</tr>
+<tr>
+<td>标识</td>
+<td>测点 ID（如 <code>0_71_1_171_2#4</code>）</td>
+<td>指标标识符（metric key，发布后保持稳定）</td>
+</tr>
+<tr>
+<td>名称</td>
+<td>测点名称</td>
+<td>指标名称（已含能源类型与计费时段）</td>
+</tr>
+<tr>
+<td>归属对象</td>
+<td>所属设备 / 组件实例</td>
+<td>指标绑定的对象实例</td>
+</tr>
+<tr>
+<td>时间语义</td>
+<td>采样时序，粒度由采集周期决定</td>
+<td>实时 / 时间段；时间段类最细半小时</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>树上挂载</strong>：指标绑定在<strong>对象实例</strong>上（园区
+/ 数据中心 / 系统 / 设备组 /
+设备），不挂在组件或测点下。指标叶子<strong>直接挂在对象节点下，与设备子节点同级同层</strong>——<strong>不套「指标（N）」分组节点、不新增树层级</strong>，展开对象即可与原有子节点一起看到，仅靠图标与类型标签区别于测点。</li>
+<li><strong>挂哪些指标由注册关系决定</strong>：某对象节点下出现哪些指标叶子，取「该对象所属物模型（含继承链）上注册的指标」∩「按能源类型
+/ 计费时段展开的入参组合」，真源为明细引擎册 §6.3
+各表「注册物模型」列，选择器不为具体对象类型写死分支。新增对象类型或调整指标适用范围时选择器无需改造。该判定由需求
+6 的服务返回，消费方不自行推导。</li>
+<li><strong>持久化</strong>：查询方案、快捷查询、组态图元绑定按「类型 +
+标识」持久化；<strong>不得</strong>把指标标识符写进原测点 ID 字段。</li>
+<li><strong>失效处理</strong>：指标被停用或删除后，引用它的方案 /
+绑定标记为失效并提示具体缺失项，不静默丢项、不回退成空值；失效判定调用需求
+6 的校验接口。</li>
+<li><strong>可见性</strong>：弹窗两入口均<strong>不提供</strong>「仅有值 /
+全部」开关——按实例添加固定「仅有值」（缺计量拓扑、缺计费方案或缺分子分母输入的指标不出现在树上），亦不提供业务分类筛选；按模型添加固定「全部」（列出该物模型上注册的适用全集，含待配置）。节点-测点树（需求
+11）与组态变量树（需求
+12）均固定仅有值、不提供开关；节点-测点树另<strong>时段类型指标直接过滤不展示</strong>。</li>
+<li><strong>搜索与配额</strong>：搜索框对测点与指标同时生效，结果按测点
+/ 指标分组；指标计入各页面既有数据项上限（参数查询按系统配置的表格 /
+曲线最大查询参数，原始数据查询 10 个，运行极值查询 50
+个），不单开配额。</li>
+<li><strong>去重</strong>：已选清单按「实例 + 类型 + 标识」去重。</li>
+</ul>
+</section>
+</section>
+<section id="整组不做项需求-1012-共同" class="level3">
+<h3>4.4 整组不做项（需求 10–12 共同）</h3>
+<ul>
+<li>指标注册为物模型测点 / 虚拟测点，或提供「指标转测点」入口。</li>
+<li>在报表、组态内新建 / 编辑 /
+删除指标定义；指标目录维护仍在指标工厂侧。</li>
+<li>告警查询、即时查询、数据补录、报表模板管理、报表总览接入指标。</li>
+<li>告警规则、联动策略、控制下发的选择器接入指标。</li>
+<li>指标血缘 / 引用分析在报表侧的可视化（属指标工厂治理能力）。</li>
+<li>模型级聚合值（同一物模型全部实例的合计 / 平均），依据明细引擎册
+§6.2.3 第 7 条。</li>
+</ul>
+</section>
+<section id="原型与需求对照" class="level3">
+<h3>4.5 原型与需求对照</h3>
+<p><strong>一条需求 = 一个可独立派工的组件 = 一份原型</strong>。原型嵌在各自需求章的开头，需求说明写在原型下方并按原型的场景页签编号，评审时对照着看，一个开发只需读一章：</p>
+<table style="width:100%;">
+<colgroup>
+<col style="width: 12%" />
+<col style="width: 26%" />
+<col style="width: 26%" />
+<col style="width: 36%" />
+</colgroup>
+<thead>
+<tr>
+<th>需求</th>
+<th>原型（本册内嵌）</th>
+<th>对应开发</th>
+<th>原型场景 = 正文小节</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#五需求-10报表选择测点弹窗">需求 10</a></td>
+<td><a href="#原型-报表选择测点弹窗">报表-选择测点弹窗</a></td>
+<td>报表前端 · 弹窗选择组件</td>
+<td>① 外层已选清单｜② 按实例添加｜③ 按模型添加｜④ 参数查询语义收敛</td>
+</tr>
+<tr>
+<td><a href="#六需求-11报表节点-测点树">需求 11</a></td>
+<td><a href="#原型-报表节点测点树选指标">报表-节点测点树选指标</a></td>
+<td>报表前端 · 节点-测点树组件</td>
+<td>① 原始数据查询｜② 运行极值查询</td>
+</tr>
+<tr>
+<td><a href="#七需求-12融合组态变量树">需求 12</a></td>
+<td><a href="#原型-融合组态变量树选指标">融合组态-变量树选指标</a></td>
+<td>融合组态前端</td>
+<td>① 变量树选指标 + 图元绑定｜② 图元兼容矩阵</td>
+</tr>
+</tbody>
+</table>
+<p>三份原型的页面骨架均按 2026-07-29 实测的线上系统绘制（<code>V300R005C21_CP015</code>），未改动的区域保持现状样式，便于逐处比对改动点。共同约定：</p>
+<ul>
+<li><strong>黄色虚线框</strong>标注本次新增或改造的控件，未框住的部分即维持现状；</li>
+<li>指标项统一用与测点不同的图标与类型标签，页面上任何位置都能一眼区分两类数据项；</li>
+<li>原型是交互与规则的可视说明，不是像素稿；配色、间距以实际组件库为准，<strong>交互规则与提示文案以原型和本册正文为准</strong>。</li>
+</ul>
+<hr />
+</section>
+</section>
+<section id="五需求-10报表选择测点弹窗" class="level2">
+<h2>五、需求 10：报表「选择测点」弹窗</h2>
+<blockquote>
+<p>落点：报表报告 → 数据查询 → <strong>参数查询</strong> / <strong>查询方案配置</strong>（两页共用同一套弹窗组件）　｜　归属：报表报告前端 · 弹窗选择组件　｜　优先级：P1</p>
+<p>依赖：视图部分<strong>无前置</strong>，可先行上线；指标部分依赖需求 6（指标选取服务）。两部分<strong>验收可分离</strong>。</p>
+<p>本期做：</p>
+<ul>
+<li>「按实例添加」「按模型添加」两个弹窗补齐空间 / 容量 / 能效三视图；「按模型添加」范围按当前视图子树<strong>递归</strong>解析。</li>
+<li>弹窗内开放指标为与测点<strong>并列</strong>的数据项，含按物模型批量添加指标；外层已选清单新增「类型」列。</li>
+<li>参数查询对时段指标收敛采样周期与聚合口径；查询方案连带保存指标的粒度与聚合方式。</li>
+</ul>
+<p>本期不做：模型级合计 / 平均值；节点-测点树（需求 11）与融合组态（需求 12）的改造；§4.4 整组不做项。</p>
+</blockquote>
+<section id="原型-报表选择测点弹窗" class="level3 proto-anchor">
+<h3>5.1 原型（对照看批注）</h3>
+<div class="proto-embed" id="proto-report-picker">
+  <div class="proto-embed-head">
+    <strong>报表-选择测点弹窗</strong>
+    <span class="proto-tag">本册内嵌原型</span>
+    <span>覆盖 需求 10 全部范围</span>
+    <span>① 外层已选清单｜② 按实例添加｜③ 按模型添加｜④ 参数查询语义收敛</span>
+  </div>
+  <iframe class="proto-frame" title="报表-选择测点弹窗（需求 10）" src="存量页面消费-原型-报表选择测点弹窗.html" sandbox="allow-scripts allow-same-origin"></iframe>
+</div>
+<p>读法：原型顶部四个场景页签 <strong>①②③④</strong> 与下面 §5.2–§5.5 一一对应；<strong>视图</strong>角标的控件不依赖指标工厂、可先行交付，<strong>指标</strong>角标的控件等需求 6。</p>
+</section>
+<section id="外层已选清单" class="level3">
+<h3>5.2 场景①：外层已选清单</h3>
+<p>外层「选择测点」弹窗<strong>只改两处</strong>，其余（批量删除 / 全部移除 / 分页 / 取消与确定）保持现状：</p>
+<ul>
+<li><strong>新增「类型」列</strong>：取值「测点 / 指标」，下游按类型分流取数——测点走时序库，指标走指标服务。</li>
+<li><strong>「测点ID」列语义放宽</strong>为「测点ID / 指标标识」，指标行展示指标标识。<strong>持久化仍按「类型 + 标识」两个字段存，指标标识不得写入原测点 ID 字段。</strong></li>
+</ul>
+<p>其他约定：搜索框对测点与指标同时生效、结果按类型分组；指标与测点<strong>合并计入</strong>本页既有数据项上限（系统配置的表格 / 曲线最大查询参数），不为指标单开配额。</p>
+</section>
+<section id="按实例添加" class="level3">
+<h3>5.3 场景②：按实例添加</h3>
+<p><strong>视图切换（左树顶部）</strong></p>
+<ul>
+<li>新增视图下拉，固定三项：空间视图 / 容量视图 / 能效视图，顺序与节点-测点树一致；位置对齐原始数据查询左树的现有实现——<strong>视图下拉在最上、搜索框在其下</strong>，不另设计一套。</li>
+<li>未配置的视图<strong>置灰并提示先配置视图</strong>，不隐藏——隐藏会让实施误判为版本缺失。</li>
+<li><strong>切换视图不清空已选清单</strong>：三视图是同一批实例的不同树结构，用户可在空间视图按位置选几个、再切到能效视图按系统选几个，两批合并提交；已选按「实例 + 类型 + 标识」去重。</li>
+</ul>
+<p><strong>指标叶子</strong></p>
+<ul>
+<li>指标挂在<strong>对象实例</strong>上（园区 / 数据中心 / 系统 / 设备组 / 设备），树上表现为对象节点下与设备子节点<strong>同级同层</strong>的叶子——<strong>不套「指标（N）」分组节点、不新增层级</strong>，图标与测点可区分；不挂在组件或测点下。</li>
+<li>某对象下出现哪些指标由<strong>物模型 × 指标注册矩阵</strong>决定（§4.3.3），选择器不为具体对象类型写死分支。</li>
+<li>指标名称已含能源类型与计费时段（如「电能消耗量」「尖时电费」），<strong>勾中即已确定入参，不需要二次参数面板</strong>。</li>
+<li><strong>固定仅有值</strong>：只展示算得出结果的指标，缺输入的不出现在树上；不提供「仅有值 / 全部」开关，也不提供业务分类筛选条。</li>
+</ul>
+</section>
+<section id="按模型添加" class="level3">
+<h3>5.4 场景③：按模型添加</h3>
+<p>三栏逐栏说明：</p>
+<ul>
+<li><strong>第一栏</strong>：「选择空间」改为「<strong>选择对象范围</strong>」，新增同样三视图；范围解析按<strong>当前视图子树递归</strong>（含下下级）。现状只取直接子节点，在能效视图下会漏掉挂在系统实例下的设备实例。</li>
+<li><strong>第二栏</strong>：空间视图下保持现状「选择设备分类」（IT 设备 / 场地设施 / 备品备件 / 软件 → 二级分类 → 物模型）；<strong>能效 / 容量视图下语义放宽为「选择对象类型」</strong>，以便按系统类型（暖通空调系统 / 电力系统等）批量选取。</li>
+<li><strong>第三栏</strong>：「设备测点列表」语义扩为「<strong>数据项列表</strong>」，按测点 / 指标分组；默认展示该物模型上注册的<strong>全部</strong>指标（含待配置），便于按类型批量勾选，<strong>不提供</strong>展示范围开关。</li>
+</ul>
+<p><strong>按物模型批量添加指标</strong>：选定「范围 + 物模型 + 指标」后，一次性加入该范围内所有该模型（<strong>含继承子模型</strong>）实例的同一指标，与现有「某模型所有实例的对应测点」对称。</p>
+<blockquote>
+<p><strong>红线：只批量添加，不产出模型级合计值。</strong>批量添加得到的是「N 个实例 × 同一指标」的 N 条独立数据项，不是该模型全部实例的合计或平均。同一块表可能同时落在多个实例的计量拓扑内，跨实例合计会形成重复计量；横向汇总由用户在报表内自行处理。</p>
+</blockquote>
+</section>
+<section id="参数查询语义收敛" class="level3">
+<h3>5.5 场景④：参数查询语义收敛</h3>
+<p>时段类型指标是<strong>按粒度预聚合的结果</strong>，不是采样序列，可理解为「历史实时指标」的给值接口。参数查询与查询方案配置按下表收敛：</p>
+<table>
+<colgroup>
+<col style="width: 22%" />
+<col style="width: 78%" />
+</colgroup>
+<thead>
+<tr>
+<th>控件 / 场景</th>
+<th>规则</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>采样周期</td>
+<td>时段指标只开放 <strong>1 小时 / 天 / 月 / 年</strong>；半小时及更细档位对时段指标不可选</td>
+</tr>
+<tr>
+<td>聚合方式</td>
+<td>时段指标<strong>不新增</strong>聚合类型，复用现有<strong>「求和」</strong>：选「求和」时有值；选平均 / 最大 / 最小等时该列为空值「—」</td>
+</tr>
+<tr>
+<td>实时类型指标</td>
+<td><strong>本页可选</strong>。采样周期与聚合方式与测点一致（全部档位、原有聚合方式均可）；数据需经查询计算后呈现，非直接读预聚合序列</td>
+</tr>
+<tr>
+<td>混选测点 / 实时指标 + 时段指标</td>
+<td>聚合方式控件<strong>不做限制</strong>。测点与实时指标按所选聚合方式正常出数；时段指标仅在「求和」下有值，其余聚合方式结果为「—」，<strong>不拦截查询、不置灰选项</strong></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="查询方案配置" class="level3">
+<h3>5.6 查询方案配置</h3>
+<ul>
+<li>方案需连带保存指标的<strong>粒度与聚合方式</strong>，加载时完整复原。</li>
+<li>仅含测点的历史方案保持原样可用，<strong>不做数据迁移</strong>。</li>
+<li>加载时校验引用有效性（需求 6 接口 4），失效项标记并提示具体缺失指标，不静默丢项、不显示为空值。</li>
+</ul>
+<hr />
+</section>
+</section>
+<section id="六需求-11报表节点-测点树" class="level2">
+<h2>六、需求 11：报表节点-测点树</h2>
+<blockquote>
+<p>落点：报表报告 → 数据查询 → <strong>原始数据查询</strong> / <strong>运行极值查询</strong>（两页共用同一套左侧节点-测点树）　｜　归属：报表报告前端 · 节点-测点树组件　｜　依赖：需求 6　｜　优先级：P2</p>
+<p>与需求 10 的边界：<strong>是另一套组件</strong>——常驻左树、选中即查询、无已选清单操作行（弹窗用的是另一套选择组件），代码互不相干，可独立派工与验收；该组件<strong>三视图已具备</strong>，本需求不含视图扩展。</p>
+<p>本期做：左树对象节点下挂指标；<strong>时段类型指标直接过滤不展示</strong>；实时指标能算出即可选；固定仅有值。</p>
+<p>本期不做：在这两页开放时段指标勾选与查询（历史时段指标由参数查询承接，见 §5.5）；改右侧查询区；§4.4 整组不做项。</p>
+</blockquote>
+<section id="原型-报表节点测点树选指标" class="level3 proto-anchor">
+<h3>6.1 原型（对照看批注）</h3>
+<div class="proto-embed" id="proto-report-tree">
+  <div class="proto-embed-head">
+    <strong>报表-节点测点树选指标</strong>
+    <span class="proto-tag">本册内嵌原型</span>
+    <span>覆盖 需求 11 全部范围</span>
+    <span>① 原始数据查询｜② 运行极值查询</span>
+  </div>
+  <iframe class="proto-frame" title="报表-节点测点树选指标（需求 11）" src="存量页面消费-原型-报表节点测点树选指标.html" sandbox="allow-scripts allow-same-origin"></iframe>
+</div>
+<p>读法：原型两个场景页签 <strong>①②</strong> 与下面 §6.2、§6.3 一一对应；两页的左树规则相同，差异只在右侧查询区，见 §6.4。</p>
+</section>
+<section id="原始数据查询" class="level3">
+<h3>6.2 场景①：原始数据查询</h3>
+<ul>
+<li>左树对象节点下直接出现指标叶子（与设备子节点<strong>同级同层</strong>，不套分组节点），<strong>只有实时指标</strong>可勾选并参与查询。</li>
+<li><strong>时段类型指标不展示</strong>：该页定位是原始采样值排查（单日 + 上一日 / 次日），时段指标已是聚合结果，接入会让「原始」口径失真。</li>
+<li>右侧保持现状：日期 + 上一日 / 次日 + 查询，结果表按测点时序展示。</li>
+<li>数量上限仍为既有的 <strong>10 个</strong>，指标与测点合并计入。</li>
+</ul>
+</section>
+<section id="运行极值查询" class="level3">
+<h3>6.3 场景②：运行极值查询</h3>
+<ul>
+<li>左树规则同 §6.2：实时指标可选，时段类型指标不展示。</li>
+<li>右侧保持现状：日报 / 月报 / 年报 + 日期 + 查询，结果表保持最大值 / 最小值 / 平均值及发生时间结构，<strong>不新增「极值口径」列</strong>、不新增指标结果行。</li>
+<li>时段指标的极值诉求由参数查询（§5.5）承接。</li>
+<li>数量上限仍为既有的 <strong>50 个</strong>，指标与测点合并计入。</li>
+</ul>
+</section>
+<section id="两页共用规则" class="level3">
+<h3>6.4 两页共用规则</h3>
+<ul>
+<li><strong>固定仅有值</strong>：算不出结果的指标不出现在树上；不提供「仅有值 / 全部」展示范围开关、不做置灰占位行。</li>
+<li><strong>不新增「已选数据项」操作行</strong>：勾选即参与查询，不增加芯片条或清除条。</li>
+<li><strong>右侧查询区样式、交互、规则一律不变</strong>：本需求不改分页、导出、图表切换等既有能力。</li>
+<li>树上挂载位置、搜索与去重按 §4.3.3（在时段指标过滤之后生效）。</li>
+</ul>
+<hr />
+</section>
+</section>
+<section id="七需求-12融合组态变量树" class="level2">
+<h2>七、需求 12：融合组态变量树</h2>
+<blockquote>
+<p>落点：工程配置 → 融合组态 → <strong>页面组态（编辑页）</strong>左下「测点 / 变量」面板 + 图元绑定　｜　归属：融合组态前端　｜　依赖：需求 6　｜　优先级：P2</p>
+<p>与前两条的边界：同样是常驻左树，但多一层<strong>拖拽绑定到图元</strong>，因此额外需要图元兼容与刷新策略；三视图已具备，本需求不含视图扩展。</p>
+<p>本期做：变量树对象节点下开放指标叶子（固定仅有值）；图元绑定指标并按时间语义分流；按粒度对齐刷新；打开组态时校验绑定有效性。</p>
+<p>本期不做：§4.4 整组不做项；属性面板不呈现告警阈值 / 控制下发 / 联动条件（组态本身无对应图元与配置入口，平台级红线见 §4.3.1）。</p>
+</blockquote>
+<section id="原型-融合组态变量树选指标" class="level3 proto-anchor">
+<h3>7.1 原型（对照看批注）</h3>
+<div class="proto-embed" id="proto-union-config">
+  <div class="proto-embed-head">
+    <strong>融合组态-变量树选指标</strong>
+    <span class="proto-tag">本册内嵌原型</span>
+    <span>覆盖 需求 12 全部范围</span>
+    <span>① 变量树选指标 + 图元绑定｜② 图元兼容矩阵</span>
+  </div>
+  <iframe class="proto-frame" title="融合组态-变量树选指标（需求 12）" src="存量页面消费-原型-融合组态变量树选指标.html" sandbox="allow-scripts allow-same-origin"></iframe>
+</div>
+<p>读法：原型两个场景页签 <strong>①②</strong> 与下面 §7.2、§7.3 对应；刷新与失效规则见 §7.4，在原型里表现为图元底部的「刷新方式 / 数据截止时间」。</p>
+</section>
+<section id="变量树与属性面板" class="level3">
+<h3>7.2 场景①：变量树与图元绑定</h3>
+<p><strong>变量树</strong></p>
+<ul>
+<li>「测点」页签的树保持现状层级，在对象实例节点下<strong>直接</strong>新增指标叶子，与设备子节点<strong>同级同层</strong>（不套「指标（N）」分组节点）；叶子可拖拽、可点选，与测点叶子交互一致。</li>
+<li><strong>固定仅有值</strong>：算不出结果的指标不出现在树上，不提供展示范围开关。</li>
+<li>「变量」页签：指标可作为<strong>只读变量</strong>参与页面展示表达式（如 <code>本月电费 / 预算</code>），<strong>不得</strong>作为控制指令的输入变量。</li>
+</ul>
+<p><strong>图元绑定</strong></p>
+<ul>
+<li>绑定入口沿用现有两条路径——从左树拖拽到图元，或选中图元后在属性面板「数据源」里选，<strong>不新增第三种入口</strong>。</li>
+<li><strong>测点与实时指标能力一致</strong>：凡测点可绑的图元，实时指标均可绑（含历史图表、数据统计图、桑基图）。</li>
+<li><strong>时段类型指标按取数意图分两种</strong>：① <strong>给实时值</strong>（指标卡 / 文本 / 仪表 / 水波图 / 进度条等单值展示）取<strong>最近半小时</strong>粒度统计值，并展示数据截止时间，不要求再选「今日 / 本月 / 本年」窗口；② <strong>给历史时序</strong>（历史图表 / 数据统计类 / 桑基图等）复用 §5.5 的收敛规则，按所选采样周期出点、不插值。</li>
+<li>历史时序绑定须<strong>持久化采样周期与聚合方式</strong>，不依赖运行时上下文推断。</li>
+</ul>
+</section>
+<section id="图元兼容矩阵" class="level3">
+<h3>7.3 场景②：图元兼容矩阵</h3>
+<table>
+<colgroup>
+<col style="width: 30%" />
+<col style="width: 26%" />
+<col style="width: 44%" />
+</colgroup>
+<thead>
+<tr>
+<th>图元类型</th>
+<th>测点 / 实时指标</th>
+<th>时间段指标</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>单值展示类（指标卡 / 文本 / 仪表 / 水波图 / 进度条）</td>
+<td>可绑（拖入即绑当前值）</td>
+<td>可绑，走<strong>实时值</strong>口径：最近半小时统计值</td>
+</tr>
+<tr>
+<td>实时图表</td>
+<td>可绑</td>
+<td><strong>不可绑</strong>——无秒级序列；拒绝落位并给出理由，不静默画假曲线</td>
+</tr>
+<tr>
+<td>历史图表 / 数据统计类 / 桑基图</td>
+<td>可绑（与测点相同）</td>
+<td>可绑，走<strong>历史时序</strong>口径：复用 §5.5；桑基图流量口径须来自计量拓扑</td>
+</tr>
+</tbody>
+</table>
+<p>组态本身无按钮组 / 控制类、告警 / 联动类图元，矩阵不列这两行。</p>
+</section>
+<section id="刷新与失效" class="level3">
+<h3>7.4 刷新与失效</h3>
+<p>组态页是常驻大屏、按秒级轮询刷新，这一点与报表侧按次查询不同，必须单独定规则：</p>
+<ul>
+<li><strong>时段指标「实时值」</strong>：按<strong>半小时</strong>粒度对齐刷新，图元显示数据截止时间；不得按秒级轮询反复打指标服务。</li>
+<li><strong>时段指标「历史时序」</strong>：按绑定的采样周期整点对齐刷新，规则同 §5.5；图元显示数据截止时间。</li>
+<li>实时指标沿用固定周期刷新；<strong>测点的刷新逻辑完全不变</strong>。</li>
+<li><strong>失效处理</strong>：打开组态时校验绑定有效性（需求 6 接口 4），失效绑定在画布与属性面板标记并提示具体缺失指标，不静默显示空值。</li>
+</ul>
+<hr />
+</section>
+</section>
+<section id="八待确认问题" class="level2">
+<h2>八、待确认问题</h2>
+<ol type="1">
+<li><strong>坏值 / 缺失的区分呈现（跟随明细引擎册待确认
+1）</strong>：区分口径以明细引擎册结论为准；总览看板无完整性角标落点，存量分析页跟随明细引擎册结论。</li>
+<li><strong>冷量等二次能源折算系数默认值</strong>：本稿口径为标煤 / CO₂
+系数默认
+0（不计入折算）、能源配置可改；默认值清单需在能源配置侧确认。</li>
+<li><strong>WUE 等级判定输入</strong>：WUE 展示按 GB/T 32910.6-2025 的
+WUEev 水效等级承载；原型示例暂按 WUE 值代入演示，真实系统需补齐 WUEev
+水源修正输入后再判定。</li>
+<li><strong>CLF / PLF / OLF 诊断阈值</strong>：CLF / PLF / OLF
+当前作为诊断档位展示，不展示标准来源说明；最终阈值需由项目行业标准或企业标准确认后替换。若阈值按<strong>数据中心单元
+/
+园区级</strong>校准，则系统级（§3.7）能否直接套用同一档位需一并确认——多系统场景下系统级数值必然小于单元级，套用会让每个系统都判为「优」。</li>
+<li><strong>【需求 9】系统实例能效卡的展示范围（跟随明细引擎册待确认
+U6）</strong>：本册按明细引擎册 §6.3 各表「注册物模型」列在暖通空调系统
+/ 电力系统 / 其他系统上展示对应的 CLF / PLF / OLF
+单张瓦片。需确认系统级与数据中心单元 /
+园区级同名指标是否需要同屏对照展示（本册按不同屏、各自在所属对象页展示处理）。</li>
+<li><strong>【需求 11】原始数据查询 / 运行极值查询时段指标（已定论）</strong>：两页左树<strong>过滤时段类型指标（不展示）</strong>；实时指标能算出即可选（固定仅有值）；不提供展示范围开关；不新增已选数据项操作行；右侧查询区保持现状。历史时段指标由参数查询（需求
+10）承接。原「是否开放原始数据查询指标」「运行极值累计型指标极值口径」两项并入本结论，不再单列待确认。</li>
+<li><strong>【需求 10–12
+公共】兼容路线复核</strong>：确认放弃《现场扩展与统计矩阵边界设计》§7
+待确认 5 的「TQL 虚拟测点视图」兼容层，改走显式双类型数据项。若存量组态
+/ 帆软 /
+北向存在强依赖「一切皆测点」的组件，需单独出清单与收敛时间表，不在这组需求内以伪装方式绕过。<strong>此项是整组的路线前提，需最先定论。</strong></li>
+<li><strong>【需求 10 / 11 / 12
+公共】指标叶子的树上呈现（已定论）</strong>：<strong>不分组、不折叠</strong>——指标叶子与设备子节点<strong>同级同层</strong>直接挂在对象节点下，不新增「指标（N）」分组节点，也不按业务分类或实时
+/ 时段再分层。沿用能效视图「能源类型与计费时段固化进指标名称」后，单个对象下的指标叶子数
+= 能源数 × 指标数 + 分时时段数（电为 4
+条分时电费），铺开较长时靠搜索与滚动收敛，不靠加层级。三处组件按同一结论实现，不各自决定。</li>
+<li><strong>【需求 12】融合组态时段指标给值（已定论）</strong>：时段指标作「历史实时指标」接口——<strong>实时值</strong>取最近半小时统计值；<strong>历史时序</strong>复用参数查询 §5.5。原「今日 / 本月 /
+本年窗口清单」待确认并入本结论，单值图元不再强制选窗口。</li>
+<li><strong>【需求 10 / 12】指标名称与单位在多语言 /
+导出中的呈现</strong>：报表导出 Excel
+的表头、组态图元标题默认取指标名称，需确认是否复用指标工厂发布的名称与单位，以及项目侧能否改别名。</li>
+<li><strong>【需求 6 /
+10】按物模型批量添加的模型选取入口</strong>：本册按「选定范围 + 物模型 +
+指标」批量添加（§5.4）。需确认中间栏的模型列表是展示全部物模型、还是只展示该范围内有实例且有已注册指标的模型；后者更可用，但需要需求
+6 接口 2 支持「注册矩阵 × 实例统计」联合查询，影响需求 6
+的接口范围。</li>
+<li><strong>【需求 6】接口归属与交付节奏</strong>：明细引擎册 §8.1
+四类接口按「指标工厂对外能力」设计。需确认是由指标工厂直接对外提供，还是经报表
+/ 组态各自的 BFF 转发；以及接口 1–3（选择器必需）与接口
+4（引用校验）能否分两批交付，让需求 10 的弹窗选取先行联调。</li>
+<li><strong>【需求 8】对比页可算状态判定的实现路径</strong>：§2.4
+要求对象树按「指标 ×
+对象」可算状态控制可勾选性（无结果对象置灰），口径与需求 6 接口
+3（批量可算状态）一致。需确认需求 8（P0）排期是否等待需求
+6（P1）接口，或先在节能管理应用内按同一规则实现、需求 6
+交付后收敛为单一服务，避免两套判定漂移。</li>
+</ol>
+<hr />
+</section>
+<section id="九验收标准初稿" class="level2">
+<h2>九、验收标准（初稿）</h2>
+<section id="需求-8-9" class="level3">
+<h3>需求 8 / 9</h3>
+<table style="width:100%;">
+<colgroup>
+<col style="width: 3%" />
+<col style="width: 28%" />
+<col style="width: 39%" />
+<col style="width: 28%" />
+</colgroup>
+<thead>
+<tr>
+<th>#</th>
+<th>验收场景</th>
+<th>输入 / 前置</th>
+<th>期望结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>存量页面消费指标工厂产出</td>
+<td>打开用能对比分析、用能定额考核、节能分析；总览看板「能耗趋势与流向」·
+流向分析</td>
+<td>能耗量与成本数据均来自需求 5
+指标工厂产出（历史区间查询时按当前拓扑计算），各页与表具核算明细口径一致；节能分析等页含缺失
+/ 坏值时段可带「含异常 /
+缺失」标记；<strong>用能对比分析、用能定额考核及总览看板（含流向桑基）不展示该标记</strong>；侧栏无独立「能耗流向分析」入口</td>
+</tr>
+<tr>
+<td>1a</td>
+<td>对比页指标切换</td>
+<td>打开用能对比分析，勾选园区与楼栋对象后依次切换「电能消耗量 →
+电费总额 → PUE」</td>
+<td>页面无能源类型 / 统计维度 /
+时间粒度控件；指标名称、单位与能效视图指标列表一致；切换指标即整体刷新单位、柱状图与表格（Y
+轴随指标量级保留小数），对象与时间段筛选保持不变；切到 PUE
+后无结果的楼栋对象自动取消勾选</td>
+</tr>
+<tr>
+<td>1b</td>
+<td>对比页对象可选性</td>
+<td>树上选对象：无计费方案对象查电费总额、未配暖通空调系统电量输入的对象查
+CLF</td>
+<td>对象树展示全集，无结果对象置灰不可勾，悬停分别提示「未应用计费方案」「待配置：缺少暖通空调系统电量输入」；可选对象单元格正常出值，「—」仅出现在所选时间段无数据时</td>
+</tr>
+<tr>
+<td>1c</td>
+<td>对比结果导出</td>
+<td>勾选对象与时间段后点击右上角「导出」</td>
+<td>导出当前对比表格，列结构与页面表格一致：对比对象 + 对比指标（名称 +
+单位）+
+各时间段跨度值（「—」原样导出）；未勾选对象时点击给出提示，不产出空文件</td>
+</tr>
+<tr>
+<td>2</td>
+<td>用能趋势预测下线</td>
+<td>检查导航与页面</td>
+<td>「用能趋势预测」入口与页面已移除，无死链</td>
+</tr>
+<tr>
+<td>3</td>
+<td>看板自动生成</td>
+<td>打开任意对象的总览看板</td>
+<td>组件集与 §3.4
+规则表推导结果一致；不满足出现规则的卡片不渲染、不占位</td>
+</tr>
+<tr>
+<td>4</td>
+<td>晚绑拓扑自动出现</td>
+<td>对象新配置某能源类型计量拓扑</td>
+<td>下次打开看板，该能源在「能耗趋势与流向」与「能耗成本」中的
+Tab 等自动出现，无需任何配置</td>
+</tr>
+<tr>
+<td>5</td>
+<td>折算公式推广</td>
+<td>配置多能源折算系数，冷量系数默认 0</td>
+<td>标准煤 / 碳排放 = Σ(启用能源用量 ×
+各自系数)，展示在能效指标总览（仅园区 /
+数据中心）；冷量默认不计入；改系数后重查生效</td>
+</tr>
+<tr>
+<td>6</td>
+<td>能耗成本卡</td>
+<td>对象下部分表具应用分时计费方案</td>
+<td>「能耗成本」卡按能源 Tab
+展示，单一计价能源展示总成本与面积趋势，分时计价能源展示时段构成环形和尖峰平谷堆叠趋势；无计费方案对象不出现能耗成本卡</td>
+</tr>
+<tr>
+<td>7</td>
+<td>能耗趋势与流向 · 趋势分析</td>
+<td>打开启用多能源计量的对象；卡头 type 为默认「趋势分析」</td>
+<td>卡标题为「能耗趋势与流向」；单卡能源 Tab；各 Tab
+的趋势、分项构成和总量均来自指标工厂对象能耗统计指标；2
+个及以上分项展示环形，0 / 1 个分项不展示环形并内联总量</td>
+</tr>
+<tr>
+<td>7a</td>
+<td>能耗趋势与流向 · 流向分析</td>
+<td>同一对象下切换 type 为「流向分析」</td>
+<td>主图切换为桑基（源 → 一级 →
+二级）；根节点为顶部当前分析对象；能源 Tab
+与顶栏时间保持不变；节点用量来自 A1
+沿计量拓扑汇总；无组件内面包屑下钻 / 返回上级</td>
+</tr>
+<tr>
+<td>7b</td>
+<td>流向节点切换顶部对象</td>
+<td>流向分析下点击带可点暗示（如 ›）的下级对象节点</td>
+<td>顶部 NavigationBar
+当前对象切换为该节点对应对象；能效 / 趋势与流向 /
+成本等卡片按新对象刷新；点击末端不可选节点不切换对象</td>
+</tr>
+<tr>
+<td>8</td>
+<td>能效指标总览（园区 / 数据中心单元）</td>
+<td>打开园区 / 数据中心对象</td>
+<td>PUE / CLF / PLF / OLF / WUE / 标准煤 / 碳排放按 §3.4
+规则生成瓦片（折算指标仅园区 / 数据中心）；园区首行表达 PUE = 1 + CLF +
+PLF + OLF；缺计算输入的 CLF / PLF / OLF
+显示「待配置」；迷你趋势数据点可查看期次与指标值</td>
+</tr>
+<tr>
+<td>8a</td>
+<td>能效指标总览（系统实例）</td>
+<td>依次打开暖通空调系统、电力系统、设备组对象</td>
+<td>暖通空调系统只出现 CLF 单张瓦片、电力系统只出现 PLF
+单张瓦片，均不出现 PUE / WUE / 标准煤 / 碳排放，也不出现
+<code>PUE = 1 + CLF + PLF + OLF</code> 首行公式关系；瓦片分子 /
+分母构成标注为<strong>本系统实例</strong>；设备组等未注册 B1–B5
+的对象类型整张能效指标卡隐藏</td>
+</tr>
+<tr>
+<td>8b</td>
+<td>系统级与基准级口径可加</td>
+<td>同一园区下配置 2 个暖通空调系统，分别查看系统级 CLF 与园区级
+CLF</td>
+<td>园区级 CLF = 两个系统级 CLF 之和（分母同为该园区下 IT
+系统电量）；两处数值不等不报错、不判为数据异常；瓦片文案能说明当前口径主体</td>
+</tr>
+<tr>
+<td>8c</td>
+<td>系统实例上溯失败</td>
+<td>打开一个不挂在任何园区 / 数据中心下、或上级单元下无 IT
+系统的暖通空调系统</td>
+<td>CLF 瓦片显示「待配置」并提示缺失项（上溯不到数据中心单元 /
+园区，或其下无 IT 系统）；不按 0 处理、不隐藏瓦片</td>
+</tr>
+<tr>
+<td>8d</td>
+<td>出现规则不写死对象类型</td>
+<td>在明细引擎册 §6.3 各表「注册物模型」列中为某新对象类型注册
+B1，重新打开该类型对象的看板</td>
+<td>该对象自动出现 PUE
+瓦片，页面代码与本册规则表无需改动；反向下线注册后瓦片不再渲染</td>
+</tr>
+<tr>
+<td>8e</td>
+<td>不与既有同名槽位耦合</td>
+<td>对比瓦片上的 PUE / CLF 与该对象物模型上既有 PUE
+<code>1_107_0</code>、CLF <code>1_161_0</code> 槽位的值</td>
+<td>瓦片取数来源为指标工厂，槽位保持原样；两者数值不一致不视为缺陷，核数以指标工厂为准</td>
+</tr>
+<tr>
+<td>9</td>
+<td>能效标准 / 诊断弹层</td>
+<td>点击任一可计算指标的等级 / 诊断标签</td>
+<td>PUE 弹出 GB 40879-2021 能效等级；WUE 弹出 GB/T 32910.6-2025
+水效等级说明；CLF / PLF / OLF
+弹出诊断档位但不展示标准来源；待配置与折算指标不展示入口</td>
+</tr>
+<tr>
+<td>10</td>
+<td>页面结构</td>
+<td>打开总览看板</td>
+<td>顶部筛选区、能效指标总览、能耗趋势与流向、能耗成本按顺序展示；页面不展示分组标题，不提供看板配置、卡片隐藏、拖拽排序操作；侧栏「能耗分析」下无独立「能耗流向分析」入口</td>
+</tr>
+<tr>
+<td>11</td>
+<td>顶部筛选交互</td>
+<td>页面滚动到中下部后切换对象 / 时间粒度 / 日期</td>
+<td>工具条吸顶可操作；日期 pill 弹层按年 / 月 / 日 /
+时段自适应，时段结束早于开始时自动对调；切换后卡片集、Tab
+集合与图表粒度按规则刷新，可见卡片展示加载态</td>
+</tr>
+<tr>
+<td>12</td>
+<td>本版不包含项</td>
+<td>检查总览看板</td>
+<td>不出现用能总览、能耗明细、完整性角标 / 表具清单弹层、旧「能耗统计 /
+能效总览」双 Tab、看板配置、卡片隐藏 / 拖拽排序、实时
+PUE、DCIE、CUE、节能收益、冷站 COP / EER 组件</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>需求 6（指标选取服务）的验收场景随需求本体移入明细引擎册 §十一（场景
+18–18f）。</p>
+</blockquote>
+</section>
+<section id="验收-需求-10" class="level3">
+<h3>需求 10：报表「选择测点」弹窗</h3>
+<p>场景 13–16 验视图部分（可先行验收），17–24 验指标部分。</p>
+<table style="width:100%;">
+<colgroup>
+<col style="width: 3%" />
+<col style="width: 28%" />
+<col style="width: 39%" />
+<col style="width: 28%" />
+</colgroup>
+<thead>
+<tr>
+<th>#</th>
+<th>验收场景</th>
+<th>输入 / 前置</th>
+<th>期望结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>13</td>
+<td>弹窗视图扩展</td>
+<td>打开参数查询「选择测点」→ 按实例添加 / 按模型添加</td>
+<td>两个弹窗均可切换空间 / 容量 /
+能效视图，三视图树结构与节点-测点树一致；未配置的视图置灰并提示先配置视图</td>
+</tr>
+<tr>
+<td>14</td>
+<td>按模型添加范围递归解析</td>
+<td>在能效视图选定某根节点后按模型添加</td>
+<td>范围按当前视图子树<strong>递归</strong>解析（含下下级），不只取直接一层子节点；能效
+/ 容量视图下中间栏语义为「对象类型」而非「设备分类」</td>
+</tr>
+<tr>
+<td>15</td>
+<td>切换视图不丢选</td>
+<td>在空间视图勾选若干测点后切换到能效视图继续勾选</td>
+<td>已选清单保留原有条目；同一实例的同一测点跨视图重复勾选只保留一条</td>
+</tr>
+<tr>
+<td>16</td>
+<td>与指标能力解耦</td>
+<td>指标工厂未交付时验收本需求</td>
+<td>三视图切换与范围递归解析可独立验证通过，不依赖任何指标能力</td>
+</tr>
+<tr>
+<td>17</td>
+<td>弹窗内指标可见性</td>
+<td>按实例添加，选中已配计量拓扑与计费方案的对象</td>
+<td>对象节点下出现指标叶子，与设备子节点并列且图标可区分；清单与需求 6
+接口 1
+返回一致（能源类型与计费时段已固化进名称，如「电能消耗量」「尖时电费」）；挂载范围与明细引擎册
+§6.3 各表「注册物模型」列一致——PUE / WUE 仅在园区 /
+数据中心单元出现，CLF / PLF / OLF 在园区 /
+数据中心单元及对应系统实例上出现</td>
+</tr>
+<tr>
+<td>18</td>
+<td>按实例添加默认仅有值</td>
+<td>打开按实例添加，选中未配计量拓扑或未配计费方案的对象</td>
+<td>树上只出现算得出结果的指标；不提供「仅有值 /
+全部」与业务分类筛选；缺输入的指标不出现在树上（不置灰、不显示「待配置」行）</td>
+</tr>
+<tr>
+<td>19</td>
+<td>按物模型批量添加指标</td>
+<td>「按模型添加」选定某范围 + 暖通空调系统 + CLF 后确认</td>
+<td>一次性加入该范围内全部暖通空调系统实例（含继承子模型实例）的
+CLF，得到 N
+条独立数据项；第三栏默认展示该物模型上注册的<strong>全部</strong>指标（含待配置），不提供「仅有值
+/ 全部」开关；<strong>不产出</strong>该模型全部实例的合计 /
+平均值</td>
+</tr>
+<tr>
+<td>20</td>
+<td>双类型不互相伪装</td>
+<td>勾选测点与指标后查看已选清单与保存结果</td>
+<td>主表格含类型列并正确区分测点 / 指标；指标 metric key 不写入测点 ID
+字段；测点走时序取数、指标走指标服务取数，两者口径互不污染</td>
+</tr>
+<tr>
+<td>21</td>
+<td>参数查询粒度与聚合收敛</td>
+<td>混选测点、「电能消耗量」与周期 PUE 后，分别选「求和」与「平均值」等查询</td>
+<td>时段指标采样周期只可选 <strong>1 小时及以上</strong>；聚合方式控件不置灰、均可选；选「求和」时时段指标有值，选平均 / 最大 / 最小时时段指标列为空值「—」且测点列正常出数；实时指标可选，档位与聚合方式同测点，查询计算后出数；不新增「采样周期统计」等聚合类型</td>
+</tr>
+<tr>
+<td>22</td>
+<td>查询方案含指标</td>
+<td>保存含指标的查询方案后重新加载</td>
+<td>指标标识、粒度、聚合方式完整复原；仅含测点的历史方案照常可用、无需迁移</td>
+</tr>
+<tr>
+<td>23</td>
+<td>方案失效提示</td>
+<td>停用或删除某个被方案引用的指标后加载该方案</td>
+<td>标记失效并提示具体缺失指标，不静默丢项、不显示为空值</td>
+</tr>
+<tr>
+<td>24</td>
+<td>数量上限</td>
+<td>在参数查询选到上限</td>
+<td>指标与测点合并计入既有上限（系统配置的表格 /
+曲线最大查询参数），不为指标单开配额</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="验收-需求-11" class="level3">
+<h3>需求 11：报表节点-测点树</h3>
+<table style="width:100%;">
+<colgroup>
+<col style="width: 3%" />
+<col style="width: 28%" />
+<col style="width: 39%" />
+<col style="width: 28%" />
+</colgroup>
+<thead>
+<tr>
+<th>#</th>
+<th>验收场景</th>
+<th>输入 / 前置</th>
+<th>期望结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>25</td>
+<td>时段类型指标过滤</td>
+<td>在原始数据查询、运行极值查询打开左树，展开已配计量拓扑的对象</td>
+<td>树上<strong>不出现</strong>电能消耗量 / 电费总额 / 周期 PUE 等时段类型指标；无展示范围开关；无「已选数据项」操作行</td>
+</tr>
+<tr>
+<td>26</td>
+<td>实时指标可选（仅有值）</td>
+<td>在原始数据查询、运行极值查询展开已配计量拓扑的对象；再看未配齐输入的对象</td>
+<td>能算出的实时指标可勾选并参与查询；算不出的不出现在树上（无置灰行）；时段指标仍不展示</td>
+</tr>
+<tr>
+<td>27</td>
+<td>右侧查询区不变</td>
+<td>分别打开原始数据查询、运行极值查询并勾选测点查询</td>
+<td>原始数据：日期 + 上一日 / 次日 + 查询与测点时序表保持现状；运行极值：日报 / 月报 /
+年报 + 日期 + 查询与最大值 / 最小值 / 平均值表结构保持现状；不新增指标结果行或「极值口径」列</td>
+</tr>
+<tr>
+<td>28</td>
+<td>时段指标改由参数查询</td>
+<td>用户需要查历史时段指标（如电能消耗量、周期 PUE）</td>
+<td>在原始数据查询 / 运行极值查询左树找不到时段指标；引导或自行到参数查询（需求
+10）勾选查询</td>
+</tr>
+<tr>
+<td>29</td>
+<td>固定仅有值</td>
+<td>对象缺计量拓扑或计费方案时查看左树对象节点下的指标叶子</td>
+<td>算不出的指标不出现在树上；不提供「仅有值 / 全部」开关</td>
+</tr>
+<tr>
+<td>30</td>
+<td>数量上限</td>
+<td>在原始数据查询、运行极值查询分别选到上限</td>
+<td>仍按页既有上限（10 / 50），不为指标单开配额</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="验收-需求-12" class="level3">
+<h3>需求 12：融合组态变量树</h3>
+<table style="width:100%;">
+<colgroup>
+<col style="width: 3%" />
+<col style="width: 28%" />
+<col style="width: 39%" />
+<col style="width: 28%" />
+</colgroup>
+<thead>
+<tr>
+<th>#</th>
+<th>验收场景</th>
+<th>输入 / 前置</th>
+<th>期望结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>31</td>
+<td>变量树内指标可见性</td>
+<td>打开融合组态编辑页，在左下「测点 /
+变量」面板选中已配计量拓扑的对象；再看未配齐输入的对象</td>
+<td>对象实例节点下直接出现指标叶子，与设备子节点同级同层（无「指标（N）」分组节点），叶子可拖拽、图标可区分；不提供「仅有值 /
+全部」开关；算不出的指标不出现在树上</td>
+</tr>
+<tr>
+<td>32</td>
+<td>实时指标直绑</td>
+<td>把「实时电功率」拖入指标卡图元</td>
+<td>直接绑定并显示当前值，无需额外配置</td>
+</tr>
+<tr>
+<td>33</td>
+<td>时段指标给实时值</td>
+<td>把「电能消耗量」拖入指标卡 / 仪表等单值图元并保存</td>
+<td>按<strong>最近半小时</strong>粒度统计值出数，图元显示数据截止时间；无需再选今日 / 本月 /
+本年窗口</td>
+</tr>
+<tr>
+<td>34</td>
+<td>时段指标历史时序</td>
+<td>把「电能消耗量」绑到历史图表 / 数据统计类图元</td>
+<td>可绑序列；采样周期与聚合方式复用 §5.5（1 小时及以上；求和有值，平均 /
+最大 / 最小为空「—」）；按所选采样周期出点、不插值</td>
+</tr>
+<tr>
+<td>35</td>
+<td>测点与实时指标能力一致</td>
+<td>把「实时电功率」拖向历史图表 / 数据统计图 / 桑基图</td>
+<td>与测点相同，允许落位绑定；不因「实时」标签拒绝</td>
+</tr>
+<tr>
+<td>36</td>
+<td>图元兼容性拦截</td>
+<td>把时间段指标拖向实时图表</td>
+<td>拒绝落位并给出理由（无秒级序列）；不静默接受后画出假曲线</td>
+</tr>
+<tr>
+<td>37</td>
+<td>按粒度对齐刷新</td>
+<td>组态页绑定小时粒度时段指标后常驻运行</td>
+<td>该图元按整点对齐刷新而非秒级轮询，图元上显示数据截止时间；实时指标与测点的刷新逻辑不变</td>
+</tr>
+<tr>
+<td>38</td>
+<td>绑定失效提示</td>
+<td>停用某个被组态引用的指标后打开该组态</td>
+<td>画布与属性面板标记失效并提示具体缺失指标，不静默显示空值</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="需求-1012-公共" class="level3">
+<h3>需求 10–12 公共</h3>
+<table style="width:100%;">
+<colgroup>
+<col style="width: 3%" />
+<col style="width: 28%" />
+<col style="width: 39%" />
+<col style="width: 28%" />
+</colgroup>
+<thead>
+<tr>
+<th>#</th>
+<th>验收场景</th>
+<th>输入 / 前置</th>
+<th>期望结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>39</td>
+<td>指标不得进入告警链路</td>
+<td>打开告警规则、联动策略、控制下发、数据补录的测点选择器</td>
+<td>不出现任何指标分支；即使直接构造 metric key
+提交，接口与权限层同样拒绝</td>
+</tr>
+<tr>
+<td>40</td>
+<td>三处组件口径一致</td>
+<td>在弹窗、节点-测点树、组态变量树对同一对象查看指标</td>
+<td>三处指标清单、名称、单位、可算状态完全一致（同源于需求 6
+接口）；分组与折叠方式按待确认 9 的统一结论，不各自实现</td>
+</tr>
+<tr>
+<td>41</td>
+<td>本期不做项</td>
+<td>检查报表与组态各入口</td>
+<td>不存在指标转测点入口；报表 /
+组态内不能新建或编辑指标定义；告警查询、即时查询、数据补录、报表模板管理未接入指标；不提供模型级合计值</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+
+      </article>
+    </div>
+  </div>
+</div>
+<script>
+(async function () {
+  const documentRoot = document.getElementById("document");
+  const toc = document.getElementById("TOC");
+  const body = document.body;
+
+  documentRoot.querySelectorAll("table").forEach((table) => {
+    if (table.parentElement.classList.contains("table-wrap")) return;
+    const wrap = document.createElement("div");
+    wrap.className = "table-wrap";
+    table.parentNode.insertBefore(wrap, table);
+    wrap.appendChild(table);
+  });
+
+  documentRoot.querySelectorAll("blockquote").forEach((quote, index) => {
+    const text = quote.textContent.trim();
+    if (index < 2 || text.startsWith("版本：") || text.startsWith("前置依赖")) quote.classList.add("callout-meta");
+    if (text.startsWith("本章导读") || text.startsWith("一条主链")) quote.classList.add("callout-guide");
+    if (text.startsWith("开发范围") || text.includes("本期不做")) quote.classList.add("callout-boundary");
+    if (text.startsWith("核心架构口径已经闭环")) quote.classList.add("callout-open");
+  });
+
+  const mermaidCodes = [...documentRoot.querySelectorAll("code.mermaid")];
+  mermaidCodes.forEach((code) => {
+    const pre = code.closest("pre");
+    const shell = document.createElement("div");
+    shell.className = "mermaid-shell";
+    const diagram = document.createElement("pre");
+    diagram.className = "mermaid";
+    diagram.textContent = code.textContent;
+    shell.appendChild(diagram);
+    const outer = pre.parentElement.classList.contains("sourceCode") ? pre.parentElement : pre;
+    outer.replaceWith(shell);
+  });
+  documentRoot.querySelectorAll("pre.mermaid").forEach((diagram) => {
+    diagram.textContent = diagram.textContent;
+    if (diagram.parentElement.classList.contains("mermaid-shell")) return;
+    const shell = document.createElement("div");
+    shell.className = "mermaid-shell";
+    diagram.parentNode.insertBefore(shell, diagram);
+    shell.appendChild(diagram);
+  });
+
+  if (window.mermaid) {
+    try {
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: "base",
+        securityLevel: "strict",
+        fontFamily: "PingFang SC, Microsoft YaHei, sans-serif",
+        themeVariables: {
+          primaryColor: "#e7f6f4",
+          primaryTextColor: "#20262d",
+          primaryBorderColor: "#087f78",
+          lineColor: "#63717d",
+          secondaryColor: "#edf5fc",
+          tertiaryColor: "#fff6e7"
+        }
+      });
+      await mermaid.run({ nodes: [...documentRoot.querySelectorAll("pre.mermaid")] });
+    } catch (error) {
+      console.error("Mermaid render failed", error);
+    }
+  }
+
+  const foldPatterns = [/^1\.2\.[1-4]\s/, /^3\.2\.1\s/, /^7\.3\.3\s/, /^10\.1\s/];
+  const foldables = [];
+  documentRoot.querySelectorAll("section.level3, section.level4").forEach((section) => {
+    const heading = section.querySelector(":scope > h3, :scope > h4");
+    if (!heading || !foldPatterns.some((pattern) => pattern.test(heading.textContent.trim()))) return;
+    section.classList.add("foldable", "is-collapsed");
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "fold-control";
+    button.textContent = "展开细则";
+    button.setAttribute("aria-expanded", "false");
+    button.addEventListener("click", () => {
+      const collapsed = section.classList.toggle("is-collapsed");
+      button.textContent = collapsed ? "展开细则" : "收起细则";
+      button.setAttribute("aria-expanded", String(!collapsed));
+    });
+    heading.insertAdjacentElement("afterend", button);
+    foldables.push({ section, button });
+  });
+
+  const detailToggle = document.getElementById("detail-toggle");
+  detailToggle.addEventListener("click", () => {
+    const shouldExpand = foldables.some(({ section }) => section.classList.contains("is-collapsed"));
+    foldables.forEach(({ section, button }) => {
+      section.classList.toggle("is-collapsed", !shouldExpand);
+      button.textContent = shouldExpand ? "收起细则" : "展开细则";
+      button.setAttribute("aria-expanded", String(shouldExpand));
+    });
+    detailToggle.textContent = shouldExpand ? "收起细则" : "展开细则";
+  });
+
+  function expandFor(target) {
+    let current = target.closest(".foldable");
+    while (current) {
+      current.classList.remove("is-collapsed");
+      const button = current.querySelector(":scope > .fold-control");
+      if (button) {
+        button.textContent = "收起细则";
+        button.setAttribute("aria-expanded", "true");
+      }
+      current = current.parentElement.closest(".foldable");
+    }
+  }
+
+  if (toc) {
+    toc.querySelectorAll("li").forEach((item) => {
+      const childList = [...item.children].find((child) => child.tagName === "UL");
+      if (!childList) return;
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "toc-toggle";
+      toggle.setAttribute("aria-label", "展开或折叠子目录");
+      toggle.addEventListener("click", () => item.classList.toggle("is-open"));
+      item.insertBefore(toggle, item.firstChild);
+    });
+    [...toc.querySelectorAll(":scope > ul > li")].slice(0, 2).forEach((item) => item.classList.add("is-open"));
+  }
+
+  const topSections = [...documentRoot.querySelectorAll(":scope > section.level1 > section.level2")];
+  topSections.forEach((section) => {
+    const title = section.querySelector(":scope > h2")?.textContent || "";
+    let kind = "core";
+    if (title.includes("需求 9") || title.includes("平台侧消费")) kind = "new";
+    if (/需求 (8|10|11|12)/.test(title)) kind = "changed";
+    if (title.includes("待确认问题")) kind = "open";
+    section.dataset.kind = kind;
+  });
+
+  const filterButtons = [...document.querySelectorAll("#focus-filter button")];
+  const focusBanner = document.getElementById("focus-banner");
+  const focusCopy = document.getElementById("focus-copy");
+  const viewLabels = { new: "仅显示本期新增需求", changed: "仅显示存量改造需求", open: "仅显示待确认问题" };
+
+  function updateTocVisibility() {
+    if (!toc) return;
+    [...toc.querySelectorAll(":scope > ul > li")].forEach((item) => {
+      const link = item.querySelector(":scope > a");
+      if (!link) return;
+      const target = document.getElementById(decodeURIComponent(link.hash.slice(1)));
+      const section = target?.closest("section.level2");
+      item.hidden = Boolean(section?.hidden);
+    });
+  }
+
+  function applyView(view, writeUrl = true) {
+    filterButtons.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.view === view)));
+    topSections.forEach((section) => {
+      const always = section.dataset.kind === "core" && (section.querySelector("h2")?.textContent.includes("文档导读") || section.querySelector("h2")?.textContent.includes("总体架构"));
+      section.hidden = view !== "all" && !always && section.dataset.kind !== view;
+    });
+    focusBanner.hidden = view === "all";
+    focusCopy.textContent = viewLabels[view] || "";
+    updateTocVisibility();
+    if (writeUrl) {
+      const url = new URL(location.href);
+      if (view === "all") url.searchParams.delete("view"); else url.searchParams.set("view", view);
+      history.replaceState(null, "", url.pathname + url.search + url.hash);
+    }
+  }
+
+  filterButtons.forEach((button) => button.addEventListener("click", () => applyView(button.dataset.view)));
+  document.getElementById("focus-reset").addEventListener("click", () => applyView("all"));
+  const initialView = new URLSearchParams(location.search).get("view");
+  applyView(["new", "changed", "open"].includes(initialView) ? initialView : "all", false);
+
+  const menuToggle = document.getElementById("menu-toggle");
+  const backdrop = document.getElementById("backdrop");
+  menuToggle.addEventListener("click", () => body.classList.toggle("nav-open"));
+  backdrop.addEventListener("click", () => body.classList.remove("nav-open"));
+
+  function scrollWithOffset(target, behavior = "smooth") {
+    const topbarHeight = document.querySelector(".topbar")?.offsetHeight || 0;
+    const top = target.getBoundingClientRect().top + window.scrollY - topbarHeight - 12;
+    window.scrollTo({ top: Math.max(0, top), behavior });
+  }
+
+  function revealAndScroll(target) {
+    applyView("all");
+    expandFor(target);
+    scrollWithOffset(target);
+    target.classList.add("search-focus");
+    setTimeout(() => target.classList.remove("search-focus"), 1300);
+    body.classList.remove("nav-open");
+  }
+
+  if (toc) {
+    toc.addEventListener("click", (event) => {
+      const link = event.target.closest("a[href^='#']");
+      if (!link) return;
+      const target = document.getElementById(decodeURIComponent(link.hash.slice(1)));
+      if (!target) return;
+      event.preventDefault();
+      revealAndScroll(target);
+      history.replaceState(null, "", link.hash);
+    });
+  }
+
+  const headings = [...documentRoot.querySelectorAll("h2, h3, h4")];
+  const searchIndex = headings.map((heading) => ({
+    heading,
+    title: heading.textContent.trim(),
+    text: (heading.closest("section")?.textContent || heading.textContent).replace(/\s+/g, " ").trim().slice(0, 900)
+  }));
+  const searchInput = document.getElementById("doc-search");
+  const searchResults = document.getElementById("search-results");
+  let activeResult = -1;
+
+  function closeSearch() {
+    searchResults.hidden = true;
+    searchResults.innerHTML = "";
+    activeResult = -1;
+  }
+
+  function runSearch() {
+    const query = searchInput.value.trim().toLowerCase();
+    if (!query) return closeSearch();
+    const hits = searchIndex.filter((item) => item.title.toLowerCase().includes(query) || item.text.toLowerCase().includes(query)).slice(0, 12);
+    searchResults.innerHTML = "";
+    if (!hits.length) {
+      const empty = document.createElement("div");
+      empty.className = "search-result";
+      empty.textContent = "没有匹配结果";
+      searchResults.appendChild(empty);
+    } else {
+      hits.forEach((hit, index) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "search-result";
+        button.dataset.index = String(index);
+        const title = document.createElement("strong");
+        title.textContent = hit.title;
+        const sub = document.createElement("span");
+        sub.textContent = hit.text.slice(0, 90) + (hit.text.length > 90 ? "…" : "");
+        button.append(title, sub);
+        button.addEventListener("click", () => {
+          revealAndScroll(hit.heading);
+          closeSearch();
+          searchInput.blur();
+        });
+        searchResults.appendChild(button);
+      });
+    }
+    searchResults.hidden = false;
+  }
+
+  searchInput.addEventListener("input", runSearch);
+  searchInput.addEventListener("keydown", (event) => {
+    const buttons = [...searchResults.querySelectorAll("button")];
+    if (event.key === "Escape") { closeSearch(); searchInput.blur(); return; }
+    if (!buttons.length || searchResults.hidden) return;
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      activeResult = event.key === "ArrowDown" ? Math.min(buttons.length - 1, activeResult + 1) : Math.max(0, activeResult - 1);
+      buttons.forEach((button, index) => button.classList.toggle("is-active", index === activeResult));
+      buttons[activeResult].scrollIntoView({ block: "nearest" });
+    }
+    if (event.key === "Enter" && activeResult >= 0) buttons[activeResult].click();
+  });
+  document.addEventListener("click", (event) => { if (!event.target.closest(".search")) closeSearch(); });
+
+  if ("IntersectionObserver" in window && toc) {
+    const tocLinks = new Map([...toc.querySelectorAll("a[href^='#']")].map((link) => [decodeURIComponent(link.hash.slice(1)), link]));
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+      if (!visible) return;
+      tocLinks.forEach((link) => link.classList.remove("is-active"));
+      const active = tocLinks.get(visible.target.id);
+      if (active) {
+        active.classList.add("is-active");
+        let parent = active.parentElement;
+        while (parent && parent !== toc) {
+          if (parent.tagName === "LI") parent.classList.add("is-open");
+          parent = parent.parentElement;
+        }
+      }
+    }, { rootMargin: "-70px 0px -75% 0px", threshold: 0 });
+    headings.forEach((heading) => observer.observe(heading));
+  }
+
+  if (location.hash) {
+    const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+    if (target) {
+      expandFor(target);
+      requestAnimationFrame(() => scrollWithOffset(target, "auto"));
+    }
+  }
+
+  function syncProtoFsButton(embed) {
+    const button = embed.querySelector(".proto-fs-btn");
+    if (!button) return;
+    const active = document.fullscreenElement === embed || embed.classList.contains("is-fs");
+    button.textContent = active ? "退出全屏" : "全屏查看";
+    button.setAttribute("aria-pressed", String(active));
+    body.classList.toggle("proto-fs-open", Boolean(document.querySelector(".proto-embed.is-fs, .proto-embed:fullscreen")));
+  }
+
+  async function toggleProtoFullscreen(embed) {
+    const native = embed.requestFullscreen || embed.webkitRequestFullscreen;
+    const exitNative = document.exitFullscreen || document.webkitExitFullscreen;
+    if (document.fullscreenElement === embed) {
+      if (exitNative) await exitNative.call(document);
+      return;
+    }
+    if (embed.classList.contains("is-fs")) {
+      embed.classList.remove("is-fs");
+      syncProtoFsButton(embed);
+      return;
+    }
+    if (native) {
+      try {
+        await native.call(embed);
+        syncProtoFsButton(embed);
+        return;
+      } catch (_) {}
+    }
+    document.querySelectorAll(".proto-embed.is-fs").forEach((other) => {
+      other.classList.remove("is-fs");
+      syncProtoFsButton(other);
+    });
+    embed.classList.add("is-fs");
+    syncProtoFsButton(embed);
+  }
+
+  documentRoot.querySelectorAll(".proto-embed").forEach((embed) => {
+    if (!embed.querySelector("iframe.proto-frame")) return;
+    const head = embed.querySelector(".proto-embed-head");
+    if (!head || head.querySelector(".proto-fs-btn")) return;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "proto-fs-btn";
+    button.textContent = "全屏查看";
+    button.setAttribute("aria-pressed", "false");
+    button.addEventListener("click", () => toggleProtoFullscreen(embed));
+    head.appendChild(button);
+  });
+
+  document.addEventListener("fullscreenchange", () => {
+    documentRoot.querySelectorAll(".proto-embed").forEach(syncProtoFsButton);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    const cssFs = document.querySelector(".proto-embed.is-fs");
+    if (!cssFs) return;
+    cssFs.classList.remove("is-fs");
+    syncProtoFsButton(cssFs);
+  });
+
+})();
+
+</script>
+</body>
+</html>

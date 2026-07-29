@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>报表-节点测点树选指标（原始数据查询 / 运行极值查询）</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-dark: #17358A;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --danger: #DC2626;
+      --success: #059669;
+      --warning: #D97706;
+      --metric: #7C3AED;
+      --metric-light: #F5F3FF;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+      --tree-w: 280px;
+      --ke-green: #2BA471;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px; color: var(--text-primary); background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+    button { border: none; background: none; font: inherit; }
+
+    .tag {
+      display: inline-flex; align-items: center; height: 18px; padding: 0 6px;
+      border-radius: 4px; font-size: 10px; font-weight: 600; white-space: nowrap;
+    }
+    .tag-point { background: #E0F2FE; color: #075985; }
+    .tag-metric { background: var(--metric-light); color: #6B21A8; }
+    .tag-rt { background: #FEF3C7; color: #92400E; }
+
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .page-shell { padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 12px; }
+    .page-head {
+      background: var(--bg-card); border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg); padding: 14px 16px; box-shadow: var(--shadow-sm);
+    }
+    .page-title { font-size: 18px; font-weight: 700; }
+    .page-desc { font-size: 13px; color: var(--text-secondary); margin-top: 6px; line-height: 1.7; }
+    .page-desc b { color: var(--text-primary); }
+    .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px; font-size: 12px; color: var(--text-secondary); }
+    .legend span { display: inline-flex; align-items: center; gap: 5px; }
+
+    .scene-tabs { display: flex; border-bottom: 1px solid var(--border-light); margin-top: 14px; }
+    .scene-tab {
+      padding: 10px 16px; font-size: 13px; color: var(--text-secondary);
+      border-bottom: 2px solid transparent; margin-bottom: -1px; cursor: pointer;
+    }
+    .scene-tab:hover { color: var(--primary); }
+    .scene-tab.active { color: var(--primary); font-weight: 700; border-bottom-color: var(--primary); }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+      height: 30px; padding: 0 12px; border-radius: var(--radius);
+      cursor: pointer; transition: all var(--transition);
+      white-space: nowrap; font-size: 12px; font-weight: 600;
+    }
+    .btn-primary { color: #fff; background: var(--ke-green); }
+    .btn-primary:hover { background: #249463; }
+    .btn-default { background: #fff; border: 1px solid var(--border); color: var(--text-primary); }
+    .btn-default:hover { border-color: var(--ke-green); color: var(--ke-green); }
+
+    .workspace { display: grid; grid-template-columns: var(--tree-w) minmax(0,1fr); gap: 12px; min-height: 560px; }
+    .panel {
+      background: var(--bg-card); border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
+      display: flex; flex-direction: column; min-height: 0; overflow: hidden;
+    }
+    .panel-body { flex: 1; min-height: 0; overflow: auto; }
+
+    .view-select-wrap { padding: 9px 12px; border-bottom: 1px solid var(--border-light); flex-shrink: 0; }
+    .filter-label { font-size: 11px; color: var(--text-secondary); font-weight: 600; }
+    .view-select {
+      width: 100%; height: 32px; padding: 0 8px; font-size: 13px;
+      border: 1px solid var(--border); border-radius: var(--radius); background: #fff; color: var(--text-primary);
+    }
+    .view-select:focus { outline: none; border-color: var(--primary); }
+    .tree-search { padding: 8px 12px; border-bottom: 1px solid var(--border-light); flex-shrink: 0; }
+    .tree-search input {
+      width: 100%; height: 30px; padding: 0 10px;
+      border: 1px solid var(--border); border-radius: var(--radius); font-size: 12px; background: #fff;
+    }
+    .tree-search input:focus { outline: none; border-color: var(--primary); }
+
+    .tree-scroll { padding: 6px; }
+    .tree-row {
+      display: flex; align-items: center; gap: 5px;
+      padding: 5px 6px; border-radius: 6px; cursor: pointer;
+      color: var(--text-secondary); user-select: none;
+    }
+    .tree-row:hover { background: rgba(30, 64, 175, 0.06); color: var(--text-primary); }
+    .tree-row.active { background: rgba(43, 164, 113, 0.12); color: var(--ke-green); font-weight: 600; }
+    .tree-row.disabled { opacity: .5; cursor: not-allowed; }
+    .tree-row.disabled:hover { background: transparent; }
+    .tree-chevron { width: 13px; font-size: 9px; color: var(--text-hint); cursor: pointer; flex-shrink: 0; text-align: center; }
+    .tree-cb {
+      display: inline-block; vertical-align: middle;
+      width: 13px; height: 13px; border: 1px solid #B6C2D2; border-radius: 3px;
+      flex-shrink: 0; background: #fff; position: relative; cursor: pointer;
+    }
+    .tree-cb.checked { background: var(--ke-green); border-color: var(--ke-green); }
+    .tree-cb.checked::after {
+      content: '✓'; color: #fff; font-size: 10px; position: absolute;
+      left: 50%; top: 50%; transform: translate(-50%,-50%); line-height: 1;
+    }
+    .tree-cb.na { background: #F1F5F9; border-color: #E2E8F0; cursor: not-allowed; }
+    .tree-ico { width: 14px; text-align: center; font-size: 11px; flex-shrink: 0; }
+    .tree-label { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+    .tree-children { padding-left: 15px; }
+    .tree-row.metric-leaf .tree-ico { color: var(--metric); }
+
+    .main-head {
+      padding: 12px 14px 0; border-bottom: 1px solid var(--border-light); flex-shrink: 0;
+    }
+    .main-title {
+      font-size: 15px; font-weight: 700; margin-bottom: 10px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .main-title .help {
+      width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--text-hint);
+      color: var(--text-hint); font-size: 11px; display: inline-flex; align-items: center; justify-content: center;
+    }
+    .period-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border-light); }
+    .period-tab {
+      padding: 8px 16px; font-size: 13px; color: var(--text-secondary); cursor: pointer;
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
+    }
+    .period-tab.active { color: var(--ke-green); font-weight: 700; border-bottom-color: var(--ke-green); }
+
+    .query-bar {
+      padding: 10px 13px; border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex-shrink: 0;
+    }
+    .field { display: flex; align-items: center; gap: 6px; }
+    .field input {
+      height: 30px; padding: 0 8px; font-size: 12px;
+      border: 1px solid var(--border); border-radius: 6px; background: #fff;
+    }
+
+    .path-bar {
+      padding: 8px 13px; font-size: 12px; color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-light); background: #FAFCFF;
+    }
+    .path-bar b { color: var(--text-primary); font-weight: 600; }
+
+    .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .data-table th {
+      background: #F8FAFC; text-align: center; padding: 8px 10px; position: sticky; top: 0;
+      font-weight: 600; color: var(--text-secondary); border: 1px solid var(--border-light); white-space: nowrap;
+    }
+    .data-table td {
+      padding: 8px 10px; border: 1px solid var(--border-light); text-align: center;
+    }
+    .data-table tbody tr:hover { background: #FAFCFF; }
+    .data-table .num { font-variant-numeric: tabular-nums; color: #1677ff; }
+    .data-table .num.min { color: var(--ke-green); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: var(--text-secondary); }
+    .left { text-align: left !important; }
+
+    .note {
+      margin-top: 12px; padding: 11px 13px; border-radius: var(--radius);
+      background: #F8FAFC; border-left: 3px solid var(--primary);
+      font-size: 12px; color: var(--text-secondary); line-height: 1.85;
+    }
+    .note b { color: var(--text-primary); }
+    .note.warn { background: #FFFBEB; border-left-color: var(--warning); }
+    .note.ok { background: #F0FDF4; border-left-color: var(--success); }
+    .note ul { margin: 6px 0 0 16px; }
+    .note li { margin-bottom: 3px; }
+
+    .req-brief {
+      margin-top: 12px; border: 1px solid var(--border-light); border-radius: var(--radius);
+      background: #F8FAFC; padding: 11px 13px; font-size: 12px;
+      color: var(--text-secondary); line-height: 1.75;
+    }
+    .req-brief h4 {
+      font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;
+    }
+    .req-brief .meta { color: var(--text-hint); margin-bottom: 4px; }
+    .req-brief ul { margin: 4px 0 0 16px; }
+    .req-brief li { margin-bottom: 2px; }
+
+    .scene { display: none; }
+    .scene.active { display: block; }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <div class="page-shell">
+
+    <div class="page-head">
+      <div class="page-title">报表节点-测点树 接入指标</div>
+      <div class="page-desc">
+        对应 <b>AI 节能 v2.5 需求 11</b>。落点：报表报告 → 数据查询 → <b>原始数据查询</b> / <b>运行极值查询</b>，两页共用同一套左侧节点-测点树组件。<br>
+        本页即需求说明载体：下方摘要 + 两场景交互与规则。三视图已具备（不含视图扩展，边界在需求 10）；历史时段指标由参数查询（需求 10）承接。
+      </div>
+      <div class="legend">
+        <span><i class="tag tag-point">测点</i> 时序采样值（可勾选）</span>
+        <span><i class="tag tag-rt">实时</i> 实时指标（能算出即可选）</span>
+        <span>时段类型指标：左树直接过滤，不展示</span>
+      </div>
+
+      <div class="req-brief">
+        <h4>需求 11 — 报表节点-测点树</h4>
+        <div class="meta">归属：报表节点-测点树（原始数据 / 运行极值共用）　｜　依赖：需求 6　｜　P2　｜　场景 ①②　｜　与需求 10 弹窗组件互不相干，可独立派工</div>
+        <ul>
+          <li><b>做</b>：左树对象节点下挂指标；<b>时段类型指标直接过滤不展示</b>；实时指标能算出即可选；固定仅有值（无展示范围开关）；不新增「已选数据项」操作行。</li>
+          <li><b>不做</b>：本两页开放时段指标勾选与查询；不改右侧查询区；不做视图扩展（已有）；整组不做项（§4.4）。</li>
+          <li><b>规则</b>：勾选即参与查询；原始数据上限 10、运行极值上限 50，指标与测点合并计入、不单开配额；挂载 / 搜索 / 去重与弹窗同源（§4.3.3）。</li>
+        </ul>
+      </div>
+
+      <div class="scene-tabs">
+        <div class="scene-tab active" data-scene="origin">① 原始数据查询</div>
+        <div class="scene-tab" data-scene="extreme">② 运行极值查询</div>
+      </div>
+    </div>
+
+    <!-- ============ 场景1：原始数据查询 ============ -->
+    <div class="scene active" id="scene-origin">
+      <div class="workspace">
+        <div class="panel">
+          <div class="view-select-wrap">
+            <div style="margin-bottom:6px"><span class="filter-label">视图</span></div>
+            <select class="view-select">
+              <option>空间视图</option><option>容量视图</option><option>能效视图</option>
+            </select>
+          </div>
+          <div class="tree-search"><input placeholder="请输入"></div>
+          <div class="panel-body"><div class="tree-scroll" id="tree1"></div></div>
+        </div>
+
+        <div class="panel">
+          <div class="main-head">
+            <div class="main-title">原始数据查询 <span class="help">?</span></div>
+          </div>
+          <div class="query-bar">
+            <div class="field"><input value="2026-07-29" style="width:130px"></div>
+            <button class="btn btn-default">上一日</button>
+            <button class="btn btn-default">次日</button>
+            <button class="btn btn-primary">查询</button>
+          </div>
+          <div class="path-bar">
+            人保北方信息中心工程/A栋/屋顶层/冷却塔平台　·　<b>冷却塔 CT-01-01</b>
+          </div>
+          <div class="panel-body">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width:56px">序号</th>
+                  <th style="width:140px">时间</th>
+                  <th>室外湿球温度</th>
+                </tr>
+              </thead>
+              <tbody id="originRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>需求 11 — 左树规则（两页共用）</b>
+        <ul>
+          <li><b>指标叶子与设备子节点同级同层</b>：直接挂在对象节点下，不套「指标（N）」分组节点、不新增层级。</li>
+          <li><b>时段类型指标不展示</b>：不做置灰行、不提供入口；历史时段指标由参数查询（需求 10）承接。</li>
+          <li><b>固定仅有值</b>：不提供「仅有值 / 全部」开关；算不出的不出现在树上。</li>
+          <li><b>实时指标可选</b>：能算出即可勾选；不做置灰占位。</li>
+          <li><b>无已选数据项操作行</b>：勾选即参与查询，不新增芯片条 / 清除条。</li>
+          <li><b>数量上限</b>：本页仍按既有上限（原始数据 10 个），不为指标单开配额。</li>
+        </ul>
+      </div>
+
+      <div class="note warn">
+        <b>右侧查询区保持现状</b>
+        <ul>
+          <li>日期 + 上一日 / 次日 + 查询；结果表按测点时序展示（序号 / 时间 / 测点列）。</li>
+          <li>不新增「已选数据项」条，不改分页、导出、图表切换等既有交互。</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ============ 场景2：运行极值查询 ============ -->
+    <div class="scene" id="scene-extreme">
+      <div class="workspace">
+        <div class="panel">
+          <div class="view-select-wrap">
+            <div style="margin-bottom:6px"><span class="filter-label">视图</span></div>
+            <select class="view-select">
+              <option>空间视图</option><option>容量视图</option><option selected>能效视图</option>
+            </select>
+          </div>
+          <div class="tree-search"><input placeholder="请输入"></div>
+          <div class="panel-body"><div class="tree-scroll" id="tree2"></div></div>
+        </div>
+
+        <div class="panel">
+          <div class="main-head">
+            <div class="main-title">运行极值查询 <span class="help">?</span></div>
+            <div class="period-tabs">
+              <div class="period-tab" data-period="day">日报</div>
+              <div class="period-tab active" data-period="month">月报</div>
+              <div class="period-tab" data-period="year">年报</div>
+            </div>
+          </div>
+          <div class="query-bar">
+            <div class="field"><input id="extremeDate" value="2026-07" style="width:120px"></div>
+            <button class="btn btn-primary">查询</button>
+          </div>
+          <div class="path-bar">
+            人保北方信息中心工程/A栋/屋顶层/冷却塔平台　·　<b>冷却塔 CT-01-01</b>
+          </div>
+          <div class="panel-body">
+            <table class="data-table" id="extremeTable">
+              <thead>
+                <tr>
+                  <th rowspan="2" style="width:56px">序号</th>
+                  <th rowspan="2" style="width:100px">时间</th>
+                  <th colspan="5">室外湿球温度</th>
+                </tr>
+                <tr>
+                  <th colspan="2">最大值</th>
+                  <th colspan="2">最小值</th>
+                  <th rowspan="1">平均值</th>
+                </tr>
+                <tr>
+                  <th></th><th></th>
+                  <th>数值</th><th>发生时间</th>
+                  <th>数值</th><th>发生时间</th>
+                  <th>数值</th>
+                </tr>
+              </thead>
+              <tbody id="extremeRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="note ok">
+        <b>右侧查询区保持现状（对齐系统截图）</b>
+        <ul>
+          <li>日报 / 月报 / 年报切换 + 日期 + 查询；结果表为测点极值结构（最大值 / 最小值 / 平均值及发生时间）。</li>
+          <li>时段类型指标不进入本页左树；不新增「极值口径」列或指标结果行；数量上限仍为 50，不为指标单开配额。</li>
+        </ul>
+      </div>
+
+      <div class="note">
+        <b>与需求 10 的边界</b>
+        <ul>
+          <li><b>共用</b>：指标选取服务接口、树上挂载规则、仅有值默认口径。</li>
+          <li><b>差异</b>：需求 10 是弹窗选择器（可选时段指标）；需求 11 是常驻左树，<b>过滤时段类型指标且无已选清单操作行</b>，右侧查询区不改。</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+
+  function go(name) {
+    document.querySelectorAll('.scene').forEach(function (s) { s.classList.remove('active'); });
+    document.querySelectorAll('.scene-tab').forEach(function (t) { t.classList.remove('active'); });
+    $('scene-' + name).classList.add('active');
+    document.querySelector('.scene-tab[data-scene="' + name + '"]').classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  document.querySelectorAll('.scene-tab').forEach(function (t) {
+    t.addEventListener('click', function () { go(t.dataset.scene); });
+  });
+
+  document.querySelectorAll('.period-tab').forEach(function (t) {
+    t.addEventListener('click', function () {
+      document.querySelectorAll('.period-tab').forEach(function (x) { x.classList.remove('active'); });
+      t.classList.add('active');
+      var p = t.dataset.period;
+      $('extremeDate').value = p === 'day' ? '2026-07-29' : (p === 'month' ? '2026-07' : '2026');
+      drawExtreme(p);
+    });
+  });
+
+  var M = function (n, kind, state) { return { name: n, kind: kind, state: state || 'ok' }; };
+  /* 数据含时段指标，渲染时过滤掉；树上只留能算出的实时指标（可勾选） */
+  var PARK = [
+    M('PUE', 'rt'), M('WUE', 'rt', 'pending'), M('实时电功率', 'rt'),
+    M('电能消耗量', 'period'), M('用水量', 'period', 'pending'), M('电费总额', 'period'),
+    M('尖时电费', 'period'), M('PUE', 'period')
+  ];
+  var SYS = [
+    M('CLF', 'rt'), M('实时电功率', 'rt'),
+    M('电能消耗量', 'period'), M('电费总额', 'period'), M('CLF', 'period')
+  ];
+  var BLD = [
+    M('实时电功率', 'rt'), M('电能消耗量', 'period'), M('电费总额', 'period'),
+    M('尖时电费', 'period')
+  ];
+
+  var TREE = [{
+    label: '人保北方信息中心工程', ico: '🏠', open: true, metrics: PARK,
+    children: [
+      { label: '0_565:合肥中行', ico: '🏢', metrics: BLD, children: [] },
+      { label: '0_435:软POC项目', ico: '🏢', metrics: BLD, children: [] },
+      {
+        label: '0_139:A栋', ico: '🏢', open: true, metrics: BLD,
+        children: [{
+          label: '屋顶层', ico: '📁', open: true, children: [{
+            label: '冷却塔平台', ico: '📁', open: true, children: [{
+              label: '冷却塔 CT-01', ico: '🖳', open: true, children: [
+                { label: '本体', ico: '📁', open: true, children: [
+                  { label: 'M_0_107_1_63_0:室外湿球温度', ico: 'AA', point: true, checked: true, leaf: true },
+                  { label: 'M_0_107_1_64_0:冷却塔逼近度', ico: 'AA', point: true, leaf: true }
+                ]}
+              ]
+            }]
+          }]
+        }]
+      }
+    ]
+  }];
+
+  /* 固定仅有值；时段类型指标直接过滤不展示 */
+  function visibleMetrics(list) {
+    return (list || []).filter(function (m) {
+      return m.kind !== 'period' && m.state === 'ok';
+    });
+  }
+
+  function render(nodes, parent) {
+    nodes.forEach(function (n) {
+      var shown = visibleMetrics(n.metrics);
+      var hasChild = (n.children && n.children.length) || shown.length;
+      var wrap = document.createElement('div');
+      var row = document.createElement('div');
+      row.className = 'tree-row' + (n.checked ? ' active' : '');
+      row.innerHTML =
+        '<span class="tree-chevron">' + (hasChild ? (n.open ? '▼' : '▶') : '') + '</span>' +
+        (n.point ? '<span class="tree-cb' + (n.checked ? ' checked' : '') + '"></span>' : '<span style="width:13px"></span>') +
+        '<span class="tree-ico">' + n.ico + '</span>' +
+        '<span class="tree-label">' + n.label + '</span>';
+      wrap.appendChild(row);
+
+      var box = document.createElement('div');
+      box.className = 'tree-children';
+      box.style.display = n.open ? 'block' : 'none';
+
+      /* 指标叶子：不套分组节点，直接挂在对象节点下，与设备子节点同级同层 */
+      if (shown.length) {
+        shown.forEach(function (m) {
+          var r = document.createElement('div');
+          /* 实时指标：能算出（仅有值）即可选 */
+          var checked = m.name === '实时电功率' && n.label && n.label.indexOf('A栋') > -1;
+          r.className = 'tree-row metric-leaf' + (checked ? ' active' : '');
+          r.innerHTML =
+            '<span class="tree-chevron"></span>' +
+            '<span class="tree-cb' + (checked ? ' checked' : '') + '"></span>' +
+            '<span class="tree-ico">◆</span><span class="tree-label">' + m.name + '</span>' +
+            '<span class="tag tag-rt">实时</span>';
+          box.appendChild(r);
+        });
+      }
+
+      if (n.children && n.children.length) render(n.children, box);
+      if (hasChild) wrap.appendChild(box);
+
+      row.querySelector('.tree-chevron').addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (!hasChild) return;
+        var open = box.style.display !== 'none';
+        box.style.display = open ? 'none' : 'block';
+        this.textContent = open ? '▶' : '▼';
+      });
+      parent.appendChild(wrap);
+    });
+  }
+
+  function drawTree() {
+    ['tree1', 'tree2'].forEach(function (id) {
+      var t = $(id);
+      t.innerHTML = '';
+      render(TREE, t);
+    });
+  }
+
+  function drawOrigin() {
+    var body = $('originRows');
+    var html = '';
+    var vals = [23.90, 23.90, 23.90, 23.88, 23.85, 23.82, 23.80, 23.78, 23.75, 23.72];
+    var secs = [0, 5, 12, 17, 22, 28, 33, 38, 44, 49];
+    for (var i = 0; i < 10; i++) {
+      var t = '00:00:' + String(secs[i]).padStart(2, '0');
+      html +=
+        '<tr>' +
+        '<td>' + (i + 1) + '</td>' +
+        '<td class="mono left">' + t + '</td>' +
+        '<td class="num">' + vals[i].toFixed(2) + '</td>' +
+        '</tr>';
+    }
+    body.innerHTML = html;
+  }
+
+  function drawExtreme(period) {
+    period = period || 'month';
+    var body = $('extremeRows');
+    var html = '';
+    if (period === 'day') {
+      for (var h = 0; h < 12; h++) {
+        var a = String(h).padStart(2, '0');
+        var b = String(h + 1).padStart(2, '0');
+        html +=
+          '<tr>' +
+          '<td>' + (h + 1) + '</td>' +
+          '<td class="mono">2026-07-29 ' + a + ':00 - ' + b + ':00</td>' +
+          '<td class="num">23.90</td><td class="mono">00:00:00</td>' +
+          '<td class="num min">23.10</td><td class="mono">14:32:05</td>' +
+          '<td class="num" style="color:var(--text-primary)">23.55</td>' +
+          '</tr>';
+      }
+    } else if (period === 'year') {
+      for (var m = 1; m <= 12; m++) {
+        html +=
+          '<tr>' +
+          '<td>' + m + '</td>' +
+          '<td class="mono">' + String(m).padStart(2, '0') + '</td>' +
+          '<td class="num">24.6</td><td class="mono">2026-' + String(m).padStart(2, '0') + '-12</td>' +
+          '<td class="num min">18.2</td><td class="mono">2026-' + String(m).padStart(2, '0') + '-03</td>' +
+          '<td class="num" style="color:var(--text-primary)">21.4</td>' +
+          '</tr>';
+      }
+    } else {
+      for (var d = 1; d <= 13; d++) {
+        html +=
+          '<tr>' +
+          '<td>' + d + '</td>' +
+          '<td class="mono">2026-07-' + String(d).padStart(2, '0') + '</td>' +
+          '<td class="num">23.90</td><td class="mono">00:00:00</td>' +
+          '<td class="num min">22.10</td><td class="mono">14:32:05</td>' +
+          '<td class="num" style="color:var(--text-primary)">23.05</td>' +
+          '</tr>';
+      }
+    }
+    body.innerHTML = html;
+  }
+
+  drawTree();
+  drawOrigin();
+  drawExtreme('month');
+})();
+</script>
+</body>
+</html>

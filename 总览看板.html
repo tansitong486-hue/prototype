@@ -355,7 +355,7 @@
       border-color: rgba(214, 225, 233, .96);
     }
     .dash-card--wide { grid-column: 1 / -1; }
-    /* 能耗趋势与分项 → 能耗成本（批注块同序；order 兜底） */
+    /* 能耗趋势与流向 → 能耗成本（批注块同序；order 兜底） */
     #gridA .dash-card[data-comp="trend"] { order: 1; }
     #gridA .dash-card[data-comp="cost"] { order: 2; }
     .dash-card[hidden] { display: none !important; }
@@ -384,7 +384,9 @@
       background: var(--primary);
       flex-shrink: 0;
     }
-    .card-head-right { display: flex; align-items: center; gap: 8px; }
+    .card-head-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .card-type-seg { flex-shrink: 0; }
+    .card-type-seg button { padding: 5px 12px; font-size: 12px; }
     .card-body { flex: 1; padding: 16px 18px 18px; }
 
     /* ── 用能总览（总成本 + 动态 N 能源格 + 折算格，瓦片矩阵） ── */
@@ -1103,6 +1105,76 @@
       min-height: 200px;
     }
 
+    /* ── 趋势卡 type：趋势分析 / 流向分析（桑基） ── */
+    [data-trend-type-view][hidden] { display: none !important; }
+    .flow-view { padding: 12px 16px 16px; }
+    .flow-drill-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      margin-bottom: 10px;
+    }
+    .flow-bc { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+    .flow-bc button {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: #F8FAFC;
+      border: 1px solid var(--border-light);
+      transition: border-color var(--transition), color var(--transition), background var(--transition);
+    }
+    .flow-bc button:not(:disabled):hover {
+      border-color: rgba(0, 122, 255, 0.35);
+      color: var(--primary-dark);
+      background: var(--primary-tint);
+    }
+    .flow-bc button:disabled {
+      color: var(--primary-dark);
+      font-weight: 600;
+      cursor: default;
+      background: var(--primary-tint);
+      border-color: rgba(0, 122, 255, 0.28);
+    }
+    .flow-bc .ico-home {
+      width: 12px; height: 12px; background: currentColor; flex-shrink: 0;
+      -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 10.5 12 3l9 7.5'/%3E%3Cpath d='M5 9.5V21h14V9.5'/%3E%3C/svg%3E") center/contain no-repeat;
+              mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 10.5 12 3l9 7.5'/%3E%3Cpath d='M5 9.5V21h14V9.5'/%3E%3C/svg%3E") center/contain no-repeat;
+    }
+    .flow-bc-sep { color: var(--text-hint); font-size: 11px; padding: 0 2px; }
+    .flow-drill-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .flow-drill-tip { font-size: 12px; color: var(--text-hint); line-height: 1.45; }
+    .flow-unit-pill {
+      font-size: 11px;
+      color: var(--text-hint);
+      font-weight: 500;
+      padding: 2px 8px;
+      border: 1px solid var(--border-light);
+      border-radius: 999px;
+      background: #FAFBFD;
+    }
+    .flow-chart-wrap {
+      position: relative;
+      min-height: 420px;
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      background:
+        radial-gradient(circle at 12% 0%, rgba(0, 122, 255, .045), transparent 42%),
+        linear-gradient(180deg, #FDFEFF 0%, #FFFFFF 100%);
+      overflow: hidden;
+    }
+    #flowSankeyChart { width: 100%; height: 460px; }
+    @media (max-width: 960px) {
+      #flowSankeyChart { height: 380px; }
+      .flow-chart-wrap { min-height: 340px; }
+    }
+
     .integ-note { font-size: 11px; color: var(--text-hint); }
     /* ── 分项构成环形（并入趋势卡右侧）：stroke 超出布局盒需裁剪，避免叠到图例 ── */
     .subitem-donut {
@@ -1699,6 +1771,7 @@
   </style>
   <link rel="stylesheet" href="annotation-styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="assets/echarts.min.js"></script>
 </head>
 <body>
   <div class="layout">
@@ -1759,7 +1832,7 @@
                 <tr><td>CLF / PLF / OLF</td><td>园区/数据中心 + 对应系统前提；缺输入时瓦片「待配置」</td></tr>
                 <tr><td>WUE</td><td>园区/数据中心 + 水计量 + IT + 可计算</td></tr>
                 <tr><td>能效指标总览</td><td>任一能效瓦片或标准煤/碳排放满足出现规则</td></tr>
-                <tr><td>能耗趋势与分项</td><td>≥1 能源有趋势；卡内能源 Tab；≥2 分项才出环形</td></tr>
+                <tr><td>能耗趋势与流向</td><td>≥1 能源有趋势；卡内能源 Tab；≥2 分项才出环形</td></tr>
                 <tr><td>能耗成本</td><td>≥1 能源同时启用计量且有计费；卡内能源 Tab</td></tr>
               </table>
               <p>「不渲染也不占位」≠「卡片在但暂无数据」。</p>
@@ -1974,9 +2047,11 @@
                 <span class="anno-version">v2.5</span>
                 <span class="anno-source">需求文档</span>
                 <div class="anno-body">
-                  <p><b>关联模块：</b>能耗趋势与分项</p>
+                  <p><b>关联模块：</b>能耗趋势与流向</p>
                   <ul>
-                    <li><b>形态：</b>单卡多能源 Tab；左环形（≥2 分项才出）+ 右堆叠趋势；0/1 分项时总量内联在趋势区顶。</li>
+                    <li><b>Type：</b>卡头右侧切换「趋势分析 / 流向分析」；默认趋势分析。原独立页「能耗流向分析」并入本卡流向 type。</li>
+                    <li><b>趋势分析：</b>单卡多能源 Tab；左环形（≥2 分项才出）+ 右堆叠时序；0/1 分项时总量内联在趋势区顶。</li>
+                    <li><b>流向分析：</b>同能源 Tab 下展示桑基能流图（源→一级分项→二级末端）；根节点=顶栏当前分析对象。带「›」的节点可点，切换顶栏对象（非整页组件内下钻）；时间与趋势共用。</li>
                     <li><b>堆叠：</b>按子节点或计量对象（见计量配置）；未启用该能源的下级过滤。</li>
                     <li><b>刻度：</b>≤3 天按小时，≤90 天按天，&gt;90 天按月；≥1 万缩写。</li>
                   </ul>
@@ -1996,91 +2071,114 @@
                 </div>
               </div>
 
-              <!-- 4. 能耗趋势与分项（全宽 · 单卡按能源 Tab，左侧分项环形 + 右侧趋势） -->
+              <!-- 4. 能耗趋势与流向（全宽 · type：趋势分析 / 流向分析；能源 Tab 共用） -->
               <section class="dash-card dash-card--wide" data-comp="trend" aria-labelledby="t-trend">
                 <div class="card-head">
                   <div class="card-title">
-                    <span class="card-title-dot"></span><span id="t-trend">能耗趋势与分项</span>
-                    <span class="card-tabs" id="trendTabs" role="tablist" aria-label="能耗趋势能源切换"></span>
+                    <span class="card-title-dot"></span><span id="t-trend">能耗趋势与流向</span>
+                    <span class="card-tabs" id="trendTabs" role="tablist" aria-label="能源类型切换"></span>
+                  </div>
+                  <div class="card-head-right">
+                    <div class="dash-seg card-type-seg" id="trendTypeSeg" role="group" aria-label="分析类型">
+                      <button type="button" data-type="trend" class="active" aria-pressed="true">趋势分析</button>
+                      <button type="button" data-type="flow" aria-pressed="false">流向分析</button>
+                    </div>
                   </div>
                 </div>
                 <div class="card-body trend-card-body">
-                  <!-- 电 Tab -->
-                  <div class="energy-panel" data-trend-panel="elec">
-                    <div class="trend-layout" id="trendLayoutElec">
-                      <div class="trend-donut-side" id="donutSideElec">
-                        <div class="subitem-donut" aria-hidden="true">
-                          <canvas id="chartSubitemElec"></canvas>
-                          <div class="subitem-center">
-                            <div class="subitem-center-val" id="subitemElecCenterVal">—</div>
-                            <div class="subitem-center-lbl">总能耗</div>
+                  <!-- type=趋势分析：左环形 + 右时序堆叠 -->
+                  <div id="trendTypeView" data-trend-type-view="trend">
+                    <!-- 电 Tab -->
+                    <div class="energy-panel" data-trend-panel="elec">
+                      <div class="trend-layout" id="trendLayoutElec">
+                        <div class="trend-donut-side" id="donutSideElec">
+                          <div class="subitem-donut" aria-hidden="true">
+                            <canvas id="chartSubitemElec"></canvas>
+                            <div class="subitem-center">
+                              <div class="subitem-center-val" id="subitemElecCenterVal">—</div>
+                              <div class="subitem-center-lbl">总能耗</div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="trend-chart-panel">
+                          <div class="trend-inline-total" id="trendElecInlineTotal" hidden>
+                            <div class="trend-value-row">
+                              <span class="trend-value" id="trendElecTotal">—</span>
+                              <span class="trend-unit" id="trendElecUnit">kWh</span>
+                            </div>
+                          </div>
+                          <div class="trend-chart-legend" id="legendTrendElec" aria-label="堆叠分项" style="margin-top:4px"></div>
+                          <div class="trend-chart-box">
+                            <canvas id="chartTrendElec" role="img" aria-label="电能耗堆叠柱状趋势（可悬停查看分项与合计）"></canvas>
                           </div>
                         </div>
                       </div>
-                      <div class="trend-chart-panel">
-                        <div class="trend-inline-total" id="trendElecInlineTotal" hidden>
-                          <div class="trend-value-row">
-                            <span class="trend-value" id="trendElecTotal">—</span>
-                            <span class="trend-unit" id="trendElecUnit">kWh</span>
+                    </div>
+                    <!-- 水 Tab -->
+                    <div class="energy-panel" data-trend-panel="water" hidden>
+                      <div class="trend-layout" id="trendLayoutWater">
+                        <div class="trend-donut-side" id="donutSideWater">
+                          <div class="subitem-donut" aria-hidden="true">
+                            <canvas id="chartSubitemWater"></canvas>
+                            <div class="subitem-center">
+                              <div class="subitem-center-val" id="subitemWaterCenterVal">—</div>
+                              <div class="subitem-center-lbl">总用水</div>
+                            </div>
                           </div>
                         </div>
-                        <div class="trend-chart-legend" id="legendTrendElec" aria-label="堆叠分项" style="margin-top:4px"></div>
-                        <div class="trend-chart-box">
-                          <canvas id="chartTrendElec" role="img" aria-label="电能耗堆叠柱状趋势（可悬停查看分项与合计）"></canvas>
+                        <div class="trend-chart-panel">
+                          <div class="trend-inline-total" id="trendWaterInlineTotal" hidden>
+                            <div class="trend-value-row">
+                              <span class="trend-value" id="trendWaterTotal">—</span>
+                              <span class="trend-unit" id="trendWaterUnit">m³</span>
+                            </div>
+                          </div>
+                          <div class="trend-chart-legend" id="legendTrendWater" aria-label="堆叠分项" style="margin-top:4px"></div>
+                          <div class="trend-chart-box">
+                            <canvas id="chartTrendWater" role="img" aria-label="水能耗堆叠柱状趋势（可悬停查看分项与合计）"></canvas>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- 冷量 Tab -->
+                    <div class="energy-panel" data-trend-panel="cooling" hidden>
+                      <div class="trend-layout" id="trendLayoutCooling">
+                        <div class="trend-donut-side" id="donutSideCooling">
+                          <div class="subitem-donut" aria-hidden="true">
+                            <canvas id="chartSubitemCooling"></canvas>
+                            <div class="subitem-center">
+                              <div class="subitem-center-val" id="subitemCoolingCenterVal">—</div>
+                              <div class="subitem-center-lbl">总冷量</div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="trend-chart-panel">
+                          <div class="trend-inline-total" id="trendCoolingInlineTotal" hidden>
+                            <div class="trend-value-row">
+                              <span class="trend-value" id="trendCoolingTotal">—</span>
+                              <span class="trend-unit" id="trendCoolingUnit">kWh</span>
+                            </div>
+                          </div>
+                          <div class="trend-chart-legend" id="legendTrendCooling" aria-label="堆叠分项" style="margin-top:4px"></div>
+                          <div class="trend-chart-box">
+                            <canvas id="chartTrendCooling" role="img" aria-label="冷量堆叠柱状趋势（可悬停查看分项与合计）"></canvas>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                  <!-- 水 Tab -->
-                  <div class="energy-panel" data-trend-panel="water" hidden>
-                    <div class="trend-layout" id="trendLayoutWater">
-                      <div class="trend-donut-side" id="donutSideWater">
-                        <div class="subitem-donut" aria-hidden="true">
-                          <canvas id="chartSubitemWater"></canvas>
-                          <div class="subitem-center">
-                            <div class="subitem-center-val" id="subitemWaterCenterVal">—</div>
-                            <div class="subitem-center-lbl">总用水</div>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="trend-chart-panel">
-                        <div class="trend-inline-total" id="trendWaterInlineTotal" hidden>
-                          <div class="trend-value-row">
-                            <span class="trend-value" id="trendWaterTotal">—</span>
-                            <span class="trend-unit" id="trendWaterUnit">m³</span>
-                          </div>
-                        </div>
-                        <div class="trend-chart-legend" id="legendTrendWater" aria-label="堆叠分项" style="margin-top:4px"></div>
-                        <div class="trend-chart-box">
-                          <canvas id="chartTrendWater" role="img" aria-label="水能耗堆叠柱状趋势（可悬停查看分项与合计）"></canvas>
-                        </div>
+
+                  <!-- type=流向分析：桑基能流图；节点点击切换顶栏分析对象（非组件内下钻） -->
+                  <div id="flowTypeView" class="flow-view" data-trend-type-view="flow" hidden>
+                    <div class="flow-drill-bar">
+                      <div class="flow-bc" id="flowBc" aria-label="当前分析对象"></div>
+                      <div class="flow-drill-right">
+                        <span class="flow-unit-pill" id="flowUnitPill">单位：kWh</span>
+                        <span class="flow-drill-tip" id="flowTip">悬停查看用量与占比 · 点击带 › 的节点切换顶部分析对象</span>
                       </div>
                     </div>
-                  </div>
-                  <!-- 冷量 Tab -->
-                  <div class="energy-panel" data-trend-panel="cooling" hidden>
-                    <div class="trend-layout" id="trendLayoutCooling">
-                      <div class="trend-donut-side" id="donutSideCooling">
-                        <div class="subitem-donut" aria-hidden="true">
-                          <canvas id="chartSubitemCooling"></canvas>
-                          <div class="subitem-center">
-                            <div class="subitem-center-val" id="subitemCoolingCenterVal">—</div>
-                            <div class="subitem-center-lbl">总冷量</div>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="trend-chart-panel">
-                        <div class="trend-inline-total" id="trendCoolingInlineTotal" hidden>
-                          <div class="trend-value-row">
-                            <span class="trend-value" id="trendCoolingTotal">—</span>
-                            <span class="trend-unit" id="trendCoolingUnit">kWh</span>
-                          </div>
-                        </div>
-                        <div class="trend-chart-legend" id="legendTrendCooling" aria-label="堆叠分项" style="margin-top:4px"></div>
-                        <div class="trend-chart-box">
-                          <canvas id="chartTrendCooling" role="img" aria-label="冷量堆叠柱状趋势（可悬停查看分项与合计）"></canvas>
-                        </div>
-                      </div>
+                    <div class="flow-chart-wrap" id="flowChartWrap">
+                      <div id="flowSankeyChart" role="img" aria-label="能耗流向桑基图"></div>
                     </div>
                   </div>
                 </div>
@@ -2968,7 +3066,7 @@
       }
 
       var COMP_META = {
-        'trend': { name: '能耗趋势与分项', sec: 'A' },
+        'trend': { name: '能耗趋势与流向', sec: 'A' },
         'cost': { name: '能耗成本', sec: 'A' },
         'efficiency': { name: '能效指标总览', sec: 'B' }
       }
@@ -3250,12 +3348,44 @@
         }
       }
 
-      /* ── 渲染：能耗趋势与分项（单卡多 Tab，左侧分项环形 + 右侧趋势） ── */
+      /* ── 渲染：能耗趋势与流向（type：趋势分析 / 流向分析；能源 Tab 共用） ── */
       var TREND_UNIT = { elec: 'kWh', water: 'm³', cooling: 'kWh' }
+      var trendViewType = 'trend' /* trend | flow */
+      var trendEnergyKey = 'elec'
+      function applyTrendTypeView () {
+        var trendView = document.getElementById('trendTypeView')
+        var flowView = document.getElementById('flowTypeView')
+        if (trendView) trendView.hidden = trendViewType !== 'trend'
+        if (flowView) flowView.hidden = trendViewType !== 'flow'
+        document.querySelectorAll('#trendTypeSeg [data-type]').forEach(function (btn) {
+          var on = btn.getAttribute('data-type') === trendViewType
+          btn.classList.toggle('active', on)
+          btn.setAttribute('aria-pressed', on ? 'true' : 'false')
+        })
+        if (trendViewType === 'flow' && window.__dashFlowApi) {
+          window.__dashFlowApi.setContext({
+            objectKey: currentKey,
+            objectLabel: (DEMO_OBJECTS[currentKey] && DEMO_OBJECTS[currentKey].label) || '',
+            energy: trendEnergyKey
+          })
+          window.__dashFlowApi.render()
+        } else if (trendViewType === 'trend' && typeof window.refreshDashCharts === 'function') {
+          requestAnimationFrame(function () { window.refreshDashCharts() })
+        }
+      }
       function switchTrendPanel (o, key) {
+        trendEnergyKey = key
         document.querySelectorAll('[data-trend-panel]').forEach(function (p) {
           p.hidden = p.getAttribute('data-trend-panel') !== key
         })
+        if (trendViewType === 'flow' && window.__dashFlowApi) {
+          window.__dashFlowApi.setContext({
+            objectKey: currentKey,
+            objectLabel: (o && o.label) || '',
+            energy: key
+          })
+          window.__dashFlowApi.render()
+        }
       }
       function renderTrendCards (o) {
         var map = {
@@ -3283,10 +3413,26 @@
         })
         var list = trendEnergies(o).map(function (e) { return { key: e, label: ENERGY_LABEL[e] || e } })
         if (list.length) {
-          buildCardTabs('trendTabs', list, list[0].key, function (key) { switchTrendPanel(o, key) })
-          switchTrendPanel(o, list[0].key)
+          if (list.every(function (item) { return item.key !== trendEnergyKey })) {
+            trendEnergyKey = list[0].key
+          }
+          buildCardTabs('trendTabs', list, trendEnergyKey, function (key) { switchTrendPanel(o, key) })
+          switchTrendPanel(o, trendEnergyKey)
         }
+        applyTrendTypeView()
       }
+      ;(function bindTrendTypeSeg () {
+        var seg = document.getElementById('trendTypeSeg')
+        if (!seg) return
+        seg.addEventListener('click', function (e) {
+          var btn = e.target.closest('[data-type]')
+          if (!btn || !seg.contains(btn)) return
+          var next = btn.getAttribute('data-type')
+          if (!next || next === trendViewType) return
+          trendViewType = next
+          applyTrendTypeView()
+        })
+      }())
 
       /* ── 渲染：分项构成（趋势卡左侧环形区；仅 0/1 个分项时降级为趋势区内联总量） ── */
       function renderSubitems (o) {
@@ -3598,6 +3744,14 @@
         renderTrendCards(o)
         renderSubitems(o)
         renderEfficiency(o)
+        if (window.__dashFlowApi) {
+          window.__dashFlowApi.setContext({
+            objectKey: currentKey,
+            objectLabel: (o && o.label) || '',
+            energy: trendEnergyKey
+          })
+          if (trendViewType === 'flow') window.__dashFlowApi.render()
+        }
       }
 
       /* ── 规则引擎：推导卡片集 ── */
@@ -3689,6 +3843,9 @@
       window.__dashObjectApi = {
         key: function () { return currentKey },
         obj: function () { return DEMO_OBJECTS[currentKey] },
+        setObject: setObject,
+        childrenOf: function (key) { return OBJECT_CHILDREN[key] || [] },
+        hasObject: function (key) { return !!DEMO_OBJECTS[key] },
         costTouParts: costTouParts
       }
       /* 时间粒度/日期变化：短骨架模拟重新取数 */
@@ -3797,6 +3954,364 @@
       setObject('park')
       enterCards()
       runCountUps()
+    })()
+  </script>
+
+  <script>
+    /* ══════════ 流向分析 · 桑基（根=顶栏对象；节点点击切换顶栏对象，非组件内下钻） ══════════ */
+    (function () {
+      'use strict'
+      var UNIT = { elec: 'kWh', water: 'm³', cooling: 'kWh' }
+      var ENERGY_FACTOR = { elec: 1, water: 0.00048, cooling: 0.24 }
+      var ROOM_COLORS = ['#7C3AED', '#8B5CF6', '#A78BFA', '#9333EA']
+      var ctx = { objectKey: 'park', objectLabel: '云谷园区', energy: 'elec' }
+      var tree = null
+      var chart = null
+      var chartEl = document.getElementById('flowSankeyChart')
+
+      function round2 (v) { return Math.round(v * 100) / 100 }
+      function fmt (v) {
+        return Number(v).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      }
+      function pct (v, total) { return total > 0 ? ((v / total) * 100).toFixed(2) : '0.00' }
+      function unit () { return UNIT[ctx.energy] || 'kWh' }
+      function selectable (node) {
+        return !!(node && node.objectKey && window.__dashObjectApi && window.__dashObjectApi.hasObject(node.objectKey))
+      }
+
+      function roomChildren (scale) {
+        var rooms = [
+          { id: 'r101', label: '101机房', value: 4823 },
+          { id: 'r102', label: '102机房', value: 2411 },
+          { id: 'r201', label: '201机房', value: 2020 },
+          { id: 'r202', label: '202机房', value: 2360 },
+          { id: 'r203', label: '203机房', value: 1813 },
+          { id: 'r204', label: '204机房', value: 1031 },
+          { id: 'r205', label: '205机房', value: 4764 },
+          { id: 'r301', label: '301机房（2F）', value: 739 },
+          { id: 'r302', label: '301机房', value: 9352 },
+          { id: 'r303', label: '302机房', value: 5744 },
+          { id: 'r304', label: '303机房', value: 1816 },
+          { id: 'r305', label: '304机房', value: 2958 },
+          { id: 'r306', label: '305机房', value: 168 },
+          { id: 'r401', label: '3F邻近机二', value: 581 },
+          { id: 'r402', label: '401机房', value: 5499 },
+          { id: 'r403', label: '402机房', value: 569 },
+          { id: 'r404', label: '403机房', value: 5470 },
+          { id: 'r405', label: '404机房', value: 7733 },
+          { id: 'r406', label: '4F临近机一', value: 546 }
+        ]
+        return rooms.map(function (r, i) {
+          return {
+            id: r.id, label: r.label, value: round2(r.value * scale),
+            color: ROOM_COLORS[i % ROOM_COLORS.length], children: []
+          }
+        })
+      }
+
+      function dcSystemChildren (scale) {
+        return [
+          {
+            id: 'hvac', label: '暖通空调系统', value: round2(11447.81 * scale), color: '#0891B2',
+            objectKey: 'hvac',
+            children: [
+              { id: 'hv1', label: '冷水主机系统', value: round2(5000 * scale), color: '#0E7490', children: [] },
+              { id: 'hv2', label: '末端水冷系统', value: round2(3840 * scale), color: '#06B6D4', children: [] },
+              { id: 'hv3', label: '冷却塔与泵组', value: round2(2607.81 * scale), color: '#22D3EE', children: [] }
+            ]
+          },
+          {
+            id: 'it', label: 'IT系统', value: round2(62302.81 * scale), color: '#6D28D9',
+            children: roomChildren(scale)
+          },
+          {
+            id: 'pwr', label: '电力系统', value: round2(6697.38 * scale), color: '#D97706',
+            children: [
+              { id: 'p1', label: 'UPS设备', value: round2(6397.59 * scale), color: '#F59E0B', children: [] },
+              { id: 'p2', label: '低压供配电损耗', value: round2(299.79 * scale), color: '#FBBF24', children: [] }
+            ]
+          },
+          { id: 'oth', label: '其他系统', value: 0, color: '#94A3B8', children: [] }
+        ]
+      }
+
+      function filterByEnergy (children) {
+        if (ctx.energy === 'water') return children.filter(function (c) { return c.id !== 'pwr' })
+        if (ctx.energy === 'cooling') return children.filter(function (c) { return c.id === 'hvac' || c.objectKey === 'hvac' || c.id === 'dc' })
+        return children
+      }
+
+      function buildData () {
+        var eFactor = ENERGY_FACTOR[ctx.energy] || 1
+        var label = ctx.objectLabel || '当前对象'
+        var root
+
+        if (ctx.objectKey === 'park') {
+          var dcKids = filterByEnergy(dcSystemChildren(1 * eFactor))
+          var dcTotal = round2(dcKids.reduce(function (s, c) { return s + c.value }, 0))
+          var siblings = [
+            {
+              id: 'dc', label: '互盟数据中心', value: dcTotal, color: '#1E40AF',
+              objectKey: 'dc', children: dcKids
+            },
+            {
+              id: 'east1', label: '华东一号', value: round2(dcTotal * 0.6), color: '#0891B2',
+              children: [
+                { id: 'e1a', label: '机房楼 A', value: round2(dcTotal * 0.36), color: '#0E7490', children: [] },
+                { id: 'e1b', label: '配套用房', value: round2(dcTotal * 0.24), color: '#06B6D4', children: [] }
+              ]
+            },
+            {
+              id: 'support', label: '综合配套', value: round2(dcTotal * 0.21), color: '#B0A8DC',
+              children: [
+                { id: 's1', label: '办公生活', value: round2(dcTotal * 0.13), color: '#A78BFA', children: [] },
+                { id: 's2', label: '公用设施', value: round2(dcTotal * 0.08), color: '#C4B5FD', children: [] }
+              ]
+            }
+          ]
+          if (ctx.energy === 'cooling') siblings = siblings.filter(function (c) { return c.id === 'dc' })
+          root = {
+            id: 'root', label: label, total: round2(siblings.reduce(function (s, c) { return s + c.value }, 0)),
+            color: '#0F766E', children: siblings
+          }
+        } else if (ctx.objectKey === 'hvac') {
+          var parts = [
+            { id: 'hv1', label: '冷水主机系统', value: round2(1780.56 * eFactor), color: '#9BB8EA', children: [] },
+            { id: 'hv2', label: '水泵群', value: round2(576.24 * eFactor), color: '#B0A8DC', children: [] },
+            { id: 'hv3', label: '冷却塔', value: round2(371.97 * eFactor), color: '#7EC8D6', children: [] },
+            { id: 'hv4', label: '空调末端', value: round2(320.13 * eFactor), color: '#D4BCE4', children: [] }
+          ]
+          root = {
+            id: 'root', label: label,
+            total: round2(parts.reduce(function (s, c) { return s + c.value }, 0)),
+            color: '#0891B2', children: parts
+          }
+        } else {
+          /* dc 及其他：系统分流 */
+          var kids = filterByEnergy(dcSystemChildren(1 * eFactor))
+          root = {
+            id: 'root', label: label,
+            total: round2(kids.reduce(function (s, c) { return s + c.value }, 0)),
+            color: '#1E40AF', children: kids
+          }
+        }
+        return root
+      }
+
+      function tooltipFormatter (params) {
+        var u = unit()
+        function row (k, v) {
+          return '<div style="display:flex;justify-content:space-between;gap:18px;font-size:12px;line-height:1.8;">' +
+            '<span style="opacity:.65;">' + k + '</span><span style="font-weight:600;font-variant-numeric:tabular-nums;">' + v + '</span></div>'
+        }
+        function box (inner) { return '<div style="min-width:190px;">' + inner + '</div>' }
+        if (params.dataType === 'edge') {
+          var d = params.data
+          return box(
+            '<div style="font-weight:600;margin-bottom:6px;">' + d.sourceLabel + ' <span style="opacity:.55;">›</span> ' + d.targetLabel + '</div>' +
+            row('流向', fmt(d.real) + ' ' + u) +
+            row('占 ' + d.sourceLabel, d.pctParent + '%')
+          )
+        }
+        var n = params.data
+        var rows = row('用量', fmt(n.real) + ' ' + u)
+        if (n.pctParent != null) rows += row('占' + (n.parentName || '父级'), n.pctParent + '%')
+        if (n.pctTotal != null) rows += row('占总计', n.pctTotal + '%')
+        if (n.selectObject) {
+          rows += '<div style="margin-top:6px;font-size:11px;color:#93C5FD;">点击后切换顶部分析对象为「' + n.name + '」</div>'
+        }
+        return box(
+          '<div style="display:flex;align-items:center;gap:7px;font-weight:600;margin-bottom:6px;">' +
+          '<span style="width:8px;height:8px;border-radius:3px;background:' + n.rawColor + ';"></span>' + n.name + '</div>' + rows
+        )
+      }
+
+      var TOOLTIP = {
+        trigger: 'item',
+        confine: true,
+        backgroundColor: 'rgba(15,23,42,.92)',
+        borderColor: 'rgba(148,163,184,.25)',
+        borderWidth: 1,
+        padding: [10, 13],
+        textStyle: { color: '#F8FAFC', fontSize: 12 },
+        extraCssText: 'border-radius:10px;box-shadow:0 10px 30px rgba(15,23,42,.3);backdrop-filter:blur(4px);',
+        formatter: tooltipFormatter
+      }
+
+      function sankeySeriesBase () {
+        return {
+          type: 'sankey',
+          nodeAlign: 'left',
+          nodeWidth: 14,
+          nodeGap: 6,
+          layoutIterations: 0,
+          draggable: false,
+          emphasis: { focus: 'adjacency', lineStyle: { opacity: .62 } },
+          blur: { itemStyle: { opacity: .16 }, lineStyle: { opacity: .04 } },
+          lineStyle: { color: 'gradient', opacity: .38, curveness: .52 },
+          itemStyle: { borderColor: 'rgba(255,255,255,.85)', borderWidth: 1, borderRadius: 3 },
+          labelLayout: { hideOverlap: true },
+          animationDuration: 700,
+          animationDurationUpdate: 480,
+          animationEasing: 'cubicOut'
+        }
+      }
+
+      function buildOption () {
+        var data = tree
+        var total = data.total
+        var eps = Math.max(total * 0.004, 0.01)
+        var u = unit()
+        var nodes = []
+        var links = []
+        nodes.push({
+          name: data.label,
+          real: total, rawColor: data.color, selectObject: false,
+          itemStyle: { color: data.color },
+          label: {
+            position: 'left', offset: [-4, 0],
+            formatter: function () { return '{t|' + data.label + '}\n{v|' + fmt(total) + ' ' + u + '}' },
+            rich: {
+              t: { fontSize: 12, fontWeight: 700, color: '#0F172A', align: 'right', lineHeight: 18 },
+              v: { fontSize: 11, color: '#475569', align: 'right', lineHeight: 16, fontWeight: 600 }
+            }
+          }
+        })
+        data.children.forEach(function (l1) {
+          var canSelect = selectable(l1)
+          nodes.push({
+            name: l1.label,
+            real: l1.value, rawColor: l1.color,
+            pctParent: pct(l1.value, total), parentName: data.label,
+            selectObject: canSelect, objectKey: l1.objectKey || null,
+            itemStyle: { color: l1.color },
+            label: {
+              position: 'right', fontSize: 11, fontWeight: 600, color: '#1E293B',
+              textBorderColor: '#fff', textBorderWidth: 3,
+              formatter: function (p) { return p.data.name + '  ' + p.data.pctParent + '%' + (p.data.selectObject ? ' ›' : '') }
+            }
+          })
+          links.push({
+            source: data.label, target: l1.label,
+            value: Math.max(l1.value, eps), real: l1.value,
+            sourceLabel: data.label, targetLabel: l1.label,
+            pctParent: pct(l1.value, total)
+          })
+          ;(l1.children || []).forEach(function (l2) {
+            var canSelect2 = selectable(l2)
+            nodes.push({
+              name: l2.label,
+              real: l2.value, rawColor: l2.color,
+              pctParent: pct(l2.value, l1.value), parentName: l1.label,
+              pctTotal: pct(l2.value, total),
+              selectObject: canSelect2, objectKey: l2.objectKey || null,
+              itemStyle: { color: l2.color },
+              label: {
+                position: 'right', fontSize: 10, color: '#475569',
+                textBorderColor: '#fff', textBorderWidth: 3,
+                formatter: function (p) {
+                  return p.data.name + '  ' + fmt(p.data.real) + ' ' + u + ' · ' + p.data.pctParent + '%' + (p.data.selectObject ? ' ›' : '')
+                }
+              }
+            })
+            links.push({
+              source: l1.label, target: l2.label,
+              value: Math.max(l2.value, eps * .4), real: l2.value,
+              sourceLabel: l1.label, targetLabel: l2.label,
+              pctParent: pct(l2.value, l1.value)
+            })
+          })
+        })
+        var series = sankeySeriesBase()
+        series.left = 140
+        series.right = 210
+        series.top = 18
+        series.bottom = 14
+        series.data = nodes
+        series.links = links
+        return { tooltip: TOOLTIP, series: [series] }
+      }
+
+      function selectTopObject (objectKey) {
+        if (!objectKey || !window.__dashObjectApi) return
+        if (!window.__dashObjectApi.hasObject(objectKey)) return
+        if (window.__dashObjectApi.key() === objectKey) return
+        window.__dashObjectApi.setObject(objectKey)
+      }
+
+      function ensureChart () {
+        if (!chartEl || !window.echarts) return null
+        if (!chart) {
+          chart = echarts.init(chartEl)
+          chart.on('click', function (params) {
+            if (params.dataType !== 'node' || !params.data || !params.data.selectObject) return
+            selectTopObject(params.data.objectKey)
+          })
+        }
+        return chart
+      }
+
+      function renderMeta () {
+        var nav = document.getElementById('flowBc')
+        var tip = document.getElementById('flowTip')
+        var pill = document.getElementById('flowUnitPill')
+        if (nav) {
+          nav.innerHTML = ''
+          var ico = document.createElement('span')
+          ico.className = 'ico-home'
+          ico.setAttribute('aria-hidden', 'true')
+          var pillBtn = document.createElement('button')
+          pillBtn.type = 'button'
+          pillBtn.disabled = true
+          pillBtn.appendChild(ico)
+          pillBtn.appendChild(document.createTextNode(ctx.objectLabel || '当前对象'))
+          nav.appendChild(pillBtn)
+        }
+        if (pill) pill.textContent = '单位：' + unit()
+        if (tip) {
+          var hasSelectable = !!(tree && (tree.children || []).some(selectable))
+          tip.textContent = hasSelectable
+            ? '悬停查看用量与占比 · 点击带 › 的节点，切换顶部分析对象'
+            : '悬停查看用量与占比 · 当前对象无下级可选节点，请用顶部路径返回上级'
+        }
+      }
+
+      function renderChart () {
+        var c = ensureChart()
+        if (!c) {
+          if (chartEl && !window.echarts) {
+            chartEl.innerHTML = '<p style="padding:40px;font-size:13px;color:#94A3B8;">图表组件（assets/echarts.min.js）加载失败。</p>'
+          }
+          return
+        }
+        c.setOption(buildOption(), { notMerge: true })
+        requestAnimationFrame(function () { c.resize() })
+      }
+
+      function renderAll () {
+        tree = buildData()
+        renderMeta()
+        renderChart()
+      }
+
+      window.__dashFlowApi = {
+        setContext: function (next) {
+          if (next.objectKey) ctx.objectKey = next.objectKey
+          if (next.objectLabel != null) ctx.objectLabel = next.objectLabel
+          if (next.energy) ctx.energy = next.energy
+        },
+        render: renderAll,
+        resize: function () { if (chart) chart.resize() }
+      }
+
+      if (typeof ResizeObserver !== 'undefined') {
+        var wrap = document.getElementById('flowChartWrap')
+        if (wrap) {
+          new ResizeObserver(function () {
+            if (chart && wrap.offsetParent !== null) chart.resize()
+          }).observe(wrap)
+        }
+      }
     })()
   </script>
 

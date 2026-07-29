@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>报表-选择测点弹窗（多视图扩展 + 指标接入）</title>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --primary-dark: #17358A;
+      --primary-light: #EEF4FF;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --danger: #DC2626;
+      --success: #059669;
+      --warning: #D97706;
+      --metric: #7C3AED;
+      --metric-light: #F5F3FF;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px; color: var(--text-primary); background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+    button { border: none; background: none; font: inherit; }
+
+    /* ============ 新增标记 ============ */
+    .is-new { position: relative; }
+    .new-badge {
+      display: inline-flex; align-items: center; height: 16px; padding: 0 5px;
+      border-radius: 4px; background: #FEF3C7; color: #92400E;
+      font-size: 10px; font-weight: 700; margin-left: 6px; flex-shrink: 0;
+      letter-spacing: .3px;
+    }
+    .new-badge.view { background: #DBEAFE; color: #1E40AF; }
+    .new-badge.metric { background: #F3E8FF; color: #6B21A8; }
+    .hl-new { outline: 2px dashed #F59E0B; outline-offset: 2px; border-radius: 6px; }
+
+    /* ============ 页面外壳 ============ */
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .page-shell { padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 12px; }
+    .page-head {
+      background: var(--bg-card); border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg); padding: 14px 16px; box-shadow: var(--shadow-sm);
+    }
+    .page-title { font-size: 18px; font-weight: 700; }
+    .page-desc { font-size: 13px; color: var(--text-secondary); margin-top: 6px; line-height: 1.7; }
+    .page-desc b { color: var(--text-primary); }
+
+    .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px; font-size: 12px; color: var(--text-secondary); }
+    .legend span { display: inline-flex; align-items: center; gap: 5px; }
+
+    .scene-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border-light); margin-top: 14px; }
+    .scene-tab {
+      padding: 10px 16px; font-size: 13px; color: var(--text-secondary);
+      border-bottom: 2px solid transparent; margin-bottom: -1px; cursor: pointer;
+    }
+    .scene-tab:hover { color: var(--primary); }
+    .scene-tab.active { color: var(--primary); font-weight: 700; border-bottom-color: var(--primary); }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+      height: 32px; padding: 0 12px; border-radius: var(--radius);
+      cursor: pointer; transition: all var(--transition);
+      white-space: nowrap; font-size: 12px; font-weight: 600;
+    }
+    .btn-primary { color: #fff; background: var(--primary); }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-default { background: #fff; border: 1px solid var(--border); color: var(--text-primary); }
+    .btn-default:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-link { height: auto; padding: 0; color: var(--primary); font-weight: 600; font-size: 12px; cursor: pointer; }
+    .btn-link:hover { text-decoration: underline; }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+    .btn-sm { height: 26px; padding: 0 9px; font-size: 11px; }
+
+    /* ============ 模拟弹窗 ============ */
+    .dlg {
+      background: var(--bg-card); border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg); box-shadow: 0 8px 32px rgba(15,23,42,.10);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .dlg-head {
+      padding: 14px 18px; border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .dlg-title { font-size: 15px; font-weight: 700; }
+    .dlg-close { color: var(--text-hint); cursor: pointer; font-size: 18px; line-height: 1; }
+    .dlg-body { padding: 14px 18px; flex: 1; min-height: 0; }
+    .dlg-foot {
+      padding: 12px 18px; border-top: 1px solid var(--border-light);
+      display: flex; justify-content: flex-end; gap: 8px; flex-shrink: 0;
+    }
+
+    .dlg-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+    .dlg-toolbar .spacer { flex: 1; }
+    .search-input {
+      height: 32px; padding: 0 10px 0 28px; width: 220px;
+      border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; background: #fff;
+    }
+    .search-field { position: relative; }
+    .search-field::before {
+      content: '⌕'; position: absolute; left: 9px; top: 50%; transform: translateY(-50%);
+      color: var(--text-hint); font-size: 15px;
+    }
+    .search-input:focus { outline: none; border-color: var(--primary); }
+
+    /* ============ 表格 ============ */
+    .table-wrap { border: 1px solid var(--border-light); border-radius: var(--radius); overflow: hidden; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .data-table th {
+      background: #F8FAFC; text-align: left; padding: 9px 10px;
+      font-weight: 600; color: var(--text-secondary); border-bottom: 1px solid var(--border-light);
+      white-space: nowrap;
+    }
+    .data-table td { padding: 9px 10px; border-bottom: 1px solid var(--border-light); color: var(--text-primary); }
+    .data-table tbody tr:last-child td { border-bottom: none; }
+    .data-table tbody tr:hover { background: #FAFCFF; }
+    .col-new { background: #FFFBEB !important; }
+    .data-table th.col-new { background: #FEF3C7 !important; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: var(--text-secondary); }
+    .path { font-size: 11px; color: var(--text-hint); }
+
+    .tag {
+      display: inline-flex; align-items: center; height: 20px; padding: 0 7px;
+      border-radius: 4px; font-size: 11px; font-weight: 600; white-space: nowrap;
+    }
+    .tag-point { background: #E0F2FE; color: #075985; }
+    .tag-metric { background: var(--metric-light); color: #6B21A8; }
+    .tag-rt { background: #FEF3C7; color: #92400E; }
+    .tag-period { background: #DCFCE7; color: #166534; }
+    .tag-cls { background: #F1F5F9; color: var(--text-secondary); }
+    .tag-pending { background: #FEE2E2; color: #991B1B; }
+
+    /* ============ 视图切换 / 树 ============ */
+    .twin { display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 14px; height: 460px; }
+    .tri { display: grid; grid-template-columns: 260px minmax(0,1fr) 300px; gap: 14px; height: 460px; }
+    .panel {
+      border: 1px solid var(--border-light); border-radius: var(--radius);
+      display: flex; flex-direction: column; min-height: 0; overflow: hidden; background: #fff;
+    }
+    .panel-head {
+      padding: 9px 12px; border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-shrink: 0;
+    }
+    .panel-title { font-size: 13px; font-weight: 700; display: flex; align-items: center; }
+    .panel-title::before {
+      content: ''; width: 3px; height: 13px; background: var(--primary);
+      border-radius: 2px; margin-right: 7px; display: inline-block;
+    }
+    .panel-body { flex: 1; min-height: 0; overflow: auto; }
+
+    .view-select-wrap { padding: 9px 12px; border-bottom: 1px solid var(--border-light); flex-shrink: 0; }
+    .view-select {
+      width: 100%; height: 32px; padding: 0 8px; font-size: 13px;
+      border: 1px solid var(--border); border-radius: var(--radius); background: #fff; color: var(--text-primary);
+    }
+    .view-select:focus { outline: none; border-color: var(--primary); }
+    .view-select option:disabled { color: var(--text-hint); }
+
+    .tree-search { padding: 8px 12px; border-bottom: 1px solid var(--border-light); flex-shrink: 0; }
+    .tree-search input {
+      width: 100%; height: 30px; padding: 0 10px;
+      border: 1px solid var(--border); border-radius: var(--radius); font-size: 12px; background: #fff;
+    }
+    .tree-search input:focus { outline: none; border-color: var(--primary); }
+
+    .filter-bar {
+      padding: 8px 12px; border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex-shrink: 0;
+      background: #FFFBEB;
+    }
+    .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+    .seg button {
+      padding: 3px 10px; font-size: 11px; color: var(--text-secondary); cursor: pointer; background: #fff;
+    }
+    .seg button.active { background: var(--primary); color: #fff; font-weight: 600; }
+    .mini-select {
+      height: 26px; padding: 0 6px; font-size: 11px;
+      border: 1px solid var(--border); border-radius: 6px; background: #fff; color: var(--text-secondary);
+    }
+    .filter-label { font-size: 11px; color: var(--text-secondary); font-weight: 600; }
+
+    .tree-scroll { padding: 6px; }
+    .tree-row {
+      display: flex; align-items: center; gap: 5px;
+      padding: 5px 6px; border-radius: 6px; cursor: pointer;
+      color: var(--text-secondary); user-select: none;
+    }
+    .tree-row:hover { background: rgba(30, 64, 175, 0.06); color: var(--text-primary); }
+    .tree-row.active { background: rgba(30, 64, 175, 0.12); color: var(--primary); font-weight: 600; }
+    .tree-row.disabled { opacity: .55; cursor: not-allowed; }
+    .tree-row.disabled:hover { background: transparent; }
+    .tree-chevron { width: 13px; font-size: 9px; color: var(--text-hint); cursor: pointer; flex-shrink: 0; text-align: center; }
+    .tree-cb {
+      width: 13px; height: 13px; border: 1px solid #B6C2D2; border-radius: 3px;
+      flex-shrink: 0; background: #fff; position: relative; cursor: pointer;
+    }
+    .tree-cb.checked { background: var(--primary); border-color: var(--primary); }
+    .tree-cb.checked::after {
+      content: '✓'; color: #fff; font-size: 10px; position: absolute;
+      left: 50%; top: 50%; transform: translate(-50%,-50%); line-height: 1;
+    }
+    .tree-cb.na { background: #F1F5F9; border-color: #E2E8F0; cursor: not-allowed; }
+    .tree-ico { width: 14px; text-align: center; font-size: 11px; flex-shrink: 0; }
+    .tree-label { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+    .tree-children { padding-left: 15px; }
+    .tree-row.metric-leaf .tree-ico { color: var(--metric); }
+
+    .selected-item {
+      display: flex; align-items: center; gap: 7px; padding: 6px 8px;
+      border-radius: 6px; font-size: 12px;
+    }
+    .selected-item:hover { background: #F8FAFC; }
+    .selected-item .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .selected-item .rm { color: var(--text-hint); cursor: pointer; flex-shrink: 0; }
+    .selected-item .rm:hover { color: var(--danger); }
+
+    .empty-hint {
+      padding: 40px 16px; text-align: center; color: var(--text-hint); font-size: 12px; line-height: 1.8;
+    }
+
+    /* ============ 说明块 ============ */
+    .note {
+      margin-top: 12px; padding: 11px 13px; border-radius: var(--radius);
+      background: #F8FAFC; border-left: 3px solid var(--primary);
+      font-size: 12px; color: var(--text-secondary); line-height: 1.85;
+    }
+    .note b { color: var(--text-primary); }
+    .note.warn { background: #FFFBEB; border-left-color: var(--warning); }
+    .note.danger { background: #FEF2F2; border-left-color: var(--danger); }
+    .note ul { margin: 6px 0 0 16px; }
+    .note li { margin-bottom: 3px; }
+
+    .req-brief {
+      margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    }
+    .req-card {
+      border: 1px solid var(--border-light); border-radius: var(--radius);
+      background: #F8FAFC; padding: 11px 13px; font-size: 12px;
+      color: var(--text-secondary); line-height: 1.75;
+    }
+    .req-card h4 {
+      font-size: 13px; font-weight: 700; color: var(--text-primary);
+      margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
+    }
+    .req-card ul { margin: 4px 0 0 16px; }
+    .req-card li { margin-bottom: 2px; }
+    .req-card .meta { color: var(--text-hint); margin-bottom: 4px; }
+    @media (max-width: 900px) { .req-brief { grid-template-columns: 1fr; } }
+
+    .scene { display: none; }
+    .scene.active { display: block; }
+
+    /* 参数查询工具条 */
+    .query-bar {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      padding: 12px 14px; background: #fff; border: 1px solid var(--border-light);
+      border-radius: var(--radius); margin-bottom: 12px;
+    }
+    .field { display: flex; align-items: center; gap: 6px; }
+    .field label { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+    .field label .req { color: var(--danger); }
+    .field select, .field input {
+      height: 30px; padding: 0 8px; font-size: 12px;
+      border: 1px solid var(--border); border-radius: 6px; background: #fff;
+    }
+    .chip-box {
+      display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
+      min-height: 30px; padding: 3px 6px; border: 1px solid var(--border); border-radius: 6px; background: #fff;
+    }
+    .chip {
+      display: inline-flex; align-items: center; gap: 3px; height: 20px; padding: 0 6px;
+      background: #F1F5F9; border-radius: 4px; font-size: 11px; color: var(--text-secondary);
+    }
+    .chip.dis { opacity: .45; text-decoration: line-through; }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <div class="page-shell">
+
+    <div class="page-head">
+      <div class="page-title">报表「选择测点」弹窗（视图扩展 + 指标接入）</div>
+      <div class="page-desc">
+        对应 <b>AI 节能 v2.5 需求 10</b>，本页覆盖该需求全部范围。落点：报表报告 → 数据查询 → <b>参数查询</b> / <b>查询方案配置</b>，两页共用同一套弹窗组件。<br>
+        需求内分<b>视图</b>与<b>指标</b>两部分：视图部分无前置可先行交付，指标部分依赖需求 6；<b>两部分分别验收</b>。
+      </div>
+      <div class="legend">
+        <span><i class="new-badge view">视图</i> 视图扩展（不依赖指标工厂，可独立上线）</span>
+        <span><i class="new-badge metric">指标</i> 指标接入（依赖指标选取服务）</span>
+        <span><i class="tag tag-point">测点</i> 时序采样值</span>
+        <span><i class="tag tag-metric">指标</i> 指标工厂产出</span>
+      </div>
+
+      <div class="req-brief">
+        <div class="req-card">
+          <h4><i class="new-badge view">视图</i> 视图部分（可先行交付）</h4>
+          <div class="meta">依赖：无　｜　场景 ②③　｜　单独验收</div>
+          <ul>
+            <li><b>做</b>：「按实例添加」「按模型添加」加空间 / 容量 / 能效三视图；按模型首栏改「选择对象范围」，范围按当前视图子树<b>递归</b>；能效 / 容量下中间栏称「选择对象类型」。</li>
+            <li><b>不做</b>：外层「选择测点」清单（视图部分不动）；节点-测点树视图（已有，对齐复用）。</li>
+            <li><b>规则</b>：切视图<b>不清空</b>已选；按「实例 + 类型 + 标识」去重；未配置视图<b>置灰提示</b>不隐藏。</li>
+          </ul>
+        </div>
+        <div class="req-card">
+          <h4><i class="new-badge metric">指标</i> 指标部分（依赖需求 6）</h4>
+          <div class="meta">依赖：需求 6 指标选取服务　｜　场景 ①②③④　｜　单独验收</div>
+          <ul>
+            <li><b>做</b>：两种添加方式开放指标；外层表增「类型」列；时段指标采样周期收敛为 1 小时及以上，聚合复用「求和」；混选不限制聚合控件；方案连带保存粒度与聚合。</li>
+            <li><b>不做</b>：模型级合计 / 平均值；整组不做项（§4.4）。</li>
+            <li><b>规则</b>：按实例默认仅有值、无筛选条；按模型批量加 N 条实例指标（含继承子模型），第三栏默认全部指标；持久化按「类型 + 标识」，metric key 不进测点 ID 字段；加载方案校验失效并提示。</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="scene-tabs">
+        <div class="scene-tab active" data-scene="outer">① 选择测点（外层清单）</div>
+        <div class="scene-tab" data-scene="inst">② 按实例添加</div>
+        <div class="scene-tab" data-scene="model">③ 按模型添加</div>
+        <div class="scene-tab" data-scene="query">④ 参数查询语义收敛</div>
+      </div>
+    </div>
+
+    <!-- ================= 场景1：外层清单 ================= -->
+    <div class="scene active" id="scene-outer">
+      <div class="dlg">
+        <div class="dlg-head">
+          <div class="dlg-title">选择测点</div>
+          <div class="dlg-close">✕</div>
+        </div>
+        <div class="dlg-body">
+          <div class="dlg-toolbar">
+            <button class="btn btn-default btn-sm">🗑 批量删除</button>
+            <button class="btn btn-default btn-sm">⤫ 全部移除</button>
+            <span class="spacer"></span>
+            <div class="search-field"><input class="search-input" placeholder="请输入测点/指标名称或ID"></div>
+            <button class="btn btn-primary btn-sm" data-goto="inst">按实例添加</button>
+            <button class="btn btn-primary btn-sm" data-goto="model">按模型添加</button>
+          </div>
+
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width:34px"><span class="tree-cb"></span></th>
+                  <th style="width:48px">序号</th>
+                  <th style="width:78px">类型</th>
+                  <th style="width:130px">监控对象</th>
+                  <th style="width:170px">测点ID / 指标标识</th>
+                  <th style="width:190px">名称</th>
+                  <th>位置</th>
+                  <th style="width:56px">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="tree-cb checked"></span></td>
+                  <td>1</td>
+                  <td><span class="tag tag-point">测点</span></td>
+                  <td>101空调-1</td>
+                  <td class="mono">0_159_1_28_0</td>
+                  <td>出水温度</td>
+                  <td class="path">人保北方信息中心工程/A栋/1F/1F-101/101空调-1/本体</td>
+                  <td><button class="btn-link">删除</button></td>
+                </tr>
+                <tr>
+                  <td><span class="tree-cb checked"></span></td>
+                  <td>2</td>
+                  <td><span class="tag tag-metric">指标</span></td>
+                  <td>A栋</td>
+                  <td class="mono">metric.energy.consume#electric</td>
+                  <td>电能消耗量 <span class="tag tag-period">时间段</span></td>
+                  <td class="path">人保北方信息中心工程/A栋</td>
+                  <td><button class="btn-link">删除</button></td>
+                </tr>
+                <tr>
+                  <td><span class="tree-cb checked"></span></td>
+                  <td>3</td>
+                  <td><span class="tag tag-metric">指标</span></td>
+                  <td>A栋</td>
+                  <td class="mono">metric.cost.tou#electric.sharp</td>
+                  <td>尖时电费 <span class="tag tag-period">时间段</span></td>
+                  <td class="path">人保北方信息中心工程/A栋</td>
+                  <td><button class="btn-link">删除</button></td>
+                </tr>
+                <tr>
+                  <td><span class="tree-cb checked"></span></td>
+                  <td>4</td>
+                  <td><span class="tag tag-metric">指标</span></td>
+                  <td>人保北方信息中心工程</td>
+                  <td class="mono">metric.pue#period</td>
+                  <td>PUE <span class="tag tag-period">时间段</span></td>
+                  <td class="path">人保北方信息中心工程</td>
+                  <td><button class="btn-link">删除</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="dlg-foot">
+          <span style="flex:1;font-size:12px;color:var(--text-hint);align-self:center">共 4 条 · 测点 1 / 指标 3　（指标与测点合并计入本页数据项上限，不单开配额）</span>
+          <button class="btn btn-default">取消</button>
+          <button class="btn btn-primary">确定</button>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>指标部分 — 外层清单改造点（共 2 处，其余保持现状）</b>
+        <ul>
+          <li><b>新增「类型」列</b>：取值「测点 / 指标」，用于下游按类型分流取数。测点走时序库，指标走指标服务。</li>
+          <li><b>原「测点ID」列语义放宽</b>为「测点ID / 指标标识」，指标行展示 metric key。<b>持久化时 metric key 不得写入原测点 ID 字段</b>，必须按「类型 + 标识」两个字段存。</li>
+          <li>搜索框对测点与指标同时生效，结果按类型分组。</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ================= 场景2：按实例添加 ================= -->
+    <div class="scene" id="scene-inst">
+      <div class="dlg">
+        <div class="dlg-head">
+          <div class="dlg-title">按实例添加</div>
+          <div class="dlg-close" data-goto="outer">✕</div>
+        </div>
+        <div class="dlg-body">
+          <div class="twin">
+            <div class="panel">
+              <div class="view-select-wrap hl-new">
+                <div style="margin-bottom:6px">
+                  <span class="filter-label">视图</span>
+                </div>
+                <select class="view-select" id="instView">
+                  <option>空间视图</option>
+                  <option>容量视图</option>
+                  <option>能效视图</option>
+                  <option disabled>业务视图（未配置，置灰）</option>
+                </select>
+              </div>
+              <div class="tree-search"><input placeholder="请输入关键字搜索"></div>
+              <div class="panel-body">
+                <div class="tree-scroll" id="instTree"></div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <div class="panel-title">已选择（<span id="selCount">3</span>）</div>
+                <button class="btn-link">清除全部</button>
+              </div>
+              <div class="panel-body">
+                <div style="padding:6px" id="selList"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="dlg-foot">
+          <button class="btn btn-default" data-goto="outer">取消</button>
+          <button class="btn btn-primary" data-goto="outer">确定</button>
+        </div>
+      </div>
+
+      <div class="note warn">
+        <b>视图部分 — 视图切换（左树顶部，与节点-测点树完全一致的三项）</b>
+        <ul>
+          <li>现状：本弹窗<b>只有空间树、没有视图切换器</b>；而原始数据查询 / 运行极值查询 / 融合组态三处的节点-测点树<b>已支持</b>空间 / 容量 / 能效三视图。本需求是把弹窗对齐到已有能力，不新造视图数据源。</li>
+          <li>三视图是同一批物模型实例的不同树结构，节点可跨视图复用。因此<b>切换视图不清空已选清单</b>，用户可在空间视图选几个、切到能效视图再选几个。</li>
+          <li>已选清单按「<b>实例 + 类型 + 标识</b>」去重，同一实例的同一数据项在不同视图重复勾选只保留一条。</li>
+          <li>未配置的视图在下拉中<b>置灰</b>并提示先配置视图，不隐藏。</li>
+        </ul>
+      </div>
+
+      <div class="note">
+        <b>指标部分 — 指标叶子（树上挂载规则）</b>
+        <ul>
+          <li>指标绑定在<b>对象实例</b>上（园区 / 数据中心 / 系统 / 设备组 / 设备），<b>不挂在组件或测点下</b>。指标叶子直接挂在对象节点下，与设备子节点<b>同级同层</b>——<b>不套「指标（N）」分组节点、不新增层级</b>，仅靠图标与类型标签区别于测点。</li>
+          <li>某对象下出现哪些指标，由「该对象所属物模型（含继承链）上注册的指标」∩「按能源类型 / 计费时段展开的入参组合」决定，真源是<b>物模型 × 指标注册矩阵</b>。<b>选择器不为具体对象类型写死分支</b>——新增对象类型或调整指标适用范围时选择器无需改造。</li>
+          <li><b>能源类型与计费时段已固化进指标名称</b>（「电能消耗量」「尖时电费」），所以勾中即已确定入参，<b>不需要二次参数面板</b>。</li>
+          <li>按实例添加<strong>不提供</strong>「仅有值 / 全部」与业务分类筛选：默认只展示算得出结果的指标（仅有值）；缺输入的指标不出现在树上。</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ================= 场景3：按模型添加 ================= -->
+    <div class="scene" id="scene-model">
+      <div class="dlg">
+        <div class="dlg-head">
+          <div class="dlg-title">按模型添加</div>
+          <div class="dlg-close" data-goto="outer">✕</div>
+        </div>
+        <div class="dlg-body">
+          <div class="tri">
+            <div class="panel">
+              <div class="panel-head">
+                <div class="panel-title" id="col1Title">选择对象范围</div>
+              </div>
+              <div class="view-select-wrap hl-new">
+                <select class="view-select" id="modelView">
+                  <option>空间视图</option>
+                  <option>容量视图</option>
+                  <option selected>能效视图</option>
+                </select>
+              </div>
+              <div class="tree-search"><input placeholder="请输入关键字搜索"></div>
+              <div class="panel-body"><div class="tree-scroll" id="modelScope"></div></div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <div class="panel-title" id="col2Title">选择对象类型</div>
+              </div>
+              <div class="tree-search"><input placeholder="请输入关键字搜索"></div>
+              <div class="panel-body"><div class="tree-scroll" id="modelTypes"></div></div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <div class="panel-title">数据项列表</div>
+              </div>
+              <div class="panel-body"><div class="tree-scroll" id="modelItems"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="dlg-foot">
+          <button class="btn btn-default" data-goto="outer">取消</button>
+          <button class="btn btn-primary" data-goto="outer">确定</button>
+        </div>
+      </div>
+
+      <div class="note warn">
+        <b>视图部分 — 三栏语义调整</b>
+        <ul>
+          <li><b>第一栏</b>：「选择空间」→「<b>选择对象范围</b>」，新增三视图切换。范围解析按<b>当前视图子树递归</b>（含下下级），不只取直接一层子节点。</li>
+          <li><b>第二栏</b>：空间视图下保持现状「选择设备分类」（IT设施 / 场地设施 / 备品备件 / 软件 → 二级分类 → 物模型）；<b>能效 / 容量视图下语义放宽为「选择对象类型」</b>，以便按系统类型（暖通空调系统 / 电力系统等）批量选取。</li>
+        </ul>
+      </div>
+
+      <div class="note">
+        <b>指标部分 — 按物模型批量添加指标</b>
+        <ul>
+          <li>选定<b>范围 + 物模型 + 指标</b>后，一次性加入该范围内所有该模型（<b>含继承子模型</b>）实例的同一指标，与现有「某模型所有实例的对应测点」完全对称。这是明细引擎册「模板化绑定（绑 <code>(物模型, 指标)</code>，切换实例即复用）」在报表侧的落点。</li>
+          <li>可选指标列表 = 该物模型上注册的指标（取指标选取服务的「按物模型列指标」接口）。</li>
+          <li>按模型添加<strong>不提供</strong>「仅有值 / 全部」开关：第三栏默认展示该物模型上注册的<strong>全部</strong>指标（含待配置），便于按类型批量勾选。</li>
+        </ul>
+      </div>
+
+      <div class="note danger">
+        <b>红线：只批量添加，不产出模型级合计值</b><br>
+        批量添加得到的是「N 个实例 × 同一指标」的 <b>N 条独立数据项</b>，<b>不是</b>该模型全部实例的合计或平均。原因：同一块表具可能同时落在多个实例的计量拓扑内，跨实例合计会绕开叶子系数与重复路径校验形成<b>重复计量</b>。横向汇总由用户在报表内自行处理。
+      </div>
+    </div>
+
+    <!-- ================= 场景4：参数查询语义收敛 ================= -->
+    <div class="scene" id="scene-query">
+      <div class="query-bar">
+        <div class="field">
+          <label>测点选择<span class="req">*</span></label>
+          <div class="chip-box" style="width:300px">
+            <span class="chip">出水温度 <span class="tag tag-point" style="height:15px;font-size:9px">测点</span></span>
+            <span class="chip">电能消耗量 <span class="tag tag-metric" style="height:15px;font-size:9px">指标</span></span>
+            <span class="chip">PUE <span class="tag tag-metric" style="height:15px;font-size:9px">指标</span></span>
+          </div>
+        </div>
+        <div class="field">
+          <label>时间范围<span class="req">*</span></label>
+          <input value="最近1天" style="width:150px">
+        </div>
+        <div class="field">
+          <label>采样周期<span class="req">*</span></label>
+          <select style="width:150px">
+            <option disabled>1 分钟（时段指标不可选）</option>
+            <option disabled>5 分钟（时段指标不可选）</option>
+            <option disabled>15 分钟（时段指标不可选）</option>
+            <option disabled>半小时（时段指标不可选）</option>
+            <option selected>小时</option>
+            <option>天</option><option>月</option><option>年</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>聚合方式<span class="req">*</span></label>
+          <div class="chip-box" style="width:280px">
+            <span class="chip">求和</span>
+            <span class="chip">平均值</span>
+            <span class="chip">最大值</span>
+            <span class="chip">最小值</span>
+          </div>
+        </div>
+        <button class="btn btn-default btn-sm">重置</button>
+        <button class="btn btn-primary btn-sm">查询</button>
+      </div>
+
+      <div class="dlg">
+        <div class="dlg-body">
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width:150px">数据项</th>
+                  <th style="width:70px">类型</th>
+                  <th style="width:110px">可选采样周期</th>
+                  <th style="width:180px">可选聚合方式</th>
+                  <th>收敛理由</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>出水温度</td>
+                  <td><span class="tag tag-point">测点</span></td>
+                  <td>全部档位</td>
+                  <td>求和 / 平均 / 最大 / 最小 / 首值 / 尾值</td>
+                  <td class="path">原始采样序列，现状不变。混选时段指标时聚合方式控件也不置灰</td>
+                </tr>
+                <tr>
+                  <td>时段类型指标<br><span class="path">如电能消耗量、尖时电费、周期 PUE 等</span></td>
+                  <td><span class="tag tag-metric">指标</span> <span class="tag tag-period">时间段</span></td>
+                  <td><b>1 小时 及以上</b></td>
+                  <td>控件不限制；有值复用「求和」，其余为「—」</td>
+                  <td class="path">同一套规则，不分累计型 / 比值型。不新增聚合类型，复用现有「求和」；选平均 / 最大 / 最小等时该列结果为空值「—」，不拦截查询</td>
+                </tr>
+                <tr>
+                  <td>实时类型指标<br><span class="path">如实时电功率、实时 PUE 等</span></td>
+                  <td><span class="tag tag-metric">指标</span> <span class="tag tag-rt">实时</span></td>
+                  <td>全部档位（同测点）</td>
+                  <td>求和 / 平均 / 最大 / 最小 / 首值 / 尾值（同测点）</td>
+                  <td class="path"><b>本页可选</b>。档位与聚合方式与测点一致；数据需经查询、计算后呈现，非直接读预聚合序列</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>指标部分 — 参数查询 / 查询方案配置的语义收敛</b>
+        <ul>
+          <li>时段类型指标是<b>按粒度预聚合的结果</b>，不是采样序列。采样周期只开放 <b>1 小时及以上</b>（半小时及更细档位对时段指标不可选）。</li>
+          <li>时段指标<strong>不新增</strong>聚合类型，复用现有 <b>「求和」</b>：选「求和」时有值；选平均 / 最大 / 最小等时该列为空值「—」。</li>
+          <li><b>实时类型指标本页可选</b>：采样周期与聚合方式与测点一致（全部档位均可）；数据需经查询、计算后呈现。</li>
+          <li><b>混选测点 + 时段指标时，聚合方式控件不做限制</b>（求和 / 平均 / 最大 / 最小等依然都可选）。测点 / 实时指标按所选聚合方式正常出数；时段指标仅在「求和」下有值，其余聚合方式结果为「—」，不拦截查询、不置灰选项。</li>
+          <li><b>查询方案配置</b>：方案需连带保存指标的粒度与聚合方式，加载时完整复原；<b>仅含测点的历史方案保持原样可用，不做数据迁移</b>；加载时校验引用有效性，指标被停用 / 删除时标记失效并提示具体缺失项，不静默丢项。</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ---------- 场景切换 ---------- */
+  function go(name) {
+    document.querySelectorAll('.scene').forEach(function (s) { s.classList.remove('active'); });
+    document.querySelectorAll('.scene-tab').forEach(function (t) { t.classList.remove('active'); });
+    var sc = $('scene-' + name); if (sc) sc.classList.add('active');
+    var tb = document.querySelector('.scene-tab[data-scene="' + name + '"]'); if (tb) tb.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  document.querySelectorAll('.scene-tab').forEach(function (t) {
+    t.addEventListener('click', function () { go(t.dataset.scene); });
+  });
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-goto]');
+    if (el) go(el.dataset.goto);
+  });
+
+  /* ---------- 指标样例（沿用能效视图「指标列表」口径：能源类型与计费时段固化进名称） ---------- */
+  var M = function (n, kind, key, state) {
+    return { name: n, kind: kind, key: key, metric: true, state: state || 'ok' };
+  };
+  var PARK_METRICS = [
+    M('PUE', 'rt', 'metric.pue#rt'),
+    M('WUE', 'rt', 'metric.wue#rt', 'pending'),
+    M('实时电功率', 'rt', 'metric.power#electric'),
+    M('电能消耗量', 'period', 'metric.energy.consume#electric'),
+    M('用水量', 'period', 'metric.energy.consume#water', 'pending'),
+    M('电费总额', 'period', 'metric.cost#electric'),
+    M('尖时电费', 'period', 'metric.cost.tou#electric.sharp'),
+    M('峰时电费', 'period', 'metric.cost.tou#electric.peak'),
+    M('平时电费', 'period', 'metric.cost.tou#electric.flat'),
+    M('谷时电费', 'period', 'metric.cost.tou#electric.valley'),
+    M('PUE', 'period', 'metric.pue#period')
+  ];
+  var BLD_METRICS = [
+    M('实时电功率', 'rt', 'metric.power#electric'),
+    M('电能消耗量', 'period', 'metric.energy.consume#electric'),
+    M('电费总额', 'period', 'metric.cost#electric'),
+    M('尖时电费', 'period', 'metric.cost.tou#electric.sharp'),
+    M('峰时电费', 'period', 'metric.cost.tou#electric.peak'),
+    M('平时电费', 'period', 'metric.cost.tou#electric.flat'),
+    M('谷时电费', 'period', 'metric.cost.tou#electric.valley')
+  ];
+
+  /* ---------- 按实例添加：树数据（还原实测层级） ---------- */
+  var TREE = [{
+    label: '人保北方信息中心工程', ico: '🏠', type: 'park', open: true,
+    metrics: PARK_METRICS,
+    children: [
+      { label: '0_565:合肥中行', ico: '🏢', type: 'obj', metrics: BLD_METRICS, children: [] },
+      { label: '0_435:软POC项目', ico: '🏢', type: 'obj', metrics: BLD_METRICS, children: [] },
+      {
+        label: '0_139:A栋', ico: '🏢', type: 'obj', open: true, metrics: BLD_METRICS,
+        children: [{
+          label: '0_142:1F', ico: '▦', type: 'floor', open: true,
+          children: [{
+            label: '0_143:1F-101', ico: '▦', type: 'room', open: true,
+            children: [{
+              label: '0_159:101空调-1', ico: '🖳', type: 'device', cb: true, open: true,
+              children: [
+                { label: '本体', ico: '📁', type: 'comp', cb: true, open: true, children: [
+                  { label: '0_159_1_28_0:出水温度', ico: 'AA', type: 'point', cb: true, leaf: true }
+                ]},
+                { label: '风机1', ico: '📁', type: 'comp', cb: true, children: [] },
+                { label: '水阀1', ico: '📁', type: 'comp', cb: true, children: [] }
+              ]
+            }]
+          }]
+        }]
+      }
+    ]
+  }];
+
+  var scope = 'value';
+  var selected = [
+    { t: 'point', n: '0_159_1_28_0:出水温度' },
+    { t: 'metric', n: '电能消耗量', o: 'A栋' },
+    { t: 'metric', n: '尖时电费', o: 'A栋' }
+  ];
+
+  function kindTag(k) {
+    return k === 'rt'
+      ? '<span class="tag tag-rt" style="height:16px;font-size:9px">实时</span>'
+      : '<span class="tag tag-period" style="height:16px;font-size:9px">时段</span>';
+  }
+
+  function renderTree(nodes, parent, depth) {
+    nodes.forEach(function (n) {
+      var wrap = document.createElement('div');
+      var row = document.createElement('div');
+      var hasChild = (n.children && n.children.length) || (n.metrics && n.metrics.length);
+      row.className = 'tree-row' + (n.type === 'point' ? ' active' : '');
+      row.innerHTML =
+        '<span class="tree-chevron">' + (hasChild ? (n.open ? '▼' : '▶') : '') + '</span>' +
+        (n.cb ? '<span class="tree-cb' + (n.type === 'point' ? ' checked' : '') + '"></span>' : '<span style="width:13px"></span>') +
+        '<span class="tree-ico">' + n.ico + '</span>' +
+        '<span class="tree-label">' + n.label + '</span>';
+      wrap.appendChild(row);
+
+      var box = document.createElement('div');
+      box.className = 'tree-children';
+      box.style.display = n.open ? 'block' : 'none';
+
+      /* 指标叶子：不套分组节点，直接挂在对象实例下，与设备子节点同级同层 */
+      if (n.metrics && n.metrics.length) {
+        var shown = n.metrics.filter(function (m) { return scope === 'all' || m.state === 'ok'; });
+        shown.forEach(function (m) {
+          var r = document.createElement('div');
+          var pending = m.state === 'pending';
+          r.className = 'tree-row metric-leaf' + (pending ? ' disabled' : '');
+          r.innerHTML =
+            '<span class="tree-chevron"></span>' +
+            '<span class="tree-cb' + (pending ? ' na' : '') + '"></span>' +
+            '<span class="tree-ico">◆</span>' +
+            '<span class="tree-label">' + m.name + '</span>' +
+            kindTag(m.kind) +
+            (pending ? '<span class="tag tag-pending" style="height:16px;font-size:9px">待配置</span>' : '');
+          if (pending) r.title = '待配置：未启用水计量 · 前往「能源计量关系」配置';
+          box.appendChild(r);
+        });
+      }
+
+      if (n.children && n.children.length) renderTree(n.children, box, depth + 1);
+      if (hasChild) wrap.appendChild(box);
+
+      row.querySelector('.tree-chevron').addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (!hasChild) return;
+        var open = box.style.display !== 'none';
+        box.style.display = open ? 'none' : 'block';
+        this.textContent = open ? '▶' : '▼';
+      });
+      parent.appendChild(wrap);
+    });
+  }
+
+  function renderSelected() {
+    var box = $('selList');
+    if (!box) return;
+    box.innerHTML = '';
+    selected.forEach(function (s) {
+      var d = document.createElement('div');
+      d.className = 'selected-item';
+      d.innerHTML =
+        '<span class="tag ' + (s.t === 'point' ? 'tag-point' : 'tag-metric') + '">' + (s.t === 'point' ? '测点' : '指标') + '</span>' +
+        '<span class="name">' + s.n + (s.o ? ' <span class="path">· ' + s.o + '</span>' : '') + '</span>' +
+        '<span class="rm">✕</span>';
+      box.appendChild(d);
+    });
+    $('selCount').textContent = selected.length;
+  }
+
+  function drawInst() {
+    var t = $('instTree');
+    if (!t) return;
+    t.innerHTML = '';
+    renderTree(TREE, t, 0);
+  }
+
+  /* 按实例添加固定 scope='value'（仅有值），不提供展示范围开关 */
+  /* 按模型添加固定展示全部指标，不提供展示范围开关 */
+
+  /* ---------- 按模型添加 ---------- */
+  var SCOPE_TREE = [{
+    label: '人保北方信息中心工程', ico: '🏠', cb: true, open: true,
+    children: [
+      { label: '0_565:合肥中行', ico: '🏢', cb: true, children: [] },
+      { label: '0_435:软POC项目', ico: '🏢', cb: true, children: [] },
+      { label: '0_139:A栋', ico: '🏢', cb: true, children: [] }
+    ]
+  }];
+  var TYPE_TREE_SPACE = [{
+    label: '设备分类', ico: '▤', open: true,
+    children: [
+      { label: 'IT设施', ico: '📁', children: [] },
+      { label: '场地设施', ico: '📁', open: true, children: [
+        { label: '供电配电', ico: '📁', children: [] },
+        { label: '空调环境', ico: '📁', open: true, children: [
+          { label: '冷水机组', ico: '▣', leaf: true },
+          { label: '冷却塔', ico: '▣', leaf: true },
+          { label: '二次泵', ico: '▣', leaf: true }
+        ]}
+      ]},
+      { label: '备品备件', ico: '📁', children: [] },
+      { label: '软件', ico: '📁', children: [] }
+    ]
+  }];
+  var TYPE_TREE_EFF = [{
+    label: '对象类型', ico: '▤', open: true,
+    children: [
+      { label: '园区', ico: '▣', leaf: true },
+      { label: '数据中心单元', ico: '▣', leaf: true },
+      { label: '暖通空调系统', ico: '▣', leaf: true, active: true },
+      { label: '电力系统', ico: '▣', leaf: true },
+      { label: '设备组', ico: '▣', leaf: true }
+    ]
+  }];
+
+  function simpleTree(nodes, parent) {
+    nodes.forEach(function (n) {
+      var wrap = document.createElement('div');
+      var row = document.createElement('div');
+      var hasChild = n.children && n.children.length;
+      row.className = 'tree-row' + (n.active ? ' active' : '');
+      row.innerHTML =
+        '<span class="tree-chevron">' + (hasChild ? (n.open ? '▼' : '▶') : '') + '</span>' +
+        (n.cb ? '<span class="tree-cb' + (n.cb === true && n.label.indexOf('工程') > -1 ? ' checked' : '') + '"></span>' : '') +
+        '<span class="tree-ico">' + n.ico + '</span>' +
+        '<span class="tree-label">' + n.label + '</span>';
+      wrap.appendChild(row);
+      if (hasChild) {
+        var box = document.createElement('div');
+        box.className = 'tree-children';
+        box.style.display = n.open ? 'block' : 'none';
+        simpleTree(n.children, box);
+        wrap.appendChild(box);
+        row.querySelector('.tree-chevron').addEventListener('click', function (e) {
+          e.stopPropagation();
+          var open = box.style.display !== 'none';
+          box.style.display = open ? 'none' : 'block';
+          this.textContent = open ? '▶' : '▼';
+        });
+      }
+      parent.appendChild(wrap);
+    });
+  }
+
+  function drawModel() {
+    var s = $('modelScope'), t = $('modelTypes'), i = $('modelItems');
+    if (!s) return;
+    var eff = $('modelView').value !== '空间视图';
+    s.innerHTML = ''; simpleTree(SCOPE_TREE, s);
+    t.innerHTML = ''; simpleTree(eff ? TYPE_TREE_EFF : TYPE_TREE_SPACE, t);
+    $('col2Title').textContent = eff ? '选择对象类型' : '选择设备分类';
+
+    i.innerHTML = '';
+    if (!eff) {
+      i.innerHTML = '<div class="empty-hint">空间视图 + 设备分类下<br>此栏为该物模型的<b>测点</b>清单（现状不变）</div>';
+      return;
+    }
+    var head = document.createElement('div');
+    head.className = 'tree-row';
+    head.innerHTML = '<span class="tree-chevron">▼</span><span class="tree-ico">◆</span>' +
+      '<span class="tree-label" style="font-weight:700;color:#6B21A8">指标（暖通空调系统上注册）</span>';
+    i.appendChild(head);
+    var g = document.createElement('div');
+    g.className = 'tree-children';
+    [['CLF', 'rt', true], ['CLF', 'period', false], ['实时电功率', 'rt', false], ['电能消耗量', 'period', false], ['电费总额', 'period', false]]
+      .forEach(function (m) {
+        var r = document.createElement('div');
+        r.className = 'tree-row metric-leaf';
+        r.innerHTML = '<span class="tree-chevron"></span><span class="tree-cb' + (m[2] ? ' checked' : '') + '"></span>' +
+          '<span class="tree-ico">◆</span><span class="tree-label">' + m[0] + '</span>' + kindTag(m[1]);
+        g.appendChild(r);
+      });
+    i.appendChild(g);
+
+    var sep = document.createElement('div');
+    sep.className = 'tree-row';
+    sep.innerHTML = '<span class="tree-chevron">▶</span><span class="tree-ico">AA</span>' +
+      '<span class="tree-label" style="font-weight:700">测点（现状能力）</span>';
+    i.appendChild(sep);
+  }
+
+  var mv = $('modelView');
+  if (mv) mv.addEventListener('change', drawModel);
+
+  drawInst();
+  renderSelected();
+  drawModel();
+})();
+</script>
+</body>
+</html>
