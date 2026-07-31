@@ -1549,17 +1549,7 @@
     .mr-relation-tag { display: inline-flex; align-items: center; height: 22px; padding: 0 7px; border-radius: 4px; font-size: 11px; font-weight: 600; }
     .mr-rel-metering { color: #047857; background: #ECFDF5; }
     .mr-rel-supply { color: #1D4ED8; background: #EFF6FF; }
-    .mr-relation-type-select {
-      width: 100%;
-      min-width: 92px;
-      height: 28px;
-      padding: 0 24px 0 8px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      color: var(--text-secondary);
-      background: #fff;
-      font-size: 12px;
-    }
+    .mr-relation-tags { display: flex; flex-wrap: wrap; gap: 4px; }
     .mr-dir-na { display: inline-flex; min-width: 88px; justify-content: center; color: var(--text-hint); }
 
     .mr-dir {
@@ -1854,7 +1844,7 @@
             <div class="anno-body">
               <p><b>当前版本：</b>v2.5</p>
               <p><b>更新日期：</b>2026-07-31</p>
-              <p><b>变更概述（2026-07-31 补充）：</b>实时指标调整为沿用数据工厂默认调度计算后写入时序存储，支持当前值与历史曲线；列表增加样本状态，演示正常、待配置、重算中和重算失败保留旧值。计量拓扑改绑或方向调整后，受影响对象及递归上级对象的全部保留期实时历史自动重算，成功后原子替换。删除已取消的「总电流」指标及本体、组件演示数据。</p>
+              <p><b>变更概述（2026-07-31 补充）：</b>实时指标调整为沿用数据工厂默认调度计算后写入时序存储，支持当前值与历史曲线；列表增加样本状态，演示正常、待配置、重算中和重算失败保留旧值。计量拓扑改绑或方向调整后，受影响对象及递归上级对象的全部保留期实时历史自动重算，成功后原子替换。删除已取消的「总电流」指标及本体、组件演示数据。单对象能源拓扑的关系类型改为只读：支持供电的列头柜 / 支路新增即同时创建能耗计量与供电两条独立关系，页面合并为一行双标签；方向只改计量关系，删除成员一次移除两条关系。</p>
               <p><b>变更概述（2026-07-30 补充）：</b>节点详情的「测点列表」与「指标列表」统一按「本体 / 组件」折叠分组；平台仍不提供组件独立详情页，组件指标在所属设备页面展示，但曲线、计算口径和下钻均使用组件自身实例 ID。默认演示对象调整为「101空调-1」，直接展示本体与风机组件的指标差异。「能效配置」Tab 的单对象入口同步为「能源拓扑配置」，同时维护能耗计量与供电关系；今日试算和用能定额仍只读取能耗计量关系，跨对象批量作业与 Excel 全局导入导出继续在独立页完成。</p>
               <p><b>变更概述（2026-07-27）：</b>页面名称统一为「能效视图」；节点详情新增「指标列表」Tab。指标分为实时指标与时间段指标：实时指标直接平铺当前对象已配置能源的瞬时值及能效值；时间段指标仅按起止时间查询，能源类型、计费时段均固化进指标名称。列表在指标名称后展示「业务分类」（本期均为「能效」），并展示简明计算口径，点击后以只读弹窗查看计算拓扑、实际引用的对象属性 / 测点 ID、节点结果、异常节点和最终计算过程。</p>
             </div>
@@ -1879,7 +1869,7 @@
                 <li><b>对象树即拓扑对象树：</b>本页左侧对象树中的设备实例及其下级组件实例均可作为拓扑对象；实例层级只表达所属关系，不自动生成或继承能耗计量关系。</li>
                 <li><b>两个配置入口、一份数据：</b>单对象配置在本页「能效配置」Tab 点「配置」进弹窗完成，跨对象批量作业仍在《能源拓扑配置》；两处共同维护能耗计量与供电关系，任一处修改后另一处立即可见。</li>
                 <li><b>归属唯一：</b>查重键为「表具（含组件）+ 能源类型」——同一能源类型下一块表具只能挂到一个计量关系上，不按输入 / 输出拆分名额；计量方向只决定计算符号。重复占用在两个配置入口都强制拦截。</li>
-                <li><b>供电关系：</b>用于表达实际供电路径，不设置计量方向；同一支路可同时配置能耗计量与供电两类关系，两条记录独立维护。</li>
+                <li><b>供电关系：</b>用于表达实际供电路径，不设置计量方向；支持供电的支路新增时自动与能耗计量关系同时创建，页面合并显示两个只读标签，底层两条记录仍独立维护。</li>
                 <li><b>历史随当前拓扑（产品已接受口径）：</b>统计指标查询始终沿【当前】计量拓扑聚合；实时指标已计算存储，表具改绑或方向调整后自动按当前拓扑重算受影响对象及递归上级对象的全部保留期历史，成功后原子替换。重算中继续展示旧结果并标记状态，失败保留旧结果。本期不做计量拓扑生效版本。</li>
               </ul>
             </div>
@@ -2370,10 +2360,10 @@
             <ul>
               <li><b>配置对象固定：</b>标题栏显示当前对象名称与物模型，弹窗内的一切操作都作用于该对象；要换对象请关闭弹窗后在左树重选。</li>
               <li><b>能源类型 Tab：</b>选项跟随《能源配置》能源类型主数据动态生成（非本页写死），默认选中第一个；角标为当前对象在该能源下的关系条数，0 条表示该能源尚未配置。切换后关系表、对象树配置态、表具池、今日试算一起按该能源重绘。</li>
-              <li><b>加关系：</b>从左栏拖入下级对象，或从右栏拖入表具。默认建立能耗计量关系；支持供电的支路可切换为供电关系。</li>
+              <li><b>加关系：</b>从左栏拖入下级对象，或从右栏拖入表具。普通成员建立能耗计量关系；支持供电的列头柜 / 支路自动同时创建能耗计量与供电两条独立关系，无需选择。历史单关系再次拖入时补齐缺失关系。</li>
               <li><b>左栏对象树：</b>只作拖拽来源，点击不切换配置对象；当前对象标「当前对象」且不可拖，已加为成员的节点置灰不可重复拖入，节点前的绿点表示该对象在当前能源下已有关系；支持按名称搜索。</li>
-              <li><b>关系类型 / 方向：</b>能耗计量关系可设置输入 / 输出；供电关系不设置计量方向。同一支路的两类关系独立保存。</li>
-              <li><b>今日试算：</b>只按当前能源下的能耗计量关系递归展开到叶子表具，供电关系不参与计算。</li>
+              <li><b>关系类型 / 方向：</b>关系类型只读；双关系成员合并为一行显示“能耗计量 + 供电”。该行仍显示输入 / 输出，且只更新能耗计量底层记录；供电方向固定。</li>
+              <li><b>删除 / 试算：</b>点击合并行“删除”表示移除该成员，一次删除当前对象 / 能源下两条关系；仅删某一底层关系不属于本页交互。今日试算只按能耗计量关系递归展开，供电关系不参与计算。</li>
               <li><b>关闭后：</b>「能效配置」Tab 内该行摘要按最新关系条数刷新。</li>
             </ul>
           </div>
@@ -3999,7 +3989,7 @@
         showToast('示意：按测点类型「' + (this.value || '全部') + '」过滤');
       });
       bindOptional('refreshInterval', 'change', function () {
-        showToast('刷新时间已切换为 ' + this.value);
+        showToast('刷新时间更新为 ' + this.value);
       });
       bindOptional('btnColSettings', 'click', function () {
         showToast('示意：打开显示列配置（勾选表格展示列）');
@@ -4030,7 +4020,7 @@
         });
       }
       bindOptional('btnNewRelation', 'click', function () {
-        showToast('示意：新建关系（选择关系类型 + 目标对象）');
+        showToast('示意：新建平台通用关系并选择目标对象');
       });
 
       document.querySelectorAll('.history-toolbar .seg button').forEach(function (b) {
@@ -4378,7 +4368,9 @@
           if (meter.energy !== mrState.energy) return false;
           if (spaceKeys && spaceKeys.indexOf(meter.space || '未绑定空间') === -1) return false;
           var key = meter.code + '|' + meter.energy;
-          var linked = (meterUsage[key] || []).length > 0 || (supplyUsage[key] || []).length > 0;
+          var hasMetering = (meterUsage[key] || []).length > 0;
+          var hasSupply = (supplyUsage[key] || []).length > 0;
+          var linked = meter.supportsSupply ? (hasMetering && hasSupply) : hasMetering;
           if (occupy === 'free' && linked) return false;
           if (occupy === 'taken' && !linked) return false;
           if (keyword) {
@@ -4405,9 +4397,10 @@
           var hasMetering = (meterUsage[key] || []).length > 0;
           var supplyForCurrent = (supplyUsage[key] || []).some(function (item) { return item.targetId === currentNode; });
           var canSupply = !!meter.supportsSupply;
-          var canAddMetering = !hasMetering;
+          var meteringForCurrent = mrMembers().some(function (item) { return item.type === 'meter' && item.code === meter.code && mrRelationKind(item) === 'metering'; });
+          var canAddMetering = !hasMetering || meteringForCurrent;
           var canAddSupply = canSupply && !!currentNode && !supplyForCurrent;
-          var blocked = !(canAddMetering || canAddSupply);
+          var blocked = canSupply ? !(canAddMetering || canAddSupply) : !canAddMetering;
           var item = document.createElement('div');
           item.className = 'mr-meter-item' + (blocked ? ' disabled' : '') + (meter.kind === 'component' ? ' component' : '');
           item.draggable = !blocked;
@@ -4455,118 +4448,74 @@
       }
 
       /* ---------- 拓扑关系列表 ---------- */
+      function mrGroupedMembers() {
+        var groups = {};
+        mrMembers().forEach(function (member) {
+          var identity = member.type === 'meter' ? ('meter:' + member.code) : ('object:' + member.id);
+          if (!groups[identity]) groups[identity] = { key: identity, records: [], metering: null, supply: null };
+          groups[identity].records.push(member);
+          groups[identity][mrRelationKind(member)] = member;
+        });
+        return Object.keys(groups).map(function (key) { return groups[key]; });
+      }
+
       function renderMrRelationTable(highlightKey) {
         var body = document.getElementById('mrRelationBody');
         if (!body) return;
         if (!currentNode) {
           body.innerHTML = '<tr class="mr-empty"><td colspan="5">请先在左侧对象树选择对象</td></tr>';
-          document.getElementById('mrRelationCount').textContent = '0 条';
+          document.getElementById('mrRelationCount').textContent = '0 个成员';
           return;
         }
-        var members = mrMembers();
-        document.getElementById('mrRelationCount').textContent = members.length + ' 条';
-        if (!members.length) {
+        var groups = mrGroupedMembers();
+        document.getElementById('mrRelationCount').textContent = groups.length + ' 个成员';
+        if (!groups.length) {
           body.innerHTML = '<tr class="mr-empty"><td colspan="5">当前对象在「' + esc(mrState.energy) + '」下暂无拓扑关系<br>从左栏对象树拖入下级对象，或从右栏表具池拖入表具</td></tr>';
           return;
         }
         body.innerHTML = '';
-        members.forEach(function (member) {
+        groups.forEach(function (group) {
+          var member = group.metering || group.supply;
           var tr = document.createElement('tr');
-          if (member.conflict) tr.className = 'conflict';
-          var relationKind = mrRelationKind(member);
-          var rowKey = relationKind + ':' + (member.type === 'meter' ? ('meter:' + member.code) : ('object:' + member.id));
-          if (highlightKey && rowKey === highlightKey) tr.classList.add('row-flash');
-          var isOut = member.direction === 'out';
+          if (group.records.some(function (record) { return record.conflict; })) tr.className = 'conflict';
+          if (highlightKey && group.key === highlightKey) tr.classList.add('row-flash');
           var meterMeta = member.type === 'meter' ? mrMeterByCode(member.code) : {};
-          var displayName = member.name;
-          if (member.type === 'object' && !String(displayName || '').trim() && NODES[member.id]) {
-            displayName = shortName(NODES[member.id].name);
-            member.name = displayName;
-          }
-          if (member.type === 'meter' && !String(displayName || '').trim()) {
-            var meta = mrMeterByCode(member.code);
-            displayName = meta.name || member.code;
-            member.name = displayName;
-            if (!member.meterKind) member.meterKind = meta.kind || 'device';
-            if (!member.parentName) member.parentName = meta.parentName || '';
-          }
+          var displayName = member.name || (member.type === 'object' && NODES[member.id] ? shortName(NODES[member.id].name) : meterMeta.name || member.code);
+          var parentName = member.parentName || meterMeta.parentName || '';
+          var meterKind = member.meterKind || meterMeta.kind || 'device';
           var subHint = '';
-          if (member.type === 'meter' && member.meterKind === 'component' && member.parentName) {
-            subHint = '<div class="mr-row-sub">所属表具 · ' + esc(member.parentName) + '</div>';
-          } else if (member.type === 'meter') {
-            subHint = '<div class="mr-row-sub">' + esc(mrMeterInstanceId(member.code)) + '</div>';
-          } else if (member.type === 'object' && NODES[member.id]) {
-            subHint = '<div class="mr-row-sub">物模型 · ' + esc(NODES[member.id].model || member.id) + '</div>';
-          }
-          var relationTag = relationKind === 'supply'
-            ? '<span class="mr-relation-tag mr-rel-supply">供电</span>'
-            : '<span class="mr-relation-tag mr-rel-metering">能耗计量</span>';
-          var relationCell = member.type === 'meter' && meterMeta.supportsSupply
-            ? '<select class="mr-relation-type-select" aria-label="关系类型">' +
-                '<option value="metering"' + (relationKind === 'metering' ? ' selected' : '') + '>能耗计量</option>' +
-                '<option value="supply"' + (relationKind === 'supply' ? ' selected' : '') + '>供电</option>' +
-              '</select>'
-            : relationTag;
-          var directionCell = relationKind === 'supply'
-            ? '<span class="mr-dir-na" title="供电关系不设置计量方向">—</span>'
-            : '<div class="mr-dir" role="group" aria-label="计量方向">' +
-                '<button type="button" class="' + (isOut ? '' : 'active-in') + '" data-dir="in">输入</button>' +
-                '<button type="button" class="' + (isOut ? 'active-out' : '') + '" data-dir="out">输出</button>' +
-              '</div>';
-          tr.innerHTML =
-            '<td><span class="mr-tag ' + (member.type === 'meter' ? 'mr-tag-meter">表具' : 'mr-tag-obj">下级对象') + '</span></td>' +
+          if (member.type === 'meter' && meterKind === 'component' && parentName) subHint = '<div class="mr-row-sub">所属表具 · ' + esc(parentName) + '</div>';
+          else if (member.type === 'meter') subHint = '<div class="mr-row-sub">' + esc(mrMeterInstanceId(member.code)) + '</div>';
+          else if (NODES[member.id]) subHint = '<div class="mr-row-sub">物模型 · ' + esc(NODES[member.id].model || member.id) + '</div>';
+          var relationCell = '<div class="mr-relation-tags">' +
+            (group.metering ? '<span class="mr-relation-tag mr-rel-metering">能耗计量</span>' : '') +
+            (group.supply ? '<span class="mr-relation-tag mr-rel-supply">供电</span>' : '') + '</div>';
+          var directionCell = group.metering
+            ? '<div class="mr-dir" role="group" aria-label="计量方向"><button type="button" class="' + (group.metering.direction === 'out' ? '' : 'active-in') + '" data-dir="in">输入</button><button type="button" class="' + (group.metering.direction === 'out' ? 'active-out' : '') + '" data-dir="out">输出</button></div>'
+            : '<span class="mr-dir-na" title="历史数据仅存在供电关系；供电方向固定">—</span>';
+          var conflictReason = group.records.map(function (record) { return record.conflictReason || ''; }).filter(Boolean).join('；');
+          tr.innerHTML = '<td><span class="mr-tag ' + (member.type === 'meter' ? 'mr-tag-meter">表具' : 'mr-tag-obj">下级对象') + '</span></td>' +
             '<td><div class="mr-row-name">' + esc(displayName || '（未命名）') + '</div>' + subHint +
-              (member.conflictReason ? '<div class="mr-row-conflict">' + esc(member.conflictReason) + '</div>' : '') +
-            '</td>' +
-            '<td>' + relationCell + '</td>' +
-            '<td>' + directionCell + '</td>' +
-            '<td><button type="button" class="mr-del">删除</button></td>';
-          var relationSelect = tr.querySelector('.mr-relation-type-select');
-          if (relationSelect) {
-            relationSelect.addEventListener('change', function () {
-              var nextKind = relationSelect.value === 'supply' ? 'supply' : 'metering';
-              if (nextKind === relationKind) return;
-              var duplicate = mrMembers().some(function (item) {
-                return item !== member && item.type === 'meter' && item.code === member.code && mrRelationKind(item) === nextKind;
-              });
-              if (duplicate) {
-                relationSelect.value = relationKind;
-                showToast('该支路已存在' + (nextKind === 'supply' ? '供电关系' : '能耗计量关系'));
-                return;
-              }
-              if (nextKind === 'metering' && (mrMeterUsage()[member.code + '|' + mrState.energy] || []).length) {
-                relationSelect.value = relationKind;
-                showToast('该表具在当前能源下已用于其他计量关系');
-                return;
-              }
-              member.relationKind = nextKind;
-              member.direction = nextKind === 'metering' ? 'in' : null;
-              refreshMeteringBlock();
-              showToast('已切换为' + (nextKind === 'supply' ? '供电关系' : '能耗计量关系'));
-            });
-          }
+            (conflictReason ? '<div class="mr-row-conflict">' + esc(conflictReason) + '</div>' : '') + '</td>' +
+            '<td>' + relationCell + '</td><td>' + directionCell + '</td><td><button type="button" class="mr-del">删除</button></td>';
           tr.querySelectorAll('.mr-dir button').forEach(function (button) {
             button.addEventListener('click', function () {
               var next = button.getAttribute('data-dir');
-              if (member.direction === next) return;
-              member.direction = next;
+              if (!group.metering || group.metering.direction === next) return;
+              group.metering.direction = next;
               refreshMeteringBlock();
-              showToast('已切换为「' + (next === 'out' ? '输出' : '输入') + '」（示意：变更即时生效）');
+              showToast('计量方向已改为「' + (next === 'out' ? '输出' : '输入') + '」');
             });
           });
           tr.querySelector('.mr-del').addEventListener('click', function () {
             var list = mrMembers();
-            var at = list.indexOf(member);
-            if (at < 0) {
-              at = list.findIndex(function (item) {
-                return member.type === 'meter'
-                  ? (item.type === 'meter' && item.code === member.code && mrRelationKind(item) === relationKind)
-                  : (item.type === 'object' && item.id === member.id && mrRelationKind(item) === relationKind);
-              });
+            var removed = 0;
+            for (var i = list.length - 1; i >= 0; i--) {
+              var same = member.type === 'meter' ? (list[i].type === 'meter' && list[i].code === member.code) : (list[i].type === 'object' && list[i].id === member.id);
+              if (same) { list.splice(i, 1); removed++; }
             }
-            if (at >= 0) list.splice(at, 1);
             refreshMeteringBlock();
-            showToast('已移除 1 条' + (relationKind === 'supply' ? '供电关系' : '能耗计量关系'));
+            showToast(removed > 1 ? '已移除该成员的能耗计量与供电两条关系' : '已移除该成员的 1 条关系');
           });
           body.appendChild(tr);
         });
@@ -4683,65 +4632,28 @@
       function mrAddMember(payload) {
         var list = mrMembers();
         var highlightKey = '';
-        var addedRelationKind = 'metering';
+        var addedKinds = [];
         if (payload.kind === 'object') {
-          if (payload.id === currentNode) {
-            showToast('不能把对象拖到自己的拓扑里');
-            return;
-          }
-          if (list.some(function (member) {
-            return member.type === 'object' && member.id === payload.id && mrRelationKind(member) === 'metering';
-          })) {
-            showToast('该下级对象已在本能源关系中');
-            return;
-          }
+          if (payload.id === currentNode) { showToast('不能把对象拖到自己的拓扑里'); return; }
+          if (list.some(function (member) { return member.type === 'object' && member.id === payload.id && mrRelationKind(member) === 'metering'; })) { showToast('该下级对象已在本能源关系中'); return; }
           var objectNode = NODES[payload.id];
-          list.push({
-            type: 'object',
-            id: payload.id,
-            name: String(payload.name || '').trim() || (objectNode ? shortName(objectNode.name) : payload.id),
-            relationKind: 'metering',
-            direction: 'in'
-          });
-          highlightKey = 'metering:object:' + payload.id;
+          list.push({ type: 'object', id: payload.id, name: String(payload.name || '').trim() || (objectNode ? shortName(objectNode.name) : payload.id), relationKind: 'metering', direction: 'in' });
+          highlightKey = 'object:' + payload.id; addedKinds.push('能耗计量');
         } else if (payload.kind === 'meter') {
           var meta = mrMeterByCode(payload.code);
-          var energy = payload.energy || meta.energy;
-          if (energy !== mrState.energy) {
-            showToast('表具能源类型与当前 Tab 不一致');
-            return;
-          }
+          if ((payload.energy || meta.energy) !== mrState.energy) { showToast('表具能源类型与当前 Tab 不一致'); return; }
           var key = payload.code + '|' + mrState.energy;
-          var hasMetering = (mrMeterUsage()[key] || []).length > 0;
-          var supplyForCurrent = (mrSupplyUsage()[key] || []).some(function (item) { return item.targetId === currentNode; });
-          var relationKind = !hasMetering ? 'metering' : (meta.supportsSupply && !supplyForCurrent ? 'supply' : '');
-          if (!relationKind) {
-            showToast('该表具与当前对象的可用关系均已建立');
-            return;
-          }
-          addedRelationKind = relationKind;
-          list.push({
-            type: 'meter',
-            code: payload.code,
-            name: String(payload.name || '').trim() || meta.name || payload.code,
-            relationKind: relationKind,
-            direction: relationKind === 'metering' ? 'in' : null,
-            meterKind: payload.meterKind || meta.kind || 'device',
-            parentName: payload.parentName || meta.parentName || ''
-          });
-          highlightKey = relationKind + ':meter:' + payload.code;
-        } else {
-          showToast('未识别到拖入内容，请重试');
-          return;
-        }
-        mrValidateCurrent();
-        renderMrRelationTable(highlightKey);
-        renderMrTree();
-        renderMrMeters();
-        renderMrTrial();
-        updateMrEnergyTabs();
-        renderEffConfigRows();
-        showToast('已添加 1 条' + (addedRelationKind === 'supply' ? '供电关系' : '能耗计量关系'));
+          var meteringForCurrent = list.some(function (member) { return member.type === 'meter' && member.code === payload.code && mrRelationKind(member) === 'metering'; });
+          var meteringElsewhere = (mrMeterUsage()[key] || []).some(function (item) { return item.objId !== currentNode; });
+          var supplyForCurrent = list.some(function (member) { return member.type === 'meter' && member.code === payload.code && mrRelationKind(member) === 'supply'; });
+          var base = { type: 'meter', code: payload.code, name: String(payload.name || '').trim() || meta.name || payload.code, meterKind: payload.meterKind || meta.kind || 'device', parentName: payload.parentName || meta.parentName || '' };
+          if (!meteringForCurrent && !meteringElsewhere) { list.push(Object.assign({}, base, { relationKind: 'metering', direction: 'in' })); addedKinds.push('能耗计量'); }
+          if (meta.supportsSupply && !supplyForCurrent) { list.push(Object.assign({}, base, { relationKind: 'supply', direction: null })); addedKinds.push('供电'); }
+          if (!addedKinds.length) { showToast(meteringElsewhere ? '该表具的能耗计量关系已被其他对象占用，且当前对象无需补齐供电关系' : '该成员所需关系已完整建立'); return; }
+          highlightKey = 'meter:' + payload.code;
+        } else { showToast('未识别到拖入内容，请重试'); return; }
+        mrValidateCurrent(); renderMrRelationTable(highlightKey); renderMrTree(); renderMrMeters(); renderMrTrial(); updateMrEnergyTabs(); renderEffConfigRows();
+        showToast(addedKinds.length === 2 ? '已添加该成员，并创建能耗计量与供电两条关系' : '已补齐' + addedKinds[0] + '关系');
       }
 
       function bindMrDropzone() {
