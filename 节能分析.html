@@ -243,6 +243,13 @@
       flex: 1;
       min-width: 0;
     }
+    .top-row > section.proto-module {
+      display: flex;
+      flex-direction: column;
+    }
+    .top-row > section.proto-module > .section-card {
+      flex: 1;
+    }
 
     .section-card {
       background: var(--bg-card);
@@ -736,7 +743,7 @@
             <div class="anno-body">
               <p><b>当前版本：</b>v2.5</p>
               <p><b>更新日期：</b>2026-07-31</p>
-              <p><b>变更概述：</b>能耗数据口径切换（需求 7）：节电量核算与基准 / 实际 / 目标能效对比中的周期能耗输入，统一改为消费对象能耗 on-read 聚合查询接口（沿计量拓扑 SUM 表具归档明细）。页面主体结构与交互不变。</p>
+              <p><b>变更概述：</b>统一 v2.5 指标与节能分析职责：实际用量 A1、适用对象的实际空调系统 CLF B2 等标准指标直接消费明细引擎册需求 5；基准与目标来自节能分析规则配置；节省电量、节能率及需求 5 未覆盖的设备级能效由节能分析领域服务生成，页面只消费最终结果，不前端计算。页面不读取表具明细、不遍历计量拓扑、不感知底层归档；刷新仅重新查询。</p>
             </div>
           </div>
 
@@ -745,7 +752,7 @@
             <div class="anno-body">
               <p><b>当前版本：</b>v1.0</p>
               <p><b>更新日期：</b>2026-03-21</p>
-              <p><b>变更概述：</b>v1.0 首版：为「节能分析」AI 单页原型补充标准化批注；图表与表格规则、规则配置弹窗字段对齐古典 Axure「节能分析-月」说明块。</p>
+              <p><b>变更概述：</b>v1.0 首版：为「节能分析」AI 单页原型补充标准化批注；图表规则对齐古典 Axure「节能分析-月」说明块；规则配置及日/月/年明细字段规则按《节能分析字段说明-工作表1》补全。</p>
               <p><b>本页说明：</b>在选定暖通系统与时间粒度下，展示节能指标卡片、设备能效对比、节能趋势/能效趋势切换图与每日明细表；支持「规则配置」维护各月对比基准，支持导出每日明细。</p>
             </div>
           </div>
@@ -781,7 +788,7 @@
                 <p><b>关联模块：</b>系统切换 + 工具栏</p>
                 <ul>
                   <li><b>数据范围：</b>当前选中的系统 + 当前粒度下的时间窗（如某月）决定页内所有 KPI、图表与表格数据源。</li>
-                  <li><b>刷新：</b>切换系统、粒度或月份后，应重新拉取或重算页内数据（原型未接接口，仅交互占位）。</li>
+                  <li><b>刷新：</b>切换系统、粒度或月份后，应重新查询页内数据；刷新不触发指标或节能结果重算（原型未接服务，仅交互占位）。</li>
                 </ul>
               </div>
             </div>
@@ -792,12 +799,12 @@
               <div class="anno-body">
                 <p><b>关联模块：</b>全页能耗数据口径（节能指标 / 趋势图 / 每日明细）</p>
                 <ul>
-                  <li><b>能耗输入切换（需求 7）：</b>节电量、基准 / 实际 / 目标能效核算所用的周期能耗，统一消费 v2.5 对象能耗 on-read 聚合接口——沿当前计量拓扑对表具归档明细求和，不再直读原始累计量或旧统计表。</li>
-                  <li><b>节能量核算：</b>节省电量 = 基准周期能耗 − 实际周期能耗；基准与实际周期能耗均来自对象能耗 on-read 聚合，节能量不在前端用其他指标反推。</li>
-                  <li><b>粒度（页内）：</b>本页为月/年分析页，顶栏仅提供「年」「月」切换；月视图读天粒度汇总展示每日明细与趋势，年视图读月粒度汇总。底层查询支持半小时/时/天/月，本页不暴露半小时/时选择器。</li>
-                  <li><b>成本：</b>本页以电量（kWh）与能效指标为主，不展示成本列；若后续增加成本字段，成本金额直接汇总表具核算明细，不在前端按电价重算。</li>
-                  <li><b>粒度映射：</b>页内年 / 月粒度对应读取表具归档的月 / 天 rollup 聚合结果；电量与成本均累加、不重算差值。</li>
-                  <li><b>历史归属：</b>对象能耗查询沿【当前】计量拓扑聚合，表具改绑后历史随新对象漂移（产品接受口径）；节能基准如需冻结历史归属，须另行立项拓扑生效版本。</li>
+                  <li><b>标准指标真源：</b>实际用量直接消费需求 5 的 A1；适用对象的实际空调系统 CLF 直接消费需求 5 的 B2。页面不读取表具明细、不自行遍历计量拓扑、不读取对象统计分片，也不重算需求 5 已提供的电量或能效指标。</li>
+                  <li><b>节能领域真源：</b>基准与目标来自节能分析规则配置；节省电量、节能率及需求 5 未覆盖的设备级能效由节能分析领域服务生成。页面只消费最终结果，不前端计算或反推。</li>
+                  <li><b>粒度（页内）：</b>月视图请求日序列用于每日明细与趋势，年视图请求月序列。页面不感知底层表具归档或存储粒度。</li>
+                  <li><b>成本：</b>本页不展示成本列；若后续增加成本字段，应直接消费需求 5 的 A2 正式结果，不读取或汇总表具成本，不按电价重算。</li>
+                  <li><b>查询与刷新：</b>切换系统、粒度、月份或保存规则配置后仅重新查询，不触发前端或需求 5 重算。</li>
+                  <li><b>历史归属：</b>需求 5 按【当前】计量拓扑口径形成并返回实际 A1 / B2 等结果；本页仅展示。表具改绑后历史随新对象漂移（产品接受口径）。</li>
                 </ul>
               </div>
             </div>
@@ -811,10 +818,10 @@
               <div class="page-toolbar">
                 <div class="toolbar-left">
                   <div class="segment-tabs">
-                    <div class="segment-tab">年</div>
-                    <div class="segment-tab active">月</div>
+                    <div class="segment-tab" data-period="year">年</div>
+                    <div class="segment-tab active" data-period="month">月</div>
                   </div>
-                  <input type="month" class="date-input" value="2024-01">
+                  <input type="month" class="date-input" id="periodPicker" value="2024-01">
                 </div>
                 <div class="toolbar-right">
                   <button class="btn btn-default" id="openConfigBtn">规则配置</button>
@@ -858,9 +865,9 @@
               <div class="anno-body">
                 <p><b>关联模块：</b>节能指标（节能率 / 节省电量 / 基准·实际能效）</p>
                 <ul>
-                  <li><b>节省电量：</b>周期节能量 = 基准能耗 − 实际能耗，两项均走对象能耗 on-read 查询。</li>
-                  <li><b>节能率：</b>在节能量与基准能耗基础上按既有产品公式计算，不因新接口改变展示定义。</li>
-                  <li><b>基准/实际能效：</b>分子分母所涉周期电量输入同样走新接口；能效比值仍在前端按指标定义计算。</li>
+                  <li><b>实际用量与实际 CLF：</b>实际用量直接消费需求 5 的 A1；当前对象适用时，实际空调系统 CLF 直接消费需求 5 的 B2，页面不展开其分子、分母。</li>
+                  <li><b>基准与目标：</b>基准能耗、基准 CLF、目标 CLF 及目标节能率来自节能分析规则配置，不属于需求 5 指标清单。</li>
+                  <li><b>节能派生结果：</b>节省电量、节能率由节能分析领域服务结合需求 5 的实际 A1 与规则配置生成；页面只展示领域服务最终结果，不前端套公式计算。</li>
                 </ul>
               </div>
             </div>
@@ -895,8 +902,9 @@
                 <p><b>关联模块：</b>设备能效对比</p>
                 <ul>
                   <li><b>图表类型：</b>柱体对比图，双系列「基准能效」「实际能效」。</li>
-                  <li><b>对比对象：</b>与界面类目一致（如空调系统、主机、冷冻系、冷却泵、冷却塔、末端空调等，以产品定义为准）。</li>
-                  <li><b>Y 轴：</b>能效（CLF）；起始点支持动态缩放以突出对比（古典说明）。</li>
+                  <li><b>对比对象：</b>与界面类目一致（如空调系统、主机、冷冻泵、冷却泵、冷却塔、末端空调等，以产品定义为准）。</li>
+                  <li><b>真源边界：</b>空调系统实际 CLF 在适用时直接使用需求 5 的 B2；主机、泵、冷却塔、末端空调等设备级能效不属于 B2，也未纳入需求 5 的 B1–B5，由节能分析领域服务生成。基准值来自规则配置，页面不计算。</li>
+                  <li><b>Y 轴：</b>展示相应对象的能效结果；“CLF”仅用于空调系统等已明确采用该口径的对象，不将设备级能效误标为需求 5 的 B2。</li>
                 </ul>
               </div>
             </div>
@@ -958,19 +966,128 @@
             <div class="anno anno-field" data-version="v1.0">
               <span class="anno-tag">字段说明</span>
               <span class="anno-version">v1.0</span>
-              <span class="anno-source">引用自古典原型</span>
+              <span class="anno-source">需求文档</span>
               <div class="anno-body">
-                <p><b>关联模块：</b>每日明细表</p>
+                <p><b>关联模块：</b>月视图 — 每日明细表（历史 v1.0 字段规则）</p>
+                <p>所有 CLF 均保留 3 位小数；节能率保留 2 位小数；电量单位为 kWh、保留 0 位小数。当前原型表格只展示下列字段的一部分，完整字段规则如下。</p>
                 <table class="anno-table">
-                  <thead><tr><th>列</th><th>说明</th></tr></thead>
+                  <thead><tr><th>字段</th><th>单位/精度</th><th>数据规则</th></tr></thead>
                   <tbody>
-                    <tr><td>日期</td><td>自然日。</td></tr>
-                    <tr><td>实际/目标 节能率(%)</td><td>当日实际节能率与目标节能率对比。</td></tr>
-                    <tr><td>节省电量(kWh)</td><td>当日节电量。</td></tr>
-                    <tr><td>基准/实际/目标 空调系统CLF</td><td>三项并列展示，便于与目标线对照。</td></tr>
-                    <tr><td>基准/实际 空调系统电量(kWh)</td><td>基准与实际用电量对比。</td></tr>
-                    <tr><td>实际 IT电量(kWh)</td><td>当日 IT 侧用电量（用于上下文或分摊口径时以产品定义为准）。</td></tr>
-                    <tr><td>基准/实际 末端空调CLF</td><td>末端空调 CLF 基准与实际值。</td></tr>
+                    <tr><td>实际节能率</td><td>% / 2 位</td><td>由节能分析领域服务返回最终结果；页面不计算。</td></tr>
+                    <tr><td>目标节能率</td><td>% / 2 位</td><td>取当前月份规则配置中的“节能率目标值”。</td></tr>
+                    <tr><td>节省电量</td><td>kWh / 0 位</td><td>由节能分析领域服务返回最终结果；页面不计算。</td></tr>
+                    <tr><td>基准空调系统 CLF</td><td>— / 3 位</td><td>取当前月份规则配置中的“空调系统 CLF 基准值”。</td></tr>
+                    <tr><td>实际空调系统 CLF</td><td>— / 3 位</td><td>适用对象直接消费需求 5 的 B2；页面不计算分子分母。</td></tr>
+                    <tr><td>目标空调系统 CLF</td><td>— / 3 位</td><td>取当前月份规则配置中的“空调系统 CLF 目标值”。</td></tr>
+                    <tr><td>基准空调系统电量</td><td>kWh / 0 位</td><td>由节能分析领域服务结合规则配置生成；页面不计算。</td></tr>
+                    <tr><td>实际空调系统电量</td><td>kWh / 0 位</td><td>直接消费需求 5 的 A1；页面不汇总表具。</td></tr>
+                    <tr><td>实际 IT 电量</td><td>kWh / 0 位</td><td>直接消费需求 5 的 A1；页面不遍历对象或计量拓扑。</td></tr>
+                    <tr><td>基准末端空调 CLF</td><td>— / 3 位</td><td>取当前月份规则配置中的对应基准值。</td></tr>
+                    <tr><td>实际末端空调 CLF</td><td>— / 3 位</td><td>需求 5 B1–B5 未覆盖的设备级能效，由节能分析领域服务生成。</td></tr>
+                    <tr><td>基准末端空调电量</td><td>kWh / 0 位</td><td>由节能分析领域服务结合规则配置生成；页面不计算。</td></tr>
+                    <tr><td>实际末端空调电量</td><td>kWh / 0 位</td><td>消费节能分析领域服务返回结果；其实际用量输入来自需求 5 A1。</td></tr>
+                    <tr><td>基准冷水主机 CLF</td><td>— / 3 位</td><td>取当前月份规则配置中的对应基准值。</td></tr>
+                    <tr><td>实际冷水主机 CLF</td><td>— / 3 位</td><td>需求 5 B1–B5 未覆盖的设备级能效，由节能分析领域服务生成。</td></tr>
+                    <tr><td>基准冷水主机电量</td><td>kWh / 0 位</td><td>由节能分析领域服务结合规则配置生成；页面不计算。</td></tr>
+                    <tr><td>实际冷水主机电量</td><td>kWh / 0 位</td><td>消费节能分析领域服务返回结果；其实际用量输入来自需求 5 A1。</td></tr>
+                    <tr><td>基准冷冻泵 CLF</td><td>— / 3 位</td><td>取当前月份规则配置中的对应基准值。</td></tr>
+                    <tr><td>实际冷冻泵 CLF</td><td>— / 3 位</td><td>需求 5 B1–B5 未覆盖的设备级能效，由节能分析领域服务生成。</td></tr>
+                    <tr><td>基准冷冻泵电量</td><td>kWh / 0 位</td><td>由节能分析领域服务结合规则配置生成；页面不计算。</td></tr>
+                    <tr><td>实际冷冻泵电量</td><td>kWh / 0 位</td><td>消费节能分析领域服务返回结果；其实际用量输入来自需求 5 A1。</td></tr>
+                    <tr><td>基准冷却泵 CLF</td><td>— / 3 位</td><td>取当前月份规则配置中的对应基准值。</td></tr>
+                    <tr><td>实际冷却泵 CLF</td><td>— / 3 位</td><td>需求 5 B1–B5 未覆盖的设备级能效，由节能分析领域服务生成。</td></tr>
+                    <tr><td>基准冷却泵电量</td><td>kWh / 0 位</td><td>由节能分析领域服务结合规则配置生成；页面不计算。</td></tr>
+                    <tr><td>实际冷却泵电量</td><td>kWh / 0 位</td><td>消费节能分析领域服务返回结果；其实际用量输入来自需求 5 A1。</td></tr>
+                    <tr><td>基准冷却塔 CLF</td><td>— / 3 位</td><td>取当前月份规则配置中的对应基准值。</td></tr>
+                    <tr><td>实际冷却塔 CLF</td><td>— / 3 位</td><td>需求 5 B1–B5 未覆盖的设备级能效，由节能分析领域服务生成。</td></tr>
+                    <tr><td>基准冷却塔电量</td><td>kWh / 0 位</td><td>由节能分析领域服务结合规则配置生成；页面不计算。</td></tr>
+                    <tr><td>实际冷却塔电量</td><td>kWh / 0 位</td><td>消费节能分析领域服务返回结果；其实际用量输入来自需求 5 A1。</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="anno anno-field" data-version="v1.0">
+              <span class="anno-tag">字段说明</span>
+              <span class="anno-version">v1.0</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>年视图 — 每月明细表（历史 v1.0 字段规则）</p>
+                <p>月明细由日明细汇总。所有 CLF 均保留 3 位小数；节能率保留 2 位小数；电量单位为 kWh、保留 0 位小数。</p>
+                <table class="anno-table">
+                  <thead><tr><th>字段</th><th>单位/精度</th><th>数据规则</th></tr></thead>
+                  <tbody>
+                    <tr><td>实际节能率</td><td>% / 2 位</td><td>由节能分析领域服务返回最终结果；页面不计算。</td></tr>
+                    <tr><td>目标节能率</td><td>% / 2 位</td><td>取当前月份规则配置中的“节能率目标值”。</td></tr>
+                    <tr><td>节省电量</td><td>kWh / 0 位</td><td>由节能分析领域服务返回最终结果；页面不计算。</td></tr>
+                    <tr><td>基准空调系统 CLF</td><td>— / 3 位</td><td>取当前月份规则配置中的“空调系统 CLF 基准值”。</td></tr>
+                    <tr><td>实际空调系统 CLF</td><td>— / 3 位</td><td>适用对象直接消费需求 5 的 B2；页面不计算分子分母。</td></tr>
+                    <tr><td>目标空调系统 CLF</td><td>— / 3 位</td><td>取当前月份规则配置中的“空调系统 CLF 目标值”。</td></tr>
+                    <tr><td>基准空调系统电量</td><td>kWh / 0 位</td><td>由节能分析领域服务结合规则配置生成；页面不计算。</td></tr>
+                    <tr><td>实际空调系统电量</td><td>kWh / 0 位</td><td>直接消费需求 5 的 A1；页面不汇总表具。</td></tr>
+                    <tr><td>实际 IT 电量</td><td>kWh / 0 位</td><td>直接消费需求 5 的 A1；页面不遍历对象或计量拓扑。</td></tr>
+                    <tr><td>基准末端空调 CLF</td><td>— / 3 位</td><td>取当前月份规则配置中的对应基准值。</td></tr>
+                    <tr><td>实际末端空调 CLF</td><td>— / 3 位</td><td>需求 5 B1–B5 未覆盖的设备级能效，由节能分析领域服务生成。</td></tr>
+                    <tr><td>基准末端空调电量</td><td>kWh / 0 位</td><td>由节能分析领域服务结合规则配置生成；页面不计算。</td></tr>
+                    <tr><td>实际末端空调电量</td><td>kWh / 0 位</td><td>消费节能分析领域服务返回结果；其实际用量输入来自需求 5 A1。</td></tr>
+                    <tr><td>基准冷水主机 CLF</td><td>— / 3 位</td><td>取当前月份规则配置中的对应基准值。</td></tr>
+                    <tr><td>实际冷水主机 CLF</td><td>— / 3 位</td><td>需求 5 B1–B5 未覆盖的设备级能效，由节能分析领域服务生成。</td></tr>
+                    <tr><td>基准冷水主机电量</td><td>kWh / 0 位</td><td>由节能分析领域服务结合规则配置生成；页面不计算。</td></tr>
+                    <tr><td>实际冷水主机电量</td><td>kWh / 0 位</td><td>消费节能分析领域服务返回结果；其实际用量输入来自需求 5 A1。</td></tr>
+                    <tr><td>基准冷冻泵 CLF</td><td>— / 3 位</td><td>取当前月份规则配置中的对应基准值。</td></tr>
+                    <tr><td>实际冷冻泵 CLF</td><td>— / 3 位</td><td>需求 5 B1–B5 未覆盖的设备级能效，由节能分析领域服务生成。</td></tr>
+                    <tr><td>基准冷冻泵电量</td><td>kWh / 0 位</td><td>由节能分析领域服务结合规则配置生成；页面不计算。</td></tr>
+                    <tr><td>实际冷冻泵电量</td><td>kWh / 0 位</td><td>消费节能分析领域服务返回结果；其实际用量输入来自需求 5 A1。</td></tr>
+                    <tr><td>基准冷却泵 CLF</td><td>— / 3 位</td><td>取当前月份规则配置中的对应基准值。</td></tr>
+                    <tr><td>实际冷却泵 CLF</td><td>— / 3 位</td><td>需求 5 B1–B5 未覆盖的设备级能效，由节能分析领域服务生成。</td></tr>
+                    <tr><td>基准冷却泵电量</td><td>kWh / 0 位</td><td>由节能分析领域服务结合规则配置生成；页面不计算。</td></tr>
+                    <tr><td>实际冷却泵电量</td><td>kWh / 0 位</td><td>消费节能分析领域服务返回结果；其实际用量输入来自需求 5 A1。</td></tr>
+                    <tr><td>基准冷却塔 CLF</td><td>— / 3 位</td><td>取当前月份规则配置中的对应基准值。</td></tr>
+                    <tr><td>实际冷却塔 CLF</td><td>— / 3 位</td><td>需求 5 B1–B5 未覆盖的设备级能效，由节能分析领域服务生成。</td></tr>
+                    <tr><td>基准冷却塔电量</td><td>kWh / 0 位</td><td>由节能分析领域服务结合规则配置生成；页面不计算。</td></tr>
+                    <tr><td>实际冷却塔电量</td><td>kWh / 0 位</td><td>消费节能分析领域服务返回结果；其实际用量输入来自需求 5 A1。</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="anno anno-field" data-version="v1.0">
+              <span class="anno-tag">字段说明</span>
+              <span class="anno-version">v1.0</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>年视图 — 每年汇总（历史 v1.0 字段规则）</p>
+                <p>年明细由月明细汇总。所有 CLF 均保留 3 位小数；节能率保留 2 位小数；电量单位为 kWh、保留 0 位小数。</p>
+                <table class="anno-table">
+                  <thead><tr><th>字段</th><th>单位/精度</th><th>数据规则</th></tr></thead>
+                  <tbody>
+                    <tr><td>实际节能率</td><td>% / 2 位</td><td>由节能分析领域服务返回最终结果；页面不计算。</td></tr>
+                    <tr><td>目标节能率</td><td>% / 2 位</td><td>取规则配置中各月“节能率目标值”的平均值。</td></tr>
+                    <tr><td>节省电量</td><td>kWh / 0 位</td><td>由节能分析领域服务返回最终结果；页面不计算。</td></tr>
+                    <tr><td>基准空调系统 CLF</td><td>— / 3 位</td><td>年度基准空调系统电量 ÷ 年度实际 IT 电量。</td></tr>
+                    <tr><td>实际空调系统 CLF</td><td>— / 3 位</td><td>适用对象直接消费需求 5 的 B2；页面不计算分子分母。</td></tr>
+                    <tr><td>目标空调系统 CLF</td><td>— / 3 位</td><td>取规则配置中各月“空调系统 CLF 目标值”的平均值。</td></tr>
+                    <tr><td>基准空调系统电量</td><td>kWh / 0 位</td><td>由节能分析领域服务结合规则配置生成；页面不计算。</td></tr>
+                    <tr><td>实际空调系统电量</td><td>kWh / 0 位</td><td>直接消费需求 5 的 A1；页面不汇总表具。</td></tr>
+                    <tr><td>实际 IT 电量</td><td>kWh / 0 位</td><td>直接消费需求 5 的 A1；页面不遍历对象或计量拓扑。</td></tr>
+                    <tr><td>基准末端空调 CLF</td><td>— / 3 位</td><td>年度基准末端空调电量 ÷ 年度实际 IT 电量。</td></tr>
+                    <tr><td>实际末端空调 CLF</td><td>— / 3 位</td><td>需求 5 B1–B5 未覆盖的设备级能效，由节能分析领域服务生成。</td></tr>
+                    <tr><td>基准末端空调电量</td><td>kWh / 0 位</td><td>由节能分析领域服务结合规则配置生成；页面不计算。</td></tr>
+                    <tr><td>实际末端空调电量</td><td>kWh / 0 位</td><td>消费节能分析领域服务返回结果；其实际用量输入来自需求 5 A1。</td></tr>
+                    <tr><td>基准冷水主机 CLF</td><td>— / 3 位</td><td>年度基准冷水主机电量 ÷ 年度实际 IT 电量。</td></tr>
+                    <tr><td>实际冷水主机 CLF</td><td>— / 3 位</td><td>需求 5 B1–B5 未覆盖的设备级能效，由节能分析领域服务生成。</td></tr>
+                    <tr><td>基准冷水主机电量</td><td>kWh / 0 位</td><td>由节能分析领域服务结合规则配置生成；页面不计算。</td></tr>
+                    <tr><td>实际冷水主机电量</td><td>kWh / 0 位</td><td>消费节能分析领域服务返回结果；其实际用量输入来自需求 5 A1。</td></tr>
+                    <tr><td>基准冷冻泵 CLF</td><td>— / 3 位</td><td>年度基准冷冻泵电量 ÷ 年度实际 IT 电量。</td></tr>
+                    <tr><td>实际冷冻泵 CLF</td><td>— / 3 位</td><td>需求 5 B1–B5 未覆盖的设备级能效，由节能分析领域服务生成。</td></tr>
+                    <tr><td>基准冷冻泵电量</td><td>kWh / 0 位</td><td>由节能分析领域服务结合规则配置生成；页面不计算。</td></tr>
+                    <tr><td>实际冷冻泵电量</td><td>kWh / 0 位</td><td>消费节能分析领域服务返回结果；其实际用量输入来自需求 5 A1。</td></tr>
+                    <tr><td>基准冷却泵 CLF</td><td>— / 3 位</td><td>年度基准冷却泵电量 ÷ 年度实际 IT 电量。</td></tr>
+                    <tr><td>实际冷却泵 CLF</td><td>— / 3 位</td><td>需求 5 B1–B5 未覆盖的设备级能效，由节能分析领域服务生成。</td></tr>
+                    <tr><td>基准冷却泵电量</td><td>kWh / 0 位</td><td>由节能分析领域服务结合规则配置生成；页面不计算。</td></tr>
+                    <tr><td>实际冷却泵电量</td><td>kWh / 0 位</td><td>消费节能分析领域服务返回结果；其实际用量输入来自需求 5 A1。</td></tr>
+                    <tr><td>基准冷却塔 CLF</td><td>— / 3 位</td><td>年度基准冷却塔电量 ÷ 年度实际 IT 电量。</td></tr>
+                    <tr><td>实际冷却塔 CLF</td><td>— / 3 位</td><td>需求 5 B1–B5 未覆盖的设备级能效，由节能分析领域服务生成。</td></tr>
+                    <tr><td>基准冷却塔电量</td><td>kWh / 0 位</td><td>由节能分析领域服务结合规则配置生成；页面不计算。</td></tr>
+                    <tr><td>实际冷却塔电量</td><td>kWh / 0 位</td><td>消费节能分析领域服务返回结果；其实际用量输入来自需求 5 A1。</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -1000,87 +1117,13 @@
             </div>
           <div class="section-card">
             <div class="section-head">
-              <div class="section-title">每日明细</div>
+              <div class="section-title" id="detailTitle">每日明细</div>
               <a class="action-link" id="exportBtn">导出</a>
             </div>
             <div class="table-wrap">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>日期</th>
-                    <th>实际/目标 节能率(%)</th>
-                    <th>节省电量(kWh)</th>
-                    <th>基准/实际/目标 空调系统CLF</th>
-                    <th>基准/实际 空调系统电量(kWh)</th>
-                    <th>实际 IT电量(kWh)</th>
-                    <th>基准/实际 末端空调CLF</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>2024年01月01日</td>
-                    <td><span class="text-success">14.23</span><span class="text-hint">/10</span></td>
-                    <td>2312</td>
-                    <td>1.3/<span class="text-danger">1.23</span>/1.2</td>
-                    <td>2312/1878</td>
-                    <td>1878.14</td>
-                    <td>1.3/<span class="text-danger">1.23</span></td>
-                  </tr>
-                  <tr>
-                    <td>2024年01月02日</td>
-                    <td><span class="text-danger">8.5</span><span class="text-hint">/10</span></td>
-                    <td>1500</td>
-                    <td>1.3/<span class="text-danger">1.28</span>/1.2</td>
-                    <td>2400/2196</td>
-                    <td>1850.00</td>
-                    <td>1.3/<span class="text-danger">1.25</span></td>
-                  </tr>
-                  <tr>
-                    <td>2024年01月03日</td>
-                    <td><span class="text-success">12.1</span><span class="text-hint">/10</span></td>
-                    <td>1800</td>
-                    <td>1.3/<span class="text-success">1.18</span>/1.2</td>
-                    <td>2350/2065</td>
-                    <td>1860.50</td>
-                    <td>1.3/<span class="text-success">1.19</span></td>
-                  </tr>
-                  <tr>
-                    <td>2024年01月04日</td>
-                    <td><span class="text-success">15.4</span><span class="text-hint">/10</span></td>
-                    <td>2500</td>
-                    <td>1.3/<span class="text-success">1.15</span>/1.2</td>
-                    <td>2300/1945</td>
-                    <td>1880.20</td>
-                    <td>1.3/<span class="text-success">1.15</span></td>
-                  </tr>
-                  <tr>
-                    <td>2024年01月05日</td>
-                    <td><span class="text-success">18.2</span><span class="text-hint">/10</span></td>
-                    <td>2800</td>
-                    <td>1.3/<span class="text-success">1.10</span>/1.2</td>
-                    <td>2280/1865</td>
-                    <td>1890.10</td>
-                    <td>1.3/<span class="text-success">1.12</span></td>
-                  </tr>
-                  <tr>
-                    <td>2024年01月06日</td>
-                    <td><span class="text-success">21.5</span><span class="text-hint">/10</span></td>
-                    <td>3100</td>
-                    <td>1.3/<span class="text-success">1.05</span>/1.2</td>
-                    <td>2250/1766</td>
-                    <td>1875.50</td>
-                    <td>1.3/<span class="text-success">1.08</span></td>
-                  </tr>
-                  <tr>
-                    <td>2024年01月07日</td>
-                    <td><span class="text-success">25.0</span><span class="text-hint">/10</span></td>
-                    <td>3500</td>
-                    <td>1.3/<span class="text-success">1.00</span>/1.2</td>
-                    <td>2200/1650</td>
-                    <td>1865.80</td>
-                    <td>1.3/<span class="text-success">1.05</span></td>
-                  </tr>
-                </tbody>
+              <table class="data-table" id="detailTable">
+                <thead id="detailTableHead"></thead>
+                <tbody id="detailTableBody"></tbody>
               </table>
             </div>
           </div>
@@ -1107,16 +1150,23 @@
         <div class="anno anno-field" data-version="v1.0">
           <span class="anno-tag">字段说明</span>
           <span class="anno-version">v1.0</span>
-          <span class="anno-source">引用自古典原型</span>
+          <span class="anno-source">需求文档</span>
           <div class="anno-body">
-            <p><b>关联模块：</b>规则配置弹窗；入口：工具栏「规则配置」</p>
-            <ul>
-              <li><b>月份：</b>1–12 月逐行配置。</li>
-              <li><b>节能率目标值(%)：</b>必填；数字或产品约定格式。</li>
-              <li><b>空调系统 CLF 目标值 / 基准值：</b>必填。</li>
-              <li><b>末端空调 CLF 基准值、冷水主机/冷冻泵/冷却泵 CLF 基准值：</b>选填或按产品规则；用于对比与报表口径。</li>
-              <li><b>详细列定义：</b>古典原型曾引用在线表格维护字段字典，落地时以产品最新配置表为准。</li>
-            </ul>
+            <p><b>关联模块：</b>规则配置弹窗；入口：工具栏「规则配置」（历史 v1.0 字段规则）</p>
+            <p>按 1–12 月逐行手动配置。所有 CLF 保留 3 位小数；节能率目标值保留 2 位小数。</p>
+            <table class="anno-table">
+              <thead><tr><th>字段</th><th>单位/精度</th><th>必填</th><th>规则</th></tr></thead>
+              <tbody>
+                <tr><td>节能率目标值</td><td>% / 2 位</td><td>是</td><td>手动配置，作为日/月目标节能率；年目标节能率取各月配置的平均值。</td></tr>
+                <tr><td>空调系统 CLF 目标值</td><td>— / 3 位</td><td>是</td><td>手动配置，作为日/月目标空调系统 CLF；年目标值取各月配置的平均值。</td></tr>
+                <tr><td>空调系统 CLF 基准值</td><td>— / 3 位</td><td>是</td><td>手动配置，作为日/月基准空调系统 CLF。</td></tr>
+                <tr><td>末端空调 CLF 基准值</td><td>— / 3 位</td><td>否</td><td>手动配置，作为日/月末端空调基准值。</td></tr>
+                <tr><td>冷水主机 CLF 基准值</td><td>— / 3 位</td><td>否</td><td>手动配置，作为日/月冷水主机基准值。</td></tr>
+                <tr><td>冷冻泵 CLF 基准值</td><td>— / 3 位</td><td>否</td><td>手动配置，作为日/月冷冻泵基准值。</td></tr>
+                <tr><td>冷却泵 CLF 基准值</td><td>— / 3 位</td><td>否</td><td>手动配置，作为日/月冷却泵基准值。</td></tr>
+                <tr><td>冷却塔 CLF 基准值</td><td>— / 3 位</td><td>否</td><td>手动配置，作为日/月冷却塔基准值。已同步补入规则配置弹窗，作为日/月冷却塔基准值。</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
         <div class="anno anno-ux" data-version="v1.0">
@@ -1127,7 +1177,7 @@
             <p><b>关联模块：</b>规则配置弹窗</p>
             <ul>
               <li><b>取消 / 关闭：</b>关闭弹窗，未保存修改丢弃或按产品规则提示。</li>
-              <li><b>保存：</b>校验通过后持久化；成功后关闭并刷新主界面相关指标/图表（原型为 <code>alert</code> 占位）。</li>
+              <li><b>保存：</b>校验通过后持久化；成功后关闭并重新查询主界面相关指标、图表与明细，不由页面触发指标或节能结果重算（原型为 <code>alert</code> 占位）。</li>
             </ul>
           </div>
         </div>
@@ -1155,6 +1205,7 @@
               <th>冷水主机CLF<br>基准值</th>
               <th>冷冻泵CLF<br>基准值</th>
               <th>冷却泵CLF<br>基准值</th>
+              <th>冷却塔CLF<br>基准值</th>
             </tr>
           </thead>
           <tbody id="configTableBody">
@@ -1346,6 +1397,86 @@
       compareChart.setOption(compareOption);
       trendChart.setOption(savingOption);
 
+      const detailTitle = document.getElementById('detailTitle');
+      const detailTableHead = document.getElementById('detailTableHead');
+      const detailTableBody = document.getElementById('detailTableBody');
+      const periodPicker = document.getElementById('periodPicker');
+      const detailColumns = [
+        '日期', '实际/目标 节能率(%)', '节省电量(kWh)', '基准/实际/目标 空调系统CLF',
+        '基准/实际 空调系统电量(kWh)', '实际 IT电量(kWh)',
+        '基准/实际 末端空调CLF', '基准/实际 末端空调电量(kWh)',
+        '基准/实际 冷水主机CLF', '基准/实际 冷水主机电量(kWh)',
+        '基准/实际 冷冻泵CLF', '基准/实际 冷冻泵电量(kWh)',
+        '基准/实际 冷却泵CLF', '基准/实际 冷却泵电量(kWh)',
+        '基准/实际 冷却塔CLF', '基准/实际 冷却塔电量(kWh)'
+      ];
+      function buildRows(count, period) {
+        return Array.from({ length: count }, (_, index) => {
+          const it = (period === 'year' ? 56000 + index * 900 : [1878,1850,1861,1880,1890,1876,1866][index]);
+          const baseClf = 1.300;
+          const actualClf = (period === 'year' ? 1.165 - index * 0.006 : [1.230,1.280,1.180,1.150,1.100,1.050,1.000][index]);
+          const targetClf = 1.200;
+          const baseEnergy = Math.round(baseClf * it);
+          const actualEnergy = Math.round(actualClf * it);
+          const actualRate = 100 * (baseClf - actualClf) / baseClf;
+          const label = period === 'year' ? `2024年${String(index + 1).padStart(2,'0')}月` : `2024年01月${String(index + 1).padStart(2,'0')}日`;
+          const pair = (base, actual) => `${base.toFixed(3)}/${actual.toFixed(3)}`;
+          const energyPair = (base, actual) => `${Math.round(base)}/${Math.round(actual)}`;
+          const factor = period === 'year' ? index : index / 2;
+          return [label, `${actualRate.toFixed(2)}/10.00`, String(baseEnergy - actualEnergy),
+            `${baseClf.toFixed(3)}/${actualClf.toFixed(3)}/${targetClf.toFixed(3)}`, energyPair(baseEnergy, actualEnergy), String(Math.round(it)),
+            pair(0.180, 0.165-factor*0.001), energyPair(0.180*it, (0.165-factor*0.001)*it),
+            pair(0.480, 0.430-factor*0.002), energyPair(0.480*it, (0.430-factor*0.002)*it),
+            pair(0.180, 0.165-factor*0.001), energyPair(0.180*it, (0.165-factor*0.001)*it),
+            pair(0.160, 0.145-factor*0.001), energyPair(0.160*it, (0.145-factor*0.001)*it),
+            pair(0.120, 0.110-factor*0.001), energyPair(0.120*it, (0.110-factor*0.001)*it)];
+        });
+      }
+      const dailyRows = buildRows(7, 'month');
+      const monthlyRows = buildRows(12, 'year');
+      function buildAnnualSummary(rows) {
+        const sum = values => values.reduce((total, value) => total + Number(value), 0);
+        const energyPairSum = column => {
+          const pairs = rows.map(row => row[column].split('/').map(Number));
+          return [sum(pairs.map(pair => pair[0])), sum(pairs.map(pair => pair[1]))];
+        };
+        const annualIt = sum(rows.map(row => row[5]));
+        const systemEnergy = energyPairSum(4);
+        const terminalEnergy = energyPairSum(7);
+        const chillerEnergy = energyPairSum(9);
+        const chilledPumpEnergy = energyPairSum(11);
+        const coolingPumpEnergy = energyPairSum(13);
+        const towerEnergy = energyPairSum(15);
+        const clfPair = pair => `${(pair[0] / annualIt).toFixed(3)}/${(pair[1] / annualIt).toFixed(3)}`;
+        const energyText = pair => `${Math.round(pair[0])}/${Math.round(pair[1])}`;
+        const actualRate = 100 * (systemEnergy[0] - systemEnergy[1]) / systemEnergy[0];
+        return ['2024年汇总', `${actualRate.toFixed(2)}/10.00`, String(Math.round(systemEnergy[0] - systemEnergy[1])),
+          `${(systemEnergy[0] / annualIt).toFixed(3)}/${(systemEnergy[1] / annualIt).toFixed(3)}/1.200`, energyText(systemEnergy), String(Math.round(annualIt)),
+          clfPair(terminalEnergy), energyText(terminalEnergy), clfPair(chillerEnergy), energyText(chillerEnergy),
+          clfPair(chilledPumpEnergy), energyText(chilledPumpEnergy), clfPair(coolingPumpEnergy), energyText(coolingPumpEnergy),
+          clfPair(towerEnergy), energyText(towerEnergy)];
+      }
+      const annualSummary = buildAnnualSummary(monthlyRows);
+      function renderDetail(period) {
+        const rows = period === 'year' ? [...monthlyRows, annualSummary] : dailyRows;
+        detailTitle.textContent = period === 'year' ? '每月明细' : '每日明细';
+        detailColumns[0] = period === 'year' ? '月份' : '日期';
+        detailTableHead.innerHTML = `<tr>${detailColumns.map(column => `<th>${column}</th>`).join('')}</tr>`;
+        detailTableBody.innerHTML = rows.map(row => `<tr>${row.map(value => `<td>${value}</td>`).join('')}</tr>`).join('');
+        periodPicker.type = period === 'year' ? 'number' : 'month';
+        periodPicker.value = period === 'year' ? '2024' : '2024-01';
+        periodPicker.min = period === 'year' ? '2020' : '';
+        periodPicker.max = period === 'year' ? '2030' : '';
+      }
+      renderDetail('month');
+      document.querySelectorAll('.segment-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.segment-tab').forEach(item => item.classList.remove('active'));
+          tab.classList.add('active');
+          renderDetail(tab.dataset.period);
+        });
+      });
+
       // 事件绑定
       document.querySelectorAll('.system-tab').forEach(tab => {
         tab.addEventListener('click', (e) => {
@@ -1372,7 +1503,7 @@
 
       // 导出按钮事件
       document.getElementById('exportBtn').addEventListener('click', () => {
-        alert('开始导出每日明细数据...');
+        alert(`开始导出${detailTitle.textContent}数据...`);
       });
 
       // 规则配置弹窗逻辑
@@ -1389,6 +1520,7 @@
         tableHtml += `
           <tr>
             <td>${i}月</td>
+            <td><input type="text" class="edit-input" placeholder="请输入"></td>
             <td><input type="text" class="edit-input" placeholder="请输入"></td>
             <td><input type="text" class="edit-input" placeholder="请输入"></td>
             <td><input type="text" class="edit-input" placeholder="请输入"></td>
