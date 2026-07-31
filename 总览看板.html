@@ -360,6 +360,20 @@
     #gridA .dash-card[data-comp="cost"] { order: 2; }
     .dash-card[hidden] { display: none !important; }
 
+    /* ── 指标类型：实时 / 时间段 ── */
+    .metric-type-seg { margin-right: 4px; }
+    .metric-type-seg button { min-width: 72px; }
+    .period-time-controls { display: inline-flex; align-items: center; gap: 8px; }
+    body[data-metric-mode="realtime"] .period-time-controls,
+    body[data-metric-mode="realtime"] [data-export-module],
+    body[data-metric-mode="realtime"] [data-comp="cost"] { display: none !important; }
+    body[data-metric-mode="realtime"] .trend-donut-side { display: none !important; }
+    body[data-metric-mode="realtime"] .trend-layout { grid-template-columns: minmax(0, 1fr) !important; }
+    body[data-metric-mode="realtime"] .trend-chart-box canvas { height: 286px !important; }
+    .realtime-stamp { font-size: 11px; color: var(--text-hint); margin-top: 4px; }
+    .realtime-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#10B981; margin-right:5px; box-shadow:0 0 0 3px rgba(16,185,129,.12); }
+    @media (max-width: 1100px) { .dash-toolbar { align-items:flex-start; } .dash-toolbar-right { flex-wrap:wrap; justify-content:flex-end; } }
+
     .card-head {
       display: flex;
       align-items: center;
@@ -387,6 +401,22 @@
     .card-head-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
     .card-type-seg { flex-shrink: 0; }
     .card-type-seg button { padding: 5px 12px; font-size: 12px; }
+    .card-export-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 30px;
+      padding: 0 12px;
+      border: 1px solid #D8DEE8;
+      border-radius: 4px;
+      background: #fff;
+      color: #001833;
+      font-size: 13px;
+      white-space: nowrap;
+      transition: color var(--transition), border-color var(--transition), background var(--transition);
+    }
+    .card-export-btn:hover { color: var(--primary); border-color: #AFC9EB; background: #F7FBFF; }
+    .card-export-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--focus-ring); }
     .card-body { flex: 1; padding: 16px 18px 18px; }
 
     /* ── 用能总览（总成本 + 动态 N 能源格 + 折算格，瓦片矩阵） ── */
@@ -1789,10 +1819,11 @@
             <span class="anno-tag">版本信息</span>
             <div class="anno-body">
               <p><b>当前版本：</b>v2.5</p>
-              <p><b>更新日期：</b>2026-07-09</p>
-              <p><b>变更概述：</b>按《存量页面消费与总览看板改造需求方案》整页改造：能耗/成本走对象层聚合；组件按出现规则自动生成（不满足不渲染）；取消双 Tab 与看板配置。2026-07-28：移除「用能总览」「能耗明细」及完整性弹层；标准煤 / 碳排放迁入「能效指标总览」（仅园区/数据中心）；卡片顺序为能效指标 → 趋势分项 → 能耗成本。</p>
-              <p><b>本页演示：</b>园区 / 数据中心 / 系统三个对象，切换可观察组件集变化。</p>
-              <p><b>评审迭代（2026-07-09）：</b>迷你趋势统一 Chart.js；工具条吸顶、大数值万级缩写；能效指标瓦片矩阵（PUE=1+CLF+PLF+OLF）。2026-07-28：用能总览、能耗明细与完整性弹层已删除；折算指标并入能效指标总览。</p>
+              <p><b>更新日期：</b>2026-07-31</p>
+              <p><b>变更概述：</b>总览看板新增「实时 / 历史」全局切换并默认实时；两种模式分别承接当前运行状态与周期经营统计。组件继续按对象、指标注册、计量拓扑和计费前提自动生成，不提供看板配置。</p>
+              <p><b>本页演示：</b>默认进入实时；可切换历史，并在园区 / 数据中心 / 系统三个对象间观察组件集变化。</p>
+              <p><b>实时指标迭代（2026-07-31）：</b>实时为默认态，隐藏顶部时间控件、全部导出及能耗成本；能效仅展示 PUE/CLF/PLF/OLF 的最新有效值、数据时间、瞬时分子/分母和近24小时趋势；能源趋势按分项绘制近24小时逐小时堆叠面积图，流向使用最新有效时刻的瞬时量桑基快照。顶部不展示“24小时”。</p>
+              <p><b>评审迭代（2026-07-09）：</b>迷你趋势统一 Chart.js；工具条吸顶、大数值万级缩写；能效指标瓦片矩阵（PUE=1+CLF+PLF+OLF）。2026-07-28：用能总览、能耗明细与完整性弹层已删除；折算指标并入能效指标总览。2026-07-31：标准煤、碳排放仅统计度量类型为「一次能源」的能源；冷量属于工质，不参与折算。</p>
             </div>
           </div>
 
@@ -1815,7 +1846,7 @@
               <ul>
                 <li><b>零配置：</b>按对象类型、各能源计量拓扑、叶子表具计费方案自动推导组件；不满足规则的组件不渲染、不占位。</li>
                 <li><b>无配置入口：</b>不提供对象级配置、卡片隐藏、拖拽排序；「看板配置」页本版下线。</li>
-                <li><b>本版不做：</b>冷站 COP/EER、节能收益、实时 PUE/DCIE/CUE。</li>
+                <li><b>本版不做：</b>冷站 COP/EER、节能收益、DCIE/CUE；实时模式仅承接 PUE、CLF、PLF、OLF 与能源主瞬时量。</li>
               </ul>
             </div>
           </div>
@@ -1832,8 +1863,8 @@
                 <tr><td>CLF / PLF / OLF</td><td>园区/数据中心 + 对应系统前提；缺输入时瓦片「待配置」</td></tr>
                 <tr><td>WUE</td><td>园区/数据中心 + 水计量 + IT + 可计算</td></tr>
                 <tr><td>能效指标总览</td><td>任一能效瓦片或标准煤/碳排放满足出现规则</td></tr>
-                <tr><td>能耗趋势与流向</td><td>≥1 能源有趋势；卡内能源 Tab；≥2 分项才出环形</td></tr>
-                <tr><td>能耗成本</td><td>≥1 能源同时启用计量且有计费；卡内能源 Tab</td></tr>
+                <tr><td>能耗趋势与流向</td><td>≥1 能源有数据；实时为分项堆叠面积 + 瞬时桑基，时间段为分项环形/堆叠柱 + 累计桑基</td></tr>
+                <tr><td>能耗成本</td><td>仅时间段指标；≥1 能源同时启用计量且有计费；卡内能源 Tab</td></tr>
               </table>
               <p>「不渲染也不占位」≠「卡片在但暂无数据」。</p>
             </div>
@@ -1848,7 +1879,8 @@
               <ul>
                 <li><b>呈现：</b>无分区标题、无隐藏/配置入口；卡片仅由出现规则决定。</li>
                 <li><b>演示对象：</b>云谷园区（电+水+冷，能效齐全）／互盟数据中心（纯电，CLF/PLF/OLF 待配置）／AI路冷水系统（系统，无能效与成本卡）。</li>
-                <li><b>工具条：</b>吸顶；日期 pill 自绘弹层（年/月/日/时段，时段结束早于开始自动对调）。</li>
+                <li><b>指标类型：</b>默认实时；实时隐藏时间控件、所有导出和能耗成本。切到时间段后显示年/月/日/时段与日期 pill；本次会话再次切回时恢复上次时间段选择。</li>
+                <li><b>工具条：</b>吸顶；实时顶部不展示“24小时”，近24小时是卡内固定查询窗口；时间段的结束日期早于开始时自动对调。</li>
                 <li><b>展示：</b>≥1 万缩写为「万+单位」、悬停精确值；趋势/成本卡内能源 Tab 只影响本卡。</li>
               </ul>
             </div>
@@ -1911,11 +1943,11 @@
             <span class="anno-version">v2.5</span>
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>顶栏时间粒度与能耗/成本口径</p>
+              <p><b>关联模块：</b>指标类型、时间窗口与能源口径</p>
               <ul>
-                <li><b>能耗：</b>沿计量拓扑对表具明细 on-read SUM；年→月、月→日、日/时段→小时。</li>
-                <li><b>成本：</b>SUM(表具核算明细.成本金额)，前端不重算电价。</li>
-                <li><b>聚合：</b>坏值/缺失槽不参与聚合、不作 0。</li>
+                <li><b>实时：</b>消费指标工厂 C1 / B1–B4 时序样本；趋势固定近24小时、每小时一个点，缺失不补0；当前值展示样本数据时间。</li>
+                <li><b>实时流向：</b>取最新有效时刻的瞬时快照，沿计量拓扑归集，不对近24小时样本求和。电 / 水 / 冷量分别使用 kW / m³/h / kW。</li>
+                <li><b>时间段：</b>能耗与成本沿计量拓扑汇总；年→月、月→日、日/时段→小时；前端不重算电价或能效。</li>
               </ul>
             </div>
           </div>
@@ -1940,7 +1972,7 @@
             <div class="anno-body">
               <p><b>关联模块：</b>本版待确认（需求方案 §四）</p>
               <ul>
-                <li><b>二次能源折算：</b>冷量等标煤/CO₂ 系数默认 0，可在能源配置改。</li>
+                <li><b>折算参与范围：</b>标准煤、碳排放仅统计度量类型为「一次能源」的能源；其他度量类型不参与；冷量属于工质，因此不参与折算。</li>
                 <li><b>等级依据：</b>PUE 用 GB 40879-2021；WUE 按 WUEev（原型暂用 WUE 值演示）；CLF/PLF/OLF 仅诊断档位、不展示标准来源。</li>
               </ul>
             </div>
@@ -2002,6 +2034,11 @@
                 </div>
               </div>
               <div class="dash-toolbar-right">
+                <div class="dash-seg metric-type-seg" id="metricTypeSeg" role="group" aria-label="数据视角">
+                  <button type="button" class="active" data-metric-mode="realtime" aria-pressed="true">实时</button>
+                  <button type="button" data-metric-mode="period" aria-pressed="false">历史</button>
+                </div>
+                <div class="period-time-controls" id="periodTimeControls">
                 <div class="dash-seg" id="timeDimSeg" role="group" aria-label="时间粒度">
                   <button type="button" data-dim="year" aria-pressed="false">年</button>
                   <button type="button" class="active" data-dim="month" aria-pressed="true">月</button>
@@ -2034,6 +2071,7 @@
                     </div>
                   </div>
                 </div>
+                </div>
               </div>
             </div>
           </div>
@@ -2050,10 +2088,10 @@
                   <p><b>关联模块：</b>能耗趋势与流向</p>
                   <ul>
                     <li><b>Type：</b>卡头右侧切换「趋势分析 / 流向分析」；默认趋势分析。原独立页「能耗流向分析」并入本卡流向 type。</li>
-                    <li><b>趋势分析：</b>单卡多能源 Tab；左环形（≥2 分项才出）+ 右堆叠时序；0/1 分项时总量内联在趋势区顶。</li>
-                    <li><b>流向分析：</b>同能源 Tab 下展示桑基能流图（源→一级分项→二级末端）；根节点=顶栏当前分析对象。带「›」的节点可点，切换顶栏对象（非整页组件内下钻）；时间与趋势共用。</li>
-                    <li><b>堆叠：</b>按子节点或计量对象（见计量配置）；未启用该能源的下级过滤。</li>
-                    <li><b>刻度：</b>≤3 天按小时，≤90 天按天，&gt;90 天按月；≥1 万缩写。</li>
+                    <li><b>实时趋势：</b>按下级分项绘制近24小时逐小时堆叠面积图；各分项相加形成总瞬时量，最后点合计与卡内大数值一致。实时模式不展示分项环形。</li>
+                    <li><b>时间段趋势：</b>左环形（≥2 分项才出）+ 右堆叠柱；0/1 分项时总量内联。≤3天按小时、≤90天按天、其余按月。</li>
+                    <li><b>流向分析：</b>同能源 Tab 下展示桑基；实时为最新有效时刻的瞬时快照，时间段为所选窗口累计量。根节点=顶栏当前分析对象，带「›」节点切换顶栏对象。</li>
+                    <li><b>指标与单位：</b>实时电功率 kW、实时用水量 m³/h、实时冷量 kW；时间段为电能消耗量 kWh、用水量 m³、冷量消耗量 kWh。</li>
                   </ul>
                 </div>
               </div>
@@ -2083,6 +2121,7 @@
                       <button type="button" data-type="trend" class="active" aria-pressed="true">趋势分析</button>
                       <button type="button" data-type="flow" aria-pressed="false">流向分析</button>
                     </div>
+                    <button type="button" class="card-export-btn" data-export-module="trend" aria-label="导出能耗趋势与流向 Excel" title="导出能耗趋势与流向 Excel">导出</button>
                   </div>
                 </div>
                 <div class="card-body trend-card-body">
@@ -2173,12 +2212,12 @@
                     <div class="flow-drill-bar">
                       <div class="flow-bc" id="flowBc" aria-label="当前分析对象"></div>
                       <div class="flow-drill-right">
-                        <span class="flow-unit-pill" id="flowUnitPill">单位：kWh</span>
-                        <span class="flow-drill-tip" id="flowTip">悬停查看用量与占比 · 点击带 › 的节点切换顶部分析对象</span>
+                        <span class="flow-unit-pill" id="flowUnitPill">指标：实时电功率 · 单位：kW</span>
+                        <span class="flow-drill-tip" id="flowTip">悬停查看瞬时值与占比 · 点击带 › 的节点切换顶部分析对象</span>
                       </div>
                     </div>
                     <div class="flow-chart-wrap" id="flowChartWrap">
-                      <div id="flowSankeyChart" role="img" aria-label="能耗流向桑基图"></div>
+                      <div id="flowSankeyChart" role="img" aria-label="实时瞬时量流向桑基图"></div>
                     </div>
                   </div>
                 </div>
@@ -2217,6 +2256,9 @@
                   <div class="card-title">
                     <span class="card-title-dot"></span><span id="t-cost">能耗成本</span>
                     <span class="card-tabs" id="costTabs" role="tablist" aria-label="能耗成本能源切换"></span>
+                  </div>
+                  <div class="card-head-right">
+                    <button type="button" class="card-export-btn" data-export-module="cost" aria-label="导出能耗成本 Excel" title="导出能耗成本 Excel">导出</button>
                   </div>
                 </div>
                 <div class="card-body cost-card-body">
@@ -2312,9 +2354,10 @@
                 <div class="anno-body">
                   <p><b>关联模块：</b>能效指标总览（瓦片矩阵）</p>
                   <ul>
-                    <li><b>形态：</b>单卡瓦片：值、环比、迷你趋势、构成；首行 PUE/CLF/PLF/OLF 带「=1+/+」扫读。</li>
+                    <li><b>实时形态：</b>仅 PUE/CLF/PLF/OLF；展示最新有效值、等级/诊断、样本数据时间、瞬时分子/分母、近24小时逐小时迷你趋势；不展示环比或导出。</li>
+                    <li><b>时间段形态：</b>展示周期值、等级/诊断、环比、近12期趋势和周期分子/分母；恢复 WUE、标准煤、碳排放与导出。</li>
                     <li><b>WUE：</b>=用水量(L)÷IT(kWh)，1 m³=1000 L；有水计量才出。OLF 参与公式，缺输入「待配置」。</li>
-                    <li><b>折算指标（本期迁入）：</b>标准煤、碳排放并入本模块（原用能总览下线）；仅园区 / 数据中心展示；标准煤=Σ(用量×标煤系数)，碳排放=Σ(用量×CO₂系数)；冷量等二次能源系数默认 0。</li>
+                    <li><b>折算指标（本期迁入）：</b>标准煤、碳排放并入本模块（原用能总览下线）；仅园区 / 数据中心展示；只取度量类型为「一次能源」的能源参与计算：标准煤=Σ(一次能源用量×标煤系数)，碳排放=Σ(一次能源用量×CO₂系数)。其他度量类型不参与；冷量属于工质，因此不参与折算。一次能源缺少对应系数时，不计入对应结果并提示系数缺失。</li>
                     <li><b>标签：</b>PUE/WUE 点开国标等级；CLF/PLF/OLF 点开诊断档位（无标准来源）。待配置无入口；折算指标无等级标签。</li>
                     <li><b>环比：</b>越低越好（降绿升红）。</li>
                   </ul>
@@ -2338,6 +2381,9 @@
       <section class="dash-card dash-card--wide" data-comp="efficiency" aria-labelledby="t-eff">
         <div class="card-head">
           <div class="card-title"><span class="card-title-dot"></span><span id="t-eff">能效指标总览</span></div>
+          <div class="card-head-right">
+            <button type="button" class="card-export-btn" data-export-module="efficiency" aria-label="导出能效指标总览 Excel" title="导出能效指标总览 Excel">导出</button>
+          </div>
         </div>
         <div class="card-body">
           <div class="eff-grid" id="effGrid"></div>
@@ -2350,6 +2396,24 @@
 
         </div>
       </main>
+    </div>
+  </div>
+
+
+  <!-- v2.5 卡片级直接导出：三个卡片分别导出当前查询结果 -->
+  <div class="anno anno-data" data-version="v2.5">
+    <span class="anno-tag">产品说明</span>
+    <span class="anno-version">v2.5</span>
+    <span class="anno-source">产品推断</span>
+    <div class="anno-body">
+      <p><b>关联模块：</b>卡片级直接导出（入口：能效指标总览、能耗趋势与流向、能耗成本卡片右上角）</p>
+      <ul>
+        <li><b>适用范围：</b>仅时间段指标展示导出入口；实时指标不存在导出，三个卡片按钮全部隐藏。</li>
+        <li><b>操作结果：</b>时间段模式点击三个卡片的“导出”按钮会下载对应 Mock Excel，并提示“已开始下载”，不再提供二次选择。</li>
+        <li><b>文件命名：</b>下载文件名按“总览看板-模块名-当前对象名-当前时间范围.xlsx”生成，页面切换对象或时间会同步改变文件名。</li>
+        <li><b>Mock 数据说明：</b>三份静态 Excel 中的数据固定为“云谷园区、2026-07”，仅用于评审导出模板结构；页面切换对象或时间只改变下载文件名和交互演示，不会动态改写静态 Excel 内容。</li>
+        <li><b>正式产品口径：</b>正式产品由服务端按页面当前查询对象、时间范围及模块口径实时生成 Excel；卡内存在能源 Tab 时，应导出当前查询结果中的所有可用能源，不只导出当前激活 Tab。</li>
+      </ul>
     </div>
   </div>
 
@@ -2825,6 +2889,39 @@
       document.getElementById('dashToastClose').addEventListener('click', hideToast)
       toastUndo.addEventListener('click', hideToast)
 
+
+      /* ── 卡片级直接导出：下载内置 Mock Excel，查询条件仅用于动态文件名 ── */
+      var EXPORT_MODULES = {
+        efficiency: { name: '能效指标总览', file: '总览看板导出模板-能效指标总览.xlsx' },
+        trend: { name: '能耗趋势与流向', file: '总览看板导出模板-能耗趋势与流向.xlsx' },
+        cost: { name: '能耗成本', file: '总览看板导出模板-能耗成本.xlsx' }
+      }
+      function sanitizeDownloadFilenamePart (value, fallback) {
+        var cleaned = String(value || '').replace(/[\\/:*?"<>|\x00-\x1F]/g, '-').replace(/\s+/g, ' ').trim()
+        return cleaned.replace(/[. ]+$/g, '') || fallback
+      }
+      document.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-export-module]')
+        if (!btn) return
+        var exportModule = EXPORT_MODULES[btn.getAttribute('data-export-module')]
+        if (!exportModule) return
+        var currentObject = DEMO_OBJECTS[currentKey]
+        var objectName = sanitizeDownloadFilenamePart(currentObject && currentObject.label, '当前对象')
+        var timeLabel = document.getElementById('datePillLabel')
+        var timeRange = sanitizeDownloadFilenamePart(timeLabel && timeLabel.textContent, '当前查询时段')
+        var downloadName = ['总览看板', exportModule.name, objectName, timeRange].map(function (part) {
+          return sanitizeDownloadFilenamePart(part, '未命名')
+        }).join('-') + '.xlsx'
+        var link = document.createElement('a')
+        link.href = 'assets/export-templates/' + encodeURIComponent(exportModule.file)
+        link.download = downloadName
+        link.style.display = 'none'
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+        showToast('<b>' + escapeHtml(exportModule.name) + ' Excel</b> 已开始下载（' + escapeHtml(timeRange) + '）', false)
+      })
+
       /* 取数骨架：模拟异步查询 */
       function setLoading (on) {
         document.querySelectorAll('.dash-card').forEach(function (c) {
@@ -3141,16 +3238,22 @@
         'carbon': function (o) { return isParkOrDc(o) && hasConversionMetric(o, 'carbon') }
       }
       function effTileList (o) {
-        return Object.keys(EFF_TILE_RULES).filter(function (id) { return EFF_TILE_RULES[id](o) })
+        var realtimeIds = ['pue-energy', 'clf', 'plf', 'olf']
+        return Object.keys(EFF_TILE_RULES).filter(function (id) {
+          return EFF_TILE_RULES[id](o) && (metricMode !== 'realtime' || realtimeIds.indexOf(id) !== -1)
+        })
       }
 
       /* 出现规则总表（§3.3 + 评审迭代的展示层聚合）：判定输入 = 对象类型 × 各能源计量拓扑 × 计费方案 */
       var RULES = {
-        'cost': function (o) { return costEnergies(o).length >= 1 },
+        'cost': function (o) { return metricMode === 'period' && costEnergies(o).length >= 1 },
         'trend': function (o) { return trendEnergies(o).length >= 1 },
         'efficiency': function (o) { return effTileList(o).length >= 1 }
       }
 
+      var metricMode = 'realtime' /* realtime | period；进入页面默认实时 */
+      window.__dashMetricMode = function () { return metricMode }
+      document.body.setAttribute('data-metric-mode', metricMode)
       var currentKey = 'hvac'
       var STANDARD_LEVEL_CLASS = {
         '1级': 'level-good',
@@ -3350,6 +3453,8 @@
 
       /* ── 渲染：能耗趋势与流向（type：趋势分析 / 流向分析；能源 Tab 共用） ── */
       var TREND_UNIT = { elec: 'kWh', water: 'm³', cooling: 'kWh' }
+      var REALTIME_UNIT = { elec: 'kW', water: 'm³/h', cooling: 'kW' }
+      var REALTIME_TOTAL = { elec: '1,248.0', water: '62.4', cooling: '4,380.0' }
       var trendViewType = 'trend' /* trend | flow */
       var trendEnergyKey = 'elec'
       function applyTrendTypeView () {
@@ -3396,10 +3501,12 @@
         Object.keys(map).forEach(function (energy) {
           var t = o.data.trends && o.data.trends[energy]
           if (!t) return
-          var f = fmtWan(t.total)
-          var baseUnit = TREND_UNIT[energy]
-          setText(map[energy][0], f.wan ? f.text : t.total)
-          setText(map[energy][1], f.wan ? '万' + baseUnit : baseUnit)
+          var realtime = metricMode === 'realtime'
+          var rawTotal = realtime ? REALTIME_TOTAL[energy] : t.total
+          var f = fmtWan(rawTotal)
+          var baseUnit = realtime ? REALTIME_UNIT[energy] : TREND_UNIT[energy]
+          setText(map[energy][0], realtime ? rawTotal : (f.wan ? f.text : t.total))
+          setText(map[energy][1], realtime ? baseUnit : (f.wan ? '万' + baseUnit : baseUnit))
           var valEl = document.getElementById(map[energy][0])
           if (valEl) valEl.parentElement.title = f.wan ? t.total + ' ' + baseUnit : ''
           var legendHost = document.getElementById(map[energy][2])
@@ -3446,7 +3553,7 @@
           var side = document.getElementById(map[energy][1])
           var layout = document.getElementById(map[energy][2])
           var inline = document.getElementById(map[energy][3])
-          var eligible = !!s && metered(o, energy) && Array.isArray(s.parts) && s.parts.length > 1
+          var eligible = metricMode === 'period' && !!s && metered(o, energy) && Array.isArray(s.parts) && s.parts.length > 1
           if (side) side.hidden = !eligible
           if (inline) inline.hidden = eligible
           if (layout) layout.classList.toggle('trend-layout--with-donut', eligible)
@@ -3663,19 +3770,19 @@
         },
         {
           id: 'coal', name: '标准煤', color: '#F59E0B', trendDown: true, conversion: true,
-          tip: '标准煤 = Σ(各能源用量 × 标煤折算系数)；冷量等二次能源系数默认 0',
+          tip: '标准煤 = Σ(一次能源用量 × 标煤折算系数)；仅度量类型为一次能源的能源参与计算',
           get: function (d) { return overviewItemByIco(d, 'coal') },
           value: function (m) { return m.value },
           unit: 'tce',
-          rows: function () { return [['口径', '各能源折算合计']] }
+          rows: function () { return [['口径', '一次能源折算合计']] }
         },
         {
           id: 'carbon', name: '碳排放', color: '#10B981', trendDown: true, conversion: true,
-          tip: '碳排放 = Σ(各能源用量 × CO₂ 折算系数)；冷量等二次能源系数默认 0',
+          tip: '碳排放 = Σ(一次能源用量 × CO₂ 折算系数)；仅度量类型为一次能源的能源参与计算',
           get: function (d) { return overviewItemByIco(d, 'carbon') },
           value: function (m) { return m.value },
           unit: 'tCO₂',
-          rows: function () { return [['口径', '各能源折算合计']] }
+          rows: function () { return [['口径', '一次能源折算合计']] }
         }
       ]
 
@@ -3696,15 +3803,28 @@
         canvasId: effChartCanvasId
       }
 
+      function realtimeMetricRows (tile, metric, object) {
+        var factor = object.type === 'park' ? 1 : 0.86
+        var it = 1008 * factor
+        var values = {
+          'pue-energy': [['总实时功率', (it * parseFloat(metric.reading || metric.value || 1)).toFixed(1) + ' kW'], ['IT 实时功率', it.toFixed(1) + ' kW']],
+          'clf': [['暖通实时功率', (it * parseFloat(metric.value)).toFixed(1) + ' kW'], ['IT 实时功率', it.toFixed(1) + ' kW']],
+          'plf': [['配电实时功率', (it * parseFloat(metric.value)).toFixed(1) + ' kW'], ['IT 实时功率', it.toFixed(1) + ' kW']],
+          'olf': [['其他实时功率', (it * parseFloat(metric.value)).toFixed(1) + ' kW'], ['IT 实时功率', it.toFixed(1) + ' kW']]
+        }
+        return values[tile.id] || tile.rows(metric)
+      }
+
       function renderEfficiency (o) {
         var grid = document.getElementById('effGrid')
         if (grid) {
           var h = ''
           EFF_TILES.forEach(function (t) {
             if (!EFF_TILE_RULES[t.id](o)) return
+            if (metricMode === 'realtime' && ['pue-energy', 'clf', 'plf', 'olf'].indexOf(t.id) === -1) return
             var m = t.get(o.data)
             var pending = !m
-            var rows = pending ? effPendingRows(t) : t.rows(m)
+            var rows = pending ? effPendingRows(t) : (metricMode === 'realtime' ? realtimeMetricRows(t, m, o) : t.rows(m))
             var valueText = pending ? '待配置' : t.value(m)
             var displayVal = valueText
             var displayUnit = t.unit || ''
@@ -3716,7 +3836,7 @@
               if (f.wan) titleAttr = ' title="' + escapeHtml(String(valueText).replace(/,/g, '') + ' ' + (m.unit || t.unit || '')) + '"'
             }
             var badgeHtml = pending || t.conversion ? '' : effStandardBadge(t, m, valueText)
-            var deltaHtml = pending ? '' : (t.conversion ? conversionDeltaBadge(m) : effDeltaBadge(m))
+            var deltaHtml = metricMode === 'realtime' || pending ? '' : (t.conversion ? conversionDeltaBadge(m) : effDeltaBadge(m))
             h += '<div class="eff-tile' + (pending ? ' is-pending' : '') + '" data-eff="' + t.id + '" style="--tile-color:' + t.color + '"' + (t.formula ? ' data-formula="' + t.formula + '"' : '') + '>'
               + '<div class="eff-tile-head">'
               + '<span class="eff-tile-name" title="' + t.tip + '">' + t.name + '</span>'
@@ -3728,6 +3848,7 @@
               + deltaHtml
               + '</div>'
               + (pending ? '<div class="eff-spark eff-spark--empty" aria-hidden="true"></div>' : '<div class="eff-spark">' + effTrendSpark(t, o, m, valueText) + '</div>')
+              + (metricMode === 'realtime' && !pending ? '<div class="realtime-stamp"><span class="realtime-dot"></span>最新有效值 · ' + pad2(new Date().getHours()) + ':' + pad2(new Date().getMinutes()) + '</div>' : '')
               + '<div class="eff-tile-foot">'
               + rows.map(function (r) {
                   return '<div class="eff-foot-row"><span>' + r[0] + '</span><b>' + r[1] + '</b></div>'
@@ -3738,6 +3859,39 @@
           grid.innerHTML = h
         }
       }
+
+      function applyMetricMode () {
+        document.body.setAttribute('data-metric-mode', metricMode)
+        document.querySelectorAll('#metricTypeSeg [data-metric-mode]').forEach(function (btn) {
+          var on = btn.getAttribute('data-metric-mode') === metricMode
+          btn.classList.toggle('active', on)
+          btn.setAttribute('aria-pressed', on ? 'true' : 'false')
+        })
+        var chartLabels = {
+          chartTrendElec: metricMode === 'realtime' ? '电实时功率分项堆叠面积趋势图' : '电能耗堆叠柱状趋势图',
+          chartTrendWater: metricMode === 'realtime' ? '水实时流量分项堆叠面积趋势图' : '水能耗堆叠柱状趋势图',
+          chartTrendCooling: metricMode === 'realtime' ? '实时冷量分项堆叠面积趋势图' : '冷量堆叠柱状趋势图'
+        }
+        Object.keys(chartLabels).forEach(function (id) {
+          var el = document.getElementById(id)
+          if (el) el.setAttribute('aria-label', chartLabels[id] + '（可悬停查看每小时数据）')
+        })
+        renderAllData(DEMO_OBJECTS[currentKey])
+        applyRules()
+      }
+      ;(function bindMetricTypeSeg () {
+        var seg = document.getElementById('metricTypeSeg')
+        if (!seg) return
+        seg.addEventListener('click', function (e) {
+          var btn = e.target.closest('[data-metric-mode]')
+          if (!btn) return
+          var next = btn.getAttribute('data-metric-mode')
+          if (!next || next === metricMode) return
+          metricMode = next
+          window.__dashMetricMode = function () { return metricMode }
+          applyMetricMode()
+        })
+      }())
 
       function renderAllData (o) {
         renderCostCards(o)
@@ -3846,7 +4000,8 @@
         setObject: setObject,
         childrenOf: function (key) { return OBJECT_CHILDREN[key] || [] },
         hasObject: function (key) { return !!DEMO_OBJECTS[key] },
-        costTouParts: costTouParts
+        costTouParts: costTouParts,
+        metricMode: function () { return metricMode }
       }
       /* 时间粒度/日期变化：短骨架模拟重新取数 */
       window.__afterDimChange = function () {
@@ -3961,7 +4116,11 @@
     /* ══════════ 流向分析 · 桑基（根=顶栏对象；节点点击切换顶栏对象，非组件内下钻） ══════════ */
     (function () {
       'use strict'
-      var UNIT = { elec: 'kWh', water: 'm³', cooling: 'kWh' }
+      var PERIOD_UNIT = { elec: 'kWh', water: 'm³', cooling: 'kWh' }
+      var REALTIME_UNIT = { elec: 'kW', water: 'm³/h', cooling: 'kW' }
+      var REALTIME_METRIC_NAME = { elec: '实时电功率', water: '实时用水量', cooling: '实时冷量' }
+      var PERIOD_METRIC_NAME = { elec: '电能消耗量', water: '用水量', cooling: '冷量消耗量' }
+      var REALTIME_FLOW_TOTAL = { elec: 1247.9, water: 62.4, cooling: 4380.0 }
       var ENERGY_FACTOR = { elec: 1, water: 0.00048, cooling: 0.24 }
       var ROOM_COLORS = ['#7C3AED', '#8B5CF6', '#A78BFA', '#9333EA']
       var ctx = { objectKey: 'park', objectLabel: '云谷园区', energy: 'elec' }
@@ -3974,7 +4133,15 @@
         return Number(v).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
       }
       function pct (v, total) { return total > 0 ? ((v / total) * 100).toFixed(2) : '0.00' }
-      function unit () { return UNIT[ctx.energy] || 'kWh' }
+      function isRealtime () { return !!(window.__dashMetricMode && window.__dashMetricMode() === 'realtime') }
+      function unit () {
+        var units = isRealtime() ? REALTIME_UNIT : PERIOD_UNIT
+        return units[ctx.energy] || (isRealtime() ? '' : 'kWh')
+      }
+      function metricName () {
+        var names = isRealtime() ? REALTIME_METRIC_NAME : PERIOD_METRIC_NAME
+        return names[ctx.energy] || (isRealtime() ? '实时瞬时量' : '能源用量')
+      }
       function selectable (node) {
         return !!(node && node.objectKey && window.__dashObjectApi && window.__dashObjectApi.hasObject(node.objectKey))
       }
@@ -4095,6 +4262,16 @@
             color: '#1E40AF', children: kids
           }
         }
+        if (isRealtime() && root && root.total > 0) {
+          var target = REALTIME_FLOW_TOTAL[ctx.energy]
+          var ratio = Number.isFinite(target) ? target / root.total : 1
+          function scaleNode (node) {
+            if (typeof node.value === 'number') node.value = round2(node.value * ratio)
+            ;(node.children || []).forEach(scaleNode)
+          }
+          root.children.forEach(scaleNode)
+          root.total = round2(root.children.reduce(function (sum, child) { return sum + child.value }, 0))
+        }
         return root
       }
 
@@ -4109,12 +4286,12 @@
           var d = params.data
           return box(
             '<div style="font-weight:600;margin-bottom:6px;">' + d.sourceLabel + ' <span style="opacity:.55;">›</span> ' + d.targetLabel + '</div>' +
-            row('流向', fmt(d.real) + ' ' + u) +
+            row(isRealtime() ? '瞬时流向' : '流向', fmt(d.real) + ' ' + u) +
             row('占 ' + d.sourceLabel, d.pctParent + '%')
           )
         }
         var n = params.data
-        var rows = row('用量', fmt(n.real) + ' ' + u)
+        var rows = row(metricName(), fmt(n.real) + ' ' + u)
         if (n.pctParent != null) rows += row('占' + (n.parentName || '父级'), n.pctParent + '%')
         if (n.pctTotal != null) rows += row('占总计', n.pctTotal + '%')
         if (n.selectObject) {
@@ -4267,12 +4444,14 @@
           pillBtn.appendChild(document.createTextNode(ctx.objectLabel || '当前对象'))
           nav.appendChild(pillBtn)
         }
-        if (pill) pill.textContent = '单位：' + unit()
+        if (pill) pill.textContent = '指标：' + metricName() + ' · 单位：' + unit()
+        if (chartEl) chartEl.setAttribute('aria-label', (isRealtime() ? '实时瞬时量' : '时间段用量') + '流向桑基图')
         if (tip) {
           var hasSelectable = !!(tree && (tree.children || []).some(selectable))
+          var valueText = isRealtime() ? '瞬时值与占比' : '用量与占比'
           tip.textContent = hasSelectable
-            ? '悬停查看用量与占比 · 点击带 › 的节点，切换顶部分析对象'
-            : '悬停查看用量与占比 · 当前对象无下级可选节点，请用顶部路径返回上级'
+            ? '悬停查看' + valueText + ' · 点击带 › 的节点，切换顶部分析对象'
+            : '悬停查看' + valueText + ' · 当前对象无下级可选节点，请用顶部路径返回上级'
         }
       }
 
@@ -4329,7 +4508,19 @@
 
       var charts = {}
 
+      function realtimeLabels () {
+        var labels = []
+        var now = new Date()
+        now.setMinutes(0, 0, 0)
+        for (var i = 23; i >= 0; i--) {
+          var d = new Date(now.getTime() - i * 3600000)
+          labels.push(String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') + ' ' + String(d.getHours()).padStart(2, '0') + ':00')
+        }
+        return labels
+      }
+
       function getLabels () {
+        if (window.__dashMetricMode && window.__dashMetricMode() === 'realtime') return realtimeLabels()
         var api = window.__dashboardChartsApi
         if (!api || typeof api.buildSevenAxisLabels !== 'function') return ['—', '—', '—', '—', '—', '—', '—']
         return api.buildSevenAxisLabels()
@@ -4366,6 +4557,84 @@
           out.push(Math.max(scale * 0.12, Math.round(t * 10) / 10))
         }
         return out
+      }
+
+      /* 实时分项堆叠面积：各分项相加形成总瞬时量顶部轮廓 */
+      function ensureRealtimeStackedArea (key, canvasId, stackCfg, labels, seed, unit, totalId) {
+        var el = document.getElementById(canvasId)
+        if (!el || !stackCfg) return
+        var data = stackedSeries(labels.length, seed, stackCfg.bases, stackCfg.scale)
+        var rawLastTotal = data.reduce(function (sum, series) { return sum + (series[series.length - 1] || 0) }, 0)
+        var calibrate = rawLastTotal > 0 ? stackCfg.scale / rawLastTotal : 1
+        data = data.map(function (series) { return series.map(function (value) { return Math.round(value * calibrate * 10) / 10 }) })
+        var lastTotal = data.reduce(function (sum, series) { return sum + (series[series.length - 1] || 0) }, 0)
+        var totalEl = document.getElementById(totalId)
+        if (totalEl) totalEl.textContent = lastTotal.toLocaleString('zh-CN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+        var sig = 'realtime-area|' + stackCfg.labels.join('|')
+        function tooltipFooter (items) {
+          var total = 0
+          items.forEach(function (it) { total += it.parsed.y || 0 })
+          return '合计：' + total.toLocaleString('zh-CN', { maximumFractionDigits: 1 }) + ' ' + unit
+        }
+        var datasets = stackCfg.labels.map(function (name, i) {
+          var color = stackCfg.colors[i]
+          return {
+            label: name,
+            data: data[i],
+            stack: 'instant',
+            fill: true,
+            tension: 0.35,
+            pointRadius: 0,
+            pointHitRadius: 12,
+            pointHoverRadius: 4,
+            pointBackgroundColor: '#FFFFFF',
+            pointBorderColor: color,
+            pointBorderWidth: 1.4,
+            borderWidth: 1.6,
+            borderColor: color,
+            backgroundColor: rgbaFromHex(color, 0.72)
+          }
+        })
+        if (charts[key] && charts[key].sig === sig && charts[key].chart.canvas === el) {
+          var current = charts[key].chart
+          current.data.labels = labels
+          current.data.datasets = datasets
+          current.options.plugins.tooltip.callbacks.footer = tooltipFooter
+          current.update('none')
+          current.resize()
+          return
+        }
+        destroyChart(key)
+        charts[key] = {
+          sig: sig,
+          chart: new Chart(el.getContext('2d'), {
+            type: 'line',
+            data: { labels: labels, datasets: datasets },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: false,
+              interaction: { mode: 'index', axis: 'x', intersect: false },
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  enabled: false,
+                  external: externalMiniTooltip,
+                  callbacks: {
+                    title: function (items) { return items.length ? '时间：' + items[0].label : '' },
+                    label: function (ctx) { return ctx.dataset.label + '：' + Number(ctx.parsed.y).toLocaleString('zh-CN', { maximumFractionDigits: 1 }) + ' ' + unit },
+                    footer: tooltipFooter
+                  }
+                }
+              },
+              scales: {
+                x: { stacked: true, grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } },
+                y: { stacked: true, beginAtZero: true, title: { display: true, text: unit }, grid: { color: '#EAF0F6' } }
+              }
+            }
+          })
+        }
+        bindMiniTipLeave(el)
       }
 
       /* 堆叠柱状图：数据集结构变化时销毁重建；tooltip 挂 body 避免卡片 overflow 裁切 */
@@ -4588,6 +4857,7 @@
       }
 
       function getEfficiencyLabels () {
+        if (window.__dashMetricMode && window.__dashMetricMode() === 'realtime') return realtimeLabels()
         var api = window.__dashboardChartsApi
         if (!api || typeof api.buildEfficiencyTrendLabels !== 'function') {
           return ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
@@ -4863,15 +5133,24 @@
           ensureArea('costWater', 'chartCostWater', labels, seed + 2, o.data.costWater.scale)
         }
         if (o.data.trends) {
-          if (o.data.trends.elec) {
-            ensureStacked('trendElec', 'chartTrendElec', o.data.trends.elec, labels, seed + 1, o.data.trends.elec.axisUnit, o.data.trends.elec.axisUnit)
+          var realtime = window.__dashMetricMode && window.__dashMetricMode() === 'realtime'
+          var realtimeCfg = {
+            elec: { canvas: 'chartTrendElec', color: '#3B82F6', unit: 'kW', scale: 1248 },
+            water: { canvas: 'chartTrendWater', color: '#0891B2', unit: 'm³/h', scale: 62.4 },
+            cooling: { canvas: 'chartTrendCooling', color: '#8B5CF6', unit: 'kW', scale: 4380 }
           }
-          if (o.data.trends.water) {
-            ensureStacked('trendWater', 'chartTrendWater', o.data.trends.water, labels, seed + 3, o.data.trends.water.axisUnit, o.data.trends.water.axisUnit)
-          }
-          if (o.data.trends.cooling) {
-            ensureStacked('trendCooling', 'chartTrendCooling', o.data.trends.cooling, labels, seed + 4, o.data.trends.cooling.axisUnit, o.data.trends.cooling.axisUnit)
-          }
+          Object.keys(realtimeCfg).forEach(function (energy) {
+            if (!o.data.trends[energy]) return
+            var key = 'trend' + energy.charAt(0).toUpperCase() + energy.slice(1)
+            var cfg = realtimeCfg[energy]
+            if (realtime) {
+              var totalIds = { elec: 'trendElecTotal', water: 'trendWaterTotal', cooling: 'trendCoolingTotal' }
+              ensureRealtimeStackedArea(key, cfg.canvas, Object.assign({}, o.data.trends[energy], { scale: cfg.scale }), labels, seed + energy.length, cfg.unit, totalIds[energy])
+            } else {
+              if (charts[key] && charts[key].chart.config.type !== 'bar') destroyChart(key)
+              ensureStacked(key, cfg.canvas, o.data.trends[energy], labels, seed + energy.length, o.data.trends[energy].axisUnit, o.data.trends[energy].axisUnit)
+            }
+          })
         }
         if (o.data.subitem) {
           if (o.data.subitem.elec) {

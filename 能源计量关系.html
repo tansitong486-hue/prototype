@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>能源计量关系</title>
+  <title>能源拓扑配置</title>
   <link rel="stylesheet" href="annotation-styles.css">
   <style>
     :root {
@@ -24,7 +24,7 @@
       --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
       --transition: .22s cubic-bezier(.4, 0, .2, 1);
       --tree-w: 300px;
-      --meter-w: 250px;
+      --meter-w: 280px;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -233,8 +233,13 @@
     .tree-row:hover { background: rgba(30, 64, 175, 0.06); color: var(--text-primary); }
     .tree-row.active { background: rgba(30, 64, 175, 0.12); color: var(--primary); font-weight: 600; }
     .tree-row.dragging { opacity: .45; }
+    .tree-row.component-node { color: #475569; }
     .tree-chevron { width: 14px; font-size: 10px; color: var(--text-hint); cursor: pointer; flex-shrink: 0; }
     .tree-label { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+    .tree-node-badge {
+      flex: none; padding: 1px 4px; border-radius: 4px;
+      background: #EFF6FF; color: #2563EB; font-size: 9px; line-height: 16px;
+    }
     .tree-children { padding-left: 14px; }
     .tree-hint {
       margin: 8px 12px 12px; padding: 8px 10px; border-radius: 8px;
@@ -330,8 +335,17 @@
     }
     .tag-obj { background: #F1F5F9; color: var(--text-secondary); }
     .tag-meter { background: #ECFDF5; color: var(--success); }
+    .tag-relation-metering { background: #ECFDF5; color: #047857; }
+    .tag-relation-supply { background: #EFF6FF; color: #1D4ED8; }
+    .relation-type-select {
+      width: 92px; height: 28px; padding: 0 24px 0 8px;
+      border: 1px solid var(--border); border-radius: 6px;
+      background: #fff; color: var(--text-primary); font-size: 12px;
+    }
+    .relation-type-select:focus { outline: none; border-color: var(--primary); }
     .tag-error { background: #FEF2F2; color: var(--danger); }
     .tag-pending { background: #F1F5F9; color: var(--text-secondary); }
+    .direction-na { color: var(--text-hint); font-size: 13px; }
     .btn-del {
       height: 28px;
       padding: 0 10px;
@@ -383,16 +397,25 @@
     }
     .meter-filter select:focus,
     .meter-filter input:focus { outline: none; border-color: var(--primary); }
-    .meter-list { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+    .meter-list { padding: 6px 8px; display: flex; flex-direction: column; gap: 4px; }
     .meter-item {
-      padding: 8px 10px; border: 1px solid var(--border-light); border-radius: 8px;
-      background: #fff; cursor: grab;
+      box-sizing: border-box; height: 48px; padding: 5px 8px;
+      border: 1px solid var(--border-light); border-radius: 6px;
+      background: #fff; cursor: grab; overflow: hidden;
     }
     .meter-item:hover { border-color: var(--primary); }
-    .meter-item.disabled { opacity: .45; cursor: not-allowed; }
+    .meter-item.disabled { opacity: .58; cursor: not-allowed; }
     .meter-item.component { border-left: 3px solid #93C5FD; }
-    .meter-name { font-size: 12px; font-weight: 600; }
-    .meter-meta { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; font-size: 11px; color: var(--text-hint); align-items: center; }
+    .meter-name { height: 17px; line-height: 17px; font-size: 12px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .meter-meta { display: flex; flex-wrap: nowrap; gap: 3px; height: 18px; margin-top: 2px; font-size: 10px; line-height: 16px; color: var(--text-hint); align-items: center; min-width: 0; overflow: hidden; }
+    .meter-code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .relation-badge {
+      display: inline-flex; align-items: center; flex: none;
+      height: 18px; box-sizing: border-box; padding: 1px 5px;
+      border-radius: 4px; font-size: 9px; font-weight: 600; white-space: nowrap;
+    }
+    .relation-badge.metering { border: 1px solid #A7F3D0; background: #ECFDF5; color: #047857; }
+    .relation-badge.supply { border: 1px solid #BFDBFE; background: #EFF6FF; color: #1D4ED8; }
     .tag-comp { background: #EFF6FF; color: var(--primary); }
     .tag-dev { background: #F1F5F9; color: var(--text-secondary); }
     .tag-muted { background: #F1F5F9; color: var(--text-hint); }
@@ -497,9 +520,9 @@
             <span class="anno-version">v2.5</span>
             <div class="anno-body">
               <p><b>当前版本：</b>v2.5</p>
-              <p><b>更新日期：</b>2026-07-28</p>
-              <p><b>变更概述：</b>能源计量关系改版：① 全局能源 Tab，选项跟随《能源配置》能源类型主数据动态扩展（非写死三类），主工作区按当前能源动态切换展示与配置；② 左树支持空间/容量/能效三视图，并按当前能源标注已配置/未配置；③ Excel 更新改为三段式「下载当前配置 → 上传修改文件 → 检查结果并确认替换」，弹窗内可下载（与页头导出同文件），文案面向实施；工作簿仍含关系清单与对照 5 个 Sheet，失败可下载带问题原因的错误文件；④ 中间关系表支持拖拽；⑤ 下方提供「今日试算」（按计量关系展开到表具）与表具明细跳转。</p>
-              <p><b>本页说明（2026-07-29 更新）：</b>计量拓扑的<b>批量作业入口</b>——多视图对象树、跨对象连续配置与 Excel 全局导入导出只在本页；<b>单个对象</b>的计量关系也可在《能效视图》「能效配置」Tab 点「配置」在弹窗内完成，两处写同一份「能耗计量」关系对象、共用同一套图约束校验。<b>页面按能源类型分域展示与编辑</b>——页头 Tab 列表 =《能源配置》当前有效能源类型；同一对象在各能源下可各有一套独立拓扑。切换能源 Tab 后，左树配置态、中间关系表、右侧表具池、今日试算全部只展示当前能源口径。查重键为「表具 + 能源类型」。对象用能量 = Σ输入 − Σ输出。页头「导入」走 Excel 三段式更新（下载→上传→检查替换）；「导出」为快捷下载，与弹窗第 1 步同一文件。</p>
+              <p><b>更新日期：</b>2026-07-30</p>
+              <p><b>变更概述：</b>页面名称调整为「能源拓扑配置」，同时维护能耗计量与供电两类拓扑：① 中间关系列表新增“关系类型”列；② 仅能耗计量关系设置输入 / 输出方向，供电关系方向固定并显示为“—”；③ 表具池以两行紧凑卡片标识可配置的拓扑关系类型；④ 状态筛选仅区分“未关联 / 已关联”，默认展示未关联；⑤ 对象树支持选择设备实例及其下级组件实例作为计量对象。</p>
+              <p><b>本页说明：</b>本页用于跨对象配置能耗计量关系和供电关系。两类关系独立保存、独立校验；同一列头柜支路可以同时参与两类关系。页头能源 Tab、对象树、关系表和表具池按当前能源类型展示；今日试算只读取能耗计量关系。Excel 导入导出继续用于能耗计量关系。</p>
             </div>
           </div>
           <div class="anno anno-req" data-version="v2.5">
@@ -507,19 +530,19 @@
             <span class="anno-version">v2.5</span>
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
-              <p><b>页面定位与范围（需求 4 / §5.3.2）：</b></p>
+              <p><b>页面定位与范围（需求 3 / §4.4）：</b></p>
               <ul>
-                <li><b>与《能效视图》的分工：</b>本页面向实施的<strong>批量作业</strong>（跨对象连续配置、多视图树、Excel 全局导入导出）；<strong>单对象</strong>配置在《能效视图》「能效配置」Tab 的「能源计量关系」行点「配置」，在弹窗内完成。两处产物、校验、查重键完全一致，任一处改动对另一处立即可见。</li>
+                <li><b>与《能效视图》的分工：</b>本页面向实施的<strong>批量作业</strong>（跨对象连续配置、多视图树、Excel 全局导入导出）；<strong>单对象</strong>配置在《能效视图》「能效配置」Tab 的「能源拓扑配置」行点「配置」，在弹窗内完成。两处产物、校验规则一致，任一处改动对另一处立即可见。</li>
                 <li><b>能源分域（核心）：</b>主工作区不是「一套关系看全部能源」，而是「先选能源类型，再只看/只配该能源」。各能源拓扑彼此独立，禁止跨能源混配、混算。</li>
                 <li><b>能源类型来源：</b>页头 Tab 不在本页维护，<strong>跟随《能源配置》能源类型列表动态扩展</strong>（预置电/水/冷量的可删性等规则仍以《能源配置》为准；本页原型示意为当前三类）。</li>
-                <li>主路径：选能源 Tab → 选视图/对象 → 拖入下级对象或表具到关系表 → 改方向；点「今日试算」按<strong>当前能源</strong>计量关系重算表具用量。</li>
-                <li>左树「已配置/未配置」、中间直接关系表、右侧表具池、今日试算单位与数据，均随当前能源 Tab 动态切换；中间表只展示当前对象在<strong>当前能源</strong>下的直接关系。</li>
+                <li>主路径：选能源 Tab → 从视图树选择设备实例或组件实例 → 从表具池拖入对象或表具 → 在“关系类型”列确认能耗计量或供电。只有能耗计量关系可设置计量方向。</li>
+                <li>左树「已配置/未配置」、中间拓扑关系列表、右侧表具池和今日试算均随当前能源 Tab 动态切换；表具池仅标识每个表具可配置的拓扑关系类型。</li>
                 <li>今日试算按计量关系向下展开到实际表具后做有符号汇总（原型 mock）；按钮固定为「今日试算」，点击即重算。</li>
               </ul>
             </div>
           </div>
 
-          <div class="breadcrumb-bar">工程配置 / 能源配置 / 能源计量关系</div>
+          <div class="breadcrumb-bar">工程配置 / 能源配置 / 能源拓扑配置</div>
 
           <div class="anno anno-ux" data-version="v2.5">
             <span class="anno-tag">交互说明</span>
@@ -545,9 +568,10 @@
               <ul>
                 <li><b>主数据依赖：</b>能源类型名称、累计量单位、实时值单位、成对测点定义均在《能源配置》维护。本页只消费：Tab 列表 = 有效能源类型；试算/展示用量单位 = 该能源的<strong>累计量单位</strong>；表具池候选 = 命中该能源累积量测点定义的实例。</li>
                 <li><b>分域键：</b>所有配置读写、占用校验、试算展开都以「当前能源类型」为边界。产物形态为「计量对象 × 能源类型 × 成员 × 计量方向」；同一对象可按每个已配置能源各建一套拓扑，互不影响。</li>
-                <li><b>左树配置态随能源变：</b>● = 该对象在<strong>当前能源</strong>下已有 ≥1 条关系；○ = 当前能源尚未配置。切到另一能源时，配置态按该能源重新判定。</li>
-                <li><b>中间关系表随能源变：</b>只列出当前对象 + 当前能源的直接成员；切 Tab 后不会把上一能源的关系带到下一能源视图。</li>
-                <li><b>表具池随能源变：</b>仅列出当前能源下的表具/组件（例如电表不出现在「水」Tab）；计量状态也只看当前能源下是否已挂入关系。拖入时若能源不一致，拦截并提示。</li>
+                <li><b>左树配置态随能源变：</b>● = 该实例在<strong>当前能源</strong>下已有 ≥1 条关系；○ = 当前能源尚未配置。设备实例与组件实例分别判定，切到另一能源时按该能源重新计算。</li>
+                <li><b>组件实例：</b>组件与设备实例使用相同的实例身份和关系规则；所属实例与层级路径仅用于展示。实例树父子层级不自动生成计量关系，也不自动继承或汇总。</li>
+                <li><b>中间关系表随能源变：</b>列出当前对象 + 当前能源的能耗计量和供电关系，并明确标识关系类型；供电关系不显示计量方向。</li>
+                <li><b>表具池随能源变：</b>仅列出当前能源下的表具/组件，并标识可配置的“计量”“供电”拓扑关系类型；关联状态统一由“未关联 / 已关联”筛选表达。</li>
                 <li><b>今日试算随能源变：</b>按当前能源计量关系展开到实际表具；用量单位取该能源在《能源配置》中的累计量单位（预置示意：电/冷量 kWh，水 m³）。</li>
                 <li><b>查重与校验范围：</b>查重键为「表具（含组件）+ 能源类型」——同一表具可在不同能源各挂一次，但同一能源下只能挂一次。图约束也在「当前对象 × 当前能源」范围内执行。</li>
                 <li><b>与导入导出的关系：</b>Excel 文件内按「能源类型」列承载多能源数据，合法值须存在于《能源配置》；页面编辑态仍一次只操作一个 Tab，批量搬迁走全局导入导出。</li>
@@ -572,12 +596,12 @@
             <div class="anno-body">
               <p><b>关联模块：</b>多视图对象树 · 关系表 · 今日试算 · 表具池（均受上方当前能源约束）</p>
               <ul>
-                <li><b>视图切换：</b>空间 / 容量 / 能效三套树，节点 ID 可跨视图复用；拖入关系表的是对象实例。视图切换不改变当前能源。</li>
+                <li><b>视图切换：</b>空间 / 容量 / 能效三套树复用同一批实例 ID；设备实例下展示其组件实例，两类节点均可选择或拖入。视图切换不改变当前能源。</li>
                 <li><b>配置态：</b>● / ○ 只表示当前能源是否已有关系，不限制拖拽；未配置对象也可拖入关系表作为下级。</li>
-                <li><b>类型：</b>仅「表具」「下级对象」两类；组件属于表具之下，名称列用「所属表具」标明，类型仍标「表具」。</li>
-                <li><b>拖拽：</b>左树对象均可拖入为下级（含当前能源尚未配置的对象；●/○ 仅表示配置态，不限制拖拽）；右池拖入当前能源表具（含其下组件）；默认方向输入。不能拖入当前对象自身。</li>
-                <li><b>表具池：</b>默认只看未计量；可筛选已计量/全部；上方提供空间位置树选择器（默认全部位置，选父含子）与搜索，仅筛表具范围；支持设备与组件；组件第一行展示为「设备名称-组件名称」；上千条时分页（每页 20）。列表内容随能源 Tab 过滤。</li>
-                <li><b>表具计量状态：</b>同一能源下一块表具/组件只能挂一次，已挂入关系表的标签统一为「已计量」。</li>
+                <li><b>组件角色：</b>组件实例既可作为当前计量对象，也可作为下级计量对象；组件具备表具能力时还可作为叶子表具。三种角色均使用组件自身实例 ID，互不替代。</li>
+                <li><b>关系类型：</b>表具拖入后默认建立能耗计量关系；支持供电的列头柜或支路可在“关系类型”列切换为供电，切换后计量方向显示为“—”。</li>
+                <li><b>表具池：</b>筛选仅保留“未关联 / 已关联”，默认展示未关联；卡片固定两行，仅展示该表具可配置的拓扑关系类型，不重复显示关联状态说明。</li>
+                <li><b>独立记录：</b>同一支路既用于计量又用于供电时，在中间列表形成两条关系记录；删除其中一条不影响另一条。</li>
                 <li><b>今日试算：</b>结果区常显；点击「今日试算」按当前能源计量关系重算各表具有符号用量；可跳转表具能耗明细（带当前能源参数）。</li>
               </ul>
             </div>
@@ -609,32 +633,34 @@
               </div>
             </aside>
 
-            <section class="panel" aria-label="计量关系配置">
+            <section class="panel" aria-label="拓扑关系配置">
               <div class="center-toolbar">
                 <div class="center-object">
                   <div class="name" id="currentObjectName">请选择左侧对象</div>
+                  <div class="meta" id="currentObjectPath" hidden></div>
                 </div>
               </div>
               <div class="center-scroll">
                 <div class="section-card" id="relationDropzone">
                   <div class="section-head">
                     <div>
-                      <div class="section-title">计量关系</div>
-                      <div class="section-hint">鼠标拖入下级对象/表具</div>
+                      <div class="section-title">拓扑关系列表</div>
+                      <div class="section-hint" id="relationDropHint">鼠标拖入下级对象/表具</div>
                     </div>
                     <span class="section-hint" id="relationCount">0 条</span>
                   </div>
-                  <table class="data-table" aria-label="计量关系表">
+                  <table class="data-table" aria-label="拓扑关系列表">
                     <thead>
                       <tr>
                         <th style="width:88px">类型</th>
                         <th>名称</th>
+                        <th style="width:108px">关系类型</th>
                         <th style="width:128px">计量方向</th>
                         <th style="width:72px">操作</th>
                       </tr>
                     </thead>
                     <tbody id="relationBody">
-                      <tr class="empty-row"><td colspan="4">请先选择左侧对象</td></tr>
+                      <tr class="empty-row"><td colspan="5">请先选择左侧对象</td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -688,12 +714,11 @@
                     <input type="hidden" id="spaceFilter" value="all">
                   </div>
                 </div>
-                <select id="meterOccupyFilter" aria-label="计量状态筛选">
-                  <option value="free" selected>未计量</option>
-                  <option value="taken">已计量</option>
-                  <option value="all">全部</option>
+                <select id="meterOccupyFilter" aria-label="拓扑关系状态筛选">
+                  <option value="free" selected>未关联</option>
+                  <option value="taken">已关联</option>
                 </select>
-                <input type="search" id="meterSearch" placeholder="搜索表具 / 组件名称或编码" aria-label="搜索表具">
+                <input type="search" id="meterSearch" placeholder="搜索表具名称或编码" aria-label="搜索表具">
               </div>
               <div class="panel-body">
                 <div class="meter-list" id="meterList"></div>
@@ -729,7 +754,7 @@
             <ul>
               <li>面向实施的三段式：① 下载当前配置 → ② 在 Excel 只改「关系清单」→ ③ 上传检查通过后整表替换。跨对象、跨能源；不绑定当前对象/能源 Tab。</li>
               <li>弹窗第 1 步提供「下载当前配置」（与页头「导出」同一文件）；已有文件可点「我已有文件，去上传」跳过下载。</li>
-              <li>工作簿仍含 5 个 Sheet；只允许编辑 Sheet1「关系清单」。对象/表具用业务实例 ID；Sheet5 为能源表具对照（含组件名称、累计量测点 ID）。</li>
+              <li>工作簿仍含 5 个 Sheet；只允许编辑 Sheet1「关系清单」。设备实例与组件实例均直接使用自身实例 ID；Sheet5 为能源表具对照（含物模型、累计量测点 ID）。</li>
               <li>提交语义是整表替换（全量覆盖）：不展示新增/变更/删除比对数量；上传后先检查，全部通过才可「确认替换」。第 3 步只展示通过/未通过结论；逐行问题统一下载「错误文件」查看并修改后重传。</li>
             </ul>
           </div>
@@ -824,6 +849,13 @@
         tf1:   { id: 'tf1', name: '0_481:1#变压器', model: '变压器' },
         tf2:   { id: 'tf2', name: '0_482:2#变压器', model: '变压器' },
         ups1:  { id: 'ups1', name: '0_483:UPS-1', model: 'UPS' },
+        rackA01:{ id: 'rackA01', name: '0_590:A01机柜', model: 'IT机柜' },
+        rackA02:{ id: 'rackA02', name: '0_591:A02机柜', model: 'IT机柜' },
+        ahu101: { id: 'ahu101', name: '0_159:101空调-1', model: '机房空调' },
+        ahu101Fan1: { id: 'ahu101Fan1', name: '0_15902:风机1', model: '风机', nodeKind: 'component', parentId: 'ahu101' },
+        ahu101Valve1: { id: 'ahu101Valve1', name: '0_15903:水阀1', model: '水阀', nodeKind: 'component', parentId: 'ahu101' },
+        ahu101Heater1: { id: 'ahu101Heater1', name: '0_15904:电加热1', model: '电加热', nodeKind: 'component', parentId: 'ahu101' },
+        ahu101Humidifier1: { id: 'ahu101Humidifier1', name: '0_15905:加湿器1', model: '加湿器', nodeKind: 'component', parentId: 'ahu101' },
         /* 空间 / 容量视图节点（截图示意） */
         hf:    { id: 'hf', name: '0_565:合肥中行', model: '园区' },
         g1:    { id: 'g1', name: '0_566:G1栋', model: '楼栋' },
@@ -846,8 +878,12 @@
           { id: 'root', children: [
             { id: 'p39' }, { id: 'p530' },
             { id: 'p475', children: [
-              { id: 's476' }, { id: 's479' },
+              { id: 's476', children: [{ id: 'rackA01' }, { id: 'rackA02' }] }, { id: 's479' },
               { id: 's477', children: [
+                { id: 'ahu101', children: [
+                  { id: 'ahu101Fan1' }, { id: 'ahu101Valve1' },
+                  { id: 'ahu101Heater1' }, { id: 'ahu101Humidifier1' }
+                ]},
                 { id: 's493', children: [
                   { id: 'u495' }, { id: 'u496' }, { id: 'u497' }, { id: 'u498' }, { id: 'u499' },
                   { id: 'pl505' }, { id: 'pl508', children: [{ id: 'd473' }] },
@@ -863,9 +899,14 @@
             { id: 'g1', children: [
               { id: 'b1' },
               { id: 'f1', children: [
+                { id: 'ahu101', children: [
+                  { id: 'ahu101Fan1' }, { id: 'ahu101Valve1' },
+                  { id: 'ahu101Heater1' }, { id: 'ahu101Humidifier1' }
+                ]},
                 { id: 'stA', children: [
                   { id: 'tank3' }, { id: 'chwp5' }, { id: 'chw1' }, { id: 'chw2' },
-                  { id: 'ctw1' }, { id: 'cwp3' }, { id: 'u495' }, { id: 'd473' }
+                  { id: 'ctw1' }, { id: 'cwp3' }, { id: 'u495' }, { id: 'd473' },
+                  { id: 'rackA01' }, { id: 'rackA02' }
                 ]}
               ]}
             ]}
@@ -873,8 +914,12 @@
         ],
         capacity: [
           { id: 'hf', children: [
-            { id: 'capIT', children: [{ id: 's476' }] },
+            { id: 'capIT', children: [{ id: 's476', children: [{ id: 'rackA01' }, { id: 'rackA02' }] }] },
             { id: 'capHVAC', children: [
+              { id: 'ahu101', children: [
+                { id: 'ahu101Fan1' }, { id: 'ahu101Valve1' },
+                { id: 'ahu101Heater1' }, { id: 'ahu101Humidifier1' }
+              ]},
               { id: 'stA', children: [{ id: 'chw1' }, { id: 'chw2' }, { id: 'chwp5' }, { id: 'tank3' }] }
             ]},
             { id: 'capPow', children: [{ id: 'tf1' }, { id: 'tf2' }, { id: 'ups1' }] }
@@ -906,9 +951,11 @@
           METERS.push({
             code: code,
             name: '支路 ' + i,
-            componentName: '支路 ' + i,
             energy: '电',
             kind: 'component',
+            model: '列头柜支路',
+            instanceId: '0_' + (800 + i),
+            supportsSupply: true,
             parentCode: 'AC_Meter_08',
             parentName: '列头柜 1',
             space: '1F'
@@ -918,7 +965,7 @@
         for (var j = 12; j <= 48; j++) {
           METERS.push({
             code: 'AC_Meter_' + String(j).padStart(2, '0'),
-            name: '交流电表-回路' + j,
+            name: j === 12 ? '交流电表-空调风机1' : ('交流电表-回路' + j),
             energy: '电',
             kind: 'device',
             space: loopSpaces[j % loopSpaces.length]
@@ -940,6 +987,7 @@
         AC_Meter_09: 15600, AC_Meter_10: 120, AC_Meter_11: 7200,
         WM_01: 86.4, WM_02: 12.8, WM_03: 4.2, CM_01: 18200
       };
+      TODAY_USAGE.AC_Meter_12 = 420;
       for (var bi = 1; bi <= 10; bi++) {
         TODAY_USAGE['PDU1_BR' + String(bi).padStart(2, '0')] = 180 + bi * 12;
       }
@@ -999,6 +1047,27 @@
         s476: {
           '电': [{ type: 'meter', code: 'AC_Meter_09', name: '交流电表-IT系统总表', direction: 'in' }]
         },
+        rackA01: {
+          '电': [
+            { type: 'meter', code: 'PDU1_BR01', name: '支路 1', relationKind: 'metering', direction: 'in', meterKind: 'component', parentName: '列头柜 1' },
+            { type: 'meter', code: 'PDU1_BR01', name: '支路 1', relationKind: 'supply', meterKind: 'component', parentName: '列头柜 1' }
+          ]
+        },
+        rackA02: {
+          '电': [
+            { type: 'meter', code: 'PDU1_BR02', name: '支路 2', relationKind: 'supply', meterKind: 'component', parentName: '列头柜 1' }
+          ]
+        },
+        ahu101: {
+          '电': [
+            { type: 'object', id: 'ahu101Fan1', name: shortName(NODES.ahu101Fan1.name), relationKind: 'metering', direction: 'in' }
+          ]
+        },
+        ahu101Fan1: {
+          '电': [
+            { type: 'meter', code: 'AC_Meter_12', name: '交流电表-空调风机1', relationKind: 'metering', direction: 'in' }
+          ]
+        },
         stA: {
           '电': [
             { type: 'meter', code: 'AC_Meter_11', name: '交流电表-制冷站进线', direction: 'in' },
@@ -1006,7 +1075,7 @@
           ]
         },
         chw1: {
-          '电': [{ type: 'meter', code: 'PDU1_BR01', name: '支路 1', direction: 'in', meterKind: 'component', parentName: '列头柜 1' }]
+          '电': [{ type: 'meter', code: 'PDU1_BR04', name: '支路 4', direction: 'in', meterKind: 'component', parentName: '列头柜 1' }]
         }
       };
 
@@ -1024,9 +1093,7 @@
 
       function meterInstanceIdByCode(code) {
         var meter = meterMetaByCode(code);
-        if (meter.kind === 'component' && meter.parentCode) {
-          return meterInstanceIdByCode(meter.parentCode);
-        }
+        if (meter.instanceId) return meter.instanceId;
         var matched = /^AC_Meter_(\d+)$/.exec(code || '');
         if (matched) return '0_' + (700 + Number(matched[1]));
         matched = /^WM_(\d+)$/.exec(code || '');
@@ -1036,18 +1103,22 @@
         return code || '';
       }
 
+      function relationKindOf(member) {
+        return member && member.relationKind === 'supply' ? 'supply' : 'metering';
+      }
+
       function buildRelationRows() {
         var rows = [];
         Object.keys(relations).forEach(function (objectId) {
           ENERGIES.forEach(function (energy) {
             ((relations[objectId] || {})[energy] || []).forEach(function (member) {
+              if (relationKindOf(member) !== 'metering') return;
               var objectIdentity = nodeIdentity(NODES[objectId] || {});
               var meterMeta = member.type === 'meter' ? meterMetaByCode(member.code) : {};
-              var isComponent = member.type === 'meter' && ((member.meterKind || meterMeta.kind) === 'component');
               var memberIdentity = member.type === 'meter'
                 ? {
-                    instanceId: meterInstanceIdByCode(isComponent ? (meterMeta.parentCode || member.parentCode || member.code) : member.code),
-                    name: isComponent ? (meterMeta.parentName || member.parentName || '') : (member.name || '')
+                    instanceId: meterInstanceIdByCode(member.code),
+                    name: member.name || meterMeta.name || ''
                   }
                 : nodeIdentity(NODES[member.id] || {});
               rows.push([
@@ -1057,7 +1128,6 @@
                 member.type === 'meter' ? '表具' : '下级对象',
                 memberIdentity.instanceId,
                 memberIdentity.name,
-                isComponent ? (member.name || meterMeta.name || '') : '',
                 member.direction === 'out' ? '输出' : '输入'
               ]);
             });
@@ -1070,7 +1140,7 @@
       var state = {
         energy: '电',
         view: 'efficiency',
-        current: 's493',
+        current: 'ahu101Fan1',
         dirty: false,
         drag: null,
         meterPage: 1,
@@ -1078,13 +1148,13 @@
       };
 
       var $ = function (id) { return document.getElementById(id); };
-      var RELATION_SHEET_RULE = '填写规则：只改本页，每行 1 条关系；计量对象实例 ID、能源类型、成员类型、成员实例 ID、计量方向必填；组件型表具须填组件名称，下级对象的组件名称留空；对象/表具/组件须能在对照页找到。确认替换后，本页没有写到的现有关系会被删掉。';
+      var RELATION_SHEET_RULE = '填写规则：只改本页，每行 1 条关系；计量对象实例 ID、能源类型、成员类型、成员实例 ID、计量方向必填；设备实例与组件实例均直接填写自身实例 ID，并须能在对照页找到。确认替换后，本页没有写到的现有关系会被删掉。';
       var IMPORT_SHEET_HEADERS = {
-        '关系清单': ['计量对象实例ID', '计量对象名称', '能源类型', '成员类型', '成员实例ID', '成员名称', '组件名称', '计量方向'],
+        '关系清单': ['计量对象实例ID', '计量对象名称', '能源类型', '成员类型', '成员实例ID', '成员名称', '计量方向'],
         '能效视图对象': ['实例ID', '对象名称', '物模型', '父级实例ID', '父级对象名称'],
         '空间视图对象': ['实例ID', '对象名称', '物模型', '父级实例ID', '父级对象名称'],
         '容量视图对象': ['实例ID', '对象名称', '物模型', '父级实例ID', '父级对象名称'],
-        '能源表具清单': ['能源类型', '表具实例ID', '表具名称', '组件名称', '测点 ID']
+        '能源表具清单': ['能源类型', '表具实例ID', '表具名称', '物模型', '测点 ID']
       };
       var latestImportResult = null;
       var latestImportFileName = '';
@@ -1324,23 +1394,23 @@
           return result;
         }
 
-        var relationHeaders = ['计量对象实例ID', '计量对象名称', '能源类型', '成员类型', '成员实例ID', '成员名称', '组件名称', '计量方向'];
+        var relationHeaders = ['计量对象实例ID', '计量对象名称', '能源类型', '成员类型', '成员实例ID', '成员名称', '计量方向'];
         var relationRows = buildRelationRows();
         var relationLastRow = Math.max(2, relationRows.length + 2);
         var sheet1 = declaration +
           '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
             '<sheetViews><sheetView workbookViewId="0"><pane ySplit="2" topLeftCell="A3" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>' +
             '<sheetFormatPr defaultRowHeight="20"/>' +
-            '<cols><col min="1" max="1" width="22" customWidth="1"/><col min="2" max="2" width="34" customWidth="1"/><col min="3" max="4" width="15" customWidth="1"/><col min="5" max="5" width="22" customWidth="1"/><col min="6" max="6" width="30" customWidth="1"/><col min="7" max="7" width="24" customWidth="1"/><col min="8" max="8" width="15" customWidth="1"/></cols>' +
+            '<cols><col min="1" max="1" width="22" customWidth="1"/><col min="2" max="2" width="34" customWidth="1"/><col min="3" max="4" width="15" customWidth="1"/><col min="5" max="5" width="22" customWidth="1"/><col min="6" max="6" width="30" customWidth="1"/><col min="7" max="7" width="15" customWidth="1"/></cols>' +
             '<sheetData>' + xlsxRow(1, [RELATION_SHEET_RULE], 5, 42) + xlsxRow(2, relationHeaders, 1, 26) + rowsXml(relationRows, 3) + '</sheetData>' +
-            '<autoFilter ref="A2:H' + relationLastRow + '"/>' +
-            '<mergeCells count="1"><mergeCell ref="A1:H1"/></mergeCells>' +
+            '<autoFilter ref="A2:G' + relationLastRow + '"/>' +
+            '<mergeCells count="1"><mergeCell ref="A1:G1"/></mergeCells>' +
             '<dataValidations count="5">' +
               '<dataValidation type="custom" allowBlank="0" showErrorMessage="1" errorTitle="计量对象实例 ID 必填" error="请填写计量对象实例 ID" sqref="A3:A5002"><formula1>LEN(TRIM(A3))&gt;0</formula1></dataValidation>' +
               '<dataValidation type="list" allowBlank="0" showErrorMessage="0" showInputMessage="1" promptTitle="能源类型" prompt="请选择能源类型" sqref="C3:C5002"><formula1>&quot;' + ENERGIES.join(',') + '&quot;</formula1></dataValidation>' +
               '<dataValidation type="list" allowBlank="0" showErrorMessage="1" errorTitle="成员类型不正确" error="仅支持表具或下级对象" sqref="D3:D5002"><formula1>&quot;表具,下级对象&quot;</formula1></dataValidation>' +
               '<dataValidation type="custom" allowBlank="0" showErrorMessage="1" errorTitle="成员实例 ID 必填" error="请填写成员实例 ID" sqref="E3:E5002"><formula1>LEN(TRIM(E3))&gt;0</formula1></dataValidation>' +
-              '<dataValidation type="list" allowBlank="0" showErrorMessage="1" errorTitle="计量方向不正确" error="仅支持输入或输出" sqref="H3:H5002"><formula1>&quot;输入,输出&quot;</formula1></dataValidation>' +
+              '<dataValidation type="list" allowBlank="0" showErrorMessage="1" errorTitle="计量方向不正确" error="仅支持输入或输出" sqref="G3:G5002"><formula1>&quot;输入,输出&quot;</formula1></dataValidation>' +
             '</dataValidations>' +
             '<pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>' +
           '</worksheet>';
@@ -1362,14 +1432,13 @@
         var sheet3 = buildViewSheet(viewRows(TREES.space));
         var sheet4 = buildViewSheet(viewRows(TREES.capacity));
 
-        var meterHeaders = ['能源类型', '表具实例ID', '表具名称', '组件名称', '测点 ID'];
+        var meterHeaders = ['能源类型', '表具实例ID', '表具名称', '物模型', '测点 ID'];
         var meterRows = METERS.map(function (meter) {
-          var isComponent = meter.kind === 'component';
           return [
             meter.energy,
-            meterInstanceIdByCode(isComponent ? meter.parentCode : meter.code),
-            isComponent ? meter.parentName : meter.name,
-            isComponent ? (meter.componentName || meter.name) : '',
+            meterInstanceIdByCode(meter.code),
+            meter.name,
+            meter.model || (meter.energy === '水' ? '水表' : (meter.energy === '冷量' ? '冷量表' : '交流电表')),
             cumulativePointId(meter)
           ];
         });
@@ -1758,14 +1827,14 @@
       }
 
       function relationBaseKey(row) {
-        return [row[0], row[2], row[3], row[4], row[6]].join('|');
+        return [row[0], row[2], row[3], row[4]].join('|');
       }
 
       function calculateImportImpact(importRows) {
         var currentMap = {};
         var importMap = {};
-        buildRelationRows().forEach(function (row) { currentMap[relationBaseKey(row)] = row[7]; });
-        importRows.forEach(function (row) { importMap[relationBaseKey(row)] = row[7]; });
+        buildRelationRows().forEach(function (row) { currentMap[relationBaseKey(row)] = row[6]; });
+        importRows.forEach(function (row) { importMap[relationBaseKey(row)] = row[6]; });
         var added = 0;
         var changed = 0;
         var removed = 0;
@@ -1817,14 +1886,11 @@
         (workbookData.sheets['能源表具清单'] || []).slice(1).forEach(function (row, index) {
           if (!rowHasValue(row)) return;
           var values = normalizedRow(row, 5);
-          [0, 1, 2, 4].forEach(function (columnIndex) {
+          [0, 1, 2, 3, 4].forEach(function (columnIndex) {
             if (!values[columnIndex]) addError('required', 'Sheet「能源表具清单」第 ' + (index + 2) + ' 行缺少“' + expectedHeaders['能源表具清单'][columnIndex] + '”', '能源表具清单', index + 2, '缺少“' + expectedHeaders['能源表具清单'][columnIndex] + '”');
           });
-          if (values[3] && values[2] && values[3].indexOf(values[2]) === 0) {
-            addError('reference', 'Sheet「能源表具清单」第 ' + (index + 2) + ' 行组件名称不应重复所属表具名称', '能源表具清单', index + 2, '组件名称不应重复所属表具名称');
-          }
-          var meterKey = [values[0], values[1], values[3]].join('|');
-          if (meterKeys[meterKey]) addError('reference', 'Sheet「能源表具清单」第 ' + (index + 2) + ' 行表具 / 组件对照重复', '能源表具清单', index + 2, '表具 / 组件对照重复');
+          var meterKey = [values[0], values[1]].join('|');
+          if (meterKeys[meterKey]) addError('reference', 'Sheet「能源表具清单」第 ' + (index + 2) + ' 行表具实例对照重复', '能源表具清单', index + 2, '表具实例对照重复');
           meterKeys[meterKey] = true;
         });
 
@@ -1835,30 +1901,29 @@
           { index: 2, name: '能源类型' },
           { index: 3, name: '成员类型' },
           { index: 4, name: '成员实例ID' },
-          { index: 7, name: '计量方向' }
+          { index: 6, name: '计量方向' }
         ];
         (workbookData.sheets['关系清单'] || []).slice(2).forEach(function (row, index) {
           if (!rowHasValue(row)) return;
-          var values = normalizedRow(row, 8);
+          var values = normalizedRow(row, 7);
           relationRows.push(values);
           requiredFields.forEach(function (field) {
             if (!values[field.index]) addError('required', 'Sheet「关系清单」第 ' + (index + 3) + ' 行缺少“' + field.name + '”', '关系清单', index + 3, '缺少“' + field.name + '”');
           });
           if (values[2] && ENERGIES.indexOf(values[2]) < 0) addError('reference', 'Sheet「关系清单」第 ' + (index + 3) + ' 行能源类型无效', '关系清单', index + 3, '能源类型无效');
           if (values[3] && ['表具', '下级对象'].indexOf(values[3]) < 0) addError('reference', 'Sheet「关系清单」第 ' + (index + 3) + ' 行成员类型无效', '关系清单', index + 3, '成员类型无效');
-          if (values[7] && ['输入', '输出'].indexOf(values[7]) < 0) addError('reference', 'Sheet「关系清单」第 ' + (index + 3) + ' 行计量方向无效', '关系清单', index + 3, '计量方向无效');
+          if (values[6] && ['输入', '输出'].indexOf(values[6]) < 0) addError('reference', 'Sheet「关系清单」第 ' + (index + 3) + ' 行计量方向无效', '关系清单', index + 3, '计量方向无效');
           if (values[0] && !objectIds[values[0]]) addError('reference', 'Sheet「关系清单」第 ' + (index + 3) + ' 行计量对象实例 ID 不在对象 Sheet 中', '关系清单', index + 3, '计量对象实例 ID 不在对象 Sheet 中');
           if (values[3] === '下级对象') {
-            if (values[6]) addError('required', 'Sheet「关系清单」第 ' + (index + 3) + ' 行下级对象不应填写“组件名称”', '关系清单', index + 3, '下级对象不应填写“组件名称”');
             if (values[4] && !objectIds[values[4]]) addError('reference', 'Sheet「关系清单」第 ' + (index + 3) + ' 行成员实例 ID 不在对象 Sheet 中', '关系清单', index + 3, '成员实例 ID 不在对象 Sheet 中');
           }
           if (values[3] === '表具' && values[2] && values[4]) {
-            var meterKey = [values[2], values[4], values[6]].join('|');
+            var meterKey = [values[2], values[4]].join('|');
             if (!meterKeys[meterKey]) {
-              addError('reference', 'Sheet「关系清单」第 ' + (index + 3) + ' 行未命中能源表具清单；组件型表具必须填写正确的“组件名称”', '关系清单', index + 3, '未命中能源表具清单；组件型表具必须填写正确的“组件名称”');
+              addError('reference', 'Sheet「关系清单」第 ' + (index + 3) + ' 行成员实例 ID 未命中能源表具清单', '关系清单', index + 3, '成员实例 ID 未命中能源表具清单');
             }
-            var usageKey = [values[2], values[4], values[6]].join('|');
-            if (usage[usageKey]) addError('graph', 'Sheet「关系清单」第 ' + (index + 3) + ' 行表具 / 组件在同一能源下重复占用', '关系清单', index + 3, '表具 / 组件在同一能源下重复占用');
+            var usageKey = [values[2], values[4]].join('|');
+            if (usage[usageKey]) addError('graph', 'Sheet「关系清单」第 ' + (index + 3) + ' 行表具实例在同一能源下重复占用', '关系清单', index + 3, '表具实例在同一能源下重复占用');
             usage[usageKey] = true;
           }
         });
@@ -1866,9 +1931,9 @@
         var impact = calculateImportImpact(relationRows);
         var checks = [
           { name: '文件结构', category: 'structure', scope: '5 个 Sheet', success: '名称与表头完整' },
-          { name: '必填字段', category: 'required', scope: relationRows.length + ' 条关系', success: '基础必填与组件字段完整' },
-          { name: '成员有效性', category: 'reference', scope: relationRows.length + ' 条关系', success: '对象、表具与组件对照有效' },
-          { name: '全图约束', category: 'graph', scope: '受影响拓扑', success: '无表具 / 组件重复占用' }
+          { name: '必填字段', category: 'required', scope: relationRows.length + ' 条关系', success: '基础必填字段完整' },
+          { name: '成员有效性', category: 'reference', scope: relationRows.length + ' 条关系', success: '对象与表具实例对照有效' },
+          { name: '全图约束', category: 'graph', scope: '受影响拓扑', success: '无表具实例重复占用' }
         ];
         checks.forEach(function (check) {
           check.errors = errors.filter(function (error) { return error.category === check.category; });
@@ -1936,10 +2001,25 @@
         Object.keys(relations).forEach(function (objId) {
           ENERGIES.forEach(function (energy) {
             (relations[objId][energy] || []).forEach(function (m) {
-              if (m.type !== 'meter') return;
+              if (m.type !== 'meter' || relationKindOf(m) !== 'metering') return;
               var key = m.code + '|' + energy;
               if (!map[key]) map[key] = [];
               map[key].push({ objId: objId, direction: m.direction });
+            });
+          });
+        });
+        return map;
+      }
+
+      function allSupplyUsage() {
+        var map = {};
+        Object.keys(relations).forEach(function (objId) {
+          ENERGIES.forEach(function (energy) {
+            (relations[objId][energy] || []).forEach(function (m) {
+              if (m.type !== 'meter' || relationKindOf(m) !== 'supply') return;
+              var key = m.code + '|' + energy;
+              if (!map[key]) map[key] = [];
+              map[key].push({ targetId: objId });
             });
           });
         });
@@ -2043,6 +2123,11 @@
       }
 
       /* ---------- 树 ---------- */
+      function nodeContextText(id) {
+        var node = NODES[id] || {};
+        return node.model ? ('物模型 · ' + node.model) : '';
+      }
+
       function renderTree(nodes, parent) {
         parent = parent || $('treeRoot');
         if (parent === $('treeRoot')) parent.innerHTML = '';
@@ -2052,14 +2137,15 @@
           var wrap = document.createElement('div');
           var row = document.createElement('div');
           var configured = isConfigured(n.id, state.energy);
-          row.className = 'tree-row' + (state.current === n.id ? ' active' : '');
+          row.className = 'tree-row' + (node.nodeKind === 'component' ? ' component-node' : '') + (state.current === n.id ? ' active' : '');
           row.setAttribute('data-node', n.id);
           row.draggable = true;
           var hasChild = n.children && n.children.length;
           row.innerHTML =
             '<span class="tree-chevron">' + (hasChild ? '▼' : '') + '</span>' +
             '<i class="dot ' + (configured ? 'ok' : 'empty') + '" title="' + (configured ? '当前能源已配置' : '当前能源未配置') + '"></i>' +
-            '<span class="tree-label">' + node.name + '</span>';
+            '<span class="tree-label">' + node.name + '</span>' +
+            (node.nodeKind === 'component' ? '<span class="tree-node-badge">组件</span>' : '');
           wrap.appendChild(row);
 
           var childBox = null;
@@ -2117,13 +2203,17 @@
         var kw = ($('meterSearch').value || '').trim();
         var occupy = ($('meterOccupyFilter') && $('meterOccupyFilter').value) || 'free';
         var spaceKeys = getSelectedSpaceKeys();
-        var usage = allMeterUsage();
+        var meterUsage = allMeterUsage();
+        var supplyUsage = allSupplyUsage();
         return METERS.filter(function (m) {
           if (m.energy !== state.energy) return false;
           if (spaceKeys && spaceKeys.indexOf(m.space || '未绑定空间') === -1) return false;
-          var taken = (usage[m.code + '|' + m.energy] || []).length > 0;
-          if (occupy === 'free' && taken) return false;
-          if (occupy === 'taken' && !taken) return false;
+          var key = m.code + '|' + m.energy;
+          var hasMetering = (meterUsage[key] || []).length > 0;
+          var hasSupply = (supplyUsage[key] || []).length > 0;
+          var linked = hasMetering || hasSupply;
+          if (occupy === 'free' && linked) return false;
+          if (occupy === 'taken' && !linked) return false;
           if (kw) {
             var hay = m.name + m.code + meterInstanceIdByCode(m.code) + (m.parentName || '') + (m.parentCode || '');
             if (hay.indexOf(kw) === -1) return false;
@@ -2133,7 +2223,8 @@
       }
 
       function renderMeters() {
-        var usage = allMeterUsage();
+        var meterUsage = allMeterUsage();
+        var supplyUsage = allSupplyUsage();
         var filtered = getFilteredMeters();
         var totalPages = Math.max(1, Math.ceil(filtered.length / METER_PAGE_SIZE));
         if (state.meterPage > totalPages) state.meterPage = totalPages;
@@ -2143,10 +2234,17 @@
         var list = $('meterList');
         list.innerHTML = '';
         pageRows.forEach(function (m) {
-          var taken = (usage[m.code + '|' + m.energy] || []).length > 0;
+          var key = m.code + '|' + m.energy;
+          var hasMetering = (meterUsage[key] || []).length > 0;
+          var hasSupply = (supplyUsage[key] || []).length > 0;
+          var supplyForCurrent = (supplyUsage[key] || []).some(function (x) { return x.targetId === state.current; });
+          var canSupply = !!m.supportsSupply;
+          var canAddMetering = !hasMetering;
+          var canAddSupply = canSupply && !!state.current && !supplyForCurrent;
+          var blocked = !(canAddMetering || canAddSupply);
           var item = document.createElement('div');
-          item.className = 'meter-item' + (taken ? ' disabled' : '') + (m.kind === 'component' ? ' component' : '');
-          item.draggable = !taken;
+          item.className = 'meter-item' + (blocked ? ' disabled' : '') + (m.kind === 'component' ? ' component' : '');
+          item.draggable = !blocked;
           var kindTag = m.kind === 'component'
             ? '<span class="tag tag-comp">组件</span>'
             : '<span class="tag tag-dev">设备</span>';
@@ -2157,10 +2255,11 @@
             '<div class="meter-name">' + displayName + '</div>' +
             '<div class="meter-meta">' +
               kindTag +
-              '<span>' + meterInstanceIdByCode(m.code) + '</span>' +
-              (taken ? '<span class="tag tag-muted">已计量</span>' : '') +
+              '<span class="meter-code">' + meterInstanceIdByCode(m.code) + '</span>' +
+              '<span class="relation-badge metering">计量</span>' +
+              (canSupply ? '<span class="relation-badge supply">供电</span>' : '') +
             '</div>';
-          if (!taken) {
+          if (!blocked) {
             item.addEventListener('dragstart', function (e) {
               state.drag = {
                 kind: 'meter',
@@ -2207,6 +2306,10 @@
         });
         var node = NODES[id];
         $('currentObjectName').textContent = node.name;
+        var path = $('currentObjectPath');
+        var contextText = nodeContextText(id);
+        path.textContent = contextText;
+        path.hidden = !contextText;
         $('btnTrial').disabled = false;
         renderRelationTable();
         renderTrial();
@@ -2220,25 +2323,29 @@
       function renderRelationTable(highlightKey) {
         var body = $('relationBody');
         if (!state.current) {
-          body.innerHTML = '<tr class="empty-row"><td colspan="4">请先选择左侧对象</td></tr>';
+          body.innerHTML = '<tr class="empty-row"><td colspan="5">请先选择左侧对象</td></tr>';
           $('relationCount').textContent = '0 条';
           return;
         }
         var members = currentMembers();
         $('relationCount').textContent = members.length + ' 条';
         if (!members.length) {
-          body.innerHTML = '<tr class="empty-row"><td colspan="4">暂无关系<br>从左侧拖入下级对象，或从右侧拖入表具</td></tr>';
+          body.innerHTML = '<tr class="empty-row"><td colspan="5">暂无关系<br>从左侧拖入下级对象，或从右侧拖入表具</td></tr>';
           return;
         }
         body.innerHTML = '';
         members.forEach(function (m, idx) {
           var tr = document.createElement('tr');
           if (m.conflict) tr.className = 'conflict';
-          var rowKey = m.type === 'meter' ? ('meter:' + m.code) : ('object:' + m.id);
+          var relationKind = relationKindOf(m);
+          var rowKey = relationKind + ':' + (m.type === 'meter' ? ('meter:' + m.code) : ('object:' + m.id));
           if (highlightKey && rowKey === highlightKey) tr.classList.add('row-flash');
           var typeLabel = m.type === 'meter' ? '表具' : '下级对象';
           var typeClass = m.type === 'meter' ? 'tag-meter' : 'tag-obj';
           var isOut = m.direction === 'out';
+          var meterMeta = m.type === 'meter'
+            ? METERS.find(function (x) { return x.code === m.code; })
+            : null;
           var displayName = m.name;
           if (m.type === 'object' && (!displayName || !String(displayName).trim()) && m.id && NODES[m.id]) {
             displayName = shortName(NODES[m.id].name);
@@ -2259,19 +2366,69 @@
           } else if (m.type === 'meter' && m.parentName) {
             belongHint = '<div style="font-size:11px;color:var(--text-hint)">所属 ' + m.parentName + '</div>';
           } else if (m.type === 'object' && m.id && NODES[m.id]) {
-            belongHint = '<div style="font-size:11px;color:var(--text-hint)">' + (NODES[m.id].model || m.id) + '</div>';
+            belongHint = '<div style="font-size:11px;color:var(--text-hint)">' + nodeContextText(m.id) + '</div>';
           }
+          if (relationKind === 'supply') {
+            belongHint = '<div style="font-size:11px;color:var(--text-hint)">供电路径 · ' +
+              (m.parentName ? m.parentName + '-' : '') + (displayName || '') + ' → ' + shortName((NODES[state.current] || {}).name) + '</div>';
+          }
+          var relationTag = relationKind === 'supply'
+            ? '<span class="tag tag-relation-supply">供电</span>'
+            : '<span class="tag tag-relation-metering">能耗计量</span>';
+          var relationCell = m.type === 'meter' && meterMeta && meterMeta.supportsSupply
+            ? '<select class="relation-type-select" aria-label="关系类型">' +
+                '<option value="metering"' + (relationKind === 'metering' ? ' selected' : '') + '>能耗计量</option>' +
+                '<option value="supply"' + (relationKind === 'supply' ? ' selected' : '') + '>供电</option>' +
+              '</select>'
+            : relationTag;
+          var directionCell = relationKind === 'supply'
+            ? '<span class="direction-na" title="供电关系方向固定，不设置计量方向">—</span>'
+            : '<div class="dir-switch" role="group" aria-label="计量方向">' +
+                '<button type="button" class="dir-in' + (!isOut ? ' active-in' : '') + '" data-dir="in">输入</button>' +
+                '<button type="button" class="dir-out' + (isOut ? ' active-out' : '') + '" data-dir="out">输出</button>' +
+              '</div>';
           tr.innerHTML =
             '<td><span class="tag ' + typeClass + '">' + typeLabel + '</span></td>' +
             '<td><div style="font-weight:600">' + (displayName || '（未命名）') + '</div>' +
               belongHint +
               (m.conflictReason ? '<div style="font-size:11px;color:var(--danger)">' + m.conflictReason + '</div>' : '') +
             '</td>' +
-            '<td><div class="dir-switch" role="group" aria-label="计量方向">' +
-              '<button type="button" class="dir-in' + (!isOut ? ' active-in' : '') + '" data-dir="in">输入</button>' +
-              '<button type="button" class="dir-out' + (isOut ? ' active-out' : '') + '" data-dir="out">输出</button>' +
-            '</div></td>' +
+            '<td>' + relationCell + '</td>' +
+            '<td>' + directionCell + '</td>' +
             '<td><button type="button" class="btn-del">删除</button></td>';
+          var relationSelect = tr.querySelector('.relation-type-select');
+          if (relationSelect) {
+            relationSelect.addEventListener('change', function () {
+              var nextKind = relationSelect.value === 'supply' ? 'supply' : 'metering';
+              if (nextKind === relationKind) return;
+              var duplicate = currentMembers().some(function (x) {
+                return x !== m && x.type === 'meter' && x.code === m.code && relationKindOf(x) === nextKind;
+              });
+              if (duplicate) {
+                relationSelect.value = relationKind;
+                toast('该支路已存在' + (nextKind === 'supply' ? '供电关系' : '能耗计量关系'));
+                return;
+              }
+              if (nextKind === 'metering') {
+                var key = m.code + '|' + state.energy;
+                var occupied = (allMeterUsage()[key] || []).length > 0;
+                if (occupied) {
+                  relationSelect.value = relationKind;
+                  toast('该表具在当前能源下已用于其他计量关系');
+                  return;
+                }
+              }
+              m.relationKind = nextKind;
+              m.direction = nextKind === 'metering' ? 'in' : null;
+              state.dirty = true;
+              renderRelationTable(nextKind + ':meter:' + m.code);
+              renderMeters();
+              renderTrial();
+              refreshTree();
+              validateCurrent();
+              toast('已切换为' + (nextKind === 'supply' ? '供电关系' : '能耗计量关系'));
+            });
+          }
           tr.querySelectorAll('.dir-switch button').forEach(function (btn) {
             btn.addEventListener('click', function () {
               var next = btn.getAttribute('data-dir');
@@ -2293,8 +2450,8 @@
               if (at < 0) {
                 at = latest.findIndex(function (x) {
                   return m.type === 'meter'
-                    ? (x.type === 'meter' && x.code === m.code)
-                    : (x.type === 'object' && x.id === m.id);
+                    ? (x.type === 'meter' && x.code === m.code && relationKindOf(x) === relationKind)
+                    : (x.type === 'object' && x.id === m.id && relationKindOf(x) === relationKind);
                 });
               }
               if (at >= 0) latest.splice(at, 1);
@@ -2304,7 +2461,7 @@
               renderTrial();
               refreshTree();
               validateCurrent();
-              toast('已移除 1 条计量关系');
+              toast('已移除 1 条' + (relationKind === 'supply' ? '供电关系' : '能耗计量关系'));
             });
           }
           body.appendChild(tr);
@@ -2361,36 +2518,40 @@
       function addMember(payload) {
         var list = currentMembers();
         var highlightKey = '';
+        var addedRelationKind = 'metering';
         if (payload.kind === 'object') {
           if (payload.id === state.current) { toast('不能把对象拖到自己的拓扑里'); return; }
-          if (list.some(function (m) { return m.type === 'object' && m.id === payload.id; })) {
+          if (list.some(function (m) { return m.type === 'object' && m.id === payload.id && relationKindOf(m) === 'metering'; })) {
             toast('该下级对象已在本能源关系中'); return;
           }
           var objNode = NODES[payload.id];
           var objName = (payload.name && String(payload.name).trim())
             || (objNode ? shortName(objNode.name) : payload.id);
-          list.push({ type: 'object', id: payload.id, name: objName, direction: 'in' });
-          highlightKey = 'object:' + payload.id;
+          list.push({ type: 'object', id: payload.id, name: objName, relationKind: 'metering', direction: 'in' });
+          highlightKey = 'metering:object:' + payload.id;
         } else if (payload.kind === 'meter') {
           var meta = METERS.find(function (m) { return m.code === payload.code; }) || {};
           var energy = payload.energy || meta.energy;
           if (energy !== state.energy) { toast('表具能源类型与当前 Tab 不一致'); return; }
-          var usage = allMeterUsage();
-          if ((usage[payload.code + '|' + state.energy] || []).length) {
-            toast('该表具在当前能源下已被计量'); return;
+          var key = payload.code + '|' + state.energy;
+          var hasMetering = (allMeterUsage()[key] || []).length > 0;
+          var supplyForCurrent = (allSupplyUsage()[key] || []).some(function (x) { return x.targetId === state.current; });
+          var relationKind = !hasMetering ? 'metering' : (meta.supportsSupply && !supplyForCurrent ? 'supply' : '');
+          if (!relationKind) {
+            toast('该表具与当前对象的可用关系均已建立');
+            return;
           }
-          if (list.some(function (m) { return m.type === 'meter' && m.code === payload.code; })) {
-            toast('该表具已在本对象关系中'); return;
-          }
+          addedRelationKind = relationKind;
           list.push({
             type: 'meter',
             code: payload.code,
             name: (payload.name && String(payload.name).trim()) || meta.name || payload.code,
-            direction: 'in',
+            relationKind: relationKind,
+            direction: relationKind === 'metering' ? 'in' : null,
             meterKind: payload.meterKind || meta.kind || 'device',
             parentName: payload.parentName || meta.parentName || ''
           });
-          highlightKey = 'meter:' + payload.code;
+          highlightKey = relationKind + ':meter:' + payload.code;
         } else {
           toast('未识别到拖入内容，请重试');
           return;
@@ -2401,7 +2562,7 @@
         renderTrial();
         refreshTree();
         validateCurrent();
-        toast('已添加 1 条计量关系');
+        toast('已添加 1 条' + (addedRelationKind === 'supply' ? '供电关系' : '能耗计量关系'));
       }
 
       /* ---------- 今日试算：递归叶子 ---------- */
@@ -2412,6 +2573,7 @@
         var members = (relations[objId] || {})[energy] || [];
         if (!members.length) return;
         members.forEach(function (m) {
+          if (relationKindOf(m) !== 'metering') return;
           var nextCoeff = coeff * (m.direction === 'out' ? -1 : 1);
           if (m.type === 'meter') {
             var key = m.code;
@@ -2531,7 +2693,7 @@
         members.forEach(function (m) {
           m.conflict = false;
           m.conflictReason = '';
-          if (m.type !== 'meter') return;
+          if (m.type !== 'meter' || relationKindOf(m) !== 'metering') return;
           var key = m.code + '|' + state.energy;
           var owners = usage[key] || [];
           if (owners.length > 1) {
@@ -2723,10 +2885,10 @@
       bindDrop();
       renderEnergyTabs();
       switchEnergy(ENERGIES[0] || '电');
-      selectObject('s493');
+      selectObject('ahu101Fan1');
     })();
   </script>
-  <script src="components/nav.js" data-active-nav="工程配置" data-active-sidebar="能源计量关系"></script>
+  <script src="components/nav.js" data-active-nav="工程配置" data-active-sidebar="能源拓扑配置"></script>
   <script>
     (function () {
       var toggle = document.getElementById('annoToggle');

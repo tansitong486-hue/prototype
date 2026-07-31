@@ -84,11 +84,11 @@
   /** 能源配置模块：左侧仅 3 个子菜单 */
   const SIDEBAR_TREE_ENERGY = [
     { label: '能源计费配置' },
-    { label: '能源计量关系' },
+    { label: '能源拓扑配置' },
     { label: '表具能耗明细' }
   ];
 
-  const ENERGY_SIDEBAR_KEYS = ['能源配置', '能源计费配置', '能源计量关系', '表具能耗明细'];
+  const ENERGY_SIDEBAR_KEYS = ['能源配置', '能源计费配置', '能源拓扑配置', '表具能耗明细'];
 
   /** 物模型模块：左侧 7 个子菜单（与现网「工程配置 → 物模型」一致；本原型只实现「模型管理」） */
   const SIDEBAR_TREE_MODEL = [
@@ -109,7 +109,7 @@
     '能效视图': '能效视图.html',
     '能源配置': '能源配置.html',
     '能源计费配置': '能源配置.html',
-    '能源计量关系': '能源计量关系.html',
+    '能源拓扑配置': '能源计量关系.html',
     '机理模型训练': '机理模型训练.html',
     '系统仿真建模': '系统仿真建模.html',
     '机房总览': '机房总览.html',
@@ -141,7 +141,7 @@
     '用能定额考核': 'v2.5',
     '能效视图': 'v2.5',
     '能源计费配置': 'v2.5',
-    '能源计量关系': 'v2.5',
+    '能源拓扑配置': 'v2.5',
     '机理模型训练': 'v2.3',
     '系统仿真建模': 'v2.3',
     '机房总览': 'v1.9',
@@ -1047,7 +1047,7 @@
         item.className = 'sidebar-item' + (node.label === config.activeSidebar ? ' active' : '');
         let icon = ICON_DASH;
         if (node.label === '总览看板') icon = ICON_GRID;
-        if (node.label === '能源计费配置' || node.label === '能源计量关系' || node.label === '表具能耗明细') {
+        if (node.label === '能源计费配置' || node.label === '能源拓扑配置' || node.label === '表具能耗明细') {
           icon = ICON_SLIDERS;
         }
         if (getSidebarMode() === 'model') icon = ICON_GRID;

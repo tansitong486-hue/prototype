@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI 节能 v2.5 — 基于计费的能耗明细系统（需求方案与架构）</title>
+<title>AI 节能 v2.5 — 能源计量核算与指标服务需求方案</title>
 <link rel="icon" href="data:,">
 <style>
 :root {
@@ -156,6 +156,7 @@ li.is-open > .toc-toggle::before { transform: rotate(90deg); }
 }
 .utility-btn { padding: 0 10px; border-radius: 5px; font-size: 12.5px; white-space: nowrap; }
 .icon-btn:hover, .utility-btn:hover { border-color: var(--accent); color: var(--accent); }
+.prototype-nav-link { display: inline-flex; align-items: center; text-decoration: none; }
 .search {
   position: relative;
   flex: 1 1 260px;
@@ -210,27 +211,6 @@ li.is-open > .toc-toggle::before { transform: rotate(90deg); }
 .search-result:hover, .search-result.is-active { background: var(--accent-soft); }
 .search-result strong { display: block; font-size: 12.5px; }
 .search-result span { display: block; color: var(--muted); font-size: 11.5px; margin-top: 2px; }
-.segmented {
-  display: inline-flex;
-  flex: 0 0 auto;
-  padding: 2px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--surface-muted);
-}
-.segmented button {
-  min-height: 28px;
-  padding: 3px 8px;
-  border: 0;
-  border-radius: 4px;
-  color: var(--muted);
-  background: transparent;
-  font-size: 12px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.segmented button:hover { color: var(--text); }
-.segmented button[aria-pressed="true"] { color: #fff; background: var(--accent); }
 .top-meta { margin-left: auto; color: var(--muted); font-size: 12px; white-space: nowrap; }
 .content {
   max-width: calc(var(--content) + 80px);
@@ -334,27 +314,10 @@ tbody tr:nth-child(even) td { background: #fbfcfc; }
 }
 .fold-control:hover { background: var(--accent-soft); }
 .foldable.is-collapsed > :not(h3):not(h4):not(.fold-control) { display: none; }
-.focus-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin: 0 0 22px;
-  padding: 9px 12px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  color: var(--muted);
-  background: var(--surface-muted);
-  font-size: 12.5px;
-}
-.focus-banner[hidden] { display: none; }
-.focus-banner button { border: 0; color: var(--accent); background: transparent; cursor: pointer; }
-section[hidden] { display: none !important; }
 .backdrop { display: none; }
 .search-focus { outline: 3px solid rgba(8, 127, 120, .22); outline-offset: 5px; }
 @media (max-width: 1120px) {
   .top-meta { display: none; }
-  .segmented button { padding-inline: 6px; }
 }
 @media (max-width: 920px) {
   .layout { grid-template-columns: minmax(0, 1fr); }
@@ -372,8 +335,6 @@ section[hidden] { display: none !important; }
   .icon-btn { display: inline-block; }
   .topbar { flex-wrap: wrap; padding: 8px 10px; }
   .search { max-width: none; flex: 1 1 240px; }
-  .segmented { order: 3; width: 100%; overflow-x: auto; }
-  .segmented button { flex: 1 0 auto; }
   .content { padding: 26px 18px 70px; }
   h1 { font-size: 27px; }
 }
@@ -385,7 +346,6 @@ section[hidden] { display: none !important; }
   h2 { margin-top: 42px; font-size: 20px; }
   h3 { font-size: 17px; }
   th, td { padding: 8px; min-width: 110px; }
-  .focus-banner { align-items: flex-start; }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
@@ -394,13 +354,24 @@ section[hidden] { display: none !important; }
 @media print {
   body { background: #fff; font-size: 11pt; }
   .layout { display: block; }
-  .sidebar, .topbar, .backdrop, .focus-banner, .fold-control { display: none !important; }
+  .sidebar, .topbar, .backdrop, .fold-control { display: none !important; }
   .content { max-width: none; padding: 0; }
   #document { padding: 0; }
-  section[hidden], .foldable.is-collapsed > * { display: block !important; }
+  .foldable.is-collapsed > * { display: block !important; }
   h2, h3, h4 { break-after: avoid; }
   table, blockquote, .mermaid-shell { break-inside: avoid; }
 }
+.proto-embed { margin: 18px 0 28px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); overflow: hidden; }
+.proto-embed-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--surface-muted); }
+.proto-embed-head strong { font-size: 13.5px; } .proto-embed-head span { color: var(--muted); font-size: 12px; }
+.proto-embed-head .proto-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); font-size: 11px; font-weight: 650; }
+.proto-fs-btn { margin-left: auto; height: 30px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: 5px; background: var(--surface); color: var(--text); font-size: 12.5px; cursor: pointer; white-space: nowrap; }
+.proto-fs-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.proto-frame { display: block; width: 100%; height: min(78vh, 920px); border: 0; background: #fff; } .proto-gallery > .proto-embed { margin-top: 14px; }
+.proto-embed:fullscreen, .proto-embed.is-fs { position: fixed; inset: 0; z-index: 200; width: 100vw; height: 100vh; margin: 0; border: 0; border-radius: 0; display: flex; flex-direction: column; background: #fff; }
+.proto-embed:fullscreen .proto-embed-head, .proto-embed.is-fs .proto-embed-head { flex-shrink: 0; }
+.proto-embed:fullscreen .proto-frame, .proto-embed.is-fs .proto-frame { flex: 1 1 auto; height: auto !important; min-height: 0; } body.proto-fs-open { overflow: hidden; }
+@media print { .proto-embed { break-inside: avoid; } .proto-frame { height: 640px; } .proto-fs-btn { display: none !important; } }
 </style>
 </head>
 <body>
@@ -410,14 +381,14 @@ section[hidden] { display: none !important; }
   <aside class="sidebar" id="sidebar">
     <div class="brand">
       <strong>AI 节能 v2.5</strong>
-      <span>能耗明细系统 · 需求与架构</span>
+      <span>能源计量核算 · 指标服务</span>
     </div>
     <div class="toc-kicker">文档目录</div>
     <nav id="TOC" role="doc-toc" aria-label="文档目录">
       <ul>
-      <li><a href="#ai-节能-v25--基于计费的能耗明细系统需求方案与架构"
-      id="toc-ai-节能-v25--基于计费的能耗明细系统需求方案与架构">AI 节能
-      v2.5 — 基于计费的能耗明细系统（需求方案与架构）</a>
+      <li><a href="#ai-节能-v25--能源计量核算与指标服务需求方案"
+      id="toc-ai-节能-v25--能源计量核算与指标服务需求方案">AI 节能
+      v2.5 — 能源计量核算与指标服务需求方案</a>
       <ul>
       <li><a href="#文档导读" id="toc-文档导读">文档导读</a>
       <ul>
@@ -451,15 +422,16 @@ section[hidden] { display: none !important; }
       </ul></li>
       <li><a href="#13-开发范围总览已有--新增--改造--不做"
       id="toc-13-开发范围总览已有--新增--改造--不做">1.3
-      开发范围总览（已有 / 新增 / 改造 / 不做）</a></li>
+      开发范围总览</a></li>
       <li><a href="#14-需求清单" id="toc-14-需求清单">1.4
       需求清单</a></li>
       </ul></li>
       <li><a href="#二需求-1已有复用能源类型与累积量--瞬时量测点"
-      id="toc-二需求-1已有复用能源类型与累积量--瞬时量测点">二、需求 1：已有复用｜能源类型与累积量 / 瞬时量测点</a></li>
+      id="toc-二需求-1已有复用能源类型与累积量--瞬时量测点">二、需求 1：能源标准测点定义与物模型映射</a><ul><li><a href="#需求-1-原型" id="toc-需求-1-原型">原型（对照批注评审）</a></li></ul></li>
       <li><a href="#三需求-2本期新增表具核算明细"
-      id="toc-三需求-2本期新增表具核算明细">三、需求 2：本期新增｜表具核算明细</a>
+      id="toc-三需求-2本期新增表具核算明细">三、需求 2：表具核算明细</a>
       <ul>
+      <li><a href="#需求-2-原型" id="toc-需求-2-原型">原型（对照批注评审）</a></li>
       <li><a href="#31-生成范围" id="toc-31-生成范围">3.1 生成范围</a></li>
       <li><a href="#32-半小时基准明细" id="toc-32-半小时基准明细">3.2 半小时基准明细</a>
       <ul>
@@ -467,7 +439,7 @@ section[hidden] { display: none !important; }
       </ul></li>
       <li><a href="#33-多粒度归档性能关键" id="toc-33-多粒度归档性能关键">3.3 多粒度归档（性能关键）</a></li>
       <li><a href="#34-幂等" id="toc-34-幂等">3.4 幂等</a></li>
-      <li><a href="#35-数据质量校验vee本期最小集" id="toc-35-数据质量校验vee本期最小集">3.5 数据质量校验（VEE，本期最小集）</a></li>
+      <li><a href="#35-数据质量校验vee本期最小集" id="toc-35-数据质量校验vee本期最小集">3.5 数据质量校验（本期最小集）</a></li>
       <li><a href="#36-人工修正" id="toc-36-人工修正">3.6 人工修正</a></li>
       <li><a href="#37-表具能耗明细管理页面" id="toc-37-表具能耗明细管理页面">3.7 「表具能耗明细」管理页面</a>
       <ul>
@@ -476,35 +448,38 @@ section[hidden] { display: none !important; }
       </ul></li>
       </ul></li>
       <li><a href="#四需求-3新增独立菜单页新增关系对象类型能源计量关系与计量拓扑含计量方向"
-      id="toc-四需求-3新增独立菜单页新增关系对象类型能源计量关系与计量拓扑含计量方向">四、需求 3：新增独立菜单页 + 新增关系对象类型｜能源计量关系与计量拓扑（含计量方向）</a>
+      id="toc-四需求-3新增独立菜单页新增关系对象类型能源计量关系与计量拓扑含计量方向">四、需求 3：能源计量关系与供电关系配置</a>
       <ul>
-      <li><a href="#41-关系模型能耗计量关系对象" id="toc-41-关系模型能耗计量关系对象">4.1 关系模型：「能耗计量」关系对象</a>
+      <li><a href="#需求-3-原型" id="toc-需求-3-原型">原型（对照批注评审）</a></li>
+      <li><a href="#41-关系模型能耗计量关系对象" id="toc-41-关系模型能耗计量关系对象">4.1 能耗计量关系对象</a>
       <ul>
-      <li><a href="#411-承载方式复用已有关系对象能力" id="toc-411-承载方式复用已有关系对象能力">4.1.1 承载方式：复用已有关系对象能力</a></li>
-      <li><a href="#412-关系两端与关系属性" id="toc-412-关系两端与关系属性">4.1.2 关系两端与关系属性</a></li>
-      <li><a href="#413-成员的两种挂法" id="toc-413-成员的两种挂法">4.1.3 成员的两种挂法（产品已有口径）</a></li>
-      <li><a href="#414-计算语义" id="toc-414-计算语义">4.1.4 计算语义：Σ输入 − Σ输出，按能源分域递归</a></li>
+      <li><a href="#411-承载方式复用已有关系对象能力" id="toc-411-承载方式复用已有关系对象能力">4.1.1 关系定义</a></li>
+      <li><a href="#412-关系两端与关系属性" id="toc-412-关系两端与关系属性">4.1.2 关系端点与属性</a></li>
+      <li><a href="#413-成员的两种挂法" id="toc-413-成员的两种挂法">4.1.3 成员类型</a></li>
       </ul></li>
-      <li><a href="#42-拓扑图约束与重复计量校验" id="toc-42-拓扑图约束与重复计量校验">4.2 拓扑图约束与重复计量校验</a></li>
-      <li><a href="#43-业务配置页能源计量关系独立页与实例详情能效配置" id="toc-43-业务配置页能源计量关系独立页与实例详情能效配置">4.3 业务配置页（纯前端）：《能源计量关系》独立页 + 实例详情「能效配置」</a>
+      <li><a href="#42-关系模型供电关系对象" id="toc-42-关系模型供电关系对象">4.2 供电关系对象</a></li>
+      <li><a href="#43-关系校验" id="toc-43-关系校验">4.3 关系校验</a></li>
+      <li><a href="#44-业务配置" id="toc-44-业务配置">4.4 业务配置</a>
       <ul>
-      <li><a href="#431-导航挂载" id="toc-431-导航挂载">4.3.1 导航挂载</a></li>
-      <li><a href="#432-计量关系主视图" id="toc-432-计量关系主视图">4.3.2 能源 Tab + 多视图树 + 关系表（主视图）</a></li>
-      <li><a href="#433-批量配置能力" id="toc-433-批量配置能力">4.3.3 批量配置能力</a></li>
-      <li><a href="#434-今日试算与表具下钻" id="toc-434-今日试算与表具下钻">4.3.4 今日试算与表具下钻</a></li>
+      <li><a href="#441-配置入口" id="toc-441-配置入口">4.4.1 配置入口</a></li>
+      <li><a href="#442-能耗计量关系配置" id="toc-442-能耗计量关系配置">4.4.2 能耗计量关系配置</a></li>
+      <li><a href="#443-批量配置" id="toc-443-批量配置">4.4.3 批量配置</a></li>
+      <li><a href="#444-今日试算" id="toc-444-今日试算">4.4.4 今日试算</a></li>
+      <li><a href="#445-供电关系配置" id="toc-445-供电关系配置">4.4.5 供电关系配置</a></li>
       </ul></li>
       </ul></li>
       <li><a href="#五需求-4复用计费方案新增计费属性写入计费方案与表具核算明细成本属性"
-      id="toc-五需求-4复用计费方案新增计费属性写入计费方案与表具核算明细成本属性">五、需求 4：复用计费方案 + 新增计费属性写入｜计费方案与表具核算明细成本属性</a>
+      id="toc-五需求-4复用计费方案新增计费属性写入计费方案与表具核算明细成本属性">五、需求 4：计费方案与表具成本</a>
       <ul>
-      <li><a href="#51-复用现有计费方案" id="toc-51-复用现有计费方案">5.1 复用现有计费方案</a></li>
-      <li><a href="#52-成本归属表具核算明细" id="toc-52-成本归属表具核算明细">5.2 成本归属表具核算明细</a></li>
-      <li><a href="#53-按时间范围重算成本属性" id="toc-53-按时间范围重算成本属性">5.3 按时间范围重算成本属性</a></li>
-      <li><a href="#54-特殊场景同一物理表在不同业务需不同方案--虚拟表具" id="toc-54-特殊场景同一物理表在不同业务需不同方案--虚拟表具">5.4 特殊场景：同一物理表在不同业务需不同方案 → 虚拟表具</a></li>
+      <li><a href="#需求-4-原型" id="toc-需求-4-原型">原型（对照批注评审）</a></li>
+      <li><a href="#51-复用现有计费方案" id="toc-51-复用现有计费方案">5.1 方案应用</a></li>
+      <li><a href="#52-成本归属表具核算明细" id="toc-52-成本归属表具核算明细">5.2 成本写入</a></li>
+      <li><a href="#53-按时间范围重算成本属性" id="toc-53-按时间范围重算成本属性">5.3 按范围重算</a></li>
       </ul></li>
       <li><a href="#六需求-5本期新增对象指标定义与指标工厂查询计算实时值--统计指标"
-      id="toc-六需求-5本期新增对象指标定义与指标工厂查询计算实时值--统计指标">六、需求 5：本期新增｜对象指标定义与指标工厂查询计算（实时值 + 统计指标）</a>
+      id="toc-六需求-5本期新增对象指标定义与指标工厂查询计算实时值--统计指标">六、需求 5：对象指标定义与指标工厂查询计算（实时值 + 统计指标）</a>
       <ul>
+      <li><a href="#需求-5-原型" id="toc-需求-5-原型">原型（对照批注评审）</a></li>
       <li><a href="#61-范围目标与整体框架" id="toc-61-范围目标与整体框架">6.1 范围、目标与整体框架</a>
       <ul>
       <li><a href="#611-目标与职责边界" id="toc-611-目标与职责边界">6.1.1 目标与职责边界</a></li>
@@ -515,20 +490,21 @@ section[hidden] { display: none !important; }
       <li><a href="#621-物模型层类型层" id="toc-621-物模型层类型层">6.2.1 物模型层（类型层）</a></li>
       <li><a href="#622-实例层" id="toc-622-实例层">6.2.2 实例层</a></li>
       <li><a href="#623-两层生效规则" id="toc-623-两层生效规则">6.2.3 两层生效规则</a></li>
+      <li><a href="#624-设备实例详情中的指标展示" id="toc-624-设备实例详情中的指标展示">6.2.4 设备实例详情中的指标展示</a></li>
       </ul></li>
       <li><a href="#63-指标清单实时值指标与统计指标" id="toc-63-指标清单实时值指标与统计指标">6.3 指标清单：实时值指标与统计指标</a>
       <ul>
       <li><a href="#631-实时值指标" id="toc-631-实时值指标">6.3.1 实时值指标</a></li>
       <li><a href="#632-统计指标" id="toc-632-统计指标">6.3.2 统计指标</a></li>
       <li><a href="#633-能效类指标共用解析规则" id="toc-633-能效类指标共用解析规则">6.3.3 能效类指标共用解析规则（B1–B5）</a></li>
-      <li><a href="#634-明确不进指标工厂首版" id="toc-634-明确不进指标工厂首版">6.3.4 明确不进指标工厂（首版）</a></li>
       </ul></li>
       <li><a href="#64-上游变更" id="toc-64-上游变更">6.4 上游变更</a></li>
       <li><a href="#65-下游消费" id="toc-65-下游消费">6.5 下游消费（本章不展开）</a></li>
       </ul></li>
-      <li><a href="#七需求-6指标选取服务面向选择器" id="toc-七需求-6指标选取服务面向选择器">七、需求 6：本期新增｜指标选取服务（面向选择器）</a>
+      <li><a href="#七需求-6指标选取服务面向选择器" id="toc-七需求-6指标选取服务面向选择器">七、需求 6：指标选取服务（面向选择器）</a>
       <ul>
-      <li><a href="#71-四类接口" id="toc-71-四类接口">7.1 四类接口</a></li>
+      <li><a href="#需求-6-原型" id="toc-需求-6-原型">原型（对照批注评审）</a></li>
+      <li><a href="#71-需求内容" id="toc-71-需求内容">7.1 需求内容</a></li>
       <li><a href="#72-关键规则" id="toc-72-关键规则">7.2 关键规则</a></li>
       </ul></li>
       <li><a href="#八跨域变更与重算矩阵"
@@ -539,12 +515,12 @@ section[hidden] { display: none !important; }
       <li><a href="#91-风险技术债与边界污染点"
       id="toc-91-风险技术债与边界污染点">9.1 风险、技术债与边界污染点</a></li>
       <li><a href="#92-待确认的落地细节"
-      id="toc-92-待确认的落地细节">9.2 落地细节：已定稿结论与剩余待确认</a></li>
+      id="toc-92-待确认的落地细节">9.2 未决项与实施前置</a></li>
       </ul></li>
       <li><a href="#十验收标准"
       id="toc-十验收标准">十、验收标准</a></li>
       <li><a href="#十一变更记录"
-      id="toc-十一变更记录">十一、变更记录</a></li>
+      id="toc-十一变更记录">十一、变更摘要</a></li>
       </ul></li>
       </ul>
     </nav>
@@ -552,40 +528,29 @@ section[hidden] { display: none !important; }
   <div class="main">
     <header class="topbar">
       <button class="icon-btn" id="menu-toggle" type="button" aria-label="打开目录" title="目录">≡</button>
+      <a class="utility-btn prototype-nav-link" href="../index.html" aria-label="返回原型导航">← 原型导航</a>
       <div class="search">
         <input id="doc-search" type="search" placeholder="搜索章节、规则或符号" autocomplete="off" aria-label="搜索文档">
         <div class="search-results" id="search-results" role="listbox" hidden></div>
-      </div>
-      <div class="segmented" id="focus-filter" role="group" aria-label="交付范围筛选">
-        <button type="button" data-view="all" aria-pressed="true">全部</button>
-        <button type="button" data-view="new" aria-pressed="false">新增</button>
-        <button type="button" data-view="changed" aria-pressed="false">改造</button>
-        <button type="button" data-view="reused" aria-pressed="false">复用</button>
-        <button type="button" data-view="open" aria-pressed="false">未决</button>
       </div>
       <button class="utility-btn" id="detail-toggle" type="button">展开细则</button>
       <span class="top-meta">规划中 · 核心口径已闭环</span>
     </header>
     <div class="content">
-      <div class="focus-banner" id="focus-banner" hidden>
-        <span id="focus-copy"></span>
-        <button type="button" id="focus-reset">显示全部</button>
-      </div>
       <article id="document">
-<section id="ai-节能-v25--基于计费的能耗明细系统需求方案与架构"
+<section id="ai-节能-v25--能源计量核算与指标服务需求方案"
 class="level1">
-<h1>AI 节能 v2.5 — 基于计费的能耗明细系统（需求方案与架构）</h1>
+<h1>AI 节能 v2.5 — 能源计量核算与指标服务需求方案</h1>
 <blockquote>
 <p>版本：v2.5<br />
 状态：规划中（核心架构口径已闭环，落地细节见 §9.2）<br />
-定位：定义需求 1–6
-的明细引擎与指标选取服务，说明累计读数如何形成可核算、可追踪、可重算的表具事实与对象指标，以及这些指标如何以稳定契约被下游选择器取用。<br />
-范围：累计量 / 瞬时量测点、表具核算明细、VEE
+定位：定义六个交付包：需求 1–5 构成能源计量核算与指标生产链，需求 6 提供面向选择器的指标选取服务；说明累计读数如何形成可核算、可追踪、可重算的表具事实与对象指标，以及这些指标如何以稳定契约被下游取用。<br />
+范围：累计量 / 瞬时量标准测点定义、物模型支持关系及实际测点映射、表具核算明细、数据质量校验
 与人工修正、计量拓扑、计费属性、对象指标工厂、「表具能耗明细」管理页面和面向选择器的指标选取服务。<br />
 关联文档：消费侧需求 8–13 见<a
 href="./存量页面消费与总览看板改造需求方案.html">《存量页面消费与总览看板改造需求方案》</a>。
-维护方式：本 HTML 为唯一维护源，后续直接修改本文件，不再维护同名
-Markdown。</p>
+编号说明：本册按六个交付包编号；版本需求清单将「表具核算生成」与「数据质量、人工修正及管理页」拆为两条。跨文档引用优先使用需求名称，避免仅凭编号对应。<br />
+维护方式：本 HTML 为唯一维护源，后续直接修改本文件，不再维护同名 Markdown。</p>
 </blockquote>
 <blockquote>
 <p>前置依赖：</p>
@@ -605,6 +570,7 @@ Markdown。</p>
 <hr />
 <section id="文档导读" class="level2">
 <h2>文档导读</h2>
+<p>需求 1–5 对应原型已嵌入各章，评审时请结合原型批注；需求 6 为服务端共同前置，无独立页面原型。</p>
 <section id="本文回答四个问题" class="level3">
 <h3>本文回答四个问题</h3>
 <ol type="1">
@@ -612,7 +578,7 @@ Markdown。</p>
 <li>表具怎样通过计量拓扑归集成系统 / 设备组 /
 设备的能耗、成本与能效指标；</li>
 <li>晚到数据、人工修正、拓扑调整和计费变化分别重算什么，不重算什么；</li>
-<li>七项需求分别由谁实现、输出什么、如何验收。</li>
+<li>六个交付包分别由谁实现、输出什么、如何验收。</li>
 </ol>
 </section>
 <section id="建议阅读路径" class="level3">
@@ -639,11 +605,11 @@ Markdown。</p>
 <tr>
 <td>测试</td>
 <td>§十验收标准</td>
-<td>按验收编号回查对应需求规则；需求 6 验收为场景 18–18f</td>
+<td>按验收编号回查对应需求规则；需求 6 验收为场景 18–18d</td>
 </tr>
 <tr>
 <td>实施 / 运维</td>
-<td>§3.7「表具能耗明细」管理页、§四计量拓扑（§4.3 配置页）</td>
+<td>§3.7「表具能耗明细」管理页、§四关系配置（§4.4 配置页）</td>
 <td>§七指标与数据链路追踪</td>
 </tr>
 </tbody>
@@ -653,7 +619,7 @@ Markdown。</p>
 <h3>核心结论</h3>
 <blockquote>
 <p><strong>一条主链、一个事实源：</strong>
-累计读数先生成与拓扑无关的表具核算明细并<strong>归档</strong>；对象能耗、成本和能效再由指标工厂沿<strong>当前</strong>计量拓扑在<strong>每次查询时</strong>计算。表具核算明细是唯一事实归档；对象层<strong>不归档、不物化</strong>。</p>
+累计读数先生成与拓扑无关的表具核算明细并<strong>归档</strong>；对象统计指标由指标工厂沿<strong>当前</strong>计量拓扑在<strong>每次查询时</strong>计算。C1 实时能耗值与 B1–B5 能效实时值沿用数据工厂现有计算指标调度，计算后像测点一样写入时序存储，形成当前值与历史曲线；表具核算明细仍是用量与成本的唯一事实归档，实时指标历史是可重算的派生时序结果。</p>
 </blockquote>
 <table>
 <thead>
@@ -667,15 +633,15 @@ Markdown。</p>
 <tbody>
 <tr>
 <td>累计量 → 表具核算明细</td>
-<td>尾值差、VEE、人工修正、计费属性</td>
+<td>尾值差、数据质量校验、人工修正、计费属性</td>
 <td>表具事实层，半小时 / 时 / 天 / 月</td>
 <td>按表具和时间窗幂等重算</td>
 </tr>
 <tr>
 <td>表具核算明细 → 对象指标</td>
 <td>沿计量拓扑递归 Σ输入 − Σ输出、能效比值</td>
-<td>指标工厂；查询时计算，不落库</td>
-<td>无对象层归档需覆盖；下次查询按当前拓扑与最新表具事实自然出数</td>
+<td>统计指标查询时计算；实时指标计算后写入时序存储</td>
+<td>统计指标下次查询自然出数；计量拓扑变更后自动重算受影响实时指标的全部保留期历史并原子替换</td>
 </tr>
 </tbody>
 </table>
@@ -683,10 +649,9 @@ Markdown。</p>
 <section id="本版边界" class="level3">
 <h3>本版边界</h3>
 <ul>
-<li>本册覆盖需求 1–6：需求 1–6 为明细引擎，需求 6 为面向选择器的指标选取服务；需求 8–13
-的页面消费、总览看板与平台侧选择器扩展在关联文档中维护。</li>
+<li>本册按六个交付包编号：需求 1–5 构成能源计量核算与指标生产链，需求 6 为面向选择器的指标选取服务；需求 8–13 的页面消费、总览看板与平台侧选择器扩展在关联文档中维护。跨文档引用优先使用需求名称。</li>
 <li>不新增表具或计量对象主数据，不自建对象层查询服务，不做估算补值、账单封存、拓扑生效版本和自由公式指标。</li>
-<li>实时值与跨时间范围统计值均在查询时按当前拓扑计算；对象层不物化、不归档。</li>
+<li>实时值按数据工厂默认调度计算并写入时序存储，支持当前值与历史曲线；跨时间范围统计值仍按当前拓扑查询时计算、不物化。</li>
 <li>指标定义按<strong>物模型（类型）</strong>注册、按实例自动派生；下游可按物模型或按实例两种方式选取同一指标。不在物模型上新增测点
 / 属性，不做模型级聚合值（同一物模型全部实例的合计 / 平均）。</li>
 <li>页面统一消费指标工厂产出；「表具能耗明细」管理页例外，直接读取表具事实层。</li>
@@ -704,19 +669,19 @@ Markdown。</p>
 <h3>1.1 分层视图</h3>
 <pre class="mermaid"><code>graph TB
     subgraph SRC[&quot;采集层（原始，不可变）&quot;]
-        A1[&quot;测点历史数据&lt;br/&gt;(物模型实例对象 · 测点 · 时刻 · 累计值)&lt;br/&gt;由能源类型的累积量测点定义筛选&quot;]
+        A1[&quot;测点历史数据&lt;br/&gt;(物模型实例对象 · 测点 · 时刻 · 累计值)&lt;br/&gt;由能源类型的唯一累积量标准测点映射筛选&quot;]
     end
     subgraph METER[&quot;表具核算明细层 · 唯一事实归档（与拓扑无关）&quot;]
-        B1[&quot;差值 + 数据质量(VEE) + 人工修正&lt;br/&gt;需求 2&quot;]
+        B1[&quot;差值 + 数据质量校验 + 人工修正&lt;br/&gt;需求 2&quot;]
         B2[&quot;表具 × 能源类型 × {半小时/时/天/月} 核算明细&lt;br/&gt;用量 + 质量状态 + 人工修正状态 + 成本计算状态&lt;br/&gt;需求 2 / 4&quot;]
         B3[&quot;计费结果属性族&lt;br/&gt;按当时生效计费方案写入单价快照与成本金额&lt;br/&gt;未应用方案时成本状态=未计算&lt;br/&gt;需求 4&quot;]
     end
     subgraph TOPO[&quot;计量拓扑（配置产物）&quot;]
-        C1[&quot;「能源计量关系」独立菜单页（本期新增）&lt;br/&gt;工程配置 · 能源配置 · 跨对象批量主入口&lt;br/&gt;另：能效视图「能效配置」做单对象配置&lt;br/&gt;每条关系带计量方向：输入 / 输出&lt;br/&gt;支持 Excel 导入导出&lt;br/&gt;需求 3&quot;]
+        C1[&quot;「能源拓扑配置」独立菜单页&lt;br/&gt;工程配置 · 能源配置 · 跨对象批量主入口&lt;br/&gt;另：能效视图「能效配置」做单对象配置&lt;br/&gt;维护能耗计量与供电两类关系&lt;br/&gt;支持 Excel 导入导出&lt;br/&gt;需求 3&quot;]
     end
     subgraph FACT[&quot;对象指标层 · 指标工厂（数据工厂）&quot;]
-        D1[&quot;对象指标定义&lt;br/&gt;能耗 / 成本 / 损耗 = Σ输入 − Σ输出&lt;br/&gt;PUE、CLF 等能效指标 + 统计差值&lt;br/&gt;需求 5&quot;]
-        D2[&quot;实时值：只查当前&lt;br/&gt;不跨时间范围&quot;]
+        D1[&quot;对象指标定义&lt;br/&gt;能耗 / 成本 / 实时功率 = Σ输入 − Σ输出&lt;br/&gt;PUE、CLF 等能效指标 + 统计差值&lt;br/&gt;需求 5&quot;]
+        D2[&quot;实时指标：默认调度计算&lt;br/&gt;写入时序存储 · 当前值 + 历史曲线&quot;]
         D3[&quot;统计查询：按时间粒度入参&lt;br/&gt;每次查询按当前计量关系汇总&lt;br/&gt;结果不落库&quot;]
     end
     MGMT[&quot;「表具能耗明细」管理页面&lt;br/&gt;工程配置 · 能源配置&lt;br/&gt;需求 2 §3.7&quot;]
@@ -737,7 +702,7 @@ Markdown。</p>
 <blockquote>
 <p>说明：概念 ER 按业务领域拆开表达，不展开字段；“物模型 / 测点 /
 物模型实例对象 /
-测点历史数据”是已有基础对象，本版只在其上定义计量业务角色与派生明细。<strong>表具、计量对象都不是新增主数据实体，而是物模型实例对象在计量业务中的不同角色。</strong></p>
+测点历史数据”是已有基础对象，本版只在其上定义计量业务角色与派生明细。<strong>表具、计量对象都不是新增主数据实体，而是物模型实例对象在计量业务中的不同角色；设备实例及其下级组件均为物模型实例对象，统一使用各自实例 ID。</strong></p>
 </blockquote>
 <table>
 <thead>
@@ -755,14 +720,13 @@ Markdown。</p>
 </tr>
 <tr>
 <td>能源配置域</td>
-<td>定义能源类型，以及该能源类型按物模型成对指定的累积量测点与瞬时量测点（子物模型继承父模型测点后同样适用）</td>
-<td>能源类型、累积量测点定义、瞬时量测点定义</td>
+<td>定义能源类型下的累积量 / 瞬时量标准测点角色，并为物模型多选「能源计量 / 供电」支持关系；选择能源计量时再将实际测点映射到对应标准角色，子物模型继承父模型配置后同样适用</td>
+<td>能源类型、标准测点定义、物模型支持关系、物模型实际测点映射</td>
 </tr>
 <tr>
 <td>计量拓扑域</td>
-<td>基于系统已有关系对象能力，按能源类型定义物模型实例对象在计量业务中的角色，以及对象到表具的汇总关系（每条关系带计量方向：输入
-/ 输出）</td>
-<td>表具角色、计量对象角色、能耗计量关系对象</td>
+<td>分别维护能耗计量关系与供电关系；前者解决能耗归集（带计量方向：输入 / 输出），后者使用有方向的 <code>supplyPower</code> 表达实际供电拓扑，两类关系独立保存</td>
+<td>表具角色、计量对象角色、能耗计量关系对象、<code>supplyPower</code> 关系</td>
 </tr>
 <tr>
 <td>表具核算域</td>
@@ -778,7 +742,7 @@ Markdown。</p>
 <td>对象指标域（指标工厂）</td>
 <td>将对象粒度的能耗 / 成本 / 能效 / 统计指标注册进 KE
 数据工厂指标工厂：定义口径与输入依赖；按查询入参（实时 / 时间跨度）现场计算并返回结果</td>
-<td>对象指标定义（类型层注册 + 实例派生）；查询结果不持久化</td>
+<td>对象指标定义（类型层注册 + 实例派生）；实时结果写入时序存储，统计结果不持久化</td>
 </tr>
 </tbody>
 </table>
@@ -790,28 +754,32 @@ Markdown。</p>
     A3[&quot;物模型实例对象&lt;br/&gt;（已有实体）&quot;]
     A4[&quot;测点历史数据&lt;br/&gt;（已有实体）&quot;]
     A5[&quot;能源类型&quot;]
-    A6[&quot;累积量测点定义&quot;]
-    A7[&quot;瞬时量测点定义&quot;]
+    A6[&quot;标准测点定义&lt;br/&gt;分类：累积量 / 瞬时量&lt;br/&gt;角色：唯一累积量 / 主瞬时量 / 过程瞬时量&quot;]
+    A8[&quot;物模型支持关系&lt;br/&gt;能源计量 / 供电（多选）&quot;]
+    A7[&quot;物模型实际测点映射&lt;br/&gt;物模型 + 标准测点 → 实际测点&quot;]
 
     A1 --&gt;|&quot;1:N 拥有测点&quot;| A2
     A1 --&gt;|&quot;父子继承：子模型继承父测点&quot;| A1
     A1 --&gt;|&quot;1:N 拥有实例对象&quot;| A3
     A3 --&gt;|&quot;1:N 产生测点历史数据&quot;| A4
-    A5 --&gt;|&quot;1:N 配置累积量测点&quot;| A6
-    A5 --&gt;|&quot;1:N 配置瞬时量测点&quot;| A7
-    A2 --&gt;|&quot;1:N 被指定为累积量测点&quot;| A6
-    A2 --&gt;|&quot;1:N 被指定为瞬时量测点&quot;| A7
-    A6 --&gt;|&quot;1:N 筛选累计读数&quot;| A4
-    A7 --&gt;|&quot;1:N 筛选瞬时读数&quot;| A4</code></pre>
+    A5 --&gt;|&quot;1:N 定义标准测点&quot;| A6
+    A5 --&gt;|&quot;1:N 配置模型业务能力&quot;| A8
+    A1 --&gt;|&quot;1:N 选择支持关系&quot;| A8
+    A8 --&gt;|&quot;选择能源计量后要求映射&quot;| A7
+    A6 --&gt;|&quot;1:N 建立角色映射&quot;| A7
+    A1 --&gt;|&quot;1:N 配置模型映射&quot;| A7
+    A2 --&gt;|&quot;1:N 作为实际测点&quot;| A7
+    A7 --&gt;|&quot;1:N 解析累计 / 瞬时读数&quot;| A4</code></pre>
 </section>
 <section id="122-计量拓扑域" class="level4">
 <h4>1.2.2 计量拓扑域</h4>
 <pre class="mermaid"><code>flowchart LR
     B1[&quot;能源类型&quot;]
-    B2[&quot;物模型实例对象&lt;br/&gt;（已有实体）&quot;]
+    B2[&quot;物模型实例对象&lt;br/&gt;（含设备实例与组件实例）&quot;]
     B3[&quot;表具角色&quot;]
     B4[&quot;计量对象角色&quot;]
-    B5[&quot;能耗计量关系对象&lt;br/&gt;（本期新增关系对象类型&lt;br/&gt;带计量方向：输入 / 输出，默认输入）&quot;]
+    B5[&quot;能耗计量关系对象&lt;br/&gt;（带计量方向：输入 / 输出，默认输入）&quot;]
+    B6[&quot;供电关系 supplyPower&lt;br/&gt;（有向关系）&quot;]
 
     B1 --&gt;|&quot;1:N 限定表具能源&quot;| B3
     B1 --&gt;|&quot;1:N 限定计量能源&quot;| B5
@@ -819,7 +787,9 @@ Markdown。</p>
     B2 --&gt;|&quot;1:0..1 作为计量对象&quot;| B4
     B4 --&gt;|&quot;1:N 配置下级成员&quot;| B5
     B5 --&gt;|&quot;N:1 指向下级对象&quot;| B4
-    B5 --&gt;|&quot;N:1 指向叶子表具&quot;| B3</code></pre>
+    B5 --&gt;|&quot;N:1 指向叶子表具&quot;| B3
+    B2 --&gt;|&quot;源 → 目标：供电&quot;| B6
+    B6 --&gt;|&quot;反向语义：被供电&quot;| B2</code></pre>
 </section>
 <section id="123-表具核算域--计费配置域" class="level4">
 <h4>1.2.3 表具核算域 × 计费配置域</h4>
@@ -852,7 +822,7 @@ Markdown。</p>
     D3[&quot;能耗计量关系对象&lt;br/&gt;（含计量方向）&quot;]
     D4[&quot;物模型指标定义（类型层）&lt;br/&gt;口径 / 入参契约 / 输入依赖&lt;br/&gt;能耗 / 成本 / 能效 / 统计差值&quot;]
     D7[&quot;实例指标（实例层）&lt;br/&gt;可算 / 待配置 + 完整性标记&quot;]
-    D5[&quot;指标查询结果&lt;br/&gt;（实时 / 跨度 · 查时计算 · 不落库）&quot;]
+    D5[&quot;指标结果&lt;br/&gt;实时：时序存储 · 统计：查时计算&quot;]
     D6[&quot;表具核算明细&quot;]
 
     D0 --&gt;|&quot;1:N 注册指标定义（一次注册）&quot;| D4
@@ -861,343 +831,267 @@ Markdown。</p>
     D4 --&gt;|&quot;1:N 按实例自动派生（不逐实例配置）&quot;| D7
     D2 --&gt;|&quot;1:1 作为实例指标主体&quot;| D7
     D3 --&gt;|&quot;归集路径 Σ输入 − Σ输出&quot;| D7
-    D7 --&gt;|&quot;1:N 查询时计算&quot;| D5
+    D7 --&gt;|&quot;1:N 产出实时 / 统计结果&quot;| D5
     D6 --&gt;|&quot;1:N 分片计算输入&quot;| D5</code></pre>
-<p>关键约束：</p>
+<p>系统级不变量：</p>
 <ol type="1">
-<li><strong>角色不是主数据</strong>：表具角色、计量对象角色都来自已有物模型实例对象；本版不新增独立的“表具主数据”或“计量对象主数据”。</li>
-<li><strong>累积量 /
-瞬时量测点定义</strong>：二者都不是历史数据本身，而是“能源类型按某物模型成对指定测点”。累积量测点用于从测点历史数据中识别可用于差值计算的累计读数；瞬时量测点用于识别瞬时功率等当前值读数。配置在父物模型上的测点，对该物模型及其<strong>继承该测点的下级子物模型</strong>实例同样生效（<strong>本期新增</strong>生效范围规则）。</li>
-<li><strong>核算明细合并口径</strong>：概念模型中不拆“表具能耗明细 /
-表具成本明细”两个实体；成本是表具核算明细上的计费结果属性族，依附于同一表具、同一能源类型、同一时间槽的用量事实。</li>
-<li><strong>表具核算明细幂等键</strong>：表具核算明细以
-<code>表具角色 + 能源类型 + 粒度 + 时间槽</code>
-唯一，支持指定时间窗重算覆盖。未应用计费方案时，用量照常生成，成本状态为“未计算
-/ 无计费方案”。</li>
-<li><strong>表具计费应用不是核心实体</strong>：概念 ER
-中按“表具角色应用计费方案”的关系表达；实现层可落为关联配置，用于记录应用日期、状态和操作留痕。</li>
-<li><strong>能耗计量关系对象按能源类型分域、带计量方向</strong>：计量拓扑由系统已有关系对象能力承载，本版新增具体关系对象类型“能耗计量”；该关系对象必须带能源类型边界与<strong>计量方向（输入
-/
-输出，默认输入）</strong>。对象指标必须按指定能源类型解析拓扑，只归集同能源类型下的叶子表具核算明细，避免电
-/ 水 / 冷量拓扑混算。</li>
-<li><strong>表具唯一归属（按能源类型查重）</strong>：查重键为
-<code>表具 + 能源类型</code>——一块表具在同一能源类型下<strong>只能被一个计量对象占用一次</strong>（不区分输入 /
-输出占用名额）；配置保存时跨"直接选表具"与"选下级对象展开表具"统一查重拦截。计量方向仍用于计算符号（输入
-<code>+1</code> / 输出
-<code>-1</code>），但不参与占用名额拆分。</li>
-<li><strong>拓扑必须可验证、可展开</strong>：同一能源类型下的对象关系必须构成有向无环图；禁止自环、祖先回挂、同方向多父级与祖先
-/
-后代重叠选择。保存时将对象关系递归展开为叶子表具的有符号系数，叶子系数绝对值大于
-1 即判定重复计量并拦截；上级输出表同时作为下游输入表形成的
-<code>-1 + 1 = 0</code> 属内部传递抵消，合法但须保留路径追踪。完整规则见
-§4.2。</li>
-<li><strong>对象层为查询时派生</strong>：计量对象角色的能耗 / 成本 /
-能效指标由指标工厂沿计量拓扑按「Σ输入 −
-Σ输出」在<strong>每次查询时</strong>现场计算——实时值与统计值均<strong>不落库、不物化</strong>；结果可由表具核算明细随时重算得出，不构成第二份事实。</li>
-<li><strong>历史随当前拓扑</strong>：ER
-图不引入拓扑生效版本；表具改绑后，按历史时间查询对象指标时归属随<strong>当前</strong>拓扑漂移，符合本期已接受口径；对象层无历史分片可覆盖，下次查询自然用新拓扑。</li>
-<li><strong>指标两层定义（本期新增）</strong>：指标定义注册在<strong>物模型（类型）</strong>上并按继承对子模型实例生效（父 /
-子模型互斥），实例指标由系统自动派生、不逐实例配置。类型层<strong>不</strong>在物模型上新增测点或属性，只把物模型引用为“适用范围 +
-输入解析锚点”；下游可按 <code>(物模型, 指标)</code> 或
-<code>(实例, 指标, 入参)</code>
-两种方式寻址同一口径。完整规则见 §6.2，注册颗粒度见 §6.3 各表。</li>
+<li><strong>角色复用既有主数据</strong>：表具、计量对象和组件计量对象均由物模型实例承担，不新增独立主数据；标准测点只定义能源计量角色，不新建或改写物模型测点。详细配置见需求 1。</li>
+<li><strong>表具事实唯一</strong>：用量、质量、人工修正和成本属性统一归档在表具核算明细，以 <code>表具 + 能源类型 + 粒度 + 时间槽</code> 幂等；未应用计费方案不影响用量事实生成。见需求 2 / 4。</li>
+<li><strong>两类关系分离</strong>：能耗计量关系按能源类型维护输入 / 输出方向并执行 §4.3 全图校验；<code>supplyPower</code> 独立表达供电方向，不参与用量、成本或能效计算。</li>
+<li><strong>对象指标统一归集</strong>：对象指标沿当前计量拓扑递归执行「Σ输入 − Σ输出」。统计指标查询时计算、不落库；实时指标按默认调度写入时序存储，拓扑变更响应见 §6.4。</li>
+<li><strong>类型定义、实例生效</strong>：指标注册在物模型层并按继承规则自动派生到实例；不在物模型上新增测点或属性，不逐实例注册，不产生模型级合计或平均。详细规则见 §6.2。</li>
 </ol>
 </section>
 </section>
 <section id="13-开发范围总览已有--新增--改造--不做" class="level3">
-<h3>1.3 开发范围总览（已有 / 新增 / 改造 / 不做）</h3>
+<h3>1.3 开发范围总览</h3>
 <table>
-<thead>
-<tr>
-<th>业务域</th>
-<th>对象 / 能力</th>
-<th>当前状态</th>
-<th>本期动作</th>
-<th>本期交付物 / 改动</th>
-<th>本期不做</th>
-</tr>
-</thead>
+<thead><tr><th>业务域</th><th>本期交付</th><th>关键边界</th><th>规则入口</th></tr></thead>
 <tbody>
-<tr>
-<td>基础资产域</td>
-<td>物模型 / 物模型测点 / 物模型实例对象 / 测点历史数据</td>
-<td>已有</td>
-<td>直接复用</td>
-<td>作为表具角色、计量对象角色、累计读数来源</td>
-<td>不新增物模型、测点、实例对象主数据</td>
-</tr>
-<tr>
-<td>能源配置域</td>
-<td>能源类型 / 累计量单位 / 实时值单位 / 累积量测点定义 /
-瞬时量测点定义</td>
-<td>已有能源类型、单一能源单位与累积量测点；需拆分累计量 /
-实时值两套单位，并补齐瞬时量测点成对定义</td>
-<td>复用并扩展单位与测点定义</td>
-<td>明确"能源类型 → 累计量单位 + 实时值单位 → 物模型（含继承子模型）→
-累积量测点 + 瞬时量测点"；累计量单位用于核算 / 计费 /
-历史统计，实时值单位用于当前值指标；预置电 <code>kWh / kW</code>、水
-<code>m³ / m³/h</code>、冷量 <code>kWh / kW</code></td>
-<td>不新建测点或单位体系；瞬时量不进表具核算明细归档</td>
-</tr>
-<tr>
-<td>计量拓扑域</td>
-<td>关系对象基础能力（批量作业入口本期新建独立菜单页，单对象入口改造能效视图）</td>
-<td>已有关系对象基础能力，但无独立的计量方案配置入口</td>
-<td>新增独立菜单页 + 改造存量单对象入口 + 新增关系对象类型</td>
-<td>新增「能源计量关系」独立菜单页（跨对象批量主入口，界面见原型）；新增「能耗计量」关系（带计量方向：输入 / 输出，默认输入）；按能源类型生成、保存、查询；校验表具同能源唯一占用、环路、同方向多父级、重叠选择与重复计量（细则见 §4.2）；单对象入口见「能效视图能效配置 Tab」行，两入口同一份关系、同一套校验</td>
-<td>不新建独立计量关系模型；不做拓扑生效版本</td>
-</tr>
-<tr>
-<td>表具核算域</td>
-<td>表具核算明细</td>
-<td>不存在</td>
-<td>新增</td>
-<td>自动生成半小时核算明细；归档半小时 / 时 / 天 /
-月；承载用量、质量状态、人工修正状态、成本状态、单价快照、成本金额</td>
-<td>不在事实层外另存对象明细</td>
-</tr>
-<tr>
-<td>计费配置域</td>
-<td>计费方案 / 计费方案版本 / 分时计价时段</td>
-<td>已有</td>
-<td>复用并接入核算明细</td>
-<td>按当时生效方案写入表具核算明细的计费属性；按时间范围重算成本属性（人工入口统一在「表具能耗明细」，见 §3.7 / §5.3）</td>
-<td>不修改历史已生效电价；不做账单封存；《计费方案配置》列表不提供「重算成本」行操作</td>
-</tr>
-<tr>
-<td>对象指标域（指标工厂）</td>
-<td>对象能耗 / 成本 / 能效 / 统计指标</td>
-<td>缺少统一对象层指标口径；数据工厂 / 指标工厂能力平行建设中</td>
-<td>新增指标注册与查询时计算</td>
-<td>对象能耗、成本、损耗（Σ输入 − Σ输出）、PUE / CLF
-等能效实时值、各时段统计值与差值注册进指标工厂；实时值与统计值均<strong>查询时按当前拓扑现场计算，不落库、不物化</strong>；完整性标记随查询结果输出；<strong>指标定义按物模型（类型）注册并对继承子模型实例生效，实例指标自动派生，对外同时支持按物模型
-/ 按实例两种寻址</strong></td>
-<td>不自建对象层查询服务；不做对象层历史归档 / ClickHouse 物化；不做自由公式指标；页面不直连内部接口；<strong>不在物模型上新增测点
-/ 属性；不做模型级聚合值；不开放现场向物模型注册指标</strong></td>
-</tr>
-<tr>
-<td>前端管理页</td>
-<td>「表具能耗明细」页面</td>
-<td>不存在</td>
-<td>新增</td>
-<td>表具列表、四粒度明细查询、质量标记、人工修正、按时间范围重算</td>
-<td>不挂在能源计费配置三级页签</td>
-</tr>
-<tr>
-<td>前端管理页</td>
-<td>能效视图「能效配置」Tab</td>
-<td>已有（Tab 内为「能耗计量方案」配置弹窗 + 计量表具只读列表）</td>
-<td>改造</td>
-<td>保留单对象配置能力，入口由「能耗计量方案」调整为「能源计量关系」，整体交互改造（界面与操作见原型 <code>能效视图.html</code>「能效配置」Tab）；与独立页维护同一份「能耗计量」关系、同一套校验（见 §4.3）</td>
-<td>本 Tab 不做多视图（空间 / 容量）树切换、Excel
-全局导入导出与跨对象批量作业；不在 Tab 内就地展开配置表单</td>
-</tr>
-<tr>
-<td>存量页面（消费侧）</td>
-<td>能耗流向分析 / 用能对比分析 / 用能定额考核 / 节能分析</td>
-<td>已有</td>
-<td>见消费侧册</td>
-<td>统一消费指标工厂产出，范围、动作与交付物见消费侧册需求 8；总览看板为需求 9 全新实现，不纳入需求 8 存量页面清单</td>
-<td>见消费侧册</td>
-</tr>
+<tr><td>能源配置</td><td>标准测点、支持关系、实际测点映射</td><td>不新增主数据或物模型测点；电只预置累计电量与实时功率</td><td><a href="#二需求-1已有复用能源类型与累积量--瞬时量测点">需求 1</a></td></tr>
+<tr><td>表具核算</td><td>半小时事实、时/天/月归档、质量校验、人工修正与管理页</td><td>不归档对象明细、不跨槽取值、不估算补值</td><td><a href="#三需求-2本期新增表具核算明细">需求 2</a></td></tr>
+<tr><td>计量拓扑</td><td>能耗计量关系、<code>supplyPower</code> 与双配置入口</td><td>两类关系独立；不设置拓扑生效版本；组件供电端点受 U9 约束</td><td><a href="#四需求-3新增独立菜单页新增关系对象类型能源计量关系与计量拓扑含计量方向">需求 3</a></td></tr>
+<tr><td>计费</td><td>方案应用及成本属性写入</td><td>计费与计量拓扑无关；不改已生效价格、不做账单封存</td><td><a href="#五需求-4复用计费方案新增计费属性写入计费方案与表具核算明细成本属性">需求 4</a></td></tr>
+<tr><td>对象指标</td><td>能耗、成本、实时功率、能效与统计指标</td><td>实时写时序、统计查时计算；不自建查询服务或模型级聚合</td><td><a href="#六需求-5本期新增对象指标定义与指标工厂查询计算实时值--统计指标">需求 5</a></td></tr>
+<tr><td>指标服务</td><td>面向选择器的目录、状态与引用校验</td><td>不改变指标口径、不负责取值或页面 UI</td><td><a href="#七需求-6指标选取服务面向选择器">需求 6</a></td></tr>
 </tbody>
 </table>
 </section>
 <section id="14-需求清单" class="level3">
 <h3>1.4 需求清单</h3>
+<p>本册内部按六个交付包编号；跨文档引用优先使用需求名称。</p>
 <table>
-<thead>
-<tr>
-<th>#</th>
-<th>需求名称</th>
-<th>当前状态</th>
-<th>本期动作</th>
-<th>开发交付物</th>
-<th>优先级</th>
-</tr>
-</thead>
+<thead><tr><th>#</th><th>需求名称</th><th>优先级</th><th>对应章节</th></tr></thead>
 <tbody>
-<tr>
-<td>1</td>
-<td>能源类型、累计量 / 实时值单位与累积量 / 瞬时量测点</td>
-<td>已有能源配置、单一能源单位、物模型（父子继承关系为平台已有）、物模型测点、物模型实例对象、测点历史数据；实时值单位与瞬时量测点定义需补齐</td>
-<td>复用并扩展单位与测点成对定义；本期新增继承生效 / 表具口径</td>
-<td>每个能源类型分别配置累计量单位与实时值单位，并按物模型成对配置累积量测点（核算输入）与瞬时量测点（对象当前值查询）；<strong>本期新增</strong>：测点对父模型及其下级子物模型实例均生效，表具口径按「配置物模型 + 下级子物模型实例」展开</td>
-<td>P0</td>
-</tr>
-<tr>
-<td>2</td>
-<td>表具核算明细</td>
-<td>不存在统一表具核算明细；缺少 VEE、人工修正与管理页</td>
-<td>新增</td>
-<td>半小时核算明细生成与时 / 天 / 月汇总；幂等重算；全量表具（含未绑对象、未应用计费方案及下级子物模型实例）；数据质量校验、人工修正留痕与锁定；「表具能耗明细」管理页与按范围重算入口</td>
-<td>P0</td>
-</tr>
-<tr>
-<td>3</td>
-<td>能源计量关系与计量拓扑（含计量方向）</td>
-<td>已有系统关系对象基础能力，但计量方案配置分散在对象详情弹窗内、无法批量实施，且无可供指标归集的能源分域拓扑产物</td>
-<td>新增独立菜单页 + 改造存量单对象入口 + 新增关系对象类型</td>
-<td>新增「能源计量关系」独立菜单页 + 「能耗计量」关系（带计量方向）；按能源类型 × 对象生成、保存、查询计量关系，并执行 §4.2 校验；<strong>存量入口改造</strong>——能效视图「能效配置」Tab 保留单对象配置并改造交互（界面见原型），与独立页同一份关系、同一套校验；跨对象批量与 Excel 仍只在独立页</td>
-<td>P0</td>
-</tr>
-<tr>
-<td>4</td>
-<td>计费方案与表具核算明细成本属性</td>
-<td>已有计费方案、版本、分时时段</td>
-<td>复用并接入核算明细</td>
-<td>计费方案应用关系；成本状态、计费方案版本、单价快照、成本金额写入；按时间范围重算成本属性（人工入口统一在「表具能耗明细」）</td>
-<td>P0</td>
-</tr>
-<tr>
-<td>5</td>
-<td>对象指标定义与指标工厂查询计算（实时值 + 统计指标）</td>
-<td>缺少统一对象层指标口径；指标口径未在物模型层固化，适用范围散落为写死的对象类型白名单；存量页面存在旧取数口径；数据工厂 /
-指标工厂能力平行建设</td>
-<td>新增指标注册与查询时计算</td>
-<td>指标两层定义 §6.2：按物模型（类型）注册 +
-实例指标自动派生；指标清单
-§6.3：P0 能耗用量 / 能耗成本 / 分时成本；P1
-PUE/CLF/PLF/OLF/WUE（实时+周期，CLF/PLF/OLF 另注册在暖通空调 / 电力 /
-其他系统）+ 实时能耗值；实时与跨度均查询时计算、对象层不落库；完整性标记随结果输出；供需求 8 / 9
-统一消费</td>
-<td>P0</td>
-</tr>
-<tr>
-<td>6</td>
-<td>指标选取服务（面向选择器）</td>
-<td>不存在；需求 5 只承诺「按类型列清单」与「按实例取值」，选择器还需要「按实例列出这个对象能选哪些指标、每个能不能算」</td>
-<td>新增，见本册 §七</td>
-<td>四类接口：①按实例列指标（展示范围必填；业务分类可选）②按物模型列指标 +
-范围内实例清单 ③批量可算状态判定 ④引用有效性校验；展开与状态判定收敛在服务侧，目录与取值同源；一级分类必返</td>
-<td>P1（阻塞消费侧需求 10 / 11 / 12）</td>
-</tr>
-<tr>
-<td>8</td>
-<td>存量页面消费需求 5 指标工厂产出</td>
-<td>消费侧，本册不展开</td>
-<td>见消费侧册 §二</td>
-<td>见消费侧册</td>
-<td>P0</td>
-</tr>
-<tr>
-<td>9</td>
-<td>总览看板组件自动生成与改造</td>
-<td>消费侧，本册不展开</td>
-<td>见消费侧册 §三</td>
-<td>见消费侧册</td>
-<td>P1</td>
-</tr>
-<tr>
-<td>10–12</td>
-<td>报表「选择测点」弹窗 / 报表节点-测点树 / 融合组态变量树（一个组件一条需求，各带一份内嵌原型）</td>
-<td>消费侧，本册不展开；均消费本册需求 6 的服务</td>
-<td>见消费侧册 §五～§七</td>
-<td>见消费侧册</td>
-<td>P1 / P1 / P2 / P2</td>
-</tr>
+<tr><td>1</td><td>能源标准测点定义与物模型映射</td><td>P0</td><td><a href="#二需求-1已有复用能源类型与累积量--瞬时量测点">§二</a></td></tr>
+<tr><td>2</td><td>表具核算明细</td><td>P0</td><td><a href="#三需求-2本期新增表具核算明细">§三</a></td></tr>
+<tr><td>3</td><td>能源计量关系与供电关系配置</td><td>P0</td><td><a href="#四需求-3新增独立菜单页新增关系对象类型能源计量关系与计量拓扑含计量方向">§四</a></td></tr>
+<tr><td>4</td><td>计费方案与表具成本</td><td>P0</td><td><a href="#五需求-4复用计费方案新增计费属性写入计费方案与表具核算明细成本属性">§五</a></td></tr>
+<tr><td>5</td><td>对象指标定义与指标工厂计算</td><td>P0</td><td><a href="#六需求-5本期新增对象指标定义与指标工厂查询计算实时值--统计指标">§六</a></td></tr>
+<tr><td>6</td><td>指标选取服务（面向选择器）</td><td>P1</td><td><a href="#七需求-6指标选取服务面向选择器">§七</a></td></tr>
 </tbody>
 </table>
+<p>消费侧需求 8–13 的存量页面、总览看板和选择器接入见关联文档。</p>
 <hr />
 </section>
 </section>
 <section id="二需求-1已有复用能源类型与累积量--瞬时量测点"
 class="level2">
-<h2>二、需求 1：已有复用｜能源类型与累积量 / 瞬时量测点</h2>
+<h2>二、需求 1：能源标准测点定义与物模型映射</h2>
 <blockquote>
 <p>开发范围：</p>
 <ul>
-<li>已有复用：能源配置 /
-能源类型、物模型（平台已有父子继承关系与实例主数据）、物模型测点、物模型实例对象、测点历史数据。</li>
-<li>本期新增：不新增主数据实体；在能源类型配置中新增与累计量单位并列的<strong>实时值单位</strong>，并在测点配置中补齐与累积量成对的<strong>瞬时量测点定义</strong>；<strong>本期新增业务逻辑</strong>——配置物模型上的测点对，对其<strong>下级子物模型实例</strong>同样生效，表具口径按「配置物模型实例 + 下级子物模型实例」展开（见下文物模型继承 / 表具口径）。</li>
-<li>本期改造：明确“能源类型 → 累计量单位 + 实时值单位 →
-物模型（含继承子模型）→ 累积量测点 + 瞬时量测点 → 物模型实例对象历史 /
-当前读数”的输入链路；配置页由「单一能源单位 + 仅累积量」扩展为「两套单位
-+ 累积量 / 瞬时量成对维护」。</li>
-<li>本期不做：不新建测点体系；不新增表具 /
-计量对象主数据；瞬时量<strong>不</strong>进表具核算明细归档、不参与差值
-/ VEE / 计费（仅配置 + 供需求 5 指标工厂实时值指标按拓扑取数）。</li>
+<li>在能源类型配置中维护<strong>标准测点定义</strong>，并为每个物模型配置可多选的<strong>支持关系</strong>与<strong>实际测点映射</strong>。支持关系取值为「能源计量」「供电」；标准测点按累积量 / 瞬时量分类，选择能源计量时将实际测点绑定到统一计量角色。</li>
+<li>配置链路为“能源类型 → 累计量单位 + 实时值单位 → 标准测点定义 →
+物模型支持关系（能源计量 / 供电）→ 选择能源计量时映射实际测点 → 物模型实例对象历史 / 当前读数”。配置时先声明物模型的业务能力，再按能源计量能力映射标准角色。</li>
+<li><strong>范围边界</strong>：基于平台的能源类型、物模型、物模型测点、实例对象和测点历史数据完成配置；主数据与测点体系保持不变，不设置独立的表具 / 计量对象主数据；电类型只预置累计电量与实时功率，不预置电压、电流或其它过程瞬时量；过程瞬时量不进表具核算明细、不参与差值、数据质量校验或计费。</li>
 </ul>
 </blockquote>
+<section id="需求-1-原型" class="level3 proto-anchor">
+<h3>原型（对照批注评审）</h3>
+<div class="proto-gallery">
+<div class="proto-embed" id="proto-energy-config"><div class="proto-embed-head"><strong>能源配置</strong><span class="proto-tag">需求 1</span><span>关注能源类型、标准测点定义及物模型支持关系</span></div>
+<iframe class="proto-frame" title="能源配置（需求 1）" src="../能源配置.html" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe></div>
+<div class="proto-embed" id="proto-energy-editor"><div class="proto-embed-head"><strong>新增 / 编辑能源</strong><span class="proto-tag">需求 1</span><span>关注标准角色、单位、实际测点映射与继承配置</span></div>
+<iframe class="proto-frame" title="新增编辑能源（需求 1）" src="../新增-编辑能源.html" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe></div>
+</div>
+<p>页面结构、控件、字段、交互、状态和异常规则以原型批注为准；本章仅保留跨页面规则、计算 / 数据契约、后端机制与原型无法完整表达的边界。评审时请点击原型右下角“批注”。</p>
+</section>
 <ul>
-<li><strong>复用《能源配置 /
-能源类型》</strong>：电、水、冷量系统预置，可新增天然气、能量等；每个能源类型分别维护<strong>累计量单位</strong>、<strong>实时值单位</strong>、度量类型、标煤
-/ CO₂ 折算系数。</li>
-<li><strong>两套单位职责（关键）</strong>：累计量单位用于累积量测点、尾值差、表具核算明细、计费和历史统计；实时值单位用于瞬时量测点及指标工厂实时值指标。二者均必填、分别从物理单位库单选，不用一个单位兼容两类量纲。系统预置能源默认值：电
-= <code>kWh / kW</code>，水 = <code>m³ / m³/h</code>，冷量 =
-<code>kWh / kW</code>（顺序均为“累计量单位 / 实时值单位”）。</li>
-<li><strong>测点成对定义（关键）</strong>：每个能源类型下，按物模型配置<strong>一对</strong>测点
-=（具体物模型 + 累积量测点 + 瞬时量测点）。示例（电）：
+<li><strong>能源类型基础配置</strong>：系统预置电、水、冷量，也可增加天然气、能量等能源类型。每个能源类型维护<strong>累计量单位</strong>、<strong>实时值单位</strong>、<strong>半小时增量上限</strong>、度量类型、标煤 / CO₂ 折算系数。</li>
+<li><strong>半小时增量上限</strong>：用于需求 2 的数据质量校验
+判断，表示该能源类型单块表具在一个半小时槽内允许的最大增量。电、水、冷量及后续新增能源类型初始化为
+<strong>1500</strong>，允许修改；字段必填且必须大于 0，单位自动跟随累计量单位，展示为
+<code>累计量单位/半小时</code>（如 <code>kWh/半小时</code>、<code>m³/半小时</code>）。</li>
+<li><strong>标准测点定义（关键）</strong>：标准测点是能源类型内部的计量业务角色，字段至少包含分类、标准名称、角色与单位；不复制、不改写平台已有物模型测点。每个能源类型必须且只能有<strong>一个累积量标准测点</strong>；瞬时量标准测点支持一个或多个，其中必须且只能有<strong>一个主瞬时量</strong>，其余均为<strong>过程瞬时量</strong>。同一能源类型内标准名称不可重复。</li>
+<li><strong>三类角色职责（关键）</strong>：唯一累积量用于识别表具、尾值差、数据质量校验、计费和历史统计，数据质量校验
+增量上限读取所属能源类型配置；主瞬时量表达该能源的当前瞬时值，供需求 5 的 C1 实时能耗值按拓扑归集；过程瞬时量不进入 C1，也不自动生成对象级指标。</li>
+<li><strong>单位职责（关键）</strong>：累计量单位对应唯一累积量；实时值单位只对应主瞬时量。二者均必填、分别从物理单位库单选。每个过程瞬时量单独配置自身单位，不复用能源类型的实时值单位。</li>
+</ul>
+<p><strong>物模型支持关系（多选）：</strong></p>
+<table>
+<thead>
+<tr>
+<th>选择结果</th>
+<th>能力语义</th>
+<th>保存条件</th>
+<th>实例侧作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>能源计量</td>
+<td>该物模型实例可作为表具参与能耗核算与计量拓扑</td>
+<td>必须映射唯一累积量与主瞬时量；过程瞬时量可选</td>
+<td>只声明可参与计量，不自动建立能耗计量关系</td>
+</tr>
+<tr>
+<td>供电</td>
+<td>该物模型实例可在需求 3 中作为源端发起 <code>supplyPower</code></td>
+<td>不要求增加或映射任何测点</td>
+<td>只声明可发起供电关系，不自动建立具体供电关系</td>
+</tr>
+<tr>
+<td>能源计量 + 供电</td>
+<td>同时具备表具计量能力与向其他实例供电的能力</td>
+<td>按「能源计量」要求完成必填测点映射</td>
+<td>两类实例关系仍分别配置、分别保存</td>
+</tr>
+</tbody>
+</table>
 <ul>
-<li><strong>累积量测点</strong>：如交流电表 →「有功-总 /
-正向有功电能」（电量值），用于表具核算明细的尾值差生成；</li>
-<li><strong>瞬时量测点</strong>：如交流电表
-→「有功功率-总」（瞬时功率），用于计量拓扑建立后，指标工厂实时值指标（实时能耗值等）直接取数。</li>
-<li>水 / 气 /
-冷量等同构：各自能源类型下同样成对配置累积量与瞬时量测点；累积量测点展示
-/ 校验累计量单位，瞬时量测点展示 /
-校验实时值单位，单位与测点名随能源类型差异化。</li>
-</ul></li>
-<li><strong>物模型继承生效范围（本期新增）</strong>：物模型父子继承关系本身为平台已有能力；本版<strong>新增</strong>计量侧生效规则——能源类型上按某物模型统一定义的累积量
+<li><strong>能力与关系分离（关键）</strong>：「支持关系」是能源类型下物模型具备的业务能力，不代表任何实例之间已经建立关系；实际的能耗计量关系与 <code>supplyPower</code> 均在需求 3 的上层业务页面中配置。</li>
+<li><strong>供电方向语义（关键）</strong>：不区分「供电端 / 受电端」两个支持关系。平台既有 <code>supplyPower</code> 是有向关系，正向表示“供电”，反向表示“被供电”；支持关系只需声明源端是否具备「供电」能力，不为目标端增加“受电”能力选项。</li>
+</ul>
+<p><strong>内置能源类型标准测点预置：</strong></p>
+<table>
+<thead>
+<tr>
+<th>能源类型</th>
+<th>分类</th>
+<th>标准名称</th>
+<th>角色</th>
+<th>单位</th>
+<th>物模型映射要求</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>电</td>
+<td>累积量</td>
+<td>累计电量</td>
+<td>唯一累积量</td>
+<td>kWh</td>
+<td>必填</td>
+</tr>
+<tr>
+<td>电</td>
+<td>瞬时量</td>
+<td>实时功率</td>
+<td>主瞬时量</td>
+<td>kW</td>
+<td>必填</td>
+</tr>
+
+<tr>
+<td>水</td>
+<td>累积量</td>
+<td>累计用水量</td>
+<td>唯一累积量</td>
+<td>m³</td>
+<td>必填</td>
+</tr>
+<tr>
+<td>水</td>
+<td>瞬时量</td>
+<td>实时流量</td>
+<td>主瞬时量</td>
+<td>m³/h</td>
+<td>必填</td>
+</tr>
+<tr>
+<td>冷量</td>
+<td>累积量</td>
+<td>累计冷量</td>
+<td>唯一累积量</td>
+<td>kWh</td>
+<td>必填</td>
+</tr>
+<tr>
+<td>冷量</td>
+<td>瞬时量</td>
+<td>实时冷量</td>
+<td>主瞬时量</td>
+<td>kW</td>
+<td>必填</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>电类型默认物模型映射（关键）</strong>：系统随标准包为以下 9 个通用物模型预置「能源计量」支持关系及累计电量、实时功率映射；不预置「供电」，不包含名称带“联通”的定制模型，也不预置任何电流映射。默认配置可由具备权限的用户调整；调整支持关系不自动建立或删除实例关系。
+<table>
+<thead><tr><th>类型</th><th>物模型</th><th>模型标识</th><th>累计电量默认测点</th><th>实时功率默认测点</th><th>默认支持关系</th></tr></thead>
+<tbody>
+<tr><td>设备</td><td>单相电量仪</td><td><code>dtdl:asset:SinglePhaseMeter</code></td><td>有功电能 <code>1_1123_0</code></td><td>有功功率 <code>1_627_0</code></td><td>能源计量</td></tr>
+<tr><td>设备</td><td>低压交流电量仪</td><td><code>dtdl:asset:ACElectricityMeter</code></td><td>正向有功电能 <code>1_1106_0</code></td><td>总有功功率 <code>1_640_0</code></td><td>能源计量</td></tr>
+<tr><td>设备</td><td>中压交流电量仪</td><td><code>dtdl:asset:HVACEnergyMeter</code></td><td>正向有功电能 <code>1_1106_0</code></td><td>总有功功率 <code>1_640_0</code></td><td>能源计量</td></tr>
+<tr><td>设备</td><td>多功能电量仪</td><td><code>dtdl:asset:MultiElectricityMeter</code></td><td>正向有功电能 <code>1_1106_0</code></td><td>总有功功率 <code>1_640_0</code></td><td>能源计量</td></tr>
+<tr><td>设备</td><td>直流电量仪</td><td><code>dtdl:asset:DCElectricityMeter</code></td><td>输入电能 <code>1_1115_0</code></td><td>输入功率P <code>1_625_0</code></td><td>能源计量</td></tr>
+<tr><td>组件</td><td>交流输入支路</td><td><code>dtdl:asset:component:ACInputBranch</code></td><td>总有功电能 <code>1_1110_0</code></td><td>总有功功率 <code>1_640_0</code></td><td>能源计量</td></tr>
+<tr><td>组件</td><td>交流输出支路</td><td><code>dtdl:asset:component:ACOutputBranch</code></td><td>输出总有功电度 <code>1_2324_0</code></td><td>输出总有功功率 <code>1_624_0</code></td><td>能源计量</td></tr>
+<tr><td>组件</td><td>进线</td><td><code>dtdl:component:PowerInlet</code></td><td>总有功电能 <code>1_1110_0</code></td><td>总有功功率 <code>1_640_0</code></td><td>能源计量</td></tr>
+<tr><td>组件</td><td>出线</td><td><code>dtdl:component:PowerDistributionLine</code></td><td>总有功电能 <code>1_1110_0</code></td><td>总有功功率 <code>1_640_0</code></td><td>能源计量</td></tr>
+</tbody>
+</table>
+<p>直流电量仪的「输入电能」当前模型元数据未声明单位与电能语义；标准包发布前须补齐为 <code>kWh</code> 与有功电能语义，使其通过本节单位量纲兼容校验。未补齐前不得静默绕过校验。</p></li>
+<li><strong>物模型实际测点映射（关键）</strong>：映射关系 =（能源类型 + 物模型 + 标准测点定义 + 实际物模型测点）。只有当支持关系包含「能源计量」时，唯一累积量和主瞬时量才为必填，过程瞬时量可不映射；只选「供电」时不显示或不要求计量测点映射。实际测点必须属于所选物模型或由其父模型继承，且单位量纲与标准测点兼容；同一实际测点不得在同一物模型内重复映射到多个标准角色。</li>
+<li><strong>物模型继承生效范围</strong>：能源类型上按某物模型统一定义的累积量
 /
-瞬时量测点，对该物模型实例及其<strong>继承了该测点的下级子物模型</strong>实例均生效——无需在每个子模型上重复配置。匹配规则：实例所属物模型
+瞬时量实际测点映射，对该物模型实例及其<strong>继承了对应实际测点的下级子物模型</strong>实例均生效——无需在每个子模型上重复配置。匹配规则：实例所属物模型
 =
-配置物模型，<strong>或</strong>为配置物模型的继承子模型且已继承对应测点。</li>
+配置物模型，<strong>或</strong>为配置物模型的继承子模型且已继承该标准角色对应的实际测点。</li>
 <li><strong>父 /
-子物模型互斥约束（本期新增）</strong>：同一能源类型下，若已配置某<strong>父物模型</strong>的测点对，则其<strong>下级子物模型不得再单独配置</strong>（父模型定义已覆盖子模型实例）。配置层强制互斥：已选父模型时子模型不可选；若先配子模型再配其父模型，须移除子模型行或拦截保存，避免重复定义。</li>
+子物模型互斥约束</strong>：同一能源类型下，若已配置某<strong>父物模型</strong>的映射，则其<strong>下级子物模型不得再单独配置</strong>同一套标准角色（父模型映射已覆盖子模型实例）。配置层强制互斥：已选父模型时子模型不可选；若先配子模型再配其父模型，须移除子模型映射或拦截保存，避免重复定义。</li>
 <li><strong>原始读数口径</strong>：
 <ul>
-<li><strong>累计读数</strong>：物模型实例对象 × 累积量测点 ×
-时间的历史数据；被指定为累积量测点后，成为表具明细生成的原始输入。</li>
-<li><strong>瞬时读数</strong>：同一实例对象上对应瞬时量测点的当前 /
-时序读数；不进核算归档，供指标工厂实时值指标按拓扑取数（实时能耗值）。</li>
+<li><strong>累计读数</strong>：物模型实例对象 × 唯一累积量映射的实际测点 ×
+时间的历史数据；成为表具明细生成的原始输入。</li>
+<li><strong>主瞬时读数</strong>：同一实例对象上主瞬时量映射的实际测点当前值；不进核算归档，供指标工厂 C1 实时能耗值按拓扑取数。</li>
+<li><strong>过程瞬时读数</strong>：同一实例对象上过程瞬时量映射的实际测点当前值；仅按表具读取，不自动生成对象级指标。</li>
 </ul></li>
-<li><strong>表具口径（本期新增）</strong>：一块「表具」=
-该能源类型下命中累积量测点定义的<strong>物模型实例对象</strong>，范围<strong>必须包含</strong>配置物模型自身实例及其<strong>下级子物模型实例</strong>（继承匹配，见上条）；表具不是新增主数据实体。表具在该能源类型下对应<strong>唯一</strong>累积量测点（及成对的瞬时量测点，由能源类型配置确定）。因此后续以
+<li><strong>表具口径</strong>：一块「表具」=
+该能源类型下支持关系包含「能源计量」且命中唯一累积量标准测点映射的<strong>物模型实例对象</strong>，范围<strong>必须包含</strong>配置物模型自身实例及其<strong>下级子物模型实例</strong>（继承匹配，见上条）；表具是物模型实例在能源计量中的业务角色，不设置独立表具主数据。表具在该能源类型下对应<strong>唯一</strong>累积量实际测点，主瞬时量随同一物模型映射确定，过程瞬时量是否映射不影响表具身份。因此后续以
 <code>表具 + 能源类型 + 时间槽</code>
 为幂等键即可唯一定位一条核算明细，<strong>无需再带测点维度</strong>（§3.4）；计费方案应用约束见
 §5.2。</li>
-<li><strong>链路含义</strong>：本版引擎对该能源类型下<strong>所有命中累积量测点定义的物模型实例对象（含下级子物模型实例，本期新增展开逻辑）</strong>，自动建立「表具半小时核算明细」；成对配置的瞬时量测点随同一套表具
-/ 拓扑归属，供指标工厂实时值指标复用（对象指标能力见需求 5，本需求只完成测点定义与生效范围）。</li>
+<li><strong>链路含义</strong>：系统对该能源类型下<strong>所有命中唯一累积量标准测点映射的物模型实例对象（含下级子物模型实例）</strong>，自动建立「表具半小时核算明细」；主瞬时量随同一套表具 /
+拓扑归属，供指标工厂实时值指标复用；过程瞬时量仍挂在表具实例上，仅供按表具读取，不自动注册为对象指标。</li>
 <li><strong>多能源同构</strong>：水 / 气 /
-冷量与电共用同一套引擎与同一套「累计量单位 + 实时值单位 + 累积量测点 +
-瞬时量测点」配置形态，仅在能源类型维度上差异化参数（两套单位、计费方案、是否分时、测点名）；不分别特殊处理。</li>
+冷量与电共用同一套「两类标准测点 + 物模型映射」引擎；差异只在标准名称、单位、计费方案、是否分时和是否存在过程瞬时量；其中电默认不预置过程瞬时量。新增能源类型同样必须定义一个唯一累积量、至少一个瞬时量并指定唯一主瞬时量。</li>
 </ul>
 <hr />
 </section>
 <section id="三需求-2本期新增表具核算明细"
 class="level2">
-<h2>三、需求 2：本期新增｜表具核算明细</h2>
+<h2>三、需求 2：表具核算明细</h2>
 <blockquote>
 <p>开发范围：</p>
 <ul>
-<li>已有复用：能源类型、累积量测点定义、测点历史数据、物模型实例对象、能源配置、计费方案配置、能效视图入口。</li>
-<li>本期新增：表具核算明细生成与半小时 / 时 / 天 / 月多粒度归档、幂等重算；生成范围按「配置物模型实例 + 下级子物模型实例」展开（承接需求 1，详见 §3.1）。</li>
-<li>本期新增：数据质量校验（VEE 最小集）、人工修正留痕与锁定、「表具能耗明细」管理页面、按时间范围重算入口；覆盖晚到数据、补传、坏值修正、人工修正、计费属性重算后的重刷。</li>
-<li>本期改造：页面产品名保留「表具能耗明细」，领域口径统一为「表具核算明细」。</li>
-<li>本期不做：在事实层归档对象明细（对象侧由后续指标工厂承载）；跨槽取值凑差值；估算补值；人工修正的二次确认与审批流（已定：不做，§3.6 / §9.2 U4）。</li>
+<li>为有效表具生成半小时核算明细，并归档时 / 天 / 月汇总；支持幂等重算。</li>
+<li>提供数据质量校验、人工修正留痕与锁定、「表具能耗明细」页面和按时间范围重算。</li>
+<li>页面名称使用「表具能耗明细」，领域对象统一称「表具核算明细」。</li>
+<li><strong>范围边界</strong>：不归档对象明细，不跨槽取值，不估算补值，不增加人工修正审批流。</li>
 </ul>
 </blockquote>
+<section id="需求-2-原型" class="level3 proto-anchor">
+<h3>原型（对照批注评审）</h3>
+<div class="proto-gallery">
+<div class="proto-embed" id="proto-meter-detail"><div class="proto-embed-head"><strong>表具能耗明细</strong><span class="proto-tag">需求 2</span><span>关注四粒度事实、质量标记、人工修正与范围重算</span></div>
+<iframe class="proto-frame" title="表具能耗明细（需求 2）" src="../能耗管理-表具明细.html" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe></div>
+</div>
+<p>页面结构、控件、字段、交互、状态和异常规则以原型批注为准；本章仅保留跨页面规则、计算 / 数据契约、后端机制与原型无法完整表达的边界。评审时请点击原型右下角“批注”。</p>
+</section>
 <section id="31-生成范围" class="level3">
 <h3>3.1 生成范围</h3>
 <ul>
-<li>对该能源类型下<strong>所有</strong>命中累积量测点定义的物模型实例对象，自动生成表具半小时核算明细。</li>
-<li><strong>表具范围含下级子物模型实例（本期新增，强调）</strong>：承接需求 1 本期新增的继承生效规则——能源配置按物模型配置了累积量测点后，表具不仅包括该物模型自身的实例，还包括其<strong>下级子物模型</strong>上、继承该测点的全部实例。举例：能源类型「电」选了父物模型「设备」并配置了累积量测点，则该设备模型下各类子物模型（如各类末端设备、配电设备等）的实例<strong>一律视为表具</strong>，进入本需求的明细生成，并在「表具能耗明细」等页面中展示与查询——无需再为每个子物模型单独配置测点。匹配规则与互斥约束见需求 1「物模型继承生效范围 / 父子互斥 / 表具口径」。</li>
+<li><strong>有效表具</strong>：所属物模型在该能源类型下支持「能源计量」，且命中唯一累积量实际测点映射；范围包含配置物模型自身实例和继承该映射的下级子物模型实例。</li>
+<li>只支持「供电」的实例不生成核算明细；同时支持「能源计量 +
+供电」的实例按有效表具处理。匹配与父子互斥规则见需求 1。</li>
 <li><strong>无论是否已绑定计量对象、是否已应用计费方案，均生成用量事实</strong>（未绑对象时不进对象树汇总；未应用方案时成本状态为"未计算
 / 无计费方案"，见需求 4）。</li>
-<li>价值：表具先投运、后补绑对象或后补应用方案时，历史用量已在库；补绑后再次查询对象指标即按当前拓扑纳入历史表具事实，成本经表具核算明细的计费属性重算补齐，事实层无需回填。</li>
+<li>新增或重新启用「能源计量」时，从配置生效槽开始生成，首个有效尾值只作基线；取消后停止生成，历史明细保留。补绑对象或补应用计费方案后，查询和重算直接使用已有表具事实。</li>
 </ul>
 </section>
 <section id="32-半小时基准明细" class="level3">
 <h3>3.2 半小时基准明细</h3>
 <ul>
 <li>对每块表具、每个半小时槽（如
-<code>08:00–08:30</code>）：<strong>忽略槽内中间采样，只取该槽尾值</strong>（槽末累计读数；取值越少，链路越简单）。</li>
+<code>08:00–08:30</code>）：<strong>忽略槽内中间采样，只取该槽尾值</strong>（槽末累计读数）。</li>
 <li><strong>该槽用能量 = 本槽尾值 −
 上一槽尾值</strong>（相邻两槽相减，<strong>不跨槽取值</strong>；见 §3.5）。</li>
 <li><strong>本槽或上一槽尾值取不到</strong>时，该槽不产生有效用能量、标记缺失（见 §3.5）；不向前追溯更早的尾值凑差值。</li>
 <li><strong>首个尾值无基准</strong>：表具首次产生尾值的槽（新接入 /
-首配累积量测点）无「上一槽尾值」可减，该槽仅作为基线不产生用能量，从下一槽起计差值。</li>
+首次配置唯一累积量映射）无「上一槽尾值」可减，该槽仅作为基线不产生用能量，从下一槽起计差值。</li>
 <li>半小时对齐分时电价时段刻度（计费方案时段已以 30 分钟为刻度）。</li>
 </ul>
 <section id="321-时间槽尾值与封口契约" class="level4">
@@ -1215,10 +1109,10 @@ class="level2">
 <code>W = min(30min, max(10min, 2 × Δ))</code>；取不到采集周期时
 <code>W = 10min</code>。槽尾值只在 <code>[T+30min-W, T+30min)</code>
 内选择数据时间最晚的有效累计读数；只有更早样本时按「尾值缺失」处理，不以陈旧读数冒充槽末值，也不跨槽借值。</li>
-<li><strong>确定性去重后再判有效</strong>：同一表具、同一累计量测点、同一数据时间存在多条记录时，先取接收入库时间最晚的版本；若接收入库时间仍相同，取稳定记录
+<li><strong>确定性去重后再判有效</strong>：同一表具、同一唯一累积量实际测点、同一数据时间存在多条记录时，先取接收入库时间最晚的版本；若接收入库时间仍相同，取稳定记录
 ID
 最大的一条。只对去重后保留的版本做有效性判断；该版本为非数值、无数据时间或已被采集层标记无效时，不得回退使用更早版本，也不得作为尾值，保证失效修订与重复执行结果一致。</li>
-<li><strong>首次生成起点</strong>：某表具首次命中累积量测点定义后，默认从该配置生效时刻所在的半小时槽开始生成，首个有效尾值只作基线。若需核算配置生效前的存量历史，必须通过「按时间范围重算」显式发起，不在首次启用时自动扫描全部历史。</li>
+<li><strong>生成起点</strong>：表具首次启用、重新启用或更换唯一累积量实际测点时，从配置生效槽开始生成，首个有效尾值只作基线，不跨停用区间或测点切换边界计算差值。配置生效前的历史只通过「按时间范围重算」处理，不自动扫描。</li>
 <li><strong>初次封口</strong>：槽在 <code>T+30min+W</code>
 首次封口并生成核算明细；此时仍无有效尾值则标记缺失。封口是调度与版本边界，不代表历史永久不可改。</li>
 <li><strong>迟到与补传</strong>：封口后到达、且数据时间属于历史槽
@@ -1246,10 +1140,10 @@ rollup 与指标工厂消费该版本事件推进。时 / 天 /
 <h3>3.4 幂等</h3>
 <ul>
 <li>以 <code>表具 + 能源类型 + 粒度 + 时间槽</code>
-为唯一键，支持指定时间窗重算覆盖（支撑晚到数据、坏值修正、人工修正、计费属性重算）。（表具在某能源类型下对应唯一累积量测点，故键无需测点维度，见需求 1「表具口径」。）</li>
+为唯一键，支持指定时间窗重算覆盖（支撑晚到数据、坏值修正、人工修正、计费属性重算）。（表具在某能源类型下对应唯一累积量标准角色及实际测点映射，故键无需测点维度，见需求 1「表具口径」。）</li>
 </ul>
 <section id="35-数据质量校验vee本期最小集" class="level3">
-<h3>3.5 数据质量校验（VEE，本期最小集）</h3>
+<h3>3.5 数据质量校验（本期最小集）</h3>
 <p><strong>取数</strong>：每个时间槽按 §3.2.1
 的左闭右开边界、数据时间、尾值有效窗口与确定性去重规则选取<strong>尾值</strong>；不使用有效窗口外的槽内中间采样点。</p>
 <p><strong>差值</strong>：<code>本槽用能量 = 本槽尾值 − 上一槽尾值</code>（相邻相减，与
@@ -1277,11 +1171,8 @@ rollup 与指标工厂消费该版本事件推进。时 / 天 /
 <tr>
 <td>增量上限</td>
 <td>单槽（半小时）差值 &gt;
-<strong>该表具生效上限</strong>（各能源类型<strong>系统默认统一取 1500</strong>，单位随能源类型——电与冷量
-kWh、水与气 m³；<strong>支持按表具 /
-能源类型配置</strong>，未配置取默认）；本期用固定 / 可配上限，不用均值 /
-标准差。默认值只作兜底，水 /
-气等默认偏宽松的能源须由实施按项目实际量级下调（§9.2 U3）</td>
+所属能源类型配置的<strong>半小时增量上限</strong>。预置和新增能源类型默认
+1500，允许在能源类型中修改；单位跟随累计量单位。本期不使用均值或标准差动态判定</td>
 <td>标记坏值</td>
 </tr>
 <tr>
@@ -1324,37 +1215,19 @@ t+1</strong>（<code>(t+1) 尾值 − t 尾值</code>）——t+1 此前以 t
 / 操作时间 / 原值 → 新值 / 原因）；时 / 天 /
 月行的「含人工修正」标签同样可点，展示区间摘要并提示下钻半小时查看逐槽留痕。不再仅依赖悬停
 tooltip。</li>
-<li><strong>修正联动（事实层重刷 +
-派生层重算）</strong>：改表具半小时核算明细一处：① <strong>表具自身的时
-/ 天 / 月 rollup
-与计费属性是归档的</strong>，须由同一次修正<strong>联动重刷</strong>受影响的表具
-rollup
-与成本属性（§3.3、§3.5）——这是表具核算明细层内部的下游一致性维护；②
-<strong>对象层</strong>不维护分片：明细变更后无需对象层重算任务，下次查询按最新表具事实与当前拓扑现场计算（见需求 5 §6.4），实时值下次查询即反映——对象层无需人工回填。</li>
-<li><strong>成本联动</strong>：计费属性归档在表具核算明细内 →
-改用量后仅该表具受影响时段成本属性本地重算（单表范围，轻量，见需求 4）。</li>
+<li><strong>修正联动</strong>：修正表具半小时事实后，同步重刷该表具受影响的时 / 天 / 月 rollup 与成本属性；对象统计指标下次查询读取最新事实，实时指标不受表具用量修正影响。完整跨域影响见 §八。</li>
 <li><strong>幂等护栏（关键）</strong>：晚到数据触发的自动重聚合<strong>必须尊重人工修正值</strong>（人工值优先
 / 锁定），不得静默覆盖；冲突时提示人工复核。</li>
-<li><strong>权限与流程</strong>：<strong>不设专用「修正角色」</strong>——具备「表具能耗明细」页面操作权限即可修正；<strong>不做二次确认弹窗、不接审批流</strong>，提交即生效。可追溯性由上述留痕、锁定与冲突提示承担，不额外加流程环节（§9.2
-U4）。</li>
+<li><strong>权限与流程</strong>：<strong>不设专用「修正角色」</strong>——具备「表具能耗明细」页面操作权限即可修正；<strong>不做二次确认弹窗、不接审批流</strong>，提交即生效。可追溯性由上述留痕、锁定与冲突提示承担，不额外加流程环节（本节第 2、6 条）。</li>
 </ol>
 </section>
 <section id="37-表具能耗明细管理页面"
 class="level3">
-<h3>3.7 「表具能耗明细」管理页面（新增，挂「能源配置」侧栏）</h3>
+<h3>3.7 「表具能耗明细」管理页面</h3>
 <p>数据质量与人工修正必须有一个面向实施人员与能源管理员的<strong>产品入口</strong>：查得到、看得懂质量标记、改得了（人工修正）、算得回（按范围重算）。该页面与本需求的
-VEE / 人工修正是同一件事的"引擎侧 + 页面侧"，合并在本需求内交付。</p>
-<section id="371-导航挂载" class="level4">
-<h4>3.7.1 导航挂载</h4>
-<ul>
-<li>菜单位置：顶栏<strong>工程配置 → 能源配置</strong>，侧栏与「能源计费配置」「能源计量关系」同级，菜单名<strong>「表具能耗明细」</strong>。能效视图同属工程配置域，但是下拉直达页（无能源配置侧栏），不与本页并列为侧栏项。</li>
-<li>此前"挂『能源计费配置』第三子页签"的方案<strong>取消</strong>：「表具能耗明细」是用量、成本与数据质量的综合管理面，不从属于计费配置，因此与计费方案配置并列，而不是挂在其下。</li>
-<li>原型对应
-<code>05-原型/AI原型html/能耗管理-表具明细.html</code>，需同步调整
-<code>index.html</code> 拓扑与 <code>components/nav.js</code>
-侧栏挂载。</li>
-</ul>
-</section>
+数据质量校验与人工修正合并在本需求内。</p>
+<section id="371-导航挂载" class="level4"><h4>3.7.1 产品入口边界</h4>
+<p>「表具能耗明细」是用量、成本与数据质量的综合管理面，与计费方案配置并列，不作为其子页签；具体导航位置与页面呈现以本章原型批注为准。</p></section>
 <section id="372-页面能力" class="level4">
 <h4>3.7.2 页面能力</h4>
 <table>
@@ -1368,19 +1241,18 @@ VEE / 人工修正是同一件事的"引擎侧 + 页面侧"，合并在本需求
 <tbody>
 <tr>
 <td>表具列表</td>
-<td>按能源类型 / 物模型 / 归属计量对象 /
-是否已应用计费方案筛选，全量表具（含未绑对象、未应用方案；<strong>含需求 1 配置物模型下的下级子物模型实例</strong>，§3.1）</td>
+<td>查询范围覆盖全量有效表具，包括未绑对象、未应用方案及需求 1 配置物模型下继承映射的子物模型实例（§3.1）；筛选控件以原型批注为准</td>
 <td>能源配置（需求 1）</td>
 </tr>
 <tr>
 <td>明细查询（四粒度）</td>
-<td>单表具按半小时 / 时 / 天 / 月查询用量与成本；时 / 天 / 月为汇总视图，可逐级下钻到半小时。日期选择方式与页面操作见原型 <code>能耗管理-表具明细.html</code></td>
-<td>表具核算明细（需求 2 / 5）</td>
+<td>单表具按半小时 / 时 / 天 / 月查询用量与成本；时 / 天 / 月读取对应归档并可追溯至半小时事实，查询控件与下钻交互以原型批注为准</td>
+<td>表具核算明细（需求 2；成本属性见需求 4）</td>
 </tr>
 <tr>
 <td>质量标记</td>
 <td>半小时逐槽展示正常 / 缺失 / 坏值 / 人工修正及原因（§3.5）；汇总行标注「完整 / 含异常缺失 / 含人工修正」，异常槽不计入行值；可查看人工修正留痕（§3.6）</td>
-<td>VEE 结果（§3.5） / §3.6</td>
+<td>数据质量校验结果（§3.5） / §3.6</td>
 </tr>
 <tr>
 <td>人工修正</td>
@@ -1390,11 +1262,11 @@ VEE / 人工修正是同一件事的"引擎侧 + 页面侧"，合并在本需求
 <tr>
 <td>按时间范围重算</td>
 <td><strong>本能力的唯一人工产品入口</strong>（《计费方案配置》列表不另设「重算成本」）。<strong>一次提交同时完成：① 用量核算</strong>（补传 /
-晚到后按补全尾值逐槽重算差值与 VEE 标记，含 rollup 联动重刷）<strong>＋
+晚到后按补全尾值逐槽重算差值与数据质量标记，含 rollup 联动重刷）<strong>＋
 ②
 计费属性重算</strong>（同一区间按当时生效方案重算成本状态、单价快照、成本金额，§5.3）。<strong>不区分重算类型</strong>：用量与成本强关联（用量一变成本必变），拆分类型徒增操作与漏刷风险；未应用计费方案的表具本次仅完成用量核算并保持成本状态为"未计算
 / 无计费方案"</td>
-<td>需求 2 / 5</td>
+<td>需求 2 / 4</td>
 </tr>
 <tr>
 <td>关联跳转</td>
@@ -1411,60 +1283,45 @@ VEE / 人工修正是同一件事的"引擎侧 + 页面侧"，合并在本需求
 <section
 id="四需求-3新增独立菜单页新增关系对象类型能源计量关系与计量拓扑含计量方向"
 class="level2">
-<h2>四、需求 3：新增独立菜单页 +
-新增关系对象类型｜能源计量关系与计量拓扑（含计量方向）</h2>
+<h2>四、需求 3：能源计量关系与供电关系配置</h2>
 <blockquote>
 <p>开发范围：</p>
 <ul>
-<li>已有复用：系统<strong>关系对象基础能力</strong>（工程配置 → 物模型 → 关系管理）及其读写 / 查询接口；能效视图对象树；物模型实例对象；需求 1 的能源类型定义。</li>
-<li>本期新增（模型层）：关系对象类型<strong>「能耗计量」</strong>，并在关系上定义两个属性——<strong>能源类型</strong>（绑定需求 1 的能源类型）、<strong>计量方向</strong>（输入 / 输出，默认输入）；随本版预置，不新增后端模型与接口（§4.1）。</li>
-<li>本期新增（页面层）：<strong>《能源计量关系》独立菜单页</strong>（工程配置 → 能源配置，跨对象批量主入口，支持 Excel 导入导出；界面与操作见原型 <code>能源计量关系.html</code>）；纯前端功能（§4.3）。</li>
-<li>本期改造（页面层）：实例详情「能效配置」Tab（能效视图内）<strong>保留</strong>单对象配置入口并改造交互（界面与操作见原型 <code>能效视图.html</code>）；与独立页维护同一份「能耗计量」关系、同一套校验（§4.3）。</li>
-<li>本期不做：独立计量关系模型；计量拓扑生效版本；独立的「损耗量」指标（损耗 = 输入 − 输出，属对象耗能子集）；配置健康度总览页与一键全量校验按钮（图约束校验仍在保存 / 导入时执行）。</li>
+<li>定义「能耗计量」关系，配置计量对象与表具或下级对象之间的能耗归集关系；计量对象可为设备实例，也可为设备实例下的组件实例。</li>
+<li>使用平台已有 <code>supplyPower</code> 关系，配置列头柜支路与被供电机柜之间的供电关系。</li>
+<li>提供跨对象配置页和实例详情单对象入口；两类关系独立保存、独立校验。</li>
+<li>平台不提供组件实例独立详情页；组件相关计量配置、今日试算和指标查看统一承载在所属设备实例详情中，保存与计算仍使用组件自身实例 ID。</li>
+<li><strong>范围边界</strong>：不新增供电关系类型，不合并两类关系，不根据物模型能力自动生成实例关系，不设置计量拓扑生效版本。</li>
 </ul>
 </blockquote>
-<p>本章方案分两层：<strong>模型层</strong>定义数据是什么（§4.1 关系模型），<strong>业务配置层</strong>解决实施人员怎么配（§4.3 配置页面），两层之间由同一套图约束校验兜底（§4.2）。底层关系能力系统已具备——即使没有本章页面，也能通过通用入口直接建出这些关系，但对实施人员过于抽象、无法批量作业，因此<strong>页面层是本章的开发主体</strong>（原因详见 §4.3）。</p>
-<table>
-<thead>
-<tr>
-<th>分层</th>
-<th>本期动作</th>
-<th>开发性质与边界</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>模型层：「能耗计量」关系对象（§4.1）</td>
-<td>在系统已有关系对象能力下新增关系类型「能耗计量」，关系上定义能源类型、计量方向两个属性</td>
-<td>复用已有关系管理模块与关系对象存储，随本版预置；不新建独立计量关系模型，不新增后端模型</td>
-</tr>
-<tr>
-<td>校验层：拓扑图约束（§4.2）</td>
-<td>定义计量业务必须满足的全图约束、校验时点与提交原子性</td>
-<td>由业务配置层在保存 / 导入提交前统一执行；两个入口共用同一套校验实现</td>
-</tr>
-<tr>
-<td>业务配置层：计量关系配置页（§4.3）</td>
-<td>新增《能源计量关系》独立菜单页；改造实例详情「能效配置」Tab</td>
-<td><strong>本期开发主体，纯前端</strong>；复用已有关系对象读写 / 查询接口，本期不新增后端接口</td>
-</tr>
-</tbody>
-</table>
+<section id="需求-3-原型" class="level3 proto-anchor">
+<h3>原型（对照批注评审）</h3>
+<div class="proto-gallery">
+<div class="proto-embed" id="proto-energy-metering-relation"><div class="proto-embed-head"><strong>能源计量关系</strong><span class="proto-tag">需求 3</span><span>跨对象入口：关注计量 / 供电关系、批量配置、校验与试算</span></div>
+<iframe class="proto-frame" title="能源计量关系（需求 3）" src="../能源计量关系.html" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe></div>
+<div class="proto-embed" id="proto-efficiency-config-req3"><div class="proto-embed-head"><strong>能效视图</strong><span class="proto-tag">需求 3</span><span>单对象入口：关注实例详情中的“能效配置” Tab</span></div>
+<iframe class="proto-frame" title="能效视图能效配置入口（需求 3）" src="../能效视图.html" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe></div>
+</div>
+<p>页面结构、控件、字段、交互、状态和异常规则以原型批注为准；本章仅保留跨页面规则、计算 / 数据契约、后端机制与原型无法完整表达的边界。评审时请点击原型右下角“批注”。</p>
+</section>
 <section id="41-关系模型能耗计量关系对象" class="level3">
-<h3>4.1 关系模型：「能耗计量」关系对象</h3>
+<h3>4.1 能耗计量关系对象</h3>
 <section id="411-承载方式复用已有关系对象能力" class="level4">
-<h4>4.1.1 承载方式：复用已有关系对象能力</h4>
+<h4>4.1.1 关系定义</h4>
 <ul>
-<li>系统已有通用<strong>关系对象</strong>能力（工程配置 → 物模型 → 关系管理，现状已承载「有一部分 hasPart」「供电 supplyPower」「监测 observes」等关系类型，支持在关系上定义属性与值枚举）。本版<strong>不新建</strong>一套抽象的"计量关系模型"，只在该能力下新增一个具体关系对象类型：<strong>「能耗计量」</strong>。</li>
-<li><strong>关系语义</strong>：方向统一为「当前计量对象 →（计量）成员对象 / 表具」；正 / 反向名称随关系类型在关系管理内定义。</li>
-<li><strong>交付方式</strong>：该关系类型及其两个属性随本版作为标准配置<strong>预置</strong>；不新增后端存储模型，关系的生成、保存、查询全部走已有关系对象接口。</li>
+<li>关系类型为<strong>「能耗计量」</strong>，通过平台关系对象能力保存和查询。</li>
+<li>关系方向为<strong>计量对象 → 成员</strong>，用于表达能耗归集路径。</li>
+<li>每条关系记录一个能源类型和一个计量方向。</li>
 </ul>
 </section>
 <section id="412-关系两端与关系属性" class="level4">
-<h4>4.1.2 关系两端与关系属性</h4>
+<h4>4.1.2 关系端点与属性</h4>
 <ul>
-<li><strong>关系两端都是物模型实例对象（已有实体）</strong>：源端为计量对象，目标端为成员（下级对象或表具），均不是本版新增主数据；系统 / 设备组 / 设备等只是该实例对象在能效视图与计量拓扑中的业务层级角色。</li>
-<li>关系上定义两个属性，是本版模型层新增的全部内容：</li>
+<li>源端为计量对象，目标端为下级计量对象或表具；两端均使用物模型实例对象。</li>
+<li>计量对象包括<strong>设备实例和下级组件实例</strong>。组件不是新增对象类型，关系保存时直接使用组件自身的实例 ID；所属实例和层级路径仅用于展示与定位。</li>
+<li>实例作为计量对象不要求其所属物模型选择需求 1 的「能源计量」支持关系；「能源计量」表示实例可作为表具提供读数。若同一组件实例同时具备表具能力和计量对象角色，两种角色独立判断。</li>
+<li>实例树中的父子层级不自动生成能耗计量关系。设备实例与组件实例分别维护关系，是否向上归集只由显式配置的能耗计量拓扑决定。</li>
+<li>组件实例没有独立详情页不改变其对象身份：所属设备实例详情只是展示容器，组件仍是计量关系端点和指标归属对象；不得以前者的实例 ID 替代后者保存、试算或查询。</li>
 </ul>
 <table>
 <thead>
@@ -1477,68 +1334,61 @@ class="level2">
 <tbody>
 <tr>
 <td>能源类型</td>
-<td>绑定需求 1 定义的能源类型（电 / 水 / 气 / 冷量等，见 §二）</td>
-<td>每条关系必须归属一个能源类型，关系按能源类型<strong>分域</strong>；同一计量对象可分别配置电 / 水 / 冷量等不同能源类型的计量拓扑，互不混算</td>
+<td>需求 1 定义的能源类型</td>
+<td>每条关系只归属一个能源类型；不同能源类型独立配置</td>
 </tr>
 <tr>
-<td>计量方向（本期新增）</td>
+<td>计量方向</td>
 <td>输入 / 输出，默认<strong>输入</strong></td>
-<td>决定成员用量在对象用能量中的符号（输入 +、输出 −，见 §4.1.4）；方向只影响计算符号，不拆分表具占用名额（见 §4.2 约束 1）</td>
+<td>供需求 5 计算对象指标；不拆分表具占用名额</td>
 </tr>
 </tbody>
 </table>
 </section>
 <section id="413-成员的两种挂法" class="level4">
-<h4>4.1.3 成员的两种挂法（产品已有口径）</h4>
+<h4>4.1.3 成员类型</h4>
 <ul>
-<li><strong>选下级计量对象</strong>：沿能效视图树选择下级节点（系统 → 设备组 → 设备），中间层继续向下展开直至叶子表具（配置可只选一层，计算侧仍按整棵子树递归）。</li>
-<li><strong>直接选表具</strong>：为当前对象直接选择一块或多块当前能源类型下的计量表具（物模型实例对象，已有实体）；表具组件仍属表具（名称注明所属表具）。</li>
-<li>两种方式最终都在<strong>同一能源类型下</strong>产出同一类「能耗计量」关系对象，只是树的深浅不同：中间层是下级对象，叶子层是表具。全部关系共同构成<strong>可递归展开到叶子表具的有向无环计量图</strong>（图约束与查重见 §4.2）。</li>
+<li><strong>下级计量对象</strong>：可以是设备实例或组件实例，可继续向下展开，直至叶子表具。</li>
+<li><strong>表具</strong>：作为叶子成员直接参与归集；表具为组件实例时使用组件自身实例 ID，并展示所属实例与层级路径。</li>
+<li>两类成员共同构成按能源类型分域的计量图，保存时执行 §4.3 的关系校验。</li>
 </ul>
 </section>
-<section id="414-计算语义" class="level4">
-<h4>4.1.4 计算语义：Σ输入 − Σ输出，按能源分域递归</h4>
+ </section>
+<section id="42-关系模型供电关系对象" class="level3">
+<h3>4.2 供电关系对象</h3>
 <ul>
-<li>对象用能量统一按 <strong>Σ(输入方向成员用量) − Σ(输出方向成员用量)</strong> 计算：
-<ul>
-<li>绝大多数场景只有输入侧计量（输出侧为空），公式退化为 Σ输入，与既有"求和"直觉一致，存量配置零改动；</li>
-<li><strong>变压器、UPS 等两侧计量的电力关键设备</strong>：输入侧挂进线表、输出侧挂出线表，对象用能量 = 输入 − 输出，即其高压转低压 / 储能过程的<strong>损耗</strong>。损耗不单设指标——它就是该对象的耗电量（子集）；</li>
-<li>多能源同构：水（进水 − 出水）、气、冷量同口径，不为电单独建模。</li>
-</ul></li>
-<li><strong>能源类型边界</strong>：对象指标计算必须携带能源类型，只沿该能源类型下的拓扑<strong>递归到叶子表具</strong>（成员为下级对象时取其同口径结果，<strong>禁止只展开直接一层</strong>），避免多能源混算。</li>
-<li><strong>消费方</strong>：配置页按当前根对象树状展示这张图（§4.3）；指标工厂（需求 5）按同一张图计算对象能耗 / 成本 / 能效指标——「能耗计量」关系对象是其直接消费输入。</li>
+<li>关系类型使用平台 <code>supplyPower</code>，用于表达列头柜支路与机柜之间的实际供电拓扑。</li>
+<li>关系方向为<strong>供电支路 → 被供电机柜</strong>。反向查询表示“被供电”，不另设供电端、受电端或反向关系。</li>
+<li>源对象所属物模型必须支持「供电」；目标对象不要求配置“受电”能力。物模型能力只用于筛选候选对象，不自动生成实例关系。</li>
+<li>同一支路可以同时参与能耗计量关系和供电关系。两类关系独立保存、独立校验、互不联动删除。</li>
+<li>供电关系不参与需求 5 的用量、成本和能效指标计算。</li>
+<li>列头柜支路为组件实例时，须先完成 §9.2 U9 的平台关系接口能力确认，不得以其上级实例替代。</li>
 </ul>
 </section>
-</section>
-<section id="42-拓扑图约束与重复计量校验" class="level3">
-<h3>4.2 拓扑图约束与重复计量校验</h3>
-<p>「能耗计量」关系虽然复用系统通用关系对象存储，但在计量业务中必须满足一组更强的图约束；校验由 §4.3 业务配置页在保存与批量提交动作中统一执行（两个入口共用同一套实现），不能留给指标查询时兜底：</p>
+<section id="43-关系校验" class="level3">
+<h3>4.3 关系校验</h3>
+<p>两类关系分别校验。新增、编辑、删除和批量导入均须先校验，校验通过后方可保存。</p>
+<p><strong>能耗计量关系：</strong></p>
 <ol type="1">
-<li><strong>表具唯一占用（归属查重）</strong>：查重键为 <code>表具（含组件） + 能源类型</code>——一块表具在同一能源类型下只能挂到<strong>一个</strong>计量关系上（无论该关系方向是输入还是输出）。对"直接选表具"与"选下级对象后展开到的表具"、以及同一能源类型下不同对象之间，均校验不得重复占用同一表具，从源头杜绝对象指标的重复计量。计量方向仍决定计算符号，但不拆分占用名额。</li>
-<li><strong>有向无环</strong>：关系方向统一为“当前计量对象 → 成员对象 /
-表具”。禁止对象指向自身；新增对象关系后若能从成员对象沿既有关系回到当前对象，则构成环路，保存失败并返回完整冲突路径。</li>
-<li><strong>对象同方向唯一父级</strong>：同一能源类型、同一计量方向下，一个成员对象最多被一个直接上级计量对象引用；同一对象可在不同方向分别承担上级输出
-/ 下游输入角色。禁止用多父级表达分摊，本版无分摊比例模型。</li>
-<li><strong>禁止重叠选择</strong>：同一当前对象、同一能源类型、同一计量方向下，选择某下级对象后，不得再同时选择其后代对象或该子树已覆盖的叶子表具；“选下级对象”与“直接选表具”必须在展开后统一校验，而不是只比较配置行
-ID。</li>
-<li><strong>叶子有符号展开</strong>：保存前把当前对象的整棵拓扑递归展开为
-<code>叶子表具 → 有符号系数</code>。输入边记 <code>+1</code>、输出边记
-<code>-1</code>，一条路径的符号为沿途边符号乘积，同一叶子经多条路径到达时系数相加。运行时可以复用下级对象指标，但计算语义必须与该叶子展开结果一致。</li>
-<li><strong>重复计量判定</strong>：任一叶子最终系数绝对值
-<code>&gt; 1</code>，说明同一物理用量被同号重复纳入，保存失败并返回所有重复路径；系数为
-<code>+1 / -1</code> 正常参与计算。系数为 <code>0</code>
-仅允许来自“上级输出表同时作为下游输入表”的内部传递抵消，结果不计入当前根对象，但两条来源路径保留用于追踪。</li>
-<li><strong>同对象输入 /
-输出冲突</strong>：同一表具不得同时作为<strong>同一个计量对象</strong>的输入和输出；该配置只会产生无业务意义的直接抵消，保存时拦截。跨相邻对象的“上级输出
-+ 下游输入”仍合法。</li>
-<li><strong>校验时点与范围</strong>：新增、编辑、删除计量关系，以及《能源计量关系》页的<strong>批量新增、批量改方向、批量删除与 Excel 全量覆盖导入</strong>，均执行同一套全图校验；校验范围包含当前对象及所有受影响的可达上级根对象，不能只验证本次编辑的直接关系。校验通过后才原子发布完整的当前拓扑配置；对象层无分片重算，下次查询即按新拓扑出数；<strong>批量操作整批原子提交</strong>，失败只返回冲突（全量导入需返回文件结构、成员有效性、全图约束及新增 / 变更 / 删除影响），不允许部分保存。本规则不新增拓扑生效版本，历史仍按本版既定的当前拓扑口径重算。</li>
+<li><strong>表具唯一占用</strong>：同一 <code>表具（含组件） + 能源类型</code> 只能归属一个计量关系，输入和输出共用一个占用名额。</li>
+<li><strong>有向无环</strong>：禁止对象指向自身或形成环路；校验失败时返回完整冲突路径。</li>
+<li><strong>实例统一校验</strong>：设备实例与组件实例按各自实例 ID 参与同一套有向无环、父级唯一、重复覆盖和叶子展开校验；实例树父子层级不视为能耗计量边。</li>
+<li><strong>对象父级唯一</strong>：同一能源类型、同一计量方向下，一个成员对象只能有一个直接上级，不支持多父级分摊。</li>
+<li><strong>禁止重复覆盖</strong>：选择下级对象后，不得再选择其后代对象或已覆盖的叶子表具。</li>
+<li><strong>叶子展开校验</strong>：输入边记为 <code>+1</code>，输出边记为 <code>-1</code>。同一叶子的最终系数绝对值大于 <code>1</code> 时，判定为重复计量并返回全部冲突路径。</li>
+<li><strong>方向冲突</strong>：同一表具不得同时作为同一计量对象的输入和输出；相邻对象之间的上级输出、下游输入允许存在。</li>
+<li><strong>原子保存</strong>：校验范围覆盖当前对象及受影响的所有上级对象。批量操作任一项失败时整批不保存；历史查询继续使用当前拓扑。</li>
 </ol>
+<p><strong>供电关系：</strong></p>
+<ul>
+<li>源对象所属物模型必须支持「供电」，源对象和目标对象必须有效；重复的同向关系不得保存。</li>
+<li>不执行表具唯一占用、计量方向、叶子展开和重复计量校验，也不修改能耗计量关系。</li>
+<li>源端为组件实例时，必须先通过 §9.2 U9 的平台关系接口能力确认。</li>
+</ul>
 </section>
-<section id="43-业务配置页能源计量关系独立页与实例详情能效配置" class="level3">
-<h3>4.3 业务配置页（纯前端）：《能源计量关系》独立页 + 实例详情「能效配置」</h3>
-<p><strong>为什么要做</strong>：基于 §4.1，系统底层能力已经具备——即使没有本节页面，也可以通过通用的关系管理 / 实例管理入口直接建出「能耗计量」关系。但该入口是面向模型管理员的通用工具：<strong>过于抽象</strong>（要求先理解关系对象模型），且<strong>操作复杂</strong>——只能逐实例、逐关系操作，无能源分域视角、无批量手段、无计量业务校验，不满足实施人员「趋近、高效、简单配置」的诉求，实际无法支撑规模化实施。因此本期把"一个对象一个弹窗"的配置方式，换成实施人员可批量作业的<strong>计量方案工作台</strong>。</p>
-<p><strong>实现边界</strong>：本节页面是计量关系配置的业务层操作界面，为<strong>纯前端功能</strong>——复用已有关系对象读写 / 查询接口，本期不新增后端接口。所有写操作产出的仍是 §4.1 定义的「能耗计量」关系对象，保存 / 导入前统一执行 §4.2 校验，不新增第二套口径。</p>
-<p><strong>两个入口、一份数据</strong>：</p>
+<section id="44-业务配置" class="level3">
+<h3>4.4 业务配置</h3>
+<p>业务页面负责维护 §4.1 和 §4.2 定义的关系对象，并统一执行 §4.3 校验。两类关系独立提交、独立保存。</p>
 <table>
 <thead>
 <tr>
@@ -1549,59 +1399,55 @@ ID。</li>
 </thead>
 <tbody>
 <tr>
-<td>《能源计量关系》独立菜单页（本期新增）</td>
+<td>《能源拓扑配置》独立菜单页</td>
 <td><strong>跨对象批量主入口</strong></td>
-<td>能源 Tab + 多视图树 + 关系表（§4.3.2）；页内批量编辑与 Excel 导入导出（§4.3.3）；今日试算与表具下钻（§4.3.4）</td>
+<td>按能源类型配置能耗计量关系和供电关系；支持批量编辑、Excel 导入导出及今日试算</td>
 </tr>
 <tr>
-<td>实例详情「能效配置」Tab（能效视图内，本期改造）</td>
+<td>实例详情「能效配置」Tab</td>
 <td><strong>单对象配置入口</strong></td>
-<td>只配<strong>当前选中对象</strong>；入口名由原「能耗计量方案」调整为「能源计量关系」，整体交互改造（<strong>不是下线</strong>）；多视图切换、Excel 导入导出与跨对象批量<strong>不在</strong>此入口</td>
+<td>配置当前对象；不提供多视图切换、Excel 导入导出和跨对象批量操作</td>
 </tr>
 </tbody>
 </table>
-<p><strong>界面与操作分别见原型 <code>能源计量关系.html</code>、<code>能效视图.html</code>「能效配置」Tab</strong>；本节只写导航挂载、业务规则与数据约定。</p>
-<section id="431-导航挂载" class="level4">
-<h4>4.3.1 导航挂载</h4>
+<section id="441-配置入口" class="level4"><h4>4.4.1 配置入口</h4>
+<p>跨对象入口与单对象「能效配置」入口维护同一份关系数据，不新增底层关系类型；入口位置、页面布局和操作流程以本章两份原型批注为准。</p></section>
+<section id="442-能耗计量关系配置" class="level4">
+<h4>4.4.2 能耗计量关系配置</h4>
 <ul>
-<li>独立页菜单位置：顶栏<strong>工程配置 → 能源配置 → 能源计量关系</strong>，与「能源计费配置」「表具能耗明细」同级。能效视图同属工程配置域，但是下拉直达页，不在能源配置侧栏。</li>
-<li>单对象入口挂在能效视图实例详情的「能效配置」Tab 内，入口分工见 §4.3 开头的入口表。</li>
-<li>原型对应 <code>05-原型/AI原型html/能源计量关系.html</code>、<code>05-原型/AI原型html/能效视图.html</code>；独立页需同步调整 <code>index.html</code> 拓扑与 <code>components/nav.js</code> 侧栏挂载。</li>
+<li>保存契约为 <code>计量对象实例 ID × 能源类型 × 成员实例 ID × 计量方向</code>；默认方向为输入，组件实例直接使用自身 ID，不增加额外身份字段。</li>
+<li>设备与组件的候选范围、选择与展示交互以原型批注为准；保存统一执行 §4.3 校验。</li>
 </ul>
 </section>
-<section id="432-计量关系主视图" class="level4">
-<h4>4.3.2 能源 Tab + 多视图树 + 关系表（主视图）</h4>
-<p>界面与操作见原型。本节只固定业务口径：</p>
+<section id="443-批量配置" class="level4">
+<h4>4.4.3 批量配置</h4>
 <ul>
-<li><strong>按能源分域</strong>：关系、树配置态、表具池、试算均跟随当前能源类型，禁止跨能源混配。</li>
-<li><strong>多视图对象树</strong>：支持空间 / 容量 / 能效视图切换；节点仍是同一批物模型实例；需区分当前能源已配置 / 未配置。</li>
-<li><strong>关系成员类型仅两种</strong>：表具、下级对象。组件仍属表具（名称注明所属表具）；每条关系带计量方向（输入 / 输出，默认输入）。</li>
-<li><strong>表格只展示直接成员</strong>：当前对象 × 当前能源下的直接关系；下级对象自身的下级不在本表展开。</li>
-<li><strong>归属与校验</strong>：配置变更与导入提交时对当前对象 × 当前能源执行 §4.2 全部约束（查重键即约束 1 <code>表具（含组件） + 能源类型</code>，方向只影响计算符号、不拆占用名额）；本期无独立「校验 / 保存」按钮、无配置健康度总览与全量校验。</li>
-<li><strong>产物</strong>：<code>计量对象 × 能源类型 × 成员 × 计量方向</code> 的「能耗计量」关系对象。</li>
-</ul>
-</section>
-<section id="433-批量配置能力" class="level4">
-<h4>4.3.3 批量配置能力</h4>
+<li>支持批量新增成员、修改计量方向和删除关系。</li>
+<li>能耗计量关系支持 Excel 导入和导出：
 <ul>
-<li><strong>页内批量编辑</strong>：可连续添加多个下级对象或多块表具（默认方向为输入，可改为输出），也可逐条改方向或删除；改方向会改变对象用能量（Σ输入 − Σ输出），须通过 §4.2 校验后生效。具体操作见原型。</li>
-<li><strong>Excel 导入 / 导出（数据约定）</strong>：
-<ul>
-<li><strong>底稿规则</strong>：须先导出当前已生效的完整关系作为底稿，再编辑后导入；不得从空白模板直接导入。</li>
-<li><strong>覆盖规则</strong>：导入为<strong>全量覆盖</strong>——文件中的关系清单即导入后的完整目标状态，未保留的现有关系视为删除。</li>
-<li><strong>工作簿内容</strong>：固定 5 个工作表——① 关系清单（写入规则 + 表头 + 关系数据）；②～④ 能效 / 空间 / 容量视图对象对照；⑤ 能源表具清单对照。②～⑤ 只作对照，不直接落库。关系清单必填：计量对象、能源类型、成员类型、成员、计量方向；成员为表具组件时须同时给出所属表具与组件名称。对象与表具均使用业务实例标识与名称，不用页面内部树节点键。</li>
-<li><strong>校验与提交</strong>：导入前检查表结构、必填项、对象 / 表具是否存在，以及是否满足 §4.2；并展示新增 / 变更 / 删除数量供确认。任一项失败则整批不生效，并导出带「问题原因」列的错误文件供修正后重传。</li>
+<li>导出当前完整关系作为编辑底稿；导入结果按文件内容全量覆盖。</li>
+<li>工作簿固定包含关系清单、能效视图对象、空间视图对象、容量视图对象和能源表具清单 5 个工作表；后 4 个工作表仅用于对照。对象对照须包含设备实例和组件实例，并展示组件所属实例与层级路径；能源表具清单统一展示实例 ID、实例名称、物模型和累计量测点 ID，不设置组件专属字段。</li>
+<li>关系清单包含计量对象实例 ID、能源类型、成员类型、成员实例 ID 和计量方向；组件实例直接填写自身实例 ID，所属实例与层级路径仅作为对照信息。</li>
+<li>导入前校验文件结构、对象有效性和 §4.3 关系规则，并展示新增、变更和删除数量。校验失败时整批不保存，并生成错误文件。</li>
 </ul></li>
 </ul>
 </section>
-<section id="434-今日试算与表具下钻" class="level4">
-<h4>4.3.4 今日试算与表具下钻</h4>
+<section id="444-今日试算" class="level4">
+<h4>4.4.4 今日试算</h4>
 <ul>
-<li><strong>目的</strong>：配置完成后，实施人员可按当前对象
-×
-当前能源，用「今日用量」快速感知拓扑是否算对（配置态试算预览，非正式核算报表）。</li>
-<li><strong>计算口径</strong>：沿当前计量关系展开到叶子表具，输入记为正、输出记为负，汇总今日用量；与对象用能量「Σ输入 − Σ输出」一致。</li>
-<li><strong>结果呈现</strong>：须能看到各叶子表具的有符号用量，并可跳转《表具能耗明细》核对；异常提示（如结果显著为负、用量全 0、尚未挂到叶子表具）不替代 §4.2 校验。具体展示见原型。</li>
+<li>按当前计量对象和能源类型调用需求 5 的计算口径，预览今日用量。</li>
+<li>展示各叶子表具的有符号用量，并支持跳转《表具能耗明细》。</li>
+<li>结果为负、全为 0 或未关联叶子表具时给出提示；提示不替代 §4.3 校验。</li>
+</ul>
+</section>
+<section id="445-供电关系配置" class="level4">
+<h4>4.4.5 供电关系配置</h4>
+<ul>
+<li>支持供电关系的新增、查看、编辑和删除。</li>
+<li>源对象只展示所属物模型支持「供电」的实例；目标对象按平台 <code>supplyPower</code> 端点规则选择。</li>
+<li>保存产物为 <code>源实例 × supplyPower × 目标实例</code>；不要求源对象同时具备「能源计量」能力。</li>
+<li>供电关系用于供电路径查询，不替代能耗计量关系，也不参与用量、成本和能效指标计算。</li>
+<li>源端为组件实例时，按 §9.2 U9 的确认结果执行。</li>
 </ul>
 </section>
 <hr />
@@ -1610,94 +1456,77 @@ ID。</li>
 <section
 id="五需求-4复用计费方案新增计费属性写入计费方案与表具核算明细成本属性"
 class="level2">
-<h2>五、需求 4：复用计费方案 +
-新增计费属性写入｜计费方案与表具核算明细成本属性</h2>
+<h2>五、需求 4：计费方案与表具成本</h2>
 <blockquote>
 <p>开发范围：</p>
 <ul>
-<li>已有复用：计费方案、计费方案版本、分时计价时段。</li>
-<li>本期新增：表具核算明细的成本状态、计费方案版本、单价快照、成本金额写入与重算。</li>
-<li>本期改造：表具应用计费方案关系接入核算链路；应用后可按时间范围补算 /
-重算表具核算明细计费属性。<strong>人工发起的按时间范围重算入口统一在「表具能耗明细」</strong>（§3.7：一次提交同时完成用量核算＋计费属性重算）；《计费方案配置》仅负责方案定义与应用到表具，列表不提供「重算成本」行操作。</li>
-<li>本期不做：修改历史已生效价格；账单封存；对象成本重算任务；计费方案列表侧单独重算入口。</li>
+<li>将计费方案应用到表具，按明细时间匹配当时生效的方案版本和价格。</li>
+<li>把成本状态、方案版本、单价快照和成本金额写入表具核算明细。</li>
+<li>在「表具能耗明细」按时间范围统一重算用量和成本。</li>
+<li><strong>范围边界</strong>：表具计费与需求 3 的计量拓扑无关；不修改已生效价格，不做账单封存和对象成本重算任务。</li>
 </ul>
 </blockquote>
+<section id="需求-4-原型" class="level3 proto-anchor">
+<h3>原型（对照批注评审）</h3>
+<div class="proto-gallery">
+<div class="proto-embed" id="proto-billing-plan"><div class="proto-embed-head"><strong>计费方案配置</strong><span class="proto-tag">需求 4</span><span>关注方案列表、应用范围及版本状态</span></div>
+<iframe class="proto-frame" title="计费方案配置（需求 4）" src="../计费方案配置.html" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe></div>
+<div class="proto-embed" id="proto-billing-editor"><div class="proto-embed-head"><strong>新增 / 编辑能源计费方案</strong><span class="proto-tag">需求 4</span><span>关注计价类型、时段价格及方案生效配置</span></div>
+<iframe class="proto-frame" title="新增编辑能源计费方案（需求 4）" src="../新增-编辑能源计费方案.html" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe></div>
+</div>
+<p>页面结构、控件、字段、交互、状态和异常规则以原型批注为准；本章仅保留跨页面规则、计算 / 数据契约、后端机制与原型无法完整表达的边界。评审时请点击原型右下角“批注”。</p>
+</section>
 <section id="51-复用现有计费方案" class="level3">
-<h3>5.1 复用现有计费方案</h3>
+<h3>5.1 方案应用</h3>
 <ul>
-<li><strong>复用《计费方案配置》</strong>：统一单价 / 峰平谷 /
-尖峰平谷；<strong>时段以 30
-分钟为刻度、需覆盖全天</strong>；每条明细带<strong>生效日期</strong>、历史锁定、未来可删。</li>
-<li>价格单位随<strong>累计量单位</strong>动态（元/千瓦时、元/m³…），实时值单位不参与计价。水
-/ 气等非分时能源走"统一单价"规则，与电同引擎。</li>
+<li>复用《计费方案配置》的统一单价、峰平谷和尖峰平谷方案；分时时段以 30 分钟为刻度并覆盖全天。</li>
+<li>同一表具在同一能源类型、同一时点最多应用一个方案；一个方案可应用到多块表具。</li>
+<li>价格单位跟随累计量单位；实时值单位、主瞬时量和过程瞬时量均不参与计价。</li>
 </ul>
 </section>
 <section id="52-成本归属表具核算明细" class="level3">
-<h3>5.2 成本归属表具核算明细</h3>
+<h3>5.2 成本写入</h3>
 <ul>
-<li>同一表具角色在同一能源类型、同一生效时点最多应用一个计费方案；同一计费方案可应用到多块表具。</li>
 <li><strong>表具半小时核算明细的成本金额 = 表具半小时用量 ×
-该半小时所属时段在【当时生效计费方案】下的单价</strong>，作为表具核算明细的计费属性归档（与拓扑无关）。</li>
+该时段在当时生效方案版本下的单价</strong>。</li>
+<li>每条明细记录成本状态、方案版本、单价快照和成本金额；未应用方案时保留用量事实，成本状态记为「未计算 / 无计费方案」。</li>
 </ul>
 </section>
 <section id="53-按时间范围重算成本属性" class="level3">
-<h3>5.3 按时间范围重算成本属性</h3>
+<h3>5.3 按范围重算</h3>
 <ul>
-<li>提供"按时间范围重算成本属性"能力，作用在<strong>表具核算明细的计费属性族</strong>（非对象层单独重算）。</li>
-<li><strong>产品入口（人工发起）：</strong>统一在「表具能耗明细」管理页工具栏「按时间范围重算」（§3.7）。一次提交同时完成用量核算＋计费属性重算，不区分重算类型。<strong>《计费方案配置》列表不提供「重算成本」行操作</strong>——该页只做方案定义与应用到表具；需要补算 / 重算历史区间时跳「表具能耗明细」操作。</li>
-<li><strong>历史计费方案不可改</strong>：已生效的计费方案明细历史锁定，只能<strong>新增未来生效版本</strong>（§5.1）。因此重算<strong>不改写历史电价</strong>，只按【当时已锁定的生效方案】重新计算成本。</li>
-<li>触发场景（均不修改历史电价）：
-<ol type="1">
-<li><strong>历史用量被人工修正</strong>（§5.2）→
-对受影响时间窗按当时生效方案重算成本属性；</li>
-<li><strong>表具晚应用 / 新应用计费方案</strong>（§3.1 晚绑定）→
-从该方案生效日起补算此前成本状态为"未计算 / 无计费方案"的区间（人工补算走「表具能耗明细」按时间范围重算）；</li>
-<li><strong>新增未来生效版本</strong> →
-自其生效日起自然切换，不回改此前区间。</li>
-</ol></li>
-<li><strong>取价口径：当时生效计费方案</strong>（审计友好）；按目标时间窗对应的生效方案重算并幂等覆盖表具核算明细中的计费方案版本、单价快照、成本金额与成本状态，用量事实不受影响。</li>
-<li>对象侧无需单独"历史成本重算"任务：表具核算明细的成本金额更新后，下次查询对象成本即按最新表具成本事实现场归集，消费口径随之一致（见需求 5 §6.4）。</li>
-</ul>
-</section>
-<section id="54-特殊场景同一物理表在不同业务需不同方案--虚拟表具"
-class="level3">
-<h3>5.4 特殊场景：同一物理表在不同业务需不同方案 → 虚拟表具</h3>
-<ul>
-<li>该场景少见、特殊。解决方式：<strong>新建虚拟表具引用同一物理表，在对应能源类型下挂不同计费方案、挂到不同计量拓扑</strong>；物理表与虚拟表成本各算各的，互不污染。</li>
-<li>本期不实现虚拟表具计费分流，也不在本版数据结构中预置虚拟表具扩展；若后续确需同一物理表多业务计费分流，另行立项设计。</li>
+<li>人工入口统一为「表具能耗明细」的「按时间范围重算」（§3.7）；一次提交先重算用量，再按当时生效方案重算成本，不拆分重算类型。</li>
+<li>人工修正用量或晚应用方案后，可重算受影响区间；结果幂等覆盖成本状态、方案版本、单价快照和成本金额。</li>
+<li>已生效价格保持锁定；新增未来版本只从生效时点起使用，不回改此前区间。</li>
+<li>对象成本不单独重算；需求 5 下次查询时按最新表具成本和当前计量拓扑归集。</li>
 </ul>
 <hr />
 </section>
 </section>
 <section id="六需求-5本期新增对象指标定义与指标工厂查询计算实时值--统计指标"
 class="level2">
-<h2>六、需求 5：本期新增｜对象指标定义与指标工厂查询计算（实时值 +
-统计指标）</h2>
+<h2>六、需求 5：对象指标定义与指标工厂计算（实时值存储 +
+统计指标查询）</h2>
 <blockquote>
 <p>开发范围：</p>
 <ul>
-<li>已有 / 平行复用：KE 数据工厂 ·
-指标工厂基础能力（指标定义、按查询入参计算并返回结果，见《R5-KE
-平台-数据工厂》册）；能源类型、物模型（含继承链）、物模型实例对象作为表具角色 /
-计量对象角色的基础对象。</li>
-<li>本期依赖：需求 1 成对定义的瞬时量测点、需求 2 / 5
-产出的表具核算明细（含成本属性）、需求 3
-产出的「能耗计量」关系对象 / 计量拓扑（含计量方向）。</li>
-<li>本期新增：对象粒度指标统一注册进指标工厂，分<strong>实时值指标</strong>与<strong>统计指标</strong>两大类（清单见
-§6.3）；指标定义按<strong>物模型层</strong>注册、按<strong>实例层</strong>自动派生（§6.2）。</li>
-<li>本期新增：实时值与统计值均在<strong>每次查询时</strong>按当前计量拓扑现场计算；对象层<strong>不落库、不归档、不物化
-ClickHouse</strong>；完整性标记随查询结果输出。</li>
-<li>本期改造：下游存量页面与总览看板统一改为消费指标工厂产出；消费口径本章不展开，由后续独立需求描述（§6.5）。</li>
-<li>本期不做：自建对象层查询服务；对象层历史归档 /
-物化与对象分片重算任务；自由公式指标（属数据工厂现场自定义域，不在本版）；表具核算明细层存储方案变更；<strong>在物模型上新增测点 /
-属性</strong>；<strong>模型级聚合值</strong>（同一物模型全部实例的合计 /
-平均）；<strong>开放现场向物模型注册指标</strong>。</li>
+<li>输入为需求 1 的主瞬时量、需求 2 / 4 的表具核算明细及成本属性、需求 3 的计量拓扑。</li>
+<li>对象指标分为<strong>实时值指标</strong>和<strong>统计指标</strong>；定义注册在物模型层，实例自动获得对应指标。</li>
+<li>实时值指标（C1、B1–B5 实时值）沿用数据工厂现有计算指标默认调度，计算后像测点一样写入时序存储；统计指标仍在查询时按当前计量拓扑计算、不落库。完整性标记随实时样本或统计结果返回。</li>
+<li>下游页面统一消费指标工厂产出，具体页面规则见消费侧需求。</li>
+<li><strong>范围边界</strong>：不自建对象查询服务，不物化对象统计指标，不做自由公式指标、物模型新增测点或属性、模型级聚合值和现场指标注册；实时指标历史存储在指标工厂时序能力中，不回写物模型测点槽位。</li>
 </ul>
 </blockquote>
-<p>对象层（园区 / 数据中心单元 / 系统 / 设备组 /
-设备）的一切消费口径，先在<strong>指标工厂</strong>内以「指标」形态定义并可见，页面只消费指标工厂产出。指标工厂的本质是<strong>定义「这个指标怎么算」</strong>（输入依赖
-+ 口径 +
-入参），并在<strong>每次查询时</strong>按定义现场计算返回结果。本章按固定顺序回答四件事：指标注册在哪一层（§6.2）、首版有哪些指标（§6.3）、上游变了指标怎么办（§6.4）、下游怎么用（§6.5，另行需求展开）。</p>
+<section id="需求-5-原型" class="level3 proto-anchor">
+<h3>原型（对照批注评审）</h3>
+<div class="proto-gallery">
+<div class="proto-embed" id="proto-model-metrics"><div class="proto-embed-head"><strong>物模型详情</strong><span class="proto-tag">需求 5</span><span>模型层：关注指标 Tab、注册范围与定义来源</span></div>
+<iframe class="proto-frame" title="物模型详情指标页签（需求 5）" src="../物模型-模型详情.html" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe></div>
+<div class="proto-embed" id="proto-efficiency-metrics-req5"><div class="proto-embed-head"><strong>能效视图</strong><span class="proto-tag">需求 5</span><span>实例层：关注指标列表、可算状态、本体 / 组件归属与下钻</span></div>
+<iframe class="proto-frame" title="能效视图指标列表（需求 5）" src="../能效视图.html" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe></div>
+</div>
+<p>页面结构、控件、字段、交互、状态和异常规则以原型批注为准；本章仅保留跨页面规则、计算 / 数据契约、后端机制与原型无法完整表达的边界。评审时请点击原型右下角“批注”。</p>
+</section>
 <section id="61-范围目标与整体框架" class="level3">
 <h3>6.1 范围、目标与整体框架</h3>
 <section id="611-目标与职责边界" class="level4">
@@ -1716,33 +1545,10 @@ PUE、各时段电量 /
 <section id="612-整体框架" class="level4">
 <h4>6.1.2 整体框架</h4>
 <ul>
-<li><strong>一条链路</strong>：上游输入（需求 1 瞬时量测点当前值、需求 2 / 5
-表具核算明细及其成本属性、需求 3 计量拓扑）→ 指标工厂（本需求：指标定义 +
-查询时计算）→ 下游消费（§6.5，另行需求）。</li>
-<li><strong>两层定义（§6.2）</strong>：指标先注册在<strong>物模型层</strong>，再按<strong>实例层</strong>自动派生——回答「哪类对象有哪些指标、某个对象现在能不能算」。</li>
-<li><strong>两大类指标（§6.3）</strong>：<strong>实时值指标</strong>只接受「当前」入参；<strong>统计指标</strong>接受半小时及以上任意时间跨度入参。两类<strong>输入源完全不同</strong>（瞬时量当前值
-vs 表具核算明细归档分片），不得混写。</li>
-<li><strong>一套归集总则（全部对象级指标共用）</strong>：对象级指标 =
-按能源类型沿<strong>当前</strong>计量拓扑递归展开，<strong>Σ(输入方向成员) −
-Σ(输出方向成员)</strong>。
-<ul>
-<li>成员为下级对象时取其同口径<strong>递归</strong>结果（直至叶子表具，<strong>禁止只展开直接一层</strong>）；最终计算语义必须等价
-§6.2 的叶子有符号展开，不得因复用下级对象中间结果而跳过重复路径校验。</li>
-<li>仅输入侧计量的对象（绝大多数）退化为 Σ输入，与既有「求和」口径一致；变压器 /
-UPS 等两侧计量对象的「输入 − 输出」即转换 /
-储能损耗，损耗不单设指标、属于该对象能耗的子集（§6.1 计量方向）。</li>
-<li>输入 − 输出 &lt; 0（表计误差、方向配错）时<strong>不静默置
-0</strong>，结果照算并随完整性标记输出「疑似方向 /
-表计异常」，供实施排查（页面呈现见 §9.2 U5）。</li>
-<li>成本类指标沿<strong>同一拓扑、同一规则</strong>归集，仅把输入源从用量换成表具核算明细.成本金额；任一指标不得自行实现另一套归集逻辑。</li>
-<li>查询主体贯穿「表具本身 →
-上层各级计量对象」：表具自身直接读叶子输入（核算明细 /
-瞬时量测点，不依赖是否已绑对象），计量对象及各级上层对象读指标工厂归集结果。计量方案保存时已按
-§6.2 校验叶子系数，同一物理用量不会以同号重复进入同一对象结果。</li>
-</ul></li>
-<li><strong>一条存储红线</strong>：两大类指标都<strong>不落库、不归档、不物化</strong>——表具核算明细（需求 2）是唯一事实归档；对象层每次查询按「最新表具事实 / 瞬时量当前值 +
-当前拓扑」现场计算，结果附完整性标记，不构成第二份事实。性能优化（缓存、并行展开等）属实现细节，不得改变该产品口径（§9.1
-第 5 条）。上游变更的响应规则见 §6.4。</li>
+<li><strong>链路</strong>：需求 1 主瞬时量、需求 2 / 4 表具事实及成本、需求 3 计量拓扑 → 指标工厂计算 → 下游消费。类型层与实例层规则见 §6.2，指标清单见 §6.3。</li>
+<li><strong>统一归集公式</strong>：对象级指标按能源类型沿当前计量拓扑递归执行 <strong>Σ输入 − Σ输出</strong>；下级对象须展开至叶子表具，完整路径校验见 §4.3。仅输入侧时退化为 Σ输入；负值照算并返回疑似方向 / 表计异常标记。成本类只替换输入源，不另建归集逻辑。</li>
+<li><strong>主体范围</strong>：表具自身直接读取核算明细或主瞬时量，不依赖是否已绑定对象；计量对象及上层对象读取按拓扑归集的指标结果。</li>
+<li><strong>存储边界</strong>：表具核算明细是用量与成本的唯一事实归档。C1 与 B1–B5 实时值写入指标工厂时序存储，属于可重算派生结果；A 类与 B 类周期统计查询时计算、不落库。任何对象结果不得反向改写表具事实或物模型既有测点。</li>
 </ul>
 </section>
 </section>
@@ -1751,17 +1557,16 @@ UPS 等两侧计量对象的「输入 − 输出」即转换 /
 <p>需求 5
 的指标在<strong>两层</strong>上同时成立：<strong>物模型层</strong>定义「某类对象有哪个指标、口径是什么、入参是什么、依赖哪条关系路径」，全局只注册一次；<strong>实例层</strong>是该定义在具体物模型实例对象上的实例化，承载可被查询的指标入口与「可算
 /
-待配置」状态，随实例自动派生。下游既可按<code>(物模型, 指标)</code>发现与选取指标，也可按<code>(实例, 指标, 入参)</code>取值，两条路径读同一份定义、走同一套查询时计算逻辑。</p>
+待配置」状态，随实例自动派生。下游既可按<code>(物模型, 指标)</code>发现与选取指标，也可按<code>(实例, 指标, 入参)</code>取值，两条路径读同一份定义，并按指标类型走同一套实时存储或统计查询逻辑。</p>
 <blockquote>
-<p><strong>红线（先读这段）</strong>：物模型层指标定义<strong>不是</strong>物模型测点。指标只存在于指标工厂内，物模型仅被<strong>引用</strong>为「适用范围 +
+<p><strong>边界：</strong>物模型层指标定义<strong>不是</strong>物模型测点。指标只存在于指标工厂内，物模型仅被<strong>引用</strong>为「适用范围 +
 输入解析锚点」，本期<strong>不</strong>在物模型上新增测点或属性——《R5-KE
 平台-数据工厂》已定「数据工厂不新建物模型测点、指标不进物模型」「不做每个粒度一个虚拟测点的爆炸」；且
 A1 / A3
 这类带<strong>时间跨度与能源类型入参</strong>的指标，单值测点槽位在结构上就承载不了。</p>
 <p><strong>与既有同类测点槽位互不相干</strong>：物模型上已存在的能耗 /
 能效测点槽位（含与本期指标同名的，及 PUE / CLF 之外的 POE、CF
-等别名），本期指标<strong>全部按新增处理</strong>——不回写这些槽位、不读取它们作为输入、不改动它们的既有算法与配置方式；两条独立链路，避免双写覆盖与深度耦合（风险见
-§9.1 第 14 条）。</p>
+等别名），本期指标<strong>全部按新增处理</strong>——不回写这些槽位、不读取它们作为输入、不改动它们的既有算法与配置方式；两条独立链路，避免双写覆盖与深度耦合（风险见 §9.1）。</p>
 </blockquote>
 <section id="621-物模型层类型层" class="level4">
 <h4>6.2.1 物模型层（类型层）</h4>
@@ -1779,7 +1584,7 @@ A1 / A3
 <h4>6.2.2 实例层</h4>
 <ul>
 <li><strong>承载内容</strong>：可被查询的实例指标入口、「可算 /
-待配置」状态；查询结果含指标值与完整性标记（当次计算产物，<strong>不持久化</strong>）。</li>
+待配置」状态；查询结果含指标值与完整性标记；实时值同时形成时序样本并持久化，统计结果仅为当次查询产物、不持久化。</li>
 <li><strong>派生方式</strong>：系统按实例<strong>自动派生</strong>，不逐实例配置；新建实例即刻具备指标，删除实例只影响实例层、不动物模型层定义。</li>
 <li><strong>状态判定</strong>：「可算 /
 待配置」只在实例层判定——缺依赖的下级对象（如 IT 系统）、未启用该能源类型计量、未配计费方案、依赖的
@@ -1792,7 +1597,7 @@ A1 / C1 不可算时为「待配置」；逐指标的生效条件见 §6.3 各�
 <ol type="1">
 <li><strong>注册在类型上、生效在实例上</strong>：指标定义只登记在物模型上，该物模型的全部实例对象<strong>自动</strong>获得该指标，无需逐实例配置。</li>
 <li><strong>继承生效</strong>：注册在父物模型上的指标，对其<strong>继承子物模型</strong>的实例同样生效——与需求 1
-的累积量 / 瞬时量测点继承生效规则<strong>同构</strong>（见 §二
+的标准测点物模型映射继承生效规则<strong>同构</strong>（见 §二
 物模型继承生效范围），不在每个子模型上重复注册；实例指标须可追溯到注册来源（父模型或本模型）。</li>
 <li><strong>父 / 子物模型互斥</strong>：同一指标不得同时注册在父物模型与其继承子物模型上；配置层强制互斥、双向拦截，与需求 1
 的父 / 子测点互斥约束一致。</li>
@@ -1807,28 +1612,29 @@ A1 / C1 不可算时为「待配置」；逐指标的生效条件见 §6.3 各�
 <li><strong>按实例</strong>：传入实例 + 指标 + 入参 →
 返回指标结果（即 §6.3 各表定义的查询口径）。</li>
 </ul>
-两条路径必须读同一份指标定义并走同一套查询时计算逻辑，<strong>不允许各自实现一套</strong>。</li>
-<li><strong>本期不做模型级聚合值</strong>：物模型层只承载「定义」，<strong>不产出「该模型全部实例的合计 /
+两条路径必须读同一份指标定义，并按指标类型走同一套实时存储或统计查询逻辑，<strong>不允许各自实现一套</strong>。</li>
+<li><strong>模型级聚合边界</strong>：物模型层只承载「定义」，<strong>不产出「该模型全部实例的合计 /
 平均」</strong>。同一块表具可能同时落在多个实例的计量拓扑内，跨实例合计会绕开 §6.2
-的叶子系数与重复路径校验形成重复计量；同类对象横向汇总由消费方按实例清单逐个取数后自行合并。若后续要做一等的模型级聚合，须单独定义去重口径并重新过
-§6.2 校验，本版<strong>不承诺</strong>。</li>
+的叶子系数与重复路径校验形成重复计量；同类对象横向汇总由消费方按实例清单逐个取数后自行合并。若后续要做一等的模型级聚合，须单独定义去重口径并重新执行 §4.3 校验，本版<strong>不承诺</strong>。</li>
 </ol>
 </section>
+<section id="624-设备实例详情中的指标展示" class="level4"><h4>6.2.4 设备实例详情中的指标承载</h4>
+<p>平台不提供组件实例独立详情页，设备实例详情仅作为本体及所属组件指标的共同展示容器；列表组织、筛选、搜索、排序和状态呈现以原型批注为准。</p><ul>
+<li><strong>分组来源</strong>：本体与组件归属取平台已有设备组件结构，不根据能耗计量拓扑推断，也不新增组件详情页；只对命中指标注册范围的本体或组件派生指标。</li>
+<li><strong>指标身份</strong>：唯一身份为 <code>指标归属实例 ID + metric key + 入参</code>。本体使用设备实例 ID，组件使用组件自身实例 ID；所属设备实例 ID、名称和路径仅用于组织与定位。</li>
+<li><strong>取值与下钻</strong>：组件指标按自身物模型、测点映射和计量拓扑判定可算状态并取值；计算、曲线和下钻均以组件实例 ID 为根节点。</li>
+<li><strong>展示不等于归集</strong>：组件出现在所属设备页面不代表自动计入设备本体；只有需求 3 显式配置关系后才按方向参与归集。</li></ul></section>
 </section>
 <section id="63-指标清单实时值指标与统计指标" class="level3">
 <h3>6.3 指标清单：实时值指标与统计指标</h3>
 <blockquote>
-<p><strong>列读法（按查询接口理解）</strong>：每个指标就是一个查询接口——<strong>先传入全部查询条件（实例
-+ 时间查询 + 其它入参），再返回指标结果</strong>。时间查询只有两类：①
-<strong>实时</strong>（只查当前）；②
-<strong>半小时及以上任意时间跨度</strong>（起止由调用方给定）。两类<strong>输入源完全不同</strong>，分别对应
-§6.3.1 与 §6.3.2 两大类，不得混写。</p>
+<p><strong>列读法（按指标类型理解）</strong>：调用时先传入实例、指标及其它入参。实时指标可读取最新样本，也可传起止时间查询已存历史曲线；统计指标传入半小时及以上任意时间跨度，由指标工厂现场计算返回。两类<strong>输入源与执行方式完全不同</strong>，分别对应 §6.3.1 与 §6.3.2，不得混写。</p>
 <ul>
 <li><strong>编号与优先级</strong>：编号 A1–A3 / B1–B5 / C1
-全册通用（§八矩阵、§10 风险、§十验收、§七选取服务引用同一套编号）。P0 = A1 /
+全册通用（§八矩阵、§9.1 风险、§十验收、§七选取服务引用同一套编号）。P0 = A1 /
 A2 / A3（阻塞存量页面与看板改造）；P1 = B1–B5（实时 + 周期值）与
 C1（实施核数用，不挡 P0）。</li>
-<li><strong>展示名对齐原型</strong>：指标展示名与能效视图原型「指标列表」一致，能源类型、计费时段固化进展示名（如「实时电功率」「尖时电费」）；注册形态仍是「指标
+<li><strong>展示名统一</strong>：指标展示名与能效视图原型「指标列表」一致，能源类型、计费时段固化进展示名（如「实时电功率」「尖时电费」）；注册形态仍是「指标
 + 入参」，面向选择器的展开由 §七服务收敛，消费方不做二次拼装。</li>
 <li><strong>「全部计量对象 / 表具物模型」</strong>（A1 / A2 / A3 / C1
 的注册范围）：可作<strong>计量对象角色或表具角色</strong>的全部可实例化物模型，即
@@ -1837,23 +1643,24 @@ C1（实施核数用，不挡 P0）。</li>
 仅注册在园区、数据中心单元与暖通空调 / 电力 / 其他系统物模型上（见表 7-2 / 表 7-5）。</li>
 <li><strong>A 类 / C1 的实例生效条件</strong>：计量对象角色 =
 该能源类型下已配计量拓扑；表具角色 = 命中该能源类型的测点定义（A1 / A2 / A3
-为累积量测点，C1 为瞬时量测点）。A2 / A3
+为唯一累积量映射，C1 为主瞬时量映射；过程瞬时量不生成指标）。A2 / A3
 叶子表具未应用计费方案时指标可查、成本状态为「未计算 / 无计费方案」。B
 类生效条件见表 7-2「待配置判定」列。</li>
 <li><strong>模型 ID</strong> 以<a
-href="../00-整体标准化文档/01-标准物模型/标准物模型-静态属性与动态参数.xlsx">《标准物模型-静态属性与动态参数》</a>为准；项目环境未配置某模型不影响注册，实例层按
+href="../../../04-需求文档/00-整体标准化文档/01-标准物模型/标准物模型-静态属性与动态参数.xlsx">《标准物模型-静态属性与动态参数》</a>为准；项目环境未配置某模型不影响注册，实例层按
 §6.2.3 第 5 条判「待配置」。</li>
 </ul>
 </blockquote>
 <section id="631-实时值指标" class="level4">
 <h4>6.3.1 实时值指标</h4>
 <ul>
-<li><strong>口径</strong>：实时值只回答「现在是多少」，<strong>不接受时间跨度入参</strong>；「过去
-N 天 / 某区间」的诉求一律走统计指标（§6.3.2）。实时值<strong>不落历史</strong>，跨时间曲线走统计指标查询，不走「实时值顺带存历史」的模糊态。</li>
+<li><strong>口径</strong>：实时指标表示按源测点当前值计算得到的瞬时结果。计算调度沿用数据工厂现有计算指标默认调度，每次成功计算形成带数据时间的时序样本；查询支持<strong>当前值</strong>和<strong>历史曲线</strong>。实时历史是瞬时样本序列，不替代 §6.3.2 基于累计量差值的能耗、成本和周期能效统计。</li>
 <li><strong>输入源</strong>：实时能耗值（C1）取需求 1
-成对定义的<strong>瞬时量测点当前值</strong>，按 §6.1.2
+按物模型映射的<strong>主瞬时量实际测点当前值</strong>，并按 §6.1.2
 总则沿拓扑归集；能效实时值（B1–B5）<strong>不重算拓扑</strong>，分子 /
 分母直接复用相关对象的 C1 做比值。</li>
+<li><strong>存储范围</strong>：C1 实时能耗值和表 7-2 的 B1–B5 能效实时值全部写入时序存储；样本身份至少包含指标归属实例 ID、metric key、指标入参（如能源类型）与数据时间，同一身份同一数据时间幂等覆盖。</li>
+<li><strong>样本状态</strong>：可算时写入数值及完整性标记；依赖缺失、无有效当前值或计算失败时不得写 0，记录本次计算失败/缺失状态并保留最近一次成功样本，当前值查询须同时返回样本数据时间与状态，避免把旧值误认为最新正常值。</li>
 </ul>
 <p><strong>表 7-1｜实时能耗值（C1 · P1）——按能源类型拆分</strong></p>
 <table>
@@ -1873,28 +1680,28 @@ N 天 / 某区间」的诉求一律走统计指标（§6.3.2）。实时值<stro
 <td>kW</td>
 <td>全部计量对象 / 表具物模型（§6.3 导读）</td>
 <td>沿当前计量拓扑递归 Σ输入 −
-Σ输出，叶子取电瞬时量测点（如交流电表「有功功率-总」）当前值</td>
+Σ输出，叶子取电的主瞬时量「实时功率」所映射实际测点（如交流电表「有功功率-总」）当前值</td>
 </tr>
 <tr>
 <td>实时用水量</td>
 <td>水</td>
 <td>m³/h</td>
 <td>同上</td>
-<td>同口径，叶子取水表瞬时流量测点当前值</td>
+<td>同口径，叶子取水的主瞬时量「实时流量」所映射实际测点当前值</td>
 </tr>
 <tr>
 <td>实时冷量</td>
 <td>冷量</td>
 <td>kW</td>
 <td>同上</td>
-<td>同口径，叶子取瞬时冷量测点当前值</td>
+<td>同口径，叶子取冷量的主瞬时量「实时冷量」所映射实际测点当前值</td>
 </tr>
 <tr>
 <td>（新增能源自动生效）</td>
 <td>天然气等</td>
 <td>随能源配置的实时值单位</td>
 <td>同上</td>
-<td>该能源类型成对配置瞬时量测点后同口径自动生效，不新增注册</td>
+<td>该能源类型定义主瞬时量并完成物模型实际测点映射后同口径自动生效，不新增注册</td>
 </tr>
 </tbody>
 </table>
@@ -1904,7 +1711,8 @@ N 天 / 某区间」的诉求一律走统计指标（§6.3.2）。实时值<stro
 /
 冷量等能源的瞬时量为流量等其它物理量；行内展示名为能源类型固化进名称后的原型命名。同一对象不同能源类型的
 C1 分别计算、互不混算。成员归属与方向取自「能耗计量」关系（输入 /
-输出）；表具本体直接读自身瞬时量测点当前值，不依赖是否已绑对象。</p>
+输出）；表具本体直接读自身主瞬时量实际测点当前值，不依赖是否已绑对象。过程瞬时量不属于 C1 输入，也不自动生成对象级指标。C1 与 B1–B5 实时值均按本节规则形成时序历史；历史曲线读取已存样本，不使用 A 类统计结果替代。</p>
+
 <p><strong>表 7-2｜能效实时值（B1–B5 · P1）——按注册物模型拆分</strong></p>
 <table>
 <thead>
@@ -2001,11 +1809,7 @@ C1 分别计算、互不混算。成员归属与方向取自「能耗计量」�
 <section id="632-统计指标" class="level4">
 <h4>6.3.2 统计指标</h4>
 <blockquote>
-<p><strong>与需求 2
-表具核算明细归档的关系（先读这段）</strong>：本节<strong>不替代、不搬迁</strong>表具核算明细的历史归档。<strong>表具核算明细</strong>（需求 2 / 5）是<strong>唯一事实归档</strong>（一块表 × 半小时 / 时 / 天 /
-月，存储方案与「表具能耗明细」管理页取数口径均不变）；<strong>对象统计指标</strong>是派生查询——调用方传入计量对象
-+ 时间跨度（及能源类型等入参）后，指标工厂读归档分片并按<strong>当前</strong>计量拓扑现场归集返回，<strong>不落库、不物化
-ClickHouse</strong>。</p>
+<p><strong>事实来源：</strong>统计指标读取需求 2 / 4 的表具核算归档分片，按调用方传入的对象、时间跨度和能源类型，沿当前计量拓扑现场归集；统计结果不落库。</p>
 </blockquote>
 <ul>
 <li><strong>时间粒度入参五档</strong>：半小时 / 时 / 天 / 月 / 年。时 / 天 /
@@ -2017,7 +1821,7 @@ rollup</strong>（§3.3）再归集，不重扫原始累计读数、不重算尾
 <li><strong>跨天 /
 跨月</strong>：按本地时间切分（分时电价为本地口径）；表具事实层存储统一时间基准，展示转本地。</li>
 <li><strong>环比 / 日均 /
-占比等</strong>由消费方用相邻查询结果计算，不单列指标（§6.3.4）。</li>
+占比等</strong>由消费方用相邻查询结果计算，不单列指标。</li>
 </ul>
 <p><strong>表 7-3｜能耗用量（A1 ·
 P0）——按能源类型拆分，对全部计量对象 / 表具物模型生效</strong></p>
@@ -2064,7 +1868,7 @@ P0）——按能源类型拆分，对全部计量对象 / 表具物模型生效
 <td>随能源配置的累计量单位</td>
 <td>同上</td>
 <td>同上</td>
-<td>该能源类型配置累积量测点并生成核算明细后同口径自动生效</td>
+<td>该能源类型完成唯一累积量物模型映射并生成核算明细后同口径自动生效</td>
 </tr>
 </tbody>
 </table>
@@ -2153,7 +1957,7 @@ P0）——按能源类型拆分，对全部计量对象 / 表具物模型生效
 <p>表注：注册形态为 <strong>A2 能耗成本</strong>（入参 = 能源类型）与
 <strong>A3 分时成本</strong>（入参 = 能源类型 + 计费时段类型：尖 / 峰 / 平 /
 谷 /
-统一）两个指标；行内展示名对齐原型（时段固化进名称）。分时时段随该对象计费方案实际存在的档位展开；无分时计费能源
+统一）两个指标；行内展示名按产品命名规范固化计费时段。分时时段随该对象计费方案实际存在的档位展开；无分时计费能源
 A3 仅「统一」一档、与该能源 A2
 同值，展示层只出一条「费用（统一价）」。叶子表具未应用计费方案时指标可查、成本状态为「未计算
 / 无计费方案」。</p>
@@ -2247,7 +2051,7 @@ P1）——按注册物模型拆分，仅园区 / 数据中心单元与暖通空
 / 数据中心单元</strong>（B1–B5 均支持）与<strong>暖通空调 / 电力 /
 其他系统自身</strong>（仅 B2 / B3 /
 B4）。除园区为空间对象外，其余均为标准物模型中的<strong>集合类型对象</strong>，对象间父子关系以<a
-href="../00-整体标准化文档/01-标准物模型/系统拓扑关系图.png">《系统拓扑关系图》</a>为准：数据中心单元按「包含
+href="../../../04-需求文档/00-整体标准化文档/01-标准物模型/系统拓扑关系图.png">《系统拓扑关系图》</a>为准：数据中心单元按「包含
 1:N」挂暖通空调系统 / 电力系统 / IT 系统 /
 其他系统。两类调用时都传「该实例 + 时间查询」，仅分子 /
 分母来源不同（见表 7-2 / 表 7-5 逐行口径）。</li>
@@ -2279,106 +2083,31 @@ CLF)，因为二者<strong>分母相同</strong>（同一单元下的 IT
 同理。存在多个同类型系统时，单元级表达整体贡献、系统级表达单系统贡献，两个数不相等<strong>不是缺陷</strong>。</li>
 </ol>
 </section>
-<section id="634-明确不进指标工厂首版" class="level4">
-<h4>6.3.4 明确不进指标工厂（首版）</h4>
-<blockquote>
-<p>以下均为展示层计算或页面规则，不注册为独立指标；损耗不单列指标（两侧计量时由能耗用量体现）。</p>
-</blockquote>
-<table>
-<thead>
-<tr>
-<th>内容</th>
-<th>落点</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>日均能耗量、能耗占比、环比</td>
-<td>页面用 A1 / A2 相邻分片或筛选区间计算</td>
-</tr>
-<tr>
-<td>标准煤、碳排放</td>
-<td>页面：Σ(各能源 A1 × 能源配置折算系数)</td>
-</tr>
-<tr>
-<td>定额虚线 / 已超限</td>
-<td>用能定额配置 × A1</td>
-</tr>
-<tr>
-<td>能效等级 / 诊断档位</td>
-<td>页面规则（GB 等），读 B1–B5 指标值后判定</td>
-</tr>
-<tr>
-<td>完整率、缺失 / 坏值槽明细清单</td>
-<td>表具核算明细质量状态 + 看板完整性弹层</td>
-</tr>
-<tr>
-<td>独立「损耗量」</td>
-<td>用 A1（两侧计量时）</td>
-</tr>
-<tr>
-<td>DCIE / CUE / COP / EER / 节能收益</td>
-<td>本版不做</td>
-</tr>
-</tbody>
-</table>
-</section>
 </section>
 <section id="64-上游变更" class="level3">
-<h3>6.4 上游变更</h3>
-<p><strong>总原则</strong>：两大类指标都<strong>不存库、不归档</strong>，每次查询现场计算——因此没有任何对象层历史分片需要维护，<strong>上游变更一律不触发对象层重算
-/ 回填 /
-迁移任务</strong>。上游只需保证表具事实层与配置正确：只要拓扑关系不变，下次查询自动按「最新表具事实
-/ 瞬时量当前值 + 当前计量拓扑 +
-最新指标注册」出数；拓扑关系变了，同样按<strong>当前（最新）</strong>拓扑查询，代价是历史归属随拓扑漂移（见下）。跨域联动总账见
-§八矩阵。</p>
+<h3>6.4 上游变更与实时历史重算</h3>
+<p><strong>总原则</strong>：统计指标不存库，上游变化后下次查询按最新表具事实与当前拓扑自然出数。实时指标已形成时序历史，因此仅<strong>计量拓扑改绑或计量方向调整</strong>触发自动历史重算；主瞬时量映射变化、指标公式或标准包升级不自动重算既有实时历史，只影响变更后的新样本。</p>
 <table>
-<thead>
-<tr>
-<th>上游变更（触发源）</th>
-<th>实时值指标（C1、B 类实时值）</th>
-<th>统计指标（A 类、B 类周期值）</th>
-</tr>
-</thead>
+<thead><tr><th>上游变更</th><th>实时值指标（C1、B1–B5 实时值）</th><th>统计指标（A 类、B 类周期值）</th></tr></thead>
 <tbody>
-<tr>
-<td>表具明细晚到重算 / 断点续传补算（需求 2）</td>
-<td>不受影响（输入为瞬时量当前值，不读归档）</td>
-<td>下次查询读最新归档分片自动反映，无需任何对象层动作</td>
-</tr>
-<tr>
-<td>人工修正半小时用能量（需求 3）</td>
-<td>不受影响</td>
-<td>下次查询即含修正值，区间结果带「含人工修正」标记</td>
-</tr>
-<tr>
-<td>成本属性重算 / 表具晚应用计费方案（需求 4）</td>
-<td>不涉及（实时值无成本口径）</td>
-<td>A2 / A3 下次查询读最新成本金额与时段快照</td>
-</tr>
-<tr>
-<td>瞬时量测点定义调整（需求 1）</td>
-<td>下次查询按最新测点定义取当前值</td>
-<td>不受影响（统计只读累积量归档分片）</td>
-</tr>
-<tr>
-<td>计量拓扑改绑 / 方向调整（需求 3）</td>
-<td colspan="2">两类一致：只更新配置、不产生对象层重算任务；下次查询按当前拓扑解析（历史归属随当前拓扑，约束见下）</td>
-</tr>
-<tr>
-<td>物模型指标注册变更（随标准包升级）</td>
-<td colspan="2">两类一致：新增注册对该物模型（含继承子模型）全部实例即刻可查，下线注册后不再返回（§八矩阵、§6.2.3
-第 4 条）</td>
-</tr>
+<tr><td>表具明细晚到、人工修正、成本重算</td><td>不受影响；实时值只依赖主瞬时量及已存 C1 实时样本</td><td>下次查询读取最新表具归档分片</td></tr>
+<tr><td>主瞬时量标准定义或物模型映射调整</td><td>变更后新样本按最新映射计算；既有实时历史不自动重算</td><td>不受影响</td></tr>
+<tr><td>唯一累积量映射调整</td><td>不受影响</td><td>新事实按最新映射生成；存量事实按需求 2 的显式重算规则处理</td></tr>
+<tr><td>计量拓扑改绑或方向调整</td><td>配置原子发布后，自动重算受影响实时指标在时序库<strong>全部保留期</strong>内的历史并覆盖旧结果</td><td>不产生对象统计重算任务；下次查询按当前拓扑计算</td></tr>
+<tr><td>指标公式、指标注册或标准包升级</td><td>变更后新样本使用新定义；既有实时历史不自动重算</td><td>下次查询使用最新定义；注册范围按 §6.2 生效</td></tr>
 </tbody>
 </table>
-<ul>
-<li><strong>历史随当前拓扑（产品接受口径，非缺陷）</strong>：对象指标始终按【当前能源类型下的当前计量拓扑】计算。表具改绑后再查历史区间，其能耗 /
-成本归到【新】计量对象名下、旧对象对应历史相应减少。用能定额考核等<strong>需冻结历史归属</strong>的场景，本口径下历史会随改绑漂移，若确需「历史归属不漂移」须另行立项拓扑生效版本（本期<strong>不做</strong>）。</li>
-<li><strong>数据链路追踪</strong>：任何页面数字可疑时，排查路径固定为「页面消费的指标
-→ 本次查询结果与完整性标记 → 所用表具核算明细 →
-原始累计读数」，每层都有留痕——表具层重算有审计快照，对象层为当次计算结果。</li>
-</ul>
+<p><strong>拓扑变更自动重算规则：</strong></p>
+<ol type="1">
+<li><strong>受影响范围</strong>：从发生改绑/方向调整的关系端点出发，包含直接计量对象、递归上级计量对象，以及依赖这些对象 C1 的 B1–B5 实时指标；不全项目无差别重算。</li>
+<li><strong>时间范围</strong>：覆盖时序库仍保留的全部历史，不只从拓扑变更时刻向后计算。历史结果统一表达“按当前拓扑计算”。</li>
+<li><strong>计算输入</strong>：按每个历史数据时间读取叶子主瞬时量历史样本，使用当前拓扑递归执行 Σ输入 − Σ输出；B1–B5 再复用重算后的同时间 C1 做比值。缺历史源样本时不补 0，写入对应完整性状态。</li>
+<li><strong>幂等与原子替换</strong>：任务按受影响实例、指标、入参与全保留时间范围建立幂等键。新结果先写临时版本并完成完整性校验；整段成功后才清理旧范围并原子切换到新结果，防止旧拓扑残留点与新结果混杂。</li>
+<li><strong>失败处理</strong>：任一分片失败时不切换、不删除旧结果；旧历史继续可查，同时将任务标记为失败并保留原因、失败分片与重试入口。重试复用同一幂等任务，不重复生成可见版本。</li>
+<li><strong>重算期间查询</strong>：在新版本完整成功前继续读取旧版本，并返回“重算中”状态；成功切换后一次性读取新版本。不得暴露半新半旧结果。</li>
+<li><strong>任务可观测性</strong>：至少记录触发人/触发事件、拓扑变更标识、影响实例数、指标数、时间范围、进度、开始/结束时间、结果版本、成功/失败状态和错误原因。</li>
+</ol>
+<p><strong>历史归属口径</strong>：本版仍不设置拓扑生效版本。统计指标在查询时使用当前拓扑；实时历史在拓扑变更后通过上述自动重算覆盖为当前拓扑结果。因此表具改绑会改变对象的历史归属，这是已接受产品口径。</p>
 </section>
 <section id="65-下游消费" class="level3">
 <h3>6.5 下游消费（本章不展开）</h3>
@@ -2387,69 +2116,51 @@ CLF)，因为二者<strong>分母相同</strong>（同一单元下的 IT
 组态选择器等消费方如何发现、选取、渲染这两类指标，由<strong>后续独立需求</strong>详细描述；本册
 §七（指标选取服务）只交付面向选择器的指标目录 / 状态查询能力。</li>
 <li>仅保留两条既定边界：①
-页面只消费指标工厂产出，不直连内部接口、不在前端算业务指标（§6.1.1 第 3
-条）；②「表具能耗明细」管理页是仪表级事实查询（需求 3
-§3.7），直接读表具核算明细层，<strong>不经指标工厂</strong>。</li>
+页面只消费指标工厂产出，不直连内部接口、不在前端算业务指标（§6.1.1 第 3 条）；②「表具能耗明细」管理页是仪表级事实查询（需求 2 §3.7），直接读表具核算明细层，<strong>不经指标工厂</strong>。</li>
 </ul>
 <hr />
 </section>
 </section>
 <section id="七需求-6指标选取服务面向选择器" class="level2">
-<h2>七、需求 6：本期新增｜指标选取服务（面向选择器）</h2>
+<h2>七、需求 6：指标选取服务（面向选择器）</h2>
 <blockquote>
-<p>归属模块：指标工厂 / 数据工厂服务端　｜　依赖：需求 3 / 5　｜　优先级：★★★☆☆（P1）</p>
-<p>开发范围：</p>
-<ul>
-<li>已有 / 平行复用：指标定义与注册清单、按实例查询时计算接口（需求 5
-§6.2 / §6.3）——本需求只<strong>消费</strong>，不改指标口径。</li>
-<li>本期新增：面向选择器的<strong>指标目录查询</strong>（按实例 /
-按物模型列清单）、<strong>可算状态批量判定</strong>、<strong>入参展开</strong>、<strong>引用有效性校验</strong>四类接口。</li>
-<li>本期不做：指标口径变更、新增指标、模型级聚合值、页面
-UI（UI 在消费侧册需求 10–12）；取值查询（含时段指标「最近半小时实时值」等）仍走需求 5。</li>
-</ul>
+<p>归属模块：指标工厂 / 数据工厂服务端　｜　依赖：需求 3 / 4 / 5　｜　优先级：★★★☆☆（P1）</p>
+<p>需求定位：由指标工厂统一提供面向报表、融合组态、能效视图等选择器的指标选取能力，避免各消费方分别拼装指标、重复判断配置状态。</p>
 </blockquote>
-<p>在需求 5 两种寻址之外，本服务提供：<strong>按实例列出可选指标及可算状态</strong>、<strong>按物模型列指标并解析范围内实例</strong>、<strong>批量可算判定</strong>、<strong>引用有效性校验</strong>。消费侧需求
-11 / 12 / 13 与能效视图指标列表的指标清单、命名、一级分类与可算状态均同源于此，消费方<strong>不做二次拼装、不自行推导可算状态</strong>。</p>
-<section id="71-四类接口" class="level3">
-<h3>7.1 四类接口</h3>
+<section id="需求-6-原型" class="level3 proto-anchor"><h3>原型（对照批注评审）</h3>
+<blockquote class="callout-boundary"><p><strong>本需求无独立页面原型。</strong>它是服务端共同前置，结果由<a href="#需求-5-原型">需求 5 的物模型 / 能效视图</a>及消费侧<a href="./存量页面消费与总览看板改造需求方案.html#五需求-10报表选择测点弹窗">需求 10：报表「选择测点」弹窗</a>、<a href="./存量页面消费与总览看板改造需求方案.html#六需求-11报表节点-测点树">需求 11：报表节点-测点树</a>、<a href="./存量页面消费与总览看板改造需求方案.html#七需求-12融合组态变量树">需求 12：融合组态变量树</a>使用；不得为本服务虚构独立页面。</p></blockquote>
+<p>页面结构、控件、字段、交互、状态和异常规则以对应消费侧原型批注为准；本章仅保留服务返回契约、状态语义、权限、引用校验与组件身份等服务端边界。评审消费侧页面时请点击原型右下角“批注”。</p></section>
+<p>消费侧需求 10 / 11 / 12 与能效视图使用同一套选取结果。服务返回的是结合对象配置展开后的<strong>最终可选项</strong>：例如按对象已启用的能源出现「电能消耗量」「用水量」，按实际计费方案出现「费用（统一价）」或「尖 / 峰 / 平 / 谷时电费」。能效视图按设备实例查看时可要求同时返回本体及所属组件分组；消费方直接展示和使用，不再二次拼装。</p>
+<section id="71-需求内容" class="level3">
+<h3>7.1 需求内容</h3>
 <table>
 <thead>
 <tr>
-<th>#</th>
-<th>接口</th>
-<th>入参</th>
-<th>返回</th>
-<th>消费方</th>
+<th>能力</th>
+<th>需求说明</th>
+<th>使用场景</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>1</td>
-<td><strong>按实例列指标</strong></td>
-<td>对象实例；展示范围（仅有值 / 全部，必填）；业务分类（可选，不传不过滤）</td>
-<td>已展开的指标清单：metric key、指标名称（含能源类型与计费时段）、单位、一级分类（实时 / 时间段）、业务分类、可算状态（可算 / 待配置）、待配置原因与配置入口</td>
-<td>消费侧需求 10 / 11 / 12、能效视图指标列表</td>
+<td><strong>按对象选择指标</strong></td>
+<td>查看指定对象可选择的最终指标。查询范围支持「仅本体 / 本体及组件」；选择「本体及组件」时，按平台已有组件结构返回本体和组件分组，每项同时返回指标归属实例 ID、归属类型（本体 / 组件）、组件名称与层级路径。指标状态仅分为「可选」和「待配置」；待配置项应说明缺少的配置及对应配置入口。支持只查看「可选」项。</td>
+<td>报表、融合组态、能效视图等按对象选择指标</td>
 </tr>
 <tr>
-<td>2</td>
-<td><strong>按物模型列指标</strong></td>
-<td>物模型、对象范围（视图 + 根节点，递归子树）</td>
-<td>该模型上注册的指标清单（同上字段）+ 范围内该模型（<strong>含继承子模型</strong>）的实例清单</td>
-<td>消费侧需求 10「按模型添加」</td>
+<td><strong>按物模型批量选择</strong></td>
+<td>展示该物模型已注册的指标，并批量加入指定范围内该模型及继承子模型的实例。范围内没有实例时应明确提示；不产生模型级合计或平均值。</td>
+<td>按模型向树节点或指定对象范围批量添加指标</td>
 </tr>
 <tr>
-<td>3</td>
-<td><strong>批量可算状态</strong></td>
-<td>对象实例列表 × 指标列表</td>
-<td>每个 (实例, 指标) 的可算状态与待配置原因</td>
-<td>消费侧需求 10 / 11 / 12 树节点批量展开；需求 8 对比页对象可选性</td>
+<td><strong>批量判断是否可选</strong></td>
+<td>一次判断一批对象与指标是否「可选」或「待配置」，满足树节点展开和批量添加场景；待配置项应说明原因及配置入口。</td>
+<td>树节点选择、批量添加、多个对象同时校验</td>
 </tr>
 <tr>
-<td>4</td>
-<td><strong>引用有效性校验</strong></td>
-<td>已保存的数据项清单（类型 + 标识 + 实例）</td>
-<td>逐项返回有效 / 已停用 / 不再适用，附失效原因</td>
-<td>消费侧需求 10 查询方案加载、需求 12 组态打开</td>
+<td><strong>已保存引用有效性校验</strong></td>
+<td>打开已保存方案或组态时，校验其中引用的对象与指标。对已删除、停用或已不适用于该对象的引用标记为「不再有效」；对引用仍有效但当前缺少必要配置的指标标记为「暂时待配置」，并说明原因。</td>
+<td>查询方案加载、组态打开、历史配置回显</td>
 </tr>
 </tbody>
 </table>
@@ -2457,22 +2168,17 @@ UI（UI 在消费侧册需求 10–12）；取值查询（含时段指标「最�
 <section id="72-关键规则" class="level3">
 <h3>7.2 关键规则</h3>
 <ol type="1">
-<li><strong>展开逻辑收敛在服务侧</strong>：A1 按对象<strong>已启用计量的能源类型</strong>展开（电 → 「电能消耗量」、水 → 「用水量」、冷 → 「冷量消耗量」）；A2 按能源展开，无分时计费的能源只出一条「费用（统一价）」；A3 按该对象计费方案实际存在的分时时段展开（如电 → 尖 / 峰 / 平 / 谷四条电费）。消费方拿到的已是最终可选项，<strong>不做二次拼装、不需要参数面板</strong>。</li>
-<li><strong>展示范围</strong>：服务端按入参过滤。<strong>仅有值</strong>只返回可算项；<strong>全部</strong>返回含待配置项。消费方按入口传入固定值（如按实例 / 节点树 / 组态传仅有值，按模型添加传全部），不要求页面提供展示范围开关。</li>
-<li><strong>业务分类</strong>：返回字段保留；接口 1 的业务分类入参<strong>可选</strong>，不传则不过滤。消费侧选择器可不传；能效视图等需要时再传。</li>
-<li><strong>一级分类必返</strong>：每项必须带实时 / 时间段分类，供消费方按入口过滤或分流（如节点树不展示时段指标）。</li>
-<li><strong>可算状态在实例层判定</strong>：依据 §6.2.3 第 5 条——缺依赖的下级对象（如 IT 系统）、未启用该能源类型计量、未配计费方案、A1 / C1 不可算时为「待配置」。状态<strong>不由消费方推导</strong>。</li>
-<li><strong>待配置须带可执行原因</strong>：返回缺什么（如「未配置电能计量关系」「未应用计费方案」「缺 IT 系统子对象」）与配置入口标识。</li>
-<li><strong>继承生效</strong>：按物模型列指标时，父物模型上注册的指标对继承子模型实例同样返回；实例清单同样含继承子模型实例。</li>
-<li><strong>与取值接口同源</strong>：目录接口返回的 metric key 与入参契约，必须与 §6.3 指标清单的取值口径完全一致。</li>
-<li><strong>不返回模型级合计</strong>：按物模型列指标只返回「定义 + 实例清单」，不产出跨实例合计或平均。</li>
-<li><strong>接口 2 不做「注册矩阵 × 实例统计」联合查询</strong>：不提供「某范围内哪些物模型有实例 / 有已注册指标」的汇总。消费侧「按模型添加」中间栏仍按现状的物模型 / 对象类型清单渲染，选定模型后由本接口返回的实例清单兜底（为空则提示范围内无该模型实例）——避免为一次预筛在选模型前全子树 × 全模型扫一遍注册矩阵（§9.2 U8）。</li>
-<li><strong>性能</strong>：接口 3 支持批量，树节点展开不得退化为逐 (实例, 指标) 单查。</li>
+<li><strong>结果统一</strong>：指标工厂返回结合对象能源、计量与计费配置展开后的最终可选项，报表、融合组态、能效视图等消费方不再二次拼装。</li>
+<li><strong>状态统一</strong>：状态只使用「可选 / 待配置」；「可选」表示配置条件已满足，不代表当前一定有实时数据；需要过滤待配置项时使用「仅可选」。</li>
+<li><strong>组件展开</strong>：只有调用方明确选择「本体及组件」时才展开所属组件；能效视图设备实例详情使用该范围并按服务返回的分组直接展示。组件范围取平台已有设备组件结构，不按能耗计量拓扑反推，也不要求组件存在独立详情页。</li>
+<li><strong>归属不改写</strong>：服务必须同时返回页面主体实例 ID 与指标归属实例 ID。组件指标的取值、曲线、下钻和已保存引用均使用组件实例 ID；不得为适配父级页面把组件指标改写为设备本体指标。</li>
+<li><strong>模型批量范围</strong>：按物模型选择时覆盖指定范围内该模型及继承子模型的实例，不提供模型级合计或平均；范围无实例时给予提示。</li>
+<li><strong>引用校验</strong>：已保存引用需区分「不再有效」与「暂时待配置」，避免把可恢复的配置问题当作永久失效。</li>
+<li><strong>权限</strong>：只返回当前用户有权限查看的对象与指标。</li>
+<li><strong>职责边界</strong>：本需求不改变指标口径、不新增指标、不负责指标取值、不建设页面 UI；指标取值仍由需求 5 负责。</li>
 </ol>
 </section>
-<p>本需求的验收场景见 §十 场景 18–18f。两项原待确认已收口：接口 2
-<strong>不做</strong>「注册矩阵 × 实例统计」联合查询、接口范围不变（§9.2
-U8）；接口归属与交付批次<strong>不在需求侧约束</strong>，转技术方案与开发计划（§9.2 U7）。</p>
+<p>本需求的验收场景见 §十 场景 18–18d。</p>
 <hr />
 </section>
 <section id="八跨域变更与重算矩阵" class="level2">
@@ -2496,29 +2202,43 @@ U8）；接口归属与交付批次<strong>不在需求侧约束</strong>，转�
 <td>历史样本晚到 / 批量补传</td>
 <td>重算槽 t、紧邻槽 t+1 及受影响时 / 天 / 月 rollup</td>
 <td>重算同时间窗成本状态、单价快照和成本金额</td>
-<td>对象侧不另存结果；下次查询按最新表具明细与当前计量关系重新汇总</td>
+<td>统计指标下次查询按最新表具明细汇总；实时指标不受影响</td>
 <td>按数据时间归槽；人工修正锁定优先；记录输入范围与触发原因</td>
 </tr>
 <tr>
 <td>人工修正半小时用能量</td>
 <td>保留新值并联动重刷表具 rollup</td>
 <td>按当时生效方案重算受影响时段</td>
-<td>对象侧不另存结果；下次查询按新用量与当前计量关系重新汇总</td>
+<td>统计指标下次查询按新用量汇总；实时指标不受影响</td>
 <td>原始累计读数不可改；记录人、时间、原值、新值和原因</td>
 </tr>
 <tr>
 <td>表具晚应用计费方案</td>
 <td>用量事实不变</td>
 <td>从方案生效日起补算原“未计算 / 无计费方案”区间</td>
-<td>对象侧不另存结果；下次查询对象成本按新的表具成本重新汇总</td>
+<td>对象成本下次查询按新的表具成本汇总；实时指标不受影响</td>
 <td>历史已生效价格锁定，只能新增未来版本</td>
 </tr>
 <tr>
 <td>计量拓扑改绑 / 方向调整</td>
 <td>表具事实不变</td>
 <td>表具成本事实不变</td>
-<td>对象侧不另存结果；下次查询按新计量关系重新汇总（历史归属随当前关系）</td>
-<td>DAG、同方向唯一父级、重叠选择和叶子系数校验通过后原子发布</td>
+<td>统计指标下次查询按新关系汇总；实时指标自动重算受影响对象及上级对象的全部保留期历史，成功后原子替换</td>
+<td>DAG、同方向唯一父级、重叠选择和叶子系数校验通过后原子发布；实时历史重算任务幂等、可恢复、可观测，失败保留旧结果</td>
+</tr>
+<tr>
+<td>物模型「能源计量」支持关系或必填映射变更</td>
+<td>既有表具历史事实不删除；新核算范围按变更后的有效表具口径执行</td>
+<td>既有计费属性不改写</td>
+<td>依赖该表具的对象指标可算状态与后续查询结果随能力变化</td>
+<td>能力变更不自动增删实例关系；取消能源计量前须提示受影响表具与计量关系，由用户显式处理</td>
+</tr>
+<tr>
+<td><code>supplyPower</code> 新增 / 改绑 / 删除</td>
+<td>不变</td>
+<td>不变</td>
+<td>能耗、成本与能效指标不变；仅供电拓扑查询与其消费业务读取新关系</td>
+<td>校验源物模型支持「供电」及端点合法性；与能耗计量关系独立留痕，不级联修改</td>
 </tr>
 <tr>
 <td>物模型指标注册变更（随标准包升级）</td>
@@ -2539,7 +2259,7 @@ U8）；接口归属与交付批次<strong>不在需求侧约束</strong>，转�
 </tr>
 </tbody>
 </table>
-<p>边界两条：<strong>只有表具事实层需要归档与幂等重算；对象层始终查询时计算，不得反向改写表具事实。</strong>表具层重算按受影响范围增量执行，不以全量刷新代替边界识别。</p>
+<p>边界两条：<strong>表具事实层负责用量与成本归档；对象实时指标层负责可重算的派生时序历史；对象统计指标始终查询时计算。</strong>任何对象层重算都不得反向改写表具事实。</p>
 <hr />
 </section>
 <section id="九风险与未决项" class="level2">
@@ -2547,130 +2267,39 @@ U8）；接口归属与交付批次<strong>不在需求侧约束</strong>，转�
 <section id="91-风险技术债与边界污染点" class="level3">
 <h3>9.1 风险、技术债与边界污染点</h3>
 <ol type="1">
-<li><strong>事实与派生混层</strong>：表具核算明细是唯一事实归档；对象层结果只在查询时计算、不落库，禁止另存一份"对象明细事实"或对象统计分片——否则拓扑变更后两份数据打架（§1.1）。</li>
-<li><strong>计费属性污染用量事实</strong>：用量字段不可被计费逻辑覆盖；计费方案版本、单价快照、成本金额、成本状态作为表具核算明细的计费属性族独立维护（§5.2）。</li>
-<li><strong>缺幂等回算</strong>：表具核算明细层与重算从第一天就要做幂等键，否则晚到
-/ 断点续传 / 修正数据会让归档失信（§3.4 / §3.6）。</li>
-<li><strong>人工修正被自动聚合覆盖</strong>：必须人工值优先 /
-锁定，冲突提示而非静默覆盖（§3.6 第 6 条）。</li>
-<li><strong>查时计算性能</strong>：深树 / 长区间 / 多对象并发查询时，对象层沿拓扑现场归集可能偏慢；实现侧可做缓存或并行展开，但不得改成对象层持久化物化，也不得改变“按当前拓扑计算”的口径。上线前须按典型项目拓扑验证查询时延（需求 5 §6.3.2）。</li>
-<li><strong>时区 /
-跨天归并</strong>：统一时间基准存储、本地展示，分时电价按本地时段切分。</li>
-<li><strong>断点续传重算范围</strong>：补传后不仅重算缺失槽，还需重算缺口紧邻的下一槽（其基准尾值被补回）及下游
-rollup /
-计费属性，否则衔接处用能量与成本金额长期错误（§3.5）；对象层下次查询自然读到修正后的表具事实（§6.4）。</li>
-<li><strong>历史随当前拓扑（已接受口径，非缺陷）</strong>：表具改绑后历史归属随当前拓扑漂移；本期不做拓扑生效版本。用能定额考核等需"历史归属冻结"的场景一旦出现，须单独立项做拓扑时间版本，不在本版承诺（§6.4）。</li>
-<li><strong>计量方向配置错误 → 负能耗 /
-损耗失真</strong>：输出误配成输入会虚增对象能耗，方向配反会算出持续负值；负值不静默置
-0、随完整性标记暴露，实施期须在指标工厂核对两侧计量对象（变压器 /
-UPS）的方向与数值合理性（§6.1.2）。</li>
-<li><strong>尾值时间语义不一致</strong>：任何服务若改用入库时间归槽、跨槽借值或绕过尾值有效窗口，都会造成同一原始数据重复计算结果不一致；表具明细生成、按范围重算与补传重算必须共用
-§3.2.1 的同一实现。</li>
-<li><strong>拓扑递归重复计量</strong>：只校验直接表具关系无法识别对象多父级、祖先
-/ 后代重叠或多路径到达同一叶子的重复计量；计量方案发布前必须完成 §6.2
-的全图校验与叶子有符号展开，指标工厂不得接收未通过校验的拓扑。</li>
-<li><strong>对数据工厂能力的排期依赖</strong>：本版对象层承载在指标工厂（指标定义
-/ 按查询入参现场计算）；若数据工厂查询计算能力晚于 v2.5 交付，需求 5–8 无承载底座，排期须对齐《R5-KE 平台-数据工厂》建设节奏。</li>
-<li><strong>类型层注册表与现场物模型库不同步</strong>：本版指标按物模型注册，而生产环境的物模型库存在现场绕过
-<code>custom</code>
-通道直改标准域、变体当类建、标准类就地改版的既有事实（《R5-KE
-平台-数据工厂》取证：458
-个新模型直写标准域、标准类改版最多 110 次）。一旦被注册的模型或其继承链被改动，实例指标会<strong>静默失效或漏算</strong>。护栏：指标工厂必须暴露「注册模型
-→
-实际命中实例数」的自检视图，并把注册表与物模型库版本一起纳入出厂基线校验；命中数为 0
-时告警而非静默通过。</li>
-<li><strong>指标与同名既有槽位被误认为同一个数</strong>：物模型上已有 PUE
-/ CLF 等测点槽位（部分项目另用 POE、CF
-等别名），本期指标与它们<strong>互不相干</strong>（§6.2
-红线）。两者算法与配置来源不同，数值大概率不一致；若实施或现场把它们当同一个数核对，会误判为指标算错。护栏：指标侧展示须能说明取数来源为指标工厂，核数以指标工厂为准；不因两者不一致而回头改任一侧。</li>
+<li><strong>事实与派生混层</strong>：触发为把实时或统计结果当事实；后果是计费与用量出现第二真源；护栏是表具事实只读、对象结果不得回写（§6.1.2、§八）。</li>
+<li><strong>计费属性污染用量</strong>：触发为成本重算覆盖用量字段；后果是原始核算失真；护栏是成本属性族独立维护（§5.2）。</li>
+<li><strong>缺少幂等</strong>：晚到、补传或重复重算会生成多份事实；以 §3.4 唯一键覆盖并保留审计。</li>
+<li><strong>人工值被覆盖</strong>：自动任务覆盖锁定值会破坏审计；人工值优先，冲突提示（§3.6）。</li>
+<li><strong>计算与重算过载</strong>：深树、长区间和拓扑改绑会放大查询及实时历史重算；须按受影响范围分片限流并验证时延、吞吐和恢复（§6.4）。</li>
+<li><strong>时区口径分裂</strong>：不同服务使用不同日界或分时时段会产生金额差异；统一按项目时区切分、UTC 存储（§3.2.1）。</li>
+<li><strong>补传范围不足</strong>：只重算缺失槽会使下一槽及成本持续错误；重算须包含相邻下一槽和表具下游归档，跨域影响见 §八。</li>
+<li><strong>历史随当前拓扑漂移</strong>：改绑会改变对象历史归属；本版接受该口径，不提供拓扑生效版本（§6.4）。</li>
+<li><strong>实时历史重算风暴</strong>：上层改绑可能影响大量 C1、B1–B5 历史；须先算影响范围，使用临时版本、幂等任务和失败保旧（§6.4）。</li>
+<li><strong>计量方向错误</strong>：方向反置会产生虚增或负值；结果不置 0并返回异常标记，实施期核对输入 / 输出（§6.1.2）。</li>
+<li><strong>能力与实例关系混淆</strong>：模型能力变化若自动改实例关系会造成不可控拓扑变更；支持关系只筛选候选，实例关系必须显式维护（需求 1、§4.4）。</li>
+<li><strong>两类关系混并</strong>：复合保存会造成计量与供电互相误删或误算；两类关系独立生命周期，<code>supplyPower</code> 不进入指标计算（§4.2）。</li>
+<li><strong>组件指标归属错位</strong>：将组件指标改写到设备本体会导致同名冲突和引用失真；始终使用组件实例 ID，父页面只作展示容器（§6.2.4）。</li>
+<li><strong>组件供电端点能力未证实</strong>：平台若不接受组件 ID，供电链路无法落地；开发前完成 U9 真实写入、查询与删除验证。</li>
+<li><strong>尾值时间语义不一致</strong>：改用入库时间、跨槽借值或绕过有效窗口会导致重算不一致；所有生成与重算共用 §3.2.1。</li>
+<li><strong>拓扑递归重复计量</strong>：只校验直接关系会漏掉多路径重复；发布前执行 §4.3 全图校验和叶子有符号展开。</li>
+<li><strong>数据工厂排期依赖</strong>：指标计算与选择服务若无平台底座，需求 5–8 无法交付；排期须与数据工厂能力对齐。</li>
+<li><strong>注册表与现场物模型不同步</strong>：继承链或模型 ID 被改动会导致指标漏算；提供“注册模型 → 命中实例数”自检并纳入出厂基线（§6.2、§八）。</li>
+<li><strong>指标与同名测点混淆</strong>：两条链路算法不同，数值可能不一致；指标侧标明数据来源，不读写物模型既有同名槽位（§6.2）。</li>
 </ol>
 <hr />
 </section>
 <section id="92-待确认的落地细节" class="level3">
-<h3>9.2 落地细节：已定稿结论与剩余待确认</h3>
+<h3>9.2 未决项与实施前置</h3>
 <blockquote>
-<p>核心架构口径已经闭环。本节事项不会改变事实层 /
-派生层、计量拓扑或重算职责，只影响默认配置、权限或页面交互。<strong>U1 / U3 / U4 / U6 / U8
-已于 2026-07-29 定稿</strong>，正文相关章节已按结论同步；<strong>U7
-移出待确认</strong>（接口归属与交付批次属技术方案与开发计划范畴）；剩余
-<strong>U2 / U5</strong> 为交互呈现细节，排期前明确即可，不阻塞开发准备。</p>
+<p>核心业务与架构口径已闭环。本节只保留尚未确定的交互呈现和开发前阻断项；已定稿规则以对应需求正文为准。</p>
 </blockquote>
 <table>
-<thead>
-<tr>
-<th>ID</th>
-<th>已确认边界</th>
-<th>结论（2026-07-29） / 待确认</th>
-<th>影响范围</th>
-</tr>
-</thead>
+<thead><tr><th>ID</th><th>已确认边界</th><th>待确认 / 前置要求</th><th>影响范围</th></tr></thead>
 <tbody>
-<tr>
-<td>U1</td>
-<td>坏值与缺失均不参与聚合、不按 0 处理</td>
-<td><strong>结论｜分层呈现</strong>：「表具能耗明细」管理页<strong>半小时逐槽区分</strong>正常 /
-缺失 / 坏值 / 人工修正并给原因（§3.5 / §3.7）；消费侧各页<strong>统一只呈现一类</strong>「含异常
-/ 缺失」标记、不区分坏值与缺失（消费侧册 §九 结论 1）</td>
-<td>表具明细、看板完整性提示</td>
-</tr>
-<tr>
-<td>U2</td>
-<td>同一能源下表具重复占用必须在配置层拦截（不按输入/输出拆分占用名额）</td>
-<td><strong>待确认</strong>：保存时直接拦截，还是先提示再阻止提交</td>
-<td>能源计量关系页交互文案 / 批量导入校验报告</td>
-</tr>
-<tr>
-<td>U3</td>
-<td>增量上限按表具 / 能源类型可配；电默认 1500 kWh/半小时</td>
-<td><strong>结论｜沿用电的默认值</strong>：水 / 气 / 冷量<strong>不单列默认值</strong>，系统默认上限统一取
-<strong>1500 / 半小时</strong>（单位随能源类型：电与冷量 kWh、水与气
-m³）。默认值只是兜底，仍<strong>按表具 /
-能源类型可配</strong>；水、气等默认偏宽松的能源由实施按项目实际量级下调，不靠默认值兜异常</td>
-<td>能源配置、VEE 默认规则</td>
-</tr>
-<tr>
-<td>U4</td>
-<td>人工修正必须留痕并锁定</td>
-<td><strong>结论｜不加审批</strong>：<strong>不设专用「修正角色」</strong>，具备「表具能耗明细」页面操作权限即可修正；<strong>不做二次确认弹窗、不接审批流</strong>，提交即生效。护栏仍是
-§3.6 的留痕（人 / 时间 / 原值 / 新值 / 原因）+ 锁定 + 冲突提示</td>
-<td>权限、审计与操作流程</td>
-</tr>
-<tr>
-<td>U5</td>
-<td>对象输入 − 输出为负时照算并标记疑似异常</td>
-<td><strong>待确认</strong>：页面直接展示负值、置灰提示或同时触发告警</td>
-<td>指标展示与告警联动</td>
-</tr>
-<tr>
-<td>U6</td>
-<td>B2 / B3 / B4 除园区 / 数据中心单元外，另注册在暖通空调系统 / 电力系统 /
-其他系统自身</td>
-<td><strong>结论｜不同屏对照</strong>：系统自身的 CLF / PLF / OLF
-<strong>各自在所属对象页展示</strong>单张瓦片，不与数据中心单元 /
-园区级同名指标并排对照；瓦片分子 / 分母口径主体标注为本系统实例（消费侧册 §九 结论
-5）</td>
-<td>消费侧册 §3.4 / §3.7 能效卡出现范围与瓦片文案</td>
-</tr>
-<tr>
-<td>U7</td>
-<td>需求 6 的四类接口按「指标工厂对外能力」设计（§6.1）</td>
-<td><strong>移出待确认｜转技术方案与开发计划</strong>：四类接口的<strong>能力、入参、返回与口径</strong>属本册需求范围（§7.1
-/ §7.2）；<strong>由谁对外暴露</strong>（指标工厂直出或经报表 / 组态 BFF
-转发）与<strong>分几批交付</strong>属技术方案与开发计划范畴，不作为需求侧待确认项。需求侧只保留既有依赖声明：消费侧需求
-10 / 11 / 12 的指标部分依赖需求 6、视图部分可先行交付；接口 3 与需求 8
-的排期约束见消费侧册 §九 结论 13</td>
-<td>需求 6 接口归属与交付节奏；消费侧需求 10 / 11 / 12 联调排期</td>
-</tr>
-<tr>
-<td>U8</td>
-<td>接口 2 按物模型返回「指标清单 + 范围内实例清单」</td>
-<td><strong>结论｜不做联合查询</strong>：接口 2 <strong>不支持</strong>「注册矩阵 ×
-实例统计」，接口范围不变。「按模型添加」中间栏<strong>与现状一致展示全部物模型 /
-对象类型</strong>，不按「范围内有实例且有已注册指标」过滤、不加实例数角标；选中模型后由第三栏用接口
-2 <strong>已返回的实例清单</strong>兜底——范围内实例为 0
-时提示「所选范围内无该模型实例」且批量添加不产出数据项（消费侧册 §九 结论 11 / §5.4）</td>
-<td>需求 6 接口范围；消费侧册 §5.4「按模型添加」中间栏内容</td>
-</tr>
+<tr><td>U2</td><td>同一能源下表具重复占用必须在配置层拦截，输入 / 输出共用占用名额</td><td><strong>待确认</strong>：保存时直接拦截，还是先提示再阻止提交</td><td>能源拓扑配置页文案、批量导入校验报告</td></tr>
+<tr><td>U5</td><td>对象输入 − 输出为负时照算并返回疑似异常标记</td><td><strong>待确认</strong>：页面直接展示负值、置灰提示或同时触发告警</td><td>指标展示与告警联动</td></tr>
+<tr><td>U9</td><td><code>supplyPower</code> 为有向关系；能耗计量与供电关系独立保存</td><td><strong>实施前阻断项</strong>：使用组件实例 ID 完成真实创建、正反向查询和删除。若平台不支持，回到产品 / 架构层采用正式端点方案，不得以上级实例静默替代</td><td>组件级供电候选、保存校验、接口联调与验收</td></tr>
 </tbody>
 </table>
 <hr />
@@ -2724,19 +2353,52 @@ m³）。默认值只是兜底，仍<strong>按表具 /
 </tr>
 <tr>
 <td>3</td>
-<td>多能源同构与两套单位</td>
+<td>多能源默认配置</td>
 <td>查看预置电 / 水 / 冷量，并新增天然气能源类型</td>
-<td>预置默认值分别为电 <code>kWh / kW</code>、水
-<code>m³ / m³/h</code>、冷量
-<code>kWh / kW</code>；新增能源可分别配置累计量单位与实时值单位；累计量单位进入核算
-/ 计费 / 历史统计，实时值单位用于瞬时量与当前值指标</td>
+<td>电只预置累计电量 <code>kWh</code>、实时功率 <code>kW</code>，不预置电流或其它过程瞬时量；水预置累计用水量 <code>m³</code>、实时流量 <code>m³/h</code>；冷量预置累计冷量 <code>kWh</code>、实时冷量 <code>kW</code>。三类能源的半小时增量上限均为 1500 且可修改；新建能源类型同样默认 1500，并必须定义一个唯一累积量、至少一个瞬时量及唯一主瞬时量</td>
+</tr>
+<tr>
+<td>3a</td>
+<td>标准角色数量与保存校验</td>
+<td>在同一能源类型中尝试缺少累积量、配置两个累积量、缺少主瞬时量、设置两个主瞬时量或创建重名标准测点</td>
+<td>均拦截保存并明确指出冲突；合法配置必须满足“累积量恰好一个、瞬时量至少一个且主瞬时量恰好一个、标准名称不重复”</td>
+</tr>
+<tr>
+<td>3b</td>
+<td>物模型实际测点映射完整性</td>
+<td>为一个物模型选择「能源计量」，映射累计电量与实时功率；再分别尝试缺少累计电量或实时功率</td>
+<td>选择能源计量后缺少唯一累积量或主瞬时量时拦截保存；实际测点须属于所选物模型或继承链且单位量纲兼容</td>
+</tr>
+<tr>
+<td>3c</td>
+<td>电类型默认物模型映射</td>
+<td>安装标准包后查看电类型默认配置，并检查名称带“联通”的定制模型</td>
+<td>9 个通用设备/组件物模型均只默认支持「能源计量」，累计电量与实时功率映射与需求 1 默认表一致；不默认支持「供电」，不预置任何电流映射；名称带“联通”的模型不进入默认清单。直流电量仪的输入电能须具备 <code>kWh</code> 与有功电能语义后通过校验</td>
+</tr>
+
+<tr>
+<td>3d</td>
+<td>存量配置迁移</td>
+<td>升级前已存在“物模型 + 累积量测点 + 瞬时量测点”配置及表具核算历史</td>
+<td>原两列分别迁移为唯一累积量与主瞬时量映射；原始测点历史和既有表具核算明细不改写；电不新增任何过程瞬时量映射</td>
+</tr>
+<tr>
+<td>3e</td>
+<td>支持关系条件校验</td>
+<td>分别为物模型选择「能源计量」「供电」「能源计量 + 供电」</td>
+<td>能源计量必须完成唯一累积量与主瞬时量映射；只选供电时无需测点即可保存；同时选择时按能源计量要求校验，且实例同时进入表具候选与供电源候选</td>
+</tr>
+<tr>
+<td>3f</td>
+<td>能力声明不生成实例关系</td>
+<td>新增或修改某物模型的支持关系后查看其既有实例关系</td>
+<td>不会自动新增、删除或推断任何「能耗计量」或 <code>supplyPower</code>；具体关系只能在需求 3 的业务页面中显式维护</td>
 </tr>
 <tr>
 <td>4</td>
 <td>坏值隔离</td>
-<td>一段含尾值回退 / 差值超【该表具生效增量上限（系统默认 1500 /
-半小时，单位随能源类型）】的累计数据</td>
-<td>坏值半小时被标记、不计入总量，报表 / 自检页可识别</td>
+<td>将某能源类型的半小时增量上限修改为 1000，再输入一段含尾值回退和单槽差值超过 1000 的累计数据</td>
+<td>坏值半小时被标记、不计入总量，并可在「表具能耗明细」页面识别与查看质量状态</td>
 </tr>
 <tr>
 <td>4a</td>
@@ -2834,28 +2496,59 @@ rollup 与计费属性；生成新版本及重算审计，人工修正值不被�
 <tr>
 <td>13d</td>
 <td>两个配置入口同一份关系</td>
-<td>在能效视图「能效配置」为某对象新增 / 改方向 / 删除关系后，到《能源计量关系》查看同一对象；再反向改一次</td>
+<td>在能效视图「能效配置」为某对象新增 / 改方向 / 删除关系后，到《能源拓扑配置》查看同一对象；再反向改一次</td>
 <td>两处结果立即一致，不产生第二套数据；同一能源下表具已被占用时两处均拦截并提示。多视图切换、Excel 与跨对象批量仅独立页提供</td>
 </tr>
 <tr>
 <td>13e</td>
 <td>能效配置摘要与定额前置校验</td>
 <td>分别选中「未配置任何计量关系」与「已配置多能源」的对象，在「能效配置」中打开用能定额考核</td>
-<td>未配置时提示先完成计量关系配置且不可保存定额；补配后可按已配置能源维护定额；计量关系变更后摘要随之更新。界面形态见原型 <code>能效视图.html</code></td>
+<td>未配置时提示先完成计量关系配置且不可保存定额；补配后可按已配置能源维护定额；计量关系变更后摘要随之更新；具体界面形态以需求 3 原型批注为准</td>
+</tr>
+<tr>
+<td>13f</td>
+<td>两类关系独立保存</td>
+<td>先建立“计量对象 --能耗计量--&gt; 列头柜支路”，再建立“列头柜支路 --<code>supplyPower</code>--&gt; IT 机柜”；随后分别编辑和删除其中一条</td>
+<td>同一支路可同时存在两类关系；任一关系的增删改不覆盖、不级联删除另一关系，供电变化不改变表具事实或能耗归集结果</td>
+</tr>
+<tr>
+<td>13g</td>
+<td>供电方向与源能力校验</td>
+<td>使用已选择「供电」的物模型实例作为源端建立 <code>supplyPower</code>，再用未选择「供电」的实例尝试相同操作</td>
+<td>前者保存为“源供电、目标被供电”的单条有向关系，反向可查询但不重复存储；后者被拦截。目标端不要求配置“受电”能力</td>
+</tr>
+<tr>
+<td>13h</td>
+<td>组件级供电端点前置验证</td>
+<td>使用列头柜支路组件自身的实例 ID，执行 <code>supplyPower</code> 创建、正反向查询和删除</td>
+<td>只有平台关系接口真实接受组件实例 ID 且全链路验证通过，才验收该场景；否则本场景保持阻断并回到产品 / 架构决策，不以上级实例代替通过</td>
+</tr>
+<tr>
+<td>13i</td>
+<td>组件实例作为计量对象</td>
+<td>在对象树展开某设备实例，选择其下的风机组件实例作为计量对象并关联表具；再将该组件实例作为设备本体的下级计量对象</td>
+<td>组件实例与设备实例均使用各自实例 ID 保存关系并执行同一套拓扑校验；组件可作为独立计算主体试算和查询，但不生成独立详情页，其配置和指标在所属设备实例详情中按组件分组查看。实例树父子层级不自动生成计量关系，未显式关联时组件能耗不自动计入设备实例</td>
 </tr>
 <tr>
 <td>14</td>
 <td>指标工厂可见性</td>
 <td>配置完成计量拓扑与计费方案后，在指标工厂查看某对象实例</td>
 <td>§6.3 清单内指标按优先级可查：P0 的 A1–A3、P1 的 B1–B5 实时/周期值与 C1
-实时能耗值均可按入参查询并返回结果；实施人员无需页面即可核数；对象侧不另存可浏览结果</td>
+实时能耗值均可按入参查询并返回结果；C1 与 B1–B5 实时值同时形成时序历史，实施人员无需页面即可核数</td>
 </tr>
 <tr>
 <td>15</td>
-<td>实时值不跨时间范围</td>
-<td>查询实时 PUE / 实时能耗值</td>
-<td>只返回当前值；跨时间范围诉求一律走统计指标查询（同样查时计算、不落库）</td>
+<td>实时值时序存储</td>
+<td>等待数据工厂默认调度产生多次 C1 与 B1–B5 实时计算，再查询当前值与历史曲线</td>
+<td>每次成功计算形成幂等时序样本；当前值返回最新样本值、数据时间及状态，历史曲线返回已存瞬时样本；不以 A 类统计结果代替实时历史</td>
 </tr>
+<tr>
+<td>15a</td>
+<td>拓扑变更自动重算实时历史</td>
+<td>先形成一段 C1 与 B1–B5 实时历史，再改绑表具或调整计量方向；覆盖正常完成、重算中、分片失败与重试</td>
+<td>系统自动识别受影响对象及递归上级对象，重算时序库全部保留期历史；重算中继续读旧版本并返回状态，成功后整段原子切换且无旧拓扑残留点；失败保留旧结果和错误原因，重试幂等</td>
+</tr>
+
 <tr>
 <td>16</td>
 <td>数据链路追踪</td>
@@ -2868,7 +2561,7 @@ rollup 与计费属性；生成新版本及重算审计，人工修正值不被�
 <td>按物模型选取指标</td>
 <td>在指标工厂按某物模型（如园区
 <code>space:Land</code>）查询可用指标</td>
-<td>返回该模型上注册的指标清单与各指标入参契约，并可列出该模型（含继承子模型）的实例；按类型查询与按实例取值读同一份指标定义并走同一套查询时计算逻辑</td>
+<td>返回该模型上注册的指标清单与各指标入参契约，并可列出该模型（含继承子模型）的实例；按类型查询与按实例取值读同一份指标定义，并按指标类型走实时存储或统计查询逻辑</td>
 </tr>
 <tr>
 <td>17a</td>
@@ -2909,49 +2602,46 @@ B2 独立产出，与槽位数值不一致不视为缺陷</td>
 实际命中实例数」自检视图可见并告警，不静默通过、不把缺数当 0</td>
 </tr>
 <tr>
+<td>17f</td>
+<td>设备详情按本体与组件展示指标</td>
+<td>打开一个包含风机、水阀等组件的设备实例详情；设备本体与风机组件均存在同名「实时电功率」</td>
+<td>「指标列表」沿用测点列表结构，按「本体 / 风机 / 水阀」分组；同名指标不改名，通过分组区分。「仅有值」隐藏无结果指标和空组件组，「全部」显示适用但待配置的指标；支持按组件名称、指标名称和指标标识搜索</td>
+</tr>
+<tr>
+<td>17g</td>
+<td>组件指标归属、下钻与父级归集隔离</td>
+<td>在所属设备详情查看风机组件的实时电功率，打开计算口径与曲线；随后分别在未配置、已配置「设备实例 → 风机组件」计量关系时查询设备本体指标</td>
+<td>组件指标、曲线和计算下钻始终使用风机组件实例 ID；父级页面不把指标改写到设备实例。未配置关系时组件指标不计入设备本体，显式配置后才按方向参与设备本体 Σ输入 − Σ输出，且只归集一次</td>
+</tr>
+<tr>
 <td>18</td>
-<td>需求 6｜按实例列指标</td>
-<td>对已配电 / 水计量拓扑与分时计费方案的对象调用接口 1</td>
-<td>返回<strong>已展开</strong>的可选项清单，与该对象在能效视图「指标列表」所见完全一致（如「电能消耗量」「用水量」「尖
-/ 峰 / 平 / 谷时电费」）；每项带 metric key、单位、<strong>实时 / 时间段一级分类</strong>、业务分类、可算状态</td>
+<td>需求 6｜按对象最终可选项与待配置</td>
+<td>分别查看已启用不同能源、采用统一价或分时计费，以及缺少必要配置的对象</td>
+<td>选择器展示结合对象配置展开后的最终可选项，如「电能消耗量」「用水量」「费用（统一价）」或「尖 / 峰 / 平 / 谷时电费」；状态仅为「可选 / 待配置」，待配置项说明缺少的配置及入口；选择「仅可选」时不展示待配置项，且不以当前是否有实时数据判断是否可选</td>
 </tr>
 <tr>
 <td>18a</td>
-<td>需求 6｜入参展开在服务侧完成</td>
-<td>对比未启用水计量与已启用水计量的两个对象</td>
-<td>未启用水计量的对象不返回「用水量 /
-水费」；无分时计费的能源只返回一条「费用（统一价）」；消费方无需二次拼装、无需参数面板</td>
+<td>需求 6｜按物模型批量选择与继承</td>
+<td>在指定对象范围内选择一个父物模型并批量添加指标</td>
+<td>展示该模型注册的指标，可批量加入范围内该模型及继承子模型的实例；不产生模型级合计或平均；范围内无实例时给予明确提示</td>
 </tr>
 <tr>
 <td>18b</td>
-<td>需求 6｜可算状态与可执行原因</td>
-<td>对未配计量拓扑、未配计费方案、缺 IT
-系统子对象三类对象按「全部」范围调用</td>
-<td>相应指标返回「待配置」并带缺失项与配置入口标识；按「仅有值」范围调用时不返回这些项</td>
+<td>需求 6｜消费一致性与批量可选判定</td>
+<td>在报表、融合组态、能效视图三处查看同一批对象和指标，并执行树节点或批量添加</td>
+<td>三处看到的最终可选项、名称和状态一致；批量操作可一次完成整批对象与指标的「可选 / 待配置」判断，消费方无需二次拼装</td>
 </tr>
 <tr>
 <td>18c</td>
-<td>需求 6｜按物模型列指标与继承生效</td>
-<td>传入父物模型 + 能效视图某根节点范围调用接口 2</td>
-<td>返回该模型注册的指标清单与入参契约，并返回范围内该模型<strong>含继承子模型</strong>的实例清单；<strong>不返回</strong>跨实例合计或平均值</td>
+<td>需求 6｜已保存引用有效性校验</td>
+<td>打开同时包含已失效引用和当前缺少配置指标的已保存方案或组态</td>
+<td>已删除、停用或不再适用的引用标记为「不再有效」；引用仍有效但缺少必要配置的指标标记为「暂时待配置」并说明原因；只展示当前用户有权限查看的对象与指标</td>
 </tr>
 <tr>
 <td>18d</td>
-<td>需求 6｜目录与取值同源</td>
-<td>用接口 1 / 2 返回的 metric key 与入参直接调 §6.3 指标清单的取值接口</td>
-<td>可直接取到值、无需转换；不存在目录与取值两套定义</td>
-</tr>
-<tr>
-<td>18e</td>
-<td>需求 6｜批量状态不退化</td>
-<td>一次传入 N 个实例 × M 个指标调用接口 3</td>
-<td>单次返回全部状态，服务端不逐 (实例, 指标) 串行查询</td>
-</tr>
-<tr>
-<td>18f</td>
-<td>需求 6｜引用有效性校验</td>
-<td>停用某指标后，用含该指标的数据项清单调接口 4</td>
-<td>逐项返回有效 / 已停用 / 不再适用及失效原因</td>
+<td>需求 6｜按对象查询包含组件</td>
+<td>对同一设备实例分别以「仅本体」和「本体及组件」范围调用按对象选择指标，并对返回的组件指标执行取值与引用保存</td>
+<td>「仅本体」只返回设备实例指标；「本体及组件」按平台已有组件结构返回本体和组件分组，每项包含页面主体实例 ID、指标归属实例 ID、归属类型、组件名称与层级路径。组件指标取值和保存引用使用组件实例 ID，消费方无需自行遍历组件或拼装分组</td>
 </tr>
 </tbody>
 </table>
@@ -2963,85 +2653,16 @@ href="./存量页面消费与总览看板改造需求方案.html">《存量页�
 </blockquote>
 </section>
 <section id="十一变更记录" class="level2">
-<h2>十一、变更记录</h2>
+<h2>十一、变更摘要</h2>
+<blockquote><p>本节只记录现行基线的近期主题与规则入口，不保存已失效方案全文；历史讨论不代表当前要求，现行口径以正文和 §十验收标准为准。</p></blockquote>
 <table>
-<thead>
-<tr>
-<th>日期</th>
-<th>变更</th>
-</tr>
-</thead>
+<thead><tr><th>日期</th><th>主题</th><th>影响章节 / 现行规则</th></tr></thead>
 <tbody>
-<tr>
-<td>2026-07-29</td>
-<td>§9.2 由「待确认的落地细节」改为「<strong>已定稿结论与剩余待确认</strong>」，业务口径与架构不变：<strong>U3</strong>（水
-/ 气 / 冷量沿用电的系统默认上限 1500 / 半小时，单位随能源类型，仍按表具 /
-能源类型可配）、<strong>U4</strong>（人工修正不设专用角色、不做二次确认与审批，留痕 + 锁定 +
-冲突提示兜底）、<strong>U6</strong>（系统自身 CLF / PLF / OLF 各自在所属对象页展示，不与单元
-/ 园区级同屏对照）、<strong>U8</strong>（接口 2 不做「注册矩阵 ×
-实例统计」联合查询，中间栏不预筛、由第三栏空态兜底）逐条落结论；<strong>U1</strong>
-按消费侧册 §九 结论 1 同步为「管理页逐槽区分、消费侧统一一类标记」；<strong>U7</strong>
-移出待确认（接口归属与交付批次转技术方案与开发计划，需求侧只保留依赖声明）。同步 §3.5
-增量上限行、§3.6 新增第 7 条「权限与流程」、需求 2 章首「本期不做」、§7.2 新增第 10
-条「接口 2 不做联合查询」（原第 10 条「性能」顺延为第 11 条）、§7 章末指引（并修正「§十一 场景 18–18f」为
-§十）、导读阅读路径与目录条目。剩余待确认为 U2 / U5。</td>
-</tr>
-<tr>
-<td>2026-07-29</td>
-<td>需求 3（§四）章节结构化重写，业务口径与范围不变：章首新增「模型层 → 校验层 → 业务配置层」分层交付表，明确关系类型与两个属性（能源类型、计量方向）随版本预置、配置页为纯前端、复用已有关系对象接口且本期不新增后端接口；原 §4.1「配置入口与产物」重组为 §4.1「关系模型：『能耗计量』关系对象」（承载方式 / 关系两端与属性表 / 成员两种挂法 / Σ输入 − Σ输出 计算语义），其「归属唯一约束」并入 §4.2 成为约束 1（表具唯一占用），§4.2 收齐全部图约束；§4.3 改为「业务配置页」，补写做业务页的原因（底层能力已可用但过于抽象、操作复杂、无法批量实施）与实现边界，双入口分工收敛为一张表。修正改版遗留交叉引用：导读阅读路径实施行（§四 / §五 → §3.7 / §四）、§1.2.4 第 8 条（§6.2 → §4.2）、§二表具口径（计费方案应用约束 §4.2 → §5.2）、§1.3 能效配置行（§4.1 → §4.3）。目录同步。</td>
-</tr>
-<tr>
-<td>2026-07-29</td>
-<td>合并原需求 2（生成与归档）与需求 3（数据质量、人工修正、管理页）为<strong>需求 2：表具核算明细</strong>（§3.1–§3.7）；后续需求顺延：原需求 4→3、5→4、6→5、7→6；章节「四～十一」与文内 § 引用同步。消费侧册对明细引擎册的交叉引用一并更新。</td>
-</tr>
-<tr>
-<td>2026-07-29</td>
-<td>需求 5（§七）整章重写，替代原 §6.1–§6.9 结构，业务口径不变：新结构为「§6.1
-范围、目标与整体框架（原 §6.2 归集总则与存储红线并入 §6.1.2）→ §6.2
-指标分层：物模型层与实例层（原 §6.8，保留红线与 7 条生效规则）→ §6.3
-指标清单：实时值指标 / 统计指标两大类逐表拆分（表 7-1 实时能耗值按能源类型拆为实时电功率 /
-实时用水量 / 实时冷量；表 7-2 / 7-5 能效实时值与周期值按注册物模型逐行拆分；表 7-3
-能耗用量按能源类型拆分；表 7-4 能耗成本与分时成本按能源类型 ×
-尖峰平谷时段逐行拆分；展示名对齐能效视图原型。原 §6.8.2 注册矩阵、§6.9.1
-查询接口一览、§6.9.2 计算口径明细合并进各表与 §6.3.3
-共用解析规则，不再单列）→ §6.4 上游变更（两类指标均不存库、不归档、查询时计算，上游变更后按最新事实与当前拓扑查询即可，无对象层重算；含上游变更 ×
-两类指标响应表）→ §6.5 下游消费（收敛为占位，消费口径由后续独立需求描述；原 §6.8.3
-下游按物模型消费随之移除）」。两层定义、Σ输入 − Σ输出 总则、查询时计算、能效解析规则、P0 /
-P1 与编号 A1–A3 / B1–B5 / C1
-均沿用。能效解析不再使用「能效基准对象 /
-系统对象绑定」等自造名词：注册对象均为标准物模型既有对象（园区为空间对象，其余为集合类型对象），分子
-/
-分母沿《系统拓扑关系图》既有「包含」关系解析（数据中心单元挂暖通空调 /
-电力 / IT / 其他系统），系统标准名对齐该图（电力系统）。全文 §4.x 交叉引用同步改号（§1.2 / §1.4 / §3.3 /
-§4.2 / §3.7 / §5.3 / §八 / §八矩阵 / §9.1 / §十验收），目录与折叠脚本同步。</td>
-</tr>
-<tr>
-<td>2026-07-29</td>
-<td>对象层改为查询时计算</td>
-<td>纠正对象统计指标架构：表具核算明细仍为唯一事实归档；对象层实时值与统计值均在<strong>每次查询时</strong>按当前计量拓扑现场计算，<strong>不落库、不物化 ClickHouse</strong>、无对象分片重算任务。§6.5 由「统计指标与 ClickHouse 物化」改为「统计指标（查询时计算）」；§6.6 改为「上游变更与数据链路追踪」。同步导读核心结论、§1.1 / §1.2 / §1.3 / §1.4、§八矩阵对象列、§9.1 风险（查时计算性能取代分片重算风暴）、§十验收与标题「指标工厂查询计算」。</td>
-</tr>
-<tr>
-<td>2026-07-24</td>
-<td>重构为 HTML
-单一维护源：增加阅读导引，压缩决策过程，统一章节编号，新增跨域重算矩阵，将已确认口径移出未决项；业务规则、指标范围和验收场景保持不变。</td>
-</tr>
-<tr>
-<td>2026-07-29</td>
-<td>需求 5 补齐指标的<strong>物模型层（类型层）</strong>定义。新增
-§6.8「指标的两层定义」：指标定义按物模型注册、对继承子模型实例生效（父 /
-子模型互斥），实例指标自动派生，对外支持按物模型 /
-按实例两种寻址；新增物模型 × 指标注册矩阵（§6.8.2）与下游按物模型消费用法（§6.8.3）。B2
-/ B3 / B4 除基准对象外另注册在暖通空调系统 / 电力系统 /
-其他系统自身，引入「能效基准对象」上溯解析规则（§6.9.2）。原 §6.8 顺延为
-§6.9，「适用对象」列改为「注册物模型」。同步 §文档导读本版边界、§1.2 /
-§1.2.4 ER / §1.3 / §1.4、§7 开发范围与 §6.1 / §6.7、§八重算矩阵（+2
-行）、§9.1 风险、§9.2 待确认 U6 与 §十验收（17 /
-17a–17e）。明确本版不做模型级聚合值、不在物模型上新增测点或属性、不开放现场注册指标，且<strong>不与物模型上既有同名 / 别名（PUE、POE、CLF、CF 等）测点槽位做任何兼容</strong>——不回写、不读取、不改其算法，既有规则保持原样。模型 ID 以《标准物模型-静态属性与动态参数》为准。</td>
-</tr>
-<tr>
-<td>2026-07-29</td>
-<td>需求 3 口径收敛：双入口（独立页批量 / 能效视图单对象）、导航对齐原型「工程配置 → 能源配置」、取消「唯一配置入口」表述；界面与操作指原型，正文只保留业务规则与数据约定；修正重算矩阵对象列残留「分片重算」；统一入口名为「能源计量关系」。同步 §1.1 / §1.3 / §1.4 / §4.3 / §5 / §九 / §十一。</td>
-</tr>
+<tr><td>2026-07-31</td><td>实时指标时序化及拓扑变更历史重算</td><td>§6.1.2、§6.3.1、§6.4、§八；验收 14、15、15a</td></tr>
+<tr><td>2026-07-31</td><td>电类型默认测点与 9 个通用物模型映射定稿</td><td>需求 1；验收 3、3a–3f</td></tr>
+<tr><td>2026-07-30</td><td>组件实例统一作为关系端点和指标归属身份</td><td>§4.1–§4.4、§6.2.4、§7.2；U9；验收 13h–13i、17f–17g、18d</td></tr>
+<tr><td>2026-07-30</td><td>半小时增量上限归能源类型统一维护</td><td>需求 1、§3.5；验收 3、4</td></tr>
+<tr><td>2026-07-29</td><td>表具生成、质量、人工修正与管理页合并为同一交付包</td><td>需求 2（§3.1–§3.7）；本册保持六个交付包编号</td></tr>
 </tbody>
 </table>
 </section>
@@ -5205,54 +4826,6 @@ Expecting `+Ze.join(", ")+", got '"+(this.terminals_[Pe]||Pe)+"'":At="Parse erro
     [...toc.querySelectorAll(":scope > ul > li")].slice(0, 2).forEach((item) => item.classList.add("is-open"));
   }
 
-  const topSections = [...documentRoot.querySelectorAll(":scope > section.level1 > section.level2")];
-  topSections.forEach((section) => {
-    const title = section.querySelector(":scope > h2")?.textContent || "";
-    let kind = "core";
-    if (title.includes("需求 1")) kind = "reused";
-    if (/需求 [236]/.test(title)) kind = "new";
-    if (/需求 [45]/.test(title)) kind = "changed";
-    if (title.includes("风险与未决项")) kind = "open";
-    section.dataset.kind = kind;
-  });
-
-  const filterButtons = [...document.querySelectorAll("#focus-filter button")];
-  const focusBanner = document.getElementById("focus-banner");
-  const focusCopy = document.getElementById("focus-copy");
-  const viewLabels = { new: "仅显示本期新增需求", changed: "仅显示复用能力上的改造需求", reused: "仅显示已有能力复用需求", open: "仅显示风险与待确认落地细节" };
-
-  function updateTocVisibility() {
-    if (!toc) return;
-    [...toc.querySelectorAll(":scope > ul > li")].forEach((item) => {
-      const link = item.querySelector(":scope > a");
-      if (!link) return;
-      const target = document.getElementById(decodeURIComponent(link.hash.slice(1)));
-      const section = target?.closest("section.level2");
-      item.hidden = Boolean(section?.hidden);
-    });
-  }
-
-  function applyView(view, writeUrl = true) {
-    filterButtons.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.view === view)));
-    topSections.forEach((section) => {
-      const always = section.dataset.kind === "core" && (section.querySelector("h2")?.textContent.includes("文档导读") || section.querySelector("h2")?.textContent.includes("总体架构"));
-      section.hidden = view !== "all" && !always && section.dataset.kind !== view;
-    });
-    focusBanner.hidden = view === "all";
-    focusCopy.textContent = viewLabels[view] || "";
-    updateTocVisibility();
-    if (writeUrl) {
-      const url = new URL(location.href);
-      if (view === "all") url.searchParams.delete("view"); else url.searchParams.set("view", view);
-      history.replaceState(null, "", url.pathname + url.search + url.hash);
-    }
-  }
-
-  filterButtons.forEach((button) => button.addEventListener("click", () => applyView(button.dataset.view)));
-  document.getElementById("focus-reset").addEventListener("click", () => applyView("all"));
-  const initialView = new URLSearchParams(location.search).get("view");
-  applyView(["new", "changed", "reused", "open"].includes(initialView) ? initialView : "all", false);
-
   const menuToggle = document.getElementById("menu-toggle");
   const backdrop = document.getElementById("backdrop");
   menuToggle.addEventListener("click", () => body.classList.toggle("nav-open"));
@@ -5265,7 +4838,6 @@ Expecting `+Ze.join(", ")+", got '"+(this.terminals_[Pe]||Pe)+"'":At="Parse erro
   }
 
   function revealAndScroll(target) {
-    applyView("all");
     expandFor(target);
     scrollWithOffset(target);
     target.classList.add("search-focus");
@@ -5374,6 +4946,12 @@ Expecting `+Ze.join(", ")+", got '"+(this.terminals_[Pe]||Pe)+"'":At="Parse erro
       requestAnimationFrame(() => scrollWithOffset(target, "auto"));
     }
   }
+  function syncProtoFsButton(embed) { const button=embed.querySelector(".proto-fs-btn"); if(!button)return; const active=document.fullscreenElement===embed||embed.classList.contains("is-fs"); button.textContent=active?"退出全屏":"全屏查看"; button.setAttribute("aria-pressed",String(active)); body.classList.toggle("proto-fs-open",Boolean(document.querySelector(".proto-embed.is-fs, .proto-embed:fullscreen"))); }
+  async function toggleProtoFullscreen(embed) { const native=embed.requestFullscreen||embed.webkitRequestFullscreen; const exitNative=document.exitFullscreen||document.webkitExitFullscreen; if(document.fullscreenElement===embed){if(exitNative)await exitNative.call(document);return;} if(embed.classList.contains("is-fs")){embed.classList.remove("is-fs");syncProtoFsButton(embed);return;} if(native){try{await native.call(embed);syncProtoFsButton(embed);return;}catch(_){}} document.querySelectorAll(".proto-embed.is-fs").forEach(other=>{other.classList.remove("is-fs");syncProtoFsButton(other);}); embed.classList.add("is-fs");syncProtoFsButton(embed); }
+  documentRoot.querySelectorAll(".proto-embed").forEach(embed=>{if(!embed.querySelector("iframe.proto-frame"))return;const head=embed.querySelector(".proto-embed-head");if(!head||head.querySelector(".proto-fs-btn"))return;const button=document.createElement("button");button.type="button";button.className="proto-fs-btn";button.textContent="全屏查看";button.setAttribute("aria-pressed","false");button.addEventListener("click",()=>toggleProtoFullscreen(embed));head.appendChild(button);});
+  document.addEventListener("fullscreenchange",()=>documentRoot.querySelectorAll(".proto-embed").forEach(syncProtoFsButton));
+  document.addEventListener("keydown",event=>{if(event.key!=="Escape")return;const cssFs=document.querySelector(".proto-embed.is-fs");if(!cssFs)return;cssFs.classList.remove("is-fs");syncProtoFsButton(cssFs);});
+
 })();
 </script>
 </body>
