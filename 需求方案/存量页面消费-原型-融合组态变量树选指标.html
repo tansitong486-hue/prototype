@@ -1,527 +1,723 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>融合组态-变量树选指标</title>
-  <style>
-    :root {
-      --primary: #1E40AF;
-      --primary-dark: #17358A;
-      --primary-light: #EEF4FF;
-      --text-primary: #0F172A;
-      --text-secondary: #475569;
-      --text-hint: #94A3B8;
-      --border: #D8E1EB;
-      --border-light: #EAF0F6;
-      --bg-body: #F6F8FB;
-      --bg-card: #FFFFFF;
-      --danger: #DC2626;
-      --success: #059669;
-      --warning: #D97706;
-      --metric: #7C3AED;
-      --metric-light: #F5F3FF;
-      --radius: 8px;
-      --radius-lg: 12px;
-      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
-      --transition: .22s cubic-bezier(.4, 0, .2, 1);
-    }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-      font-size: 14px; color: var(--text-primary); background: var(--bg-body);
-      -webkit-font-smoothing: antialiased;
-    }
-    button { border: none; background: none; font: inherit; }
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>融合组态-测点树接入指标与图元查询适配</title><link rel="icon" href="data:,">
+<style>
+/* ================= 原型界面（演示模式） ================= */
+*{box-sizing:border-box}body{margin:0;font:12px "Microsoft YaHei","PingFang SC",sans-serif;color:#555;background:#d7d7d7}
+.proto-bar{height:34px;background:#0f172a;color:#cbd5e1;display:flex;align-items:center;gap:14px;padding:0 14px;font-size:11px}
+.proto-name{color:#f8fafc;font-weight:600}
+.proto-bar .switcher{display:flex;border:1px solid #334155;border-radius:3px;overflow:hidden}
+.proto-bar .switcher button{border:0;border-right:1px solid #334155;background:#1e293b;color:#cbd5e1;padding:4px 11px;cursor:pointer;font:inherit}
+.proto-bar .switcher button:last-child{border-right:0}
+.proto-bar .switcher button.on{background:#2563eb;color:#fff}
+.proto-hint{margin-left:auto;color:#94a3b8}
+.app{min-width:1200px;height:calc(100vh - 34px);min-height:680px;display:flex;flex-direction:column;overflow:hidden}
+.global{height:36px;background:#1682e9;color:#fff;display:flex;align-items:center;padding:0 14px;gap:26px}.grid-icon{font-size:18px}.global .active{height:36px;padding:0 18px;display:flex;align-items:center;background:#fff;color:#1682e9;border-radius:4px 4px 0 0}.global .user{margin-left:auto}
+.pagebar{height:32px;background:#fff;border-bottom:1px solid #bbb;display:flex;align-items:center;justify-content:center;gap:10px;color:#222}
+.tab-chip{padding:3px 10px;border:1px solid #cfd6dd;border-radius:3px;color:#555}.tab-chip.on{background:#1682e9;border-color:#1682e9;color:#fff}
+.tools{height:32px;background:#f4f4f4;border-bottom:1px solid #aaa;display:flex;align-items:center;padding-left:12px;gap:14px;color:#777}.tools b{font-weight:400}.status-dot{width:8px;height:8px;background:#1682e9;border-radius:50%;display:inline-block;margin-right:3px}.tools .lang{margin-left:auto;margin-right:10px}
+.workspace{flex:1;min-height:0;display:grid;grid-template-columns:206px 218px minmax(0,1fr) 92px}
+.mod{min-width:0;min-height:0;display:flex;flex-direction:column}
+.mod-ui{flex:1;min-height:0;display:flex}
+.mod-label{display:none}
+.col{flex:1;min-width:0;background:#f5f5f5;border-right:1px solid #aaa;display:flex;flex-direction:column;min-height:0}
+.menu-line{height:26px;display:flex;align-items:center;gap:14px;padding:0 9px;background:#fff;border-bottom:1px solid #ddd;color:#444}
+.panel-head{height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 9px;background:#fff;border-bottom:1px solid #ddd;color:#333}
+.picker{padding:7px 8px;display:flex;gap:5px;align-items:center;border-bottom:1px solid #e3e3e3}
+.select,.input{width:100%;height:27px;border:1px solid #c9c9c9;background:#fff;border-radius:2px;padding:0 6px;color:#555}
+.icon-btn{width:27px;height:27px;flex:0 0 27px;border:1px solid #c9c9c9;background:#fff;color:#1682e9;cursor:pointer}
+.tree{overflow:auto;padding:4px 0}
+.tree-row{display:flex;align-items:center;gap:4px;padding:4px 8px;cursor:pointer;white-space:nowrap}
+.tree-row:hover{background:#e8f2fd}.tree-row.on{background:#1682e9;color:#fff}
+.tree-row .ico{width:13px;text-align:center;color:#8a949d}.tree-row.on .ico{color:#fff}
+.tree-row .name{flex:1;overflow:hidden;text-overflow:ellipsis}
+.indent-1{padding-left:20px}.indent-2{padding-left:34px}.indent-3{padding-left:48px}
+.leaf-metric .ico{color:#7b4ad0}
+.tag{font-size:10px;padding:0 4px;line-height:15px;border-radius:2px;background:#eaf4ff;color:#1682e9;flex:0 0 auto}
+.tag.rt{background:#fff3e0;color:#b8710d}.tag.qm{background:#f3ecff;color:#6a35c4}
+.grip{color:#bbb;font-size:10px;flex:0 0 auto}
+.split{height:7px;background:#e6e6e6;border-top:1px solid #cfcfcf;border-bottom:1px solid #cfcfcf}
+.sub-tabs{display:flex;background:#fff;border-bottom:1px solid #ddd}
+.sub-tab{flex:1;text-align:center;padding:7px 0;cursor:pointer;border-bottom:2px solid transparent}
+.sub-tab.on{color:#1682e9;border-bottom-color:#1682e9}
+.prop-tabs{height:36px;background:#fff;display:flex;border-bottom:1px solid #c8c8c8}
+.prop-tab{flex:1;display:flex;align-items:center;justify-content:center;cursor:pointer;border-bottom:2px solid transparent}
+.prop-tab.on{color:#1682e9;border-bottom-color:#1682e9}
+.prop-scroll{overflow:auto;flex:1}
+.acc{border-bottom:1px solid #c9c9c9}.acc-title{height:32px;padding:0 9px;display:flex;align-items:center;color:#444;background:#efefef}
+.chev{display:inline-flex;width:15px;height:15px;align-items:center;justify-content:center;border:1px solid #7fc1ff;color:#1682e9;margin-right:7px;font-size:10px}
+.acc-body{padding:9px;background:#fafafa}
+.field{margin-bottom:9px}.field label{display:block;color:#777;margin-bottom:4px}
+.time-pair{display:grid;grid-template-columns:1fr 12px 1fr;gap:3px;align-items:center}.time-pair .input{font-size:10px;padding:0 3px}
+.metric-row{background:#fff;border:1px solid #d3d3d3;margin-bottom:6px;padding:7px;cursor:pointer}
+.metric-row.on{border-color:#1682e9;box-shadow:inset 3px 0 #1682e9}
+.metric-top{display:flex;align-items:center;gap:5px}.metric-top strong{font-weight:400;color:#333;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gear{border:0;background:transparent;color:#1682e9;cursor:pointer}
+.metric-time{font-size:10px;color:#999;margin-top:4px}
+.btn{height:27px;border:1px solid #bfc7cf;background:#fff;color:#555;padding:0 9px;cursor:pointer;border-radius:2px}
+.btn.full{width:100%;margin-top:3px}
+.btn.blue{background:#1682e9;border-color:#1682e9;color:#fff}
+.bind-row{display:flex;gap:5px;align-items:center;margin-bottom:7px}
+.bind-row .select{flex:1;min-width:0}
+.drop-slot{flex:1;min-width:0;height:27px;border:1px dashed #9bb7d4;background:#fff;border-radius:2px;display:flex;align-items:center;gap:4px;padding:0 7px;color:#333;overflow:hidden;white-space:nowrap}
+.drop-slot .ico{color:#7b4ad0}
+.icon-btn.blue{color:#1682e9;border-color:#9ec8f0}
+.bind-meta{font-size:10px;color:#999}
+/* 查询设置弹窗 */
+.modal-mask{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;z-index:900}
+.modal-mask.on{display:flex}
+.modal{width:540px;max-width:94vw;background:#fff;border-radius:3px;box-shadow:0 8px 30px rgba(0,0,0,.3);overflow:hidden}
+.modal-head{height:38px;background:#f7f9fb;border-bottom:1px solid #e3e8ee;display:flex;align-items:center;justify-content:space-between;padding:0 14px;color:#222;font-weight:600}
+.modal-close{border:0;background:transparent;font-size:15px;color:#888;cursor:pointer}
+.modal-body{padding:14px;max-height:58vh;overflow:auto}
+.modal-hint{color:#8a8a8a;font-size:11px;margin-bottom:10px}
+.qs-row{border:1px solid #e3e8ee;border-radius:3px;padding:10px;margin-bottom:10px}
+.qs-head{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.qs-head b{font-weight:600;color:#333}
+.qs-slot{color:#888;font-size:10px}
+.qs-apply{margin-left:auto;border:0;background:transparent;color:#1682e9;cursor:pointer;font-size:11px}
+.qs-grid{display:grid;grid-template-columns:66px 1fr;gap:8px;align-items:center}
+.qs-grid label{color:#777}
+.modal-foot{padding:10px 14px;border-top:1px solid #e3e8ee;display:flex;justify-content:flex-end;gap:8px;background:#fafbfc}
+.center{flex:1;min-width:0;background:#a4a4a4;padding:18px 10px 10px;overflow:auto}
+.canvas{height:100%;min-height:520px;background:#151a1c;border:1px solid #777;position:relative;overflow:hidden}
+.canvas-head{height:26px;background:#181c1e;color:#ddd;padding:5px 10px}.canvas-head span{color:#777;margin-left:8px}
+.dashboard-title{position:absolute;left:16px;top:40px;color:#e7e7e7;font-size:11px}
+.side-cards{position:absolute;right:16px;top:58px;width:172px;display:grid;gap:12px}
+.dark-card{height:92px;background:#242a2d;color:#ddd;padding:10px}.dark-card b{font-size:10px}
+.ring{width:42px;height:42px;border:3px solid #28c7ed;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-top:9px;font-size:11px}
+.bottom-nav{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:10px}
+.nav-dot{width:32px;height:32px;border-radius:50%;background:#35393b;color:#ddd;display:flex;align-items:center;justify-content:center;font-size:10px}.nav-dot.on{background:#08a9d3}
+.widget{position:absolute;border:1px solid transparent;color:#ddd;background:#202629}
+.widget.selected{border:2px solid #ffe600}
+.widget .handle{position:absolute;right:-13px;top:50%;transform:translateY(-50%);background:#00b6d8;color:#fff;font-size:9px;padding:3px 1px;writing-mode:vertical-rl}
+.history-widget{left:24px;top:84px;width:54%;height:220px;padding:10px}
+.widget-title{font-size:10px;color:#eee}
+.legend{display:flex;gap:12px;margin-top:6px;font-size:9px;color:#aaa}.legend i{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:3px}
+.chart{position:absolute;left:12px;right:12px;bottom:16px;top:52px;border-left:1px solid #555;border-bottom:1px solid #555;overflow:hidden}
+.gridline{height:25%;border-top:1px dashed #343b3e}
+.line{position:absolute;left:2%;right:2%;top:38%;height:2px;background:#16b9e8;transform:rotate(-4deg)}
+.line.second{top:62%;background:#f6b72c;transform:rotate(2deg)}
+.fixed-widget{left:24px;top:84px;width:46%;height:140px;padding:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:#252c2f;padding:9px;color:#9ea9ad}.stat b{display:block;color:#24bddd;font-size:19px;margin-top:16px}.stat em{font-style:normal;font-size:10px;margin-left:3px}
+.other-samples{position:absolute;left:24px;top:244px;width:46%;display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.sample{height:96px;background:#22292c;color:#ddd;padding:10px}.sample-value{font-size:23px;color:#2dc9ef;margin-top:16px}
+.right{flex:1;min-width:0;background:#f4f4f4;border-left:1px solid #aaa;overflow:auto}
+.right-title{height:36px;padding:10px 9px;background:#fff;color:#1682e9;border-bottom:1px solid #bbb}
+.search{margin:7px;width:76px;height:26px;border:1px solid #ccc;padding:0 6px}
+.group-title{padding:6px 8px;background:#e9e9e9;border-top:1px solid #ccc;border-bottom:1px solid #ccc;color:#444}
+.glyph-grid{padding:5px;display:grid;grid-template-columns:1fr;gap:5px}
+.glyph{height:52px;background:#e4e4e4;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#777;text-align:center;font-size:10px}
+.glyph .ico{font-size:19px;color:#999;margin-bottom:3px}
+.statusbar{height:24px;background:#f0f0f0;border-top:1px solid #bbb;display:flex;align-items:center;gap:16px;padding:0 12px;color:#888;font-size:10px}
+.hidden{display:none!important}
 
-    .new-badge {
-      display: inline-flex; align-items: center; height: 16px; padding: 0 5px;
-      border-radius: 4px; background: #F3E8FF; color: #6B21A8;
-      font-size: 10px; font-weight: 700; margin-left: 6px; flex-shrink: 0; letter-spacing: .3px;
-    }
-    .new-badge.keep { background: #DCFCE7; color: #166534; }
-    .new-badge.no { background: #FEE2E2; color: #991B1B; }
-    .hl-new { outline: 2px dashed #F59E0B; outline-offset: 2px; border-radius: 6px; }
+/* ================= 原型批注（对齐 05-原型/AI原型html/annotation-styles.css） ================= */
+:root{
+  --anno-req:#1E40AF;--anno-req-bg:rgba(30,64,175,.05);
+  --anno-ux:#7C3AED;--anno-ux-bg:rgba(124,58,237,.05);
+  --anno-field:#059669;--anno-field-bg:rgba(5,150,105,.05);
+  --anno-data:#D97706;--anno-data-bg:rgba(217,119,6,.05);
+  --anno-state:#0891B2;--anno-state-bg:rgba(8,145,178,.05);
+  --anno-edge:#475569;--anno-edge-bg:rgba(71,85,105,.05);
+  --anno-version-header:#1E40AF;--anno-version-header-bg:rgba(30,64,175,.04);
+}
+.anno{display:none}
+.anno-filter-bar{display:none}
+.annotation-mode .anno{display:block}
+.annotation-mode .anno-filter-bar{display:flex}
+.annotation-mode{padding-top:46px}
+.anno{position:relative;margin:0 0 12px;padding:12px 14px 10px;border-left:4px solid var(--anno-edge);background:var(--anno-edge-bg);border-radius:0 6px 6px 0;font:12px/1.7 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:#334155;border-top:1px dashed #CBD5E1}
+.anno-tag{display:inline-block;padding:1px 8px;border-radius:3px;font-size:11px;font-weight:600;color:#fff;background:var(--anno-edge);margin-right:6px;vertical-align:middle;line-height:1.8}
+.anno-version{display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;color:#64748B;background:#F1F5F9;border:1px solid #E2E8F0;margin-right:6px;vertical-align:middle;line-height:1.8}
+.anno-source{display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;vertical-align:middle;line-height:1.8;color:#1E40AF;background:rgba(30,64,175,.08);border:1px solid rgba(30,64,175,.2)}
+.anno-source[data-type="产品推断"]{background:rgba(30,64,175,.05);border:1px dashed rgba(30,64,175,.3)}
+.anno-source[data-type="待确认"]{color:#92400E;background:#FEF3C7;border:1px solid #FDE68A}
+.anno-body{margin-top:8px}.anno-body p{margin:4px 0}.anno-body ul{margin:4px 0;padding-left:18px}.anno-body li{margin:2px 0}.anno-body b{color:#0F172A}
+.anno-table{width:100%;border-collapse:collapse;margin:6px 0;font-size:12px}
+.anno-table th{background:#F1F5F9;font-weight:600;color:#334155;text-align:left;padding:6px 10px;border:1px solid #E2E8F0}
+.anno-table td{padding:5px 10px;border:1px solid #E2E8F0;color:#475569}
+.anno.anno-req{border-left-color:var(--anno-req);background:var(--anno-req-bg)}.anno.anno-req .anno-tag{background:var(--anno-req)}
+.anno.anno-ux{border-left-color:var(--anno-ux);background:var(--anno-ux-bg)}.anno.anno-ux .anno-tag{background:var(--anno-ux)}
+.anno.anno-field{border-left-color:var(--anno-field);background:var(--anno-field-bg)}.anno.anno-field .anno-tag{background:var(--anno-field)}
+.anno.anno-data{border-left-color:var(--anno-data);background:var(--anno-data-bg)}.anno.anno-data .anno-tag{background:var(--anno-data)}
+.anno.anno-state{border-left-color:var(--anno-state);background:var(--anno-state-bg)}.anno.anno-state .anno-tag{background:var(--anno-state)}
+.anno.anno-edge{border-left-color:var(--anno-edge);background:var(--anno-edge-bg)}.anno.anno-edge .anno-tag{background:var(--anno-edge)}
+.anno.anno-version-header{border-left-color:var(--anno-version-header);background:var(--anno-version-header-bg);border-top:none;border-radius:6px;margin:0 0 16px;padding:14px 16px 12px}
+.anno.anno-version-header .anno-tag{background:var(--anno-version-header)}
+.anno-toggle{position:fixed;bottom:24px;right:24px;z-index:9999;padding:10px 20px;border:none;border-radius:8px;background:#1E293B;color:#F8FAFC;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(15,23,42,.25);font-family:inherit}
+.anno-toggle:hover{background:#334155}
+.annotation-mode .anno-toggle{background:#1E40AF}
+.anno-filter-bar{position:fixed;top:0;left:0;right:0;z-index:10000;align-items:center;gap:8px;padding:8px 20px;background:#FFFBEB;border-bottom:2px solid #FDE68A;font-size:13px;box-shadow:0 2px 8px rgba(146,64,14,.12)}
+.anno-filter-label{font-weight:600;color:#92400E;white-space:nowrap}
+.anno-filter-tags{display:flex;gap:6px;flex-wrap:wrap}
+.anno-filter-tag{display:inline-block;padding:3px 12px;border-radius:4px;font-size:12px;color:#92400E;background:#FEF3C7;border:1px solid #FDE68A;cursor:pointer}
+.anno-filter-tag.active{background:#F59E0B;color:#fff;border-color:#F59E0B}
 
-    .layout { display: flex; flex-direction: column; min-height: 100vh; }
-    .page-shell { padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 12px; }
-    .page-head {
-      background: var(--bg-card); border: 1px solid var(--border-light);
-      border-radius: var(--radius-lg); padding: 14px 16px; box-shadow: var(--shadow-sm);
-    }
-    .page-title { font-size: 18px; font-weight: 700; }
-    .page-desc { font-size: 13px; color: var(--text-secondary); margin-top: 6px; line-height: 1.7; }
-    .page-desc b { color: var(--text-primary); }
-    .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px; font-size: 12px; color: var(--text-secondary); }
-    .legend span { display: inline-flex; align-items: center; gap: 5px; }
-
-    .scene-tabs { display: flex; border-bottom: 1px solid var(--border-light); margin-top: 14px; }
-    .scene-tab {
-      padding: 10px 16px; font-size: 13px; color: var(--text-secondary);
-      border-bottom: 2px solid transparent; margin-bottom: -1px; cursor: pointer;
-    }
-    .scene-tab:hover { color: var(--primary); }
-    .scene-tab.active { color: var(--primary); font-weight: 700; border-bottom-color: var(--primary); }
-
-    .btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: 4px;
-      height: 30px; padding: 0 12px; border-radius: var(--radius);
-      cursor: pointer; transition: all var(--transition);
-      white-space: nowrap; font-size: 12px; font-weight: 600;
-    }
-    .btn-primary { color: #fff; background: var(--primary); }
-    .btn-default { background: #fff; border: 1px solid var(--border); color: var(--text-primary); }
-
-    /* 组态工作区：左树 + 画布（本页不展示属性面板） */
-    .editor { display: grid; grid-template-columns: 260px minmax(0,1fr); gap: 12px; min-height: 580px; }
-    .panel {
-      background: var(--bg-card); border: 1px solid var(--border-light);
-      border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
-      display: flex; flex-direction: column; min-height: 0; overflow: hidden;
-    }
-    .panel-head {
-      padding: 10px 13px; border-bottom: 1px solid var(--border-light);
-      display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-shrink: 0;
-    }
-    .panel-title { font-size: 13px; font-weight: 700; }
-    .panel-body { flex: 1; min-height: 0; overflow: auto; }
-
-    .sub-tabs { display: flex; border-bottom: 1px solid var(--border-light); flex-shrink: 0; }
-    .sub-tab {
-      flex: 1; text-align: center; padding: 9px 0; font-size: 13px; color: var(--text-secondary);
-      border-bottom: 2px solid transparent; margin-bottom: -1px; cursor: pointer;
-    }
-    .sub-tab.active { color: var(--primary); font-weight: 700; border-bottom-color: var(--primary); }
-
-    .view-select-wrap { padding: 9px 12px; border-bottom: 1px solid var(--border-light); flex-shrink: 0; }
-    .view-select {
-      width: 100%; height: 30px; padding: 0 8px; font-size: 12px;
-      border: 1px solid var(--border); border-radius: var(--radius); background: #fff; color: var(--text-primary);
-    }
-    .tree-search { padding: 8px 12px; border-bottom: 1px solid var(--border-light); flex-shrink: 0; }
-    .tree-search input {
-      width: 100%; height: 28px; padding: 0 10px;
-      border: 1px solid var(--border); border-radius: var(--radius); font-size: 12px; background: #fff;
-    }
-    .filter-bar {
-      padding: 7px 12px; border-bottom: 1px solid var(--border-light);
-      display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex-shrink: 0; background: #FFFBEB;
-    }
-    .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
-    .seg button { padding: 2px 9px; font-size: 11px; color: var(--text-secondary); cursor: pointer; background: #fff; }
-    .seg button.active { background: var(--primary); color: #fff; font-weight: 600; }
-    .filter-label { font-size: 11px; color: var(--text-secondary); font-weight: 600; }
-
-    .tree-scroll { padding: 6px; }
-    .tree-row {
-      display: flex; align-items: center; gap: 5px;
-      padding: 5px 6px; border-radius: 6px; cursor: grab; color: var(--text-secondary); user-select: none;
-    }
-    .tree-row:hover { background: rgba(30, 64, 175, 0.06); color: var(--text-primary); }
-    .tree-row.active { background: rgba(30, 64, 175, 0.12); color: var(--primary); font-weight: 600; }
-    .tree-row.disabled { opacity: .5; cursor: not-allowed; }
-    .tree-chevron { width: 13px; font-size: 9px; color: var(--text-hint); cursor: pointer; flex-shrink: 0; text-align: center; }
-    .tree-ico { width: 14px; text-align: center; font-size: 11px; flex-shrink: 0; }
-    .tree-label { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
-    .tree-children { padding-left: 15px; }
-    .tree-row.metric-leaf .tree-ico { color: var(--metric); }
-    .drag-hint { font-size: 10px; color: var(--text-hint); flex-shrink: 0; }
-
-    .tag {
-      display: inline-flex; align-items: center; height: 18px; padding: 0 6px;
-      border-radius: 4px; font-size: 10px; font-weight: 600; white-space: nowrap;
-    }
-    .tag-point { background: #E0F2FE; color: #075985; }
-    .tag-metric { background: var(--metric-light); color: #6B21A8; }
-    .tag-rt { background: #FEF3C7; color: #92400E; }
-    .tag-period { background: #DCFCE7; color: #166534; }
-    .tag-pending { background: #FEE2E2; color: #991B1B; }
-
-    /* 画布 */
-    .canvas {
-      flex: 1; background: #0B1B2E; border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-      padding: 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
-      align-content: start; overflow: auto;
-    }
-    .widget {
-      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12);
-      border-radius: 8px; padding: 12px; color: #E2E8F0; min-height: 96px;
-      display: flex; flex-direction: column; gap: 6px;
-    }
-    .widget.selected { border-color: #60A5FA; box-shadow: 0 0 0 2px rgba(96,165,250,.35); }
-    .widget.drop-target { border: 1px dashed #F59E0B; background: rgba(245,158,11,.08); }
-    .w-name { font-size: 11px; color: #94A3B8; display: flex; align-items: center; gap: 5px; }
-    .w-val { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
-    .w-unit { font-size: 12px; color: #94A3B8; font-weight: 400; margin-left: 3px; }
-    .w-foot { font-size: 10px; color: #64748B; margin-top: auto; }
-    .w-chart { height: 46px; display: flex; align-items: flex-end; gap: 3px; margin-top: 4px; }
-    .w-chart i { flex: 1; background: linear-gradient(180deg,#3B82F6,#1D4ED8); border-radius: 2px 2px 0 0; }
-    .canvas-tip {
-      grid-column: 1/-1; padding: 10px 12px; border: 1px dashed rgba(255,255,255,.2);
-      border-radius: 8px; color: #94A3B8; font-size: 11px; line-height: 1.7;
-    }
-
-    .compat-table { width: 100%; border-collapse: collapse; font-size: 11px; }
-    .compat-table th {
-      background: #F8FAFC; text-align: left; padding: 7px 8px; font-weight: 600;
-      color: var(--text-secondary); border-bottom: 1px solid var(--border-light);
-    }
-    .compat-table td { padding: 7px 8px; border-bottom: 1px solid var(--border-light); }
-    .yes { color: var(--success); font-weight: 700; }
-    .no { color: var(--danger); font-weight: 700; }
-
-    .note {
-      margin-top: 12px; padding: 11px 13px; border-radius: var(--radius);
-      background: #F8FAFC; border-left: 3px solid var(--primary);
-      font-size: 12px; color: var(--text-secondary); line-height: 1.85;
-    }
-    .note b { color: var(--text-primary); }
-    .note.warn { background: #FFFBEB; border-left-color: var(--warning); }
-    .note.danger { background: #FEF2F2; border-left-color: var(--danger); }
-    .note.ok { background: #F0FDF4; border-left-color: var(--success); }
-    .note ul { margin: 6px 0 0 16px; }
-    .note li { margin-bottom: 3px; }
-
-    .req-brief {
-      margin-top: 12px; border: 1px solid var(--border-light); border-radius: var(--radius);
-      background: #F8FAFC; padding: 11px 13px; font-size: 12px;
-      color: var(--text-secondary); line-height: 1.75;
-    }
-    .req-brief h4 {
-      font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;
-      display: flex; align-items: center; gap: 6px;
-    }
-    .req-brief .meta { color: var(--text-hint); margin-bottom: 4px; }
-    .req-brief ul { margin: 4px 0 0 16px; }
-    .req-brief li { margin-bottom: 2px; }
-
-    .scene { display: none; }
-    .scene.active { display: block; }
-    .card {
-      background: var(--bg-card); border: 1px solid var(--border-light);
-      border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden;
-    }
-  </style>
+/* 批注模式：模块纵向展开，让批注有完整宽度，界面块保持原尺寸 */
+.anno-page{padding:0}
+.annotation-mode .anno-page{padding:16px 20px 0;background:#eef1f5}
+.annotation-mode .app{height:auto;min-height:0;overflow:visible}
+.annotation-mode .workspace{display:block;background:#eef1f5}
+.annotation-mode .mod{display:block;padding:16px 20px 20px;border-bottom:1px solid #cfd6dd}
+.annotation-mode .mod-label{display:block;font-size:11px;font-weight:600;color:#64748b;letter-spacing:.5px;margin-bottom:8px}
+.annotation-mode .mod-ui{display:block;border:1px solid #b9c2cb;box-shadow:0 1px 4px rgba(15,23,42,.12)}
+.annotation-mode .mod-nav .mod-ui,.annotation-mode .mod-prop .mod-ui{width:264px}
+.annotation-mode .mod-glyph .mod-ui{width:110px}
+.annotation-mode .col,.annotation-mode .right{flex:none;border-right:0;border-left:0}
+.annotation-mode .center{flex:none;padding:0;background:transparent;overflow:visible}
+.annotation-mode .canvas{height:520px}
+.annotation-mode .tree,.annotation-mode .prop-scroll{max-height:none!important;overflow:visible;flex:none}
+</style>
 </head>
 <body>
-<div class="layout">
-  <div class="page-shell">
 
-    <div class="page-head">
-      <div class="page-title">融合组态 变量树 接入指标</div>
-      <div class="page-desc">
-        对应 <b>AI 节能 v2.5 需求 12</b>。落点：工程配置 → <b>融合组态 → 页面组态（编辑页）</b> 左下角「测点 / 变量」面板。<br>
-        本页即需求说明载体：下方摘要 + 两场景交互与规则。三视图已具备，本需求只做指标接入、图元绑定与刷新策略。
-      </div>
-      <div class="legend">
-        <span><i class="new-badge keep">现状</i> 三视图已具备，不改</span>
-        <span><i class="new-badge">需求12</i> 本次新增</span>
-        <span>测点 = 实时指标能力</span>
-      </div>
+<!-- 原型工具条：非系统界面，仅用于原型场景切换 -->
+<div class="proto-bar">
+  <span class="proto-name">原型 · 融合组态：测点树接入指标与图元查询适配</span>
+  <div class="switcher"><button class="on" data-scene="history">场景① 历史图表</button><button data-scene="fixed">场景② 其他图元</button></div>
+  <span class="proto-hint">当前为演示模式（1:1 还原真实界面）；产品规则请点右下角「批注」</span>
+</div>
 
-      <div class="req-brief">
-        <h4><i class="new-badge">需求12</i> 融合组态变量树</h4>
-        <div class="meta">归属：融合组态前端（变量树 + 图元绑定）　｜　依赖：需求 6　｜　P2　｜　场景 ①②</div>
-        <ul>
-          <li><b>做</b>：测点树对象节点下开放指标叶子（固定仅有值）；图元绑定指标——实时指标同测点；时段指标分「实时值=最近半小时」与「历史时序=复用需求 10 §5.5」；按粒度对齐刷新；打开组态校验绑定有效性。</li>
-          <li><b>不做</b>：整组不做项（§4.4）；属性面板不呈现告警阈值 / 控制下发 / 联动条件（组态无对应图元）。</li>
-          <li><b>规则</b>：变量页签指标只读可参与展示表达式，<b>不得</b>作控制指令输入；历史时序须持久化采样周期（及聚合方式）；失效绑定在画布与属性面板标记并提示，不静默空值。</li>
-        </ul>
-      </div>
-
-      <div class="scene-tabs">
-        <div class="scene-tab active" data-scene="edit">① 变量树选指标 + 图元绑定</div>
-        <div class="scene-tab" data-scene="compat">② 图元兼容矩阵</div>
-      </div>
+<!-- 页面级批注 -->
+<div class="anno-page">
+  <div class="anno anno-version-header" data-version="v1.2">
+    <span class="anno-tag">版本信息</span>
+    <div class="anno-body">
+      <p><b>当前版本：</b>v1.2</p>
+      <p><b>更新日期：</b>2026-08-05</p>
+      <p><b>变更概述：</b>补充取数与性能约定。同一组态页面的所有查询指标<b>合并为一次批量查询</b>（请求项按「对象 + 指标 + 时间范围」去重、支持部分成功），批量接口由后端指标服务统一提供；监控态按<b>统一刷新频次</b>定时批量刷新，查询指标不跟随测点秒级轮询，<b>具体频次与技术方案由开发评估确定</b>。</p>
     </div>
+  </div>
 
-    <!-- ============ 场景1：编辑页 ============ -->
-    <div class="scene active" id="scene-edit">
-      <div class="editor">
-
-        <div class="panel">
-          <div class="sub-tabs">
-            <div class="sub-tab active" data-sub="point">测点</div>
-            <div class="sub-tab" data-sub="var">变量</div>
-          </div>
-          <div class="view-select-wrap">
-            <select class="view-select">
-              <option>空间视图</option><option>容量视图</option><option selected>能效视图</option>
-            </select>
-          </div>
-          <div class="tree-search"><input placeholder="搜索"></div>
-          <div class="panel-body"><div class="tree-scroll" id="tree"></div></div>
-        </div>
-
-        <div class="panel">
-          <div class="panel-head">
-            <div class="panel-title">页面组态 · 画布</div>
-            <div style="font-size:11px;color:var(--text-hint)">1920 × 1080 · 52%</div>
-          </div>
-          <div class="canvas">
-            <div class="widget selected" id="w1">
-              <div class="w-name">指标卡 · <span class="tag tag-metric">指标</span> 实时 PUE</div>
-              <div class="w-val">1.34</div>
-              <div class="w-foot">刷新：30 秒 · 数据源 metric.pue#rt</div>
-            </div>
-            <div class="widget">
-              <div class="w-name">指标卡 · <span class="tag tag-metric">指标</span> 电能消耗量（实时值）</div>
-              <div class="w-val">128.4<span class="w-unit">kWh</span></div>
-              <div class="w-foot">最近半小时统计 · 刷新：半小时对齐 · 数据截止 07-29 09:00</div>
-            </div>
-            <div class="widget">
-              <div class="w-name">指标卡 · <span class="tag tag-point">测点</span> 出水温度</div>
-              <div class="w-val">12.8<span class="w-unit">℃</span></div>
-              <div class="w-foot">刷新：5 秒（现状不变）</div>
-            </div>
-            <div class="widget drop-target" style="grid-column:span 2">
-              <div class="w-name">历史图表 · <span class="tag tag-metric">指标</span> 电能消耗量（小时）</div>
-              <div class="w-chart" id="chart"></div>
-              <div class="w-foot">时间范围 最近 24 小时 · 粒度 小时 · 拖拽指标叶子到图元即完成绑定</div>
-            </div>
-            <div class="widget">
-              <div class="w-name">环形进度 · <span class="tag tag-metric">指标</span> 本月电费占预算</div>
-              <div class="w-val">62<span class="w-unit">%</span></div>
-              <div class="w-foot">分子 metric.cost#electric · 分母 页面常量</div>
-            </div>
-            <div class="canvas-tip">
-              交互：从左树把<b>指标叶子拖到图元</b>完成绑定——与现有测点拖拽绑定一致，<b>不新增绑定入口</b>。本页不展示右侧属性面板。
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="note">
-        <b>需求 12 — 树上改造点（与需求 10 / 11 同源）</b>
-        <ul>
-          <li>「测点」页签保持现状层级，对象实例下直接新增指标叶子，与设备子节点<b>同级同层</b>（不套「指标（N）」分组节点）；叶子可拖拽、可点选。</li>
-          <li><b>固定仅有值</b>：不提供「仅有值 / 全部」开关；算不出的不出现在树上。</li>
-          <li>三处选择器须调同一指标选取服务，同对象所见指标集合 / 命名 / 分组一致。</li>
-          <li>「变量」页签：指标可作为只读变量参与展示表达式（如 <code>本月电费 / 预算</code>），<b>不得</b>作为控制指令输入变量。</li>
-          <li><b>测点与实时指标能力一致</b>：凡测点可绑的图元，实时指标均可绑（含历史图表 / 数据统计 / 桑基图）。</li>
-        </ul>
-      </div>
-
-      <div class="note warn">
-        <b>需求 12 — 刷新与失效（组态特有）</b>
-        <ul>
-          <li>时段指标<strong>实时值</strong>：按<strong>半小时</strong>对齐刷新，取最近半小时统计值；图元显示数据截止时间；不得秒级轮询打指标服务。</li>
-          <li>时段指标<strong>历史时序</strong>：按绑定采样周期整点对齐刷新（复用需求 10 §5.5）；须持久化采样周期及聚合方式。</li>
-          <li>实时指标沿用固定周期；<b>测点刷新逻辑完全不变</b>。</li>
-          <li>打开组态时校验绑定有效性：失效项在画布与属性面板标记并提示具体缺失指标，不静默空值。</li>
-        </ul>
-      </div>
+  <div class="anno anno-version-header" data-version="v1.1">
+    <span class="anno-tag">版本信息</span>
+    <div class="anno-body">
+      <p><b>当前版本：</b>v1.1</p>
+      <p><b>更新日期：</b>2026-08-05</p>
+      <p><b>变更概述：</b>对齐真实系统「绑定」tab 的<b>数值映射</b>结构。数据来源类型新增「<b>查询指标</b>」（原有函数、测点、告警类型、测点名称、测点映射保持不变）；查询条件改由数值行右侧 ⚙ 打开的「<b>查询设置</b>」弹窗按指标分别设置，沿用系统现有时间范围枚举、<b>排除「最近1小时」</b>，<b>默认「当天」</b>；移除属性面板上的「应用当前时间到其他指标」按钮，该快捷操作收进弹窗内每个指标行。</p>
     </div>
+  </div>
 
-    <!-- ============ 场景2：兼容矩阵 ============ -->
-    <div class="scene" id="scene-compat">
-      <div class="card">
-        <div class="panel-head">
-          <div class="panel-title">图元 × 数据项类型 兼容矩阵</div>
-          <span class="new-badge">需求12 交付物</span>
-        </div>
-        <table class="compat-table">
-          <thead>
-            <tr>
-              <th style="width:150px">图元</th>
-              <th style="width:80px">测点</th>
-              <th style="width:110px">实时指标</th>
-              <th style="width:110px">时间段指标</th>
-              <th>约束说明</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>指标卡</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td>
-              <td>时段指标走<strong>实时值</strong>：取<strong>最近半小时</strong>粒度统计值，并显示数据截止时间</td>
-            </tr>
-            <tr>
-              <td>仪表盘 / 水波图</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td>
-              <td>需要量程；时段指标同左，取最近半小时统计值</td>
-            </tr>
-            <tr>
-              <td>环形进度条 / 进度条</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td>
-              <td>时段指标取最近半小时统计值；分母为常量或另一数据项，<b>分子分母同口径</b></td>
-            </tr>
-            <tr>
-              <td>实时图表</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td>
-              <td>时段指标无秒级序列，不可绑</td>
-            </tr>
-            <tr>
-              <td>历史图表</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td>
-              <td>时段指标走<strong>历史时序</strong>：复用参数查询语义收敛（需求 10 §5.5）；按所选采样周期出点，<b>不插值</b></td>
-            </tr>
-            <tr>
-              <td>数据统计图 / 桑基图</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td>
-              <td>时段指标同历史时序规则（需求 10 §5.5）；桑基图流量口径须来自计量拓扑，<b>不得跨对象自行相加</b></td>
-            </tr>
-            <tr>
-              <td>普通文本 / 富文本</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td>
-              <td>纯展示；绑时段指标时同「实时值」口径（最近半小时）</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="note">
-        <b>矩阵口径</b>
-        <ul>
-          <li><b>测点与实时指标能力一致</b>：凡测点可绑的图元，实时指标均可绑。</li>
-          <li>组态本身<b>无</b>按钮组 / 控制类、告警 / 联动类图元，矩阵不列这两行。</li>
-          <li><b>时段类型指标 =「历史实时指标」给值接口</b>，分两种：
-            <ol style="margin:4px 0 0 18px">
-              <li><b>给实时值</b>（指标卡 / 仪表 / 进度条 / 文本等）：取<strong>最近半小时</strong>粒度统计值。</li>
-              <li><b>基于时序给历史采样周期聚合值</b>（历史图表 / 数据统计 / 桑基图等）：复用参数查询语义收敛统一规则（需求 10 §5.5：采样周期 1 小时及以上，聚合复用「求和」等）。</li>
-            </ol>
-          </li>
-          <li>实时图表对时段指标仍不可绑（无秒级序列）。</li>
-        </ul>
-      </div>
-
-      <div class="note ok">
-        <b>三处选择器的分工边界（三个开发各自的活）</b>
-        <ul>
-          <li><b>需求 10</b>：报表「选择测点」弹窗（<code>twin-select-tree</code>）—— 先选后确认、有已选清单与外层表格。</li>
-          <li><b>需求 11</b>：报表节点-测点树（原始数据查询 / 运行极值查询）—— 常驻左树、选中即查询。</li>
-          <li><b>需求 12</b>：融合组态左下树 —— 常驻左树、<b>拖拽绑定到图元</b>，多一层「图元兼容 + 刷新策略」。</li>
-          <li>三者<b>共用</b>指标选取服务与挂载规则，<b>不共用</b>各自的组件实现。<b>公共约束若要改，三处需同步改</b>。</li>
-        </ul>
-      </div>
+  <div class="anno anno-version-header" data-version="v1.0">
+    <span class="anno-tag">版本信息</span>
+    <div class="anno-body">
+      <p><b>当前版本：</b>v1.0（初版）</p>
+      <p><b>更新日期：</b>2026-08-05</p>
+      <p><b>变更概述：</b>初版。覆盖测点变量树接入指标、历史图表与其余七类图元的查询指标绑定与时间范围设置。</p>
+      <p><b>本页说明：</b>对应 AI 节能 v2.5 <b>需求 13 融合组态变量树</b>。落点：工程配置 → 页面组态 → 融合组态编辑器。页面含两个场景：① 历史图表编辑区（趋势序列）、② 其他图元编辑区（固定结果）。顶部深色条为原型场景切换器，<b>不属于真实系统界面</b>。</p>
     </div>
+  </div>
 
+  <div class="anno anno-req" data-version="v1.2">
+    <span class="anno-tag">需求说明</span>
+    <span class="anno-version">v1.2</span>
+    <span class="anno-source">需求文档</span>
+    <div class="anno-body">
+      <p><b>页面级验收要点：</b></p>
+      <ul>
+        <li>本期适配 <b>8 类图元</b>：历史图表、指标卡、环形进度条、进度条、仪表盘、水波图、数据统计、桑基图。</li>
+        <li>其他七类图元在「绑定」tab 的数值映射中<b>新增「查询指标」数据来源</b>，与函数、测点、告警类型、测点名称、测点映射并列；原有五种方式不变。</li>
+        <li>查询指标当前<b>只有「时间范围」一个查询条件</b>，在「查询设置」弹窗中<b>按指标分别设置</b>，<b>默认「当天」</b>。</li>
+        <li>同一图元绑定查询指标<b>不设统一数量上限</b>，最终可展示的数量与布局沿用各图元既有能力。</li>
+        <li>绑定入口沿用现有方式：左树拖拽到图元、或在数值行选择数据来源后选择／拖入指标，<b>不新增独立的绑定弹窗</b>。</li>
+        <li>历史图表取<b>历史趋势序列</b>；其余七类取<b>固定结果</b>后按各自既有形式展示。</li>
+        <li>同一组态页面的所有查询指标由后端<b>统一批量查询</b>，不按图元或数值项逐个发请求；单个指标失败不影响同页其余指标。</li>
+        <li>监控态按<b>统一刷新频次</b>刷新，查询指标不跟随测点秒级轮询；<b>具体频次与技术方案由开发确定</b>，产品侧只约定必须统一。</li>
+      </ul>
+      <p><b>本期不做：</b>视图扩展、指标定义与计算口径变更、时间范围以外的查询条件、其余五种数据来源的规则调整。</p>
+    </div>
   </div>
 </div>
 
+<div class="app">
+
+<div class="global"><span class="grid-icon">▦</span><span>设施监控</span><span>AI智能能效</span><span>系统管理</span><span>数据分析</span><span class="active">工程配置</span><span class="user">系统管理员 ⌄</span></div>
+
+<div class="pagebar"><span class="tab-chip">设备组态</span><span class="tab-chip on">页面组态</span></div>
+
+<div class="tools"><b>▷</b><b>↶</b><b>↷</b><b>▤ 保存</b><b>缓存 <i class="status-dot"></i>开启中</b><b class="lang">中 EN</b></div>
+
+<div class="workspace">
+
+  <!-- ① 导航 + 测点/变量树 -->
+  <section class="mod mod-nav">
+    <div class="mod-label">模块 ①　导航 + 测点/变量树</div>
+
+    <div class="anno anno-data" data-version="v1.0">
+      <span class="anno-tag">数据逻辑</span>
+      <span class="anno-version">v1.0</span>
+      <span class="anno-source">需求文档</span>
+      <div class="anno-body">
+        <p><b>关联模块：</b>测点变量树 — 指标挂载与可见性</p>
+        <ul>
+          <li><b>挂载层级：</b>指标叶子直接挂在所属对象节点下，与设备子节点<b>同级同层</b>，不新增「指标（N）」分组节点。</li>
+          <li><b>可见范围：</b>实时指标与查询指标<b>都在树上展示</b>，用标签区分（与报表左树不同：报表左树过滤查询指标，本页开放）。</li>
+          <li><b>仅有值：</b>当前口径算不出的指标不出现在树上，不做置灰占位。</li>
+          <li><b>取数时机：</b>指标本身不在树上取值，取值发生在绑定到图元并设置时间范围之后。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="anno anno-ux" data-version="v1.1">
+      <span class="anno-tag">交互说明</span>
+      <span class="anno-version">v1.1</span>
+      <span class="anno-source">需求文档</span>
+      <div class="anno-body">
+        <p><b>关联模块：</b>测点 / 变量页签与绑定入口</p>
+        <ul>
+          <li><b>页签切换：</b>「测点」展示对象树（含指标叶子），「变量」展示系统与自定义变量，两者互斥显示。</li>
+          <li><b>绑定方式一：</b>把指标叶子拖到画布图元上，即完成绑定并进入该图元的属性面板。</li>
+          <li><b>绑定方式二：</b>先选中图元，在「绑定」tab 的数值行把数据来源选为「查询指标」，再选择或拖入指标。</li>
+          <li><b>搜索：</b>按名称过滤，测点与指标一起命中；清空后恢复原树。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mod-ui"><aside class="col">
+      <div class="menu-line"><span>文件</span><span>编辑</span><span>主题</span></div>
+      <div class="panel-head"><span>导航</span><span>⟳</span></div>
+      <div class="picker"><select class="select"><option>空间视图</option><option>容量视图</option><option>能效视图</option></select><button class="icon-btn">✎</button></div>
+      <div class="picker"><input class="input" placeholder="搜索"></div>
+      <div class="tree" style="max-height:176px;flex:0 0 auto">
+        <div class="tree-row"><span class="ico">⊟</span><span class="ico">🏠</span><span class="name">人保北方信息中心工程</span></div>
+        <div class="tree-row indent-1"><span class="ico">⊞</span><span class="name">合肥中行</span></div>
+        <div class="tree-row indent-1"><span class="ico">⊞</span><span class="name">软POC项目</span></div>
+        <div class="tree-row indent-1"><span class="ico">⊟</span><span class="name">A栋</span></div>
+        <div class="tree-row indent-2"><span class="ico">▤</span><span class="name">节能分析</span></div>
+        <div class="tree-row indent-2"><span class="ico">▤</span><span class="name">机房视图</span></div>
+        <div class="tree-row indent-2 on"><span class="ico">▤</span><span class="name">总览</span></div>
+      </div>
+
+      <div class="split"></div>
+
+      <div class="sub-tabs"><div class="sub-tab on" id="tabPoint">测点</div><div class="sub-tab" id="tabVar">变量</div></div>
+      <div class="picker"><select class="select"><option>空间视图</option><option>容量视图</option><option>能效视图</option></select></div>
+      <div class="picker"><input class="input" placeholder="搜索测点或指标"></div>
+
+      <div class="tree" id="pointTree" style="flex:1">
+        <div class="tree-row"><span class="ico">⊟</span><span class="ico">🏠</span><span class="name">人保北方信息中心工程</span></div>
+        <div class="tree-row indent-1 leaf-metric"><span class="ico">◆</span><span class="name">PUE</span><span class="tag rt">实时指标</span><span class="grip">⠿</span></div>
+        <div class="tree-row indent-1 leaf-metric"><span class="ico">◆</span><span class="name">实时电功率</span><span class="tag rt">实时指标</span><span class="grip">⠿</span></div>
+        <div class="tree-row indent-1 leaf-metric"><span class="ico">◆</span><span class="name">电能消耗量</span><span class="tag qm">查询指标</span><span class="grip">⠿</span></div>
+        <div class="tree-row indent-1 leaf-metric"><span class="ico">◆</span><span class="name">电费总额</span><span class="tag qm">查询指标</span><span class="grip">⠿</span></div>
+        <div class="tree-row indent-1 leaf-metric"><span class="ico">◆</span><span class="name">尖时电费</span><span class="tag qm">查询指标</span><span class="grip">⠿</span></div>
+        <div class="tree-row indent-1"><span class="ico">⊞</span><span class="name">合肥中行</span></div>
+        <div class="tree-row indent-1"><span class="ico">⊞</span><span class="name">软POC项目</span></div>
+        <div class="tree-row indent-1"><span class="ico">⊟</span><span class="name">A栋</span></div>
+        <div class="tree-row indent-2"><span class="ico">⊟</span><span class="name">暖通空调系统</span></div>
+        <div class="tree-row indent-3 leaf-metric"><span class="ico">◆</span><span class="name">CLF</span><span class="tag rt">实时指标</span><span class="grip">⠿</span></div>
+        <div class="tree-row indent-3 leaf-metric"><span class="ico">◆</span><span class="name">电能消耗量</span><span class="tag qm">查询指标</span><span class="grip">⠿</span></div>
+        <div class="tree-row indent-3"><span class="ico">◇</span><span class="name">总电能</span><span class="tag">测点</span><span class="grip">⠿</span></div>
+      </div>
+
+      <div class="tree" id="varTree" style="flex:1" hidden>
+        <div class="tree-row"><span class="ico">⊟</span><span class="name">系统变量</span></div>
+        <div class="tree-row"><span class="ico">⊟</span><span class="name">当前空间</span></div>
+        <div class="tree-row"><span class="ico">⊟</span><span class="name">自定义变量</span></div>
+        <div class="tree-row indent-1"><span class="name" style="color:#999">未添加自定义变量</span></div>
+      </div>
+    </aside></div>
+  </section>
+
+  <!-- ② 属性面板 -->
+  <section class="mod mod-prop">
+    <div class="mod-label">模块 ②　选中图元的属性面板（绑定）</div>
+
+    <div class="anno anno-field" data-version="v1.1">
+      <span class="anno-tag">字段说明</span>
+      <span class="anno-version">v1.1</span>
+      <span class="anno-source">需求文档</span>
+      <div class="anno-body">
+        <p><b>关联模块：</b>场景① 历史图表 — 「时间设置」</p>
+        <table class="anno-table">
+          <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>规则</th><th>默认值</th></tr></thead>
+          <tbody>
+            <tr><td>范围</td><td>下拉</td><td>是</td><td>沿用历史图表现有取值方式</td><td>时间范围</td></tr>
+            <tr><td>时间范围</td><td>下拉</td><td>是</td><td><b>查询指标唯一的查询条件</b>，沿用现有枚举：当天 / 本周 / 当月 / 当年 / 最近1天 / 最近1周 / 最近1个月 / 最近3个月 / 最近1年。<b>图元绑定了查询指标时不提供「最近1小时」</b><span class="anno-source" data-type="待确认">待确认</span></td><td>当天</td></tr>
+            <tr><td>采样周期</td><td>下拉</td><td>是</td><td>决定趋势出点密度，沿用图元既有能力</td><td>小时</td></tr>
+            <tr><td>聚合方式</td><td>下拉</td><td>是</td><td>图元侧的趋势聚合，<b>不带入查询指标请求</b></td><td>首值</td></tr>
+            <tr><td>显示规则</td><td>勾选</td><td>否</td><td>不显示最近一次采样数据，沿用现状</td><td>不勾选</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="anno anno-field" data-version="v1.1">
+      <span class="anno-tag">字段说明</span>
+      <span class="anno-version">v1.1</span>
+      <span class="anno-source">需求文档</span>
+      <div class="anno-body">
+        <p><b>关联模块：</b>场景② 其他图元 — 「绑定」tab 的数值映射行（数值1 / 数值2 / …）</p>
+        <table class="anno-table">
+          <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>规则</th><th>默认值</th></tr></thead>
+          <tbody>
+            <tr><td>数据来源</td><td>下拉</td><td>是</td><td>函数 / 测点 / 告警类型 / 测点名称 / 测点映射 / <b>查询指标（本期新增）</b>；切换来源后清空下方已选值</td><td>沿用图元现状</td></tr>
+            <tr><td>查询指标</td><td>选择或拖入</td><td>是</td><td>来源为「查询指标」时出现；从左侧测点树拖入或点击选择，一个数值行绑定一个指标</td><td>空</td></tr>
+            <tr><td>查询设置 ⚙</td><td>图标按钮</td><td>—</td><td>与「函数」行的设置图标同位置同形态；点击打开「查询设置」弹窗</td><td>—</td></tr>
+            <tr><td>查询条件（回显）</td><td>只读文本</td><td>—</td><td>展示该指标在弹窗中已保存的条件，便于不打开弹窗即可核对</td><td><b>当天</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="anno anno-ux" data-version="v1.1">
+      <span class="anno-tag">交互说明</span>
+      <span class="anno-version">v1.1</span>
+      <span class="anno-source">需求文档</span>
+      <div class="anno-body">
+        <p><b>关联模块：</b>数值映射行与查询设置入口</p>
+        <ul>
+          <li><b>新增来源：</b>数据来源下拉新增「查询指标」，与原有五种方式并列，不改变其余方式的行为。</li>
+          <li><b>选指标：</b>选中「查询指标」后，值区变为可选择／可拖入状态，从左侧测点树拖入指标即完成绑定。</li>
+          <li><b>多指标：</b>图元支持多个数值项时（如数据统计、桑基图），每个数值行各绑定一个查询指标，用行尾 ⊞ 增加。</li>
+          <li><b>查询设置：</b>点任一数值行右侧 ⚙ 打开「查询设置」弹窗，在弹窗内<b>按指标分别</b>设置条件；<b>属性面板上不再放批量应用按钮</b>。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="anno anno-edge" data-version="v1.1">
+      <span class="anno-tag">边界与异常</span>
+      <span class="anno-version">v1.1</span>
+      <span class="anno-source" data-type="产品推断">产品推断</span>
+      <div class="anno-body">
+        <p><b>关联模块：</b>绑定数量与条件校验</p>
+        <ul>
+          <li><b>数量：</b>不设统一上限；超出图元可展示数量时，按该图元既有规则截断或滚动，不额外报错。</li>
+          <li><b>未选指标：</b>来源选了「查询指标」但值区为空时，⚙ 置灰，保存时该数值行按未配置处理。</li>
+          <li><b>最近1小时不开放：</b>查询指标的查询条件里不出现「最近1小时」，其余时间范围选项全部支持；该限制只作用于查询指标，测点等其他数据来源不受影响。</li>
+          <li><b>切换来源：</b>从「查询指标」切到其他来源时，已保存的查询条件一并清除，需二次确认。</li>
+          <li><b>只有 1 个查询指标：</b>弹窗内「应用到其他指标」置灰，悬浮提示「当前图元只有 1 个查询指标」。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mod-ui"><aside class="col">
+      <div class="prop-tabs"><div class="prop-tab">样式</div><div class="prop-tab on">绑定</div><div class="prop-tab">事件</div></div>
+      <div class="prop-scroll">
+        <div class="acc"><div class="acc-title"><i class="chev">⌃</i>单元格告警</div><div class="acc-body"><select class="select"><option>请选择</option></select><button class="btn full">选择或拖入</button></div></div>
+
+        <div class="acc history-only"><div class="acc-title"><i class="chev">⌃</i>时间设置</div><div class="acc-body">
+          <div class="field"><label>范围</label><select class="select"><option>时间范围</option></select></div>
+          <div class="field"><label>时间范围</label><select class="select"><option selected>当天</option><option>本周</option><option>当月</option><option>当年</option><option>最近1天</option><option>最近1周</option><option>最近1个月</option><option>最近3个月</option><option>最近1年</option></select></div>
+          <div class="field"><label>采样周期</label><select class="select"><option>小时</option><option>天</option></select></div>
+          <div class="field"><label>聚合方式</label><select class="select"><option>首值</option><option>求和</option><option>平均值</option></select></div>
+          <div class="field"><label>显示规则</label><label style="display:flex;gap:5px;align-items:center"><input type="checkbox">不显示最近一次采样数据</label></div>
+        </div></div>
+
+        <div class="acc history-only"><div class="acc-title"><i class="chev">⌃</i>测点列表</div><div class="acc-body">
+          <div class="metric-row on"><div class="metric-top"><strong>电能消耗量</strong><span class="tag qm">查询指标</span></div><div class="metric-time">当天</div></div>
+          <div class="metric-row"><div class="metric-top"><strong>电费总额</strong><span class="tag qm">查询指标</span></div><div class="metric-time">当天</div></div>
+        </div></div>
+
+        <div class="acc fixed-only hidden"><div class="acc-title"><i class="chev">⌃</i>数值1</div><div class="acc-body">
+          <div class="bind-row"><select class="select" id="srcType1"><option>函数</option><option>测点</option><option>告警类型</option><option>测点名称</option><option>测点映射</option><option selected>查询指标</option></select></div>
+          <div class="bind-row">
+            <div class="drop-slot"><span class="ico">◆</span><span>电能消耗量</span></div>
+            <button class="icon-btn blue qs-open" title="查询设置">⚙</button>
+            <button class="icon-btn" title="新增一项">⊞</button>
+          </div>
+          <div class="bind-meta">查询条件：<span class="cond" data-idx="0">当天</span></div>
+        </div></div>
+
+        <div class="acc fixed-only hidden"><div class="acc-title"><i class="chev">⌃</i>数值2</div><div class="acc-body">
+          <div class="bind-row"><select class="select"><option>函数</option><option>测点</option><option>告警类型</option><option>测点名称</option><option>测点映射</option><option selected>查询指标</option></select></div>
+          <div class="bind-row">
+            <div class="drop-slot"><span class="ico">◆</span><span>电费总额</span></div>
+            <button class="icon-btn blue qs-open" title="查询设置">⚙</button>
+            <button class="icon-btn" title="新增一项">⊞</button>
+          </div>
+          <div class="bind-meta">查询条件：<span class="cond" data-idx="1">当天</span></div>
+        </div></div>
+
+        <div class="acc fixed-only hidden"><div class="acc-title"><i class="chev">⌄</i>数值3</div></div>
+        <div class="acc fixed-only hidden"><div class="acc-title"><i class="chev">⌄</i>前关</div></div>
+        <div class="acc fixed-only hidden"><div class="acc-title"><i class="chev">⌄</i>主题</div></div>
+        <div class="acc fixed-only hidden"><div class="acc-title"><i class="chev">⌄</i>其它</div></div>
+      </div>
+    </aside></div>
+  </section>
+
+  <!-- ③ 画布 -->
+  <section class="mod mod-canvas">
+    <div class="mod-label">模块 ③　画布与图元展示</div>
+
+    <div class="anno anno-data" data-version="v1.2">
+      <span class="anno-tag">数据逻辑</span>
+      <span class="anno-version">v1.2</span>
+      <span class="anno-source">需求文档</span>
+      <div class="anno-body">
+        <p><b>关联模块：</b>图元取数与刷新</p>
+        <ul>
+          <li><b>历史图表：</b>按每个查询指标各自的时间范围取<b>历史趋势序列</b>，多指标在同一坐标系分系列展示，图例沿用现状。</li>
+          <li><b>其余七类图元：</b>按各自时间范围取<b>固定结果</b>（单值），再由指标卡、环形进度条、进度条、仪表盘、水波图、数据统计、桑基图按既有形式渲染。</li>
+          <li><b>批量取数：</b>整个组态页面的查询指标<b>合并为一次批量查询</b>，请求项为「对象 + 指标 + 时间范围」并对完全相同项去重；不按图元、不按数值项逐个发请求。</li>
+          <li><b>部分成功：</b>批量结果逐项返回状态，单个指标失败或无数据只影响对应数值项，<b>不影响同页其余指标出数</b>，也不使整页取数失败。</li>
+          <li><b>刷新频次：</b>监控态按<b>统一刷新频次</b>定时批量刷新，查询指标<b>不跟随测点秒级轮询</b>；同一周期内一个页面只发一次批量查询。<b>具体频次与技术方案由开发评估确定</b>。</li>
+          <li><b>相对区间：</b>当天 / 本周 / 当月 / 当年按每次取数时刻的自然区间计算，跨日跨月后下一次刷新自动切到新区间。</li>
+          <li><b>编辑态：</b>新增绑定或改查询条件后按需即时查询用于预览，不进入定时刷新。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="anno anno-state" data-version="v1.2">
+      <span class="anno-tag">状态说明</span>
+      <span class="anno-version">v1.2</span>
+      <span class="anno-source" data-type="产品推断">产品推断</span>
+      <div class="anno-body">
+        <p><b>关联模块：</b>图元数据状态</p>
+        <ul>
+          <li><b>加载中：</b>图元区域显示加载态，保留原有边框与标题，不闪烁重排。</li>
+          <li><b>无数据：</b>该时间范围内无结果时显示「--」，并保留单位与标题。</li>
+          <li><b>指标失效：</b>绑定的指标被删除或不再可算时，编辑态在属性面板与树上给出失效提示，运行态显示「--」。</li>
+          <li><b>查询失败：</b>仅该指标位置显示异常提示，同图元其他指标正常展示。</li>
+          <li><b>刷新失败：</b>定时刷新失败不清空上一轮结果，图元保留上次成功值并标记数据时间，直到下一次刷新成功。</li>
+          <li><b>页面不可见：</b>切走标签页时暂停定时刷新，重新可见后立即补一次批量查询。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mod-ui"><main class="center"><div class="canvas">
+      <div class="canvas-head">☰　‹　›　/ 人保北方信息中心工程 / 总览 <span>编辑</span></div>
+      <div class="dashboard-title">能耗总览</div>
+
+      <div id="historyCanvas">
+        <div class="widget history-widget selected">
+          <div class="widget-title">历史图表 · 能耗与电费趋势</div>
+          <div class="legend"><span><i style="background:#16b9e8"></i>电能消耗量</span><span><i style="background:#f6b72c"></i>电费总额</span></div>
+          <div class="chart"><div class="gridline"></div><div class="gridline"></div><div class="gridline"></div><div class="gridline"></div><div class="line"></div><div class="line second"></div></div>
+          <span class="handle">图元设置</span>
+        </div>
+      </div>
+
+      <div id="fixedCanvas" class="hidden">
+        <div class="widget fixed-widget selected">
+          <div class="stat">电能消耗量<b>12,840<em>kWh</em></b></div>
+          <div class="stat">电费总额<b>8,562<em>元</em></b></div>
+          <div class="stat">尖时电费<b>2,130<em>元</em></b></div>
+          <span class="handle">图元设置</span>
+        </div>
+        <div class="other-samples">
+          <div class="sample">指标卡<div class="sample-value">128.4 kWh</div></div>
+          <div class="sample">仪表盘 / 水波图<div class="sample-value">84%</div></div>
+        </div>
+      </div>
+
+      <div class="side-cards"><div class="dark-card"><b>水冷系统AI寻优</b><div class="ring">100</div></div><div class="dark-card"><b>机房AI寻优</b><div class="ring">100</div></div></div>
+      <div class="bottom-nav"><div class="nav-dot on">总览</div><div class="nav-dot">冷站</div><div class="nav-dot">机房</div><div class="nav-dot">能效</div></div>
+    </div></main></div>
+  </section>
+
+  <!-- ④ 图元库 -->
+  <section class="mod mod-glyph">
+    <div class="mod-label">模块 ④　图元库</div>
+
+    <div class="anno anno-edge" data-version="v1.0">
+      <span class="anno-tag">边界与异常</span>
+      <span class="anno-version">v1.0</span>
+      <span class="anno-source">需求文档</span>
+      <div class="anno-body">
+        <p><b>关联模块：</b>图元适配范围</p>
+        <ul>
+          <li><b>本期适配（8 类）：</b>历史图表、指标卡、环形进度条、进度条、仪表盘、水波图、数据统计、桑基图。</li>
+          <li><b>不适配图元：</b>2D、3D 场景、实时图表、按钮组、普通文本、筛选组件等不接受查询指标绑定；拖入时不响应并提示「该图元暂不支持查询指标」。</li>
+          <li><b>实时图表：</b>继续只接测点与实时指标，本期不变。</li>
+          <li><b>图元库本身不改：</b>不新增图元、不调整分组与顺序。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mod-ui"><aside class="right">
+      <div class="right-title">图元</div>
+      <input class="search" placeholder="搜索">
+      <div class="group-title">⌃ 基础图元</div>
+      <div class="glyph-grid">
+        <div class="glyph"><div class="ico">□</div>2D</div>
+        <div class="glyph"><div class="ico">◈</div>3D场景</div>
+        <div class="glyph"><div class="ico">123</div>指标卡</div>
+        <div class="glyph"><div class="ico">▥</div>实时图表</div>
+        <div class="glyph"><div class="ico">⌁</div>历史图表</div>
+        <div class="glyph"><div class="ico">◯</div>环形进度条</div>
+        <div class="glyph"><div class="ico">━</div>进度条</div>
+        <div class="glyph"><div class="ico">◔</div>仪表盘</div>
+        <div class="glyph"><div class="ico">≋</div>水波图</div>
+        <div class="glyph"><div class="ico">▦</div>数据统计</div>
+        <div class="glyph"><div class="ico">BTN</div>按钮组</div>
+        <div class="glyph"><div class="ico">T</div>普通文本</div>
+        <div class="glyph"><div class="ico">▰</div>桑基图</div>
+        <div class="glyph"><div class="ico">▤</div>筛选组件</div>
+      </div>
+    </aside></div>
+  </section>
+</div>
+
+<div class="statusbar"><span>区块抽屉</span><span id="cellInfo">单元格：历史图表 - 折线图 401×130</span><span>按住空格以缩放及拖拽</span><span>1920 × 1080　31%</span></div>
+</div>
+
+<!-- 查询设置弹窗：入口为「绑定」tab 内数值映射行右侧的 ⚙ -->
+<div class="modal-mask" id="qsMask">
+  <div class="modal">
+    <div class="modal-head"><span>查询设置</span><button class="modal-close" id="qsClose">✕</button></div>
+    <div class="modal-body">
+
+      <div class="anno anno-field" data-version="v1.1">
+        <span class="anno-tag">字段说明</span>
+        <span class="anno-version">v1.1</span>
+        <span class="anno-source">需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>查询设置弹窗；入口：「绑定」tab 内数据来源为「查询指标」的数值行右侧 ⚙</p>
+          <table class="anno-table">
+            <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>规则</th><th>默认值</th></tr></thead>
+            <tbody>
+              <tr><td>指标行</td><td>只读</td><td>—</td><td>按数值序号列出本图元所有数据来源为「查询指标」的绑定项；非查询指标的数值行不出现</td><td>—</td></tr>
+              <tr><td>查询条件</td><td>下拉</td><td>是</td><td>沿用系统现有时间范围枚举：当天 / 本周 / 当月 / 当年 / 最近1天 / 最近1周 / 最近1个月 / 最近3个月 / 最近1年；<b>「最近1小时」不开放</b>；<b>按指标分别保存</b></td><td><b>当天</b></td></tr>
+              <tr><td>应用到其他指标</td><td>快捷操作</td><td>否</td><td>把本行条件覆盖到<b>同一图元</b>其余查询指标，不影响其他图元</td><td>—</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="anno anno-ux" data-version="v1.1">
+        <span class="anno-tag">交互说明</span>
+        <span class="anno-version">v1.1</span>
+        <span class="anno-source" data-type="产品推断">产品推断</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>查询设置弹窗 — 确认与回写</p>
+          <ul>
+            <li><b>打开：</b>点任一数值行的 ⚙ 都打开同一个弹窗，并定位到该数值对应的指标行。</li>
+            <li><b>确定：</b>校验通过后写回各数值行的「查询条件」并关闭；画布按新条件重新取数。</li>
+            <li><b>取消 / 关闭：</b>丢弃本次修改，已保存的条件不变。</li>
+            <li><b>未做任何设置：</b>指标绑定时即带默认「当天」，不存在空条件状态。</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="modal-hint">本图元共 3 个数据来源为「查询指标」的绑定项，条件按指标分别保存。</div>
+
+      <div class="qs-row">
+        <div class="qs-head"><b>数值1</b><span class="qs-slot">查询指标 · 电能消耗量</span><button class="qs-apply">应用到其他指标</button></div>
+        <div class="qs-grid">
+          <label>查询条件</label>
+          <select class="select qs-cond" data-idx="0"><option selected>当天</option><option>本周</option><option>当月</option><option>当年</option><option>最近1天</option><option>最近1周</option><option>最近1个月</option><option>最近3个月</option><option>最近1年</option></select>
+        </div>
+      </div>
+
+      <div class="qs-row">
+        <div class="qs-head"><b>数值2</b><span class="qs-slot">查询指标 · 电费总额</span><button class="qs-apply">应用到其他指标</button></div>
+        <div class="qs-grid">
+          <label>查询条件</label>
+          <select class="select qs-cond" data-idx="1"><option selected>当天</option><option>本周</option><option>当月</option><option>当年</option><option>最近1天</option><option>最近1周</option><option>最近1个月</option><option>最近3个月</option><option>最近1年</option></select>
+        </div>
+      </div>
+
+      <div class="qs-row">
+        <div class="qs-head"><b>数值3</b><span class="qs-slot">查询指标 · 尖时电费</span><button class="qs-apply">应用到其他指标</button></div>
+        <div class="qs-grid">
+          <label>查询条件</label>
+          <select class="select qs-cond" data-idx="2"><option selected>当天</option><option>本周</option><option>当月</option><option>当年</option><option>最近1天</option><option>最近1周</option><option>最近1个月</option><option>最近3个月</option><option>最近1年</option></select>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-foot"><button class="btn" id="qsCancel">取消</button><button class="btn blue" id="qsOk">确定</button></div>
+  </div>
+</div>
+
+<button class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+
+<div class="anno-filter-bar" id="annoFilterBar">
+  <span class="anno-filter-label">批注版本：</span>
+  <div class="anno-filter-tags" id="annoFilterTags"></div>
+</div>
+
 <script>
-(function () {
-  var $ = function (id) { return document.getElementById(id); };
+(function(){
+var $=function(id){return document.getElementById(id)};
+function setScene(next){
+  document.querySelectorAll('.switcher button').forEach(function(b){b.classList.toggle('on',b.dataset.scene===next)});
+  $('historyCanvas').classList.toggle('hidden',next!=='history');
+  $('fixedCanvas').classList.toggle('hidden',next!=='fixed');
+  document.querySelectorAll('.history-only').forEach(function(x){x.classList.toggle('hidden',next!=='history')});
+  document.querySelectorAll('.fixed-only').forEach(function(x){x.classList.toggle('hidden',next!=='fixed')});
+  $('cellInfo').textContent=next==='history'?'单元格：历史图表 - 折线图 401×130':'单元格：数据统计 - 横向排列 401×130';
+  if(next!=='fixed')closeQs();
+}
+document.querySelectorAll('.switcher button').forEach(function(b){b.addEventListener('click',function(){setScene(b.dataset.scene)})});
+$('tabPoint').addEventListener('click',function(){this.classList.add('on');$('tabVar').classList.remove('on');$('pointTree').hidden=false;$('varTree').hidden=true});
+$('tabVar').addEventListener('click',function(){this.classList.add('on');$('tabPoint').classList.remove('on');$('pointTree').hidden=true;$('varTree').hidden=false});
+document.querySelectorAll('#pointTree .tree-row').forEach(function(r){r.addEventListener('click',function(){
+  document.querySelectorAll('#pointTree .tree-row').forEach(function(x){x.classList.remove('on')});r.classList.add('on')})});
 
-  function go(name) {
-    document.querySelectorAll('.scene').forEach(function (s) { s.classList.remove('active'); });
-    document.querySelectorAll('.scene-tab').forEach(function (t) { t.classList.remove('active'); });
-    $('scene-' + name).classList.add('active');
-    document.querySelector('.scene-tab[data-scene="' + name + '"]').classList.add('active');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-  document.querySelectorAll('.scene-tab').forEach(function (t) {
-    t.addEventListener('click', function () { go(t.dataset.scene); });
-  });
-  document.querySelectorAll('.sub-tab').forEach(function (t) {
-    t.addEventListener('click', function () {
-      document.querySelectorAll('.sub-tab').forEach(function (x) { x.classList.remove('active'); });
-      t.classList.add('active');
-      draw(t.dataset.sub);
-    });
-  });
-
-  var M = function (n, kind, state) { return { name: n, kind: kind, state: state || 'ok' }; };
-  var PARK = [
-    M('PUE', 'rt'), M('WUE', 'rt', 'pending'), M('实时电功率', 'rt'),
-    M('电能消耗量', 'period'), M('电费总额', 'period'), M('尖时电费', 'period'), M('PUE', 'period')
-  ];
-  var SYS = [M('CLF', 'rt'), M('实时电功率', 'rt'), M('电能消耗量', 'period'), M('CLF', 'period')];
-
-  var TREE = [{
-    label: '人保北方信息中心工程', ico: '🏠', open: true, metrics: PARK,
-    children: [
-      { label: '合肥中行', ico: '🏢', children: [] },
-      { label: '软POC项目', ico: '🏢', children: [] },
-      {
-        label: 'A栋', ico: '🏢', open: true,
-        children: [{
-          label: '暖通空调系统', ico: '⚙', open: true, metrics: SYS,
-          children: [{ label: '总电能', ico: 'AA', point: true, leaf: true }]
-        }]
-      }
-    ]
-  }];
-
-  var mode = 'point';
-
-  function kindTag(k) {
-    return k === 'rt' ? '<span class="tag tag-rt">实时</span>' : '<span class="tag tag-period">时段</span>';
-  }
-
-  function render(nodes, parent) {
-    nodes.forEach(function (n) {
-      var wrap = document.createElement('div');
-      var row = document.createElement('div');
-      /* 固定仅有值：不算得出的指标不出现在树上 */
-      var shown = (n.metrics || []).filter(function (m) { return m.state === 'ok'; });
-      var hasChild = (n.children && n.children.length) || shown.length;
-      row.className = 'tree-row';
-      row.innerHTML =
-        '<span class="tree-chevron">' + (hasChild ? (n.open ? '▼' : '▶') : '') + '</span>' +
-        '<span class="tree-ico">' + n.ico + '</span>' +
-        '<span class="tree-label">' + n.label + '</span>';
-      wrap.appendChild(row);
-
-      var box = document.createElement('div');
-      box.className = 'tree-children';
-      box.style.display = n.open ? 'block' : 'none';
-
-      /* 指标叶子：不套分组节点，直接挂在对象节点下，与设备子节点同级同层 */
-      if (shown.length) {
-        shown.forEach(function (m) {
-          var r = document.createElement('div');
-          r.className = 'tree-row metric-leaf';
-          r.draggable = true;
-          r.innerHTML =
-            '<span class="tree-chevron"></span><span class="tree-ico">◆</span>' +
-            '<span class="tree-label">' + m.name + '</span>' + kindTag(m.kind) +
-            '<span class="drag-hint">⠿</span>';
-          r.title = '可拖拽到画布图元完成绑定';
-          box.appendChild(r);
-        });
-      }
-
-      if (n.children && n.children.length) render(n.children, box);
-      if (hasChild) wrap.appendChild(box);
-
-      row.querySelector('.tree-chevron').addEventListener('click', function (e) {
-        e.stopPropagation();
-        if (!hasChild) return;
-        var open = box.style.display !== 'none';
-        box.style.display = open ? 'none' : 'block';
-        this.textContent = open ? '▶' : '▼';
-      });
-      parent.appendChild(wrap);
-    });
-  }
-
-  function draw(sub) {
-    if (sub) mode = sub;
-    var t = $('tree');
-    t.innerHTML = '';
-    if (mode === 'var') {
-      t.innerHTML =
-        '<div class="tree-row"><span class="tree-chevron">▼</span><span class="tree-ico">▤</span>' +
-        '<span class="tree-label" style="font-weight:700">页面变量</span></div>' +
-        '<div class="tree-children">' +
-        '<div class="tree-row"><span class="tree-chevron"></span><span class="tree-ico">𝑥</span>' +
-        '<span class="tree-label">月度电费预算</span><span class="tag tag-point">常量</span></div>' +
-        '<div class="tree-row metric-leaf"><span class="tree-chevron"></span><span class="tree-ico">◆</span>' +
-        '<span class="tree-label">本月电费</span><span class="tag tag-metric">指标</span><span class="new-badge">新增</span></div>' +
-        '<div class="tree-row"><span class="tree-chevron"></span><span class="tree-ico">ƒ</span>' +
-        '<span class="tree-label">电费占预算 = 本月电费 / 预算</span><span class="tag tag-period">只读</span></div>' +
-        '</div>' +
-        '<div style="padding:10px 8px;font-size:11px;color:var(--text-hint);line-height:1.7">' +
-        '指标可作为<b>只读变量</b>参与展示表达式。</div>';
-      return;
-    }
-    render(TREE, t);
-  }
-
-  var c = $('chart');
-  [38, 42, 47, 52, 61, 74, 88, 96, 82, 71, 64, 58, 55, 61, 69, 78, 85, 91, 84, 73, 62, 54, 46, 41]
-    .forEach(function (h) {
-      var i = document.createElement('i');
-      i.style.height = h + '%';
-      c.appendChild(i);
-    });
-
-  draw('point');
+/* 查询设置弹窗：数值行 ⚙ 打开，条件按指标各自保存，确定后回写属性面板 */
+var conds=['当天','当天','当天'];
+function syncModal(){document.querySelectorAll('.qs-cond').forEach(function(s){s.value=conds[s.dataset.idx]})}
+function openQs(){syncModal();$('qsMask').classList.add('on')}
+function closeQs(){$('qsMask').classList.remove('on')}
+document.querySelectorAll('.qs-open').forEach(function(b){b.addEventListener('click',openQs)});
+$('qsClose').addEventListener('click',closeQs);
+$('qsCancel').addEventListener('click',closeQs);
+$('qsMask').addEventListener('click',function(e){if(e.target===this)closeQs()});
+document.querySelectorAll('.qs-apply').forEach(function(b){b.addEventListener('click',function(){
+  var v=b.closest('.qs-row').querySelector('.qs-cond').value;
+  document.querySelectorAll('.qs-cond').forEach(function(s){s.value=v});
+})});
+$('qsOk').addEventListener('click',function(){
+  document.querySelectorAll('.qs-cond').forEach(function(s){conds[s.dataset.idx]=s.value});
+  document.querySelectorAll('.bind-meta .cond').forEach(function(c){c.textContent=conds[c.dataset.idx]});
+  closeQs();
+});
+setScene('history');
 })();
+
+function initAnnoVersionFilter() {
+  var tags = document.getElementById('annoFilterTags');
+  if (!document.body.classList.contains('annotation-mode')) return;
+  var annos = document.querySelectorAll('.anno[data-version]');
+  var versions = [];
+  annos.forEach(function(a) {
+    var v = a.getAttribute('data-version');
+    if (v && versions.indexOf(v) === -1) versions.push(v);
+  });
+  versions.sort(function(a, b) {
+    var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+    var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+    for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+      if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+    }
+    return 0;
+  });
+  tags.innerHTML = '';
+  var allBtn = document.createElement('span');
+  allBtn.className = 'anno-filter-tag active';
+  allBtn.textContent = '全部';
+  allBtn.onclick = function() { filterAnno('all', versions[0]); setActive(this); };
+  tags.appendChild(allBtn);
+  versions.forEach(function(v) {
+    var btn = document.createElement('span');
+    btn.className = 'anno-filter-tag';
+    btn.textContent = v;
+    btn.onclick = function() { filterAnno(v, versions[0]); setActive(this); };
+    tags.appendChild(btn);
+  });
+  if (versions.length > 0) filterAnno('all', versions[0]);
+}
+function filterAnno(version, latest) {
+  document.querySelectorAll('.anno[data-version]').forEach(function(a) {
+    var v = a.getAttribute('data-version');
+    if (version === 'all') {
+      a.style.display = '';
+      a.style.opacity = (v === latest) ? '1' : '0.6';
+    } else {
+      a.style.display = (v === version) ? '' : 'none';
+      a.style.opacity = '1';
+    }
+  });
+}
+function setActive(el) {
+  el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function(t) { t.classList.remove('active'); });
+  el.classList.add('active');
+}
 </script>
-</body>
-</html>
+</body></html>

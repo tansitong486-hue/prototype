@@ -235,6 +235,30 @@
     .node-model-sep { color: var(--border); }
     .node-model { color: var(--text-hint); font-size: 13px; }
 
+    /* 实时指标编辑（沿用现网测点编辑页结构） */
+    .metric-edit-view { padding: 12px 18px 18px; overflow: auto; }
+    .metric-edit-head { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+    .metric-edit-head .btn { margin-left:auto; }
+    .metric-edit-title { font-weight:700; color:var(--text-primary); }
+    .metric-edit-tabs, .metric-edit-subtabs { display:flex; gap:24px; border-bottom:1px solid var(--border); }
+    .metric-edit-tabs button, .metric-edit-subtabs button { height:36px; position:relative; color:var(--text-secondary); font-size:13px; }
+    .metric-edit-tabs button.active, .metric-edit-subtabs button.active { color:var(--primary); font-weight:600; }
+    .metric-edit-tabs button.active::after, .metric-edit-subtabs button.active::after { content:""; position:absolute; left:0; right:0; bottom:-1px; height:2px; background:var(--primary); }
+    .metric-edit-card { padding:14px 4px 0; }
+    .metric-edit-section { margin:12px 0 6px; font-size:13px; font-weight:600; color:var(--text-primary); }
+    .metric-edit-section::before { content:"▾ "; color:var(--primary); }
+    .metric-edit-grid { display:grid; grid-template-columns:repeat(2,minmax(260px,1fr)); gap:12px 28px; max-width:920px; }
+    .metric-edit-field { display:grid; grid-template-columns:120px minmax(0,1fr); align-items:center; gap:10px; min-height:32px; font-size:12px; }
+    .metric-edit-field label { color:var(--text-secondary); text-align:right; }
+    .metric-edit-field input, .metric-edit-field select { width:100%; height:30px; border:1px solid var(--border); border-radius:4px; padding:0 9px; background:#fff; color:var(--text-primary); }
+    .metric-edit-field input[readonly], .metric-edit-field select:disabled { background:#f7f8fa; color:var(--text-secondary); }
+    .metric-edit-subtabs { margin-top:14px; gap:18px; }
+    .metric-alarm-toolbar { display:flex; align-items:center; gap:10px; margin:12px 0; }
+    .metric-alarm-toolbar select { width:130px; height:30px; border:1px solid var(--border); border-radius:4px; padding:0 8px; }
+    .metric-alarm-table { min-width:980px; }
+    .metric-edit-empty { height:110px; color:var(--text-hint); text-align:center; }
+    @media (max-width: 960px) { .metric-edit-grid { grid-template-columns:1fr; } }
+
     /* 工程基础信息视图（首页态） */
     .home-block { max-width: 860px; }
     .home-block-head {
@@ -587,7 +611,7 @@
       text-decoration: none;
     }
 
-    /* 指标列表 */
+    /* 内置指标 */
     .metric-toolbar {
       display: flex;
       align-items: center;
@@ -623,6 +647,24 @@
       flex-wrap: wrap;
       margin-left: auto;
     }
+    .metric-query-params {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    .metric-query-params input[type="date"] {
+      width: 126px;
+      height: 28px;
+      padding: 0 7px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      background: #fff;
+      font-size: 12px;
+    }
+    .metric-query-params span { color: var(--text-hint); }
+    .metric-query-action { margin-left: 2px; }
     .metric-visibility {
       display: inline-flex;
       align-items: center;
@@ -1845,8 +1887,8 @@
               <p><b>当前版本：</b>v2.5</p>
               <p><b>更新日期：</b>2026-07-31</p>
               <p><b>变更概述（2026-07-31 补充）：</b>实时指标调整为沿用数据工厂默认调度计算后写入时序存储，支持当前值与历史曲线；列表增加样本状态，演示正常、待配置、重算中和重算失败保留旧值。计量拓扑改绑或方向调整后，受影响对象及递归上级对象的全部保留期实时历史自动重算，成功后原子替换。删除已取消的「总电流」指标及本体、组件演示数据。单对象能源拓扑的关系类型改为只读：支持供电的列头柜 / 支路新增即同时创建能耗计量与供电两条独立关系，页面合并为一行双标签；方向只改计量关系，删除成员一次移除两条关系。</p>
-              <p><b>变更概述（2026-07-30 补充）：</b>节点详情的「测点列表」与「指标列表」统一按「本体 / 组件」折叠分组；平台仍不提供组件独立详情页，组件指标在所属设备页面展示，但曲线、计算口径和下钻均使用组件自身实例 ID。默认演示对象调整为「101空调-1」，直接展示本体与风机组件的指标差异。「能效配置」Tab 的单对象入口同步为「能源拓扑配置」，同时维护能耗计量与供电关系；今日试算和用能定额仍只读取能耗计量关系，跨对象批量作业与 Excel 全局导入导出继续在独立页完成。</p>
-              <p><b>变更概述（2026-07-27）：</b>页面名称统一为「能效视图」；节点详情新增「指标列表」Tab。指标分为实时指标与时间段指标：实时指标直接平铺当前对象已配置能源的瞬时值及能效值；时间段指标仅按起止时间查询，能源类型、计费时段均固化进指标名称。列表在指标名称后展示「业务分类」（本期均为「能效」），并展示简明计算口径，点击后以只读弹窗查看计算拓扑、实际引用的对象属性 / 测点 ID、节点结果、异常节点和最终计算过程。</p>
+              <p><b>变更概述（2026-07-30 补充）：</b>节点详情的「测点列表」与「内置指标」统一按「本体 / 组件」折叠分组；平台仍不提供组件独立详情页，组件指标在所属设备页面展示，但曲线、计算口径和下钻均使用组件自身实例 ID。默认演示对象调整为「101空调-1」，直接展示本体与风机组件的指标差异。「能效配置」Tab 的单对象入口同步为「能源拓扑配置」，同时维护能耗计量与供电关系；今日试算和用能定额仍只读取能耗计量关系，跨对象批量作业与 Excel 全局导入导出继续在独立页完成。</p>
+              <p><b>变更概述（2026-07-27）：</b>页面名称统一为「能效视图」；节点详情新增「内置指标」Tab。指标按取值方式分为实时指标与查询指标：实时指标直接平铺当前对象已配置能源的瞬时值及能效值；查询指标由用户发起查询时按自身声明的查询参数即时计算。本期所有查询指标仅要求起止时间，后续可按指标定义扩展其他查询参数；能源类型、计费时段均固化进指标名称。列表在指标名称后展示「业务分类」（本期均为「能效」），并展示简明计算口径，点击后以只读弹窗查看计算拓扑、实际引用的对象属性 / 测点 ID、节点结果、异常节点和最终计算过程。</p>
             </div>
           </div>
 
@@ -1870,7 +1912,7 @@
                 <li><b>两个配置入口、一份数据：</b>单对象配置在本页「能效配置」Tab 点「配置」进弹窗完成，跨对象批量作业仍在《能源拓扑配置》；两处共同维护能耗计量与供电关系，任一处修改后另一处立即可见。</li>
                 <li><b>归属唯一：</b>查重键为「表具（含组件）+ 能源类型」——同一能源类型下一块表具只能挂到一个计量关系上，不按输入 / 输出拆分名额；计量方向只决定计算符号。重复占用在两个配置入口都强制拦截。</li>
                 <li><b>供电关系：</b>用于表达实际供电路径，不设置计量方向；支持供电的支路新增时自动与能耗计量关系同时创建，页面合并显示两个只读标签，底层两条记录仍独立维护。</li>
-                <li><b>历史随当前拓扑（产品已接受口径）：</b>统计指标查询始终沿【当前】计量拓扑聚合；实时指标已计算存储，表具改绑或方向调整后自动按当前拓扑重算受影响对象及递归上级对象的全部保留期历史，成功后原子替换。重算中继续展示旧结果并标记状态，失败保留旧结果。本期不做计量拓扑生效版本。</li>
+                <li><b>历史随当前拓扑（产品已接受口径）：</b>查询指标每次查询始终沿【当前】计量拓扑计算；实时指标已计算存储，表具改绑或方向调整后自动按当前拓扑重算受影响对象及递归上级对象的全部保留期历史，成功后原子替换。重算中继续展示旧结果并标记状态，失败保留旧结果。本期不做计量拓扑生效版本。</li>
               </ul>
             </div>
           </div>
@@ -2026,7 +2068,7 @@
 
                   <div class="main-tabs" role="tablist" aria-label="节点详情 Tab">
                     <button type="button" class="main-tab active" role="tab" aria-selected="true" data-tab="points">测点列表<span class="tab-badge" id="badgePoints">0</span></button>
-                    <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="metrics">指标列表<span class="tab-badge has" id="badgeMetrics">22</span></button>
+                    <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="metrics">内置指标<span class="tab-badge has" id="badgeMetrics">22</span></button>
                     <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="devices">设备列表<span class="tab-badge" id="badgeDevices">0</span></button>
                     <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="info">详情信息</button>
                     <button type="button" class="main-tab" role="tab" aria-selected="false" data-tab="topology">关系拓扑</button>
@@ -2044,7 +2086,7 @@
                         <p><b>关联模块：</b>测点列表 Tab</p>
                         <ul>
                           <li>沿用真实平台结构，在所属设备实例页面按「本体 / 组件」分组展示原始测点或表达式测点；组件没有独立详情页，测点仍保留组件自身实例身份。</li>
-                          <li>支持测点类型、刷新频率与按组件名 / 测点 ID / 测点名称搜索；角标展示本体及组件测点总数。对象 PUE、能耗与成本等业务指标统一进入相邻「指标列表」。</li>
+                          <li>支持测点类型、刷新频率与按组件名 / 测点 ID / 测点名称搜索；角标展示本体及组件测点总数。对象 PUE、能耗与成本等业务指标统一进入相邻「内置指标」。</li>
                         </ul>
                       </div>
                     </div>
@@ -2101,29 +2143,31 @@
                     </div>
                   </div>
 
-                  <!-- 指标列表 -->
+                  <!-- 内置指标 -->
                   <div class="tab-panel" id="panel-metrics" role="tabpanel" hidden>
                     <div class="anno anno-ux" data-version="v2.5">
                       <span class="anno-tag">交互说明</span>
                       <span class="anno-version">v2.5</span>
                       <span class="anno-source">需求文档</span>
                       <div class="anno-body">
-                        <p><b>关联模块：</b>指标列表 — 实施核数与计算链路排查</p>
+                        <p><b>关联模块：</b>内置指标 — 实施核数与计算链路排查</p>
                         <ul>
                           <li><b>本体 / 组件分组：</b>复用测点列表结构，在当前设备实例详情中按本体和所属组件分组。组件不新增详情入口；每条组件指标仍以组件实例 ID 取值、打开曲线和下钻，同名指标通过分组区分。</li>
                           <li><b>实时指标：</b>不提供能源类型筛选。默认「仅有值」：只展示本体及组件已有成功样本的能源瞬时值；可切换「全部」查看适用指标全集，算不出的显示「待配置」。C1 与 PUE / CLF / PLF / OLF / WUE 实时值沿用数据工厂默认调度计算后写入时序存储，支持当前值与历史曲线；PUE / CLF / PLF / OLF / WUE 仅在适用物模型实例上出现。</li>
-                          <li><b>时间段指标：</b>查询区只有起止时间。能源类型、计费时段固化进指标名称；显隐同样受「仅有值 / 全部」开关控制。无分时能源仅展示一条「费用（统一价）」。时间段指标不提供曲线入口。</li>
-                          <li><b>样本状态：</b>正常样本展示「正常」；依赖不完整显示「待配置」且不写 0；拓扑变更期间继续展示旧版本并标记「重算中」；分片失败保留最近成功值并标记「重算失败」。数据时间始终是当前展示样本的时间，避免旧值被误认作最新正常值。</li>
+                          <li><b>实时指标编辑：</b>每行提供「编辑」，点击后在当前右侧区域进入与现网测点一致的编辑详情，保留基础设置、高级设置和告警配置；取消或返回恢复指标列表。内置定义只读，别名、输入提示和告警配置可维护。指标由指标工厂计算，因此编辑页不提供赋值设置。</li>
+                          <li><b>查询指标：</b>每一行均有独立的「查询参数」列，参数由指标定义声明；本期每行提供开始日期和结束日期，后续可按指标扩展其他参数。顶部只提供一个统一「查询」按钮，点击后按各行参数分别查询并刷新结果；首次进入查询指标时按默认参数自动查询一次。能源类型、计费时段固化进指标名称；本期查询指标不提供曲线入口。</li>
+                          <li><b>数据时间边界：</b>实时指标是已写入时序存储的样本，继续展示状态与数据时间；查询指标是按参数即时计算的派生结果，不属于事实数据，不展示「数据时间」，对应列改为「查询参数」。</li>
+                          <li><b>样本状态：</b>实时指标正常样本展示「正常」；依赖不完整显示「待配置」且不写 0；拓扑变更期间继续展示旧版本并标记「重算中」；分片失败保留最近成功值并标记「重算失败」。数据时间始终是当前展示的实时样本时间，避免旧值被误认作最新正常值。</li>
                           <li><b>计算排查：</b>点击绿色计算口径打开只读预览。组件行以组件实例为计算根节点；组件出现在父级页面不代表自动计入本体，只有显式配置计量关系后才参与本体归集。</li>
-                          <li><b>业务分类：</b>列表展示「业务分类」列，筛选区提供业务分类选择器（默认「全部」）。本期指标（实时 / 时间段的能耗、成本、能效比值等）均归属「能效」；选其他分类时列表为空。后续扩展容量等分类时只增指标定义，不另开专用页面。</li>
+                          <li><b>业务分类：</b>列表展示「业务分类」列，筛选区提供业务分类选择器（默认「全部」）。本期指标（实时 / 查询两种取值方式下的能耗、成本、能效比值等）均归属「能效」；选其他分类时列表为空。后续扩展容量等分类时只增指标定义，不另开专用页面。</li>
                           <li><b>扩展规则：</b>列表与弹窗均按通用指标定义和计算节点渲染。新增能源、计费时段或能效指标时只增加指标定义及节点数据，不新增专用列或专用页面。</li>
                         </ul>
                       </div>
                     </div>
                     <div class="metric-toolbar">
-                      <div class="metric-mode" aria-label="指标时间类型">
+                      <div class="metric-mode" aria-label="指标获取方式">
                         <button type="button" class="active" data-metric-mode="realtime" aria-pressed="true">实时指标</button>
-                        <button type="button" data-metric-mode="period" aria-pressed="false">时间段指标</button>
+                        <button type="button" data-metric-mode="period" aria-pressed="false">查询指标</button>
                       </div>
                       <div class="metric-toolbar-right">
                         <input type="search" class="toolbar-search" id="metricSearch" placeholder="组件名/指标标识/指标名称" aria-label="搜索指标" autocomplete="off">
@@ -2143,10 +2187,7 @@
                           </div>
                         </div>
                         <div class="metric-range" id="metricRange" hidden>
-                          <input type="date" id="metricStart" value="2026-07-28" aria-label="开始日期">
-                          <span>至</span>
-                          <input type="date" id="metricEnd" value="2026-07-28" aria-label="结束日期">
-                          <button type="button" class="btn btn-primary" id="btnMetricQuery">查询</button>
+                          <button type="button" class="btn btn-primary metric-query-action" id="btnMetricQuery">查询</button>
                         </div>
                       </div>
                     </div>
@@ -2160,7 +2201,7 @@
                             <th style="width:11%">指标值</th>
                             <th style="width:7%">单位</th>
                             <th style="width:10%">状态</th>
-                            <th style="width:12%">数据时间</th>
+                            <th style="width:22%" id="metricDynamicColumn">数据时间</th>
                             <th style="width:8%">操作</th>
                           </tr>
                         </thead>
@@ -2326,6 +2367,51 @@
                       </div>
                       <button type="button" class="action-link" id="btnQuotaConfig">配置</button>
                     </div>
+                  </div>
+                </div>
+
+                <!-- 实时指标编辑详情：复用现网测点编辑页结构，去掉赋值设置 -->
+                <div class="detail-inner metric-edit-view" id="metricEditView" hidden>
+                  <div class="anno anno-ux" data-version="v2.5">
+                    <span class="anno-tag">交互说明</span><span class="anno-version">v2.5</span><span class="anno-source">需求文档</span>
+                    <div class="anno-body"><p><b>关联模块：</b>实时指标编辑详情（入口：内置指标 → 实时指标 → 编辑）</p><ul><li>页面结构与现网测点编辑一致，在当前右侧区域切换，不另开弹窗；返回或取消后回到原实时指标列表。</li><li>名称、指标标识、类型、单位、数据来源和计算口径属于内置定义，只读；别名、输入提示和告警配置允许按实例维护。</li><li>实时指标由指标工厂按默认调度计算并写入时序存储，指标编辑页不提供赋值设置。</li></ul></div>
+                  </div>
+                  <div class="metric-edit-head">
+                    <button type="button" class="node-back" id="btnMetricEditBack" title="返回" aria-label="返回实时指标列表">←</button>
+                    <strong class="metric-edit-title" id="metricEditTitle">实时指标</strong>
+                    <span class="node-model-sep">|</span><span class="node-model" id="metricEditOwner">—</span>
+                    <button type="button" class="btn btn-outline" id="btnMetricEditCancel">取消</button>
+                  </div>
+                  <div class="metric-edit-tabs" role="tablist" aria-label="实时指标编辑设置">
+                    <button type="button" class="active" data-metric-edit-tab="basic" aria-pressed="true">基础设置</button>
+                    <button type="button" data-metric-edit-tab="advanced" aria-pressed="false">高级设置</button>
+                  </div>
+                  <div class="metric-edit-card" id="metricEditBasic">
+                    <div class="metric-edit-section">指标信息</div>
+                    <div class="metric-edit-grid">
+                      <div class="metric-edit-field"><label>指标 ID</label><input id="metricEditId" readonly></div>
+                      <div class="metric-edit-field"><label>名称</label><input id="metricEditName" readonly></div>
+                      <div class="metric-edit-field"><label>别名</label><input id="metricEditAlias" placeholder="请输入指标别名"></div>
+                      <div class="metric-edit-field"><label>类型</label><input value="实时指标" readonly></div>
+                      <div class="metric-edit-field"><label>最小值</label><input value="0" readonly></div>
+                      <div class="metric-edit-field"><label>单位</label><input id="metricEditUnit" readonly></div>
+                      <div class="metric-edit-field"><label>精度</label><input value="2" readonly></div>
+                      <div class="metric-edit-field"><label>值类型</label><input value="DTMI" readonly></div>
+                      <div class="metric-edit-field"><label>最大值</label><input value="—" readonly></div>
+                      <div class="metric-edit-field"><label>输入提示</label><input id="metricEditHint" placeholder="请输入提示内容"></div>
+                      <div class="metric-edit-field"><label>数据来源</label><input value="指标工厂计算" readonly></div>
+                      <div class="metric-edit-field"><label>计算口径</label><input id="metricEditFormula" readonly></div>
+                    </div>
+                    <div class="metric-edit-section">告警设置</div>
+                    <div class="metric-edit-field" style="max-width:430px"><label>告警方案</label><select><option>默认</option></select></div>
+                    <div class="metric-edit-subtabs" role="tablist" aria-label="告警配置类型"><button type="button" class="active">解除值配置</button><button type="button">变化配置</button><button type="button">有效性配置</button><button type="button">关联告警</button></div>
+                    <div class="metric-alarm-toolbar"><button type="button" class="btn btn-outline">新增规则</button><span class="text-hint">按现网告警方案维护；本原型展示空状态</span></div>
+                    <table class="data-table metric-alarm-table"><thead><tr><th>序号</th><th>自定义编码</th><th>规则名称</th><th>告警延滞</th><th>告警值</th><th>恢复延滞</th><th>恢复值</th><th>告警等级</th><th>处理建议</th><th>状态</th></tr></thead><tbody><tr><td colspan="10" class="metric-edit-empty">没有找到匹配的记录</td></tr></tbody></table>
+                  </div>
+                  <div class="metric-edit-card" id="metricEditAdvanced" hidden>
+                    <div class="metric-edit-section">高级设置</div>
+                    <div class="metric-edit-grid"><div class="metric-edit-field"><label>存储策略</label><select><option>默认时序存储</option></select></div><div class="metric-edit-field"><label>刷新周期</label><select><option>跟随指标工厂调度</option></select></div><div class="metric-edit-field"><label>质量码策略</label><select><option>继承计算结果状态</option></select></div><div class="metric-edit-field"><label>历史保留</label><input value="跟随平台策略" readonly></div></div>
+                    <div class="anno anno-data" data-version="v2.5"><span class="anno-tag">数据逻辑</span><span class="anno-version">v2.5</span><span class="anno-source">需求文档</span><div class="anno-body"><p><b>关联模块：</b>实时指标高级设置</p><p>此处只维护实时样本的存储、刷新与质量码策略；不出现赋值设置，计算输入和公式仍由内置指标定义及指标工厂负责。</p></div></div>
                   </div>
                 </div>
               </div>
@@ -3244,6 +3330,8 @@
       var metricMode = 'realtime';
       var metricPeriodStart = '2026-07-28';
       var metricPeriodEnd = '2026-07-28';
+      var metricQueryParams = {};
+      var metricQueryAutoRan = false;
       var activeExpression = null;
       var activeMetricName = '';
       var selectedCalcNodeId = '';
@@ -3541,6 +3629,25 @@
         }).filter(function (group) { return group.rows.length > 0; });
       }
 
+      function metricQueryKey(row) {
+        return (row.ownerNodeId || currentNode || 'self') + '::' + row.id;
+      }
+
+      function queryParamsForRow(row) {
+        var key = metricQueryKey(row);
+        if (!metricQueryParams[key]) metricQueryParams[key] = { start: metricPeriodStart, end: metricPeriodEnd };
+        return metricQueryParams[key];
+      }
+
+      function applyQueryParams(row) {
+        var params = queryParamsForRow(row);
+        row.expression.nodes.forEach(function (node) {
+          if (/时间: [^·]+/.test(node.ref)) node.ref = node.ref.replace(/时间: [^·]+/, '时间: ' + params.start + '~' + params.end + ' ');
+        });
+        row.expression.steps[0] = '= 读取 ' + params.start + ' 至 ' + params.end + ' 已归档分片';
+        return row;
+      }
+
       function dataGroupRow(group, count, expanded, type) {
         var owner = metricOwnerMeta(group.ownerNodeId);
         return '<tr class="data-group-row"><td colspan="8">' +
@@ -3559,6 +3666,8 @@
         var groups = getVisibleMetricGroups(metricMode);
         var rows = groups.reduce(function (all, group) { return all.concat(group.rows); }, []);
         var isRealtime = metricMode === 'realtime';
+        document.getElementById('metricDynamicColumn').textContent = isRealtime ? '数据时间' : '查询参数';
+        if (!isRealtime) rows.forEach(applyQueryParams);
         if (!rows.length) {
           var emptyMsg = metricKeyword
             ? '未找到匹配的组件或指标'
@@ -3572,7 +3681,7 @@
             var rowHtml = expanded ? group.rows.map(function (row) {
               var pending = row.value === '待配置';
               var actionCell = isRealtime
-                ? '<td><div class="points-actions"><button type="button" class="action-link metric-curve-act" data-metric-curve="' + esc(row.id) + '"' + (pending ? ' disabled title="待配置，暂无曲线"' : ' title="查看已存实时样本曲线"') + '>曲线</button></div></td>'
+                ? '<td><div class="points-actions"><button type="button" class="action-link metric-curve-act" data-metric-curve="' + esc(row.id) + '"' + (pending ? ' disabled title="待配置，暂无曲线"' : ' title="查看已存实时样本曲线"') + '>曲线</button><button type="button" class="action-link metric-edit-act" data-metric-edit="' + esc(row.id) + '">编辑</button></div></td>'
                 : '<td class="num-cell">—</td>';
               return '<tr class="data-child-row' + (group.kindLabel === '组件' ? ' is-component' : '') + '">' +
                 '<td class="metric-name-cell">' + esc(row.name) + '</td>' +
@@ -3581,7 +3690,9 @@
                 '<td><span class="metric-value' + (pending ? ' pending' : '') + '">' + esc(row.value) + '</span></td>' +
                 '<td>' + esc(row.unit) + '</td>' +
                 '<td><span class="metric-status ' + esc(row.sampleStatus || (pending ? 'pending' : 'normal')) + '">' + esc(({ normal: '正常', recalculating: '重算中', failed: '重算失败', pending: '待配置' })[row.sampleStatus || (pending ? 'pending' : 'normal')] || '正常') + '</span></td>' +
-                '<td class="num-cell">' + esc(row.time) + '</td>' +
+                (isRealtime
+                  ? '<td class="num-cell">' + esc(row.time) + '</td>'
+                  : '<td><div class="metric-query-params"><input type="date" class="metric-query-start" data-query-key="' + esc(metricQueryKey(row)) + '" value="' + esc(queryParamsForRow(row).start) + '" aria-label="' + esc(group.name + ' ' + row.name) + ' 开始日期"><span>至</span><input type="date" class="metric-query-end" data-query-key="' + esc(metricQueryKey(row)) + '" value="' + esc(queryParamsForRow(row).end) + '" aria-label="' + esc(group.name + ' ' + row.name) + ' 结束日期"></div></td>') +
                 actionCell +
               '</tr>';
             }).join('') : '';
@@ -3607,6 +3718,12 @@
             if (row) openMetricCalculation(row);
           });
         });
+        body.querySelectorAll('[data-metric-edit]').forEach(function (button) {
+          button.addEventListener('click', function () {
+            var row = rows.find(function (candidate) { return candidate.id === button.getAttribute('data-metric-edit'); });
+            if (row) openMetricEdit(row);
+          });
+        });
         body.querySelectorAll('[data-metric-curve]').forEach(function (button) {
           button.addEventListener('click', function () {
             if (button.disabled) return;
@@ -3616,6 +3733,40 @@
           });
         });
       }
+
+      function openMetricEdit(row) {
+        document.getElementById('nodeView').hidden = true;
+        document.getElementById('metricEditView').hidden = false;
+        document.getElementById('metricEditTitle').textContent = row.name;
+        document.getElementById('metricEditOwner').textContent = row.ownerName || NODES[currentNode].name;
+        document.getElementById('metricEditId').value = row.id;
+        document.getElementById('metricEditName').value = row.name;
+        document.getElementById('metricEditAlias').value = row.alias || '';
+        document.getElementById('metricEditUnit').value = row.unit === '—' ? '' : row.unit;
+        document.getElementById('metricEditFormula').value = row.formula;
+        document.getElementById('metricEditHint').value = row.hint || '';
+      }
+
+      function closeMetricEdit() {
+        document.getElementById('metricEditView').hidden = true;
+        document.getElementById('nodeView').hidden = false;
+      }
+
+      ['btnMetricEditBack', 'btnMetricEditCancel'].forEach(function (id) {
+        document.getElementById(id).addEventListener('click', closeMetricEdit);
+      });
+      document.querySelectorAll('[data-metric-edit-tab]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          var tab = button.getAttribute('data-metric-edit-tab');
+          document.querySelectorAll('[data-metric-edit-tab]').forEach(function (item) {
+            var active = item === button;
+            item.classList.toggle('active', active);
+            item.setAttribute('aria-pressed', active ? 'true' : 'false');
+          });
+          document.getElementById('metricEditBasic').hidden = tab !== 'basic';
+          document.getElementById('metricEditAdvanced').hidden = tab !== 'advanced';
+        });
+      });
 
       function pointGroupsForNode(node) {
         var groups = [{ id: 'self', name: '本体', kindLabel: node.kind === 'collection' ? '对象' : '设备', ownerNodeId: currentNode, points: node.points || [] }];
@@ -3860,7 +4011,7 @@
         });
       });
 
-      /* ---------- 指标列表与计算预览 ---------- */
+      /* ---------- 内置指标与计算预览 ---------- */
       document.querySelectorAll('[data-metric-mode]').forEach(function (button) {
         button.addEventListener('click', function () {
           metricMode = button.getAttribute('data-metric-mode');
@@ -3871,6 +4022,10 @@
           });
           document.getElementById('metricRange').hidden = metricMode !== 'period';
           renderMetrics();
+          if (metricMode === 'period' && !metricQueryAutoRan) {
+            metricQueryAutoRan = true;
+            runMetricQuery(false);
+          }
         });
       });
 
@@ -3908,24 +4063,30 @@
         runMetricSearch(true);
       });
 
-      document.getElementById('btnMetricQuery').addEventListener('click', function () {
-        var start = document.getElementById('metricStart').value;
-        var end = document.getElementById('metricEnd').value;
-        if (!start || !end || start > end) {
-          showToast('请选择正确的起止日期');
-          return;
-        }
-        metricPeriodStart = start;
-        metricPeriodEnd = end;
-        metricDatasets.period.forEach(function (row) {
-          row.expression.nodes.forEach(function (node) {
-            node.ref = node.ref.replace(/时间: [^·]+/, '时间: ' + start + '~' + end + ' ');
-          });
-          row.expression.steps[0] = '= 读取 ' + start + ' 至 ' + end + ' 已归档分片';
-          row.time = end + ' 16:30:00';
+      function runMetricQuery(notifyResult) {
+        var invalidName = '';
+        document.querySelectorAll('.metric-query-start').forEach(function (input) {
+          var key = input.getAttribute('data-query-key');
+          var endInput = document.querySelector('.metric-query-end[data-query-key="' + key + '"]');
+          var start = input.value;
+          var end = endInput ? endInput.value : '';
+          if (!start || !end || start > end) {
+            invalidName = input.getAttribute('aria-label').replace(' 开始日期', '');
+            return;
+          }
+          metricQueryParams[key] = { start: start, end: end };
         });
+        if (invalidName) {
+          showToast('请检查「' + invalidName + '」的起止日期');
+          return false;
+        }
         renderMetrics();
-        showToast('已按 ' + start + ' 至 ' + end + ' 查询时间段指标');
+        if (notifyResult) showToast('已按各指标的查询参数更新结果');
+        return true;
+      }
+
+      document.getElementById('btnMetricQuery').addEventListener('click', function () {
+        runMetricQuery(true);
       });
 
       document.querySelectorAll('[data-calc-view]').forEach(function (button) {
@@ -4939,7 +5100,7 @@
 
       refreshMeteringBlock();
 
-      /* ---------- 初始态：直接进入带组件的设备指标列表，便于评审本体 / 组件分组 ---------- */
+      /* ---------- 初始态：直接进入带组件的设备内置指标，便于评审本体 / 组件分组 ---------- */
       selectNode('ahu101');
       document.querySelector('.main-tab[data-tab="metrics"]').click();
     })();

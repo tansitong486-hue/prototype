@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>报表-选择测点弹窗（多视图扩展 + 指标接入）</title>
+  <title>报表参数查询功能优化（测点 + 实时指标）</title>
   <style>
     :root {
       --primary: #1E40AF;
@@ -261,28 +261,35 @@
     .scene { display: none; }
     .scene.active { display: block; }
 
-    /* 参数查询工具条 */
+    /* 参数查询：对齐现网的单行筛选栏 + 多级表头结果表 */
     .query-bar {
-      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-      padding: 12px 14px; background: #fff; border: 1px solid var(--border-light);
-      border-radius: var(--radius); margin-bottom: 12px;
+      display: flex; align-items: center; gap: 10px; flex-wrap: nowrap;
+      padding: 8px 10px; background: #fff; border: 1px solid var(--border-light);
+      border-radius: var(--radius); margin-bottom: 8px; overflow-x: auto;
     }
-    .field { display: flex; align-items: center; gap: 6px; }
-    .field label { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+    .field { display: flex; align-items: center; gap: 5px; flex: 0 0 auto; }
+    .field label { font-size: 12px; color: var(--text-primary); white-space: nowrap; }
     .field label .req { color: var(--danger); }
-    .field select, .field input {
-      height: 30px; padding: 0 8px; font-size: 12px;
-      border: 1px solid var(--border); border-radius: 6px; background: #fff;
+    .field select, .field input, .select-trigger {
+      width: 118px; height: 28px; padding: 0 8px; font-size: 12px;
+      border: 1px solid var(--border); border-radius: 3px; background: #fff;
     }
-    .chip-box {
-      display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
-      min-height: 30px; padding: 3px 6px; border: 1px solid var(--border); border-radius: 6px; background: #fff;
-    }
-    .chip {
-      display: inline-flex; align-items: center; gap: 3px; height: 20px; padding: 0 6px;
-      background: #F1F5F9; border-radius: 4px; font-size: 11px; color: var(--text-secondary);
-    }
-    .chip.dis { opacity: .45; text-decoration: line-through; }
+    .select-trigger { display:flex; align-items:center; justify-content:space-between; color:var(--text-primary); cursor:pointer; }
+    .select-trigger:hover { border-color:var(--primary); }
+    .select-trigger:focus-visible { outline:2px solid rgba(37,99,235,.22); outline-offset:1px; }
+    .query-spacer { flex: 1 1 auto; min-width: 8px; }
+    .result-head { display:flex; align-items:center; gap:10px; padding:0 2px 8px; font-size:12px; }
+    .result-head .count { color:var(--text-secondary); }
+    .result-head select { margin-left:auto; width:112px; height:28px; border:1px solid var(--border); border-radius:3px; background:#fff; }
+    .query-result { background:#fff; border:1px solid var(--border-light); border-radius:var(--radius); overflow:hidden; }
+    .query-table { width:100%; border-collapse:collapse; table-layout:fixed; font-size:12px; }
+    .query-table th { background:#EAF4FF; color:var(--text-primary); font-weight:600; text-align:center; border:1px solid #C9DDF1; padding:7px 6px; }
+    .query-table td { height:40px; border:1px solid var(--border-light); padding:7px 10px; text-align:center; }
+    .query-table td.time { text-align:left; white-space:nowrap; }
+    .query-table tbody tr:hover { background:#F8FBFF; }
+    .query-pager { display:flex; align-items:center; gap:8px; padding:8px 10px; color:var(--text-secondary); font-size:12px; }
+    .query-pager .pages { margin-left:auto; display:flex; align-items:center; gap:8px; }
+    .query-pager .active-page { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; color:#fff; background:var(--primary); border-radius:3px; }
   </style>
 </head>
 <body>
@@ -290,22 +297,22 @@
   <div class="page-shell">
 
     <div class="page-head">
-      <div class="page-title">报表「选择测点」弹窗（视图扩展 + 指标接入）</div>
+      <div class="page-title">报表参数查询功能优化（测点 + 实时指标）</div>
       <div class="page-desc">
-        对应 <b>AI 节能 v2.5 需求 10</b>，本页覆盖该需求全部范围。落点：报表报告 → 数据查询 → <b>参数查询</b> / <b>查询方案配置</b>，两页共用同一套弹窗组件。<br>
-        需求内分<b>视图</b>与<b>指标</b>两部分：视图部分无前置可先行交付，指标部分依赖需求 6；<b>两部分分别验收</b>。
+        对应 <b>AI 节能 v2.5 需求 12</b>，本页覆盖报表报告 → 数据查询 → <b>参数查询</b>菜单功能优化，并同步覆盖<b>查询方案配置</b>共用的数据项选择能力。<br>
+        可选范围仅包含<b>测点和本次需求提供的实时指标</b>；查询指标不在外层清单、两种添加弹窗和参数查询中展示。实时指标沿用测点的查询逻辑。
       </div>
       <div class="legend">
-        <span><i class="new-badge view">视图</i> 视图扩展（不依赖指标工厂，可独立上线）</span>
-        <span><i class="new-badge metric">指标</i> 指标接入（依赖指标选取服务）</span>
+        <span><i class="new-badge view">视图</i> 空间 / 容量 / 能效三视图</span>
+        <span><i class="new-badge metric">指标</i> 仅本次需求内的实时指标</span>
         <span><i class="tag tag-point">测点</i> 时序采样值</span>
-        <span><i class="tag tag-metric">指标</i> 指标工厂产出</span>
+        <span><i class="tag tag-metric">指标</i> 本次需求提供的实时指标</span>
       </div>
 
       <div class="req-brief">
         <div class="req-card">
-          <h4><i class="new-badge view">视图</i> 视图部分（可先行交付）</h4>
-          <div class="meta">依赖：无　｜　场景 ②③　｜　单独验收</div>
+          <h4><i class="new-badge view">视图</i> 三视图选择</h4>
+          <div class="meta">适用场景：③ 按实例添加　｜　④ 按模型添加</div>
           <ul>
             <li><b>做</b>：「按实例添加」「按模型添加」加空间 / 容量 / 能效三视图；按模型首栏改「选择对象范围」，范围按当前视图子树<b>递归</b>；能效 / 容量下中间栏称「选择对象类型」。</li>
             <li><b>不做</b>：外层「选择测点」清单（视图部分不动）；节点-测点树视图（已有，对齐复用）。</li>
@@ -313,37 +320,37 @@
           </ul>
         </div>
         <div class="req-card">
-          <h4><i class="new-badge metric">指标</i> 指标部分（依赖需求 6）</h4>
-          <div class="meta">依赖：需求 6 指标选取服务　｜　场景 ①②③④　｜　单独验收</div>
+          <h4><i class="new-badge metric">指标</i> 实时指标选择</h4>
+          <div class="meta">适用场景：① 参数查询　｜　② 外层弹窗　｜　③ 按实例添加　｜　④ 按模型添加</div>
           <ul>
-            <li><b>做</b>：两种添加方式开放指标；外层表增「类型」列；时段指标采样周期收敛为 1 小时及以上，并按指标语义开放聚合方式；聚合按数据项独立配置；方案连带保存粒度与聚合。</li>
-            <li><b>不做</b>：模型级合计 / 平均值；整组不做项（§4.4）。</li>
-            <li><b>规则</b>：按实例默认仅有值、无筛选条；按模型批量加 N 条实例指标（含继承子模型），第三栏默认全部指标；持久化按「类型 + 标识」，metric key 不进测点 ID 字段；加载方案校验失效并提示。</li>
+            <li><b>做</b>：两种添加方式开放本次需求提供的实时指标；外层表新增“类型”列；参数查询沿用测点的采样周期、统计方式和结果展示逻辑。</li>
+            <li><b>不做</b>：查询指标选择与查询；指标专属查询参数；模型级合计或平均值。</li>
+            <li><b>规则</b>：按实例只显示可计算的实时指标；按模型批量添加 N 条实例数据项；持久化按“类型 + 标识”保存；加载方案时校验失效项并提示。</li>
           </ul>
         </div>
       </div>
 
       <div class="scene-tabs">
-        <div class="scene-tab active" data-scene="outer">① 选择测点（外层清单）</div>
-        <div class="scene-tab" data-scene="inst">② 按实例添加</div>
-        <div class="scene-tab" data-scene="model">③ 按模型添加</div>
-        <div class="scene-tab" data-scene="query">④ 参数查询语义收敛</div>
+        <div class="scene-tab active" data-scene="query">① 参数查询</div>
+        <div class="scene-tab" data-scene="outer">② 选择测点（外层弹窗）</div>
+        <div class="scene-tab" data-scene="inst">③ 按实例添加</div>
+        <div class="scene-tab" data-scene="model">④ 按模型添加</div>
       </div>
     </div>
 
     <!-- ================= 场景1：外层清单 ================= -->
-    <div class="scene active" id="scene-outer">
+    <div class="scene" id="scene-outer">
       <div class="dlg">
         <div class="dlg-head">
           <div class="dlg-title">选择测点</div>
-          <div class="dlg-close">✕</div>
+          <div class="dlg-close" data-goto="query">✕</div>
         </div>
         <div class="dlg-body">
           <div class="dlg-toolbar">
             <button class="btn btn-default btn-sm">🗑 批量删除</button>
             <button class="btn btn-default btn-sm">⤫ 全部移除</button>
             <span class="spacer"></span>
-            <div class="search-field"><input class="search-input" placeholder="请输入测点/指标名称或ID"></div>
+            <div class="search-field"><input class="search-input" placeholder="请输入测点/实时指标名称或ID"></div>
             <button class="btn btn-primary btn-sm" data-goto="inst">按实例添加</button>
             <button class="btn btn-primary btn-sm" data-goto="model">按模型添加</button>
           </div>
@@ -364,62 +371,37 @@
               </thead>
               <tbody>
                 <tr>
-                  <td><span class="tree-cb checked"></span></td>
-                  <td>1</td>
-                  <td><span class="tag tag-point">测点</span></td>
-                  <td>101空调-1</td>
-                  <td class="mono">0_159_1_28_0</td>
-                  <td>出水温度</td>
-                  <td class="path">人保北方信息中心工程/A栋/1F/1F-101/101空调-1/本体</td>
-                  <td><button class="btn-link">删除</button></td>
+                  <td><span class="tree-cb checked"></span></td><td>1</td><td><span class="tag tag-point">测点</span></td>
+                  <td>101空调-1</td><td class="mono">0_159_1_28_0</td><td>出水温度</td>
+                  <td class="path">人保北方信息中心工程/A栋/1F/1F-101/101空调-1/本体</td><td><button class="btn-link">删除</button></td>
                 </tr>
                 <tr>
-                  <td><span class="tree-cb checked"></span></td>
-                  <td>2</td>
-                  <td><span class="tag tag-metric">指标</span></td>
-                  <td>A栋</td>
-                  <td class="mono">metric.energy.consume#electric</td>
-                  <td>电能消耗量 <span class="tag tag-period">时间段</span></td>
-                  <td class="path">人保北方信息中心工程/A栋</td>
-                  <td><button class="btn-link">删除</button></td>
+                  <td><span class="tree-cb checked"></span></td><td>2</td><td><span class="tag tag-metric">实时指标</span></td>
+                  <td>A栋</td><td class="mono">metric.power#electric</td><td>实时电功率</td>
+                  <td class="path">人保北方信息中心工程/A栋</td><td><button class="btn-link">删除</button></td>
                 </tr>
                 <tr>
-                  <td><span class="tree-cb checked"></span></td>
-                  <td>3</td>
-                  <td><span class="tag tag-metric">指标</span></td>
-                  <td>A栋</td>
-                  <td class="mono">metric.cost.tou#electric.sharp</td>
-                  <td>尖时电费 <span class="tag tag-period">时间段</span></td>
-                  <td class="path">人保北方信息中心工程/A栋</td>
-                  <td><button class="btn-link">删除</button></td>
-                </tr>
-                <tr>
-                  <td><span class="tree-cb checked"></span></td>
-                  <td>4</td>
-                  <td><span class="tag tag-metric">指标</span></td>
-                  <td>人保北方信息中心工程</td>
-                  <td class="mono">metric.pue#period</td>
-                  <td>PUE <span class="tag tag-period">时间段</span></td>
-                  <td class="path">人保北方信息中心工程</td>
-                  <td><button class="btn-link">删除</button></td>
+                  <td><span class="tree-cb checked"></span></td><td>3</td><td><span class="tag tag-metric">实时指标</span></td>
+                  <td>人保北方信息中心工程</td><td class="mono">metric.pue#rt</td><td>PUE</td>
+                  <td class="path">人保北方信息中心工程</td><td><button class="btn-link">删除</button></td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
         <div class="dlg-foot">
-          <span style="flex:1;font-size:12px;color:var(--text-hint);align-self:center">共 4 条 · 测点 1 / 指标 3　（指标与测点合并计入本页数据项上限，不单开配额）</span>
-          <button class="btn btn-default">取消</button>
-          <button class="btn btn-primary">确定</button>
+          <span style="flex:1;font-size:12px;color:var(--text-hint);align-self:center">共 3 条 · 测点 1 / 实时指标 2　（合并计入本页数据项上限，不单开配额）</span>
+          <button class="btn btn-default" data-goto="query">取消</button>
+          <button class="btn btn-primary" data-goto="query">确定</button>
         </div>
       </div>
 
       <div class="note">
         <b>指标部分 — 外层清单改造点（共 2 处，其余保持现状）</b>
         <ul>
-          <li><b>新增「类型」列</b>：取值「测点 / 指标」，用于下游按类型分流取数。测点走时序库，指标走指标服务。</li>
+          <li><b>新增「类型」列</b>：取值「测点 / 实时指标」，用于下游按类型分流取数。</li>
           <li><b>原「测点ID」列语义放宽</b>为「测点ID / 指标标识」，指标行展示 metric key。<b>持久化时 metric key 不得写入原测点 ID 字段</b>，必须按「类型 + 标识」两个字段存。</li>
-          <li>搜索框对测点与指标同时生效，结果按类型分组。</li>
+          <li>搜索框对测点与实时指标同时生效；查询指标不进入搜索结果。</li>
         </ul>
       </div>
     </div>
@@ -469,9 +451,9 @@
       </div>
 
       <div class="note warn">
-        <b>视图部分 — 视图切换（左树顶部，与节点-测点树完全一致的三项）</b>
+        <b>视图切换规则</b>
         <ul>
-          <li>现状：本弹窗<b>只有空间树、没有视图切换器</b>；而原始数据查询 / 运行极值查询 / 融合组态三处的节点-测点树<b>已支持</b>空间 / 容量 / 能效三视图。本需求是把弹窗对齐到已有能力，不新造视图数据源。</li>
+          <li>视图下拉固定为空间、容量、能效三项，树结构与节点-测点树保持一致。</li>
           <li>三视图是同一批物模型实例的不同树结构，节点可跨视图复用。因此<b>切换视图不清空已选清单</b>，用户可在空间视图选几个、切到能效视图再选几个。</li>
           <li>已选清单按「<b>实例 + 类型 + 标识</b>」去重，同一实例的同一数据项在不同视图重复勾选只保留一条。</li>
           <li>未配置的视图在下拉中<b>置灰</b>并提示先配置视图，不隐藏。</li>
@@ -482,9 +464,9 @@
         <b>指标部分 — 指标叶子（树上挂载规则）</b>
         <ul>
           <li>指标绑定在<b>对象实例</b>上（园区 / 数据中心 / 系统 / 设备组 / 设备），<b>不挂在组件或测点下</b>。指标叶子直接挂在对象节点下，与设备子节点<b>同级同层</b>——<b>不套「指标（N）」分组节点、不新增层级</b>，仅靠图标与类型标签区别于测点。</li>
-          <li>某对象下出现哪些指标，由「该对象所属物模型（含继承链）上注册的指标」∩「按能源类型 / 计费时段展开的入参组合」决定，真源是<b>物模型 × 指标注册矩阵</b>。<b>选择器不为具体对象类型写死分支</b>——新增对象类型或调整指标适用范围时选择器无需改造。</li>
-          <li><b>能源类型与计费时段已固化进指标名称</b>（「电能消耗量」「尖时电费」），所以勾中即已确定入参，<b>不需要二次参数面板</b>。</li>
-          <li>按实例添加<strong>不提供</strong>「仅有值 / 全部」与业务分类筛选：默认只展示算得出结果的指标（仅有值）；缺输入的指标不出现在树上。</li>
+          <li>某对象下出现哪些实时指标，由该对象所属物模型（含继承链）与指标注册关系决定；选择器不为具体对象类型写死分支。</li>
+          <li>实时指标勾中后直接进入已选清单，不增加二次参数面板；查询指标不展示。</li>
+          <li>按实例添加<strong>不提供</strong>“仅有值 / 全部”与业务分类筛选：只展示算得出结果的实时指标；缺输入的指标不出现在树上。</li>
         </ul>
       </div>
     </div>
@@ -536,7 +518,7 @@
       </div>
 
       <div class="note warn">
-        <b>视图部分 — 三栏语义调整</b>
+        <b>三栏选择规则</b>
         <ul>
           <li><b>第一栏</b>：「选择空间」→「<b>选择对象范围</b>」，新增三视图切换。范围解析按<b>当前视图子树递归</b>（含下下级），不只取直接一层子节点。</li>
           <li><b>第二栏</b>：空间视图下保持现状「选择设备分类」（IT设施 / 场地设施 / 备品备件 / 软件 → 二级分类 → 物模型）；<b>能效 / 容量视图下语义放宽为「选择对象类型」</b>，以便按系统类型（暖通空调系统 / 电力系统等）批量选取。</li>
@@ -544,11 +526,11 @@
       </div>
 
       <div class="note">
-        <b>指标部分 — 按物模型批量添加指标</b>
+        <b>指标部分 — 按物模型批量添加实时指标</b>
         <ul>
-          <li>选定<b>范围 + 物模型 + 指标</b>后，一次性加入该范围内所有该模型（<b>含继承子模型</b>）实例的同一指标，与现有「某模型所有实例的对应测点」完全对称。这是明细引擎册「模板化绑定（绑 <code>(物模型, 指标)</code>，切换实例即复用）」在报表侧的落点。</li>
-          <li>可选指标列表 = 该物模型上注册的指标（取指标选取服务的「按物模型列指标」接口）。</li>
-          <li>按模型添加<strong>不提供</strong>「仅有值 / 全部」开关：第三栏默认展示该物模型上注册的<strong>全部</strong>指标（含待配置），便于按类型批量勾选。</li>
+          <li>选定<b>范围 + 物模型 + 实时指标</b>后，一次性加入该范围内所有该模型（<b>含继承子模型</b>）实例的同一实时指标，与现有「某模型所有实例的对应测点」完全对称。这是明细引擎册「模板化绑定（绑 <code>(物模型, 指标)</code>，切换实例即复用）」在报表侧的落点。</li>
+          <li>可选指标列表仅包含该物模型上注册且属于本次需求范围的实时指标。</li>
+          <li>第三栏按测点、实时指标分组展示；查询指标不展示。</li>
         </ul>
       </div>
 
@@ -558,101 +540,57 @@
       </div>
     </div>
 
-    <!-- ================= 场景4：参数查询语义收敛 ================= -->
-    <div class="scene" id="scene-query">
+    <!-- ================= 场景4：参数查询 ================= -->
+    <div class="scene active" id="scene-query">
       <div class="query-bar">
-        <div class="field">
-          <label>测点选择<span class="req">*</span></label>
-          <div class="chip-box" style="width:300px">
-            <span class="chip">出水温度 <span class="tag tag-point" style="height:15px;font-size:9px">测点</span></span>
-            <span class="chip">电能消耗量 <span class="tag tag-metric" style="height:15px;font-size:9px">指标</span></span>
-            <span class="chip">PUE <span class="tag tag-metric" style="height:15px;font-size:9px">指标</span></span>
-          </div>
-        </div>
-        <div class="field">
-          <label>时间范围<span class="req">*</span></label>
-          <input value="最近1天" style="width:150px">
-        </div>
-        <div class="field">
-          <label>采样周期<span class="req">*</span></label>
-          <select style="width:150px">
-            <option disabled>1 分钟（时段指标不可选）</option>
-            <option disabled>5 分钟（时段指标不可选）</option>
-            <option disabled>15 分钟（时段指标不可选）</option>
-            <option disabled>半小时（时段指标不可选）</option>
-            <option selected>小时</option>
-            <option>天</option><option>月</option><option>年</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>聚合方式<span class="req">*</span></label>
-          <div class="chip-box" style="width:280px">
-            <span class="chip">求和</span>
-            <span class="chip">平均值</span>
-            <span class="chip">最大值</span>
-            <span class="chip">最小值</span>
-          </div>
-        </div>
+        <div class="field"><label><span class="req">*</span>测点选择：</label><button type="button" class="select-trigger" data-goto="outer" aria-label="打开选择测点弹窗"><span>已选3个</span><span>⌄</span></button></div>
+        <div class="field"><label><span class="req">*</span>时间范围：</label><select><option>最近一天</option></select></div>
+        <div class="field"><label><span class="req">*</span>采样周期：</label><select><option selected>小时</option><option>半小时</option><option>15分钟</option><option>5分钟</option><option>1分钟</option></select></div>
+        <div class="field"><label><span class="req">*</span>聚合方式：</label><select><option selected>平均值</option><option>最大值</option><option>最小值</option><option>求和</option><option>首值</option><option>尾值</option></select></div>
+        <span class="query-spacer"></span>
         <button class="btn btn-default btn-sm">重置</button>
         <button class="btn btn-primary btn-sm">查询</button>
+        <button class="btn btn-primary btn-sm">保存</button>
+        <button class="btn btn-primary btn-sm">快捷查询⌄</button>
       </div>
 
-      <div class="dlg">
-        <div class="dlg-body">
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th style="width:150px">数据项</th>
-                  <th style="width:70px">类型</th>
-                  <th style="width:110px">可选采样周期</th>
-                  <th style="width:180px">可选聚合方式</th>
-                  <th>收敛理由</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>出水温度</td>
-                  <td><span class="tag tag-point">测点</span></td>
-                  <td>全部档位</td>
-                  <td>求和 / 平均 / 最大 / 最小 / 首值 / 尾值</td>
-                  <td class="path">原始采样序列，现状不变。混选时段指标时聚合方式控件也不置灰</td>
-                </tr>
-                <tr>
-                  <td>用量 / 成本指标<br><span class="path">如电能消耗量、尖时电费</span></td>
-                  <td><span class="tag tag-metric">指标</span> <span class="tag tag-period">时间段</span></td>
-                  <td><b>1 小时 及以上</b></td>
-                  <td>求和（默认）/ 平均值 / 最大值 / 最小值</td>
-                  <td class="path">可加指标：求和得到本时间桶总量；其他方式对子周期结果序列统计</td>
-                </tr>
-                <tr>
-                  <td>能效比值指标<br><span class="path">周期 PUE / CLF / PLF / OLF / WUE</span></td>
-                  <td><span class="tag tag-metric">指标</span> <span class="tag tag-period">时间段</span></td>
-                  <td><b>1 小时 及以上</b></td>
-                  <td>周期值（默认）/ 平均值 / 最大值 / 最小值；禁用求和</td>
-                  <td class="path">周期值按整个时间桶重算分子 ÷ 分母；平均 / 最大 / 最小对子周期比值统计</td>
-                </tr>
-                <tr>
-                  <td>实时类型指标<br><span class="path">如实时电功率、实时 PUE 等</span></td>
-                  <td><span class="tag tag-metric">指标</span> <span class="tag tag-rt">实时</span></td>
-                  <td>全部档位（同测点）</td>
-                  <td>求和 / 平均 / 最大 / 最小 / 首值 / 尾值（同测点）</td>
-                  <td class="path"><b>本页可选</b>。档位与聚合方式与测点一致；数据需经查询、计算后呈现，非直接读预聚合序列</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+      <div class="result-head">
+        <b>搜索结果</b><span class="count">共24条记录2页</span>
+        <select><option>表格</option><option>曲线</option></select>
+        <button class="btn btn-primary btn-sm">生成数据报表</button>
+      </div>
+
+      <div class="query-result">
+        <table class="query-table">
+          <colgroup><col style="width:48px"><col style="width:150px"><col><col><col></colgroup>
+          <thead>
+            <tr><th rowspan="4">序号</th><th rowspan="4">时间</th><th colspan="3">工程/机房</th></tr>
+            <tr><th colspan="3">GX201(2)</th></tr>
+            <tr><th>电压变比(PT值)</th><th>电流变比(CT值)</th><th>相电压不平衡度</th></tr>
+            <tr><th>平均值</th><th>平均值</th><th>平均值</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td class="time">2026-08-04 12:00 ~ 13:00</td><td></td><td></td><td></td></tr>
+            <tr><td>2</td><td class="time">2026-08-04 13:00 ~ 14:00</td><td></td><td></td><td></td></tr>
+            <tr><td>3</td><td class="time">2026-08-04 14:00 ~ 15:00</td><td></td><td></td><td></td></tr>
+            <tr><td>4</td><td class="time">2026-08-04 15:00 ~ 16:00</td><td></td><td></td><td></td></tr>
+            <tr><td>5</td><td class="time">2026-08-04 16:00 ~ 17:00</td><td></td><td></td><td></td></tr>
+            <tr><td>6</td><td class="time">2026-08-04 17:00 ~ 18:00</td><td></td><td></td><td></td></tr>
+            <tr><td>7</td><td class="time">2026-08-04 18:00 ~ 19:00</td><td></td><td></td><td></td></tr>
+            <tr><td>8</td><td class="time">2026-08-04 19:00 ~ 20:00</td><td></td><td></td><td></td></tr>
+          </tbody>
+        </table>
+        <div class="query-pager"><span>一页显示</span><select><option>20</option></select><span>条数据</span><div class="pages"><span>◀</span><span class="active-page">1</span><span>2</span><span>▶</span></div></div>
       </div>
 
       <div class="note">
-        <b>指标部分 — 参数查询 / 查询方案配置的语义收敛</b>
+        <b>参数查询最终规则</b>
         <ul>
-          <li>时段类型指标是<b>按粒度预聚合的结果</b>，不是采样序列。采样周期只开放 <b>1 小时及以上</b>（半小时及更细档位对时段指标不可选）。</li>
-          <li>时段指标按语义声明聚合能力：<b>用量 / 成本类</b>默认求和，支持平均 / 最大 / 最小；<b>能效比值类</b>默认周期值，支持子周期平均 / 最大 / 最小，禁止求和。</li>
-          <li><b>实时类型指标本页可选</b>：采样周期与聚合方式与测点一致（全部档位均可）；数据需经查询、计算后呈现。</li>
-          <li><b>混选时聚合按数据项独立配置</b>：每条数据项带出自己的默认聚合并仅开放支持项；顶部控件如保留则作为批量设置入口，不支持项跳过并提示。禁止用不适用的聚合方式查询后静默返回「—」。</li>
-          <li><b>查询方案配置</b>：方案需连带保存指标的粒度与聚合方式，加载时完整复原；<b>仅含测点的历史方案保持原样可用，不做数据迁移</b>；加载时校验引用有效性，指标被停用 / 删除时标记失效并提示具体缺失项，不静默丢项。</li>
+          <li>保持现网参数查询的页面结构：顶部单行查询条件，结果区支持表格 / 曲线切换，表格按对象、数据项和聚合方式形成多级表头。</li>
+          <li>参数查询是默认入口；点击“测点选择”的选择器后打开外层“选择测点”弹窗，确定或取消后返回参数查询。</li>
+          <li>选择弹窗的可选范围只包含<b>测点和本次需求提供的实时指标</b>，查询指标不展示、不选择、不查询。</li>
+          <li>实时指标与测点共用采样周期和聚合方式；混合选择后，每个数据项作为独立结果列展示，名称和单位沿用各自定义。</li>
+          <li>重置、查询、保存、快捷查询、生成数据报表和分页等现有能力保持不变。</li>
         </ul>
       </div>
     </div>
@@ -680,31 +618,17 @@
     if (el) go(el.dataset.goto);
   });
 
-  /* ---------- 指标样例（沿用能效视图「指标列表」口径：能源类型与计费时段固化进名称） ---------- */
-  var M = function (n, kind, key, state) {
-    return { name: n, kind: kind, key: key, metric: true, state: state || 'ok' };
+  /* ---------- 本次需求可选的实时指标样例 ---------- */
+  var M = function (n, key, state) {
+    return { name: n, kind: 'rt', key: key, metric: true, state: state || 'ok' };
   };
   var PARK_METRICS = [
-    M('PUE', 'rt', 'metric.pue#rt'),
-    M('WUE', 'rt', 'metric.wue#rt', 'pending'),
-    M('实时电功率', 'rt', 'metric.power#electric'),
-    M('电能消耗量', 'period', 'metric.energy.consume#electric'),
-    M('用水量', 'period', 'metric.energy.consume#water', 'pending'),
-    M('电费总额', 'period', 'metric.cost#electric'),
-    M('尖时电费', 'period', 'metric.cost.tou#electric.sharp'),
-    M('峰时电费', 'period', 'metric.cost.tou#electric.peak'),
-    M('平时电费', 'period', 'metric.cost.tou#electric.flat'),
-    M('谷时电费', 'period', 'metric.cost.tou#electric.valley'),
-    M('PUE', 'period', 'metric.pue#period')
+    M('PUE', 'metric.pue#rt'),
+    M('WUE', 'metric.wue#rt', 'pending'),
+    M('实时电功率', 'metric.power#electric')
   ];
   var BLD_METRICS = [
-    M('实时电功率', 'rt', 'metric.power#electric'),
-    M('电能消耗量', 'period', 'metric.energy.consume#electric'),
-    M('电费总额', 'period', 'metric.cost#electric'),
-    M('尖时电费', 'period', 'metric.cost.tou#electric.sharp'),
-    M('峰时电费', 'period', 'metric.cost.tou#electric.peak'),
-    M('平时电费', 'period', 'metric.cost.tou#electric.flat'),
-    M('谷时电费', 'period', 'metric.cost.tou#electric.valley')
+    M('实时电功率', 'metric.power#electric')
   ];
 
   /* ---------- 按实例添加：树数据（还原实测层级） ---------- */
@@ -739,14 +663,12 @@
   var scope = 'value';
   var selected = [
     { t: 'point', n: '0_159_1_28_0:出水温度' },
-    { t: 'metric', n: '电能消耗量', o: 'A栋' },
-    { t: 'metric', n: '尖时电费', o: 'A栋' }
+    { t: 'metric', n: '实时电功率', o: 'A栋' },
+    { t: 'metric', n: 'PUE', o: '人保北方信息中心工程' }
   ];
 
-  function kindTag(k) {
-    return k === 'rt'
-      ? '<span class="tag tag-rt" style="height:16px;font-size:9px">实时</span>'
-      : '<span class="tag tag-period" style="height:16px;font-size:9px">时段</span>';
+  function kindTag() {
+    return '';
   }
 
   function renderTree(nodes, parent, depth) {
@@ -807,7 +729,7 @@
       var d = document.createElement('div');
       d.className = 'selected-item';
       d.innerHTML =
-        '<span class="tag ' + (s.t === 'point' ? 'tag-point' : 'tag-metric') + '">' + (s.t === 'point' ? '测点' : '指标') + '</span>' +
+        '<span class="tag ' + (s.t === 'point' ? 'tag-point' : 'tag-metric') + '">' + (s.t === 'point' ? '测点' : '实时指标') + '</span>' +
         '<span class="name">' + s.n + (s.o ? ' <span class="path">· ' + s.o + '</span>' : '') + '</span>' +
         '<span class="rm">✕</span>';
       box.appendChild(d);
@@ -823,7 +745,7 @@
   }
 
   /* 按实例添加固定 scope='value'（仅有值），不提供展示范围开关 */
-  /* 按模型添加固定展示全部指标，不提供展示范围开关 */
+  /* 按模型添加仅展示本次需求范围内的实时指标 */
 
   /* ---------- 按模型添加 ---------- */
   var SCOPE_TREE = [{
@@ -906,11 +828,11 @@
     var head = document.createElement('div');
     head.className = 'tree-row';
     head.innerHTML = '<span class="tree-chevron">▼</span><span class="tree-ico">◆</span>' +
-      '<span class="tree-label" style="font-weight:700;color:#6B21A8">指标（暖通空调系统上注册）</span>';
+      '<span class="tree-label" style="font-weight:700;color:#6B21A8">实时指标（暖通空调系统上注册）</span>';
     i.appendChild(head);
     var g = document.createElement('div');
     g.className = 'tree-children';
-    [['CLF', 'rt', true], ['CLF', 'period', false], ['实时电功率', 'rt', false], ['电能消耗量', 'period', false], ['电费总额', 'period', false]]
+    [['CLF', 'rt', true], ['实时电功率', 'rt', false]]
       .forEach(function (m) {
         var r = document.createElement('div');
         r.className = 'tree-row metric-leaf';
