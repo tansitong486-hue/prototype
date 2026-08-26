@@ -237,6 +237,11 @@
     .summary-card .card-value { font-size:18px; font-weight:700; color:var(--text-primary); letter-spacing:-.2px; white-space:nowrap; }
     .summary-card .card-value .unit { font-size:11px; font-weight:500; color:var(--text-secondary); margin-left:2px; }
     .summary-card .card-extra { font-size:10.5px; color:var(--text-secondary); line-height:1.55; white-space:nowrap; text-align:right; flex-shrink:0; margin-left:8px; }
+    .summary-card-action { cursor:pointer; text-align:left; font:inherit; color:inherit; }
+    .summary-card-action:hover { background:#F8FBFF; }
+    .summary-card-action:focus-visible { outline:2px solid var(--primary); outline-offset:-2px; }
+    .summary-card-trend { display:inline-flex; align-items:center; gap:3px; margin-left:auto; color:var(--primary); font-size:10px; font-weight:600; white-space:nowrap; }
+    .summary-card-trend svg { width:12px; height:12px; fill:none; stroke:currentColor; stroke-width:2; }
 
     .records-panel {
       background:#fff; border-radius:8px;
@@ -376,6 +381,35 @@
     .room-scada-panel .room-viz {
       border:none; border-radius:0; margin-bottom:0; box-shadow:none;
     }
+    .room-viz-layout { display:grid; grid-template-columns:minmax(0, 1fr) 360px; gap:12px; align-items:start; }
+    .viz-object-detail {
+      min-width:0; min-height:280px; background:#fff; border:1px solid var(--border-light);
+      border-radius:var(--radius-lg); overflow:hidden; box-shadow:var(--shadow-sm);
+    }
+    .viz-detail-head {
+      display:flex; align-items:flex-start; justify-content:space-between; gap:8px;
+      padding:12px 14px 10px; border-bottom:1px solid var(--border-light); background:#FAFBFC;
+    }
+    .viz-detail-title { min-width:0; }
+    .viz-detail-title h3 { margin:0; font-size:14px; line-height:1.4; font-weight:700; color:var(--text-primary); word-break:break-all; }
+    .viz-detail-title p { margin:3px 0 0; font-size:11px; color:var(--text-hint); line-height:1.4; }
+    .viz-detail-status { flex-shrink:0; font-size:11px; color:var(--success); white-space:nowrap; }
+    .viz-detail-empty { display:flex; align-items:center; justify-content:center; min-height:220px; padding:24px; text-align:center; color:var(--text-hint); font-size:12px; line-height:1.7; }
+    .viz-detail-content { padding:10px 12px 12px; }
+    .viz-detail-section-label { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; font-size:11px; font-weight:700; color:var(--text-secondary); }
+    .viz-detail-section-label small { color:var(--text-hint); font-weight:400; }
+    .viz-detail-table { width:100%; border:1px solid var(--border-light); border-radius:6px; overflow:hidden; }
+    .viz-detail-row { display:grid; grid-template-columns:minmax(0, 1.3fr) .78fr .78fr .78fr; gap:6px; align-items:center; min-height:34px; padding:6px 8px; border-bottom:1px solid var(--border-light); font-size:11px; }
+    .viz-detail-row:last-child { border-bottom:none; }
+    .viz-detail-row.is-head { min-height:30px; background:#F7F9FC; color:var(--text-secondary); font-size:10.5px; font-weight:600; }
+    .viz-detail-row > span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .viz-detail-row > span:first-child { overflow:visible; text-overflow:clip; white-space:normal; line-height:1.35; word-break:break-all; }
+    .viz-detail-row .is-ai { color:var(--primary); font-weight:600; }
+    .viz-detail-row .is-change { font-weight:600; }
+    .viz-detail-row .is-change.is-positive { color:var(--success); }
+    .viz-detail-row .is-change.is-negative { color:var(--danger); }
+    .viz-detail-history { width:100%; margin-top:10px; }
+    .viz-node.is-selected { filter:url(#glow-sh); stroke:#001833 !important; stroke-width:2.5 !important; }
     .scada-modal-section { margin-bottom:14px; }
     .scada-modal-section > .form-label { margin-bottom:8px; }
     .scada-linked-row, .scada-avail-row {
@@ -708,12 +742,6 @@
     .obj-tags .device-type-note { flex-basis:100%; margin-top:0; }
     .device-type-tag { display:inline-flex; align-items:center; min-height:20px; padding:1px 7px; border-radius:4px; background:#E6F4FF; color:#096DD9; font-size:10px; font-weight:600; white-space:nowrap; }
     .device-type-tag.air { background:#FFF7E6; color:#C2410C; }
-    .result-facts { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); border:1px solid var(--border-light); border-radius:6px; background:#fff; margin:12px 0; overflow:hidden; }
-    .result-fact { min-width:0; padding:10px 12px; border-right:1px solid var(--border-light); }
-    .result-fact:last-child { border-right:none; }
-    .result-fact-label { font-size:11px; color:var(--text-hint); margin-bottom:4px; }
-    .result-fact-value { font-size:12px; color:var(--text-primary); font-weight:600; line-height:1.45; word-break:break-word; }
-
     .io-list { margin-bottom:8px; }
     .io-item {
       display:flex; align-items:center; gap:12px;
@@ -876,9 +904,9 @@
     @media (max-width:768px) {
       .sidebar { display:none; }
       .right-panel { width:calc(100vw - 24px); max-width:none; max-height:92vh; }
-      .result-facts { grid-template-columns:repeat(2, minmax(0, 1fr)); }
-      .result-fact:nth-child(2) { border-right:none; }
-      .result-fact:nth-child(-n+2) { border-bottom:1px solid var(--border-light); }
+      .room-viz-layout { grid-template-columns:1fr; }
+      .viz-object-detail { min-height:0; }
+      .viz-detail-empty { min-height:96px; }
     }
   </style>
   <link rel="stylesheet" href="annotation-styles.css">
@@ -1064,6 +1092,7 @@
         <div class="anno-body">
           <p><b>关联模块：</b>中部关键指标卡片（四宫格）</p>
           <p><b>平均/最高冷通道温度：</b>投入状态冷通道传感器 Tc 的均值与最大值；热通道同理。</p>
+          <p><b>历史趋势：</b>平均/最高冷通道温度、平均/最高热通道温度与 pPUE 卡片可直接打开历史趋势弹窗。</p>
           <p><b>空调开机/投入总数：</b>开机台数 / 投入状态（Fi=投入）空调总数；柔性寻优仅对 s_i=1 且 Fi=投入 的空调调节。</p>
           <p><b>pPUE：</b>(QIT + Pcool) ÷ QIT，值越接近 1 能效越好；寻优前后可对比评估节能效果。</p>
         </div>
@@ -1081,17 +1110,17 @@
 
       <!-- 概览卡片 -->
       <div class="summary-cards">
-        <div class="summary-card">
+        <div class="summary-card summary-card-action" role="button" tabindex="0" aria-label="查看平均最高冷通道温度历史趋势" onclick="openKeyMetricTrend('coldTemp')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openKeyMetricTrend('coldTemp');}">
           <div class="card-icon"><svg viewBox="0 0 24 24"><path d="M22 11h-4.17l3.24-3.24-1.41-1.42L15 11h-2V9l4.66-4.66-1.42-1.41L13 6.17V2h-2v4.17L7.76 2.93 6.34 4.34 11 9v2H9L4.34 6.34 2.93 7.76 6.17 11H2v2h4.17l-3.24 3.24 1.41 1.42L9 13h2v2l-4.66 4.66 1.42 1.41L11 17.83V22h2v-4.17l3.24 3.24 1.42-1.41L13 15v-2h2l4.66 4.66 1.41-1.42L17.83 13H22z"/></svg></div>
           <div class="card-body">
-            <div class="card-label">平均/最高冷通道温度</div>
+            <div class="card-label">平均/最高冷通道温度 <span class="summary-card-trend"><svg viewBox="0 0 24 24"><path d="M4 17l5-5 4 3 7-8"/><path d="M15 7h5v5"/></svg>趋势</span></div>
             <div class="card-value">23.4 / 26.0 <span class="unit">℃</span></div>
           </div>
         </div>
-        <div class="summary-card">
+        <div class="summary-card summary-card-action" role="button" tabindex="0" aria-label="查看平均最高热通道温度历史趋势" onclick="openKeyMetricTrend('hotTemp')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openKeyMetricTrend('hotTemp');}">
           <div class="card-icon"><svg viewBox="0 0 24 24"><path d="M13.5 .67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg></div>
           <div class="card-body">
-            <div class="card-label">平均/最高热通道温度</div>
+            <div class="card-label">平均/最高热通道温度 <span class="summary-card-trend"><svg viewBox="0 0 24 24"><path d="M4 17l5-5 4 3 7-8"/><path d="M15 7h5v5"/></svg>趋势</span></div>
             <div class="card-value">30.2 / 34.0 <span class="unit">℃</span></div>
           </div>
         </div>
@@ -1102,10 +1131,10 @@
             <div class="card-value">4 / 4</div>
           </div>
         </div>
-        <div class="summary-card">
+        <div class="summary-card summary-card-action" role="button" tabindex="0" aria-label="查看 pPUE 历史趋势" onclick="openKeyMetricTrend('ppue')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openKeyMetricTrend('ppue');}">
           <div class="card-icon"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></svg></div>
           <div class="card-body">
-            <div class="card-label">pPUE</div>
+            <div class="card-label">pPUE <span class="summary-card-trend"><svg viewBox="0 0 24 24"><path d="M4 17l5-5 4 3 7-8"/><path d="M15 7h5v5"/></svg>趋势</span></div>
             <div class="card-value">1.057</div>
           </div>
           <div class="card-extra">IT功率&nbsp;&nbsp;613.5 kW<br>制冷功率&nbsp;&nbsp;35.2 kW</div>
@@ -1183,12 +1212,6 @@
             </div>
           </div>
         </div>
-        <div class="result-facts" aria-label="本轮设备能力概览">
-          <div class="result-fact"><div class="result-fact-label">编队类型</div><div class="result-fact-value">混合编队（8 水冷 / 4 风冷 DX）</div></div>
-          <div class="result-fact"><div class="result-fact-label">安全反馈冷量</div><div class="result-fact-value">724.0 kW / R_cool 1.18</div></div>
-          <div class="result-fact"><div class="result-fact-label">当前估算冷量</div><div class="result-fact-value">746.0 kW</div></div>
-          <div class="result-fact"><div class="result-fact-label">数据质量</div><div class="result-fact-value">9 A / 2 B / 1 C</div></div>
-        </div>
         <div class="room-scada-panel opt-record-viz-card" id="optRecordVizCard">
           <div class="opt-viz-card-head">
             <div class="opt-record-subtabs" id="optRecordSubtabs">
@@ -1208,7 +1231,7 @@
               </div>
               <button type="button" class="btn btn-primary" onclick="openLinkScadaModal()">绑定机房组态</button>
             </div>
-            <div id="roomVizSharedWrap">
+            <div id="roomVizSharedWrap" class="room-viz-layout">
               <div class="room-viz" id="roomVizShared">
                 <div class="room-viz-zoom-viewport" id="roomVizZoomViewport">
                   <svg id="roomSvgShared" viewBox="0 0 960 520" width="960" height="520" role="img" aria-label="机房组态平面图"></svg>
@@ -1233,6 +1256,37 @@
                   </div>
                 </div>
               </div>
+              <aside class="viz-object-detail" id="vizObjectDetail" aria-live="polite">
+                <div class="viz-detail-empty" id="vizObjectDetailEmpty">点击空调或冷热通道温湿度传感器，查看当前巡游记录明细</div>
+                <div id="vizObjectDetailContent" style="display:none;">
+                  <div class="viz-detail-head">
+                    <div class="viz-detail-title">
+                      <h3 id="vizDetailTitle">—</h3>
+                      <p id="vizDetailType">—</p>
+                    </div>
+                    <span class="viz-detail-status" id="vizDetailStatus">—</span>
+                  </div>
+                  <div class="viz-detail-content">
+                    <div class="viz-detail-section-label">
+                      <span>巡游记录数据明细</span>
+                      <small id="vizDetailArea">—</small>
+                    </div>
+                    <div class="viz-detail-table" role="table" aria-label="对象巡游记录数据明细">
+                      <div class="viz-detail-row is-head" role="row">
+                        <span role="columnheader">变量名称</span>
+                        <span role="columnheader">实际值</span>
+                        <span role="columnheader">AI寻优值</span>
+                        <span role="columnheader">寻优变化</span>
+                      </div>
+                      <div id="vizDetailBody"></div>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-solid viz-detail-history" id="btnVizDetailHistory" onclick="openSelectedVizHistory()">
+                      <span class="btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17l5-5 4 3 7-8"/><path d="M15 7h5v5"/></svg></span>
+                      操作历史趋势
+                    </button>
+                  </div>
+                </div>
+              </aside>
             </div>
           </div>
         </div>
@@ -1929,7 +1983,7 @@
       <span class="anno-source">基于文档推断</span>
       <div class="anno-body">
         <p><b>关联模块：</b>历史趋势图表弹窗（modalChart）</p>
-        <p><b>入口：</b>寻优记录变量表「历史趋势」。</p>
+        <p><b>入口：</b>关键指标卡、组态对象右侧「操作历史趋势」、寻优记录变量表行内「历史趋势」。</p>
       </div>
     </div>
     <div class="anno anno-field" data-version="v1.6" style="margin:0 20px 8px;">
@@ -1945,8 +1999,8 @@
       <canvas id="trendChart"></canvas>
     </div>
     <div class="chart-legend">
-      <div class="leg"><div class="leg-line" style="background:#1890FF;"></div>实际值</div>
-      <div class="leg"><div class="leg-line dashed" style="color:#52C41A;"></div>AI寻优值</div>
+      <div class="leg"><div class="leg-line" style="background:#1890FF;"></div><span id="chartLegendActual">实际值</span></div>
+      <div class="leg"><div class="leg-line dashed" style="color:#52C41A;"></div><span id="chartLegendAi">AI寻优值</span></div>
     </div>
     <div class="chart-foot">
       <button class="btn" onclick="closeModal('modalChart')">取 消</button>
@@ -2073,6 +2127,105 @@ const SCADA_LIBRARY = [
 const SCADA_BINDING_STORE_KEY = 'idc.flexOpt.scadaBinding.v1';
 
 let scadaBinding;
+let selectedVizObject = null;
+
+function vizText(value) {
+  return String(value === undefined || value === null ? '—' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function getVizObjectDetail(type, id) {
+  const room = getRoomForOptTable();
+  if (!room) return null;
+  if (type === 'ac') {
+    const ac = (room.acs || []).find(item => item.id === id);
+    if (!ac) return null;
+    const data = buildDataFromRoom([ac])[0];
+    return {
+      type, id, name: data.name,
+      typeLabel: ac.deviceType === 'air' ? '风冷 DX 空调' : '水冷空调',
+      status: `${ac.si === 1 ? '运行中' : '停机中'} · ${ac.Fi}`,
+      area: '当前巡游记录',
+      variables: data.variables,
+    };
+  }
+  if (type === 'cold') {
+    const sensor = (room.coldSensors || []).find(item => item.id === id);
+    if (!sensor) return null;
+    return {
+      type, id, name: `${sensor.id} 冷通道传感器`, typeLabel: '冷通道温湿度传感器',
+      status: '采集中', area: sensor.area,
+      variables: [
+        { name: '冷通道温度', actual: `${Number(sensor.Tc).toFixed(2)}℃`, ai: '—', change: '—' },
+        { name: '相对湿度', actual: `${sensor.RH}%`, ai: '—', change: '—' },
+      ],
+    };
+  }
+  if (type === 'hot') {
+    const sensor = (room.hotSensors || []).find(item => item.id === id);
+    if (!sensor) return null;
+    return {
+      type, id, name: `${sensor.id} 热通道传感器`, typeLabel: '热通道温湿度传感器',
+      status: '采集中', area: sensor.area,
+      variables: [
+        { name: '热通道温度', actual: `${Number(sensor.Th).toFixed(2)}℃`, ai: '—', change: '—' },
+        { name: '相对湿度', actual: `${sensor.RH}%`, ai: '—', change: '—' },
+      ],
+    };
+  }
+  return null;
+}
+
+function selectVizObject(type, id) {
+  const detail = getVizObjectDetail(type, id);
+  if (!detail) return;
+  selectedVizObject = detail;
+  renderVizObjectDetail();
+  const svg = document.getElementById('roomSvgShared');
+  if (svg) {
+    svg.querySelectorAll('.viz-node.is-selected').forEach(el => el.classList.remove('is-selected'));
+    const selected = svg.querySelector(`.viz-node[data-type="${type}"][data-id="${id}"]`);
+    if (selected) selected.classList.add('is-selected');
+    applyVizLinkHighlight(svg, type, id);
+  }
+}
+
+function renderVizObjectDetail() {
+  const empty = document.getElementById('vizObjectDetailEmpty');
+  const content = document.getElementById('vizObjectDetailContent');
+  if (!empty || !content) return;
+  const detail = selectedVizObject;
+  if (!detail) {
+    empty.style.display = 'flex';
+    content.style.display = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  content.style.display = 'block';
+  document.getElementById('vizDetailTitle').textContent = detail.name;
+  document.getElementById('vizDetailType').textContent = detail.typeLabel;
+  document.getElementById('vizDetailStatus').textContent = detail.status;
+  document.getElementById('vizDetailArea').textContent = detail.area;
+  document.getElementById('vizDetailBody').innerHTML = detail.variables.map(variable => {
+    const change = String(variable.change || '—');
+    const changeClass = change.startsWith('+') ? 'is-positive' : change.startsWith('-') ? 'is-negative' : '';
+    return `<div class="viz-detail-row" role="row">
+      <span role="cell" title="${vizText(variable.name)}">${vizText(variable.name)}</span>
+      <span role="cell">${vizText(variable.actual)}</span>
+      <span role="cell" class="is-ai">${vizText(variable.ai)}</span>
+      <span role="cell" class="is-change ${changeClass}">${vizText(change)}</span>
+    </div>`;
+  }).join('');
+}
+
+function openSelectedVizHistory() {
+  if (!selectedVizObject || !selectedVizObject.variables.length) return;
+  openChart(selectedVizObject.name, selectedVizObject.variables[0].name);
+}
 
 function persistScadaBinding() {
   try {
@@ -2198,7 +2351,7 @@ function updateOptVizCardLayout() {
     if (btn) btn.style.display = 'none';
   } else {
     empty.style.display = 'none';
-    wrap.style.display = 'block';
+    wrap.style.display = 'grid';
     if (btn) btn.style.display = onScada && scadaBinding ? 'inline-flex' : 'none';
   }
 }
@@ -2539,14 +2692,14 @@ function paintRoomSvg(R, cfg) {
   (R.coldSensors || []).forEach(cs => {
     const cx = tx(cs.x), cy = ty(cs.y);
     const col = tempColor(cs.Tc, 18, 27);
-    s += `<circle cx="${cx}" cy="${cy}" r="12" fill="${col}" stroke="#fff" stroke-width="2" opacity="0.95" class="viz-node" data-type="cold" data-id="${cs.id}" data-tc="${cs.Tc}" data-rh="${cs.RH}" data-area="${cs.area}"/>`;
+    s += `<circle cx="${cx}" cy="${cy}" r="12" fill="${col}" stroke="#fff" stroke-width="2" opacity="0.95" class="viz-node" data-type="cold" data-id="${cs.id}" data-tc="${cs.Tc}" data-rh="${cs.RH}" data-area="${cs.area}" role="button" tabindex="0" aria-label="${cs.id} 冷通道温湿度传感器"/>`;
     s += `<text x="${cx}" y="${cy + 4.5}" font-size="10" fill="#fff" text-anchor="middle" font-weight="700" pointer-events="none">${cs.Tc.toFixed(1)}</text>`;
   });
 
   R.hotSensors.forEach(hs => {
     const hx = tx(hs.x), hy = ty(hs.y);
     const col = tempColor(hs.Th, 27, 35);
-    s += `<rect x="${hx - 9}" y="${hy - 9}" width="18" height="18" rx="3" fill="${col}" stroke="#fff" stroke-width="1.5" opacity="0.88" class="viz-node" data-type="hot" data-id="${hs.id}" data-th="${hs.Th}" data-rh="${hs.RH}" data-area="${hs.area}"/>`;
+    s += `<rect x="${hx - 9}" y="${hy - 9}" width="18" height="18" rx="3" fill="${col}" stroke="#fff" stroke-width="1.5" opacity="0.88" class="viz-node" data-type="hot" data-id="${hs.id}" data-th="${hs.Th}" data-rh="${hs.RH}" data-area="${hs.area}" role="button" tabindex="0" aria-label="${hs.id} 热通道温湿度传感器"/>`;
     s += `<text x="${hx}" y="${hy + 4}" font-size="9" fill="#fff" text-anchor="middle" font-weight="700" pointer-events="none">${hs.Th.toFixed(1)}</text>`;
   });
 
@@ -2562,7 +2715,7 @@ function paintRoomSvg(R, cfg) {
 
     const ox = ac.side === 'L' ? VIZ_AC_OX_L : VIZ_AC_OX_R;
     const acHalfH = VIZ_AC_BOX_H / 2;
-    s += `<rect x="${ax + ox}" y="${ay - acHalfH}" width="${VIZ_AC_BOX_W}" height="${VIZ_AC_BOX_H}" rx="3" fill="${fill}" stroke="${isOut ? '#999' : '#fff'}" stroke-width="2" class="viz-node" data-type="ac" data-id="${ac.id}" data-fi="${ac.Fi}" data-si="${ac.si}" data-v1="${ac.V1}" data-v1ai="${ac.V1_ai}" data-v2="${ac.V2}" data-v2ai="${ac.V2_ai}" data-nfan="${ac.Nfan}" data-ts="${ac.Ts}" data-tr="${ac.Tr}" data-device-type="${ac.deviceType}" data-type-label="${ac.typeLabel}" data-control-var="${ac.controlVar}" data-control-unit="${ac.controlUnit}" data-qsafe="${ac.Qsafe}" data-qest="${ac.Qest}" data-quality="${ac.quality}" data-capability="${ac.capability}"/>`;
+    s += `<rect x="${ax + ox}" y="${ay - acHalfH}" width="${VIZ_AC_BOX_W}" height="${VIZ_AC_BOX_H}" rx="3" fill="${fill}" stroke="${isOut ? '#999' : '#fff'}" stroke-width="2" class="viz-node" data-type="ac" data-id="${ac.id}" data-fi="${ac.Fi}" data-si="${ac.si}" data-v1="${ac.V1}" data-v1ai="${ac.V1_ai}" data-v2="${ac.V2}" data-v2ai="${ac.V2_ai}" data-nfan="${ac.Nfan}" data-ts="${ac.Ts}" data-tr="${ac.Tr}" data-device-type="${ac.deviceType}" data-type-label="${ac.typeLabel}" data-control-var="${ac.controlVar}" data-control-unit="${ac.controlUnit}" data-qsafe="${ac.Qsafe}" data-qest="${ac.Qest}" data-quality="${ac.quality}" data-capability="${ac.capability}" role="button" tabindex="0" aria-label="${ac.id} 空调"/>`;
 
     const iconX = ax + ox + VIZ_AC_BOX_W / 2, iconY = ay;
     if (isOut || !isRunning) {
@@ -2613,6 +2766,20 @@ function paintRoomSvg(R, cfg) {
 
   svg.querySelectorAll('.viz-node').forEach(el => {
     el.style.cursor = 'pointer';
+    const nodeType = el.dataset.type;
+    const nodeId = el.dataset.id;
+    if (selectedVizObject && selectedVizObject.type === nodeType && selectedVizObject.id === nodeId) {
+      el.classList.add('is-selected');
+    }
+    el.addEventListener('click', function(e) {
+      e.stopPropagation();
+      selectVizObject(nodeType, nodeId);
+    });
+    el.addEventListener('keydown', function(e) {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      selectVizObject(nodeType, nodeId);
+    });
     el.addEventListener('mouseenter', function(e) {
       const d = this.dataset;
       applyVizLinkHighlight(svg, d.type, d.id);
@@ -2668,6 +2835,14 @@ function renderRoomViz() {
   const tip = document.getElementById('vizTipShared');
   const legRack = document.getElementById('vizLegRack');
   const onOverview = isOptOverviewTabActive();
+  const currentRoom = getRoomForOptTable();
+  if (selectedVizObject && !getVizObjectDetail(selectedVizObject.type, selectedVizObject.id)) {
+    selectedVizObject = null;
+  }
+  if (onOverview && !selectedVizObject && currentRoom) {
+    const firstAc = (currentRoom.acs || []).find(ac => ac.Fi === '投入' && ac.si === 1) || (currentRoom.acs || [])[0];
+    if (firstAc) selectedVizObject = getVizObjectDetail('ac', firstAc.id);
+  }
   if (legRack) legRack.style.display = onOverview ? 'none' : '';
   if (onOverview) {
     paintRoomSvg(getRoomForOptTable(), {
@@ -2678,12 +2853,14 @@ function renderRoomViz() {
       emptyMsg: '暂无平面图数据',
       overviewSimplified: true,
     });
+    renderVizObjectDetail();
     return;
   }
   if (!scadaBinding) {
     if (svg) svg.innerHTML = '';
     if (tip) tip.classList.remove('show');
     applyRoomVizZoomSize();
+    renderVizObjectDetail();
     return;
   }
   paintRoomSvg(getCurrentRoom(), {
@@ -2693,6 +2870,7 @@ function renderRoomViz() {
     defSuffix: '-sh',
     emptyMsg: '请先关联机房组态',
   });
+  renderVizObjectDetail();
 }
 
 function buildDataFromRoom(acs) {
@@ -3114,10 +3292,38 @@ function openDispatch(mode) {
 }
 
 let trendChartInstance = null;
+let chartMetricKey = '';
+const KEY_METRIC_TREND_DATA = {
+  coldTemp: {
+    title: '平均/最高冷通道温度', unit: '℃', yMin: 20, yMax: 28, yStep: 2,
+    actual: [22.8, 23.0, 23.2, 23.1, 23.5, 23.7, 23.6, 23.4, 23.3, 23.5, 23.4, 23.4],
+    compare: [23.2, 23.2, 23.2, 23.2, 23.3, 23.3, 23.3, 23.4, 23.4, 23.4, 23.4, 23.4],
+  },
+  hotTemp: {
+    title: '平均/最高热通道温度', unit: '℃', yMin: 26, yMax: 36, yStep: 2,
+    actual: [29.1, 29.4, 29.8, 30.0, 30.6, 31.0, 30.8, 30.5, 30.2, 30.1, 30.2, 30.2],
+    compare: [29.8, 29.8, 29.8, 29.8, 30.0, 30.0, 30.0, 30.1, 30.1, 30.2, 30.2, 30.2],
+  },
+  ppue: {
+    title: 'pPUE', unit: '', yMin: 1.02, yMax: 1.10, yStep: 0.02,
+    actual: [1.082, 1.079, 1.075, 1.071, 1.068, 1.064, 1.061, 1.059, 1.058, 1.057, 1.057, 1.057],
+    compare: [1.070, 1.070, 1.068, 1.066, 1.064, 1.062, 1.060, 1.059, 1.058, 1.057, 1.057, 1.057],
+  },
+};
 
-function openChart(acName, varName) {
+function openKeyMetricTrend(metric) {
+  const config = KEY_METRIC_TREND_DATA[metric] || KEY_METRIC_TREND_DATA.coldTemp;
+  openChart('机房关键指标', config.title, metric);
+}
+
+function openChart(acName, varName, metricKey) {
+  chartMetricKey = metricKey || '';
   document.getElementById('chartMainTitle').textContent = varName;
   document.getElementById('chartSubTitle').textContent = acName;
+  const actualLegend = document.getElementById('chartLegendActual');
+  const aiLegend = document.getElementById('chartLegendAi');
+  if (actualLegend) actualLegend.textContent = metricKey ? '历史值' : '实际值';
+  if (aiLegend) aiLegend.textContent = metricKey ? '当前记录' : 'AI寻优值';
   openModal('modalChart');
   setTimeout(() => drawTrendChart(), 80);
 }
@@ -3139,13 +3345,17 @@ function drawTrendChart() {
   ctx.scale(dpr, dpr);
 
   const hours = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'];
-  const actual  = [20.0, 20.0, 20.5, 20.5, 21.0, 20.0, 19.0, 19.5, 20.0, 20.5, 21.0, 20.5];
-  const aiValue = [20.0, 20.5, 21.0, 21.5, 22.0, 19.0, 18.5, 19.0, 19.5, 21.5, 22.0, 21.0];
+  const metric = chartMetricKey ? KEY_METRIC_TREND_DATA[chartMetricKey] : null;
+  const actual  = metric ? metric.actual : [20.0, 20.0, 20.5, 20.5, 21.0, 20.0, 19.0, 19.5, 20.0, 20.5, 21.0, 20.5];
+  const aiValue = metric ? metric.compare : [20.0, 20.5, 21.0, 21.5, 22.0, 19.0, 18.5, 19.0, 19.5, 21.5, 22.0, 21.0];
 
   const pad = { l:50, r:20, t:20, b:40 };
   const chartW = w - pad.l - pad.r;
   const chartH = h - pad.t - pad.b;
-  const yMin = 16, yMax = 26, yStep = 2;
+  const yMin = metric ? metric.yMin : 16;
+  const yMax = metric ? metric.yMax : 26;
+  const yStep = metric ? metric.yStep : 2;
+  const unit = metric ? metric.unit : '℃';
 
   ctx.clearRect(0, 0, w, h);
 
@@ -3154,7 +3364,8 @@ function drawTrendChart() {
   for (let v = yMin; v <= yMax; v += yStep) {
     const y = pad.t + chartH - ((v - yMin) / (yMax - yMin)) * chartH;
     ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + chartW, y); ctx.stroke();
-    ctx.fillText(v + '℃', pad.l - 8, y + 4);
+    const axisValue = metric && metric.unit === '' ? Number(v).toFixed(2) : v;
+    ctx.fillText(axisValue + unit, pad.l - 8, y + 4);
   }
 
   ctx.textAlign = 'center';
