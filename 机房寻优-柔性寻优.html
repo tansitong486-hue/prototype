@@ -240,8 +240,18 @@
     .summary-card-action { cursor:pointer; text-align:left; font:inherit; color:inherit; }
     .summary-card-action:hover { background:#F8FBFF; }
     .summary-card-action:focus-visible { outline:2px solid var(--primary); outline-offset:-2px; }
-    .summary-card-trend { display:inline-flex; align-items:center; gap:3px; margin-left:auto; color:var(--primary); font-size:10px; font-weight:600; white-space:nowrap; }
-    .summary-card-trend svg { width:12px; height:12px; fill:none; stroke:currentColor; stroke-width:2; }
+    .card-extra-action {
+      display:block; width:100%; margin:0; padding:0; border:none;
+      background:none; font:inherit; color:inherit; cursor:pointer; text-align:right; line-height:1.55;
+    }
+    .card-extra-action:hover { color:var(--primary); }
+    .click-arrow {
+      display:inline-block; margin-left:4px; color:var(--primary);
+      font-weight:500; font-size:.78em; line-height:1; vertical-align:.08em; opacity:.72;
+    }
+    .summary-card-action:hover .click-arrow,
+    .card-extra-action:hover .click-arrow,
+    .viz-detail-trend:hover .click-arrow { opacity:1; }
 
     .records-panel {
       background:#fff; border-radius:8px;
@@ -381,34 +391,53 @@
     .room-scada-panel .room-viz {
       border:none; border-radius:0; margin-bottom:0; box-shadow:none;
     }
-    .room-viz-layout { display:grid; grid-template-columns:minmax(0, 1fr) 360px; gap:12px; align-items:start; }
+    .room-viz-layout { position:relative; display:block; }
     .viz-object-detail {
-      min-width:0; min-height:280px; background:#fff; border:1px solid var(--border-light);
-      border-radius:var(--radius-lg); overflow:hidden; box-shadow:var(--shadow-sm);
+      position:absolute; top:12px; right:12px; z-index:20;
+      width:300px; max-width:calc(100% - 24px); max-height:calc(100% - 24px);
+      overflow:auto; background:#fff; border:1px solid var(--border-light);
+      border-radius:var(--radius-lg); box-shadow:0 10px 28px rgba(15, 23, 42, 0.16);
     }
+    .viz-object-detail[hidden] { display:none !important; }
     .viz-detail-head {
       display:flex; align-items:flex-start; justify-content:space-between; gap:8px;
-      padding:12px 14px 10px; border-bottom:1px solid var(--border-light); background:#FAFBFC;
+      padding:10px 12px 8px; border-bottom:1px solid var(--border-light); background:#FAFBFC;
+      position:sticky; top:0; z-index:1;
     }
-    .viz-detail-title { min-width:0; }
+    .viz-detail-title { min-width:0; flex:1; }
     .viz-detail-title h3 { margin:0; font-size:14px; line-height:1.4; font-weight:700; color:var(--text-primary); word-break:break-all; }
     .viz-detail-title p { margin:3px 0 0; font-size:11px; color:var(--text-hint); line-height:1.4; }
-    .viz-detail-status { flex-shrink:0; font-size:11px; color:var(--success); white-space:nowrap; }
-    .viz-detail-empty { display:flex; align-items:center; justify-content:center; min-height:220px; padding:24px; text-align:center; color:var(--text-hint); font-size:12px; line-height:1.7; }
+    .viz-detail-head-actions { display:flex; align-items:center; gap:4px; flex-shrink:0; }
+    .viz-detail-status { font-size:11px; color:var(--success); white-space:nowrap; }
+    .viz-detail-close {
+      width:24px; height:24px; border:none; border-radius:50%; background:transparent;
+      color:var(--text-hint); font-size:16px; line-height:1; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .viz-detail-close:hover { background:#F5F5F5; color:var(--text-primary); }
     .viz-detail-content { padding:10px 12px 12px; }
-    .viz-detail-section-label { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; font-size:11px; font-weight:700; color:var(--text-secondary); }
-    .viz-detail-section-label small { color:var(--text-hint); font-weight:400; }
     .viz-detail-table { width:100%; border:1px solid var(--border-light); border-radius:6px; overflow:hidden; }
-    .viz-detail-row { display:grid; grid-template-columns:minmax(0, 1.3fr) .78fr .78fr .78fr; gap:6px; align-items:center; min-height:34px; padding:6px 8px; border-bottom:1px solid var(--border-light); font-size:11px; }
+    .viz-detail-row { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.15fr); gap:8px; align-items:center; min-height:32px; padding:5px 8px; border-bottom:1px solid var(--border-light); font-size:11px; }
     .viz-detail-row:last-child { border-bottom:none; }
-    .viz-detail-row.is-head { min-height:30px; background:#F7F9FC; color:var(--text-secondary); font-size:10.5px; font-weight:600; }
-    .viz-detail-row > span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .viz-detail-row > span:first-child { overflow:visible; text-overflow:clip; white-space:normal; line-height:1.35; word-break:break-all; }
-    .viz-detail-row .is-ai { color:var(--primary); font-weight:600; }
-    .viz-detail-row .is-change { font-weight:600; }
-    .viz-detail-row .is-change.is-positive { color:var(--success); }
-    .viz-detail-row .is-change.is-negative { color:var(--danger); }
-    .viz-detail-history { width:100%; margin-top:10px; }
+    .viz-detail-row.is-head { min-height:28px; background:#F7F9FC; color:var(--text-secondary); font-size:10.5px; font-weight:600; }
+    .viz-detail-row.is-group {
+      grid-template-columns:1fr; min-height:26px; padding:4px 8px;
+      font-size:10.5px; font-weight:700;
+    }
+    .viz-detail-row.is-group.controlled { background:#EFF6FF; color:#2563EB; }
+    .viz-detail-row.is-group.optimizing { background:#F0FDF4; color:#16A34A; }
+    .viz-detail-row.is-group.unopt { background:#F8FAFC; color:#64748B; }
+    .viz-detail-row.is-group.disturbance { background:#FFF7ED; color:#D97706; }
+    .viz-detail-row > span { min-width:0; }
+    .viz-detail-row > span:first-child { line-height:1.35; word-break:break-all; }
+    .viz-detail-value { display:flex; align-items:center; justify-content:flex-end; }
+    .viz-detail-trend {
+      display:inline-flex; align-items:center; gap:4px; margin:0; padding:0;
+      border:none; background:none; color:var(--text-primary); font:inherit; font-weight:600; cursor:pointer;
+    }
+    .viz-detail-actual { color:var(--text-primary); }
+    .viz-detail-arrow { color:var(--text-hint); font-weight:600; }
+    .viz-detail-ai { color:var(--primary); font-weight:700; }
     .viz-node.is-selected { filter:url(#glow-sh); stroke:#001833 !important; stroke-width:2.5 !important; }
     .scada-modal-section { margin-bottom:14px; }
     .scada-modal-section > .form-label { margin-bottom:8px; }
@@ -904,9 +933,7 @@
     @media (max-width:768px) {
       .sidebar { display:none; }
       .right-panel { width:calc(100vw - 24px); max-width:none; max-height:92vh; }
-      .room-viz-layout { grid-template-columns:1fr; }
-      .viz-object-detail { min-height:0; }
-      .viz-detail-empty { min-height:96px; }
+      .viz-object-detail { left:8px; right:8px; width:auto; max-height:56%; }
     }
   </style>
   <link rel="stylesheet" href="annotation-styles.css">
@@ -949,6 +976,13 @@
         <span class="anno-tag">版本信息</span>
         <div class="anno-body">
           <p><b>v2.6（2026-07-24）：</b>新增<strong>寻优结果可解释性</strong>：①「寻优记录」Tab 顶部展示本轮建议模式、安全反馈冷量倍数、目标带分支和建议数量；②平面图浮窗与手动下发弹窗展示同一段设备原因。解释以 v2.6 L3 输出为唯一事实源，按 `mode` 区分节能与保障，保障模式覆盖安全线以下与连续退出确认；节能模式覆盖目标带上方省电、带内 / 趋势保持、带下预防性增冷、热点增冷及热点在途保持，允许整体省电与局部热点增冷同轮存在，并继续覆盖紧急增冷和凝露部分恢复。本轮 V1 或 V2 任一建议目标变化均输出原因，V2-only 不再遗漏。所有文案只描述本轮建议，不代表已经下发或生效，实际执行结果仍在 L4 既有下发记录中查看。普通分支遵守 V1 / V2 跨轮串行，同一设备只变化一个通道；紧急增冷可同轮 V1+V2。V2-only 收小水阀只表述为减少过度供冷和冷量再分配，不声称直接省电。规则配置改为居中弹窗，按对象类型 / 控制通道生成模拟量规则；结果概览、变量表、平面图和手动下发同步展示水冷 / 风冷 DX 类型，风冷 DX 不展示水阀控制。</p>
+        </div>
+      </div>
+      <div class="anno anno-version-header" data-version="v2.8" data-date="2026-08-28">
+        <span class="anno-tag">版本信息</span>
+        <span class="anno-version">v2.8</span>
+        <div class="anno-body">
+          <p><b>v2.8（2026-08-28）：</b>对应需求 6、需求 7。① 气流布局对象明细改为平面图右上角可关闭浮层，默认不弹出。② 顶部指标（冷/热通道温度、开机/投入总数、pPUE、IT 功率、制冷功率）均可从当前值下钻历史。与机房加减机寻优页同一套。详见《机房寻优记录查看体验优化需求文档》。</p>
         </div>
       </div>
 
@@ -1097,6 +1131,29 @@
           <p><b>pPUE：</b>(QIT + Pcool) ÷ QIT，值越接近 1 能效越好；寻优前后可对比评估节能效果。</p>
         </div>
       </div>
+      <div class="anno anno-ux" data-version="v2.8">
+        <span class="anno-tag">交互说明</span>
+        <span class="anno-version">v2.8</span>
+        <span class="anno-source">引用自需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>中部关键指标卡片</p>
+          <p><b>目的：</b>从本轮当前值跳到该指标历史，核对温度、开机台数和功率是刚变化还是一直如此。</p>
+          <p><b>下钻：</b>可点指标的数值末尾只放一个 <code>&gt;</code>，点卡片（或功率行）打开历史趋势弹窗。对照关系用 <code>→</code>，可点下钻只用 <code>&gt;</code>。</p>
+          <p><b>可点：</b>冷通道温度、热通道温度、空调开机/投入总数、pPUE、IT 功率、制冷功率。</p>
+          <p><b>功率与 pPUE：</b>IT / 制冷功率挂在 pPUE 卡片右侧，但是独立入口。点哪一行只打开对应功率趋势；点 pPUE 数值才打开 pPUE。</p>
+        </div>
+      </div>
+      <div class="anno anno-field" data-version="v2.8">
+        <span class="anno-tag">字段说明</span>
+        <span class="anno-version">v2.8</span>
+        <span class="anno-source">引用自需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>中部关键指标卡片</p>
+          <p><b>空调开机/投入总数：</b>开机台数 / 投入总数，点整卡看台数趋势。</p>
+          <p><b>IT功率 / 制冷功率：</b>各自一行、各自一个 <code>&gt;</code>，用来解释 pPUE 变化来自 IT 侧还是制冷侧。</p>
+          <p><b>弹窗：</b>与对象浮层、变量表共用同一扇历史趋势窗，标题跟所点指标走。</p>
+        </div>
+      </div>
       <div class="anno anno-data" data-version="v1.6">
         <span class="anno-tag">数据逻辑</span>
         <span class="anno-version">v1.6</span>
@@ -1113,31 +1170,34 @@
         <div class="summary-card summary-card-action" role="button" tabindex="0" aria-label="查看平均最高冷通道温度历史趋势" onclick="openKeyMetricTrend('coldTemp')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openKeyMetricTrend('coldTemp');}">
           <div class="card-icon"><svg viewBox="0 0 24 24"><path d="M22 11h-4.17l3.24-3.24-1.41-1.42L15 11h-2V9l4.66-4.66-1.42-1.41L13 6.17V2h-2v4.17L7.76 2.93 6.34 4.34 11 9v2H9L4.34 6.34 2.93 7.76 6.17 11H2v2h4.17l-3.24 3.24 1.41 1.42L9 13h2v2l-4.66 4.66 1.42 1.41L11 17.83V22h2v-4.17l3.24 3.24 1.42-1.41L13 15v-2h2l4.66 4.66 1.41-1.42L17.83 13H22z"/></svg></div>
           <div class="card-body">
-            <div class="card-label">平均/最高冷通道温度 <span class="summary-card-trend"><svg viewBox="0 0 24 24"><path d="M4 17l5-5 4 3 7-8"/><path d="M15 7h5v5"/></svg>趋势</span></div>
-            <div class="card-value">23.4 / 26.0 <span class="unit">℃</span></div>
+            <div class="card-label">平均/最高冷通道温度</div>
+            <div class="card-value">23.4 / 26.0 <span class="unit">℃</span><span class="click-arrow">&gt;</span></div>
           </div>
         </div>
         <div class="summary-card summary-card-action" role="button" tabindex="0" aria-label="查看平均最高热通道温度历史趋势" onclick="openKeyMetricTrend('hotTemp')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openKeyMetricTrend('hotTemp');}">
           <div class="card-icon"><svg viewBox="0 0 24 24"><path d="M13.5 .67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg></div>
           <div class="card-body">
-            <div class="card-label">平均/最高热通道温度 <span class="summary-card-trend"><svg viewBox="0 0 24 24"><path d="M4 17l5-5 4 3 7-8"/><path d="M15 7h5v5"/></svg>趋势</span></div>
-            <div class="card-value">30.2 / 34.0 <span class="unit">℃</span></div>
+            <div class="card-label">平均/最高热通道温度</div>
+            <div class="card-value">30.2 / 34.0 <span class="unit">℃</span><span class="click-arrow">&gt;</span></div>
           </div>
         </div>
-        <div class="summary-card">
+        <div class="summary-card summary-card-action" role="button" tabindex="0" aria-label="查看空调开机投入总数历史趋势" onclick="openKeyMetricTrend('acCount')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openKeyMetricTrend('acCount');}">
           <div class="card-icon"><svg viewBox="0 0 24 24"><path d="M21 2H3c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 18H3V4h18v16zm-8-6h-2v-2h2v2zm-2-4V6h2v4h-2zm6 4h-2v-2h2v2zm-2-4V6h2v4h-2zm-8 4H5v-2h2v2zm-2-4V6h2v4H5z"/></svg></div>
           <div class="card-body">
             <div class="card-label">空调开机/投入总数</div>
-            <div class="card-value">4 / 4</div>
+            <div class="card-value">4 / 4<span class="click-arrow">&gt;</span></div>
           </div>
         </div>
         <div class="summary-card summary-card-action" role="button" tabindex="0" aria-label="查看 pPUE 历史趋势" onclick="openKeyMetricTrend('ppue')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openKeyMetricTrend('ppue');}">
           <div class="card-icon"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></svg></div>
           <div class="card-body">
-            <div class="card-label">pPUE <span class="summary-card-trend"><svg viewBox="0 0 24 24"><path d="M4 17l5-5 4 3 7-8"/><path d="M15 7h5v5"/></svg>趋势</span></div>
-            <div class="card-value">1.057</div>
+            <div class="card-label">pPUE</div>
+            <div class="card-value">1.057<span class="click-arrow">&gt;</span></div>
           </div>
-          <div class="card-extra">IT功率&nbsp;&nbsp;613.5 kW<br>制冷功率&nbsp;&nbsp;35.2 kW</div>
+          <div class="card-extra">
+            <button type="button" class="card-extra-action" aria-label="查看 IT 功率历史趋势" onclick="event.stopPropagation();openKeyMetricTrend('itPower')">IT功率&nbsp;&nbsp;613.5 kW<span class="click-arrow">&gt;</span></button>
+            <button type="button" class="card-extra-action" aria-label="查看制冷功率历史趋势" onclick="event.stopPropagation();openKeyMetricTrend('coolPower')">制冷功率&nbsp;&nbsp;35.2 kW<span class="click-arrow">&gt;</span></button>
+          </div>
         </div>
       </div>
 
@@ -1212,6 +1272,41 @@
             </div>
           </div>
         </div>
+        <div class="anno anno-ux" data-version="v2.8">
+          <span class="anno-tag">交互说明</span>
+          <span class="anno-version">v2.8</span>
+          <span class="anno-source">引用自需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>气流布局 / 组态平面图 — 对象明细浮层</p>
+            <p><b>目的：</b>点平面图上的一台空调或一个传感器，就地看这一台本轮被分到哪类、实际值和 AI 差多少，同时不挤占组态图。</p>
+            <p><b>默认：</b>进页不选中任何对象，浮层不出现，平面图完整可见。</p>
+            <p><b>打开 / 切换：</b>点空调或冷、热通道传感器打开右上角浮层；再点另一个对象，浮层换成该对象。</p>
+            <p><b>关闭：</b>点右上角 × 收起，直到再点对象才出现。悬停仍用原来的关系线 / 温差浮窗，和点选明细分开，互不替代。</p>
+          </div>
+        </div>
+        <div class="anno anno-field" data-version="v2.8">
+          <span class="anno-tag">字段说明</span>
+          <span class="anno-version">v2.8</span>
+          <span class="anno-source">引用自需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>对象明细浮层内容</p>
+            <p><b>列：</b>只保留变量名称、实际值。不展示「寻优变化」列。</p>
+            <p><b>分类：</b>与下方变量表同一套：被控、控制（寻优中）、控制（未寻优）、扰动。没有该类就不显示该分组。</p>
+            <p><b>对照：</b>有 AI 寻优值时写成「实际值 → AI 值」；没有就不画箭头。</p>
+            <p><b>下钻：</b>整段数值末尾只放一个 <code>&gt;</code>，打开该变量历史趋势。不要每个数字后面都跟 <code>&gt;</code>。</p>
+          </div>
+        </div>
+        <div class="anno anno-state" data-version="v2.8">
+          <span class="anno-tag">状态说明</span>
+          <span class="anno-version">v2.8</span>
+          <span class="anno-source">引用自需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>对象明细浮层</p>
+            <p><b>未选中：</b>浮层隐藏。</p>
+            <p><b>已关闭：</b>保持收起，不因为刷新图例或缩放自动再弹出。</p>
+            <p><b>无该类变量：</b>该对象本轮没有某一类就不出该分组；对象名和状态仍显示。</p>
+          </div>
+        </div>
         <div class="room-scada-panel opt-record-viz-card" id="optRecordVizCard">
           <div class="opt-viz-card-head">
             <div class="opt-record-subtabs" id="optRecordSubtabs">
@@ -1256,34 +1351,26 @@
                   </div>
                 </div>
               </div>
-              <aside class="viz-object-detail" id="vizObjectDetail" aria-live="polite">
-                <div class="viz-detail-empty" id="vizObjectDetailEmpty">点击空调或冷热通道温湿度传感器，查看当前巡游记录明细</div>
-                <div id="vizObjectDetailContent" style="display:none;">
+              <aside class="viz-object-detail" id="vizObjectDetail" hidden aria-live="polite">
+                <div id="vizObjectDetailContent">
                   <div class="viz-detail-head">
                     <div class="viz-detail-title">
                       <h3 id="vizDetailTitle">—</h3>
                       <p id="vizDetailType">—</p>
                     </div>
-                    <span class="viz-detail-status" id="vizDetailStatus">—</span>
+                    <div class="viz-detail-head-actions">
+                      <span class="viz-detail-status" id="vizDetailStatus">—</span>
+                      <button type="button" class="viz-detail-close" id="btnVizDetailClose" onclick="closeVizObjectDetail()" aria-label="关闭明细">×</button>
+                    </div>
                   </div>
                   <div class="viz-detail-content">
-                    <div class="viz-detail-section-label">
-                      <span>巡游记录数据明细</span>
-                      <small id="vizDetailArea">—</small>
-                    </div>
-                    <div class="viz-detail-table" role="table" aria-label="对象巡游记录数据明细">
+                    <div class="viz-detail-table" role="table" aria-label="对象寻优记录数据明细">
                       <div class="viz-detail-row is-head" role="row">
                         <span role="columnheader">变量名称</span>
                         <span role="columnheader">实际值</span>
-                        <span role="columnheader">AI寻优值</span>
-                        <span role="columnheader">寻优变化</span>
                       </div>
                       <div id="vizDetailBody"></div>
                     </div>
-                    <button type="button" class="btn btn-primary btn-solid viz-detail-history" id="btnVizDetailHistory" onclick="openSelectedVizHistory()">
-                      <span class="btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17l5-5 4 3 7-8"/><path d="M15 7h5v5"/></svg></span>
-                      操作历史趋势
-                    </button>
                   </div>
                 </div>
               </aside>
@@ -1983,7 +2070,17 @@
       <span class="anno-source">基于文档推断</span>
       <div class="anno-body">
         <p><b>关联模块：</b>历史趋势图表弹窗（modalChart）</p>
-        <p><b>入口：</b>关键指标卡、组态对象右侧「操作历史趋势」、寻优记录变量表行内「历史趋势」。</p>
+        <p><b>入口：</b>寻优记录变量表「历史趋势」操作。</p>
+      </div>
+    </div>
+    <div class="anno anno-ux" data-version="v2.8" style="margin:0 20px 8px;">
+      <span class="anno-tag">交互说明</span>
+      <span class="anno-version">v2.8</span>
+      <span class="anno-source">引用自需求文档</span>
+      <div class="anno-body">
+        <p><b>关联模块：</b>历史趋势图表弹窗（modalChart）</p>
+        <p><b>入口：</b>① 顶部指标卡数值末尾的「&gt;」（含开机/投入、IT/制冷功率）；② 对象浮层明细数值末尾的「&gt;」；③ 变量表行内「历史趋势」。</p>
+        <p><b>符号：</b>对照关系用「→」，可点下钻只用「&gt;」。标题跟所点指标或变量走。</p>
       </div>
     </div>
     <div class="anno anno-field" data-version="v1.6" style="margin:0 20px 8px;">
@@ -2128,6 +2225,7 @@ const SCADA_BINDING_STORE_KEY = 'idc.flexOpt.scadaBinding.v1';
 
 let scadaBinding;
 let selectedVizObject = null;
+let vizDetailDismissed = false;
 
 function vizText(value) {
   return String(value === undefined || value === null ? '—' : value)
@@ -2149,7 +2247,7 @@ function getVizObjectDetail(type, id) {
       type, id, name: data.name,
       typeLabel: ac.deviceType === 'air' ? '风冷 DX 空调' : '水冷空调',
       status: `${ac.si === 1 ? '运行中' : '停机中'} · ${ac.Fi}`,
-      area: '当前巡游记录',
+      area: '当前寻优记录',
       variables: data.variables,
     };
   }
@@ -2160,8 +2258,8 @@ function getVizObjectDetail(type, id) {
       type, id, name: `${sensor.id} 冷通道传感器`, typeLabel: '冷通道温湿度传感器',
       status: '采集中', area: sensor.area,
       variables: [
-        { name: '冷通道温度', actual: `${Number(sensor.Tc).toFixed(2)}℃`, ai: '—', change: '—' },
-        { name: '相对湿度', actual: `${sensor.RH}%`, ai: '—', change: '—' },
+        { name: '冷通道温度', type: 'disturbance', actual: `${Number(sensor.Tc).toFixed(2)}℃`, ai: '—', change: '—' },
+        { name: '相对湿度', type: 'disturbance', actual: `${sensor.RH}%`, ai: '—', change: '—' },
       ],
     };
   }
@@ -2172,8 +2270,8 @@ function getVizObjectDetail(type, id) {
       type, id, name: `${sensor.id} 热通道传感器`, typeLabel: '热通道温湿度传感器',
       status: '采集中', area: sensor.area,
       variables: [
-        { name: '热通道温度', actual: `${Number(sensor.Th).toFixed(2)}℃`, ai: '—', change: '—' },
-        { name: '相对湿度', actual: `${sensor.RH}%`, ai: '—', change: '—' },
+        { name: '热通道温度', type: 'disturbance', actual: `${Number(sensor.Th).toFixed(2)}℃`, ai: '—', change: '—' },
+        { name: '相对湿度', type: 'disturbance', actual: `${sensor.RH}%`, ai: '—', change: '—' },
       ],
     };
   }
@@ -2183,6 +2281,7 @@ function getVizObjectDetail(type, id) {
 function selectVizObject(type, id) {
   const detail = getVizObjectDetail(type, id);
   if (!detail) return;
+  vizDetailDismissed = false;
   selectedVizObject = detail;
   renderVizObjectDetail();
   const svg = document.getElementById('roomSvgShared');
@@ -2194,37 +2293,73 @@ function selectVizObject(type, id) {
   }
 }
 
+function closeVizObjectDetail() {
+  selectedVizObject = null;
+  vizDetailDismissed = true;
+  const svg = document.getElementById('roomSvgShared');
+  if (svg) {
+    svg.querySelectorAll('.viz-node.is-selected').forEach(el => el.classList.remove('is-selected'));
+    clearVizLinkHighlight(svg);
+  }
+  renderVizObjectDetail();
+}
+
+function hasVizAiValue(ai) {
+  const value = String(ai == null ? '' : ai).trim();
+  return value !== '' && value !== '-' && value !== '—';
+}
+
+const VIZ_VAR_TYPE_ORDER = ['controlled', 'optimizing', 'unopt', 'disturbance'];
+const VIZ_VAR_TYPE_LABELS = {
+  controlled: '被控变量',
+  optimizing: '控制变量（寻优中）',
+  unopt: '控制变量（未寻优）',
+  disturbance: '扰动变量'
+};
+
 function renderVizObjectDetail() {
-  const empty = document.getElementById('vizObjectDetailEmpty');
+  const panel = document.getElementById('vizObjectDetail');
   const content = document.getElementById('vizObjectDetailContent');
-  if (!empty || !content) return;
+  if (!panel || !content) return;
   const detail = selectedVizObject;
   if (!detail) {
-    empty.style.display = 'flex';
-    content.style.display = 'none';
+    panel.hidden = true;
     return;
   }
-  empty.style.display = 'none';
-  content.style.display = 'block';
+  panel.hidden = false;
   document.getElementById('vizDetailTitle').textContent = detail.name;
   document.getElementById('vizDetailType').textContent = detail.typeLabel;
   document.getElementById('vizDetailStatus').textContent = detail.status;
-  document.getElementById('vizDetailArea').textContent = detail.area;
-  document.getElementById('vizDetailBody').innerHTML = detail.variables.map(variable => {
-    const change = String(variable.change || '—');
-    const changeClass = change.startsWith('+') ? 'is-positive' : change.startsWith('-') ? 'is-negative' : '';
-    return `<div class="viz-detail-row" role="row">
-      <span role="cell" title="${vizText(variable.name)}">${vizText(variable.name)}</span>
-      <span role="cell">${vizText(variable.actual)}</span>
-      <span role="cell" class="is-ai">${vizText(variable.ai)}</span>
-      <span role="cell" class="is-change ${changeClass}">${vizText(change)}</span>
-    </div>`;
-  }).join('');
-}
-
-function openSelectedVizHistory() {
-  if (!selectedVizObject || !selectedVizObject.variables.length) return;
-  openChart(selectedVizObject.name, selectedVizObject.variables[0].name);
+  const groups = {};
+  (detail.variables || []).forEach(variable => {
+    const type = variable.type || 'disturbance';
+    if (!groups[type]) groups[type] = [];
+    groups[type].push(variable);
+  });
+  const clickArrow = '<span class="click-arrow" aria-hidden="true">&gt;</span>';
+  const parts = [];
+  VIZ_VAR_TYPE_ORDER.forEach(type => {
+    const list = groups[type];
+    if (!list || !list.length) return;
+    parts.push(`<div class="viz-detail-row is-group ${type}" role="row">
+      <span role="cell">${VIZ_VAR_TYPE_LABELS[type]}</span>
+    </div>`);
+    list.forEach(variable => {
+      const actualHtml = `<span class="viz-detail-actual">${vizText(variable.actual)}</span>`;
+      const aiHtml = hasVizAiValue(variable.ai)
+        ? `<span class="viz-detail-arrow" aria-hidden="true">→</span><span class="viz-detail-ai">${vizText(variable.ai)}</span>`
+        : '';
+      parts.push(`<div class="viz-detail-row" role="row">
+        <span role="cell" title="${vizText(variable.name)}"><span class="var-name-type ${type}">${vizText(variable.name)}</span></span>
+        <span role="cell" class="viz-detail-value">
+          <button type="button" class="viz-detail-trend" title="查看历史趋势" data-chart-obj="${vizText(detail.name)}" data-chart-var="${vizText(variable.name)}" onclick="openChart(this.dataset.chartObj, this.dataset.chartVar)">
+            ${actualHtml}${aiHtml}${clickArrow}
+          </button>
+        </span>
+      </div>`);
+    });
+  });
+  document.getElementById('vizDetailBody').innerHTML = parts.join('');
 }
 
 function persistScadaBinding() {
@@ -2351,7 +2486,7 @@ function updateOptVizCardLayout() {
     if (btn) btn.style.display = 'none';
   } else {
     empty.style.display = 'none';
-    wrap.style.display = 'grid';
+    wrap.style.display = 'block';
     if (btn) btn.style.display = onScada && scadaBinding ? 'inline-flex' : 'none';
   }
 }
@@ -2839,10 +2974,6 @@ function renderRoomViz() {
   if (selectedVizObject && !getVizObjectDetail(selectedVizObject.type, selectedVizObject.id)) {
     selectedVizObject = null;
   }
-  if (onOverview && !selectedVizObject && currentRoom) {
-    const firstAc = (currentRoom.acs || []).find(ac => ac.Fi === '投入' && ac.si === 1) || (currentRoom.acs || [])[0];
-    if (firstAc) selectedVizObject = getVizObjectDetail('ac', firstAc.id);
-  }
   if (legRack) legRack.style.display = onOverview ? 'none' : '';
   if (onOverview) {
     paintRoomSvg(getRoomForOptTable(), {
@@ -3308,6 +3439,21 @@ const KEY_METRIC_TREND_DATA = {
     title: 'pPUE', unit: '', yMin: 1.02, yMax: 1.10, yStep: 0.02,
     actual: [1.082, 1.079, 1.075, 1.071, 1.068, 1.064, 1.061, 1.059, 1.058, 1.057, 1.057, 1.057],
     compare: [1.070, 1.070, 1.068, 1.066, 1.064, 1.062, 1.060, 1.059, 1.058, 1.057, 1.057, 1.057],
+  },
+  acCount: {
+    title: '空调开机/投入总数', unit: '台', yMin: 0, yMax: 8, yStep: 2,
+    actual: [5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
+    compare: [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
+  },
+  itPower: {
+    title: 'IT功率', unit: 'kW', yMin: 580, yMax: 640, yStep: 10,
+    actual: [608.2, 609.5, 611.0, 612.4, 613.8, 614.1, 613.6, 613.2, 613.0, 613.4, 613.5, 613.5],
+    compare: [612.0, 612.0, 612.5, 613.0, 613.0, 613.5, 613.5, 613.5, 613.5, 613.5, 613.5, 613.5],
+  },
+  coolPower: {
+    title: '制冷功率', unit: 'kW', yMin: 20, yMax: 50, yStep: 5,
+    actual: [42.6, 41.1, 39.8, 38.4, 37.2, 36.5, 36.0, 35.6, 35.4, 35.3, 35.2, 35.2],
+    compare: [38.0, 37.5, 37.0, 36.5, 36.0, 35.8, 35.6, 35.4, 35.3, 35.2, 35.2, 35.2],
   },
 };
 

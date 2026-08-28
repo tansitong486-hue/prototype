@@ -3,7 +3,7 @@
 > 原型侧入口。产品价值与域叙事见  
 > `07-产品文档/01-ai 节能/产品文档/00-产品全貌.md`。  
 > 机读关系：同目录 `product-graph.yaml`。  
-> 最后更新：2026-08-14
+> 最后更新：2026-08-28
 
 ---
 
@@ -113,6 +113,10 @@
 - UI 落点：两页「本轮寻优结论条」；设备原因仅在平面图浮窗与手动下发弹窗展示同一段“本轮建议”文案（无 chip 列、无独立解释弹窗）。实际下发、回执和回读继续由 L4 既有记录承载。
 - PRD：`04-需求文档/AI节能v2.6 版本/末端寻优结果可解释性需求方案.md`
 
+#### v2.8 机房寻优记录查看体验（req.v28.room_opt_viz_detail / req.v28.room_opt_metric_trend）
+
+两条需求、一份文档：`04-需求文档/AI节能v2.8 版本/机房寻优记录查看体验优化需求文档.md`。柔性 / 加减机两页统一。需求 6：点平面图对象才弹出右上角可关闭浮层，进页默认不选中；分类 + `→` 对照 + 末尾 `>` 下钻。需求 7：顶部冷/热通道、开机/投入、pPUE、IT / 制冷功率均可下钻，功率与 pPUE 分入口。
+
 #### v2.6 风冷精密空调功率（req.v26.pac_power_predict）
 
 算法侧、无新原型页：复用 `AirCooledPAC`；L0 零数据可出值，L1 仅数码涡旋/变频；定频启停本期仅 L0。寻优消费由设备能力架构承接；物模型 / L0·L1 见 `04-需求文档/AI节能v2.6 版本/风冷精密空调功率预测模型需求文档.md`。
@@ -149,7 +153,7 @@
 | 改冷站寻优/置信 | flow.cold_station_opt_family + v2.3 泛化性文档清单表 |
 | 改长周期 MPC 页 | `冷站长周期寻优.html` + v2.8《冷站长周期寻优MPC化需求文档》§九 |
 | 改冷站诊断/规则 | flow.cold_station_diagnosis + 现网 `#/diagnosis-overview` / `#/diagnosis-rules` |
-| 改机房加减机/柔性 | flow.room_opt_diagnosis §3.5 + req.v26.room_opt_device_capability / explainability |
+| 改机房加减机/柔性 | flow.room_opt_diagnosis §3.5 + req.v26.room_opt_device_capability / explainability + req.v28.room_opt_viz_detail / metric_trend |
 | 改机房诊断 | flow.room_opt_diagnosis + v1.9 方案 §一–§二 |
 | 改风冷精密空调功率 | req.v26.pac_power_predict（algo_only，无新页）+ 设备能力承接消费 |
 | 改模型训练/仿真 | flow.model_train_sim + v2.3/v2.2 相关条目 |
