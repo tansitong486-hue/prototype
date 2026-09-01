@@ -983,6 +983,7 @@
         <span class="anno-version">v2.8</span>
         <div class="anno-body">
           <p><b>v2.8（2026-08-28）：</b>对应需求 6、需求 7。① 气流布局对象明细改为平面图右上角可关闭浮层，默认不弹出。② 顶部指标（冷/热通道温度、开机/投入总数、pPUE、IT 功率、制冷功率）均可从当前值下钻历史。与机房加减机寻优页同一套。详见《机房寻优记录查看体验优化需求文档》。</p>
+          <p><b>v2.8（2026-09-01）：</b>对应需求 8。规则表新增「风冷 DX · 辅助控制」，控制变量写死「风机转速上下限」；打开后变量表、浮层、手动下发按现网辅助控制展示下限 / 上限两行。算出的包络再夹该机安全边界「风机转速下限设定 / 上限设定」。风冷主控下拉不加「风机转速上限」。详见《风冷精密空调风机转速辅助控制需求文档》。</p>
         </div>
       </div>
 
@@ -1404,7 +1405,7 @@
           <span class="anno-source">引用自需求文档</span>
           <div class="anno-body">
             <p><b>关联模块：</b>寻优记录 Tab — 时间/变量筛选与变量表</p>
-            <p><b>变量分类：</b>被控变量=Ts、Tr、Nfan及适用的水阀反馈；控制变量（寻优中）=各对象类型注册的 V1，水冷对象可另含 V2；控制变量（未寻优）=投出或关机设备已注册但本轮不参与的控制变量；扰动变量=非寻优变量。变量表只展示真实测点和实际控制点。</p>
+            <p><b>变量分类：</b>被控变量=Ts、Tr、Nfan及适用的水阀反馈；控制变量（寻优中）=各对象类型注册的 V1，水冷对象可另含 V2，风冷 DX 辅助打开后再含风机转速下限设定 / 上限设定两行；控制变量（未寻优）=投出或关机设备已注册但本轮不参与的控制变量；扰动变量=非寻优变量。变量表只展示真实测点和实际控制点。</p>
             <p><b>表格列：</b>对象名称、变量名称（颜色表示分类，与上方筛选一致）、实际值、AI寻优值、寻优变化、历史趋势。</p>
           </div>
         </div>
@@ -1545,9 +1546,24 @@
             <p><b>主控制变量类型：</b>按对象类型注册选择；水冷支持送风温度设定 / 回风温度设定 / 风机转速上限设定三选一，风冷支持送风 / 回风温度设定二选一，混合编队可按对象类型不同；省电方向由注册能力给出。</p>
             <p><b>寻优步长 ΔV1_max：</b>主控制每轮允许的最大调节量（原「单次最大幅度」）。</p>
             <p><b>寻优粒度 ΔV1_step：</b>主控制每次调节的最小精度（原「调节步长」）。</p>
-            <p><b>寻优步长 ΔV2_max：</b>水阀最大开度每轮允许的最大调节量（辅助控制）。</p>
+            <p><b>寻优步长 ΔV2_max：</b>水阀最大开度每轮允许的最大调节量（辅助控制）。风冷辅助行的步长语义见下方 v2.8 批注，不是本轮走多远。</p>
             <p><b>寻优粒度 ΔV2_step：</b>水阀最大开度每次调节精度（辅助控制）。</p>
             <p><b>冷量安全系数 K_safe：</b>柔性省电门槛。仅当 `Q_feedback_safe = min(ΣQ_est,safe, ΣQ_constraint,running)` 满足 `Q_feedback_safe / QIT ≥ K_safe` 时允许省电方向动作。</p>
+          </div>
+        </div>
+
+        <div class="anno anno-field" data-version="v2.8">
+          <span class="anno-tag">字段说明</span>
+          <span class="anno-version">v2.8</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>规则配置 —「风冷 DX · 辅助控制」行</p>
+            <p><b>出现条件：</b>当前机房有风冷 DX 才出这一行。纯水冷不出。</p>
+            <p><b>启用：</b>产品默认关；关掉 = 本轮不写风机，温度主控照常。本页演示为打开后的结果。</p>
+            <p><b>控制变量：</b>写死「风机转速上下限」，打开后下限、上限一起出，不能只开一侧。风冷主控下拉不加「风机转速上限」。</p>
+            <p><b>寻优步长：</b>包络半宽 δ_fan（5～15，缺省 10），不是水阀那一行「本轮走多远」。</p>
+            <p><b>寻优粒度：</b>写入精度，缺省 1%。</p>
+            <p><b>夹边：</b>算出的上下限再夹该机安全边界「风机转速下限设定 / 上限设定」。软边界未填则回落硬边界。</p>
           </div>
         </div>
 
@@ -1589,6 +1605,13 @@
                   <td><input class="form-control" value="水阀最大开度" data-fixed disabled></td>
                   <td><div class="form-row"><input type="number" class="form-control" value="20"><span class="form-suffix">%</span></div></td>
                   <td><div class="form-row"><input type="number" class="form-control" value="5"><span class="form-suffix">%</span></div></td>
+                </tr>
+                <tr>
+                  <td><span class="device-type-name">风冷 DX · 辅助控制</span><span class="device-type-note">当前匹配 4 台设备</span></td>
+                  <td><label class="toggle-switch"><input type="checkbox" id="airFanAuxSwitch" checked onchange="onAirFanAuxToggle(this)"><span class="toggle-slider"></span></label></td>
+                  <td><input class="form-control" value="风机转速上下限" data-fixed disabled></td>
+                  <td><div class="form-row"><input type="number" class="form-control" value="10" min="5" max="15"><span class="form-suffix">%</span></div></td>
+                  <td><div class="form-row"><input type="number" class="form-control" value="1"><span class="form-suffix">%</span></div></td>
                 </tr>
               </tbody>
             </table>
@@ -1988,7 +2011,7 @@
         <span class="anno-source">引用自需求文档</span>
         <div class="anno-body">
           <p><b>关联模块：</b>下发/回退确认弹窗 — 设备行原因文案（v2.6 可解释性，两处入口之一）</p>
-          <p><b>展示规则：</b>每台建议目标发生变化的设备在其参数行下方以<strong>整行灰字</strong>展示完整原因文案；V1-only 只生成主控制行，V2-only 只生成水阀行，紧急 V1+V2 可生成两行。原因与平面图浮窗逐字相同，不可点击、不挤占参数列宽，且不代表设备已经执行。</p>
+          <p><b>展示规则：</b>每台建议目标发生变化的设备在其参数行下方以<strong>整行灰字</strong>展示完整原因文案；V1-only 只生成主控制行，V2-only 只生成水阀行，紧急 V1+V2 可生成两行。风冷 DX 辅助打开后，下限 / 上限变化按现网辅助控制同一套出两行，可与温度主控同轮都出。原因与平面图浮窗逐字相同，不可点击、不挤占参数列宽，且不代表设备已经执行。</p>
           <p><b>数据来源：</b>本轮 V1 或 V2 建议目标相对真实值变化的设备均输出解释对象。原因码为 SAVE_ADJUST、COOL_ADJUST、COOL_EMERGENCY、DEWPOINT_RECOVERY；通过 `action_channel` 区分 V1 / V2 / V1+V2，通过 `signal_branch` 区分省电分配、预防性增冷、热点增冷、热点在途保持、目标带保持、趋势阻尼、保障、紧急和凝露恢复。普通分支单台只建议 V1 或 V2；V2-only 设备必须独立成行并展示原因。接口参数包含控制类型、单位、真实值和建议目标，B 级附注使用本轮实际折减策略，不写死比例。参数不齐不输出并记日志，无 fallback_text。</p>
         </div>
       </div>
@@ -2124,10 +2147,10 @@ const tpl1f = {
     { id:'AC6',  x:0,  y:2.0,  side:'L', deviceType:'water', typeLabel:'冷冻水型', controlVar:'送风温度设定', controlUnit:'℃', Qsafe:76, Qest:78, quality:'A', capability:'基础出值', Qc:127, P:17, Va:30000, Fi:'投入', si:1, V1:20.00, V1_ai:20.00, V2:70, V2_ai:80, Nfan:60, Ts:'16.5', Tr:'25.5', Ei:-0.096 },
     { id:'AC7',  x:24, y:16.5, side:'R', deviceType:'water', typeLabel:'冷冻水型', controlVar:'送风温度设定', controlUnit:'℃', Qsafe:76, Qest:78, quality:'B', capability:'保守出值', Qc:127, P:17, Va:30000, Fi:'投入', si:1, V1:18.50, V1_ai:18.50, V2:80, V2_ai:85, Nfan:75, Ts:'15.0', Tr:'27.0', Ei:-0.03 },
     { id:'AC8',  x:24, y:14.0, side:'R', deviceType:'water', typeLabel:'冷冻水型', controlVar:'送风温度设定', controlUnit:'℃', Qsafe:76, Qest:78, quality:'A', capability:'基础出值', Qc:127, P:17, Va:30000, Fi:'投入', si:1, V1:18.50, V1_ai:19.00, V2:80, V2_ai:80, Nfan:75, Ts:'15.2', Tr:'26.5', Ei:0.05 },
-    { id:'AC9',  x:24, y:11.0, side:'R', deviceType:'air', typeLabel:'风冷 DX', controlVar:'回风温度设定', controlUnit:'℃', Qsafe:67, Qest:69.5, quality:'A', capability:'基础出值', Qc:92, P:22.4, Va:30000, Fi:'投入', si:1, V1:21.00, V1_ai:22.50, V2:'-', V2_ai:'-', Nfan:65, Ts:'17.5', Tr:'25.0', Ei:0.18 },
-    { id:'AC10', x:24, y:8.0,  side:'R', deviceType:'air', typeLabel:'风冷 DX', controlVar:'回风温度设定', controlUnit:'℃', Qsafe:67, Qest:69.5, quality:'A', capability:'基础出值', Qc:92, P:22.4, Va:30000, Fi:'投入', si:1, V1:22.00, V1_ai:23.50, V2:'-', V2_ai:'-', Nfan:60, Ts:'18.0', Tr:'24.5', Ei:0.21 },
-    { id:'AC11', x:24, y:5.0,  side:'R', deviceType:'air', typeLabel:'风冷 DX', controlVar:'回风温度设定', controlUnit:'℃', Qsafe:67, Qest:69.5, quality:'A', capability:'基础出值', Qc:92, P:22.4, Va:30000, Fi:'投入', si:1, V1:21.00, V1_ai:22.00, V2:'-', V2_ai:'-', Nfan:65, Ts:'17.2', Tr:'24.8', Ei:0.12 },
-    { id:'AC12', x:24, y:2.0,  side:'R', deviceType:'air', typeLabel:'风冷 DX', controlVar:'回风温度设定', controlUnit:'℃', Qsafe:67, Qest:69.5, quality:'B', capability:'保守出值', Qc:92, P:22.4, Va:30000, Fi:'投入', si:1, V1:20.00, V1_ai:20.00, V2:'-', V2_ai:'-', Nfan:70, Ts:'16.0', Tr:'26.0', Ei:-0.07 },
+    { id:'AC9',  x:24, y:11.0, side:'R', deviceType:'air', typeLabel:'风冷 DX', controlVar:'回风温度设定', controlUnit:'℃', Qsafe:67, Qest:69.5, quality:'A', capability:'基础出值', Qc:92, P:22.4, Va:30000, Fi:'投入', si:1, V1:21.00, V1_ai:22.50, V2:'-', V2_ai:'-', Nfan:65, Nfan_lo:40, Nfan_lo_ai:65, Nfan_hi:100, Nfan_hi_ai:85, Ts:'17.5', Tr:'25.0', Ei:0.18 },
+    { id:'AC10', x:24, y:8.0,  side:'R', deviceType:'air', typeLabel:'风冷 DX', controlVar:'回风温度设定', controlUnit:'℃', Qsafe:67, Qest:69.5, quality:'A', capability:'基础出值', Qc:92, P:22.4, Va:30000, Fi:'投入', si:1, V1:22.00, V1_ai:23.50, V2:'-', V2_ai:'-', Nfan:60, Nfan_lo:40, Nfan_lo_ai:65, Nfan_hi:100, Nfan_hi_ai:85, Ts:'18.0', Tr:'24.5', Ei:0.21 },
+    { id:'AC11', x:24, y:5.0,  side:'R', deviceType:'air', typeLabel:'风冷 DX', controlVar:'回风温度设定', controlUnit:'℃', Qsafe:67, Qest:69.5, quality:'A', capability:'基础出值', Qc:92, P:22.4, Va:30000, Fi:'投入', si:1, V1:21.00, V1_ai:22.00, V2:'-', V2_ai:'-', Nfan:65, Nfan_lo:40, Nfan_lo_ai:65, Nfan_hi:100, Nfan_hi_ai:85, Ts:'17.2', Tr:'24.8', Ei:0.12 },
+    { id:'AC12', x:24, y:2.0,  side:'R', deviceType:'air', typeLabel:'风冷 DX', controlVar:'回风温度设定', controlUnit:'℃', Qsafe:67, Qest:69.5, quality:'B', capability:'保守出值', Qc:92, P:22.4, Va:30000, Fi:'投入', si:1, V1:20.00, V1_ai:20.00, V2:'-', V2_ai:'-', Nfan:70, Nfan_lo:40, Nfan_lo_ai:65, Nfan_hi:100, Nfan_hi_ai:80, Ts:'16.0', Tr:'26.0', Ei:-0.07 },
   ],
   coldSensors: [
     { id:'c1',  x:4.0,  y:15.25, Tc:23.93, RH:42, area:'G-H冷通道' },
@@ -2850,7 +2873,7 @@ function paintRoomSvg(R, cfg) {
 
     const ox = ac.side === 'L' ? VIZ_AC_OX_L : VIZ_AC_OX_R;
     const acHalfH = VIZ_AC_BOX_H / 2;
-    s += `<rect x="${ax + ox}" y="${ay - acHalfH}" width="${VIZ_AC_BOX_W}" height="${VIZ_AC_BOX_H}" rx="3" fill="${fill}" stroke="${isOut ? '#999' : '#fff'}" stroke-width="2" class="viz-node" data-type="ac" data-id="${ac.id}" data-fi="${ac.Fi}" data-si="${ac.si}" data-v1="${ac.V1}" data-v1ai="${ac.V1_ai}" data-v2="${ac.V2}" data-v2ai="${ac.V2_ai}" data-nfan="${ac.Nfan}" data-ts="${ac.Ts}" data-tr="${ac.Tr}" data-device-type="${ac.deviceType}" data-type-label="${ac.typeLabel}" data-control-var="${ac.controlVar}" data-control-unit="${ac.controlUnit}" data-qsafe="${ac.Qsafe}" data-qest="${ac.Qest}" data-quality="${ac.quality}" data-capability="${ac.capability}" role="button" tabindex="0" aria-label="${ac.id} 空调"/>`;
+    s += `<rect x="${ax + ox}" y="${ay - acHalfH}" width="${VIZ_AC_BOX_W}" height="${VIZ_AC_BOX_H}" rx="3" fill="${fill}" stroke="${isOut ? '#999' : '#fff'}" stroke-width="2" class="viz-node" data-type="ac" data-id="${ac.id}" data-fi="${ac.Fi}" data-si="${ac.si}" data-v1="${ac.V1}" data-v1ai="${ac.V1_ai}" data-v2="${ac.V2}" data-v2ai="${ac.V2_ai}" data-nfan="${ac.Nfan}" data-nfan-lo="${ac.Nfan_lo == null ? '-' : ac.Nfan_lo}" data-nfan-lo-ai="${ac.Nfan_lo_ai == null ? '-' : ac.Nfan_lo_ai}" data-nfan-hi="${ac.Nfan_hi == null ? '-' : ac.Nfan_hi}" data-nfan-hi-ai="${ac.Nfan_hi_ai == null ? '-' : ac.Nfan_hi_ai}" data-ts="${ac.Ts}" data-tr="${ac.Tr}" data-device-type="${ac.deviceType}" data-type-label="${ac.typeLabel}" data-control-var="${ac.controlVar}" data-control-unit="${ac.controlUnit}" data-qsafe="${ac.Qsafe}" data-qest="${ac.Qest}" data-quality="${ac.quality}" data-capability="${ac.capability}" role="button" tabindex="0" aria-label="${ac.id} 空调"/>`;
 
     const iconX = ax + ox + VIZ_AC_BOX_W / 2, iconY = ay;
     if (isOut || !isRunning) {
@@ -2940,7 +2963,11 @@ function paintRoomSvg(R, cfg) {
         }
         html += `送风温度：${d.ts === '-' ? '—' : d.ts + ' ℃'}<br>`;
         html += `回风温度：${d.tr === '-' ? '—' : d.tr + ' ℃'}<br>`;
-        html += '风机转速：- %';
+        html += `风机转速：${d.nfan === '-' || d.nfan === '' ? '—' : d.nfan + '%'}`;
+        if (d.deviceType === 'air' && isAirFanAuxEnabled() && d.nfanLoAi && d.nfanLoAi !== '-') {
+          html += `<br>风机转速下限：${d.nfanLo === '-' ? '—' : d.nfanLo + '%'} → <b>${d.nfanLoAi}%</b>`;
+          html += `<br>风机转速上限：${d.nfanHi === '-' ? '—' : d.nfanHi + '%'} → <b>${d.nfanHiAi}%</b>`;
+        }
         const reason = (typeof EXPLAIN_REASONS !== 'undefined') && EXPLAIN_REASONS[d.id];
         if (reason) html += `<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.25);max-width:280px;white-space:normal;"><b>调节原因：</b>${reason}</div>`;
       }
@@ -3017,6 +3044,7 @@ function buildDataFromRoom(acs) {
     }
 
     const v1Name = (ac.controlVar || '送风温度设定') + '（V1）';
+    const fanAuxOn = ac.deviceType === 'air' && isAirFanAuxEnabled() && ac.Nfan_lo != null;
     if (isParticipating) {
       const v1Diff = ac.V1_ai !== '-' ? (parseFloat(ac.V1_ai) - parseFloat(ac.V1)) : 0;
       const v1Change = v1Diff > 0.01 ? '+' + v1Diff.toFixed(2) + unit : (v1Diff < -0.01 ? v1Diff.toFixed(2) + unit : '无变化');
@@ -3026,10 +3054,20 @@ function buildDataFromRoom(acs) {
         const v2Change = v2Diff > 0 ? '+' + v2Diff + '%' : (v2Diff < 0 ? v2Diff + '%' : '无变化');
         vars.push({ name:'水阀最大开度（V2）', type:'optimizing', actual:ac.V2 + '%', ai:ac.V2_ai + '%', change:v2Change });
       }
+      if (fanAuxOn) {
+        const loDiff = ac.Nfan_lo_ai - ac.Nfan_lo;
+        const hiDiff = ac.Nfan_hi_ai - ac.Nfan_hi;
+        vars.push({ name:'风机转速下限设定', type:'optimizing', actual:ac.Nfan_lo + '%', ai:ac.Nfan_lo_ai + '%', change:loDiff > 0 ? '+' + loDiff + '%' : (loDiff < 0 ? loDiff + '%' : '无变化') });
+        vars.push({ name:'风机转速上限设定', type:'optimizing', actual:ac.Nfan_hi + '%', ai:ac.Nfan_hi_ai + '%', change:hiDiff > 0 ? '+' + hiDiff + '%' : (hiDiff < 0 ? hiDiff + '%' : '无变化') });
+      }
     } else {
       vars.push({ name:v1Name, type:'unopt', actual:ac.V1 !== '-' ? ac.V1 + unit : '—', ai:'-', change:'无变化' });
       if (ac.deviceType === 'water') {
         vars.push({ name:'水阀最大开度（V2）', type:'unopt', actual:ac.V2 !== '-' ? ac.V2 + '%' : '—', ai:'-', change:'无变化' });
+      }
+      if (fanAuxOn) {
+        vars.push({ name:'风机转速下限设定', type:'unopt', actual:ac.Nfan_lo + '%', ai:'-', change:'无变化' });
+        vars.push({ name:'风机转速上限设定', type:'unopt', actual:ac.Nfan_hi + '%', ai:'-', change:'无变化' });
       }
     }
 
@@ -3054,7 +3092,7 @@ const EXPLAIN_SCENE_META = {
 // 目标带上方省电与局部热点增冷同轮存在；单台普通建议仍只变化 V1 或 V2 一个通道
 const ROOM_EXPLAIN = {
   sceneCode: 'RM_ADJUST',
-  text: '安全反馈冷量为 IT 负载的 <b>1.18</b> 倍，高于调节目标带；按温度裕量建议 <b>5</b> 台主控制向省电方向各走一步，另有 <b>4</b> 台空调因负责区域接近温度上限，建议通过水阀增加供冷；<b>1</b> 台不新增调节建议'
+  text: '安全反馈冷量为 IT 负载的 <b>1.18</b> 倍，高于调节目标带；按温度裕量建议 <b>5</b> 台主控制向省电方向各走一步，另有 <b>4</b> 台空调因负责区域接近温度上限，建议通过水阀增加供冷；风冷辅助已打开，<b>4</b> 台风冷按本轮机房带子写入风机转速下限 / 上限（未触边 65% / 85%，1 台软上夹到 80%）；<b>1</b> 台水冷不新增调节建议'
 };
 
 // 设备级原因：V1 或 V2 任一建议目标变化即输出；普通分支单台只建议一个通道
@@ -3065,9 +3103,10 @@ const EXPLAIN_REASONS = {
   'AC6':  '本机负责的 E-F 冷通道当前温度 25.2℃，距上限 1.8℃；本机负责区域接近温度上限，建议单独增加供冷。按跨轮串行优先建议开大水阀。',
   'AC7':  '本机负责的 I-J 冷通道当前温度 23.7℃，距上限 3.3℃；本机负责区域接近温度上限，建议单独增加供冷。按跨轮串行优先建议开大水阀。本机数据质量降级，调节幅度已按本轮策略折减。',
   'AC8':  '本机负责的 I-J 冷通道当前温度 23.1℃，距上限 3.9℃；本轮冷量高于调节目标带，本机温度裕量排序靠前，建议主控制向省电方向调整一个寻优粒度。安全确认：本轮未低于冷量安全线，本机未命中热点禁省电，建议目标已通过变量边界、单轮幅度和方向一致性校验。',
-  'AC9':  '本机负责的 A-B 冷通道当前温度 22.1℃，距上限 4.9℃；本轮冷量高于调节目标带，本机温度裕量排序靠前，建议主控制向省电方向调整一个寻优粒度。安全确认：本轮未低于冷量安全线，本机未命中热点禁省电，建议目标已通过变量边界、单轮幅度和方向一致性校验。',
-  'AC10': '本机负责的 C-D 冷通道当前温度 22.1℃，距上限 4.9℃；本轮冷量高于调节目标带，本机温度裕量排序靠前，建议主控制向省电方向调整一个寻优粒度。安全确认：本轮未低于冷量安全线，本机未命中热点禁省电，建议目标已通过变量边界、单轮幅度和方向一致性校验。',
-  'AC11': '本机负责的 C-D 冷通道当前温度 23.2℃，距上限 3.8℃；本轮冷量高于调节目标带，本机温度裕量排序靠前，建议主控制向省电方向调整一个寻优粒度。安全确认：本轮未低于冷量安全线，本机未命中热点禁省电，建议目标已通过变量边界、单轮幅度和方向一致性校验。'
+  'AC9':  '本机负责的 A-B 冷通道当前温度 22.1℃，距上限 4.9℃；本轮冷量高于调节目标带，本机温度裕量排序靠前，建议主控制向省电方向调整一个寻优粒度。安全确认：本轮未低于冷量安全线，本机未命中热点禁省电，建议目标已通过变量边界、单轮幅度和方向一致性校验。本轮同时按机房风机包络建议下限 65%、上限 85%。',
+  'AC10': '本机负责的 C-D 冷通道当前温度 22.1℃，距上限 4.9℃；本轮冷量高于调节目标带，本机温度裕量排序靠前，建议主控制向省电方向调整一个寻优粒度。安全确认：本轮未低于冷量安全线，本机未命中热点禁省电，建议目标已通过变量边界、单轮幅度和方向一致性校验。本轮同时按机房风机包络建议下限 65%、上限 85%。',
+  'AC11': '本机负责的 C-D 冷通道当前温度 23.2℃，距上限 3.8℃；本轮冷量高于调节目标带，本机温度裕量排序靠前，建议主控制向省电方向调整一个寻优粒度。安全确认：本轮未低于冷量安全线，本机未命中热点禁省电，建议目标已通过变量边界、单轮幅度和方向一致性校验。本轮同时按机房风机包络建议下限 65%、上限 85%。',
+  'AC12': '本机负责的 E-F 冷通道当前温度 23.0℃，距上限 4.0℃；主控制本轮无新增调节。风冷辅助已打开，按机房风机包络建议下限 65%、上限 85%，该机安全边界「风机转速上限设定」软上为 80%，上沿夹到 80%。'
 };
 
 function renderExplainBar() {
@@ -3079,7 +3118,8 @@ function renderExplainBar() {
   bar.className = 'opt-explain-bar ' + meta.tone;
   if (tag) tag.textContent = meta.tag;
   // 时间以筛选条为准，结论条文案不再重复时间戳
-  txt.innerHTML = ROOM_EXPLAIN.text;
+  const fanOffText = '安全反馈冷量为 IT 负载的 <b>1.18</b> 倍，高于调节目标带；按温度裕量建议 <b>5</b> 台主控制向省电方向各走一步，另有 <b>4</b> 台空调因负责区域接近温度上限，建议通过水阀增加供冷；<b>1</b> 台不新增调节建议';
+  txt.innerHTML = isAirFanAuxEnabled() ? ROOM_EXPLAIN.text : fanOffText;
 }
 
 function refreshRoomScadaDataViews() {
@@ -3088,6 +3128,7 @@ function refreshRoomScadaDataViews() {
   renderTable();
   updateOptVizCardLayout();
   renderRoomViz();
+  renderExplainBar();
 }
 
 let DATA = buildDataFromRoom(getRoomForOptTable().acs);
@@ -3159,6 +3200,16 @@ function onCtrlToggle(type, checked) {
   tag.className = 'tag ' + (checked ? 'on' : 'off');
 }
 
+function isAirFanAuxEnabled() {
+  const el = document.getElementById('airFanAuxSwitch');
+  return !el || el.checked;
+}
+
+function onAirFanAuxToggle(input) {
+  onRuleToggle(input);
+  refreshRoomScadaDataViews();
+}
+
 function onRuleToggle(input) {
   const row = input.closest('tr');
   if (!row) return;
@@ -3223,7 +3274,8 @@ const DISPATCH_DATA = [
   { strategy:'',                          time:'2026-03-17 13:25:00', user:'系统管理员', target:'#6精密空调/送风温度设定', actual:'20.00', dispatch:'19.00', result:'成功' },
   { strategy:'末端柔性寻优自动下发策略', time:'2026-03-17 13:20:00', user:'系统管理员', target:'#9精密空调/送风温度设定', actual:'20.50', dispatch:'21.00', result:'成功' },
   { strategy:'',                          time:'2026-03-17 13:20:00', user:'系统管理员', target:'#10精密空调/送风温度设定', actual:'21.50', dispatch:'22.00', result:'成功' },
-  { strategy:'',                          time:'2026-03-17 13:20:00', user:'系统管理员', target:'#10精密空调/水阀最大开度', actual:'75', dispatch:'70', result:'成功' },
+  { strategy:'',                          time:'2026-03-17 13:20:00', user:'系统管理员', target:'#9精密空调/风机转速下限设定', actual:'40', dispatch:'65', result:'成功' },
+  { strategy:'',                          time:'2026-03-17 13:20:00', user:'系统管理员', target:'#9精密空调/风机转速上限设定', actual:'100', dispatch:'85', result:'成功' },
 ];
 
 function renderDispatchTable() {
@@ -3372,12 +3424,16 @@ function openDispatch(mode) {
     if (ac.Fi !== '投入' || ac.si !== 1) return;
     const v1Delta = ac.V1_ai === '-' ? 0 : parseFloat(ac.V1_ai) - parseFloat(ac.V1);
     const v2Delta = ac.V2_ai === '-' ? 0 : parseFloat(ac.V2_ai) - parseFloat(ac.V2);
+    const fanChanged = isAirFanAuxEnabled() && ac.deviceType === 'air' && ac.Nfan_lo != null &&
+      (ac.Nfan_lo_ai !== ac.Nfan_lo || ac.Nfan_hi_ai !== ac.Nfan_hi);
     if (Math.abs(v1Delta) > 0.01) {
       (v1Delta > 0 ? saveDevices : coolDevices).push(ac);
     } else if (v2Delta > 0) {
       coolDevices.push(ac);
     } else if (v2Delta < 0) {
       redistributeDevices.push(ac);
+    } else if (fanChanged) {
+      saveDevices.push(ac);
     }
   });
 
@@ -3388,6 +3444,10 @@ function openDispatch(mode) {
     const controlUnit = ac.controlUnit || '℃';
     if (v1Changed) rows.push({ name:ac.controlVar || '送风温度设定', actual:`${ac.V1}${controlUnit}`, target:`${ac.V1_ai}${controlUnit}`, value:ac.V1_ai });
     if (v2Changed && ac.deviceType === 'water') rows.push({ name:'水阀最大开度', actual:`${ac.V2}%`, target:`${ac.V2_ai}%`, value:ac.V2_ai });
+    if (isAirFanAuxEnabled() && ac.deviceType === 'air' && ac.Nfan_lo != null) {
+      if (ac.Nfan_lo_ai !== ac.Nfan_lo) rows.push({ name:'风机转速下限设定', actual:`${ac.Nfan_lo}%`, target:`${ac.Nfan_lo_ai}%`, value:ac.Nfan_lo_ai });
+      if (ac.Nfan_hi_ai !== ac.Nfan_hi) rows.push({ name:'风机转速上限设定', actual:`${ac.Nfan_hi}%`, target:`${ac.Nfan_hi_ai}%`, value:ac.Nfan_hi_ai });
+    }
     const reason = EXPLAIN_REASONS[ac.id];
     let body = '';
     rows.forEach((row, index) => {
