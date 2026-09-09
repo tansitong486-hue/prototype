@@ -658,6 +658,8 @@
     .opt-explain-bar.tone-muted .opt-explain-strip { background:#94A3B8; }
     .opt-explain-bar.tone-muted .oe-kicker { color:var(--text-hint); }
     .opt-explain-bar.tone-muted .oe-tag { background:#64748B; }
+    /* 平面图浮窗 · 热通道责任角标 */
+    .hot-resp-badge { display:inline-block; margin-left:6px; padding:0 6px; border-radius:9px; font-size:10px; line-height:16px; background:#FFEDD5; color:#9A3412; border:1px solid #FDBA74; vertical-align:middle; }
     .ds-reason { font-weight:400; color:var(--text-hint); font-size:11px; }
     .ds-reason-cell {
       font-weight:400; color:var(--text-secondary); font-size:11.5px; line-height:1.65;
@@ -1019,6 +1021,13 @@
           <p><b>v2.8（2026-08-28）：</b>对应需求 6、需求 7。① 气流布局对象明细改为平面图右上角可关闭浮层，默认不弹出。② 顶部指标（冷/热通道温度、开机/投入总数、pPUE、IT 功率、制冷功率）均可从当前值下钻历史。与机房柔性寻优页同一套。详见《机房寻优记录查看体验优化需求文档》。</p>
         </div>
       </div>
+      <div class="anno anno-version-header" data-version="v2.8" data-date="2026-09-08">
+        <span class="anno-tag">版本信息</span>
+        <span class="anno-version">v2.8</span>
+        <div class="anno-body">
+          <p><b>v2.8（2026-09-08）：</b>加减机引擎按《末端寻优设备能力抽象架构设计方案-v2.8定稿版》§六 09-08 修订同步，解释按《末端寻优结果可解释性需求方案-v2.8》第四章。三处变化：① <strong>结论条</strong>：场景码仍是 5 个，但原因参数换成「为哪条通道、在哪个责任范围内」——<code>RM_SWITCH</code> 的 <code>switch_reason_code</code> 为 <code>add_local</code>「分区加机」/ <code>swap_local</code>「一开一关」/ <code>surplus</code>「冗余减机 / 过冷减机」/ <code>rollback</code>「试关补回」/ <code>repair</code>「约束修复」/ <code>fault</code>「故障关机」；<code>RM_KEEP</code> 的 <code>keep_reason_code</code> 为 <code>activate_local</code>「叫醒空转机」/ <code>no_local_candidate</code>「无本地候选」/ <code>no_change</code>「维持现状」。文案不再出现「安全冷量余量」「冷量比」「安全线」，加机 / 修复用兜底句（按当前生效冷量衰减系数折算的开机安全冷量 ≥ 机房冷量需求参考值），减机只写局部覆盖事实。② <strong>规则配置弹窗</strong>：删 β、γ；冷量衰减系数按设备类型填初始值，旁列推荐值与当前生效值；超参数改用用户语言命名（开机后最短运行时间、关机后最短停机时间、未制冷多久允许关机、过冷多久允许减机），只读展示机房冷量需求参考；「寻优范围」只影响约束修复时的选组方式。③ <strong>平面图浮窗</strong>：接近上限通道的责任空调加「热通道责任」角标（本轮不进减机候选）；调节原因按 <code>ON_LOCAL / OFF_RULE</code> 模板。④ <strong>开关机控制变量</strong>：规则配置弹窗「设备状态寻优规则」每行新增下拉，按对象类型二选一——「开机 / 关机指令（双点位 <code>3_18_0</code> / <code>3_19_0</code>）」或「开关机设定（单点位 <code>3_48_0</code>，1 开 0 关）」，交互与柔性弹窗按对象类型选主控制变量相同；手动下发弹窗的开关机行随之出「开机指令 / 关机指令」或「开关机设定 1 / 0」；两种可在同一机房并存。演示数据取自南京二楼 09-07 17:45 回放场景（为热列开一台、关空转 4 天的一台），设备名换成本页示例机房；演示中冷冻水型为单点位、风冷 DX 为双点位。</p>
+        </div>
+      </div>
 
       <div class="page-header">
         <div class="page-header-left">
@@ -1152,7 +1161,7 @@
         <div class="anno-body">
           <p><b>关联模块：</b>页面整体 / 顶部三策略卡片</p>
           <p><b>需求目标：</b>以单机房为粒度展示末端空调开关机寻优的策略配置、寻优结果、执行下发与安全回退，支撑开发联调和运维复核。</p>
-          <p><b>核心输出：</b>在满足总供冷、开机台数、冷通道覆盖、Fi 投入状态、最小连续运行时长等约束下，输出空调开关机方案 <code>zi</code>、总功耗、总有效冷量、气流不均衡度 <code>G</code> 与新开机设备初始控制值 <code>Tset</code>。</p>
+          <p><b>核心输出（v2.8 · 2026-09-08）：</b>按冷通道近 40 分钟峰值找出接近上限的通道，在每条通道的责任空调范围内决定叫醒 / 开机 / 无本地候选，对责任通道均不热的空转机与柔性已省到边界的富余机组决定关机；纸面兜底、开机台数、冷通道覆盖、Fi 投入状态、最小连续运行时长为硬约束。输出空调开关机方案 <code>zi</code>、叫醒目标、新开机设备初始控制值 <code>Tset</code>、通道级结果（哪条通道、责任空调、本轮处置）与参考功率项（仅用于方案比选）。气流不均衡度 <code>G</code> 只进诊断日志。</p>
         </div>
       </div>
 
@@ -1315,7 +1324,7 @@
           <span class="anno-source">引用自需求文档</span>
           <div class="anno-body">
             <p><b>关联模块：</b>平面图空调浮窗 —「调节原因」区块（v2.6 可解释性，两处入口之一）</p>
-            <p><b>展示规则：</b>悬停空调节点时，浮窗在现有内容末尾追加「调节原因」区块，展示该设备所属的实际联合计算阶段（全局最优组合 / 基准修正 / 邻域改进）和负责区域温度事实；不展示候选排名，不把区域事实表述为唯一选择原因。关机建议末尾只复述目标组合已通过的约束；仅本轮开关建议目标相对真实状态变化的设备显示，文案不代表设备已经开关机。</p>
+            <p><b>展示规则（v2.8 · 2026-09-08）：</b>悬停空调节点时，浮窗在现有内容末尾追加「调节原因」区块，按可解释性方案 4.2 模板：开机用 <code>ON_LOCAL</code>（本机是哪条接近上限通道的责任空调、该通道峰值与距上限、为何是它），关机用 <code>OFF_RULE</code>（连续未制冷轮数、送回风、负责通道均未接近上限、每条通道仍有几台在制冷的空调），只有约束修复轮用 <code>ON_SELECTED / OFF_SELECTED</code>；不展示候选排名。接近上限通道的责任空调在名称后加「热通道责任」角标（本轮不进减机候选），空转机加「运行中未制冷」角标。仅本轮开关建议目标相对真实状态变化的设备显示，文案不代表设备已经开关机。</p>
             <p><b>同一套文案：</b>与手动下发弹窗设备行展示的是<strong>同一段文案</strong>（同一原因码 + 参数按统一模板渲染），全站不做短语版/缩略版变体。</p>
           </div>
         </div>
@@ -1326,7 +1335,7 @@
           <div class="anno-body">
             <p><b>关联模块：</b>本轮寻优结论条（一句话层）</p>
             <p><b>结构：</b>醒目结论模块：左侧色条 + 抬头「本轮寻优结论」+ <strong>方向性主标签徽章</strong> + 详细文案。主标签是场景定性结论（≤5 字），详细文案给数字和依据。<strong>不展示本轮时间戳</strong>（与上方时间筛选重复，时间以筛选条为准）。</p>
-            <p><b>场景码与主标签：</b>RM_SWITCH 按净关机 / 净开机 / 替换显示「节能减机 / 补冷加机 / 组合调整」；文案展示建议开机台数、目标变化设备、安全冷量余量和<strong>参考功率项变化（仅用于方案比选）</strong>。RM_KEEP=「维持现状」；RM_NO_FEASIBLE=「无可行方案」，只展示本轮实际记录的冲突类别，不单一归因冷量不足；RM_SKIP=「本轮跳过」；RM_ERROR=「计算异常」。仅上一轮 L3 计算仍在运行、导致本轮未触发时按「该时刻无寻优记录」处理。</p>
+            <p><b>场景码与主标签（v2.8 · 2026-09-08）：</b>RM_SWITCH 按 <code>switch_reason_code</code> 显示「分区加机 / 一开一关 / 冗余减机 / 过冷减机 / 试关补回 / 约束修复 / 故障关机」；RM_KEEP 按 <code>keep_reason_code</code> 显示「叫醒空转机 / 无本地候选 / 维持现状」；RM_NO_FEASIBLE=「无可行方案」，只展示本轮实际记录的冲突类别；RM_SKIP=「本轮跳过」；RM_ERROR=「计算异常」。文案先说<strong>哪条通道近 40 分钟峰值多少、距上限多少</strong>，再说在它的责任空调里做了什么；加机 / 修复带兜底句「按当前生效的冷量衰减系数折算，方案开机安全冷量 X kW，不低于本机房冷量需求参考值 Y kW」和<strong>参考功率项变化（仅用于方案比选）</strong>；减机只写「它负责的通道均未接近上限、每条通道仍有至少 N 台在制冷的空调」。全页不出现「安全冷量余量」「冷量比」「安全线」。状态色：故障关机 / 约束修复 / 无本地候选为橙，异常 / 无可行方案为红，跳过为灰，其余绿。仅上一轮 L3 计算仍在运行、导致本轮未触发时按「该时刻无寻优记录」处理。</p>
             <p><b>联动：</b>随下方时间筛选切换——切到哪个时间快照，即展示该轮寻优的结论；该时刻无记录时显示「该时刻无寻优记录」。v2.6 上线前的历史轮次无解释数据，显示「该轮寻优早于可解释性功能上线，无原因记录」。</p>
             <p><b>实现硬约束：</b>字段取自算法本轮已有结果和实际计算轨迹；只允许确定性聚合与格式化，禁止重跑寻优、反事实搜索、事后候选排名或新增决策阈值。接口只返回场景码、原因码和原始参数，主标签及完整中文模板由前端单点维护。`P_reference` 不是实际耗电或节能量，页面不得出现由它生成的「预计省电 / 节省功率」。</p>
             <p><b>兜底（唯一规则）：</b>算法侧参数取不到时不输出该解释对象并记录日志（无 fallback_text 双轨话术）；前端码 + 参数齐全按模板渲染，其余任何情况该处不展示解释内容（结论条位置显示「本轮无解释数据」），不做从句级降级。</p>
@@ -1641,7 +1650,7 @@
           <div class="anno-body">
             <p><b>关联模块：</b>加减机寻优规则配置弹窗</p>
             <p><b>需求目标：</b>承载加减机寻优运行所需的核心参数配置与投入范围配置，作为周期寻优、结果生成和执行下发的参数入口。</p>
-            <p><b>配置范围：</b>包括 <code>T_opt</code>、安全边界、寻优算法、寻优模式、<code>Tset</code>、<code>α/β/γ</code>、<code>T_run,min</code> 以及设备和传感器的投入/投出状态。</p>
+            <p><b>配置范围：</b>寻优周期、安全边界、寻优算法、寻优范围（只影响约束修复时的选组方式）、开关机控制变量、开机初始控制变量与初始值、冷量衰减系数初始值、开机后最短运行时间、关机后最短停机时间、未制冷多久允许关机、过冷多久允许减机，以及设备和传感器的投入/投出状态。机房冷量需求参考与冷量衰减系数推荐值 / 当前生效值为只读展示。</p>
           </div>
         </div>
         <div class="anno anno-ux" data-version="v2.6">
@@ -1651,7 +1660,7 @@
           <div class="anno-body">
             <p><b>关联模块：</b>规则配置弹窗 —「寻优规则配置」Tab</p>
             <p><b>入口：</b>顶部寻优策略卡片「规则配置」。</p>
-            <p><b>交互：</b>沿用冷站柔性寻优的居中配置弹窗；取消直接关闭不保存，保存后关闭弹窗。规则区对齐冷站全局寻优规则配置弹窗（现网交互）的两段式结构：上部「设备状态寻优规则」按行配置启用开关与寻优范围单选（全局式/增量式开机组合寻优，选中项绿色高亮），下部「模拟量初始值规则」配置各类型设备的开机初始控制变量与开机初始值（默认值）；α/β/γ/T_run,min 收拢到「超参数配置」区统一填写。</p>
+            <p><b>交互：</b>沿用冷站柔性寻优的居中配置弹窗；取消直接关闭不保存，保存后关闭弹窗。上部「设备状态寻优规则」按对象类型成行：启用开关、开关机控制变量下拉（双点位 / 单点位，交互同柔性弹窗选主控制变量）、寻优范围单选；中部「模拟量初始值规则」按对象类型配置开机初始控制变量与初始值；下部「超参数配置」用用户语言命名，与柔性弹窗「温度控制参数」同一风格。</p>
           </div>
         </div>
         <div class="anno anno-field" data-version="v2.6">
@@ -1664,10 +1673,11 @@
             <p><b>寻优周期 T_opt：</b>定时触发寻优计算的时间间隔（单位：分钟）；若上一轮未完成则本周期跳过。</p>
             <p><b>安全边界：</b>单选当前末端系统下的安全边界模式；约束口径含 Nmin、Nmax、Tc,max,c、Th,max,h 等。</p>
             <p><b>寻优算法：</b>必选；选定后展示对应「核心配置参数」表单，未选时该区域折叠隐藏。</p>
-            <p><b>设备状态寻优规则（上部）：</b>系统按对象类型自动生成，每行配置启用开关与寻优范围。启用开关：开启表示该类型设备参与本机房加减机开关机寻优，关闭则该类设备保持现状、本轮不生成开关机建议。寻优范围单选：全局式开机组合寻优=穷举该类设备可行开机组合取最优；增量式开机组合寻优=从当前开机状态逐步加减机迭代；选中项绿色高亮，交互对齐冷站全局寻优现网弹窗。</p>
+            <p><b>设备状态寻优规则（上部）：</b>系统按对象类型自动生成，每行配置启用开关、<strong>开关机控制变量</strong>与寻优范围。启用开关：开启表示该类型设备参与本机房加减机开关机寻优，关闭则该类设备保持现状、本轮不生成开关机建议。<b>开关机控制变量（v2.8 · 2026-09-08 新增，必选）：</b>下拉二选一，交互与柔性弹窗按对象类型选主控制变量相同——「开机 / 关机指令（双点位）」= 通过「开机」<code>3_18_0</code>、「关机」<code>3_19_0</code> 两个点下发（现有机型缺省，开机写 <code>3_18_0</code>=1 / <code>3_19_0</code>=0，关机反之）；「开关机设定（单点位）」= 通过「开关机设定」<code>3_48_0</code> 一个点下发，写 1 开 / 写 0 关。选项按该类型设备物模型上实际存在的点位过滤，两种点位都没有的类型不可启用。算法只输出目标开关状态，点位翻译由下发链按此选择执行；到位确认统一读「运行状态」<code>2_167_0</code>。混合编队两类可不同（演示：冷冻水型单点位、风冷 DX 双点位）。寻优范围单选（v2.8 · 2026-09-08 起只在<strong>当前开机组合本身违反运行约束、需要修复</strong>时有区别）：全局式=从全部可行组合里取参考功率最低的；增量式=取与当前状态开关差异最少的。正常轮次的叫醒 / 加机 / 减机按通道责任范围逐台判断，两种模式相同，每轮最多开 1 台、关 1 台。选中项绿色高亮，交互对齐冷站全局寻优现网弹窗。</p>
             <p><b>模拟量初始值规则（下部）：</b>按对象类型配置开机初始控制变量与开机初始值（默认值）。冷冻水型可选既有设定点位；风冷 DX 可选送风或回风温度设定。被寻优开机的空调按该值写入初始设定，需保留两位小数。</p>
-            <p><b>冷量衰减系数 α：</b>机房级单一超参数（默认 0.60），表示安装、老化与系统侧综合衰减，不再按机型分别配置：风冷 DX 高温能力下降已由室外温度折减系数 F_odb 动态承接（水冷恒为 1），避免同一差异重复折减。<b>冷量冗余系数 β：</b>额外预留冷量比例，默认 0.08。<b>均衡权重系数 γ：</b>省电与气流均衡的权衡，可配置 0.01~0.50。</p>
-            <p><b>最小连续运行时长 T_run,min：</b>单台空调自本次开机起须连续运行的最短时间（单位：分钟），属寻优<strong>硬约束</strong>：未满该时长时，本轮寻优结果不得对该机下达关机（或等效减机）指令。用于抑制频繁启停、保护压缩机与末端气流稳定；与加减机策略、T_opt 周期触发及上一轮执行状态联动校验。</p>
+            <p><b>冷量衰减系数：</b>空调实际能出的冷量占额定冷量的比例，按设备类型填初始值（冷冻水型缺省 0.60、风冷 DX 缺省 0.80）。系统运行后按实测学出推荐值并自动生效，表中并列展示初始值、推荐值、当前生效值；没有推荐值时用初始值。风冷高温影响由室外温度折减自动处理，不在此区分。（对应架构 §3.4 <code>α_config / α_suggested / α_eff</code>）</p>
+            <p><b>开机后最短运行时间：</b>缺省 20 分钟，空调开机后至少运行这么久才允许再建议关它（<code>T_run,min</code>）。<b>关机后最短停机时间：</b>缺省 60 分钟，被建议关掉的空调这么久内不再建议开，不小于开机后最短运行时间（<code>T_off,lock</code>）。<b>未制冷多久允许关机：</b>缺省 30 分钟，空调开着但一直没制冷、负责的通道也都不热，持续这么久后建议关掉；引擎按采集周期换算成轮数（<code>N_idle,off</code>）。<b>过冷多久允许减机：</b>缺省 30 分钟，空调已调到最省电、负责的通道仍都很冷，持续这么久后建议试关一台（<code>N_over</code>）。<b>机房冷量需求参考：</b>只读，系统按近一日实测自动学习，用于校核开机方案的冷量下限（<code>K_room</code>）。已删除：冷量冗余系数 β、均衡权重系数 γ。</p>
+            <p><b>开机后最短运行时间（T_run,min）：</b>单台空调自本次开机起须连续运行的最短时间（单位：分钟），属寻优<strong>硬约束</strong>：未满该时长时，本轮寻优结果不得对该机下达关机（或等效减机）指令。用于抑制频繁启停、保护压缩机与末端气流稳定；与加减机策略、T_opt 周期触发及上一轮执行状态联动校验。</p>
           </div>
         </div>
         <div class="form-group" style="margin-bottom:20px;">
@@ -1687,7 +1697,8 @@
               <thead>
                 <tr>
                   <th>规则名称</th>
-                  <th style="width:76px;">启用开关</th>
+                  <th style="width:62px;">启用</th>
+                  <th style="width:210px;">开关机控制变量<span class="required">*</span></th>
                   <th style="width:180px;">寻优范围</th>
                 </tr>
               </thead>
@@ -1695,6 +1706,7 @@
                 <tr>
                   <td><span class="rule-device">冷冻水型精密空调</span><span class="rule-param" style="color:var(--text-secondary);">运行状态</span><span class="device-type-note">当前机房 8 台</span></td>
                   <td><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></td>
+                  <td><select class="form-control" title="该类型空调的开关机通过哪个点位下发：双点位 = 开机 3_18_0 + 关机 3_19_0；单点位 = 开关机设定 3_48_0，写 1 开 / 写 0 关。与柔性弹窗选主控制变量同一交互"><option value="dual">开机 / 关机指令（双点位）</option><option value="single" selected>开关机设定（单点位）</option></select></td>
                   <td>
                     <div class="qty-radio-stack">
                       <label class="qty-radio-label"><input type="radio" name="jjScope0" value="global" checked> <span class="qty-radio-text active">全局式开机组合寻优</span></label>
@@ -1705,6 +1717,7 @@
                 <tr>
                   <td><span class="rule-device">风冷 DX 精密空调</span><span class="rule-param" style="color:var(--text-secondary);">运行状态</span><span class="device-type-note">当前机房 4 台</span></td>
                   <td><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></td>
+                  <td><select class="form-control" title="该类型空调的开关机通过哪个点位下发：双点位 = 开机 3_18_0 + 关机 3_19_0；单点位 = 开关机设定 3_48_0，写 1 开 / 写 0 关。与柔性弹窗选主控制变量同一交互"><option value="dual" selected>开机 / 关机指令（双点位）</option><option value="single">开关机设定（单点位）</option></select></td>
                   <td>
                     <div class="qty-radio-stack">
                       <label class="qty-radio-label"><input type="radio" name="jjScope1" value="global" checked> <span class="qty-radio-text active">全局式开机组合寻优</span></label>
@@ -1743,27 +1756,78 @@
 
           <div class="form-section">超参数配置</div>
           <div class="form-group">
-            <div class="form-label"><span class="required">*</span> 冷量衰减系数 α</div>
-            <input type="number" class="form-control" value="0.60" min="0.01" max="1" step="0.01">
-            <div class="form-hint field-hint-annoonly">机房统一配置：实际可发挥冷量占额定制冷量的比例（默认 0.60），表示安装、老化与系统侧综合衰减；风冷 DX 高温影响由室外温度折减系数 F_odb 自动收紧，不在此按机型区分</div>
+            <div class="form-label"><span class="required">*</span> 冷量衰减系数</div>
+            <table class="analog-rule-table" style="margin-top:4px;">
+              <thead>
+                <tr>
+                  <th style="width:170px;">设备类型</th>
+                  <th style="width:130px;">初始值<span class="required">*</span></th>
+                  <th style="width:120px;">推荐值</th>
+                  <th>当前生效值</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="rule-device">冷冻水型精密空调</span></td>
+                  <td><input type="number" class="form-control rule-num" value="0.60" min="0.01" max="1" step="0.01"></td>
+                  <td style="color:var(--text-hint);">—</td>
+                  <td><b>0.60</b> <span style="color:var(--text-hint);">初始值</span></td>
+                </tr>
+                <tr>
+                  <td><span class="rule-device">风冷 DX 精密空调</span></td>
+                  <td><input type="number" class="form-control rule-num" value="0.80" min="0.01" max="1" step="0.01"></td>
+                  <td>0.95</td>
+                  <td><b>0.95</b> <span style="color:var(--text-hint);">推荐值</span></td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="form-hint">空调实际能出的冷量占额定冷量的比例。系统运行后会按实测学出推荐值并自动生效；没有推荐值时用初始值</div>
           </div>
-          <div class="form-group">
-            <div class="form-label"><span class="required">*</span> 冷量冗余系数 β</div>
-            <input type="number" class="form-control" value="0.08" step="0.01">
-            <div class="form-hint field-hint-annoonly">额外预留的冷量比例（默认8%）</div>
-          </div>
-          <div class="form-group">
-            <div class="form-label"><span class="required">*</span> 均衡权重系数 γ</div>
-            <input type="number" class="form-control" value="0.10" step="0.01" min="0.01" max="0.50">
-            <div class="form-hint field-hint-annoonly">控制"省电"与"气流均衡"的权衡程度，值越大越重视气流均衡，可配置范围 0.01~0.50</div>
-          </div>
-          <div class="form-group">
-            <div class="form-label"><span class="required">*</span> 最小连续运行时长 T_run,min</div>
-            <div class="form-row">
-              <input type="number" class="form-control" value="20" style="width:100px;">
-              <span class="form-suffix">分钟</span>
+
+          <div class="form-row-2col">
+            <div class="form-group">
+              <div class="form-label"><span class="required">*</span> 开机后最短运行时间</div>
+              <div class="form-row">
+                <input type="number" class="form-control" value="20" step="5" style="width:140px;">
+                <span class="form-suffix">分钟</span>
+              </div>
+              <div class="form-hint">空调开机后至少运行这么久，才允许再建议关它</div>
             </div>
-            <div class="form-hint field-hint-annoonly">空调开机后允许关机前需满足的最短连续运行时间</div>
+            <div class="form-group">
+              <div class="form-label"><span class="required">*</span> 关机后最短停机时间</div>
+              <div class="form-row">
+                <input type="number" class="form-control" value="60" step="5" style="width:140px;">
+                <span class="form-suffix">分钟</span>
+              </div>
+              <div class="form-hint">被建议关掉的空调，这么久内不再建议开它，避免反复启停；不小于开机后最短运行时间</div>
+            </div>
+          </div>
+
+          <div class="form-row-2col">
+            <div class="form-group">
+              <div class="form-label"><span class="required">*</span> 未制冷多久允许关机</div>
+              <div class="form-row">
+                <input type="number" class="form-control" value="30" step="5" style="width:140px;">
+                <span class="form-suffix">分钟</span>
+              </div>
+              <div class="form-hint">空调开着但压缩机一直没制冷、它负责的通道也都不热，持续这么久后建议关掉；不短于压缩机一次正常启停周期</div>
+            </div>
+            <div class="form-group">
+              <div class="form-label"><span class="required">*</span> 过冷多久允许减机</div>
+              <div class="form-row">
+                <input type="number" class="form-control" value="30" step="5" style="width:140px;">
+                <span class="form-suffix">分钟</span>
+              </div>
+              <div class="form-hint">空调已调到最省电、它负责的通道仍都很冷，持续这么久后建议试关一台</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="form-label">机房冷量需求参考</div>
+            <div class="form-row">
+              <input type="text" class="form-control" value="1.14 × IT 功率" style="width:160px;" readonly>
+              <span class="form-hint" style="margin:0 0 0 10px;">系统按近一日实测自动学习，只读；用于校核开机方案的冷量下限，不需要配置</span>
+            </div>
           </div>
 
           <div class="anno anno-field" data-version="v1.0" style="margin-top:4px;">
@@ -1771,7 +1835,7 @@
             <span class="anno-version">v1.0</span>
             <span class="anno-source">引用自需求文档</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>规则配置面板 — 核心参数区「最小连续运行时长 T_run,min」</p>
+              <p><b>关联模块：</b>规则配置面板 — 超参数配置「开机后最短运行时间」</p>
               <p><b>T_run,min：</b>硬约束。自本次开机起累计运行未满该时长（分钟）时，寻优不得对该空调给出关机/减机指令，避免频繁启停；与周期寻优、执行反馈一致校验。</p>
             </div>
           </div>
@@ -2105,6 +2169,7 @@
         <div class="anno-body">
           <p><b>关联模块：</b>下发/回退确认弹窗内容区</p>
           <p><b>下发值列：</b>与「当前值 / AI 寻优值」对照编辑；支持按设备多行参数（开机指令、设定温度、风机限幅等）。</p>
+          <p><b>开关机行按对象类型选定的控制变量展示（v2.8 · 2026-09-08，架构 §5.3 / §8.1）：</b>取规则配置弹窗「设备状态寻优规则」里该类型选定的开关机控制变量——<strong>双点位</strong>（开机 <code>3_18_0</code> + 关机 <code>3_19_0</code>，现有机型缺省）：开机设备出「开机指令」行、关机设备出「关机指令」行，写值 1 表示执行该动作，另一个点由 L4 同步写 0，不单列；<strong>单点位</strong>（开关机设定 <code>3_48_0</code>）：开机、关机都只出「开关机设定」一行，写 1 开 / 写 0 关。两类可同一机房并存（演示：冷冻水型单点位、风冷 DX 双点位）。到位确认统一以「运行状态」回读为准，弹窗与下发记录不按命令点判断是否生效。算法结果里不含点位，点位与写值由下发链按类型选择补出。</p>
         </div>
       </div>
       <div class="anno anno-data" data-version="v2.6">
@@ -2250,13 +2315,14 @@ const tpl1f = {
     { id:'AC12', x:24, y:2.0,  side:'R', Qc:127, P:17, Va:30000, Fi:'投入', si:1, V1:20.00, V1_ai:19.50, V2:80, V2_ai:85, Nfan:70, Ts:'16.0', Tr:'26.0', Ei:-0.07 },
   ],
   coldSensors: [
-    { id:'c1',  x:4.0,  y:15.25, Tc:23.93, RH:42, area:'G-H冷通道' },
-    { id:'c2',  x:6.5,  y:15.25, Tc:23.84, RH:44, area:'G-H冷通道' },
-    { id:'c3',  x:9.0,  y:15.25, Tc:23.73, RH:43, area:'G-H冷通道' },
-    { id:'c4',  x:4.0,  y:9.5,   Tc:26.00, RH:48, area:'I-J冷通道' },
-    { id:'c5',  x:6.5,  y:9.5,   Tc:26.00, RH:47, area:'I-J冷通道' },
-    { id:'c6',  x:9.0,  y:9.5,   Tc:26.00, RH:49, area:'I-J冷通道' },
-    { id:'c7',  x:4.0,  y:3.5,   Tc:23.06, RH:40, area:'K-L冷通道' },
+    // v2.8 · 2026-09-08 演示：G-H 冷通道逼近上限；c7 读数是空转的 AC5 吹出的风（自污染）。与 ROOM.coldSensors 保持一致
+    { id:'c1',  x:4.0,  y:15.25, Tc:26.40, RH:42, area:'G-H冷通道' },
+    { id:'c2',  x:6.5,  y:15.25, Tc:26.10, RH:44, area:'G-H冷通道' },
+    { id:'c3',  x:9.0,  y:15.25, Tc:25.90, RH:43, area:'G-H冷通道' },
+    { id:'c4',  x:4.0,  y:9.5,   Tc:24.80, RH:48, area:'I-J冷通道' },
+    { id:'c5',  x:6.5,  y:9.5,   Tc:24.80, RH:47, area:'I-J冷通道' },
+    { id:'c6',  x:9.0,  y:9.5,   Tc:24.80, RH:49, area:'I-J冷通道' },
+    { id:'c7',  x:4.0,  y:3.5,   Tc:25.90, RH:40, area:'K-L冷通道' },
     { id:'c8',  x:6.5,  y:3.5,   Tc:23.36, RH:41, area:'K-L冷通道' },
     { id:'c9',  x:9.0,  y:3.5,   Tc:22.85, RH:39, area:'K-L冷通道' },
     { id:'c10', x:16.0, y:15.25, Tc:22.54, RH:38, area:'A-B冷通道' },
@@ -2347,23 +2413,24 @@ const ROOM = {
     { id:'AC2',  x:0,  y:14.0, side:'L', deviceType:'water', typeLabel:'冷冻水型', Qc:127, P:17, powerSource:'额定功率', Fi:'投入', si:1, zi:1, Ts:'20.5', Tr:'27.8' },
     { id:'AC3',  x:0,  y:11.0, side:'L', deviceType:'water', typeLabel:'冷冻水型', Qc:127, P:17, powerSource:'额定功率', Fi:'投入', si:1, zi:1, Ts:'20.5', Tr:'28.5' },
     { id:'AC4',  x:0,  y:8.0,  side:'L', deviceType:'water', typeLabel:'冷冻水型', Qc:127, P:17, powerSource:'额定功率', Fi:'投入', si:1, zi:1, Ts:'20.5', Tr:'27.3' },
-    { id:'AC5',  x:0,  y:5.0,  side:'L', deviceType:'water', typeLabel:'冷冻水型', Qc:127, P:17, powerSource:'额定功率', Fi:'投入', si:1, zi:0, Ts:'20.5', Tr:'28.9' },
+    { id:'AC5',  x:0,  y:5.0,  side:'L', deviceType:'water', typeLabel:'冷冻水型', Qc:127, P:17, powerSource:'额定功率', Fi:'投入', si:1, zi:0, Ts:'26.8', Tr:'25.9' },
     { id:'AC6',  x:0,  y:2.0,  side:'L', deviceType:'water', typeLabel:'冷冻水型', Qc:127, P:17, powerSource:'额定功率', Fi:'投入', si:1, zi:1, Ts:'20.5', Tr:'27.6' },
     { id:'AC7',  x:24, y:16.5, side:'R', deviceType:'water', typeLabel:'冷冻水型', Qc:127, P:17, powerSource:'额定功率', Fi:'投入', si:1, zi:1, Ts:'20.5', Tr:'28.1' },
     { id:'AC8',  x:24, y:14.0, side:'R', deviceType:'water', typeLabel:'冷冻水型', Qc:127, P:17, powerSource:'额定功率', Fi:'投入', si:1, zi:1, Ts:'20.5', Tr:'28.7' },
     { id:'AC9',  x:24, y:11.0, side:'R', deviceType:'air', typeLabel:'风冷 DX', Qc:92, P:22.4, powerSource:'基础模型', Todb:38.0, Fodb:0.955, Fi:'投入', si:1, zi:1, Ts:'20.5', Tr:'27.4' },
     { id:'AC10', x:24, y:8.0,  side:'R', deviceType:'air', typeLabel:'风冷 DX', Qc:92, P:22.4, powerSource:'基础模型', Todb:38.0, Fodb:0.955, Fi:'投入', si:1, zi:1, Ts:'20.5', Tr:'28.3' },
-    { id:'AC11', x:24, y:5.0,  side:'R', deviceType:'air', typeLabel:'风冷 DX', Qc:89, P:27.6, powerSource:'输入替代', Todb:38.0, Fodb:0.955, Fi:'投入', si:1, zi:0, Ts:'20.5', Tr:'27.9' },
-    { id:'AC12', x:24, y:2.0,  side:'R', deviceType:'air', typeLabel:'风冷 DX', Qc:92, P:22.4, powerSource:'基础模型', Todb:38.0, Fodb:0.955, Fi:'投入', si:0, zi:1, Ts:'-',    Tr:'-'   },
+    { id:'AC11', x:24, y:5.0,  side:'R', deviceType:'air', typeLabel:'风冷 DX', Qc:89, P:27.6, powerSource:'输入替代', Todb:38.0, Fodb:0.955, Fi:'投入', si:1, zi:1, Ts:'20.5', Tr:'27.9' },
+    { id:'AC12', x:24, y:2.0,  side:'R', deviceType:'air', typeLabel:'风冷 DX', Qc:92, P:22.4, powerSource:'基础模型', Todb:38.0, Fodb:0.955, Fi:'投入', si:0, zi:0, Ts:'-',    Tr:'-'   },
   ],
+  // v2.8 · 2026-09-08 演示：G-H 冷通道逼近上限（对应 09-07 17:45 KL 列）；c7 读数是空转的 AC5 吹出的风（自污染）
   coldSensors: [
-    { id:'c1',  x:4.0,  y:15.25, Tc:23.93, RH:42, area:'G-H冷通道' },
-    { id:'c2',  x:6.5,  y:15.25, Tc:23.84, RH:44, area:'G-H冷通道' },
-    { id:'c3',  x:9.0,  y:15.25, Tc:23.73, RH:43, area:'G-H冷通道' },
+    { id:'c1',  x:4.0,  y:15.25, Tc:26.40, RH:42, area:'G-H冷通道' },
+    { id:'c2',  x:6.5,  y:15.25, Tc:26.10, RH:44, area:'G-H冷通道' },
+    { id:'c3',  x:9.0,  y:15.25, Tc:25.90, RH:43, area:'G-H冷通道' },
     { id:'c4',  x:4.0,  y:9.5,   Tc:24.80, RH:46, area:'I-J冷通道' },
     { id:'c5',  x:6.5,  y:9.5,   Tc:24.80, RH:45, area:'I-J冷通道' },
     { id:'c6',  x:9.0,  y:9.5,   Tc:24.80, RH:47, area:'I-J冷通道' },
-    { id:'c7',  x:4.0,  y:3.5,   Tc:23.06, RH:40, area:'K-L冷通道' },
+    { id:'c7',  x:4.0,  y:3.5,   Tc:25.90, RH:40, area:'K-L冷通道' },
     { id:'c8',  x:6.5,  y:3.5,   Tc:23.36, RH:41, area:'K-L冷通道' },
     { id:'c9',  x:9.0,  y:3.5,   Tc:22.85, RH:39, area:'K-L冷通道' },
     { id:'c10', x:16.0, y:15.25, Tc:22.54, RH:38, area:'A-B冷通道' },
@@ -3182,7 +3249,8 @@ function renderRoomViz() {
         const suggestionColor = d.zi === '1' ? '#1890FF' : '#FF4D4F';
         const supplyTemp = d.ts === '-' ? '—' : `${d.ts} ℃`;
         const returnTemp = d.tr === '-' ? '—' : `${d.tr} ℃`;
-        html = `<b>${displayName}（${d.fi}）</b><br><br>`;
+        const badge = (typeof EXPLAIN_BADGES !== 'undefined') && EXPLAIN_BADGES[d.id];
+        html = `<b>${displayName}（${d.fi}）</b>${badge ? `<span class="hot-resp-badge" title="${badge.title}">${badge.label}</span>` : ''}<br><br>`;
         html += `设备类型：${deviceType}<br>`;
         html += `状态：${st} → <b style="color:${suggestionColor}">${suggestion}</b><br>`;
         html += `送风温度：${supplyTemp}<br>`;
@@ -3262,25 +3330,62 @@ const TYPE_CLASS = {
   unopt:'var-unopt'
 };
 
-// ===== v2.6 可解释性（演示数据，正式环境由算法结果输出渲染） =====
-// 主标签与状态色由前端按场景码单点映射；ROOM_EXPLAIN 只模拟场景码与原始结果渲染后的正文
+// ===== 可解释性（演示数据，正式环境由后端结果输出模块返回码 + 参数 + 整句文案，前端直接显示） =====
+// v2.8 · 2026-09-08：场景码 5 个不变，主标签与状态色按「场景码 · 原因参数」单点映射（《可解释性需求方案-v2.8》4.1 / 6.1）
 const EXPLAIN_SCENE_META = {
-  RM_SWITCH: { tag:'组合调整', tone:'tone-warning' }
+  'RM_SWITCH·add_local':          { tag:'分区加机',   tone:'tone-success' },
+  'RM_SWITCH·swap_local':         { tag:'一开一关',   tone:'tone-success' },
+  'RM_SWITCH·surplus·idle':       { tag:'冗余减机',   tone:'tone-success' },
+  'RM_SWITCH·surplus·overcool':   { tag:'过冷减机',   tone:'tone-success' },
+  'RM_SWITCH·rollback':           { tag:'试关补回',   tone:'tone-success' },
+  'RM_SWITCH·repair':             { tag:'约束修复',   tone:'tone-warning' },
+  'RM_SWITCH·fault':              { tag:'故障关机',   tone:'tone-warning' },
+  'RM_KEEP·activate_local':       { tag:'叫醒空转机', tone:'tone-success' },
+  'RM_KEEP·no_local_candidate':   { tag:'无本地候选', tone:'tone-warning' },
+  'RM_KEEP·no_change':            { tag:'维持现状',   tone:'tone-success' },
+  'RM_NO_FEASIBLE':               { tag:'无可行方案', tone:'tone-danger' },
+  'RM_SKIP':                      { tag:'本轮跳过',   tone:'tone-muted' },
+  'RM_ERROR':                     { tag:'计算异常',   tone:'tone-danger' }
 };
 
-// 本轮 2 台建议开机、2 台建议关机，台数不变，属于替换场景
-const ROOM_EXPLAIN = {
-  sceneCode: 'RM_SWITCH',
-  text: '本轮建议开机 <b>10</b> 台，建议开启 <b>AC1、AC12</b>、关闭 <b>AC5、AC11</b>；在满足全部运行约束的前提下调整开机组合，方案安全冷量余量 <b>96.4kW</b>，参考功率项较当前组合降低 <b>5.2kW</b>（仅用于方案比选）'
+// 三条演示：对应南京二楼 09-08 回放的三个场景，设备名换成本页示例机房。
+const EXPLAIN_DEMOS = {
+  // 场景一 · 一开一关：G-H 冷通道逼近上限、责任空调里 AC1 关着 → 开 AC1；AC5 空转 4 天且其通道均不热 → 关 AC5
+  swap_local: {
+    sceneCode: 'RM_SWITCH', reason: 'swap_local', resultCode: 'ADD_LOCAL', branchHits: ['ADD_LOCAL', 'IDLE_SURPLUS_OFF'],
+    text: '<b>G-H 冷通道</b>（c1、c2、c3）近 40 分钟峰值最高 <b>26.6℃</b>，距上限 27.0℃ 不足 1.0℃，建议开启 <b>AC1</b>（能覆盖这些通道的关机空调中得分最高的一台）；同时 <b>AC5</b> 已连续 <b>1162</b> 轮运行但未制冷（送风 26.8℃、回风 25.9℃），它负责的 I-J、K-L 冷通道均未接近温度上限（其中 c7 的读数与本机送风相差不超过 1.5℃，属本机吹出的未冷却空气），每条通道仍有至少 2 台在制冷的空调，建议关停。开机台数不变（<b>10</b> 台）。按当前生效的冷量衰减系数折算，方案开机安全冷量 <b>1 083kW</b>，不低于本机房冷量需求参考值 <b>926kW</b>；参考功率项与当前组合基本持平（仅用于方案比选）。'
+  },
+  // 场景二 · 冗余减机：全房无通道接近上限，AC5 空转最久 → 关 1 台
+  surplus_idle: {
+    sceneCode: 'RM_SWITCH', reason: 'surplus', surplusKind: 'idle', resultCode: 'IDLE_SURPLUS_OFF', branchHits: ['IDLE_SURPLUS_OFF'],
+    text: '<b>AC5</b> 已连续 <b>282</b> 轮运行但未制冷（送风 24.5℃、回风 21.8℃、估算冷量 0.0kW），风机仍在向冷通道送未冷却空气；它负责的 I-J、K-L 冷通道均未接近温度上限，每条通道仍有至少 2 台在制冷的空调。建议关停，开机 <b>9</b> 台。'
+  },
+  // 场景三 · 无本地候选：C-D 冷通道逼近上限，责任空调全开全做功，没有关机空调能覆盖它
+  no_local: {
+    sceneCode: 'RM_KEEP', reason: 'no_local_candidate', resultCode: 'NO_LOCAL_CANDIDATE', branchHits: ['NO_LOCAL_CANDIDATE'],
+    text: '<b>C-D 冷通道</b>（c13）近 40 分钟峰值最高 <b>26.0℃</b>，距上限 27.0℃ 不足 1.0℃；这些通道的责任空调（AC9、AC10）全部在运行且在制冷（送风 13.5～14.7℃），没有关机的责任空调可以开启；同一批空调负责的 A-B 冷通道只有 15.1～21.1℃。冷量到不了这些通道，本轮不新开机，请核对该区域的地板出风、封堵和责任空调配置。'
+  }
 };
+const ROOM_EXPLAIN = EXPLAIN_DEMOS.swap_local;
 
 // 设备级原因：一台设备一段完整建议文案（仅本轮 zi 建议目标相对真实状态变化的设备），
-// 平面图浮窗「调节原因」区块与手动下发弹窗展示同一段，无短语/缩略变体
+// 平面图浮窗「调节原因」区块与手动下发弹窗展示同一段，无短语/缩略变体（模板：可解释性方案 4.2 ON_LOCAL / OFF_RULE）
 const EXPLAIN_REASONS = {
-  'AC5':  '本机属于本轮满足全部约束且总目标值最低的组合中的建议关机设备，主要负责的 E-F 冷通道当前温度 23.4℃，距上限 3.6℃。安全确认：建议目标组合已通过总供冷、通道覆盖、开机台数和连续运行约束，E-F 冷通道仍有 2 台空调供冷。',
-  'AC11': '本机属于本轮满足全部约束且总目标值最低的组合中的建议关机设备，主要负责的 C-D 冷通道当前温度 23.7℃，距上限 3.3℃。安全确认：建议目标组合已通过总供冷、通道覆盖、开机台数和连续运行约束，C-D 冷通道仍有 2 台空调供冷。',
-  'AC1':  '本机属于本轮满足全部约束且总目标值最低的组合中的建议开机设备，主要负责的 G-H 冷通道当前温度 23.9℃，距上限 3.1℃。本轮按联合目标调整开机组合。',
-  'AC12': '本机属于本轮满足全部约束且总目标值最低的组合中的建议开机设备，主要负责的 E-F 冷通道当前温度 23.7℃，距上限 3.3℃。本轮按联合目标调整开机组合。'
+  'AC1': '本机是 G-H 冷通道的责任空调，该通道近 40 分钟峰值 26.6℃、距上限 0.4℃；这些通道的责任空调中没有可叫醒的空转机，能覆盖它们的关机空调里本机能效与位置得分最高，建议开启。',
+  'AC5': '本机已连续 1162 轮运行但未制冷（送风 26.8℃、回风 25.9℃、估算冷量 0.0kW），风机仍在向冷通道送未冷却空气；本机负责的 I-J、K-L 冷通道均未接近温度上限（其中 c7 的读数与本机送风相差不超过 1.5℃，属本机吹出的未冷却空气），每条通道仍有至少 2 台在制冷的空调。建议关停。'
+};
+// 开关机控制变量按对象类型在规则配置弹窗「设备状态寻优规则」行选择（架构 §5.3；交互同柔性弹窗的主控制变量）。
+// 演示缺省：冷冻水型 = 开关机设定（单点位 3_48_0），风冷 DX = 开机 / 关机指令（双点位 3_18_0 / 3_19_0）；弹窗里改选后手动下发弹窗随之变化
+const SWITCH_FORM_DEFAULT = { water:'single', air:'dual' };
+function switchFormOf(ac) {
+  const rowIdx = ac.deviceType === 'water' ? 0 : 1;
+  const sel = document.querySelectorAll('.qty-rule-table tbody tr')[rowIdx]?.querySelector('select');
+  return (sel && sel.value) || SWITCH_FORM_DEFAULT[ac.deviceType] || 'dual';
+}
+// 设备级角标（可解释性方案 7.5）：热通道责任空调本轮不进减机候选，只出角标不出文案
+const EXPLAIN_BADGES = {
+  'AC2': { code:'HOT_CHANNEL_RESP', label:'热通道责任', title:'本机是本轮接近上限通道 G-H 冷通道 的责任空调，不进减机候选' },
+  'AC5': { code:'IDLE_COMPRESSOR', label:'运行中未制冷', title:'温控器已满足、压缩机按温控停机（IDLE_BY_SETPOINT）' }
 };
 
 function renderExplainBar() {
@@ -3288,7 +3393,8 @@ function renderExplainBar() {
   const tag = document.getElementById('optExplainTag');
   const txt = document.getElementById('optExplainText');
   if (!bar || !txt) return;
-  const meta = EXPLAIN_SCENE_META[ROOM_EXPLAIN.sceneCode] || { tag:'', tone:'tone-warning' };
+  const key = [ROOM_EXPLAIN.sceneCode, ROOM_EXPLAIN.reason, ROOM_EXPLAIN.surplusKind].filter(Boolean).join('·');
+  const meta = EXPLAIN_SCENE_META[key] || EXPLAIN_SCENE_META[ROOM_EXPLAIN.sceneCode] || { tag:'', tone:'tone-warning' };
   bar.className = 'opt-explain-bar ' + meta.tone;
   if (tag) tag.textContent = meta.tag;
   // 时间以筛选条为准，结论条文案不再重复时间戳
@@ -3605,13 +3711,17 @@ function openDispatch(mode) {
     </tr></thead><tbody>`;
     onDevices.forEach(ac => {
       const reason = EXPLAIN_REASONS[ac.id];
+      // 开关机行按该对象类型在规则配置弹窗选定的「开关机控制变量」展示（架构 §5.3 / §8.1）：single → 一行「开关机设定」；dual → 「开机指令」行（关机点由 L4 同步写 0，不单列）
+      const switchRow = switchFormOf(ac) === 'single'
+        ? ['开关机设定 <span class="ds-reason">3_48_0 · 单点式</span>', '0（关）', '1（开）', '1']
+        : ['开机指令 <span class="ds-reason">3_18_0 · 双点式</span>', '0（停机）', '1（开机）', '1'];
       const initialRows = ac.deviceType === 'air'
         ? [
-            ['开机指令', '0（停机）', '1（开机）', '1'],
+            switchRow,
             ['回风温度设定', '—', '24.0℃', '24.0']
           ]
         : [
-            ['开机指令', '0（停机）', '1（开机）', '1'],
+            switchRow,
             ['送风温度设定', '—', '24.5℃', '24.5'],
             ['风机转速上限', '—', '80%', '80'],
             ['风机转速下限', '—', '30%', '30']
@@ -3639,12 +3749,13 @@ function openDispatch(mode) {
     </tr></thead><tbody>`;
     offDevices.forEach(ac => {
       const reason = EXPLAIN_REASONS[ac.id];
+      const single = switchFormOf(ac) === 'single';
       html += `<tr>
         <td class="dev-name">${ac.id}<br><span style="font-weight:400;color:var(--text-hint);font-size:11px;">${ac.typeLabel}精密空调</span></td>
-        <td class="param-name">关机指令</td>
-        <td class="val-actual">1（运行中）</td>
-        <td class="val-ai">0（关机）</td>
-        <td><input class="dispatch-val" type="text" value="0"></td>
+        <td class="param-name">${single ? '开关机设定 <span class="ds-reason">3_48_0 · 单点式</span>' : '关机指令 <span class="ds-reason">3_19_0 · 双点式，写 1 执行关机</span>'}</td>
+        <td class="val-actual">${single ? '1（开）' : '运行中'}</td>
+        <td class="val-ai">${single ? '0（关）' : '关机'}</td>
+        <td><input class="dispatch-val" type="text" value="${single ? '0' : '1'}"></td>
       </tr>`;
       if (reason) html += `<tr><td class="ds-reason-cell" colspan="5">原因：${reason}</td></tr>`;
     });
