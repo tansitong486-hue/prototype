@@ -553,6 +553,13 @@
           <p><b>本页说明：</b>多步表单第一步；顶部面包屑导航；底部「下一步」校验必填后跳转步骤2，「取消」回列表不落库。</p>
         </div>
       </div>
+      <div class="anno anno-version-header" data-version="v2.8" data-date="2026-09-08">
+        <span class="anno-tag">版本信息</span>
+        <span class="anno-version">v2.8</span>
+        <div class="anno-body">
+          <p><b>v2.8（2026-09-08）：</b>对应《末端寻优设备能力抽象架构设计方案-v2.8定稿版》§3.3、§3.4、§4.7、§4.9。①「气流组织信息」的冷 / 热通道温度上限即柔性的需求侧约束：柔性按每条通道近一个窗口的峰值离上限还剩几度决定省电还是增冷，热通道上限与冷通道上限取小；这里配的是机房级缺省，步骤 2 的传感器行可按传感器覆盖（可选）。②「送回风温差下限」即算法的未做功温差阈值 <code>ΔT_idle</code>：运行中送回风温差不超过此值连续两个快照判为压缩机未做功。③数据质量类判据（呼叫无冷升级轮数、数据过期倍数、大面积离线占比等）不进配置页，用全局缺省。</p>
+        </div>
+      </div>
 
       <div class="page-header">
         <div class="page-header-left">
@@ -657,6 +664,20 @@
               <p>冷/热通道温湿度与送回风温差等基础阈值；无封闭时「热通道温度上限」置灰不可用。阈值为机房级全局配置。</p>
             </div>
           </div>
+          <div class="anno anno-field" data-version="v2.8">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.8</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>气流组织信息 — 冷 / 热通道温度上限、送回风温差下限</p>
+              <p><b>冷通道温度上限 Tc,max：</b>必填。柔性寻优的核心约束：每条冷通道近一个窗口内的峰值距此上限不足「请求阈值」时增冷，全部富余时省电，最新值越过此上限时大步增冷；加减机也用它判真热点。机房级缺省，步骤 2 的传感器表可按传感器填写覆盖值（可选）。</p>
+              <p><b>热通道温度上限 Th,max：</b>封闭模式下必填。与配对冷通道的裕度取小后进入柔性，超上限同样触发增冷。须不低于冷通道上限；建议按机柜典型温升设置（如冷通道上限 + 10～12℃），设得过低会迫使空调为热通道过冷冷通道。无封闭时置灰。</p>
+              <p><b>送回风温差下限（未做功温差阈值 ΔT_idle）：</b>必填，缺省 2℃，范围 1～4。运行中空调送回风温差不超过此值、连续两个快照 → 判为「开着但压缩机没在制冷」，两引擎据此处置空转 / 掺混机组。原字段沿用，含义即算法的 <code>ΔT_idle</code>。</p>
+              <p><b>冷通道湿度上 / 下限：</b>监测告警用；露点由算法按温湿度自算，不读这两个值。</p>
+              <p><b>不在本页配置的判据：</b>呼叫无冷升级轮数、未做功确认快照数、数据过期倍数、大面积离线占比等数据质量判据用全局缺省，不出现在配置页（文档 §3.5）。</p>
+              <p><b>校验：</b>热通道上限 ≥ 冷通道上限；送回风温差下限 1～4℃；不满足时输入框标红。</p>
+            </div>
+          </div>
 
           <!-- 2. 气流组织信息 -->
           <section class="section-card">
@@ -695,9 +716,10 @@
                 <div class="field">
                   <label class="field-label"><span class="required">*</span>送回风温差下限：</label>
                   <div class="field-inline">
-                    <input type="text" class="field-control" placeholder="请输入">
+                    <input type="text" class="field-control" placeholder="请输入" value="2">
                     <span class="field-suffix">℃</span>
                   </div>
+                  <span class="field-hint">即未做功温差阈值 ΔT_idle：送回风温差不超过此值连续两个快照，判为压缩机未做功</span>
                 </div>
               </div>
             </div>
