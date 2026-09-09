@@ -726,6 +726,7 @@
     .form-control:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(24,144,255,.08); }
     .form-row { display:flex; gap:10px; align-items:center; }
     .form-suffix { font-size:13px; color:var(--text-secondary); white-space:nowrap; }
+    .form-hint { font-size:11px; color:var(--text-hint); margin-top:5px; line-height:1.45; }
     .panel-footer {
       padding:12px 18px; border-top:1px solid var(--border-light);
       display:flex; justify-content:flex-end; gap:10px; background:#FBFCFE;
@@ -983,7 +984,8 @@
         <span class="anno-version">v2.8</span>
         <div class="anno-body">
           <p><b>v2.8（2026-08-28）：</b>对应需求 6、需求 7。① 气流布局对象明细改为平面图右上角可关闭浮层，默认不弹出。② 顶部指标（冷/热通道温度、开机/投入总数、pPUE、IT 功率、制冷功率）均可从当前值下钻历史。与机房加减机寻优页同一套。详见《机房寻优记录查看体验优化需求文档》。</p>
-          <p><b>v2.8（2026-09-01）：</b>对应需求 8。规则表新增「风冷 DX · 辅助控制」，控制变量写死「风机转速上下限」；打开后变量表、浮层、手动下发按现网辅助控制展示下限 / 上限两行。算出的包络再夹该机安全边界「风机转速下限设定 / 上限设定」。风冷主控下拉不加「风机转速上限」。详见《风冷精密空调风机转速辅助控制需求文档》。</p>
+          <p><b>v2.8（2026-09-04）：</b>对应需求 8。口径以《末端寻优设备能力抽象架构设计方案-v2.8定稿版》§7.6为准（原独立需求文档已并入删除）。规则表新增「风冷 DX · 辅助控制」，控制变量写死「风机转速上限」（下限不纳入本版）；「寻优步长」与水阀行同义（本轮上限相对当前上限实际值的最大偏差 <code>ΔV_fan,max</code>），包络半宽 <code>δ_fan</code> 为内置参数、不进规则表。算出的上限再夹该机安全边界「风机转速上限设定」。风冷主控下拉不加「风机转速上限」。本页变量表 / 浮层 / 手动下发仍按 2026-09-01 上下限两行演示，待同步只留上限一行。</p>
+          <p><b>v2.8（2026-09-08）：</b>柔性引擎按《架构设计方案-v2.8定稿版》§七重写为「通道温度裕度驱动的修剪 / 响应」，本次只同步<strong>规则配置弹窗</strong>：①「安全约束参数 · K_safe」从本页移除（柔性不再消费冷量比；该参数归加减机，加减机页由其需求同步）；②新增「温度控制参数」区，四项均用用户语言命名：增冷触发距离（<code>ΔT_sens</code>）、省电安全距离（<code>ΔT_trim</code>）、温度观察时长（<code>W_env</code>，分钟）、压缩机唤醒温差（<code>ΔT_on</code>，有风冷 DX 才出）；掺混容差等算法判据不进配置页，用全局缺省；③「风冷 DX · 辅助控制」行去掉负荷包络口径，风机上限作为普通辅助通道按通道裕度修剪 / 响应，包络半宽 <code>δ_fan</code> 不再存在。<strong>结果展示区（寻优记录顶栏、浮窗原因、变量表）的批注仍按 v2.6 目标带口径书写，待下一轮按 §7.7 结果字段同步。</strong></p>
         </div>
       </div>
 
@@ -1016,7 +1018,7 @@
         <span class="anno-source">引用自需求文档</span>
         <div class="anno-body">
           <p><b>关联模块：</b>顶部三卡片（寻优策略 / 智控下发策略 / 安全策略）</p>
-          <p><b>寻优策略：</b>停用/启用切换寻优开关；规则配置打开居中弹窗，按对象类型配置主控制、适用的辅助控制及 K_safe。</p>
+          <p><b>寻优策略：</b>停用/启用切换寻优开关；规则配置打开居中弹窗，按对象类型配置主控制、适用的辅助控制，以及「温度控制参数」（v2.8 起本页不再有 K_safe）。</p>
           <p><b>智控下发：</b>手动下发、工单下发、切换策略均需密码校验；手动下发展示调节方向及 V1、V2 建议值，可改为空值不下发。</p>
           <p><b>安全策略：</b>一键回退、切换回退策略；温度超限时按算法触发紧急增冷回退（见边界批注）。</p>
         </div>
@@ -1539,16 +1541,16 @@
           <div class="anno-body">
             <p><b>关联模块：</b>规则配置居中弹窗 —「寻优规则配置」Tab</p>
             <p><b>业务要点：</b>模拟量规则按对象类型自动生成。水冷与风冷 DX 都配置主控制；只有注册水阀能力的水冷对象显示辅助控制，风冷 DX 不出现水阀规则。</p>
-            <p><b>布局与交互：</b><b>寻优周期 T_opt</b>、<b>安全边界</b>作为公共参数置顶；选定算法后按“设备类型 / 控制通道”成行配置控制变量、<b>寻优步长</b>和<b>寻优粒度</b>（命名对齐冷站柔性调优），再统一配置 K_safe。投入/投出仍由另一 Tab 按对象类型动态分组，本次不改变其逻辑。</p>
+            <p><b>布局与交互：</b><b>寻优周期 T_opt</b>、<b>安全边界</b>作为公共参数置顶；选定算法后按“设备类型 / 控制通道”成行配置控制变量、<b>寻优步长</b>和<b>寻优粒度</b>（命名对齐冷站柔性调优），再配置「温度控制参数」（v2.8 起替代原 K_safe 区，见下方 v2.8 字段说明）。投入/投出仍由另一 Tab 按对象类型动态分组，本次不改变其逻辑。</p>
             <p><b>寻优周期 T_opt：</b>定时触发寻优计算的时间间隔（单位：分钟）。</p>
             <p><b>安全边界：</b>单选，可选择当前末端系统的安全边界。</p>
             <p><b>寻优算法：</b>必选；选定后展示主控制、辅助控制及安全约束参数等区域，未选时该区域折叠隐藏。</p>
             <p><b>主控制变量类型：</b>按对象类型注册选择；水冷支持送风温度设定 / 回风温度设定 / 风机转速上限设定三选一，风冷支持送风 / 回风温度设定二选一，混合编队可按对象类型不同；省电方向由注册能力给出。</p>
             <p><b>寻优步长 ΔV1_max：</b>主控制每轮允许的最大调节量（原「单次最大幅度」）。</p>
             <p><b>寻优粒度 ΔV1_step：</b>主控制每次调节的最小精度（原「调节步长」）。</p>
-            <p><b>寻优步长 ΔV2_max：</b>水阀最大开度每轮允许的最大调节量（辅助控制）。风冷辅助行的步长语义见下方 v2.8 批注，不是本轮走多远。</p>
+            <p><b>寻优步长 ΔV2_max：</b>水阀最大开度每轮允许的最大调节量（辅助控制）。风冷辅助行「寻优步长」<code>ΔV_fan,max</code> 与本行同义：风机转速上限每轮的调节量。</p>
             <p><b>寻优粒度 ΔV2_step：</b>水阀最大开度每次调节精度（辅助控制）。</p>
-            <p><b>冷量安全系数 K_safe：</b>柔性省电门槛。仅当 `Q_feedback_safe = min(ΣQ_est,safe, ΣQ_constraint,running)` 满足 `Q_feedback_safe / QIT ≥ K_safe` 时允许省电方向动作。</p>
+            <p><b>冷量安全系数 K_safe：</b>v2.8 起从本页移除。柔性只看通道温度裕度，不再使用本参数；它归加减机的实测缺冷判据，加减机页的呈现由加减机需求另行明确。</p>
           </div>
         </div>
 
@@ -1560,10 +1562,11 @@
             <p><b>关联模块：</b>规则配置 —「风冷 DX · 辅助控制」行</p>
             <p><b>出现条件：</b>当前机房有风冷 DX 才出这一行。纯水冷不出。</p>
             <p><b>启用：</b>产品默认关；关掉 = 本轮不写风机，温度主控照常。本页演示为打开后的结果。</p>
-            <p><b>控制变量：</b>写死「风机转速上下限」，打开后下限、上限一起出，不能只开一侧。风冷主控下拉不加「风机转速上限」。</p>
-            <p><b>寻优步长：</b>包络半宽 δ_fan（5～15，缺省 10），不是水阀那一行「本轮走多远」。</p>
-            <p><b>寻优粒度：</b>写入精度，缺省 1%。</p>
-            <p><b>夹边：</b>算出的上下限再夹该机安全边界「风机转速下限设定 / 上限设定」。软边界未填则回落硬边界。</p>
+            <p><b>控制变量：</b>写死「风机转速上限」，不可选下限。风冷主控下拉不加「风机转速上限」；主变量已选「风机转速上限设定」的项目不启用本行。</p>
+            <p><b>寻优步长：</b><code>ΔV_fan,max</code>，风机转速上限每轮的调节量，缺省 10 个百分点；修剪、请求响应、超限都走这一个幅度。</p>
+            <p><b>寻优粒度：</b>写入精度 <code>ε_fan</code>，缺省 1%，只用于取整。</p>
+            <p><b>怎么动（v2.8 §7.9）：</b>风机上限是风冷 DX 的辅助通道，按通道温度裕度走：该机责任通道裕度富余且温度主控 V1 已到省电边界 → 压一个步长；裕度不足且 V1 已到增冷边界 → 抬一个步长；通道超限 → 与 V1 同轮各走一步；掺混且叫不醒 / 疑似故障 / 故障位报警 → 一轮压到安全边界软下限。没有机房级负荷包络，也没有「只降不升」硬规则。</p>
+            <p><b>夹边：</b>目标夹在该机安全边界「风机转速上限设定」软下限～软上限之间，软边界未填回落硬边界；启用本行时软下限必填。</p>
           </div>
         </div>
 
@@ -1609,8 +1612,8 @@
                 <tr>
                   <td><span class="device-type-name">风冷 DX · 辅助控制</span><span class="device-type-note">当前匹配 4 台设备</span></td>
                   <td><label class="toggle-switch"><input type="checkbox" id="airFanAuxSwitch" checked onchange="onAirFanAuxToggle(this)"><span class="toggle-slider"></span></label></td>
-                  <td><input class="form-control" value="风机转速上下限" data-fixed disabled></td>
-                  <td><div class="form-row"><input type="number" class="form-control" value="10" min="5" max="15"><span class="form-suffix">%</span></div></td>
+                  <td><input class="form-control" value="风机转速上限" data-fixed disabled></td>
+                  <td><div class="form-row"><input type="number" class="form-control" value="10"><span class="form-suffix">%</span></div></td>
                   <td><div class="form-row"><input type="number" class="form-control" value="1"><span class="form-suffix">%</span></div></td>
                 </tr>
               </tbody>
@@ -1685,11 +1688,60 @@
             </div>
           </div>
 
-          <div class="form-section">安全约束参数</div>
+          <div class="anno anno-field" data-version="v2.8">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.8</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>规则配置 —「温度控制参数」区（替代原「安全约束参数 · K_safe」）</p>
+              <p><b>这组参数管什么：</b>柔性每轮看每条冷 / 热通道最近一段时间里的最高温度离上限还剩几度：离得太近就让负责它的空调增冷，离得足够远就让空调调高设定省电，中间不动。这里配的就是「多近算太近、多远算足够远、看多长时间、多久调一次」。四个名字按用户视角起，括号里的符号只为对照文档《架构设计方案-v2.8定稿版》§4.7、§7.2、§7.5。</p>
+              <p><b>增冷触发距离（ΔT_sens）：</b>必填，缺省 1.0℃。通道温度离上限不到这么多度，负责它的空调就开始增冷。也是加减机判「真热点」的阈值，两页共用同一个值。</p>
+              <p><b>省电安全距离（ΔT_trim）：</b>必填，缺省 2.0℃。一台空调负责的所有通道温度离上限都超过这么多度，才允许它调高设定省电。必须大于增冷触发距离，两者之间空调不动；不满足时标红「省电安全距离须大于增冷触发距离」。</p>
+              <p><b>温度观察时长（W_env）：</b>必填，缺省 40 分钟，范围 10～120。判断通道温度时，看最近这段时间里的最高温度，不看某一瞬间的读数——压缩机启停会让通道温度每半小时左右上下起伏 1～3℃，只看瞬间读数会在谷底误判「够冷」。每次调整后也要等这么久再调下一步，让效果显现完。建议不小于空调压缩机一次启停的周期；下方灰字给出近 24 小时冷通道温度起伏周期作为参考，只读。引擎会按寻优周期换算成轮数，用户不用自己算。</p>
+              <p><b>压缩机唤醒温差（ΔT_on）：</b>缺省 1.0℃，范围 0.5～3；当前机房有风冷 DX 才显示。空调开着但压缩机没在制冷（空转）时，不问它的通道够不够冷，本轮就把回风设定压到「当前回风 − 这个值」让压缩机重新启动，不让任何一台机吹热风；按机型温控回差核对。</p>
+              <p><b>不进配置页的判据：</b>掺混容差、未做功确认快照数、呼叫无冷升级轮数、数据过期倍数、大面积离线占比等算法判据用全局缺省，见文档 §3.5。</p>
+              <p><b>提交后：</b>所有参数保存即生效于下一轮寻优，不影响已生成的建议。</p>
+            </div>
+          </div>
 
-          <div class="form-group">
-            <div class="form-label"><span class="required">*</span> 冷量安全系数 K_safe</div>
-            <input type="number" class="form-control" value="1.10" step="0.01">
+          <div class="form-section">温度控制参数</div>
+
+          <div class="form-row-2col">
+            <div class="form-group">
+              <div class="form-label"><span class="required">*</span> 增冷触发距离</div>
+              <div class="form-row">
+                <input type="number" class="form-control" value="1.0" step="0.1" style="width:140px;">
+                <span class="form-suffix">℃</span>
+              </div>
+              <div class="form-hint">通道温度离上限不到这么多度，负责它的空调开始增冷</div>
+            </div>
+            <div class="form-group">
+              <div class="form-label"><span class="required">*</span> 省电安全距离</div>
+              <div class="form-row">
+                <input type="number" class="form-control" value="2.0" step="0.1" style="width:140px;">
+                <span class="form-suffix">℃</span>
+              </div>
+              <div class="form-hint">空调负责的所有通道离上限都超过这么多度，才允许它调高设定省电；须大于增冷触发距离</div>
+            </div>
+          </div>
+
+          <div class="form-row-2col">
+            <div class="form-group">
+              <div class="form-label"><span class="required">*</span> 温度观察时长</div>
+              <div class="form-row">
+                <input type="number" class="form-control" value="40" step="5" style="width:140px;">
+                <span class="form-suffix">分钟</span>
+              </div>
+              <div class="form-hint">看最近这段时间里的最高通道温度，不看瞬间读数；每次调整后等这么久再调下一步。建议不小于压缩机一次启停周期，参考：近 24h 冷通道温度起伏周期约 <b>40 分钟</b></div>
+            </div>
+            <div class="form-group" id="fieldDeltaTOn">
+              <div class="form-label"><span class="required">*</span> 压缩机唤醒温差</div>
+              <div class="form-row">
+                <input type="number" class="form-control" value="1.0" step="0.1" style="width:140px;">
+                <span class="form-suffix">℃</span>
+              </div>
+              <div class="form-hint">仅风冷机房显示；空调开着但不制冷时，把回风设定压到当前回风以下这么多度让压缩机重启，按机型核对</div>
+            </div>
           </div>
 
         </div>
