@@ -185,6 +185,9 @@
     .strategy-item .strategy-info { flex:1; }
     .strategy-item .strategy-name { font-size:13px; font-weight:600; }
     .strategy-item .strategy-desc { font-size:11px; color:var(--text-hint); margin-top:2px; }
+    /* 开关机控制测点由智控下发策略配置页维护，寻优规则表不展示该列。 */
+    #algorithmConfigArea .qty-rule-table thead th:nth-child(3),
+    #algorithmConfigArea .qty-rule-table tbody td:nth-child(3) { display:none; }
     .btn {
       display:inline-flex; align-items:center; justify-content:center; gap:6px;
       padding:0 14px; height:32px; border-radius:var(--radius-pill);
@@ -748,6 +751,61 @@
       font-size:13px; font-weight:600; color:var(--text-primary);
       padding:10px 0 8px; margin-top:8px;
       border-bottom:1px solid var(--border-light); margin-bottom:14px;
+    }
+    .pref-section-header {
+      display:flex; align-items:center; gap:8px;
+    }
+    .smart-recommend-btn {
+      display:inline-flex; align-items:center; gap:5px;
+      padding:3px 10px; border-radius:5px; cursor:pointer;
+      font-size:11px; font-weight:600; border:1px solid #7C3AED;
+      color:#7C3AED; background:#F5F3FF; transition:all .2s;
+      margin-left:auto; white-space:nowrap; line-height:1.6;
+    }
+    .smart-recommend-btn:hover { background:#EDE9FE; border-color:#6D28D9; color:#6D28D9; }
+    .smart-recommend-btn:active { transform:scale(.96); }
+    .smart-recommend-btn svg { width:13px; height:13px; fill:currentColor; flex-shrink:0; }
+    .smart-recommend-btn.loading { pointer-events:none; opacity:.7; }
+    .smart-recommend-btn.loading svg { animation:sparkle .6s ease infinite; }
+    .pref-recommend-toast {
+      font-size:10.5px; color:#7C3AED; font-weight:500;
+      opacity:0; transition:opacity .3s; margin-left:8px; white-space:nowrap;
+    }
+    .pref-recommend-toast.show { opacity:1; }
+    @keyframes sparkle { 0%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.1)} 100%{opacity:1;transform:scale(1)} }
+    .pref-slider-group { margin-bottom:20px; }
+    .pref-slider-end-labels {
+      display:flex; justify-content:space-between; align-items:center;
+      font-size:11px; color:var(--text-secondary); margin-bottom:6px; font-weight:500;
+    }
+    .pref-slider-ticks {
+      display:flex; justify-content:space-between;
+      font-size:10px; color:var(--text-hint); margin:0 0 4px;
+      font-variant-numeric:tabular-nums;
+    }
+    .pref-slider-default-cap {
+      font-size:10px; color:var(--text-hint); text-align:center; margin:-2px 0 6px;
+    }
+    input.range-pref {
+      width:100%; height:6px; margin:0; cursor:pointer;
+      accent-color:var(--primary); box-shadow:0 2px 0 #B8C1CC;
+    }
+    .pref-slider-meta {
+      display:flex; justify-content:space-between; align-items:center;
+      font-size:11px; margin-top:6px; color:var(--text-secondary);
+    }
+    .pref-slider-meta .pref-val {
+      font-weight:700; color:var(--primary); font-variant-numeric:tabular-nums;
+    }
+    .recommend-value { color:#7C3AED; font-weight:600; }
+    .recommend-current { color:var(--text-primary); font-weight:600; }
+    .recommend-current .recommend-state { color:#7C3AED; font-weight:500; }
+    .readonly-recommend-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .readonly-recommend-row .form-hint { margin:0; }
+    .recommend-chip {
+      display:inline-flex; align-items:center; gap:4px; padding:3px 8px;
+      border-radius:5px; background:#F5F3FF; color:#7C3AED;
+      border:1px solid #DDD6FE; font-size:11px; font-weight:600;
     }
     .form-row-2col { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
     .form-group-sm { margin-bottom:12px; }
@@ -1650,7 +1708,7 @@
           <div class="anno-body">
             <p><b>关联模块：</b>加减机寻优规则配置弹窗</p>
             <p><b>需求目标：</b>承载加减机寻优运行所需的核心参数配置与投入范围配置，作为周期寻优、结果生成和执行下发的参数入口。</p>
-            <p><b>配置范围：</b>寻优周期、安全边界、寻优算法、寻优范围（只影响约束修复时的选组方式）、开关机控制变量、开机初始控制变量与初始值、冷量衰减系数初始值、开机后最短运行时间、关机后最短停机时间、未制冷多久允许关机、过冷多久允许减机，以及设备和传感器的投入/投出状态。机房冷量需求参考与冷量衰减系数推荐值 / 当前生效值为只读展示。</p>
+            <p><b>配置范围：</b>寻优周期、安全边界、寻优算法、寻优范围（只影响约束修复时的选组方式）、开机初始控制变量与初始值、冷量衰减系数、机房冷量需求系数、开机后最短运行时间、关机后最短停机时间、未制冷多久允许关机、过冷多久允许减机，以及设备和传感器的投入/投出状态。开关机控制测点在「智控下发策略」配置页维护。</p>
           </div>
         </div>
         <div class="anno anno-ux" data-version="v2.6">
@@ -1660,7 +1718,7 @@
           <div class="anno-body">
             <p><b>关联模块：</b>规则配置弹窗 —「寻优规则配置」Tab</p>
             <p><b>入口：</b>顶部寻优策略卡片「规则配置」。</p>
-            <p><b>交互：</b>沿用冷站柔性寻优的居中配置弹窗；取消直接关闭不保存，保存后关闭弹窗。上部「设备状态寻优规则」按对象类型成行：启用开关、开关机控制变量下拉（双点位 / 单点位，交互同柔性弹窗选主控制变量）、寻优范围单选；中部「模拟量初始值规则」按对象类型配置开机初始控制变量与初始值；下部「超参数配置」用用户语言命名，与柔性弹窗「温度控制参数」同一风格。</p>
+            <p><b>交互：</b>沿用冷站柔性寻优的居中配置弹窗；取消直接关闭不保存，保存后关闭弹窗。上部「设备状态寻优规则」按对象类型成行配置启用开关与寻优范围；中部「模拟量初始值规则」按对象类型配置开机初始控制变量与初始值；下部「超参数配置」用用户语言命名并使用横向滑块，与柔性弹窗「温度控制参数」同一风格。点击「智能推荐」只触发一次学习计算，完成后回填三个配置值；三个值均可继续手动调整。开关机控制测点不在本页配置。</p>
           </div>
         </div>
         <div class="anno anno-field" data-version="v2.6">
@@ -1673,10 +1731,10 @@
             <p><b>寻优周期 T_opt：</b>定时触发寻优计算的时间间隔（单位：分钟）；若上一轮未完成则本周期跳过。</p>
             <p><b>安全边界：</b>单选当前末端系统下的安全边界模式；约束口径含 Nmin、Nmax、Tc,max,c、Th,max,h 等。</p>
             <p><b>寻优算法：</b>必选；选定后展示对应「核心配置参数」表单，未选时该区域折叠隐藏。</p>
-            <p><b>设备状态寻优规则（上部）：</b>系统按对象类型自动生成，每行配置启用开关、<strong>开关机控制变量</strong>与寻优范围。启用开关：开启表示该类型设备参与本机房加减机开关机寻优，关闭则该类设备保持现状、本轮不生成开关机建议。<b>开关机控制变量（v2.8 · 2026-09-08 新增，必选）：</b>下拉二选一，交互与柔性弹窗按对象类型选主控制变量相同——「开机 / 关机指令（双点位）」= 通过「开机」<code>3_18_0</code>、「关机」<code>3_19_0</code> 两个点下发（现有机型缺省，开机写 <code>3_18_0</code>=1 / <code>3_19_0</code>=0，关机反之）；「开关机设定（单点位）」= 通过「开关机设定」<code>3_48_0</code> 一个点下发，写 1 开 / 写 0 关。选项按该类型设备物模型上实际存在的点位过滤，两种点位都没有的类型不可启用。算法只输出目标开关状态，点位翻译由下发链按此选择执行；到位确认统一读「运行状态」<code>2_167_0</code>。混合编队两类可不同（演示：冷冻水型单点位、风冷 DX 双点位）。寻优范围单选（v2.8 · 2026-09-08 起只在<strong>当前开机组合本身违反运行约束、需要修复</strong>时有区别）：全局式=从全部可行组合里取参考功率最低的；增量式=取与当前状态开关差异最少的。正常轮次的叫醒 / 加机 / 减机按通道责任范围逐台判断，两种模式相同，每轮最多开 1 台、关 1 台。选中项绿色高亮，交互对齐冷站全局寻优现网弹窗。</p>
+            <p><b>设备状态寻优规则（上部）：</b>系统按对象类型自动生成，每行配置启用开关与寻优范围。启用开关：开启表示该类型设备参与本机房加减机开关机寻优，关闭则该类设备保持现状、本轮不生成开关机建议。寻优范围单选（v2.8 · 2026-09-08 起只在<strong>当前开机组合本身违反运行约束、需要修复</strong>时有区别）：全局式=从全部可行组合里取参考功率最低的；增量式=取与当前状态开关差异最少的。正常轮次的叫醒 / 加机 / 减机按通道责任范围逐台判断，两种模式相同，每轮最多开 1 台、关 1 台。开关机控制测点由「智控下发策略」配置页按设备类型维护。</p>
             <p><b>模拟量初始值规则（下部）：</b>按对象类型配置开机初始控制变量与开机初始值（默认值）。冷冻水型可选既有设定点位；风冷 DX 可选送风或回风温度设定。被寻优开机的空调按该值写入初始设定，需保留两位小数。</p>
-            <p><b>冷量衰减系数：</b>空调实际能出的冷量占额定冷量的比例，按设备类型填初始值（冷冻水型缺省 0.60、风冷 DX 缺省 0.80）。系统运行后按实测学出推荐值并自动生效，表中并列展示初始值、推荐值、当前生效值；没有推荐值时用初始值。风冷高温影响由室外温度折减自动处理，不在此区分。（对应架构 §3.4 <code>α_config / α_suggested / α_eff</code>）</p>
-            <p><b>开机后最短运行时间：</b>缺省 20 分钟，空调开机后至少运行这么久才允许再建议关它（<code>T_run,min</code>）。<b>关机后最短停机时间：</b>缺省 60 分钟，被建议关掉的空调这么久内不再建议开，不小于开机后最短运行时间（<code>T_off,lock</code>）。<b>未制冷多久允许关机：</b>缺省 30 分钟，空调开着但一直没制冷、负责的通道也都不热，持续这么久后建议关掉；引擎按采集周期换算成轮数（<code>N_idle,off</code>）。<b>过冷多久允许减机：</b>缺省 30 分钟，空调已调到最省电、负责的通道仍都很冷，持续这么久后建议试关一台（<code>N_over</code>）。<b>机房冷量需求参考：</b>只读，系统按近一日实测自动学习，用于校核开机方案的冷量下限（<code>K_room</code>）。已删除：冷量冗余系数 β、均衡权重系数 γ。</p>
+            <p><b>冷量衰减系数：</b>空调实际能出的冷量占额定冷量的比例，按设备类型分别配置（冷冻水型缺省 0.60、风冷 DX 缺省 0.80）。可手动拖动滑块调整，也可点击「智能推荐」手动触发一次学习计算后回填结果。风冷高温影响由室外温度折减自动处理，不在此区分。</p>
+            <p><b>开机后最短运行时间：</b>缺省 20 分钟，空调开机后至少运行这么久才允许再建议关它（<code>T_run,min</code>）。<b>关机后最短停机时间：</b>缺省 60 分钟，被建议关掉的空调这么久内不再建议开，不小于开机后最短运行时间（<code>T_off,lock</code>）。<b>未制冷多久允许关机：</b>缺省 30 分钟，空调开着但一直没制冷、负责的通道也都不热，持续这么久后建议关掉；引擎按采集周期换算成轮数（<code>N_idle,off</code>）。<b>过冷多久允许减机：</b>缺省 30 分钟，空调已调到最省电、负责的通道仍都很冷，持续这么久后建议试关一台（<code>N_over</code>）。<b>机房冷量需求系数：</b>按 IT 功率倍数配置，用于校核开机方案的冷量下限（<code>K_room</code>），支持手动调整，也支持通过「智能推荐」一次性学习计算后回填。不设置每日定时计算任务。已删除：冷量冗余系数 β、均衡权重系数 γ。</p>
             <p><b>开机后最短运行时间（T_run,min）：</b>单台空调自本次开机起须连续运行的最短时间（单位：分钟），属寻优<strong>硬约束</strong>：未满该时长时，本轮寻优结果不得对该机下达关机（或等效减机）指令。用于抑制频繁启停、保护压缩机与末端气流稳定；与加减机策略、T_opt 周期触发及上一轮执行状态联动校验。</p>
           </div>
         </div>
@@ -1754,36 +1812,6 @@
             </table>
           </div>
 
-          <div class="form-section">超参数配置</div>
-          <div class="form-group">
-            <div class="form-label"><span class="required">*</span> 冷量衰减系数</div>
-            <table class="analog-rule-table" style="margin-top:4px;">
-              <thead>
-                <tr>
-                  <th style="width:170px;">设备类型</th>
-                  <th style="width:130px;">初始值<span class="required">*</span></th>
-                  <th style="width:120px;">推荐值</th>
-                  <th>当前生效值</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><span class="rule-device">冷冻水型精密空调</span></td>
-                  <td><input type="number" class="form-control rule-num" value="0.60" min="0.01" max="1" step="0.01"></td>
-                  <td style="color:var(--text-hint);">—</td>
-                  <td><b>0.60</b> <span style="color:var(--text-hint);">初始值</span></td>
-                </tr>
-                <tr>
-                  <td><span class="rule-device">风冷 DX 精密空调</span></td>
-                  <td><input type="number" class="form-control rule-num" value="0.80" min="0.01" max="1" step="0.01"></td>
-                  <td>0.95</td>
-                  <td><b>0.95</b> <span style="color:var(--text-hint);">推荐值</span></td>
-                </tr>
-              </tbody>
-            </table>
-            <div class="form-hint">空调实际能出的冷量占额定冷量的比例。系统运行后会按实测学出推荐值并自动生效；没有推荐值时用初始值</div>
-          </div>
-
           <div class="form-row-2col">
             <div class="form-group">
               <div class="form-label"><span class="required">*</span> 开机后最短运行时间</div>
@@ -1822,13 +1850,40 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <div class="form-label">机房冷量需求参考</div>
-            <div class="form-row">
-              <input type="text" class="form-control" value="1.14 × IT 功率" style="width:160px;" readonly>
-              <span class="form-hint" style="margin:0 0 0 10px;">系统按近一日实测自动学习，只读；用于校核开机方案的冷量下限，不需要配置</span>
-            </div>
+          <div class="form-section pref-section-header">
+            <span>超参数配置</span>
+            <button type="button" class="smart-recommend-btn" id="jjSmartRecommendBtn" onclick="smartRecommendRoom(this)">
+              <svg viewBox="0 0 24 24"><path d="M9 21c0 .5.4 1 1 1h4c.6 0 1-.5 1-1v-1H9v1zm3-19C8.1 2 5 5.1 5 9c0 2.4 1.2 4.5 3 5.7V17c0 .5.4 1 1 1h6c.6 0 1-.5 1-1v-2.3c1.8-1.3 3-3.4 3-5.7 0-3.9-3.1-7-7-7zm2.9 11.1l-.9.6V16h-4v-2.3l-.9-.6C7.8 12.2 7 10.6 7 9c0-2.8 2.2-5 5-5s5 2.2 5 5c0 1.6-.8 3.2-2.1 4.1z"/></svg>
+              智能推荐
+            </button>
+            <span class="pref-recommend-toast" id="jjSmartToast" aria-live="polite"></span>
           </div>
+          <div class="form-group pref-slider-group">
+            <div class="form-label"><span class="required">*</span> 冷量衰减系数 · 冷冻水型精密空调</div>
+            <div class="pref-slider-end-labels"><span>按额定冷量折减</span><span>接近额定冷量</span></div>
+            <div class="pref-slider-ticks"><span>0.00</span><span>0.50</span><span>0.80</span><span>1.00</span></div>
+            <div class="pref-slider-default-cap">（刻度默认参考点：0.60）</div>
+            <input type="range" class="range-pref" id="jjAlphaWaterInput" min="0" max="1" step="0.01" value="0.60" aria-label="冷冻水型精密空调冷量衰减系数">
+            <div class="pref-slider-meta"><span>当前值</span><span class="pref-val" id="jjAlphaWaterVal">0.60</span></div>
+          </div>
+          <div class="form-group pref-slider-group">
+            <div class="form-label"><span class="required">*</span> 冷量衰减系数 · 风冷 DX 精密空调</div>
+            <div class="pref-slider-end-labels"><span>按额定冷量折减</span><span>接近额定冷量</span></div>
+            <div class="pref-slider-ticks"><span>0.00</span><span>0.50</span><span>0.80</span><span>1.00</span></div>
+            <div class="pref-slider-default-cap">（刻度默认参考点：0.80）</div>
+            <input type="range" class="range-pref" id="jjAlphaAirInput" min="0" max="1" step="0.01" value="0.80" aria-label="风冷 DX 精密空调冷量衰减系数">
+            <div class="pref-slider-meta"><span>当前值</span><span class="pref-val" id="jjAlphaAirVal">0.80</span></div>
+          </div>
+          <div class="form-group pref-slider-group">
+            <div class="form-label"><span class="required">*</span> 机房冷量需求系数</div>
+            <div class="pref-slider-end-labels"><span>按较低需求估算</span><span>留足需求余量</span></div>
+            <div class="pref-slider-ticks"><span>1.00</span><span>1.10</span><span>1.20</span><span>1.40</span></div>
+            <div class="pref-slider-default-cap">（刻度默认参考点：1.14）</div>
+            <input type="range" class="range-pref" id="jjRoomDemandInput" min="1" max="1.4" step="0.01" value="1.14" aria-label="机房冷量需求系数">
+            <div class="pref-slider-meta"><span>当前值（× IT 功率）</span><span class="pref-val" id="jjRoomDemandVal">1.14</span></div>
+            <div class="form-hint">用于校核开机方案的冷量下限，可手动调整；智能推荐完成后会回填本次计算结果。</div>
+          </div>
+          <div class="form-hint">三个参数均可手动调整。点击“智能推荐”手动触发一次学习计算，完成后回填三项配置值。</div>
 
           <div class="anno anno-field" data-version="v1.0" style="margin-top:4px;">
             <span class="anno-tag">字段说明</span>
@@ -3439,6 +3494,55 @@ function togglePanel() {
   document.getElementById('rulePanel').classList.toggle('open');
   document.getElementById('panelOverlay').classList.toggle('open');
 }
+
+// 加减机超参数智能推荐：模拟基于近 30 天机房运行数据的联合推荐。
+window.smartRecommendRoom = function(btn) {
+  if (!btn) return;
+  btn.classList.add('loading');
+  const runningToast = document.getElementById('jjSmartToast');
+  if (runningToast) {
+    runningToast.textContent = '正在学习计算…';
+    runningToast.classList.add('show');
+  }
+  setTimeout(function() {
+    const recommended = { waterAlpha: '0.68', airAlpha: '0.95', roomDemand: '1.12' };
+    const waterInput = document.getElementById('jjAlphaWaterInput');
+    const airInput = document.getElementById('jjAlphaAirInput');
+    if (waterInput) waterInput.value = recommended.waterAlpha;
+    if (airInput) airInput.value = recommended.airAlpha;
+
+    const roomInput = document.getElementById('jjRoomDemandInput');
+    if (roomInput) roomInput.value = recommended.roomDemand;
+    syncRoomHyperparamValues();
+
+    btn.classList.remove('loading');
+    const toast = document.getElementById('jjSmartToast');
+    if (toast) {
+      toast.textContent = '本次学习完成，参数已回填，保存后生效';
+      toast.classList.add('show');
+      setTimeout(function() { toast.classList.remove('show'); }, 3000);
+    }
+  }, 650);
+};
+
+function syncRoomHyperparamValues() {
+  const pairs = [
+    ['jjAlphaWaterInput', 'jjAlphaWaterVal'],
+    ['jjAlphaAirInput', 'jjAlphaAirVal'],
+    ['jjRoomDemandInput', 'jjRoomDemandVal']
+  ];
+  pairs.forEach(function(pair) {
+    const input = document.getElementById(pair[0]);
+    const output = document.getElementById(pair[1]);
+    if (input && output) output.textContent = Number(input.value).toFixed(2);
+  });
+}
+
+['jjAlphaWaterInput', 'jjAlphaAirInput', 'jjRoomDemandInput'].forEach(function(id) {
+  const input = document.getElementById(id);
+  if (input) input.addEventListener('input', syncRoomHyperparamValues);
+});
+syncRoomHyperparamValues();
 
 document.querySelectorAll('.tabs-bar .tab-item').forEach(tab => {
   tab.addEventListener('click', function() {

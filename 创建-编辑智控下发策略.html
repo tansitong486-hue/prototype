@@ -528,6 +528,20 @@
       cursor: pointer;
       white-space: nowrap;
     }
+    .terminal-control-panel {
+      margin-top: 12px;
+      border: 1px solid var(--border);
+      box-shadow: none;
+      transition: opacity var(--transition), background var(--transition);
+    }
+    .terminal-control-panel.is-disabled {
+      background: #F8FAFC;
+    }
+    .terminal-control-panel.is-disabled .mapping-title,
+    .terminal-control-panel.is-disabled .mapping-options label,
+    .terminal-control-panel.is-disabled .form-hint {
+      color: var(--text-hint);
+    }
 
     .action-bar {
       position: fixed;
@@ -643,7 +657,7 @@
           <div class="anno-body">
             <p><b>当前版本：</b>v1.0</p>
             <p><b>更新日期：</b>2026-06-15</p>
-            <p><b>v1.0 基线：</b>基于真实系统补齐新增、编辑、查看智控下发策略表单，支持下发策略名称、下发模式、手动下发工单通知规则、群控下发策略映射与保存/返回操作。</p>
+            <p><b>v1.0 基线：</b>基于真实系统补齐新增、编辑、查看智控下发策略表单，支持下发策略名称、下发模式、手动下发工单通知规则、冷站群控下发策略映射与保存/返回操作。</p>
           </div>
         </div>
 
@@ -831,13 +845,13 @@
                 <span class="anno-version">v1.0</span>
                 <span class="anno-source">产品推断</span>
                 <div class="anno-body">
-                  <p><b>关联模块：</b>群控下发策略</p>
+                  <p><b>关联模块：</b>冷站群控下发策略</p>
                   <p>开启后将寻优对象映射到群控点位。适用于现场已接入 BA 群控系统的项目；未开启时按单设备点位下发。</p>
                 </div>
               </div>
               <div class="form-group">
                 <div class="switch-row">
-                  <span class="switch-label">群控下发策略</span>
+                  <span class="switch-label">冷站群控下发策略</span>
                   <span class="switch-desc">（适用于配备 BA 自控系统的场景：控制指令先下发至群控点位，再由群控系统统一下发至各设备点位）</span>
                   <label class="switch">
                     <input type="checkbox" id="groupSwitch">
@@ -914,6 +928,45 @@
                   </div>
                 </div>
               </div>
+
+              <div class="anno anno-data" data-version="v2.8">
+                <span class="anno-tag">数据逻辑</span>
+                <span class="anno-version">v2.8</span>
+                <span class="anno-source">需求补充</span>
+                <div class="anno-body">
+                  <p><b>关联模块：</b>末端机房下发策略</p>
+                  <p>开关关闭时使用两类设备的第一项双点位指令作为默认下发方式；打开后可按设备类型切换为单点位开关机设定。两类设备可分别配置。</p>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="switch-row">
+                  <span class="switch-label">末端机房下发策略</span>
+                  <span class="switch-desc">（用于末端加减机寻优；关闭时默认使用开机 / 关机指令双点位）</span>
+                  <label class="switch">
+                    <input type="checkbox" id="terminalSwitch">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <div class="group-control-panel terminal-control-panel is-disabled" id="terminalPanel">
+                  <div class="mapping-row">
+                    <div class="mapping-title">水冷型精密空调</div>
+                    <div class="mapping-options">
+                      <label><input type="radio" name="terminalWaterSwitch" value="dual" checked>开机 / 关机指令（双点位：3_18_0 / 3_19_0）</label>
+                      <label><input type="radio" name="terminalWaterSwitch" value="single" disabled>开关机设定（单点位：3_48_0，1 开 / 0 关）</label>
+                    </div>
+                  </div>
+                  <div class="mapping-row">
+                    <div class="mapping-title">风冷型精密空调</div>
+                    <div class="mapping-options">
+                      <label><input type="radio" name="terminalAirSwitch" value="dual" checked>开机 / 关机指令（双点位：3_18_0 / 3_19_0）</label>
+                      <label><input type="radio" name="terminalAirSwitch" value="single" disabled>开关机设定（单点位：3_48_0，1 开 / 0 关）</label>
+                    </div>
+                  </div>
+                  <div class="form-hint">打开配置开关后，可分别选择两类精密空调的控制测点。</div>
+                </div>
+              </div>
+
             </div>
           </section>
         </div>
@@ -1006,6 +1059,25 @@
         document.getElementById('groupPanel').classList.toggle('hidden', !document.getElementById('groupSwitch').checked);
       }
 
+      function updateTerminalPanel() {
+        var toggle = document.getElementById('terminalSwitch');
+        var panel = document.getElementById('terminalPanel');
+        if (!toggle || !panel) return;
+        var enabled = toggle.checked;
+        panel.classList.toggle('hidden', !enabled);
+        panel.classList.toggle('is-disabled', !enabled);
+        if (!enabled) {
+          var waterDefault = document.querySelector('input[name="terminalWaterSwitch"]');
+          var airDefault = document.querySelector('input[name="terminalAirSwitch"]');
+          if (waterDefault) waterDefault.checked = true;
+          if (airDefault) airDefault.checked = true;
+        }
+        panel.querySelectorAll('input[type="radio"]').forEach(function (input) {
+          input.disabled = !enabled;
+        });
+      }
+
+
       function addTimeChip() {
         var list = document.getElementById('timeList');
         var start = document.getElementById('startTime').value.trim() || '09:00';
@@ -1072,6 +1144,7 @@
       document.getElementById('highConfidenceMode').addEventListener('change', updateMixSummary);
       document.getElementById('lowConfidenceMode').addEventListener('change', updateMixSummary);
       document.getElementById('groupSwitch').addEventListener('change', updateGroupPanel);
+      document.getElementById('terminalSwitch').addEventListener('change', updateTerminalPanel);
       document.getElementById('addTimeBtn').addEventListener('click', addTimeChip);
       document.getElementById('addConditionBtn').addEventListener('click', createConditionRow);
       document.getElementById('cancelBtn').addEventListener('click', goList);
@@ -1088,6 +1161,7 @@
       updateDateRange();
       updateNoticeMode();
       updateGroupPanel();
+      updateTerminalPanel();
     })();
   </script>
   <button type="button" class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>

@@ -525,7 +525,7 @@ tbody tr:nth-child(even) td { background: #fbfcfc; }
   <div class="main">
     <header class="topbar">
       <button class="icon-btn" id="menu-toggle" type="button" aria-label="打开目录" title="目录">≡</button>
-      <a class="utility-btn prototype-nav-link" href="../index.html" aria-label="返回原型导航">← 原型导航</a>
+      <a class="utility-btn prototype-nav-link" href="../../05-原型/AI原型html/index.html" aria-label="返回原型导航">← 原型导航</a>
       <div class="search">
         <input id="doc-search" type="search" placeholder="搜索章节、规则或符号" autocomplete="off" aria-label="搜索文档">
         <div class="search-results" id="search-results" role="listbox" hidden></div>
@@ -542,7 +542,7 @@ class="level1">
 <p>版本：v2.5<br />
 状态：规划中（核心架构口径已闭环，落地细节见 §9.2）<br />
 定位：定义六个交付包：需求 1–5 构成能源计量核算与指标生产链，需求 6 提供面向选择器的指标选取服务；说明累计读数如何形成可核算、可追踪、可重算的表具事实与对象指标，以及这些指标如何以稳定契约被下游取用。<br />
-范围：累计量 / 瞬时量标准测点定义、物模型支持关系及实际测点映射、表具核算明细、数据质量校验
+范围：固定两类标准测点定义、物模型 + 组件支持关系及实际测点映射、表具核算明细、数据质量校验
 与人工修正、计量拓扑、计费属性、对象指标工厂、「表具能耗明细」管理页面和面向选择器的指标选取服务。<br />
 关联文档：消费侧需求 7–13 见<a
 href="./存量页面消费与总览看板改造需求方案.html">《存量页面消费与总览看板改造需求方案》</a>。
@@ -733,8 +733,8 @@ href="./存量页面消费与总览看板改造需求方案.html">《存量页�
 </tr>
 <tr>
 <td>能源配置域</td>
-<td>定义能源类型下的累积量 / 瞬时量标准测点角色，并为物模型多选「能源计量 / 供电」支持关系；选择能源计量时再将实际测点映射到对应标准角色，子物模型继承父模型配置后同样适用</td>
-<td>能源类型、标准测点定义、物模型支持关系、物模型实际测点映射</td>
+<td>定义能源类型下固定的唯一累积量 / 唯一主瞬时量标准测点，并为“物模型 + 组件”多选「能源计量 / 供电」支持关系；选择能源计量时再将实际测点映射到对应标准角色，子物模型继承父模型配置后同样适用</td>
+<td>能源类型、标准测点定义、物模型组件支持关系、物模型组件实际测点映射</td>
 </tr>
 <tr>
 <td>计量拓扑域</td>
@@ -767,9 +767,9 @@ href="./存量页面消费与总览看板改造需求方案.html">《存量页�
     A3[&quot;物模型实例对象&lt;br/&gt;（已有实体）&quot;]
     A4[&quot;测点历史数据&lt;br/&gt;（已有实体）&quot;]
     A5[&quot;能源类型&quot;]
-    A6[&quot;标准测点定义&lt;br/&gt;分类：累积量 / 瞬时量&lt;br/&gt;角色：唯一累积量 / 主瞬时量 / 过程瞬时量&quot;]
-    A8[&quot;物模型支持关系&lt;br/&gt;能源计量 / 供电（多选）&quot;]
-    A7[&quot;物模型实际测点映射&lt;br/&gt;物模型 + 标准测点 → 实际测点&quot;]
+    A6[&quot;标准测点定义&lt;br/&gt;固定两行：唯一累积量 / 主瞬时量&lt;br/&gt;仅可改名称与单位&quot;]
+    A8[&quot;物模型 + 组件支持关系&lt;br/&gt;能源计量 / 供电（多选）&quot;]
+    A7[&quot;物模型 + 组件实际测点映射&lt;br/&gt;先选物模型，再选组件&quot;]
 
     A1 --&gt;|&quot;1:N 拥有测点&quot;| A2
     A1 --&gt;|&quot;父子继承：子模型继承父测点&quot;| A1
@@ -894,19 +894,18 @@ class="level2">
 <blockquote>
 <p>开发范围：</p>
 <ul>
-<li>在能源类型配置中维护<strong>标准测点定义</strong>，并为每个物模型配置可多选的<strong>支持关系</strong>与<strong>实际测点映射</strong>。支持关系取值为「能源计量」「供电」；标准测点按累积量 / 瞬时量分类，选择能源计量时将实际测点绑定到统一计量角色。</li>
-<li>配置链路为“能源类型 → 累计量单位 + 实时值单位 → 标准测点定义 →
-物模型支持关系（能源计量 / 供电）→ 选择能源计量时映射实际测点 → 物模型实例对象历史 / 当前读数”。配置时先声明物模型的业务能力，再按能源计量能力映射标准角色。</li>
-<li><strong>范围边界</strong>：基于平台的能源类型、物模型、物模型测点、实例对象和测点历史数据完成配置；主数据与测点体系保持不变，不设置独立的表具 / 计量对象主数据；电类型只预置累计电量与实时功率，不预置电压、电流或其它过程瞬时量；过程瞬时量不进表具核算明细、不参与差值、数据质量校验或计费。支持关系可在已配置拓扑后继续修改，需求 1 不因此拦截或提示；已生成的能耗计量关系与 <code>supplyPower</code> 不受影响，仅需求 3 后续新增与修改按最新支持关系校验。</li>
+<li>在能源类型配置中维护<strong>固定两类标准测点</strong>，并为每个“物模型 + 组件”配置可多选的<strong>支持关系</strong>与<strong>实际测点映射</strong>。支持关系取值为「能源计量」「供电」；标准测点固定为唯一累积量和唯一主瞬时量，只允许修改标准名称和单位。</li>
+<li>配置链路为“能源类型 → 两类标准测点定义 → 先选物模型 → 再选该模型组件 → 物模型 + 组件支持关系（能源计量 / 供电）→ 选择能源计量时映射实际测点 → 物模型实例对象历史 / 当前读数”。同一“物模型 + 组件”组合只能配置一次。</li>
+<li><strong>范围边界</strong>：基于平台的能源类型、物模型、物模型组件、物模型测点、实例对象和测点历史数据完成配置；主数据与测点体系保持不变，不设置独立的表具 / 计量对象主数据；电类型只预置累计电量与实时功率，不预置电压、电流或其它非计量标准测点。支持关系可在已配置拓扑后继续修改，需求 1 不因此拦截或提示；已生成的能耗计量关系与 <code>supplyPower</code> 不受影响，仅需求 3 后续新增与修改按最新支持关系校验。</li>
 </ul>
 </blockquote>
 <section id="需求-1-原型" class="level3 proto-anchor">
 <h3>原型（对照批注评审）</h3>
 <div class="proto-gallery">
 <div class="proto-embed" id="proto-energy-config"><div class="proto-embed-head"><strong>能源配置</strong><span class="proto-tag">需求 1</span><span>关注能源类型、标准测点定义及物模型支持关系</span></div>
-<iframe class="proto-frame" title="能源配置（需求 1）" src="../能源配置.html" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe></div>
+<iframe class="proto-frame" title="能源配置（需求 1）" src="../../05-原型/AI原型html/能源配置.html" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe></div>
 <div class="proto-embed" id="proto-energy-editor"><div class="proto-embed-head"><strong>新增 / 编辑能源</strong><span class="proto-tag">需求 1</span><span>关注标准角色、单位、实际测点映射与继承配置</span></div>
-<iframe class="proto-frame" title="新增编辑能源（需求 1）" src="../新增-编辑能源.html" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe></div>
+<iframe class="proto-frame" title="新增编辑能源（需求 1）" src="../../05-原型/AI原型html/新增-编辑能源.html" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe></div>
 </div>
 <p>页面结构、控件、字段、交互、状态和异常规则以原型批注为准；本章仅保留跨页面规则、计算 / 数据契约、后端机制与原型无法完整表达的边界。评审时请点击原型右下角“批注”。</p>
 </section>
@@ -916,12 +915,11 @@ class="level2">
 判断，表示该能源类型单块表具在一个半小时槽内允许的最大增量。电、水、冷量及后续新增能源类型初始化为
 <strong>1500</strong>，允许修改；字段必填且必须大于 0，单位自动跟随累计量单位，展示为
 <code>累计量单位/半小时</code>（如 <code>kWh/半小时</code>、<code>m³/半小时</code>）。</li>
-<li><strong>标准测点定义（关键）</strong>：标准测点是能源类型内部的计量业务角色，字段至少包含分类、标准名称、角色与单位；不复制、不改写平台已有物模型测点。每个能源类型必须且只能有<strong>一个累积量标准测点</strong>；瞬时量标准测点支持一个或多个，其中必须且只能有<strong>一个主瞬时量</strong>，其余均为<strong>过程瞬时量</strong>。同一能源类型内标准名称不可重复。</li>
-<li><strong>三类角色职责（关键）</strong>：唯一累积量用于识别表具、尾值差、数据质量校验、计费和历史统计，数据质量校验
-增量上限读取所属能源类型配置；主瞬时量表达该能源的当前瞬时值，供需求 5 的 C1 实时能耗值按拓扑归集；过程瞬时量不进入 C1，也不自动生成对象级指标。</li>
-<li><strong>单位职责（关键）</strong>：累计量单位对应唯一累积量；实时值单位只对应主瞬时量。二者均必填、分别从物理单位库单选。每个过程瞬时量单独配置自身单位，不复用能源类型的实时值单位。</li>
+<li><strong>标准测点定义（关键）</strong>：标准测点是能源类型内部的计量业务角色，固定包含一个累积量标准测点和一个主瞬时量标准测点；不提供新增或删除。两行均只允许修改标准名称和单位，且名称不可重复。</li>
+<li><strong>两类角色职责（关键）</strong>：唯一累积量用于识别表具、尾值差、数据质量校验、计费和历史统计，数据质量校验增量上限读取所属能源类型配置；主瞬时量表达该能源的当前瞬时值，供需求 5 的 C1 实时能耗值按拓扑归集。</li>
+<li><strong>单位职责（关键）</strong>：累计量单位对应唯一累积量，实时值单位对应唯一主瞬时量，二者均必填并分别从物理单位库单选。</li>
 </ul>
-<p><strong>物模型支持关系（多选）：</strong></p>
+<p><strong>物模型 + 组件支持关系（多选）：</strong></p>
 <table>
 <thead>
 <tr>
@@ -935,7 +933,7 @@ class="level2">
 <tr>
 <td>能源计量</td>
 <td>该物模型实例可作为表具参与能耗核算与计量拓扑</td>
-<td>必须映射唯一累积量与主瞬时量；过程瞬时量可选</td>
+<td>必须映射唯一累积量与主瞬时量</td>
 <td>只声明可参与计量，不自动建立能耗计量关系</td>
 </tr>
 <tr>
@@ -1037,7 +1035,7 @@ class="level2">
 </tbody>
 </table>
 <p>直流电量仪的「输入电能」当前模型元数据未声明单位与电能语义；标准包发布前须补齐为 <code>kWh</code> 与有功电能语义，使其通过本节单位量纲兼容校验。未补齐前不得静默绕过校验。</p></li>
-<li><strong>物模型实际测点映射（关键）</strong>：映射关系 =（能源类型 + 物模型 + 标准测点定义 + 实际物模型测点）。只有当支持关系包含「能源计量」时，唯一累积量和主瞬时量才为必填，过程瞬时量可不映射；只选「供电」时不显示或不要求计量测点映射。实际测点必须属于所选物模型或由其父模型继承，且单位量纲与标准测点兼容；同一实际测点不得在同一物模型内重复映射到多个标准角色。</li>
+<li><strong>物模型组件与实际测点映射（关键）</strong>：配置时必须先选择物模型，再从该模型的组件列表选择具体组件；映射关系 =（能源类型 + 物模型 + 组件 + 标准测点定义 + 实际物模型测点），同一“物模型 + 组件”组合不可重复。只有当支持关系包含「能源计量」时，唯一累积量和主瞬时量才为必填；只选「供电」时不显示或不要求计量测点映射。实际测点必须属于所选物模型 / 组件或由其父模型继承，且单位量纲与标准测点兼容；同一实际测点不得在同一“物模型 + 组件”内重复映射到多个标准角色。</li>
 <li><strong>物模型继承生效范围</strong>：能源类型上按某物模型统一定义的累积量
 /
 瞬时量实际测点映射，对该物模型实例及其<strong>继承了对应实际测点的下级子物模型</strong>实例均生效——无需在每个子模型上重复配置。匹配规则：实例所属物模型
@@ -1050,17 +1048,14 @@ class="level2">
 <li><strong>累计读数</strong>：物模型实例对象 × 唯一累积量映射的实际测点 ×
 时间的历史数据；成为表具明细生成的原始输入。</li>
 <li><strong>主瞬时读数</strong>：同一实例对象上主瞬时量映射的实际测点当前值；不进核算归档，供指标工厂 C1 实时能耗值按拓扑取数。</li>
-<li><strong>过程瞬时读数</strong>：同一实例对象上过程瞬时量映射的实际测点当前值；仅按表具读取，不自动生成对象级指标。</li>
 </ul></li>
 <li><strong>表具口径</strong>：一块「表具」=
-该能源类型下支持关系包含「能源计量」且命中唯一累积量标准测点映射的<strong>物模型实例对象</strong>，范围<strong>必须包含</strong>配置物模型自身实例及其<strong>下级子物模型实例</strong>（继承匹配，见上条）；表具是物模型实例在能源计量中的业务角色，不设置独立表具主数据。表具在该能源类型下对应<strong>唯一</strong>累积量实际测点，主瞬时量随同一物模型映射确定，过程瞬时量是否映射不影响表具身份。因此后续以
+该能源类型下支持关系包含「能源计量」且命中唯一累积量标准测点映射的<strong>物模型 + 组件实例对象</strong>，范围<strong>必须包含</strong>配置物模型 / 组件自身实例及其<strong>下级子物模型实例</strong>（继承匹配，见上条）；表具是物模型实例在能源计量中的业务角色，不设置独立表具主数据。表具在该能源类型下对应<strong>唯一</strong>累积量实际测点，主瞬时量随同一物模型 + 组件映射确定。因此后续以
 <code>表具 + 能源类型 + 时间槽</code>
 为幂等键即可唯一定位一条核算明细，<strong>无需再带测点维度</strong>（§3.4）；计费方案应用约束见
 §5.2。</li>
-<li><strong>链路含义</strong>：系统对该能源类型下<strong>所有命中唯一累积量标准测点映射的物模型实例对象（含下级子物模型实例）</strong>，自动建立「表具半小时核算明细」；主瞬时量随同一套表具 /
-拓扑归属，供指标工厂实时值指标复用；过程瞬时量仍挂在表具实例上，仅供按表具读取，不自动注册为对象指标。</li>
-<li><strong>多能源同构</strong>：水 / 气 /
-冷量与电共用同一套「两类标准测点 + 物模型映射」引擎；差异只在标准名称、单位、计费方案、是否分时和是否存在过程瞬时量；其中电默认不预置过程瞬时量。新增能源类型同样必须定义一个唯一累积量、至少一个瞬时量并指定唯一主瞬时量。</li>
+<li><strong>链路含义</strong>：系统对该能源类型下<strong>所有命中唯一累积量标准测点映射的物模型 + 组件实例对象（含下级子物模型实例）</strong>，自动建立「表具半小时核算明细」；主瞬时量随同一套表具 / 拓扑归属，供指标工厂实时值指标复用。</li>
+<li><strong>多能源同构</strong>：水 / 气 / 冷量与电共用同一套「两类标准测点 + 物模型 + 组件映射」引擎；差异只在标准名称、单位、计费方案和是否分时。新增能源类型同样固定定义一个唯一累积量和一个唯一主瞬时量。</li>
 </ul>
 <hr />
 </section>
@@ -1080,7 +1075,7 @@ class="level2">
 <h3>原型（对照批注评审）</h3>
 <div class="proto-gallery">
 <div class="proto-embed" id="proto-meter-detail"><div class="proto-embed-head"><strong>表具能耗明细</strong><span class="proto-tag">需求 2</span><span>关注四粒度事实、质量标记、人工修正与范围重算</span></div>
-<iframe class="proto-frame" title="表具能耗明细（需求 2）" src="../能耗管理-表具明细.html" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe></div>
+<iframe class="proto-frame" title="表具能耗明细（需求 2）" src="../../05-原型/AI原型html/能耗管理-表具明细.html" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe></div>
 </div>
 <p>页面结构、控件、字段、交互、状态和异常规则以原型批注为准；本章仅保留跨页面规则、计算 / 数据契约、后端机制与原型无法完整表达的边界。评审时请点击原型右下角“批注”。</p>
 </section>
@@ -1310,9 +1305,9 @@ class="level2">
 <h3>原型（对照批注评审）</h3>
 <div class="proto-gallery">
 <div class="proto-embed" id="proto-energy-metering-relation"><div class="proto-embed-head"><strong>能源计量关系</strong><span class="proto-tag">需求 3</span><span>跨对象入口：关注计量 / 供电关系、批量配置、校验与试算</span></div>
-<iframe class="proto-frame" title="能源计量关系（需求 3）" src="../能源计量关系.html" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe></div>
+<iframe class="proto-frame" title="能源计量关系（需求 3）" src="../../05-原型/AI原型html/能源计量关系.html" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe></div>
 <div class="proto-embed" id="proto-efficiency-config-req3"><div class="proto-embed-head"><strong>能效视图</strong><span class="proto-tag">需求 3</span><span>单对象入口：关注实例详情中的“能效配置” Tab</span></div>
-<iframe class="proto-frame" title="能效视图能效配置入口（需求 3）" src="../能效视图.html" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe></div>
+<iframe class="proto-frame" title="能效视图能效配置入口（需求 3）" src="../../05-原型/AI原型html/能效视图.html" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe></div>
 </div>
 <p>页面结构、控件、字段、交互、状态和异常规则以原型批注为准；本章仅保留跨页面规则、计算 / 数据契约、后端机制与原型无法完整表达的边界。评审时请点击原型右下角“批注”。</p>
 </section>
@@ -1515,9 +1510,9 @@ class="level2">
 <h3>原型（对照批注评审）</h3>
 <div class="proto-gallery">
 <div class="proto-embed" id="proto-billing-plan"><div class="proto-embed-head"><strong>计费方案配置</strong><span class="proto-tag">需求 4</span><span>关注方案列表、应用范围及版本状态</span></div>
-<iframe class="proto-frame" title="计费方案配置（需求 4）" src="../计费方案配置.html" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe></div>
+<iframe class="proto-frame" title="计费方案配置（需求 4）" src="../../05-原型/AI原型html/计费方案配置.html" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe></div>
 <div class="proto-embed" id="proto-billing-editor"><div class="proto-embed-head"><strong>新增 / 编辑能源计费方案</strong><span class="proto-tag">需求 4</span><span>关注计价类型、时段价格及方案生效配置</span></div>
-<iframe class="proto-frame" title="新增编辑能源计费方案（需求 4）" src="../新增-编辑能源计费方案.html" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe></div>
+<iframe class="proto-frame" title="新增编辑能源计费方案（需求 4）" src="../../05-原型/AI原型html/新增-编辑能源计费方案.html" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe></div>
 </div>
 <p>页面结构、控件、字段、交互、状态和异常规则以原型批注为准；本章仅保留跨页面规则、计算 / 数据契约、后端机制与原型无法完整表达的边界。评审时请点击原型右下角“批注”。</p>
 </section>
@@ -1526,7 +1521,7 @@ class="level2">
 <ul>
 <li>复用《计费方案配置》的统一单价、峰平谷和尖峰平谷方案；分时时段以 30 分钟为刻度并覆盖全天。</li>
 <li>同一表具在同一能源类型、同一时点最多应用一个方案；一个方案可应用到多块表具。</li>
-<li>价格单位跟随累计量单位；实时值单位、主瞬时量和过程瞬时量均不参与计价。</li>
+<li>价格单位跟随累计量单位；实时值单位和主瞬时量不参与计价。</li>
 </ul>
 </section>
 <section id="52-成本归属表具核算明细" class="level3">
@@ -1560,9 +1555,9 @@ class="level2">
 <h3>原型（对照批注评审）</h3>
 <div class="proto-gallery">
 <div class="proto-embed" id="proto-model-metrics"><div class="proto-embed-head"><strong>物模型详情</strong><span class="proto-tag">需求 5</span><span>模型层：关注内置指标 Tab、注册范围与定义来源</span></div>
-<iframe class="proto-frame" title="物模型详情内置指标页签（需求 5）" src="../物模型-模型详情.html" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe></div>
+<iframe class="proto-frame" title="物模型详情内置指标页签（需求 5）" src="../../05-原型/AI原型html/物模型-模型详情.html" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe></div>
 <div class="proto-embed" id="proto-efficiency-metrics-req5"><div class="proto-embed-head"><strong>能效视图</strong><span class="proto-tag">需求 5</span><span>实例层：关注指标列表、可算状态、本体 / 组件归属与下钻</span></div>
-<iframe class="proto-frame" title="能效视图指标列表（需求 5）" src="../能效视图.html" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe></div>
+<iframe class="proto-frame" title="能效视图指标列表（需求 5）" src="../../05-原型/AI原型html/能效视图.html" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe></div>
 </div>
 <p>页面结构、控件、字段、交互、状态和异常规则以原型批注为准；本章仅保留跨页面规则、计算 / 数据契约、后端机制与原型无法完整表达的边界。评审时请点击原型右下角“批注”。</p>
 </section>
@@ -1592,7 +1587,7 @@ class="level2">
 <tr><td>新增能源的实时值</td><td>随能源配置</td><td>直接读取自身主瞬时量测点当前值</td><td>沿该能源计量拓扑执行输入合计 − 输出合计</td><td>该能源已定义主瞬时量并完成实际测点映射</td></tr>
 </tbody>
 </table>
-<p>过程瞬时量不属于 C1 输入，也不自动生成对象指标。负值照算，并返回疑似方向或表计异常标记。</p>
+<p>主瞬时量不属于表具累计核算输入，也不自动生成对象指标。负值照算，并返回疑似方向或表计异常标记。</p>
 </section>
 <section id="622-实例层" class="level4">
 <h4>6.2.2 用量与成本内置指标（A1–A3 · P0）</h4>
@@ -1954,19 +1949,19 @@ class="level2">
 <td>3</td>
 <td>多能源默认配置</td>
 <td>查看预置电 / 水 / 冷量，并新增天然气能源类型</td>
-<td>电只预置累计电量 <code>kWh</code>、实时功率 <code>kW</code>，不预置电流或其它过程瞬时量；水预置累计用水量 <code>m³</code>、实时流量 <code>m³/h</code>；冷量预置累计冷量 <code>kWh</code>、实时冷量 <code>kW</code>。三类能源的半小时增量上限均为 1500 且可修改；新建能源类型同样默认 1500，并必须定义一个唯一累积量、至少一个瞬时量及唯一主瞬时量</td>
+<td>电只预置累计电量 <code>kWh</code>、实时功率 <code>kW</code>；水预置累计用水量 <code>m³</code>、实时流量 <code>m³/h</code>；冷量预置累计冷量 <code>kWh</code>、实时冷量 <code>kW</code>。三类能源的半小时增量上限均为 1500 且可修改；新建能源类型同样默认 1500，并固定包含一个唯一累积量和一个唯一主瞬时量</td>
 </tr>
 <tr>
 <td>3a</td>
 <td>标准角色数量与保存校验</td>
-<td>在同一能源类型中尝试缺少累积量、配置两个累积量、缺少主瞬时量、设置两个主瞬时量或创建重名标准测点</td>
-<td>均拦截保存并明确指出冲突；合法配置必须满足“累积量恰好一个、瞬时量至少一个且主瞬时量恰好一个、标准名称不重复”</td>
+<td>尝试通过新增 / 删除标准测点，或将两行标准测点改为重名、空名、缺少单位</td>
+<td>页面不提供新增 / 删除入口；保存时固定校验两行均有名称和单位且名称不重复，并明确指出冲突</td>
 </tr>
 <tr>
 <td>3b</td>
-<td>物模型实际测点映射完整性</td>
-<td>为一个物模型选择「能源计量」，映射累计电量与实时功率；再分别尝试缺少累计电量或实时功率</td>
-<td>选择能源计量后缺少唯一累积量或主瞬时量时拦截保存；实际测点须属于所选物模型或继承链且单位量纲兼容</td>
+<td>物模型组件实际测点映射完整性</td>
+<td>为一个物模型先选择组件，再选择「能源计量」并映射累计电量与实时功率；再分别尝试不选组件、缺少任一映射</td>
+<td>必须先选物模型，再从该模型组件列表选具体组件；缺少组件或任一映射时拦截保存，实际测点须属于所选物模型 / 组件或继承链且单位量纲兼容</td>
 </tr>
 <tr>
 <td>3c</td>
@@ -1979,13 +1974,13 @@ class="level2">
 <td>3d</td>
 <td>存量配置迁移</td>
 <td>升级前已存在“物模型 + 累积量测点 + 瞬时量测点”配置及表具核算历史</td>
-<td>原两列分别迁移为唯一累积量与主瞬时量映射；原始测点历史和既有表具核算明细不改写；电不新增任何过程瞬时量映射</td>
+<td>原两列分别迁移为唯一累积量与主瞬时量映射，组件缺省为“本模型”；原始测点历史和既有表具核算明细不改写</td>
 </tr>
 <tr>
 <td>3e</td>
 <td>支持关系条件校验</td>
-<td>分别为物模型选择「能源计量」「供电」「能源计量 + 供电」</td>
-<td>能源计量必须完成唯一累积量与主瞬时量映射；只选供电时无需测点即可保存；同时选择时按能源计量要求校验，且实例同时进入表具候选与供电源候选</td>
+<td>分别为同一物模型的不同组件选择「能源计量」「供电」「能源计量 + 供电」</td>
+<td>每行均须先选物模型和组件；能源计量必须完成唯一累积量与主瞬时量映射；只选供电时无需测点即可保存；同时选择时按能源计量要求校验，且实例同时进入表具候选与供电源候选</td>
 </tr>
 <tr>
 <td>3f</td>
