@@ -1593,6 +1593,19 @@
     .mr-rel-supply { color: #1D4ED8; background: #EFF6FF; }
     .mr-relation-tags { display: flex; flex-wrap: wrap; gap: 4px; }
     .mr-dir-na { display: inline-flex; min-width: 88px; justify-content: center; color: var(--text-hint); }
+    .mr-attr-cell { display: inline-flex; align-items: center; gap: 6px; }
+    .mr-attr-label { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+    .mr-attr-select {
+      height: 28px;
+      min-width: 88px;
+      padding: 0 8px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text-primary);
+      font-size: 12px;
+    }
+    .mr-attr-select:focus { outline: none; border-color: var(--primary); }
 
     .mr-dir {
       display: inline-flex;
@@ -1885,7 +1898,8 @@
             <span class="anno-tag">版本信息</span>
             <div class="anno-body">
               <p><b>当前版本：</b>v2.5</p>
-              <p><b>更新日期：</b>2026-08-26</p>
+              <p><b>更新日期：</b>2026-09-10</p>
+              <p><b>变更概述（2026-09-10 补充）：</b>单对象能源拓扑弹窗的供电关系补齐物模型关系属性「支路」（未指定 / A路 / B路 / C路，默认空）；只写在供电底层记录，不参与今日试算。</p>
               <p><b>变更概述（2026-08-26 补充）：</b>能源计量与供电关系引入<b>线路变更记录</b>（按能源类型各一条线路时间线，详见《能源拓扑配置》页批注），本页口径同步调整：① 指标出数按查询时间段<b>所属生效线路记录</b>解释，跨记录边界分段拼接，历史区间不再因新改造重算——取代 2026-07-31 口径中「改绑后全部保留期实时历史自动重算并整体替换」的说法；重算仅发生在某条记录自身内容变化时，范围限于该记录已生效区间。② 对象在某段区间内无计量关系时，该区间显示「无计量关系」而非 0。③ 本页「能效配置」Tab 的单对象能源拓扑弹窗<b>仅操作各能源最新线路记录</b>，不提供记录切换；查看线路变更记录、登记线路改造请到《能源拓扑配置》。</p>
               <p><b>变更概述（2026-07-31 补充）：</b>实时指标调整为沿用数据工厂默认调度计算后写入时序存储，支持当前值与历史曲线；列表增加样本状态，演示正常、待配置、重算中和重算失败保留旧值。计量拓扑改绑或方向调整后，受影响对象及递归上级对象的全部保留期实时历史自动重算，成功后原子替换（2026-08-26 起按拓扑版本口径收敛，见上一条）。删除已取消的「总电流」指标及本体、组件演示数据。单对象能源拓扑的关系类型改为只读：支持供电的列头柜 / 支路新增即同时创建能耗计量与供电两条独立关系，页面合并为一行双标签；方向只改计量关系，删除成员一次移除两条关系。</p>
               <p><b>变更概述（2026-07-30 补充）：</b>节点详情的「测点列表」与「内置指标」统一按「本体 / 组件」折叠分组；平台仍不提供组件独立详情页，组件指标在所属设备页面展示，但曲线、计算口径和下钻均使用组件自身实例 ID。默认演示对象调整为「101空调-1」，直接展示本体与风机组件的指标差异。「能效配置」Tab 的单对象入口同步为「能源拓扑配置」，同时维护能耗计量与供电关系；今日试算和用能定额仍只读取能耗计量关系，跨对象批量作业与 Excel 全局导入导出继续在独立页完成。</p>
@@ -1912,7 +1926,7 @@
                 <li><b>对象树即拓扑对象树：</b>本页左侧对象树中的设备实例及其下级组件实例均可作为拓扑对象；实例层级只表达所属关系，不自动生成或继承能耗计量关系。</li>
                 <li><b>两个配置入口、一份数据：</b>单对象配置在本页「能效配置」Tab 点「配置」进弹窗完成，跨对象批量作业仍在《能源拓扑配置》；两处共同维护能耗计量与供电关系，任一处修改后另一处立即可见。</li>
                 <li><b>归属唯一：</b>查重键为「表具（含组件）+ 能源类型 + 拓扑版本」——同一能源同一版本内一块表具只能挂到一个计量关系上，不按输入 / 输出拆分名额；计量方向只决定计算符号。重复占用在两个配置入口都强制拦截。</li>
-                <li><b>供电关系：</b>用于表达实际供电路径，不设置计量方向；支持供电的支路新增时自动与能耗计量关系同时创建，页面合并显示两个只读标签，底层两条记录仍独立维护。</li>
+                <li><b>供电关系：</b>用于表达实际供电路径，不设置计量方向；支持供电的支路新增时自动与能耗计量关系同时创建，页面合并显示两个只读标签，底层两条记录仍独立维护。供电记录可另填关系属性「支路」（未指定 / A路 / B路 / C路，默认空），用于标明当前关系属于哪一路供电。</li>
                 <li><b>线路记录口径（2026-08-26）：</b>两类关系按能源类型做线路记录管理，时间线、线路改造与历史记录查看统一在《能源拓扑配置》；本页指标出数按查询时间段所属线路记录解释，某段区间内无计量关系时显示「无计量关系」而非 0；本页单对象弹窗仅操作各能源最新线路记录。</li>
               </ul>
             </div>
@@ -2343,7 +2357,7 @@
                         <p><b>关联模块：</b>能效配置 Tab — 配置项摘要与单对象能源拓扑口径</p>
                         <ul>
                           <li><b>行内摘要口径：</b>「能源拓扑配置」行按能源类型列出关系条数，一条都没有时显示「未配置」；摘要只统计当前对象的<strong>直接</strong>关系。</li>
-                          <li><b>产物形态：</b>「能源类型 × 拓扑版本 × 拓扑对象 × 成员 × 关系类型」；仅关系类型为能耗计量时记录计量方向。本弹窗读写各能源最新版本。</li>
+                          <li><b>产物形态：</b>「能源类型 × 拓扑版本 × 拓扑对象 × 成员 × 关系类型」；仅关系类型为能耗计量时记录计量方向；仅供电关系记录可选「支路」属性。本弹窗读写各能源最新版本。</li>
                           <li><b>作用范围：</b>关系表只列当前对象在当前能源下的<strong>直接</strong>成员；下级对象的下级不在本表展开，需选中该下级对象后再看（计算侧仍递归整棵子树）。</li>
                           <li><b>成员类型：</b>关系成员分为表具和下级对象；组件作为物模型实例，可使用自身实例 ID 参与配置。</li>
                           <li><b>表具池随能源过滤：</b>默认展示未关联表具，可切换已关联；卡片仅标识可配置的计量 / 供电拓扑关系，搜索统一按表具名称或编码。</li>
@@ -2449,7 +2463,7 @@
               <li><b>能源类型 Tab：</b>选项跟随《能源配置》能源类型主数据动态生成（非本页写死），默认选中第一个；角标为当前对象在该能源下的关系条数，0 条表示该能源尚未配置。切换后关系表、对象树配置态、表具池、今日试算一起按该能源重绘。</li>
               <li><b>加关系：</b>从左栏拖入下级对象，或从右栏拖入表具。普通成员建立能耗计量关系；支持供电的列头柜 / 支路自动同时创建能耗计量与供电两条独立关系，无需选择。历史单关系再次拖入时补齐缺失关系。</li>
               <li><b>左栏对象树：</b>只作拖拽来源，点击不切换配置对象；当前对象标「当前对象」且不可拖，已加为成员的节点置灰不可重复拖入，节点前的绿点表示该对象在当前能源下已有关系；支持按名称搜索。</li>
-              <li><b>关系类型 / 方向：</b>关系类型只读；双关系成员合并为一行显示“能耗计量 + 供电”。该行仍显示输入 / 输出，且只更新能耗计量底层记录；供电方向固定。</li>
+              <li><b>关系类型 / 方向 / 供电支路：</b>关系类型只读；双关系成员合并为一行显示“能耗计量 + 供电”。该行仍显示输入 / 输出，且只更新能耗计量底层记录；供电方向固定。「供电支路」列仅在存在供电关系时提供下拉（未指定 / A路 / B路 / C路，默认未指定），只写回供电底层记录；仅有能耗计量的行显示「—」。</li>
               <li><b>删除 / 试算：</b>点击合并行“删除”表示移除该成员，一次删除当前对象 / 能源下两条关系；仅删某一底层关系不属于本页交互。今日试算只按能耗计量关系递归展开，供电关系不参与计算。</li>
               <li><b>线路记录口径（2026-08-26）：</b>本弹窗不提供记录切换，读写均落在各能源<b>最新线路记录</b>上；重算范围遵循统一规则（该记录已生效的覆盖区间）。查看线路变更记录、登记线路改造，请点头部「批量配置」到《能源拓扑配置》操作。</li>
               <li><b>关闭后：</b>「能效配置」Tab 内该行摘要按最新关系条数刷新。</li>
@@ -2485,11 +2499,12 @@
                       <th>名称</th>
                       <th style="width:108px">关系类型</th>
                       <th style="width:128px">计量方向</th>
+                      <th style="width:148px">供电支路</th>
                       <th style="width:72px">操作</th>
                     </tr>
                   </thead>
                   <tbody id="mrRelationBody">
-                    <tr class="mr-empty"><td colspan="5">请先在左侧对象树选择对象</td></tr>
+                    <tr class="mr-empty"><td colspan="6">请先在左侧对象树选择对象</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -3054,11 +3069,11 @@
         rackA01: {
           '电': [
             { type: 'meter', code: 'PDU1_BR01', name: '支路 1', relationKind: 'metering', direction: 'in', meterKind: 'component', parentName: '列头柜 1' },
-            { type: 'meter', code: 'PDU1_BR01', name: '支路 1', relationKind: 'supply', direction: null, meterKind: 'component', parentName: '列头柜 1' }
+            { type: 'meter', code: 'PDU1_BR01', name: '支路 1', relationKind: 'supply', direction: null, meterKind: 'component', parentName: '列头柜 1', branch: 'A' }
           ]
         },
         rackA02: {
-          '电': [{ type: 'meter', code: 'PDU1_BR02', name: '支路 2', relationKind: 'supply', direction: null, meterKind: 'component', parentName: '列头柜 1' }]
+          '电': [{ type: 'meter', code: 'PDU1_BR02', name: '支路 2', relationKind: 'supply', direction: null, meterKind: 'component', parentName: '列头柜 1', branch: '' }]
         },
         ahu101: {
           '电': [{ type: 'object', id: 'ahu101Fan1', name: shortName(NODES.ahu101Fan1.name), relationKind: 'metering', direction: 'in' }]
@@ -4412,6 +4427,25 @@
         return member && member.relationKind === 'supply' ? 'supply' : 'metering';
       }
 
+      var MR_SUPPLY_BRANCHES = [
+        { value: '', label: '未指定' },
+        { value: 'A', label: 'A路' },
+        { value: 'B', label: 'B路' },
+        { value: 'C', label: 'C路' }
+      ];
+
+      function mrSupplyBranchOf(member) {
+        return (member && member.branch) || '';
+      }
+
+      function mrSupplyBranchSelectHtml(value) {
+        var current = value || '';
+        var options = MR_SUPPLY_BRANCHES.map(function (item) {
+          return '<option value="' + item.value + '"' + (item.value === current ? ' selected' : '') + '>' + item.label + '</option>';
+        }).join('');
+        return '<select class="mr-attr-select" aria-label="供电支路">' + options + '</select>';
+      }
+
       /* 表具占用：查重键为「表具（含组件）+ 能源类型」，不按输入 / 输出拆名额 */
       function mrMeterUsage() {
         var map = {};
@@ -4626,14 +4660,14 @@
         var body = document.getElementById('mrRelationBody');
         if (!body) return;
         if (!currentNode) {
-          body.innerHTML = '<tr class="mr-empty"><td colspan="5">请先在左侧对象树选择对象</td></tr>';
+          body.innerHTML = '<tr class="mr-empty"><td colspan="6">请先在左侧对象树选择对象</td></tr>';
           document.getElementById('mrRelationCount').textContent = '0 个成员';
           return;
         }
         var groups = mrGroupedMembers();
         document.getElementById('mrRelationCount').textContent = groups.length + ' 个成员';
         if (!groups.length) {
-          body.innerHTML = '<tr class="mr-empty"><td colspan="5">当前对象在「' + esc(mrState.energy) + '」下暂无拓扑关系<br>从左栏对象树拖入下级对象，或从右栏表具池拖入表具</td></tr>';
+          body.innerHTML = '<tr class="mr-empty"><td colspan="6">当前对象在「' + esc(mrState.energy) + '」下暂无拓扑关系<br>从左栏对象树拖入下级对象，或从右栏表具池拖入表具</td></tr>';
           return;
         }
         body.innerHTML = '';
@@ -4656,11 +4690,14 @@
           var directionCell = group.metering
             ? '<div class="mr-dir" role="group" aria-label="计量方向"><button type="button" class="' + (group.metering.direction === 'out' ? '' : 'active-in') + '" data-dir="in">输入</button><button type="button" class="' + (group.metering.direction === 'out' ? 'active-out' : '') + '" data-dir="out">输出</button></div>'
             : '<span class="mr-dir-na" title="历史数据仅存在供电关系；供电方向固定">—</span>';
+          var attrCell = group.supply
+            ? mrSupplyBranchSelectHtml(mrSupplyBranchOf(group.supply))
+            : '<span class="mr-dir-na" title="仅能耗计量关系没有供电支路属性">—</span>';
           var conflictReason = group.records.map(function (record) { return record.conflictReason || ''; }).filter(Boolean).join('；');
           tr.innerHTML = '<td><span class="mr-tag ' + (member.type === 'meter' ? 'mr-tag-meter">表具' : 'mr-tag-obj">下级对象') + '</span></td>' +
             '<td><div class="mr-row-name">' + esc(displayName || '（未命名）') + '</div>' + subHint +
             (conflictReason ? '<div class="mr-row-conflict">' + esc(conflictReason) + '</div>' : '') + '</td>' +
-            '<td>' + relationCell + '</td><td>' + directionCell + '</td><td><button type="button" class="mr-del">删除</button></td>';
+            '<td>' + relationCell + '</td><td>' + directionCell + '</td><td>' + attrCell + '</td><td><button type="button" class="mr-del">删除</button></td>';
           tr.querySelectorAll('.mr-dir button').forEach(function (button) {
             button.addEventListener('click', function () {
               var next = button.getAttribute('data-dir');
@@ -4670,6 +4707,14 @@
               showToast('计量方向已改为「' + (next === 'out' ? '输出' : '输入') + '」');
             });
           });
+          var branchSelect = tr.querySelector('.mr-attr-select');
+          if (branchSelect) {
+            branchSelect.addEventListener('change', function () {
+              if (!group.supply) return;
+              group.supply.branch = branchSelect.value;
+              showToast(branchSelect.value ? ('供电支路已设为「' + (branchSelect.value === 'A' ? 'A路' : branchSelect.value === 'B' ? 'B路' : 'C路') + '」') : '供电支路已清空');
+            });
+          }
           tr.querySelector('.mr-del').addEventListener('click', function () {
             var list = mrMembers();
             var removed = 0;
@@ -4811,7 +4856,7 @@
           var supplyForCurrent = list.some(function (member) { return member.type === 'meter' && member.code === payload.code && mrRelationKind(member) === 'supply'; });
           var base = { type: 'meter', code: payload.code, name: String(payload.name || '').trim() || meta.name || payload.code, meterKind: payload.meterKind || meta.kind || 'device', parentName: payload.parentName || meta.parentName || '' };
           if (!meteringForCurrent && !meteringElsewhere) { list.push(Object.assign({}, base, { relationKind: 'metering', direction: 'in' })); addedKinds.push('能耗计量'); }
-          if (meta.supportsSupply && !supplyForCurrent) { list.push(Object.assign({}, base, { relationKind: 'supply', direction: null })); addedKinds.push('供电'); }
+          if (meta.supportsSupply && !supplyForCurrent) { list.push(Object.assign({}, base, { relationKind: 'supply', direction: null, branch: '' })); addedKinds.push('供电'); }
           if (!addedKinds.length) { showToast(meteringElsewhere ? '该表具的能耗计量关系已被其他对象占用，且当前对象无需补齐供电关系' : '该成员所需关系已完整建立'); return; }
           highlightKey = 'meter:' + payload.code;
         } else { showToast('未识别到拖入内容，请重试'); return; }
