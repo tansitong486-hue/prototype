@@ -274,6 +274,13 @@
         width: auto;
         display: block;
       }
+      .header-logo-text {
+        color: #fff;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+      }
       .header-nav {
         display: flex;
         align-items: stretch;
@@ -869,7 +876,10 @@
 
     const logo = document.createElement('div');
     logo.className = 'header-logo';
-    logo.innerHTML = '<img src="http://192.168.0.50:11182/page/authority/login/image/logo-login.png" alt="X-BROTHER">';
+    const intranetLogoHosts = ['192.168.0.50', '192.168.50.242'];
+    logo.innerHTML = intranetLogoHosts.indexOf(location.hostname) >= 0
+      ? '<img src="http://192.168.0.50:11182/page/authority/login/image/logo-login.png" alt="X-BROTHER">'
+      : '<span class="header-logo-text">X-BROTHER</span>';
 
     const nav = document.createElement('nav');
     nav.className = 'header-nav';
