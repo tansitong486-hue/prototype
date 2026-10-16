@@ -1479,6 +1479,17 @@
     }
     .mr-foot-hint { margin-right: auto; font-size: 12px; color: var(--text-hint); }
 
+    /* 保存并重算历史（叠在能源拓扑配置弹窗之上） */
+    .modal-mask.rc-mask { z-index: 240; }
+    .rc-modal { width: 560px; }
+    .rc-field { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; font-size: 13px; }
+    .rc-label { flex: 0 0 96px; padding-top: 5px; color: var(--text-secondary); font-weight: 600; }
+    .rc-req { color: #DC2626; margin-right: 2px; }
+    .rc-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .rc-chip { height: 30px; padding: 0 12px; border: 1px solid var(--border); border-radius: 999px; background: #fff; color: var(--text-secondary); font-size: 12px; }
+    .rc-chip.active { border-color: var(--primary); background: var(--primary-tint); color: var(--primary); font-weight: 600; }
+    .rc-chips input[type="date"] { height: 30px; padding: 0 8px; border: 1px solid var(--border); border-radius: var(--radius); font: inherit; font-size: 12px; }
+
     .mr-energy-tabs {
       display: flex;
       gap: 0;
@@ -1885,11 +1896,12 @@
             <span class="anno-tag">版本信息</span>
             <div class="anno-body">
               <p><b>当前版本：</b>v2.5</p>
-              <p><b>更新日期：</b>2026-09-30</p>
-              <p><b>变更概述（2026-09-30 补充）：</b>本页「能效配置」仍只改各能源当前生效线路，保存即「配错了，改的还是现在这条线路」，不另记一条线路。《能源拓扑配置》主工作区也只展示当前生效线路；现场线路改造和历史变化都在那边完成，历史变化看「线路变更记录」。</p>
+              <p><b>更新日期：</b>2026-10-16</p>
+              <p><b>变更概述（2026-10-16 补充）：</b>依据 2026-10-16 重算方案面聊（三档结论，本期落地第一档），计量拓扑改为每个能源类型只维护一套<b>当前最新拓扑</b>，取消线路记录 / 拓扑版本 / 生效日，去掉「配错了」「现场线路改造了」两种保存。本页「能效配置」单对象入口编辑先作为草稿，点「保存」后与《能源拓扑配置》一样弹出「保存并重算历史」，必填重算开始日期（默认今天；快捷项「全部历史」= 2020-01-01，弹窗只有这一个字段）；保存后查询指标任意时间段立即按最新拓扑出数，实时历史（实时能耗、实时能效）仅对被改对象及其递归上级、在「重算开始日 至今」范围内按最新拓扑重算，范围之前保持原结果；表具核算明细与拓扑无关，不重算。每次保存自动写一条「变更记录」（改动摘要 + 重算状态），在《能源拓扑配置》查看；第二 / 三档后续升级见需求池 #73。</p>
+              <p><b>变更概述（2026-09-30 补充，已被 2026-10-16 口径替代）：</b>本页「能效配置」只改各能源当前生效线路，保存即「配错了」，不另记一条线路；现场线路改造和历史变化在《能源拓扑配置》完成。</p>
               <p><b>变更概述（2026-09-10 补充）：</b>单对象能源拓扑弹窗的供电关系补齐物模型关系属性「支路」（未指定 / A路 / B路 / C路，默认空）；只写在供电底层记录，不参与今日试算。</p>
-              <p><b>变更概述（2026-08-26 补充）：</b>能源计量与供电关系引入<b>线路变更记录</b>（按能源类型各一条线路时间线，详见《能源拓扑配置》页批注），本页口径同步调整：① 指标出数按查询时间段<b>所属生效线路记录</b>解释，跨记录边界分段拼接，历史区间不再因新改造重算——取代 2026-07-31 口径中「改绑后全部保留期实时历史自动重算并整体替换」的说法；重算仅发生在某条记录自身内容变化时，范围限于该记录已生效区间。② 对象在某段区间内无计量关系时，该区间显示「无计量关系」而非 0。③ 本页单对象弹窗当时只读写最新记录（2026-09-24 起改为只改当前生效记录，见本页最新一条变更概述）。</p>
-              <p><b>变更概述（2026-07-31 补充）：</b>实时指标调整为沿用数据工厂默认调度计算后写入时序存储，支持当前值与历史曲线；列表增加样本状态，演示正常、待配置、重算中和重算失败保留旧值。计量拓扑改绑或方向调整后，受影响对象及递归上级对象的全部保留期实时历史自动重算，成功后原子替换（2026-08-26 起按拓扑版本口径收敛，见上一条）。删除已取消的「总电流」指标及本体、组件演示数据。单对象能源拓扑的关系类型改为只读：支持供电的列头柜 / 支路新增即同时创建能耗计量与供电两条独立关系，页面合并为一行双标签；方向只改计量关系，删除成员一次移除两条关系。</p>
+              <p><b>变更概述（2026-08-26 补充，已被 2026-10-16 口径替代）：</b>曾引入按能源类型的线路变更记录，指标出数按查询时间段所属线路记录分段拼接、区间无计量关系显示「无计量关系」。2026-10-16 起取消线路记录与分段拼接，统一按最新拓扑出数（对象本身无成员时仍显示无计量关系 / 待配置）。</p>
+              <p><b>变更概述（2026-07-31 补充）：</b>实时指标调整为沿用数据工厂默认调度计算后写入时序存储，支持当前值与历史曲线；列表增加样本状态，演示正常、待配置、重算中和重算失败保留旧值。计量拓扑改绑或方向调整后，受影响对象及递归上级对象的实时历史重算，成功后原子替换（2026-10-16 起重算范围改为用户保存时所选「重算开始日 至今」，见最新一条变更概述）。删除已取消的「总电流」指标及本体、组件演示数据。单对象能源拓扑的关系类型改为只读：支持供电的列头柜 / 支路新增即同时创建能耗计量与供电两条独立关系，页面合并为一行双标签；方向只改计量关系，删除成员一次移除两条关系。</p>
               <p><b>变更概述（2026-07-30 补充）：</b>节点详情的「测点列表」与「内置指标」统一按「本体 / 组件」折叠分组；平台仍不提供组件独立详情页，组件指标在所属设备页面展示，但曲线、计算口径和下钻均使用组件自身实例 ID。默认演示对象调整为「101空调-1」，直接展示本体与风机组件的指标差异。「能效配置」Tab 的单对象入口同步为「能源拓扑配置」，同时维护能耗计量与供电关系；今日试算和用能定额仍只读取能耗计量关系，跨对象批量作业与 Excel 全局导入导出继续在独立页完成。</p>
               <p><b>变更概述（2026-07-27）：</b>页面名称统一为「能效视图」；节点详情新增「内置指标」Tab。指标按取值方式分为实时指标与查询指标：实时指标直接平铺当前对象已配置能源的瞬时值及能效值；查询指标由用户发起查询时按自身声明的查询参数即时计算。本期所有查询指标仅要求起止时间，后续可按指标定义扩展其他查询参数；能源类型、计费时段均固化进指标名称。列表在指标名称后展示「业务分类」（本期均为「能效」），并展示简明计算口径，点击后以只读弹窗查看计算拓扑、实际引用的对象属性 / 测点 ID、节点结果、异常节点和最终计算过程。</p>
             </div>
@@ -1912,10 +1924,10 @@
               <p><b>关联模块：</b>整页 — 对象树与计量拓扑的关系</p>
               <ul>
                 <li><b>对象树即拓扑对象树：</b>本页左侧对象树中的设备实例及其下级组件实例均可作为拓扑对象；实例层级只表达所属关系，不自动生成或继承能耗计量关系。</li>
-                <li><b>两个配置入口、一份数据：</b>单对象配置在本页「能效配置」Tab 点「配置」进弹窗完成，跨对象批量作业仍在《能源拓扑配置》；两处共同维护能耗计量与供电关系，任一处修改后另一处立即可见。</li>
-                <li><b>归属唯一：</b>查重键为「表具（含组件）+ 能源类型 + 拓扑版本」——同一能源同一版本内一块表具只能挂到一个计量关系上，不按输入 / 输出拆分名额；计量方向只决定计算符号。重复占用在两个配置入口都强制拦截。</li>
-                <li><b>供电关系：</b>用于表达实际供电路径，不设置计量方向；支持供电的支路新增时自动与能耗计量关系同时创建，页面合并显示两个只读标签，底层两条记录仍独立维护。供电记录可另填关系属性「支路」（未指定 / A路 / B路 / C路，默认空），用于标明当前关系属于哪一路供电。</li>
-                <li><b>线路记录口径（2026-09-30）：</b>两类关系按能源类型做线路记录管理。主工作区只使用当前生效线路。配错保存不另记一条线路，从该线路生效日起按改后关系计算用量；现场线路改造才另记一条，并写入线路变更记录。这两件事都在《能源拓扑配置》的保存弹窗里选。本页指标出数按查询时间段所属线路记录解释，某段区间内无计量关系时显示「无计量关系」而非 0。本页单对象弹窗只改各能源当前生效线路，不登记现场改造。</li>
+                <li><b>两个配置入口、一份数据：</b>单对象配置在本页「能效配置」Tab 点「配置」进弹窗完成，跨对象批量作业仍在《能源拓扑配置》；两处共同维护能耗计量与供电关系，任一处保存后另一处立即可见。</li>
+                <li><b>归属唯一：</b>查重键为「表具（含组件）+ 能源类型」——同一能源内一块表具只能挂到一个计量关系上，不按输入 / 输出拆分名额；计量方向只决定计算符号。重复占用在两个配置入口都强制拦截。</li>
+                <li><b>供电关系：</b>用于表达实际供电路径，不设置计量方向；支持供电的支路新增时自动与能耗计量关系同时创建，页面合并显示两个只读标签，底层两条记录仍独立维护。供电关系不再配置支路属性（2026-10-10 起取消）。</li>
+                <li><b>拓扑重算口径（2026-10-16，第一档）：</b>每个能源类型只维护一套当前最新拓扑（能耗计量 + 供电），无拓扑版本 / 线路记录 / 生效日。两个入口保存时都必须选择「重算开始日期」（默认今天，快捷项「全部历史」= 2020-01-01）。本页查询指标不物化，任意历史时间段查询均按当前最新拓扑读下级表具现场汇总，保存后立即按新拓扑出数，与所选重算开始日无关；实时指标（实时能耗、实时能效）只对被改对象及其递归上级、在「重算开始日 00:00 至当前」范围内按最新拓扑重算，范围之前的实时历史保持原结果，因此可能与同期查询指标不一致（第一档预期行为，需全量一致请选更早的重算开始日）。表具核算明细与拓扑无关，不重算。对象本身无成员时仍显示「无计量关系 / 待配置」。</li>
               </ul>
             </div>
           </div>
@@ -2160,7 +2172,7 @@
                           <li><b>实时指标编辑：</b>每行提供「编辑」，点击后在当前右侧区域进入与现网测点一致的编辑详情，保留基础设置、高级设置和告警配置；取消或返回恢复指标列表。内置定义只读，别名、输入提示和告警配置可维护。指标由指标工厂计算，因此编辑页不提供赋值设置。</li>
                           <li><b>查询指标：</b>每一行均有独立的「查询参数」列，参数由指标定义声明；本期每行提供开始日期和结束日期，后续可按指标扩展其他参数。顶部只提供一个统一「查询」按钮，点击后按各行参数分别查询并刷新结果；首次进入查询指标时按默认参数自动查询一次。能源类型、计费时段固化进指标名称；本期查询指标不提供曲线入口。</li>
                           <li><b>数据时间边界：</b>实时指标是已写入时序存储的样本，继续展示状态与数据时间；查询指标是按参数即时计算的派生结果，不属于事实数据，不展示「数据时间」，对应列改为「查询参数」。</li>
-                          <li><b>样本状态：</b>实时指标正常样本展示「正常」；依赖不完整显示「待配置」且不写 0；拓扑变更期间继续展示旧版本并标记「重算中」；分片失败保留最近成功值并标记「重算失败」。数据时间始终是当前展示的实时样本时间，避免旧值被误认作最新正常值。</li>
+                          <li><b>样本状态：</b>实时指标正常样本展示「正常」；依赖不完整显示「待配置」且不写 0；拓扑变更期间继续展示旧结果并标记「重算中」；分片失败保留最近成功值并标记「重算失败」。数据时间始终是当前展示的实时样本时间，避免旧值被误认作最新正常值。</li>
                           <li><b>计算排查：</b>点击绿色计算口径打开只读预览。组件行以组件实例为计算根节点；组件出现在父级页面不代表自动计入本体，只有显式配置计量关系后才参与本体归集。</li>
                           <li><b>业务分类：</b>列表展示「业务分类」列，筛选区提供业务分类选择器（默认「全部」）。本期指标（实时 / 查询两种取值方式下的能耗、成本、能效比值等）均归属「能效」；选其他分类时列表为空。后续扩展容量等分类时只增指标定义，不另开专用页面。</li>
                           <li><b>扩展规则：</b>列表与弹窗均按通用指标定义和计算节点渲染。新增能源、计费时段或能效指标时只增加指标定义及节点数据，不新增专用列或专用页面。</li>
@@ -2331,8 +2343,8 @@
                           <li><b>页面形态（后续可扩展）：</b>本 Tab 是当前对象的<strong>配置项清单</strong>，每个配置能力只占一行：左侧配置项名称 + 当前配置摘要，右侧「配置」。所有具体操作都在各自弹窗里完成，本 Tab 不就地展开表单，后续新增配置模块按行追加即可。</li>
                           <li><b>本期两行：</b>「能源拓扑配置」（摘要为各能源已配置条数，未配置显示「未配置」）、「用能定额考核」。</li>
                           <li><b>行内摘要来源：</b>读当前对象的实际配置数据实时生成，弹窗内改完关闭即刷新；切换左树对象时整个清单按新对象重算。</li>
-                          <li><b>两个入口一份数据：</b>本 Tab 的弹窗只配<strong>当前对象</strong>，《能源拓扑配置》做<strong>跨对象</strong>批量作业；两处共同维护能耗计量与供电关系，任一处改动对另一处立即可见。</li>
-                          <li><b>弹窗里不做的：</b>多视图（空间 / 容量）树切换、Excel 全局导入导出、跨对象批量修改、线路变更记录，以及「现场线路改造了」这条保存路径——这些仍只在《能源拓扑配置》，弹窗头部提供跳转。弹窗内的增删改都落在各能源<b>当前生效线路</b>上，关闭即按「配错了，改的还是现在这条线路」从该线路生效日起计算用量。</li>
+                          <li><b>两个入口一份数据：</b>本 Tab 的弹窗只配<strong>当前对象</strong>，《能源拓扑配置》做<strong>跨对象</strong>批量作业；两处共同维护能耗计量与供电关系，任一处保存后对另一处立即可见。</li>
+                          <li><b>弹窗里做的 / 不做的：</b>弹窗内只做当前对象的关系编辑，编辑先作为草稿，点「保存」后弹出与《能源拓扑配置》同一个「保存并重算历史」确认（只填重算开始日期，默认今天，可点「全部历史」），确认后才生效；取消或关闭则放弃草稿。多视图（空间 / 容量）树切换、跨对象批量修改、Excel 全局导入导出、变更记录查看仍只在《能源拓扑配置》，弹窗头部提供跳转。</li>
                           <li><b>用能定额考核：</b>沿用原入口；当前对象在任一能源下都还没有计量关系时，定额保存不可用——可直接在上一行的能源拓扑弹窗补配，不必先跳走。</li>
                         </ul>
                       </div>
@@ -2345,11 +2357,11 @@
                         <p><b>关联模块：</b>能效配置 Tab — 配置项摘要与单对象能源拓扑口径</p>
                         <ul>
                           <li><b>行内摘要口径：</b>「能源拓扑配置」行按能源类型列出关系条数，一条都没有时显示「未配置」；摘要只统计当前对象的<strong>直接</strong>关系。</li>
-                          <li><b>产物形态：</b>「能源类型 × 拓扑版本 × 拓扑对象 × 成员 × 关系类型」；仅关系类型为能耗计量时记录计量方向；仅供电关系记录可选「支路」属性。本弹窗只读写各能源当前生效版本，保存即普通保存。</li>
+                          <li><b>产物形态：</b>「能源类型 × 拓扑对象 × 成员 × 关系类型」；仅关系类型为能耗计量时记录计量方向；供电关系不再记录支路属性。本弹窗读写各能源当前拓扑，保存须选择重算开始日期，并自动写一条变更记录（入口 = 能效视图单对象）。</li>
                           <li><b>作用范围：</b>关系表只列当前对象在当前能源下的<strong>直接</strong>成员；下级对象的下级不在本表展开，需选中该下级对象后再看（计算侧仍递归整棵子树）。</li>
                           <li><b>成员类型：</b>关系成员分为表具和下级对象；组件作为物模型实例，可使用自身实例 ID 参与配置。</li>
                           <li><b>表具池随能源过滤：</b>默认展示未关联表具，可切换已关联；卡片仅标识可配置的计量 / 供电拓扑关系，搜索统一按表具名称或编码。</li>
-                          <li><b>归属唯一：</b>同一表具在同一能源的同一版本内只能归属一条能耗计量关系；支持供电的支路可同时建立一条独立供电关系。</li>
+                          <li><b>归属唯一：</b>同一表具在同一能源内只能归属一条能耗计量关系；支持供电的支路可同时建立一条独立供电关系。</li>
                           <li><b>今日试算口径：</b>只沿能耗计量关系递归到叶子表具，输入记 +1、输出记 −1；供电关系不参与试算。</li>
                           <li><b>原型说明：</b>本页与《能源拓扑配置》各自维护演示数据，页面间状态不互通；真实系统维护同一份关系数据。</li>
                         </ul>
@@ -2436,7 +2448,7 @@
         </div>
         <div class="calc-head-actions">
           <a class="btn btn-ghost" href="能源计量关系.html">批量配置</a>
-          <button type="button" class="modal-close" data-close="meteringModal" aria-label="关闭">✕</button>
+          <button type="button" class="modal-close" id="mrBtnClose" aria-label="关闭">✕</button>
         </div>
       </div>
       <div class="modal-body">
@@ -2453,8 +2465,9 @@
               <li><b>左栏对象树：</b>只作拖拽来源，点击不切换配置对象；当前对象标「当前对象」且不可拖，已加为成员的节点置灰不可重复拖入，节点前的绿点表示该对象在当前能源下已有关系；支持按名称搜索。</li>
               <li><b>关系类型 / 方向：</b>关系类型只读；双关系成员合并为一行显示“能耗计量 + 供电”。该行仍显示输入 / 输出，且只更新能耗计量底层记录；供电方向固定。供电关系不再配置支路属性。</li>
               <li><b>删除 / 试算：</b>点击合并行“删除”表示移除该成员，一次删除当前对象 / 能源下两条关系；仅删某一底层关系不属于本页交互。今日试算只按能耗计量关系递归展开，供电关系不参与计算。</li>
-              <li><b>线路记录口径（2026-09-30）：</b>本弹窗不提供记录切换，也不登记现场线路改造。读写都落在各能源<b>当前生效线路</b>上，保存即「配错了，改的还是现在这条线路」：不另记一条线路，从该线路生效日起按改后关系计算用量。看历史变化、登记现场线路改造，请点头部「批量配置」到《能源拓扑配置》。那边主工作区只展示当前生效线路，历史变化在「线路变更记录」里看。</li>
-              <li><b>关闭后：</b>「能效配置」Tab 内该行摘要按最新关系条数刷新。</li>
+              <li><b>草稿与保存（2026-10-16）：</b>打开弹窗时读取当前对象各能源的当前拓扑，拖拽、方向切换、删除都只改草稿，未保存不生效。底部「保存」：无改动直接关闭；有改动弹出「保存并重算历史」，选择重算开始日期并确认后才写入当前拓扑。「取消」或右上角 ✕：有未保存改动时二次确认放弃。</li>
+              <li><b>拓扑重算口径（2026-10-16，第一档）：</b>与《能源拓扑配置》一致，只有一套当前最新拓扑，不再区分「配错了 / 现场线路改造了」。确认保存后，被改对象及其递归上级自所选重算开始日起至今的实时历史按最新拓扑重算；查询指标立即按最新拓扑出数；表具明细不重算。每次保存自动写一条变更记录，在《能源拓扑配置》「变更记录」查看改动摘要与重算进度。</li>
+              <li><b>保存后：</b>「能效配置」Tab 内该行摘要按最新关系条数刷新。</li>
             </ul>
           </div>
         </div>
@@ -2553,8 +2566,59 @@
         </div>
       </div>
       <div class="modal-foot">
-        <span class="mr-foot-hint">拖拽、关系切换、方向切换、删除均即时生效，无需保存</span>
-        <button type="button" class="btn btn-primary" data-close="meteringModal">完成</button>
+        <span class="mr-foot-hint" id="mrFootHint">修改需点保存后生效</span>
+        <button type="button" class="btn btn-ghost" id="mrBtnCancel">取消</button>
+        <button type="button" class="btn btn-primary" id="mrBtnSave">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 保存并重算历史（能源拓扑配置弹窗点「保存」且有改动时弹出；与《能源计量关系》同一组件） -->
+  <div class="modal-mask rc-mask" id="recalcModal" hidden>
+    <div class="modal rc-modal" role="dialog" aria-modal="true" aria-label="保存并重算历史">
+      <div class="modal-head">
+        <span>保存并重算历史</span>
+        <button type="button" class="modal-close" id="rcBtnClose" aria-label="关闭">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="anno anno-ux" data-version="v2.5">
+          <span class="anno-tag">交互说明</span>
+          <span class="anno-version">v2.5</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>「保存并重算历史」确认弹窗 — 单对象入口与《能源拓扑配置》页面保存、Excel 导入共用同一组件</p>
+            <ul>
+              <li><b>触发：</b>能源拓扑配置弹窗点「保存」且草稿有改动时弹出；无改动直接关闭，不弹本窗。</li>
+              <li><b>操作：</b>选择重算开始日期（或点「全部历史」）→「确认保存」。弹窗只有这一个字段，不展示影响范围、重算结束和口径说明（2026-10-16 二次收敛）。「取消」或 ✕ 返回配置弹窗，草稿保留。</li>
+              <li><b>确认后：</b>草稿写入当前拓扑并关闭配置弹窗，回填「能效配置」行摘要；后台按所选范围排队重算，进度在《能源拓扑配置》「变更记录」查看，失败可重试。</li>
+              <li><b>不再出现：</b>「配错了，改的还是现在这条线路 / 现场线路改造了」二选一，以及「改造从哪天开始 / 改了什么」。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="anno anno-field" data-version="v2.5">
+          <span class="anno-tag">字段说明</span>
+          <span class="anno-version">v2.5</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <ul>
+              <li><b>重算开始日期：</b>必填，日粒度，日期选择器，默认今天；可选范围 2020-01-01 至今天，晚于今天不可保存。</li>
+              <li><b>快捷项「全部历史」：</b>点击后不用选具体日期，开始日期直接置为 2020-01-01，即全部历史按最新拓扑重算；手动改日期后自动取消该快捷项高亮。</li>
+              <li><b>后台口径（界面不展示）：</b>重算对象为被改计量对象及其递归上级，范围 [重算开始日 00:00, 当前时刻]；表具核算明细不重算；失败保留旧结果并可在变更记录重试。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="rc-field">
+          <div class="rc-label"><span class="rc-req">*</span>重算开始日期</div>
+          <div class="rc-chips">
+            <input type="date" id="rcDate" aria-label="重算开始日期" min="2020-01-01">
+            <button type="button" class="rc-chip" id="rcAllHistory" aria-pressed="false">全部历史</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" id="rcBtnCancel">取消</button>
+        <button type="button" class="btn btn-primary" id="rcBtnConfirm">确认保存</button>
       </div>
     </div>
   </div>
@@ -5000,6 +5064,8 @@
       }
 
       function renderEffConfigRows() {
+        /* 弹窗内为草稿，未保存前不回填行摘要 */
+        if (meteringModal && !meteringModal.hidden) return;
         var meteringState = document.getElementById('effMeteringState');
         if (meteringState) {
           var summary = meteringSummary(currentNode);
@@ -5041,13 +5107,126 @@
         mrState.energy = configured[0] || ENERGIES[0] || '电';
         mrState.meterPage = 1;
         document.getElementById('mrTreeSearch').value = '';
+        mrTakeSnapshot();
         meteringModal.hidden = false;
         refreshMeteringBlock();
       });
 
-      /* 关闭即回填行摘要（弹窗内变更已即时生效，不存在放弃保存的语义） */
-      meteringModal.querySelectorAll('[data-close="meteringModal"]').forEach(function (button) {
-        button.addEventListener('click', renderEffConfigRows);
+      /* ---------- 草稿与「保存并重算历史」（2026-10-16 第一档：单一最新拓扑） ---------- */
+      /* 打开弹窗时备份关系数据；弹窗内编辑直接作用于 relations（即草稿），取消时还原，确认保存时保留。 */
+      var mrSnapshot = null;
+
+      function mrCloneRelations(src) { return JSON.parse(JSON.stringify(src || {})); }
+
+      function mrTakeSnapshot() { mrSnapshot = mrCloneRelations(relations); }
+
+      function mrRestoreSnapshot() {
+        if (!mrSnapshot) return;
+        Object.keys(relations).forEach(function (key) { delete relations[key]; });
+        var copy = mrCloneRelations(mrSnapshot);
+        Object.keys(copy).forEach(function (key) { relations[key] = copy[key]; });
+      }
+
+      function mrMemberSignature(list) {
+        return JSON.stringify((list || []).map(function (member) {
+          return [member.type, member.id || member.code || '', mrRelationKind(member), member.direction || ''];
+        }));
+      }
+
+      /* 返回 [{ objId, energy }]：草稿与打开时相比有改动的对象 × 能源 */
+      function mrDraftChanges() {
+        if (!mrSnapshot) return [];
+        var keys = {};
+        Object.keys(mrSnapshot).concat(Object.keys(relations)).forEach(function (key) { keys[key] = true; });
+        var changes = [];
+        Object.keys(keys).forEach(function (objId) {
+          ENERGIES.forEach(function (energy) {
+            var before = (mrSnapshot[objId] || {})[energy];
+            var after = (relations[objId] || {})[energy];
+            if (mrMemberSignature(before) !== mrMemberSignature(after)) changes.push({ objId: objId, energy: energy });
+          });
+        });
+        return changes;
+      }
+
+      function mrFormatDate(date) {
+        var m = date.getMonth() + 1;
+        var d = date.getDate();
+        return date.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (d < 10 ? '0' : '') + d;
+      }
+
+      var recalcModal = document.getElementById('recalcModal');
+      var RC_ALL_HISTORY = '2020-01-01';
+      var rcState = { date: '', changes: [] };
+
+      function rcTodayStr() { return mrFormatDate(new Date()); }
+
+      function rcStartDate() { return rcState.date; }
+
+      function renderRecalcModal() {
+        var dateInput = document.getElementById('rcDate');
+        dateInput.max = rcTodayStr();
+        dateInput.value = rcState.date;
+        var all = rcState.date === RC_ALL_HISTORY;
+        var allBtn = document.getElementById('rcAllHistory');
+        allBtn.classList.toggle('active', all);
+        allBtn.setAttribute('aria-pressed', all ? 'true' : 'false');
+        document.getElementById('rcBtnConfirm').disabled = !rcState.date;
+      }
+
+      function openRecalcModal(changes) {
+        rcState = { date: rcTodayStr(), changes: changes };
+        renderRecalcModal();
+        recalcModal.hidden = false;
+      }
+
+      function closeMeteringModal() {
+        recalcModal.hidden = true;
+        meteringModal.hidden = true;
+        mrSnapshot = null;
+        renderEffConfigRows();
+      }
+
+      function cancelMeteringModal() {
+        if (mrDraftChanges().length && !window.confirm('有未保存的能源拓扑修改，确定放弃吗？')) return;
+        mrRestoreSnapshot();
+        closeMeteringModal();
+        refreshMeteringBlock();
+      }
+
+      document.getElementById('mrBtnClose').addEventListener('click', cancelMeteringModal);
+      document.getElementById('mrBtnCancel').addEventListener('click', cancelMeteringModal);
+      document.getElementById('mrBtnSave').addEventListener('click', function () {
+        var changes = mrDraftChanges();
+        if (!changes.length) {
+          closeMeteringModal();
+          showToast('未修改能源拓扑，已关闭');
+          return;
+        }
+        openRecalcModal(changes);
+      });
+
+      document.getElementById('rcAllHistory').addEventListener('click', function () {
+        rcState.date = RC_ALL_HISTORY;
+        renderRecalcModal();
+      });
+      document.getElementById('rcDate').addEventListener('change', function () {
+        var value = this.value;
+        if (value && value > rcTodayStr()) {
+          showToast('重算开始日期不得晚于今天');
+          value = rcTodayStr();
+          this.value = value;
+        }
+        rcState.date = value;
+        renderRecalcModal();
+      });
+      document.getElementById('rcBtnClose').addEventListener('click', function () { recalcModal.hidden = true; });
+      document.getElementById('rcBtnCancel').addEventListener('click', function () { recalcModal.hidden = true; });
+      document.getElementById('rcBtnConfirm').addEventListener('click', function () {
+        var start = rcStartDate();
+        if (!start) { showToast('请选择重算开始日期'); return; }
+        closeMeteringModal();
+        showToast('已保存。正在按最新拓扑重算 ' + start + ' 至今的实时历史，可在《能源拓扑配置》变更记录查看进度');
       });
 
       renderMrEnergyTabs();
@@ -5099,7 +5278,7 @@
           return;
         }
         renderMrTrial();
-        showToast('已按当前能源拓扑重算今日用量');
+        showToast('已按当前编辑中的拓扑试算今日用量（未保存不生效）');
       });
 
       refreshMeteringBlock();
