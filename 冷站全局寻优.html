@@ -961,6 +961,13 @@
     }
     .io-status.in { background:#F6FFED; color:#52C41A; }
     .io-status.out { background:#FFF1F0; color:#FF4D4F; }
+
+    /* ── v2.9 廊坊群控下发兼容：手动下发 / 工单内容沿用原 dispatch-table，只补设备类型灰字和超限提示 ── */
+    .dispatch-table .dev-type { display:block; margin-top:2px; font-size:11.5px; font-weight:400; color:var(--text-hint); }
+    .dispatch-table td.val-actual, .dispatch-table td.val-ai { white-space:nowrap; }
+    .dispatch-table input.dispatch-val.is-error { border-color:var(--danger); box-shadow:0 0 0 2px var(--danger-light); }
+    .dispatch-table .dispatch-val-tip { display:block; margin-top:3px; font-size:11px; color:var(--danger); white-space:nowrap; }
+    .dispatch-table .dispatch-val-tip:empty { display:none; }
   </style>
   <link rel="stylesheet" href="annotation-styles.css">
 </head>
@@ -974,6 +981,22 @@
       <div class="anno-filter-bar" id="annoFilterBar">
         <span class="anno-filter-label">批注版本：</span>
         <div class="anno-filter-tags" id="annoFilterTags"></div>
+      </div>
+
+      <div class="anno anno-version-header" data-version="v2.9">
+        <span class="anno-tag">版本信息</span>
+        <span class="anno-version">v2.9</span>
+        <span class="anno-source">需求文档</span>
+        <div class="anno-body">
+          <p><b>当前版本：</b>v2.9</p>
+          <p><b>更新日期：</b>2026-10-20</p>
+          <p><b>变更概述：</b>v2.9 廊坊群控下发兼容（需求 3）：寻优算法不改。全局寻优出结果后，按寻优绑定的下发策略上传的转写规则文件，把结果逐点转写成 BA 群控设定值，写进寻优记录，再通过现有下发方式写入 BA。全局寻优给出的开机台数和模式，转写成加减机、湿球阈值的平移，由 BA 自己执行。</p>
+          <p><b>本页改动：</b>按「尽量复用原有前端样式和交互」：BA 设定点是群控系统设备「A路水冷群控系统」（设备类型「水冷群控系统」）上的平级测点，按「设备 → 测点」展示，和其他设备一样。① 寻优记录表多出对象「A路水冷群控系统」，下面列出 58 个测点（测点名称，不分组、不显示 BA 点号）：本轮转写的点为「控制变量（寻优中）」，直通、不下发的点为「控制变量（未寻优）」；着色、分类筛选、隐藏关机、搜索、历史趋势沿用原逻辑；② 智控下发卡片保持原样；③ 带规则文件时，手动下发弹窗沿用原弹窗的样式和列，行换成寻优值与当前值不同的 BA 设定点（只下发这些点），保留联动组跟随和上下限校验，确认后走本页原有密码校验；一键回退不变；④ 工单推送功能不变，推送成功后展示的工单内容与手动下发弹窗同款列、只列有变化的点，不出现频率；⑤ 下发记录示例补充 BA 设定点下发记录（只含实际下发的点）。规则文件版本记录在寻优记录里，界面不单独展示。</p>
+          <p><b>寻优策略卡片：</b>去掉「最新寻优时间」旁的置信标签（数据积累中 / 数据充分）。在卡片上看不出用途，反而增加理解负担；置信只在寻优记录当前轮次旁和手动下发弹窗里展示。</p>
+          <p><b>演示入口：</b>v2.9 演示在 A路冷水系统下；切到其他冷水系统为原有演示。冷站柔性 / 全局 / 长周期三个寻优页共用同一个「已选冷水系统」记忆：首次进入（没有记忆）默认选中「A路冷水系统」，手动切换后按上次选择进入。</p>
+          <p><b>演示说明：</b>「A路冷水系统」= 廊坊 A 路，已绑定上传了「廊坊A路（人保北方）转写规则 v1」的下发策略；示例为全局寻优 2026-10-20 15:00 轮（现场 2#、5# 制冷，最优加开 1# 为 3 台制冷）；全局寻优的开机台数和模式通过加减机、湿球阈值平移转写，由 BA 自己执行（制冷加机负荷 85 → 73、减机负荷 35 → 23）。规则文件 2026-10-20 10:30 上传，选「A路冷水系统」时寻优记录栏和策略卡「最新寻优时间」定位到该轮（2026-10-20 15:00:00）。把记录时间改到上传之前（如 2025-12-25），这条记录没有 BA 设定点，群控系统设备不出现。切到其他冷水系统 = 下发策略没上传规则文件，寻优记录、手动下发、工单推送、下发记录均保持原逻辑。从冷站柔性 / 长周期寻优页签跳转过来时沿用上一页选中的冷水系统，若落在其他冷水系统，切回「A路冷水系统」即可查看 v2.9 演示。</p>
+          <p><b>版本说明：</b>本页当前交付版本为 v2.9；下方 v2.4 及更早的版本头为历史交付记录，保留原文。</p>
+        </div>
       </div>
 
       <div class="anno anno-version-header" data-version="v2.4">
@@ -1010,7 +1033,7 @@
           <label class="selector cold-station-selector">
             <select id="coldStationSelect" aria-label="冷站选择">
               <option value="3#数据中心水冷冷水系统">3#数据中心水冷冷水系统</option>
-              <option value="A路冷水系统">A路冷水系统</option>
+              <option value="A路冷水系统" selected>A路冷水系统</option>
               <option value="B路风冷冷水系统">B路风冷冷水系统</option>
               <option value="C路冷水系统">C路冷水系统</option>
               <option value="G1栋A路冷水系统">G1栋A路冷水系统</option>
@@ -1072,7 +1095,7 @@
               </div>
               <div class="status-item">
                 <span class="label">最新寻优时间</span>
-                <span class="value confidence-value">2026-06-11 14:20:44 <span class="confidence-pill low">数据积累中</span></span>
+                <span class="value confidence-value">2026-06-11 14:20:44</span>
               </div>
               <div class="status-item">
                 <span class="label">当前安全边界</span>
@@ -1098,6 +1121,36 @@
             智控下发策略
           </div>
           <div class="module-card-body">
+            <div class="anno anno-ux" data-version="v2.9">
+              <span class="anno-tag">交互说明</span>
+              <span class="anno-version">v2.9</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>智控下发策略卡片（手动下发、工单推送）</p>
+                <ul>
+                  <li><b>卡片样式不变：</b>仍为当前下发策略、下发模式和「手动下发 / 工单推送 / 策略切换」按钮；不在卡片上单独展示转写规则文件（规则文件版本记录在寻优记录里）。</li>
+                  <li><b>手动下发：</b>带规则文件时，原手动下发弹窗的行换成有变化的 BA 设定点（见弹窗批注）；没上传规则文件时保持原弹窗。</li>
+                  <li><b>工单推送：</b>流程不变（密码校验 → 推送）；带规则文件时推送成功后展示本次工单内容（有变化的 BA 设定点）。</li>
+                  <li><b>策略切换：</b>不变。</li>
+                </ul>
+              </div>
+            </div>
+            <div class="anno anno-data" data-version="v2.9">
+              <span class="anno-tag">数据逻辑</span>
+              <span class="anno-version">v2.9</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>智控下发策略卡片 — 带规则文件时各下发方式的下发对象</p>
+                <ul>
+                  <li><b>待下发内容：</b>本轮寻优记录里群控系统设备上寻优值与当前值不同的 BA 设定点，写入寻优值；直通、没变化、当前值读不到的点不下发。</li>
+                  <li><b>手动下发：</b>弹窗列出上述点，确认后写入（含混合下发命中手动、从工单进入的手动下发）。</li>
+                  <li><b>自动下发：</b>寻优、转写完成后按现有自动下发流程写入 BA，同样只下发有变化的点。</li>
+                  <li><b>混合下发：</b>按现有混合规则和置信度规则判定走自动还是手动，判定逻辑不改。</li>
+                  <li><b>工单：</b>按现有工单通知规则推送（不通知 / 每次寻优都通知 / 按需通知），工单内容只列有变化的 BA 设定点，列与手动下发弹窗一致，不出现泵、冷却塔频率等设备量；按需通知的条件可以选 BA 设定点。</li>
+                  <li><b>规则文件生效：</b>上传或覆盖后从下一轮寻优起生效；移除规则文件或切回通用映射后，从下一轮起恢复原逻辑。</li>
+                </ul>
+              </div>
+            </div>
             <div id="deliverBound">
               <div class="module-status-row">
                 <div class="status-item">
@@ -1333,8 +1386,61 @@
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
               <p><b>关联模块：</b>寻优策略卡片与寻优记录轮次置信度</p>
-              <p>置信度为一轮寻优结果的整体属性，按本轮仿真求解链路最低置信等级展示；因此仅在“最新寻优时间”和当前寻优记录轮次旁展示，不在变量明细表逐行新增列。</p>
+              <p>置信度为一轮寻优结果的整体属性，按本轮仿真求解链路最低置信等级展示；因此仅在当前寻优记录轮次旁展示，不在变量明细表逐行新增列（v2.9 起寻优策略卡片「最新寻优时间」旁不再展示置信标签）。</p>
               <p><b>明细真源：</b>对齐 KE 生产「冷站全局寻优」表格结构（对象 / 变量 / 实际值 / AI寻优值 / 寻优变化）；演示数据取自 A 路冷站真实寻优日志 fixture（400 条变量）。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-data" data-version="v2.9">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>寻优记录 — 群控系统设备「A路水冷群控系统」（BA 设定点）</p>
+              <ul>
+                <li><b>展示方式：</b>BA 设定点都是群控系统设备上的平级测点，按「设备 → 测点」挂在设备「A路水冷群控系统」下，和其他设备一样展示，不分组、不加列、不加筛选项。</li>
+                <li><b>数据来源：</b>本轮寻优出结果后，转写引擎按下发策略上传的转写规则文件逐点处理：前置条件（挂钩的寻优开关已启用、设备投入）→ 转写条件 → 按规则计算 → 按安全边界上下限贴边，联动组整组按同一个量贴边，结果写进本轮寻优记录。一轮只转写一次，寻优记录、手动下发、自动下发和工单共用这份结果。</li>
+                <li><b>出现条件：</b>下发策略已开群控下发并上传规则文件、且本轮寻优有结果时，记录里多出群控系统设备；寻优失败、没有结果、没上传规则文件，或规则文件上传之前的轮次，没有该设备。</li>
+                <li><b>台数和模式：</b>全局寻优的开机台数和模式通过加减机、湿球阈值平移转写，由 BA 自己执行（按 BA 自身的确认延时逐台加减、切模式），AI 不直接下发启停。本例现场制冷 2 台、BA 制冷平均负荷 78%，最优为 3 台制冷：「群控-制冷模式加机负荷设定」85 → 73、「群控-制冷模式减机负荷设定」35 → 23，两点按同一平移量 −12 变化，间隔不变；湿球判据待 BA 确认，湿球阈值组本轮不转写。</li>
+                <li><b>模式要变的单元：</b>1# 单元现场停机、最优加开，冷塔出水温度、冷却泵温差类点本轮不转写（模式变化，未锚定），按未寻优显示；冷机出水温度按最优模式直取，照常转写（10.00 → 10.50）。</li>
+                <li><b>规则文件版本：</b>本轮所用规则文件的名称和版本号记录在寻优记录里，界面不单独展示；覆盖上传规则文件后从下一轮起生效，历史记录保留当时的版本。</li>
+                <li><b>生效时间：</b>规则文件 2026-10-20 10:30 上传，保存后从下一轮寻优起转写；示例轮次为 2026-10-20 15:00。</li>
+                <li><b>原有变量不变：</b>原有设备和变量（含开机台数、系统运行模式）照常显示，与群控系统设备互不影响。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="anno anno-field" data-version="v2.9">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>寻优记录表 — 群控系统设备的行（列与原表一致）</p>
+              <table class="anno-table">
+                <thead>
+                  <tr><th>列</th><th>内容</th><th>备注</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>对象名称</td><td>「A路水冷群控系统」，带运行 / 投入状态标签，写法同其他设备</td><td>设备类型：水冷群控系统</td></tr>
+                  <tr><td>变量名称</td><td>测点名称，如「02号制冷单元-制冷冷塔出水温度设定」「二次泵-末端压差设定」「群控-制冷模式加机负荷设定」</td><td>按变量分类着色；58 个测点平铺，不显示 BA 点号</td></tr>
+                  <tr><td>实际值</td><td>BA 当前值（寻优时刻读数）</td><td>当前值读不到显示「—」，AI寻优值同样显示「—」，寻优变化仍写「无变化」（本例「蓄冷罐-超级充冷流量设定」）</td></tr>
+                  <tr><td>AI寻优值 / 寻优变化</td><td>本轮转写的点归「控制变量（寻优中）」，显示寻优值和差值（本例 14 项）；直通和不下发的点归「控制变量（未寻优）」，AI寻优值同实际值、寻优变化「无变化」（本例 44 项）</td><td>直通原因（寻优开关未启用、设备投出、不满足转写条件、未锚定、规则直通等）不在界面展示</td></tr>
+                  <tr><td>操作</td><td>历史趋势</td><td>同原有变量，曲线为当前值和寻优值</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="anno anno-ux" data-version="v2.9">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">产品推断</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>寻优记录 — 变量分类、隐藏关机的设备、搜索</p>
+              <ul>
+                <li><b>沿用原逻辑：</b>变量分类筛选、隐藏关机的设备、对象名称 / 变量名称搜索、历史趋势都按原有逻辑作用于群控系统设备，不另写。例：选「控制变量（寻优中）」只看到本轮转写的 14 个测点；搜「A路水冷群控系统」看该设备全部 58 个测点。</li>
+                <li><b>演示：</b>只在「A路冷水系统」下出现；切到其他冷水系统，或在「A路冷水系统」下把记录时间改到规则文件上传（2026-10-20 10:30）之前的轮次（如 2025-12-25），记录与原来一致、没有群控系统设备。</li>
+              </ul>
             </div>
           </div>
 
@@ -1363,6 +1469,21 @@
               <p>记录冷站全局寻优策略的下发时间、下发人、对象与属性、实际参数、下发参数和下发结果。可按策略、日期、关键词筛选。</p>
             </div>
           </div>
+          <div class="anno anno-data" data-version="v2.9">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>下发记录 Tab — BA 设定点下发记录</p>
+              <ul>
+                <li><b>功能不改：</b>下发执行、下发记录表样式、一键回退沿用现有功能。</li>
+                <li><b>带规则文件时：</b>「对象名称、下发属性」写法同原有设备：「A路水冷群控系统/测点名称」，如「A路水冷群控系统/群控-制冷模式加机负荷设定」；实际参数 = 下发时 BA 当前值，下发参数 = 下发值。</li>
+                <li><b>只记实际下发的点：</b>只有寻优值与当前值不同、实际下发的点产生记录；直通、没变化、当前值读不到的点不下发，也不产生记录。</li>
+                <li><b>示例：</b>2026-10-20 15:06 一组为带规则文件后的手动下发（本轮有变化的 14 个测点全部下发，如制冷加机负荷 85 → 73、减机负荷 35 → 23）；2025-12-25 两组为上传规则文件前的历史记录（设备量）。日期筛选默认覆盖 2025-12-25 ~ 2026-10-20。</li>
+                <li><b>演示：</b>群控系统设备的下发记录只在「A路冷水系统」下出现；切到其他冷水系统，下发记录与原来一致（只有 2025-12-25 两组）。</li>
+              </ul>
+            </div>
+          </div>
           <div class="filter-bar">
             <div class="filter-group">
               <span class="filter-label">策略：</span>
@@ -1376,7 +1497,7 @@
               <span class="filter-label">日期：</span>
               <input type="date" class="filter-input" value="2025-12-25">
               <span class="filter-sep">~</span>
-              <input type="date" class="filter-input" value="2025-12-25">
+              <input type="date" class="filter-input" value="2026-10-20">
             </div>
             <div class="filter-group" style="margin-left:auto;">
               <span class="filter-label">Q</span>
@@ -2465,6 +2586,251 @@
   var recordDataModes = {"water": [{"name": "A路冷水系统", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "冷冻泵运行数量", "type": "controlled", "actual": "4.00", "ai": "4.00", "change": "无变化"}, {"name": "最不利压差", "type": "controlled", "actual": "1.02 bar", "ai": "1.597 bar", "change": "+0.58"}, {"name": "二次泵平均频率", "type": "controlled", "actual": "30.00 Hz", "ai": "30.00 Hz", "change": "无变化"}, {"name": "总功率", "type": "controlled", "actual": "955.44 kW", "ai": "933.40 kW", "change": "-22.04"}, {"name": "冷冻水总管流量", "type": "controlled", "actual": "804.02 m3/h", "ai": "1455.00 m3/h", "change": "+650.98"}, {"name": "冷冻水总管供水温度", "type": "controlled", "actual": "12.00 ℃", "ai": "12.00 ℃", "change": "无变化"}, {"name": "冷冻水总管回水温度", "type": "controlled", "actual": "17.12 ℃", "ai": "14.83 ℃", "change": "-2.29"}, {"name": "冷冻泵平均频率", "type": "controlled", "actual": "30.00 Hz", "ai": "30.00 Hz", "change": "无变化"}, {"name": "实时制冷量", "type": "disturbance", "actual": "4787.59 kW", "ai": "4787.60 kW", "change": "+0.01"}, {"name": "冷冻水总管供回水压差", "type": "controlled", "actual": "1.17 bar", "ai": "1.315 bar", "change": "+0.15"}, {"name": "系统运行模式", "type": "controlled", "actual": "制冷", "ai": "制冷", "change": "无变化"}, {"name": "二次泵运行数量", "type": "controlled", "actual": "4.00", "ai": "4.00", "change": "无变化"}, {"name": "冷冻水供回水温差", "type": "controlled", "actual": "5.12 ℃", "ai": "2.829 ℃", "change": "-2.29"}, {"name": "制冷系统能效（COP)", "type": "controlled", "actual": "5.01", "ai": "5.129", "change": "+0.12"}, {"name": "冷冻主管旁通阀开度", "type": "unopt", "actual": "0.00 %", "ai": "0.00 %", "change": "无变化"}, {"name": "室外湿球温度", "type": "disturbance", "actual": "23.90 ℃", "ai": "23.90 ℃", "change": "无变化"}]}, {"name": "1#二次泵", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "有功功率", "type": "controlled", "actual": "10.45 kW", "ai": "10.07 kW", "change": "-0.38"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "频率反馈", "type": "optimizing", "actual": "30.00", "ai": "30.00", "change": "无变化"}, {"name": "进出口压差", "type": "controlled", "actual": "1.02 bar", "ai": "1.20 bar", "change": "+0.18"}, {"name": "流量", "type": "controlled", "actual": "199.18", "ai": "290.20", "change": "+91.02"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}]}, {"name": "2#二次泵", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "10.45 kW", "ai": "10.66 kW", "change": "+0.21"}, {"name": "频率反馈", "type": "optimizing", "actual": "30.00", "ai": "30.00", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "流量", "type": "controlled", "actual": "198.69", "ai": "293.50", "change": "+94.81"}, {"name": "进出口压差", "type": "controlled", "actual": "1.02 bar", "ai": "1.20 bar", "change": "+0.18"}]}, {"name": "3#二次泵", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "流量", "type": "controlled", "actual": "200.34", "ai": "171.20", "change": "-29.14"}, {"name": "进出口压差", "type": "controlled", "actual": "1.02 bar", "ai": "1.20 bar", "change": "+0.18"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "频率反馈", "type": "optimizing", "actual": "30.00", "ai": "30.00", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "10.45 kW", "ai": "10.66 kW", "change": "+0.21"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}]}, {"name": "4#二次泵", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "进出口压差", "type": "controlled", "actual": "1.02 bar", "ai": "1.20 bar", "change": "+0.18"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "10.45 kW", "ai": "10.66 kW", "change": "+0.21"}, {"name": "频率反馈", "type": "optimizing", "actual": "30.00", "ai": "30.00", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "流量", "type": "controlled", "actual": "202.59", "ai": "301.30", "change": "+98.71"}]}, {"name": "A路01#制冷单元", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "冷水主机负载率", "type": "controlled", "actual": "31.00 %", "ai": "35.08 %", "change": "+4.08"}, {"name": "冷冻水出水温度", "type": "optimizing", "actual": "12.00 ℃", "ai": "12.00 ℃", "change": "无变化"}, {"name": "冷冻水流量", "type": "controlled", "actual": "204.21 m3/h", "ai": "374.90 m3/h", "change": "+170.69"}, {"name": "冷冻冷却水温差", "type": "controlled", "actual": "16.09 ℃", "ai": "15.16 ℃", "change": "-0.93"}, {"name": "冷却水进水温度（计算）", "type": "controlled", "actual": "28.09 ℃", "ai": "27.16 ℃", "change": "-0.93"}, {"name": "实时制冷量", "type": "controlled", "actual": "1215.98 kW", "ai": "1233.40 kW", "change": "+17.42"}, {"name": "有功功率", "type": "controlled", "actual": "192.98 kW", "ai": "182.40 kW", "change": "-10.58"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "冷却水流量", "type": "controlled", "actual": "242.20 m3/h", "ai": "357.70 m3/h", "change": "+115.50"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}]}, {"name": "A路02#制冷单元", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "冷冻冷却水温差", "type": "controlled", "actual": "16.08 ℃", "ai": "15.79 ℃", "change": "-0.29"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "冷冻水出水温度", "type": "optimizing", "actual": "12.00 ℃", "ai": "12.00 ℃", "change": "无变化"}, {"name": "实时制冷量", "type": "controlled", "actual": "1208.84 kW", "ai": "1238.30 kW", "change": "+29.46"}, {"name": "冷却水进水温度（计算）", "type": "controlled", "actual": "28.08 ℃", "ai": "27.79 ℃", "change": "-0.29"}, {"name": "冷冻水流量", "type": "controlled", "actual": "203.01 m3/h", "ai": "376.30 m3/h", "change": "+173.29"}, {"name": "冷水主机负载率", "type": "controlled", "actual": "30.90 %", "ai": "35.22 %", "change": "+4.32"}, {"name": "冷却水流量", "type": "controlled", "actual": "240.87 m3/h", "ai": "489.20 m3/h", "change": "+248.33"}, {"name": "有功功率", "type": "controlled", "actual": "192.39 kW", "ai": "183.60 kW", "change": "-8.79"}]}, {"name": "A路03#制冷单元", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "冷冻水出水温度", "type": "optimizing", "actual": "12.00 ℃", "ai": "12.00 ℃", "change": "无变化"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "冷冻水流量", "type": "controlled", "actual": "199.63 m3/h", "ai": "376.30 m3/h", "change": "+176.67"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "实时制冷量", "type": "controlled", "actual": "1188.71 kW", "ai": "1238.30 kW", "change": "+49.59"}, {"name": "冷却水流量", "type": "controlled", "actual": "237.12 m3/h", "ai": "489.20 m3/h", "change": "+252.08"}, {"name": "冷冻冷却水温差", "type": "controlled", "actual": "16.07 ℃", "ai": "15.79 ℃", "change": "-0.28"}, {"name": "冷却水进水温度（计算）", "type": "controlled", "actual": "28.07 ℃", "ai": "27.79 ℃", "change": "-0.28"}, {"name": "冷水主机负载率", "type": "controlled", "actual": "30.30 %", "ai": "35.22 %", "change": "+4.92"}, {"name": "有功功率", "type": "controlled", "actual": "190.73 kW", "ai": "183.60 kW", "change": "-7.13"}]}, {"name": "A路04#制冷单元", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "冷冻冷却水温差", "type": "controlled", "actual": "16.06 ℃", "ai": "14.13 ℃", "change": "-1.93"}, {"name": "冷却水进水温度（计算）", "type": "controlled", "actual": "28.06 ℃", "ai": "26.13 ℃", "change": "-1.93"}, {"name": "实时制冷量", "type": "controlled", "actual": "1174.06 kW", "ai": "1077.70 kW", "change": "-96.36"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "冷冻水出水温度", "type": "optimizing", "actual": "12.00 ℃", "ai": "12.00 ℃", "change": "无变化"}, {"name": "冷水主机负载率", "type": "controlled", "actual": "30.00 %", "ai": "30.65 %", "change": "+0.65"}, {"name": "冷冻水流量", "type": "controlled", "actual": "197.17 m3/h", "ai": "327.50 m3/h", "change": "+130.33"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "189.54 kW", "ai": "155.80 kW", "change": "-33.74"}, {"name": "冷却水流量", "type": "controlled", "actual": "234.40 m3/h", "ai": "417.80 m3/h", "change": "+183.40"}]}, {"name": "冷冻水泵 PCWP-01-01", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "流量", "type": "controlled", "actual": "204.21", "ai": "374.90", "change": "+170.69"}, {"name": "频率反馈", "type": "optimizing", "actual": "30.00", "ai": "30.00", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "15.54 kW", "ai": "15.50 kW", "change": "-0.04"}, {"name": "进出口压差", "type": "controlled", "actual": "1.17 bar", "ai": "1.802 bar", "change": "+0.63"}]}, {"name": "冷冻水泵 PCWP-01-02", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "流量", "type": "controlled", "actual": "203.01", "ai": "376.30", "change": "+173.29"}, {"name": "进出口压差", "type": "controlled", "actual": "1.17 bar", "ai": "1.802 bar", "change": "+0.63"}, {"name": "频率反馈", "type": "optimizing", "actual": "30.00", "ai": "30.00", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "15.54 kW", "ai": "15.50 kW", "change": "-0.04"}]}, {"name": "冷冻水泵 PCWP-01-03", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "流量", "type": "controlled", "actual": "199.63", "ai": "376.30", "change": "+176.67"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "15.54 kW", "ai": "15.50 kW", "change": "-0.04"}, {"name": "进出口压差", "type": "controlled", "actual": "1.17 bar", "ai": "1.802 bar", "change": "+0.63"}, {"name": "频率反馈", "type": "optimizing", "actual": "30.00", "ai": "30.00", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}]}, {"name": "冷冻水泵 PCWP-01-04", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "有功功率", "type": "controlled", "actual": "15.54 kW", "ai": "15.50 kW", "change": "-0.04"}, {"name": "进出口压差", "type": "controlled", "actual": "1.17 bar", "ai": "1.802 bar", "change": "+0.63"}, {"name": "流量", "type": "controlled", "actual": "197.17", "ai": "327.50", "change": "+130.33"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "频率反馈", "type": "optimizing", "actual": "30.00", "ai": "30.00", "change": "无变化"}]}, {"name": "冷却塔 CT-01-01", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "频率反馈", "type": "optimizing", "actual": "30.00", "ai": "30.00", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "6.48 kW", "ai": "6.257 kW", "change": "-0.22"}, {"name": "风机开机数", "type": "unopt", "actual": "1.00", "ai": "1.00", "change": "无变化"}, {"name": "冷却水温差", "type": "controlled", "actual": "5.00 ℃", "ai": "2.465 ℃", "change": "-2.54"}, {"name": "冷却塔出水温度", "type": "controlled", "actual": "28.09 ℃", "ai": "27.16 ℃", "change": "-0.93"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "室外湿球温度", "type": "controlled", "actual": "23.90 ℃", "ai": "23.90 ℃", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "冷却水流量", "type": "controlled", "actual": "242.20 m3/h", "ai": "357.70 m3/h", "change": "+115.50"}, {"name": "冷却塔逼近度", "type": "controlled", "actual": "4.19 ℃", "ai": "3.256 ℃", "change": "-0.93"}]}, {"name": "冷却塔 CT-01-02", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "风机开机数", "type": "unopt", "actual": "1.00", "ai": "1.00", "change": "无变化"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "6.48 kW", "ai": "6.108 kW", "change": "-0.37"}, {"name": "冷却水流量", "type": "controlled", "actual": "240.87 m3/h", "ai": "489.20 m3/h", "change": "+248.33"}, {"name": "冷却水温差", "type": "controlled", "actual": "5.00 ℃", "ai": "2.465 ℃", "change": "-2.54"}, {"name": "频率反馈", "type": "optimizing", "actual": "30.00", "ai": "30.00", "change": "无变化"}, {"name": "冷却塔出水温度", "type": "controlled", "actual": "28.08 ℃", "ai": "27.79 ℃", "change": "-0.29"}, {"name": "室外湿球温度", "type": "controlled", "actual": "23.90 ℃", "ai": "23.90 ℃", "change": "无变化"}, {"name": "冷却塔逼近度", "type": "controlled", "actual": "4.18 ℃", "ai": "3.889 ℃", "change": "-0.29"}]}, {"name": "冷却塔 CT-01-03", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "冷却水温差", "type": "controlled", "actual": "5.00 ℃", "ai": "2.465 ℃", "change": "-2.54"}, {"name": "室外湿球温度", "type": "controlled", "actual": "23.90 ℃", "ai": "23.90 ℃", "change": "无变化"}, {"name": "风机开机数", "type": "unopt", "actual": "1.00", "ai": "1.00", "change": "无变化"}, {"name": "冷却塔出水温度", "type": "controlled", "actual": "28.07 ℃", "ai": "27.79 ℃", "change": "-0.28"}, {"name": "频率反馈", "type": "optimizing", "actual": "30.00", "ai": "30.00", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "6.48 kW", "ai": "5.776 kW", "change": "-0.70"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "冷却水流量", "type": "controlled", "actual": "237.12 m3/h", "ai": "489.20 m3/h", "change": "+252.08"}, {"name": "冷却塔逼近度", "type": "controlled", "actual": "4.17 ℃", "ai": "3.889 ℃", "change": "-0.28"}]}, {"name": "冷却塔 CT-01-04", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "频率反馈", "type": "optimizing", "actual": "30.00", "ai": "30.00", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "6.48 kW", "ai": "5.392 kW", "change": "-1.09"}, {"name": "冷却水温差", "type": "controlled", "actual": "5.00 ℃", "ai": "2.465 ℃", "change": "-2.54"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "冷却水流量", "type": "controlled", "actual": "234.40 m3/h", "ai": "417.80 m3/h", "change": "+183.40"}, {"name": "风机开机数", "type": "unopt", "actual": "1.00", "ai": "1.00", "change": "无变化"}, {"name": "冷却塔逼近度", "type": "controlled", "actual": "4.16 ℃", "ai": "2.23 ℃", "change": "-1.93"}, {"name": "冷却塔出水温度", "type": "controlled", "actual": "28.06 ℃", "ai": "26.13 ℃", "change": "-1.93"}, {"name": "室外湿球温度", "type": "controlled", "actual": "23.90 ℃", "ai": "23.90 ℃", "change": "无变化"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}]}, {"name": "冷却水泵 CP-01-01", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "有功功率", "type": "controlled", "actual": "25.43 kW", "ai": "25.35 kW", "change": "-0.08"}, {"name": "进出口压差", "type": "controlled", "actual": "0.00 bar", "ai": "1.09 bar", "change": "+1.09"}, {"name": "流量", "type": "controlled", "actual": "242.20", "ai": "357.70", "change": "+115.50"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "频率反馈", "type": "optimizing", "actual": "30.00", "ai": "30.00", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}]}, {"name": "冷却水泵 CP-01-02", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "流量", "type": "controlled", "actual": "240.87", "ai": "489.20", "change": "+248.33"}, {"name": "频率反馈", "type": "optimizing", "actual": "30.00", "ai": "30.00", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "25.43 kW", "ai": "25.35 kW", "change": "-0.08"}, {"name": "进出口压差", "type": "controlled", "actual": "0.00 bar", "ai": "1.101 bar", "change": "+1.10"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}]}, {"name": "冷却水泵 CP-01-03", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "进出口压差", "type": "controlled", "actual": "0.00 bar", "ai": "1.101 bar", "change": "+1.10"}, {"name": "频率反馈", "type": "optimizing", "actual": "30.00", "ai": "30.00", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "25.43 kW", "ai": "25.35 kW", "change": "-0.08"}, {"name": "流量", "type": "controlled", "actual": "237.12", "ai": "489.20", "change": "+252.08"}]}, {"name": "冷却水泵 CP-01-04", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "流量", "type": "controlled", "actual": "234.40", "ai": "417.80", "change": "+183.40"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "频率反馈", "type": "optimizing", "actual": "30.00", "ai": "30.00", "change": "无变化"}, {"name": "进出口压差", "type": "controlled", "actual": "1.69 bar", "ai": "1.481 bar", "change": "-0.21"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "25.43 kW", "ai": "24.28 kW", "change": "-1.15"}]}, {"name": "制冷单元_1", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "冷冻侧压差", "type": "controlled", "actual": "1.17 bar", "ai": "0.4871 bar", "change": "-0.68"}, {"name": "冷却水流量", "type": "controlled", "actual": "242.20 m3/h", "ai": "357.70 m3/h", "change": "+115.50"}, {"name": "冷冻水流量", "type": "controlled", "actual": "204.21 m3/h", "ai": "374.90 m3/h", "change": "+170.69"}, {"name": "系统运行模式", "type": "controlled", "actual": "制冷", "ai": "制冷", "change": "无变化"}, {"name": "冷冻水出水温度", "type": "controlled", "actual": "12.00 ℃", "ai": "12.00 ℃", "change": "无变化"}, {"name": "冷却侧压差", "type": "controlled", "actual": "-0.99 bar", "ai": "0.6044 bar", "change": "+1.59"}, {"name": "运行状态", "type": "controlled", "actual": "运行中", "ai": "运行中", "change": "无变化"}]}, {"name": "制冷单元_2", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "运行状态", "type": "controlled", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "系统运行模式", "type": "controlled", "actual": "制冷", "ai": "制冷", "change": "无变化"}, {"name": "冷冻水流量", "type": "controlled", "actual": "203.01 m3/h", "ai": "376.30 m3/h", "change": "+173.29"}, {"name": "冷冻侧压差", "type": "controlled", "actual": "1.49 bar", "ai": "0.4872 bar", "change": "-1.00"}, {"name": "冷冻水出水温度", "type": "controlled", "actual": "12.00 ℃", "ai": "12.00 ℃", "change": "无变化"}, {"name": "冷却侧压差", "type": "controlled", "actual": "-0.99 bar", "ai": "0.5951 bar", "change": "+1.59"}, {"name": "冷却水流量", "type": "controlled", "actual": "240.87 m3/h", "ai": "489.20 m3/h", "change": "+248.33"}]}, {"name": "制冷单元_3", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "冷却水流量", "type": "controlled", "actual": "237.12 m3/h", "ai": "489.20 m3/h", "change": "+252.08"}, {"name": "系统运行模式", "type": "controlled", "actual": "制冷", "ai": "制冷", "change": "无变化"}, {"name": "冷冻水出水温度", "type": "controlled", "actual": "12.00 ℃", "ai": "12.00 ℃", "change": "无变化"}, {"name": "冷冻水流量", "type": "controlled", "actual": "199.63 m3/h", "ai": "376.30 m3/h", "change": "+176.67"}, {"name": "冷冻侧压差", "type": "controlled", "actual": "1.17 bar", "ai": "0.4872 bar", "change": "-0.68"}, {"name": "运行状态", "type": "controlled", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "冷却侧压差", "type": "controlled", "actual": "-0.99 bar", "ai": "0.5951 bar", "change": "+1.59"}]}, {"name": "制冷单元_4", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "冷却水流量", "type": "controlled", "actual": "234.40 m3/h", "ai": "417.80 m3/h", "change": "+183.40"}, {"name": "冷冻水出水温度", "type": "controlled", "actual": "12.00 ℃", "ai": "12.00 ℃", "change": "无变化"}, {"name": "冷冻水流量", "type": "controlled", "actual": "197.17 m3/h", "ai": "327.50 m3/h", "change": "+130.33"}, {"name": "冷冻侧压差", "type": "controlled", "actual": "0.30 bar", "ai": "0.4873 bar", "change": "+0.19"}, {"name": "冷却侧压差", "type": "controlled", "actual": "0.70 bar", "ai": "0.591 bar", "change": "-0.11"}, {"name": "系统运行模式", "type": "controlled", "actual": "制冷", "ai": "制冷", "change": "无变化"}, {"name": "运行状态", "type": "controlled", "actual": "运行中", "ai": "运行中", "change": "无变化"}]}, {"name": "并联二次水泵管路_1", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "冷冻水流量", "type": "controlled", "actual": "800.80 m3/h", "ai": "1056.20 m3/h", "change": "+255.40"}, {"name": "进出口压差", "type": "controlled", "actual": "1.02 bar", "ai": "1.20 bar", "change": "+0.18"}, {"name": "二次泵运行数量", "type": "controlled", "actual": "4.00", "ai": "4.00", "change": "无变化"}, {"name": "旁通流量", "type": "controlled", "actual": "3.22 m³/h", "ai": "398.90 m³/h", "change": "+395.68"}, {"name": "末端冷冻水供水温度", "type": "controlled", "actual": "12.00 ℃", "ai": "12.00 ℃", "change": "无变化"}]}, {"name": "并联冷却塔管路_1", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "冷却管旁通阀开度", "type": "unopt", "actual": "0.00 %", "ai": "0.00 %", "change": "无变化"}, {"name": "总散热量", "type": "controlled", "actual": "1408.39 kW", "ai": "1025.20 kW", "change": "-383.19"}, {"name": "运行状态", "type": "controlled", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "冷却塔逼近度", "type": "controlled", "actual": "4.19 ℃", "ai": "3.256 ℃", "change": "-0.93"}, {"name": "冷却水总管路进出塔压差", "type": "controlled", "actual": "0.99 bar", "ai": "0.4864 bar", "change": "-0.50"}, {"name": "冷却水总管进塔温度", "type": "controlled", "actual": "33.09 ℃", "ai": "29.62 ℃", "change": "-3.47"}, {"name": "平均冷却塔流量", "type": "controlled", "actual": "242.20 m³/h", "ai": "357.70 m³/h", "change": "+115.50"}, {"name": "冷却水总管出塔温度", "type": "controlled", "actual": "28.09 ℃", "ai": "27.16 ℃", "change": "-0.93"}, {"name": "冷却塔运行数量", "type": "controlled", "actual": "1.00", "ai": "1.00", "change": "无变化"}, {"name": "冷却水温差", "type": "controlled", "actual": "5.00 ℃", "ai": "2.465 ℃", "change": "-2.54"}, {"name": "冷却水流量", "type": "controlled", "actual": "242.20 m3/h", "ai": "357.70 m3/h", "change": "+115.50"}]}, {"name": "并联冷却塔管路_2", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "冷却塔运行数量", "type": "controlled", "actual": "1.00", "ai": "1.00", "change": "无变化"}, {"name": "冷却塔逼近度", "type": "controlled", "actual": "4.18 ℃", "ai": "3.889 ℃", "change": "-0.29"}, {"name": "冷却水总管路进出塔压差", "type": "controlled", "actual": "0.99 bar", "ai": "0.5062 bar", "change": "-0.48"}, {"name": "冷却水流量", "type": "controlled", "actual": "240.87 m3/h", "ai": "489.20 m3/h", "change": "+248.33"}, {"name": "冷却管旁通阀开度", "type": "unopt", "actual": "0.00 %", "ai": "0.00 %", "change": "无变化"}, {"name": "冷却水总管进塔温度", "type": "controlled", "actual": "33.08 ℃", "ai": "30.25 ℃", "change": "-2.83"}, {"name": "平均冷却塔流量", "type": "controlled", "actual": "240.87 m³/h", "ai": "489.20 m³/h", "change": "+248.33"}, {"name": "运行状态", "type": "controlled", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "冷却水总管出塔温度", "type": "controlled", "actual": "28.08 ℃", "ai": "27.79 ℃", "change": "-0.29"}, {"name": "总散热量", "type": "controlled", "actual": "1400.66 kW", "ai": "1402.10 kW", "change": "+1.44"}, {"name": "冷却水温差", "type": "controlled", "actual": "5.00 ℃", "ai": "2.465 ℃", "change": "-2.54"}]}, {"name": "并联冷却塔管路_3", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "平均冷却塔流量", "type": "controlled", "actual": "237.12 m³/h", "ai": "489.20 m³/h", "change": "+252.08"}, {"name": "冷却水总管进塔温度", "type": "controlled", "actual": "33.07 ℃", "ai": "30.25 ℃", "change": "-2.82"}, {"name": "冷却塔逼近度", "type": "controlled", "actual": "4.17 ℃", "ai": "3.889 ℃", "change": "-0.28"}, {"name": "冷却塔运行数量", "type": "controlled", "actual": "1.00", "ai": "1.00", "change": "无变化"}, {"name": "冷却水流量", "type": "controlled", "actual": "237.12 m3/h", "ai": "489.20 m3/h", "change": "+252.08"}, {"name": "冷却管旁通阀开度", "type": "unopt", "actual": "0.00 %", "ai": "0.00 %", "change": "无变化"}, {"name": "运行状态", "type": "controlled", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "冷却水总管路进出塔压差", "type": "controlled", "actual": "0.99 bar", "ai": "0.5062 bar", "change": "-0.48"}, {"name": "冷却水温差", "type": "controlled", "actual": "5.00 ℃", "ai": "2.465 ℃", "change": "-2.54"}, {"name": "总散热量", "type": "controlled", "actual": "1378.85 kW", "ai": "1402.10 kW", "change": "+23.25"}, {"name": "冷却水总管出塔温度", "type": "controlled", "actual": "28.07 ℃", "ai": "27.79 ℃", "change": "-0.28"}]}, {"name": "并联冷却塔管路_4", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "冷却管旁通阀开度", "type": "unopt", "actual": "0.00 %", "ai": "0.00 %", "change": "无变化"}, {"name": "运行状态", "type": "controlled", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "冷却水流量", "type": "controlled", "actual": "234.40 m3/h", "ai": "417.80 m3/h", "change": "+183.40"}, {"name": "冷却水总管路进出塔压差", "type": "controlled", "actual": "0.99 bar", "ai": "0.8912 bar", "change": "-0.10"}, {"name": "冷却水温差", "type": "controlled", "actual": "5.00 ℃", "ai": "2.465 ℃", "change": "-2.54"}, {"name": "冷却水总管进塔温度", "type": "controlled", "actual": "33.06 ℃", "ai": "28.59 ℃", "change": "-4.47"}, {"name": "平均冷却塔流量", "type": "controlled", "actual": "234.40 m³/h", "ai": "417.80 m³/h", "change": "+183.40"}, {"name": "总散热量", "type": "controlled", "actual": "1363.04 kW", "ai": "1197.60 kW", "change": "-165.44"}, {"name": "冷却水总管出塔温度", "type": "controlled", "actual": "28.06 ℃", "ai": "26.13 ℃", "change": "-1.93"}, {"name": "冷却塔运行数量", "type": "controlled", "actual": "1.00", "ai": "1.00", "change": "无变化"}, {"name": "冷却塔逼近度", "type": "controlled", "actual": "4.16 ℃", "ai": "2.23 ℃", "change": "-1.93"}]}, {"name": "蓄冷罐组", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "蓄冷量", "type": "controlled", "actual": "1901.62 kWh", "ai": "2509.80 kWh", "change": "+608.18"}]}, {"name": "5#二次泵", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "有功功率", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "频率反馈", "type": "unopt", "actual": "0.00", "ai": "0.00", "change": "无变化"}, {"name": "流量", "type": "controlled", "actual": "0.00", "ai": "0.00", "change": "无变化"}, {"name": "进出口压差", "type": "controlled", "actual": "0.00 bar", "ai": "1.20 bar", "change": "+1.20"}, {"name": "运行状态", "type": "unopt", "actual": "关机中", "ai": "关机中", "change": "无变化"}]}, {"name": "6#二次泵", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "进出口压差", "type": "controlled", "actual": "0.00 bar", "ai": "1.20 bar", "change": "+1.20"}, {"name": "运行状态", "type": "unopt", "actual": "关机中", "ai": "关机中", "change": "无变化"}, {"name": "频率反馈", "type": "unopt", "actual": "0.00", "ai": "0.00", "change": "无变化"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "流量", "type": "controlled", "actual": "0.00", "ai": "0.00", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}]}, {"name": "A路01#制冷单元板换", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "冷冻水出水温度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "冷却水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "实时制冷量", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}, {"name": "换热温差", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "冷冻水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "关机中", "ai": "关机中", "change": "无变化"}, {"name": "冷却水出水温度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}]}, {"name": "A路02#制冷单元板换", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "运行状态", "type": "unopt", "actual": "关机中", "ai": "关机中", "change": "无变化"}, {"name": "实时制冷量", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}, {"name": "冷却水出水温度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "换热温差", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "冷却水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "冷冻水出水温度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "冷冻水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}]}, {"name": "A路03#制冷单元板换", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "运行状态", "type": "unopt", "actual": "关机中", "ai": "关机中", "change": "无变化"}, {"name": "冷冻水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "换热温差", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "冷却水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "冷却水出水温度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "实时制冷量", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}, {"name": "冷冻水出水温度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}]}, {"name": "A路04#制冷单元板换", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "换热温差", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "冷却水出水温度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "冷冻水出水温度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "冷冻水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "冷却水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "实时制冷量", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "关机中", "ai": "关机中", "change": "无变化"}]}, {"name": "A路05#制冷单元", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "运行状态", "type": "unopt", "actual": "关机中", "ai": "关机中", "change": "无变化"}, {"name": "冷冻冷却水温差", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "冷冻水出水温度", "type": "unopt", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "实时制冷量", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "冷水主机负载率", "type": "controlled", "actual": "0.00 %", "ai": "0.00 %", "change": "无变化"}, {"name": "冷却水进水温度（计算）", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "冷冻水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "冷却水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}]}, {"name": "A路05#制冷单元板换", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "换热温差", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "冷冻水出水温度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "冷冻水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "实时制冷量", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}, {"name": "冷却水出水温度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "冷却水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "关机中", "ai": "关机中", "change": "无变化"}]}, {"name": "A路06#制冷单元", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "冷冻水出水温度", "type": "unopt", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "冷冻水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "冷却水进水温度（计算）", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "冷水主机负载率", "type": "controlled", "actual": "0.00 %", "ai": "0.00 %", "change": "无变化"}, {"name": "实时制冷量", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}, {"name": "冷冻冷却水温差", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "关机中", "ai": "关机中", "change": "无变化"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "冷却水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}]}, {"name": "A路06#制冷单元板换", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "冷冻水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "关机中", "ai": "关机中", "change": "无变化"}, {"name": "冷却水出水温度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "冷却水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "换热温差", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "冷冻水出水温度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "实时制冷量", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}]}, {"name": "冷冻水泵 PCWP-01-05", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "进出口压差", "type": "controlled", "actual": "0.00 bar", "ai": "0.00 bar", "change": "无变化"}, {"name": "流量", "type": "controlled", "actual": "0.00", "ai": "0.00", "change": "无变化"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "关机中", "ai": "关机中", "change": "无变化"}, {"name": "频率反馈", "type": "unopt", "actual": "0.00", "ai": "0.00", "change": "无变化"}]}, {"name": "冷冻水泵 PCWP-01-06", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "进出口压差", "type": "controlled", "actual": "0.00 bar", "ai": "0.00 bar", "change": "无变化"}, {"name": "频率反馈", "type": "unopt", "actual": "0.00", "ai": "0.00", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "关机中", "ai": "关机中", "change": "无变化"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "流量", "type": "controlled", "actual": "0.00", "ai": "0.00", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}]}, {"name": "冷却塔 CT-01-05", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "冷却水温差", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "室外湿球温度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}, {"name": "冷却水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "冷却塔逼近度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "风机开机数", "type": "unopt", "actual": "0.00", "ai": "0.00", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "关机中", "ai": "关机中", "change": "无变化"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "冷却塔出水温度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "频率反馈", "type": "unopt", "actual": "0.00", "ai": "0.00", "change": "无变化"}]}, {"name": "冷却塔 CT-01-06", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "冷却塔逼近度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "冷却水温差", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "频率反馈", "type": "unopt", "actual": "0.00", "ai": "0.00", "change": "无变化"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "关机中", "ai": "关机中", "change": "无变化"}, {"name": "冷却水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "冷却塔出水温度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}, {"name": "室外湿球温度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "风机开机数", "type": "unopt", "actual": "0.00", "ai": "0.00", "change": "无变化"}]}, {"name": "冷却水泵 CP-01-05", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "有功功率", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}, {"name": "进出口压差", "type": "controlled", "actual": "0.00 bar", "ai": "0.00 bar", "change": "无变化"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "频率反馈", "type": "unopt", "actual": "0.00", "ai": "0.00", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "关机中", "ai": "关机中", "change": "无变化"}, {"name": "流量", "type": "controlled", "actual": "0.00", "ai": "0.00", "change": "无变化"}]}, {"name": "冷却水泵 CP-01-06", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "有功功率", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "关机中", "ai": "关机中", "change": "无变化"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "流量", "type": "controlled", "actual": "0.00", "ai": "0.00", "change": "无变化"}, {"name": "频率反馈", "type": "unopt", "actual": "0.00", "ai": "0.00", "change": "无变化"}, {"name": "进出口压差", "type": "controlled", "actual": "0.00 bar", "ai": "0.00 bar", "change": "无变化"}]}, {"name": "制冷单元_5", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "系统运行模式", "type": "controlled", "actual": "制冷", "ai": "制冷", "change": "无变化"}, {"name": "冷却侧压差", "type": "controlled", "actual": "0.00 bar", "ai": "0.00 bar", "change": "无变化"}, {"name": "冷冻水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "冷却水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "冷冻水出水温度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "运行状态", "type": "controlled", "actual": "关机中", "ai": "关机中", "change": "无变化"}, {"name": "冷冻侧压差", "type": "controlled", "actual": "0.00 bar", "ai": "0.00 bar", "change": "无变化"}]}, {"name": "制冷单元_6", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "冷冻水出水温度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "系统运行模式", "type": "controlled", "actual": "制冷", "ai": "制冷", "change": "无变化"}, {"name": "冷却侧压差", "type": "controlled", "actual": "0.00 bar", "ai": "0.00 bar", "change": "无变化"}, {"name": "冷冻侧压差", "type": "controlled", "actual": "0.00 bar", "ai": "0.00 bar", "change": "无变化"}, {"name": "冷却水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "冷冻水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "运行状态", "type": "controlled", "actual": "关机中", "ai": "关机中", "change": "无变化"}]}, {"name": "并联冷却塔管路_5", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "平均冷却塔流量", "type": "controlled", "actual": "0.00 m³/h", "ai": "0.00 m³/h", "change": "无变化"}, {"name": "冷却水温差", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "运行状态", "type": "controlled", "actual": "关机中", "ai": "关机中", "change": "无变化"}, {"name": "冷却管旁通阀开度", "type": "unopt", "actual": "0.00 %", "ai": "0.00 %", "change": "无变化"}, {"name": "冷却塔逼近度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "冷却水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "冷却水总管进塔温度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "冷却塔运行数量", "type": "controlled", "actual": "0.00", "ai": "0.00", "change": "无变化"}, {"name": "冷却水总管路进出塔压差", "type": "controlled", "actual": "0.00 bar", "ai": "0.00 bar", "change": "无变化"}, {"name": "冷却水总管出塔温度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "总散热量", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}]}, {"name": "并联冷却塔管路_6", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "冷却水总管进塔温度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "平均冷却塔流量", "type": "controlled", "actual": "0.00 m³/h", "ai": "0.00 m³/h", "change": "无变化"}, {"name": "运行状态", "type": "controlled", "actual": "关机中", "ai": "关机中", "change": "无变化"}, {"name": "冷却水总管出塔温度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "冷却塔逼近度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "冷却水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "冷却管旁通阀开度", "type": "unopt", "actual": "0.00 %", "ai": "0.00 %", "change": "无变化"}, {"name": "冷却水温差", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "总散热量", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}, {"name": "冷却水总管路进出塔压差", "type": "controlled", "actual": "0.00 bar", "ai": "0.00 bar", "change": "无变化"}, {"name": "冷却塔运行数量", "type": "controlled", "actual": "0.00", "ai": "0.00", "change": "无变化"}]}], "wind": [{"name": "A路冷水系统", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "冷冻泵运行数量", "type": "controlled", "actual": "4.00", "ai": "4.00", "change": "无变化"}, {"name": "最不利压差", "type": "controlled", "actual": "1.02 bar", "ai": "1.597 bar", "change": "+0.58"}, {"name": "二次泵平均频率", "type": "controlled", "actual": "30.00 Hz", "ai": "30.00 Hz", "change": "无变化"}, {"name": "总功率", "type": "controlled", "actual": "955.44 kW", "ai": "933.40 kW", "change": "-22.04"}, {"name": "冷冻水总管流量", "type": "controlled", "actual": "804.02 m3/h", "ai": "1455.00 m3/h", "change": "+650.98"}, {"name": "冷冻水总管供水温度", "type": "controlled", "actual": "12.00 ℃", "ai": "12.00 ℃", "change": "无变化"}, {"name": "冷冻水总管回水温度", "type": "controlled", "actual": "17.12 ℃", "ai": "14.83 ℃", "change": "-2.29"}, {"name": "冷冻泵平均频率", "type": "controlled", "actual": "30.00 Hz", "ai": "30.00 Hz", "change": "无变化"}, {"name": "实时制冷量", "type": "disturbance", "actual": "4787.59 kW", "ai": "4787.60 kW", "change": "+0.01"}, {"name": "冷冻水总管供回水压差", "type": "controlled", "actual": "1.17 bar", "ai": "1.315 bar", "change": "+0.15"}, {"name": "系统运行模式", "type": "controlled", "actual": "制冷", "ai": "制冷", "change": "无变化"}, {"name": "二次泵运行数量", "type": "controlled", "actual": "4.00", "ai": "4.00", "change": "无变化"}, {"name": "冷冻水供回水温差", "type": "controlled", "actual": "5.12 ℃", "ai": "2.829 ℃", "change": "-2.29"}, {"name": "制冷系统能效（COP)", "type": "controlled", "actual": "5.01", "ai": "5.129", "change": "+0.12"}, {"name": "冷冻主管旁通阀开度", "type": "unopt", "actual": "0.00 %", "ai": "0.00 %", "change": "无变化"}, {"name": "室外湿球温度", "type": "disturbance", "actual": "23.90 ℃", "ai": "23.90 ℃", "change": "无变化"}]}, {"name": "1#二次泵", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "有功功率", "type": "controlled", "actual": "10.45 kW", "ai": "10.07 kW", "change": "-0.38"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "频率反馈", "type": "optimizing", "actual": "30.00", "ai": "30.00", "change": "无变化"}, {"name": "进出口压差", "type": "controlled", "actual": "1.02 bar", "ai": "1.20 bar", "change": "+0.18"}, {"name": "流量", "type": "controlled", "actual": "199.18", "ai": "290.20", "change": "+91.02"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}]}, {"name": "2#二次泵", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "10.45 kW", "ai": "10.66 kW", "change": "+0.21"}, {"name": "频率反馈", "type": "optimizing", "actual": "30.00", "ai": "30.00", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "流量", "type": "controlled", "actual": "198.69", "ai": "293.50", "change": "+94.81"}, {"name": "进出口压差", "type": "controlled", "actual": "1.02 bar", "ai": "1.20 bar", "change": "+0.18"}]}, {"name": "3#二次泵", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "流量", "type": "controlled", "actual": "200.34", "ai": "171.20", "change": "-29.14"}, {"name": "进出口压差", "type": "controlled", "actual": "1.02 bar", "ai": "1.20 bar", "change": "+0.18"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "频率反馈", "type": "optimizing", "actual": "30.00", "ai": "30.00", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "10.45 kW", "ai": "10.66 kW", "change": "+0.21"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}]}, {"name": "4#二次泵", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "进出口压差", "type": "controlled", "actual": "1.02 bar", "ai": "1.20 bar", "change": "+0.18"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "10.45 kW", "ai": "10.66 kW", "change": "+0.21"}, {"name": "频率反馈", "type": "optimizing", "actual": "30.00", "ai": "30.00", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "流量", "type": "controlled", "actual": "202.59", "ai": "301.30", "change": "+98.71"}]}, {"name": "A路01#制冷单元", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "冷水主机负载率", "type": "controlled", "actual": "31.00 %", "ai": "35.08 %", "change": "+4.08"}, {"name": "冷冻水出水温度", "type": "optimizing", "actual": "12.00 ℃", "ai": "12.00 ℃", "change": "无变化"}, {"name": "冷冻水流量", "type": "controlled", "actual": "204.21 m3/h", "ai": "374.90 m3/h", "change": "+170.69"}, {"name": "冷冻冷却水温差", "type": "controlled", "actual": "16.09 ℃", "ai": "15.16 ℃", "change": "-0.93"}, {"name": "冷却水进水温度（计算）", "type": "controlled", "actual": "28.09 ℃", "ai": "27.16 ℃", "change": "-0.93"}, {"name": "实时制冷量", "type": "controlled", "actual": "1215.98 kW", "ai": "1233.40 kW", "change": "+17.42"}, {"name": "有功功率", "type": "controlled", "actual": "192.98 kW", "ai": "182.40 kW", "change": "-10.58"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "冷却水流量", "type": "controlled", "actual": "242.20 m3/h", "ai": "357.70 m3/h", "change": "+115.50"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}]}, {"name": "A路02#制冷单元", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "冷冻冷却水温差", "type": "controlled", "actual": "16.08 ℃", "ai": "15.79 ℃", "change": "-0.29"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "冷冻水出水温度", "type": "optimizing", "actual": "12.00 ℃", "ai": "12.00 ℃", "change": "无变化"}, {"name": "实时制冷量", "type": "controlled", "actual": "1208.84 kW", "ai": "1238.30 kW", "change": "+29.46"}, {"name": "冷却水进水温度（计算）", "type": "controlled", "actual": "28.08 ℃", "ai": "27.79 ℃", "change": "-0.29"}, {"name": "冷冻水流量", "type": "controlled", "actual": "203.01 m3/h", "ai": "376.30 m3/h", "change": "+173.29"}, {"name": "冷水主机负载率", "type": "controlled", "actual": "30.90 %", "ai": "35.22 %", "change": "+4.32"}, {"name": "冷却水流量", "type": "controlled", "actual": "240.87 m3/h", "ai": "489.20 m3/h", "change": "+248.33"}, {"name": "有功功率", "type": "controlled", "actual": "192.39 kW", "ai": "183.60 kW", "change": "-8.79"}]}, {"name": "A路03#制冷单元", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "冷冻水出水温度", "type": "optimizing", "actual": "12.00 ℃", "ai": "12.00 ℃", "change": "无变化"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "冷冻水流量", "type": "controlled", "actual": "199.63 m3/h", "ai": "376.30 m3/h", "change": "+176.67"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "实时制冷量", "type": "controlled", "actual": "1188.71 kW", "ai": "1238.30 kW", "change": "+49.59"}, {"name": "冷却水流量", "type": "controlled", "actual": "237.12 m3/h", "ai": "489.20 m3/h", "change": "+252.08"}, {"name": "冷冻冷却水温差", "type": "controlled", "actual": "16.07 ℃", "ai": "15.79 ℃", "change": "-0.28"}, {"name": "冷却水进水温度（计算）", "type": "controlled", "actual": "28.07 ℃", "ai": "27.79 ℃", "change": "-0.28"}, {"name": "冷水主机负载率", "type": "controlled", "actual": "30.30 %", "ai": "35.22 %", "change": "+4.92"}, {"name": "有功功率", "type": "controlled", "actual": "190.73 kW", "ai": "183.60 kW", "change": "-7.13"}]}, {"name": "A路04#制冷单元", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "冷冻冷却水温差", "type": "controlled", "actual": "16.06 ℃", "ai": "14.13 ℃", "change": "-1.93"}, {"name": "冷却水进水温度（计算）", "type": "controlled", "actual": "28.06 ℃", "ai": "26.13 ℃", "change": "-1.93"}, {"name": "实时制冷量", "type": "controlled", "actual": "1174.06 kW", "ai": "1077.70 kW", "change": "-96.36"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "冷冻水出水温度", "type": "optimizing", "actual": "12.00 ℃", "ai": "12.00 ℃", "change": "无变化"}, {"name": "冷水主机负载率", "type": "controlled", "actual": "30.00 %", "ai": "30.65 %", "change": "+0.65"}, {"name": "冷冻水流量", "type": "controlled", "actual": "197.17 m3/h", "ai": "327.50 m3/h", "change": "+130.33"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "189.54 kW", "ai": "155.80 kW", "change": "-33.74"}, {"name": "冷却水流量", "type": "controlled", "actual": "234.40 m3/h", "ai": "417.80 m3/h", "change": "+183.40"}]}, {"name": "冷冻水泵 PCWP-01-01", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "流量", "type": "controlled", "actual": "204.21", "ai": "374.90", "change": "+170.69"}, {"name": "频率反馈", "type": "optimizing", "actual": "30.00", "ai": "30.00", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "15.54 kW", "ai": "15.50 kW", "change": "-0.04"}, {"name": "进出口压差", "type": "controlled", "actual": "1.17 bar", "ai": "1.802 bar", "change": "+0.63"}]}, {"name": "冷冻水泵 PCWP-01-02", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "流量", "type": "controlled", "actual": "203.01", "ai": "376.30", "change": "+173.29"}, {"name": "进出口压差", "type": "controlled", "actual": "1.17 bar", "ai": "1.802 bar", "change": "+0.63"}, {"name": "频率反馈", "type": "optimizing", "actual": "30.00", "ai": "30.00", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "15.54 kW", "ai": "15.50 kW", "change": "-0.04"}]}, {"name": "冷冻水泵 PCWP-01-03", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "流量", "type": "controlled", "actual": "199.63", "ai": "376.30", "change": "+176.67"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "15.54 kW", "ai": "15.50 kW", "change": "-0.04"}, {"name": "进出口压差", "type": "controlled", "actual": "1.17 bar", "ai": "1.802 bar", "change": "+0.63"}, {"name": "频率反馈", "type": "optimizing", "actual": "30.00", "ai": "30.00", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}]}, {"name": "冷冻水泵 PCWP-01-04", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "有功功率", "type": "controlled", "actual": "15.54 kW", "ai": "15.50 kW", "change": "-0.04"}, {"name": "进出口压差", "type": "controlled", "actual": "1.17 bar", "ai": "1.802 bar", "change": "+0.63"}, {"name": "流量", "type": "controlled", "actual": "197.17", "ai": "327.50", "change": "+130.33"}, {"name": "运行状态", "type": "unopt", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "频率反馈", "type": "optimizing", "actual": "30.00", "ai": "30.00", "change": "无变化"}]}, {"name": "制冷单元_1", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "冷冻侧压差", "type": "controlled", "actual": "1.17 bar", "ai": "0.4871 bar", "change": "-0.68"}, {"name": "冷却水流量", "type": "controlled", "actual": "242.20 m3/h", "ai": "357.70 m3/h", "change": "+115.50"}, {"name": "冷冻水流量", "type": "controlled", "actual": "204.21 m3/h", "ai": "374.90 m3/h", "change": "+170.69"}, {"name": "系统运行模式", "type": "controlled", "actual": "制冷", "ai": "制冷", "change": "无变化"}, {"name": "冷冻水出水温度", "type": "controlled", "actual": "12.00 ℃", "ai": "12.00 ℃", "change": "无变化"}, {"name": "冷却侧压差", "type": "controlled", "actual": "-0.99 bar", "ai": "0.6044 bar", "change": "+1.59"}, {"name": "运行状态", "type": "controlled", "actual": "运行中", "ai": "运行中", "change": "无变化"}]}, {"name": "制冷单元_2", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "运行状态", "type": "controlled", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "系统运行模式", "type": "controlled", "actual": "制冷", "ai": "制冷", "change": "无变化"}, {"name": "冷冻水流量", "type": "controlled", "actual": "203.01 m3/h", "ai": "376.30 m3/h", "change": "+173.29"}, {"name": "冷冻侧压差", "type": "controlled", "actual": "1.49 bar", "ai": "0.4872 bar", "change": "-1.00"}, {"name": "冷冻水出水温度", "type": "controlled", "actual": "12.00 ℃", "ai": "12.00 ℃", "change": "无变化"}, {"name": "冷却侧压差", "type": "controlled", "actual": "-0.99 bar", "ai": "0.5951 bar", "change": "+1.59"}, {"name": "冷却水流量", "type": "controlled", "actual": "240.87 m3/h", "ai": "489.20 m3/h", "change": "+248.33"}]}, {"name": "制冷单元_3", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "冷却水流量", "type": "controlled", "actual": "237.12 m3/h", "ai": "489.20 m3/h", "change": "+252.08"}, {"name": "系统运行模式", "type": "controlled", "actual": "制冷", "ai": "制冷", "change": "无变化"}, {"name": "冷冻水出水温度", "type": "controlled", "actual": "12.00 ℃", "ai": "12.00 ℃", "change": "无变化"}, {"name": "冷冻水流量", "type": "controlled", "actual": "199.63 m3/h", "ai": "376.30 m3/h", "change": "+176.67"}, {"name": "冷冻侧压差", "type": "controlled", "actual": "1.17 bar", "ai": "0.4872 bar", "change": "-0.68"}, {"name": "运行状态", "type": "controlled", "actual": "运行中", "ai": "运行中", "change": "无变化"}, {"name": "冷却侧压差", "type": "controlled", "actual": "-0.99 bar", "ai": "0.5951 bar", "change": "+1.59"}]}, {"name": "制冷单元_4", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "冷却水流量", "type": "controlled", "actual": "234.40 m3/h", "ai": "417.80 m3/h", "change": "+183.40"}, {"name": "冷冻水出水温度", "type": "controlled", "actual": "12.00 ℃", "ai": "12.00 ℃", "change": "无变化"}, {"name": "冷冻水流量", "type": "controlled", "actual": "197.17 m3/h", "ai": "327.50 m3/h", "change": "+130.33"}, {"name": "冷冻侧压差", "type": "controlled", "actual": "0.30 bar", "ai": "0.4873 bar", "change": "+0.19"}, {"name": "冷却侧压差", "type": "controlled", "actual": "0.70 bar", "ai": "0.591 bar", "change": "-0.11"}, {"name": "系统运行模式", "type": "controlled", "actual": "制冷", "ai": "制冷", "change": "无变化"}, {"name": "运行状态", "type": "controlled", "actual": "运行中", "ai": "运行中", "change": "无变化"}]}, {"name": "并联二次水泵管路_1", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "冷冻水流量", "type": "controlled", "actual": "800.80 m3/h", "ai": "1056.20 m3/h", "change": "+255.40"}, {"name": "进出口压差", "type": "controlled", "actual": "1.02 bar", "ai": "1.20 bar", "change": "+0.18"}, {"name": "二次泵运行数量", "type": "controlled", "actual": "4.00", "ai": "4.00", "change": "无变化"}, {"name": "旁通流量", "type": "controlled", "actual": "3.22 m³/h", "ai": "398.90 m³/h", "change": "+395.68"}, {"name": "末端冷冻水供水温度", "type": "controlled", "actual": "12.00 ℃", "ai": "12.00 ℃", "change": "无变化"}]}, {"name": "蓄冷罐组", "status": "running", "statusText": "运行中", "fi": "in", "fiText": "投入", "variables": [{"name": "蓄冷量", "type": "controlled", "actual": "1901.62 kWh", "ai": "2509.80 kWh", "change": "+608.18"}]}, {"name": "5#二次泵", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "有功功率", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "频率反馈", "type": "unopt", "actual": "0.00", "ai": "0.00", "change": "无变化"}, {"name": "流量", "type": "controlled", "actual": "0.00", "ai": "0.00", "change": "无变化"}, {"name": "进出口压差", "type": "controlled", "actual": "0.00 bar", "ai": "1.20 bar", "change": "+1.20"}, {"name": "运行状态", "type": "unopt", "actual": "关机中", "ai": "关机中", "change": "无变化"}]}, {"name": "6#二次泵", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "进出口压差", "type": "controlled", "actual": "0.00 bar", "ai": "1.20 bar", "change": "+1.20"}, {"name": "运行状态", "type": "unopt", "actual": "关机中", "ai": "关机中", "change": "无变化"}, {"name": "频率反馈", "type": "unopt", "actual": "0.00", "ai": "0.00", "change": "无变化"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "流量", "type": "controlled", "actual": "0.00", "ai": "0.00", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}]}, {"name": "A路05#制冷单元", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "运行状态", "type": "unopt", "actual": "关机中", "ai": "关机中", "change": "无变化"}, {"name": "冷冻冷却水温差", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "冷冻水出水温度", "type": "unopt", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "实时制冷量", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "冷水主机负载率", "type": "controlled", "actual": "0.00 %", "ai": "0.00 %", "change": "无变化"}, {"name": "冷却水进水温度（计算）", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "冷冻水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "冷却水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}]}, {"name": "A路06#制冷单元", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "冷冻水出水温度", "type": "unopt", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "冷冻水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "冷却水进水温度（计算）", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "冷水主机负载率", "type": "controlled", "actual": "0.00 %", "ai": "0.00 %", "change": "无变化"}, {"name": "实时制冷量", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}, {"name": "冷冻冷却水温差", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "关机中", "ai": "关机中", "change": "无变化"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "冷却水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}]}, {"name": "冷冻水泵 PCWP-01-05", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "进出口压差", "type": "controlled", "actual": "0.00 bar", "ai": "0.00 bar", "change": "无变化"}, {"name": "流量", "type": "controlled", "actual": "0.00", "ai": "0.00", "change": "无变化"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "关机中", "ai": "关机中", "change": "无变化"}, {"name": "频率反馈", "type": "unopt", "actual": "0.00", "ai": "0.00", "change": "无变化"}]}, {"name": "冷冻水泵 PCWP-01-06", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "进出口压差", "type": "controlled", "actual": "0.00 bar", "ai": "0.00 bar", "change": "无变化"}, {"name": "频率反馈", "type": "unopt", "actual": "0.00", "ai": "0.00", "change": "无变化"}, {"name": "运行状态", "type": "unopt", "actual": "关机中", "ai": "关机中", "change": "无变化"}, {"name": "故障状态", "type": "controlled", "actual": "正常", "ai": "正常", "change": "无变化"}, {"name": "流量", "type": "controlled", "actual": "0.00", "ai": "0.00", "change": "无变化"}, {"name": "有功功率", "type": "controlled", "actual": "0.00 kW", "ai": "0.00 kW", "change": "无变化"}]}, {"name": "制冷单元_5", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "系统运行模式", "type": "controlled", "actual": "制冷", "ai": "制冷", "change": "无变化"}, {"name": "冷却侧压差", "type": "controlled", "actual": "0.00 bar", "ai": "0.00 bar", "change": "无变化"}, {"name": "冷冻水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "冷却水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "冷冻水出水温度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "运行状态", "type": "controlled", "actual": "关机中", "ai": "关机中", "change": "无变化"}, {"name": "冷冻侧压差", "type": "controlled", "actual": "0.00 bar", "ai": "0.00 bar", "change": "无变化"}]}, {"name": "制冷单元_6", "status": "stopped", "statusText": "已停机", "fi": "in", "fiText": "投入", "variables": [{"name": "冷冻水出水温度", "type": "controlled", "actual": "0.00 ℃", "ai": "0.00 ℃", "change": "无变化"}, {"name": "系统运行模式", "type": "controlled", "actual": "制冷", "ai": "制冷", "change": "无变化"}, {"name": "冷却侧压差", "type": "controlled", "actual": "0.00 bar", "ai": "0.00 bar", "change": "无变化"}, {"name": "冷冻侧压差", "type": "controlled", "actual": "0.00 bar", "ai": "0.00 bar", "change": "无变化"}, {"name": "冷却水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "冷冻水流量", "type": "controlled", "actual": "0.00 m3/h", "ai": "0.00 m3/h", "change": "无变化"}, {"name": "运行状态", "type": "controlled", "actual": "关机中", "ai": "关机中", "change": "无变化"}]}]};
   var recordData = recordDataModes.water;
 
+  /* ═══ v2.9 廊坊群控下发兼容：BA 设定点 · 全局寻优示例 ═══ */
+  /* 演示口径：只有「A路冷水系统」页签绑定了上传转写规则文件的下发策略；其他页签视为没上传规则文件，保持原逻辑。
+     BA 设定点是群控系统设备「A路水冷群控系统」上的平级测点：寻优记录、手动下发、下发记录、工单都沿用原有「设备 → 测点」的展示 */
+  var BA_RULE_FILE = { name: '廊坊A路（人保北方）转写规则', file: 'langfang-a-ba-v1.json', version: 'v1', uploader: 'admin', uploadTime: '2026-10-20 10:30' };
+  var BA_RECORD_INFO = { station: 'A路冷水系统', device: 'A路水冷群控系统', deviceType: '水冷群控系统', time: '2026-10-20 15:00' };
+  /* 全局寻优 2026-10-20 15:00 轮：58 项（转写 14 / 直通 39 / 不下发 5），与 glob 场景示例数据一致 */
+  var BA_SETPOINT_DEMO = [
+    {"id":"4_290","device":"A路水冷群控系统","pointName":"01号制冷单元-制冷冷塔出水温度设定","unit":"℃","current":20.0,"value":20.0,"lo":16.5,"hi":33.5,"link":"","handling":"直通","note":"模式变化，未锚定"},
+    {"id":"4_287","device":"A路水冷群控系统","pointName":"01号制冷单元-联合冷塔出水温度设定","unit":"℃","current":12.0,"value":12.0,"lo":12.0,"hi":20.0,"link":"","handling":"直通","note":"非最优工况模式"},
+    {"id":"4_285","device":"A路水冷群控系统","pointName":"01号制冷单元-板换冷塔出水温度设定","unit":"℃","current":10.0,"value":10.0,"lo":5.0,"hi":15.0,"link":"","handling":"直通","note":"非最优工况模式"},
+    {"id":"4_286","device":"A路水冷群控系统","pointName":"01号制冷单元-冷却泵频率板换温度设定","unit":"℃","current":12.0,"value":12.0,"lo":8.0,"hi":16.0,"link":"","handling":"直通","note":"非最优工况模式"},
+    {"id":"4_291","device":"A路水冷群控系统","pointName":"01号制冷单元-冷却泵频率温差设定（制冷）","unit":"℃","current":5.0,"value":5.0,"lo":3.0,"hi":5.5,"link":"1# 温差组","handling":"直通","note":"模式变化，未锚定"},
+    {"id":"4_288","device":"A路水冷群控系统","pointName":"01号制冷单元-冷却泵频率温差设定（联合）","unit":"℃","current":5.0,"value":5.0,"lo":3.0,"hi":5.5,"link":"1# 温差组","handling":"直通","note":"模式变化，未锚定"},
+    {"id":"4_292","device":"A路水冷群控系统","pointName":"01号制冷单元-冷机出水温度设定","unit":"℃","current":10.0,"value":10.5,"lo":7.0,"hi":12.0,"link":"","handling":"转写","note":""},
+    {"id":"4_313","device":"A路水冷群控系统","pointName":"02号制冷单元-制冷冷塔出水温度设定","unit":"℃","current":20.0,"value":19.0,"lo":16.5,"hi":33.5,"link":"","handling":"转写","note":""},
+    {"id":"4_311","device":"A路水冷群控系统","pointName":"02号制冷单元-联合冷塔出水温度设定","unit":"℃","current":12.0,"value":12.0,"lo":12.0,"hi":20.0,"link":"","handling":"直通","note":"非最优工况模式"},
+    {"id":"4_309","device":"A路水冷群控系统","pointName":"02号制冷单元-板换冷塔出水温度设定","unit":"℃","current":10.0,"value":10.0,"lo":5.0,"hi":15.0,"link":"","handling":"直通","note":"非最优工况模式"},
+    {"id":"4_310","device":"A路水冷群控系统","pointName":"02号制冷单元-冷却泵频率板换温度设定","unit":"℃","current":12.0,"value":12.0,"lo":8.0,"hi":16.0,"link":"","handling":"直通","note":"非最优工况模式"},
+    {"id":"4_314","device":"A路水冷群控系统","pointName":"02号制冷单元-冷却泵频率温差设定（制冷）","unit":"℃","current":5.0,"value":5.3,"lo":3.0,"hi":5.5,"link":"2# 温差组","handling":"转写","note":""},
+    {"id":"4_312","device":"A路水冷群控系统","pointName":"02号制冷单元-冷却泵频率温差设定（联合）","unit":"℃","current":5.0,"value":5.3,"lo":3.0,"hi":5.5,"link":"2# 温差组","handling":"转写","note":""},
+    {"id":"4_315","device":"A路水冷群控系统","pointName":"02号制冷单元-冷机出水温度设定","unit":"℃","current":10.0,"value":10.5,"lo":7.0,"hi":12.0,"link":"","handling":"转写","note":""},
+    {"id":"4_320","device":"A路水冷群控系统","pointName":"03号制冷单元-制冷冷塔出水温度设定","unit":"℃","current":20.0,"value":20.0,"lo":16.5,"hi":33.5,"link":"","handling":"直通","note":"设备投出"},
+    {"id":"4_318","device":"A路水冷群控系统","pointName":"03号制冷单元-联合冷塔出水温度设定","unit":"℃","current":12.0,"value":12.0,"lo":12.0,"hi":20.0,"link":"","handling":"直通","note":"设备投出"},
+    {"id":"4_316","device":"A路水冷群控系统","pointName":"03号制冷单元-板换冷塔出水温度设定","unit":"℃","current":10.0,"value":10.0,"lo":5.0,"hi":15.0,"link":"","handling":"直通","note":"设备投出"},
+    {"id":"4_317","device":"A路水冷群控系统","pointName":"03号制冷单元-冷却泵频率板换温度设定","unit":"℃","current":12.0,"value":12.0,"lo":8.0,"hi":16.0,"link":"","handling":"直通","note":"设备投出"},
+    {"id":"4_321","device":"A路水冷群控系统","pointName":"03号制冷单元-冷却泵频率温差设定（制冷）","unit":"℃","current":5.0,"value":5.0,"lo":3.0,"hi":5.5,"link":"3# 温差组","handling":"直通","note":"设备投出"},
+    {"id":"4_319","device":"A路水冷群控系统","pointName":"03号制冷单元-冷却泵频率温差设定（联合）","unit":"℃","current":5.0,"value":5.0,"lo":3.0,"hi":5.5,"link":"3# 温差组","handling":"直通","note":"设备投出"},
+    {"id":"4_322","device":"A路水冷群控系统","pointName":"03号制冷单元-冷机出水温度设定","unit":"℃","current":10.0,"value":10.0,"lo":7.0,"hi":12.0,"link":"","handling":"直通","note":"设备投出"},
+    {"id":"4_327","device":"A路水冷群控系统","pointName":"04号制冷单元-制冷冷塔出水温度设定","unit":"℃","current":20.0,"value":20.0,"lo":16.5,"hi":33.5,"link":"","handling":"直通","note":"单元停机"},
+    {"id":"4_325","device":"A路水冷群控系统","pointName":"04号制冷单元-联合冷塔出水温度设定","unit":"℃","current":12.0,"value":12.0,"lo":12.0,"hi":20.0,"link":"","handling":"直通","note":"单元停机"},
+    {"id":"4_323","device":"A路水冷群控系统","pointName":"04号制冷单元-板换冷塔出水温度设定","unit":"℃","current":10.0,"value":10.0,"lo":5.0,"hi":15.0,"link":"","handling":"直通","note":"单元停机"},
+    {"id":"4_324","device":"A路水冷群控系统","pointName":"04号制冷单元-冷却泵频率板换温度设定","unit":"℃","current":12.0,"value":12.0,"lo":8.0,"hi":16.0,"link":"","handling":"直通","note":"单元停机"},
+    {"id":"4_328","device":"A路水冷群控系统","pointName":"04号制冷单元-冷却泵频率温差设定（制冷）","unit":"℃","current":5.0,"value":5.0,"lo":3.0,"hi":5.5,"link":"4# 温差组","handling":"直通","note":"单元停机"},
+    {"id":"4_326","device":"A路水冷群控系统","pointName":"04号制冷单元-冷却泵频率温差设定（联合）","unit":"℃","current":5.0,"value":5.0,"lo":3.0,"hi":5.5,"link":"4# 温差组","handling":"直通","note":"单元停机"},
+    {"id":"4_329","device":"A路水冷群控系统","pointName":"04号制冷单元-冷机出水温度设定","unit":"℃","current":10.0,"value":10.0,"lo":7.0,"hi":12.0,"link":"","handling":"直通","note":"单元停机"},
+    {"id":"4_334","device":"A路水冷群控系统","pointName":"05号制冷单元-制冷冷塔出水温度设定","unit":"℃","current":20.0,"value":19.0,"lo":16.5,"hi":33.5,"link":"","handling":"转写","note":""},
+    {"id":"4_332","device":"A路水冷群控系统","pointName":"05号制冷单元-联合冷塔出水温度设定","unit":"℃","current":12.0,"value":12.0,"lo":12.0,"hi":20.0,"link":"","handling":"直通","note":"非最优工况模式"},
+    {"id":"4_330","device":"A路水冷群控系统","pointName":"05号制冷单元-板换冷塔出水温度设定","unit":"℃","current":10.0,"value":10.0,"lo":5.0,"hi":15.0,"link":"","handling":"直通","note":"非最优工况模式"},
+    {"id":"4_331","device":"A路水冷群控系统","pointName":"05号制冷单元-冷却泵频率板换温度设定","unit":"℃","current":12.0,"value":12.0,"lo":8.0,"hi":16.0,"link":"","handling":"直通","note":"非最优工况模式"},
+    {"id":"4_335","device":"A路水冷群控系统","pointName":"05号制冷单元-冷却泵频率温差设定（制冷）","unit":"℃","current":5.0,"value":5.5,"lo":3.0,"hi":5.5,"link":"5# 温差组","handling":"转写","note":""},
+    {"id":"4_333","device":"A路水冷群控系统","pointName":"05号制冷单元-冷却泵频率温差设定（联合）","unit":"℃","current":5.0,"value":5.5,"lo":3.0,"hi":5.5,"link":"5# 温差组","handling":"转写","note":""},
+    {"id":"4_336","device":"A路水冷群控系统","pointName":"05号制冷单元-冷机出水温度设定","unit":"℃","current":10.0,"value":10.5,"lo":7.0,"hi":12.0,"link":"","handling":"转写","note":""},
+    {"id":"4_341","device":"A路水冷群控系统","pointName":"06号制冷单元-制冷冷塔出水温度设定","unit":"℃","current":20.0,"value":20.0,"lo":16.5,"hi":33.5,"link":"","handling":"直通","note":"设备投出"},
+    {"id":"4_339","device":"A路水冷群控系统","pointName":"06号制冷单元-联合冷塔出水温度设定","unit":"℃","current":12.0,"value":12.0,"lo":12.0,"hi":20.0,"link":"","handling":"直通","note":"设备投出"},
+    {"id":"4_337","device":"A路水冷群控系统","pointName":"06号制冷单元-板换冷塔出水温度设定","unit":"℃","current":10.0,"value":10.0,"lo":5.0,"hi":15.0,"link":"","handling":"直通","note":"设备投出"},
+    {"id":"4_338","device":"A路水冷群控系统","pointName":"06号制冷单元-冷却泵频率板换温度设定","unit":"℃","current":12.0,"value":12.0,"lo":8.0,"hi":16.0,"link":"","handling":"直通","note":"设备投出"},
+    {"id":"4_342","device":"A路水冷群控系统","pointName":"06号制冷单元-冷却泵频率温差设定（制冷）","unit":"℃","current":5.0,"value":5.0,"lo":3.0,"hi":5.5,"link":"6# 温差组","handling":"直通","note":"设备投出"},
+    {"id":"4_340","device":"A路水冷群控系统","pointName":"06号制冷单元-冷却泵频率温差设定（联合）","unit":"℃","current":5.0,"value":5.0,"lo":3.0,"hi":5.5,"link":"6# 温差组","handling":"直通","note":"设备投出"},
+    {"id":"4_343","device":"A路水冷群控系统","pointName":"06号制冷单元-冷机出水温度设定","unit":"℃","current":10.0,"value":10.0,"lo":7.0,"hi":12.0,"link":"","handling":"直通","note":"设备投出"},
+    {"id":"4_293","device":"A路水冷群控系统","pointName":"二次泵-末端压差设定","unit":"bar","current":1.2,"value":1.1,"lo":0.8,"hi":1.6,"link":"二次泵压差组","handling":"转写","note":""},
+    {"id":"4_294","device":"A路水冷群控系统","pointName":"二次泵-二次泵加泵压差设定","unit":"bar","current":1.1,"value":1.0,"lo":0.7,"hi":1.5,"link":"二次泵压差组","handling":"转写","note":""},
+    {"id":"4_295","device":"A路水冷群控系统","pointName":"二次泵-二次泵减泵压差设定","unit":"bar","current":1.3,"value":1.2,"lo":0.9,"hi":1.7,"link":"二次泵压差组","handling":"转写","note":""},
+    {"id":"4_296","device":"A路水冷群控系统","pointName":"群控-制冷模式加机负荷设定","unit":"%","current":85,"value":73,"lo":50,"hi":95,"link":"制冷加减机组","handling":"转写","note":""},
+    {"id":"4_297","device":"A路水冷群控系统","pointName":"群控-制冷模式减机负荷设定","unit":"%","current":35,"value":23,"lo":15,"hi":60,"link":"制冷加减机组","handling":"转写","note":""},
+    {"id":"4_298","device":"A路水冷群控系统","pointName":"群控-联合模式加机负荷设定","unit":"%","current":85,"value":85,"lo":50,"hi":95,"link":"联合加减机组","handling":"直通","note":"现场不是联合模式"},
+    {"id":"4_299","device":"A路水冷群控系统","pointName":"群控-联合模式减机负荷设定","unit":"%","current":35,"value":35,"lo":15,"hi":60,"link":"联合加减机组","handling":"直通","note":"现场不是联合模式"},
+    {"id":"4_300","device":"A路水冷群控系统","pointName":"群控-板换模式加机温度设定","unit":"℃","current":16.0,"value":16.0,"lo":12,"hi":20,"link":"板换加减机组","handling":"直通","note":"寻优开关未启用"},
+    {"id":"4_301","device":"A路水冷群控系统","pointName":"群控-板换模式减机温度设定","unit":"℃","current":14.0,"value":14.0,"lo":10,"hi":18,"link":"板换加减机组","handling":"直通","note":"寻优开关未启用"},
+    {"id":"4_302","device":"A路水冷群控系统","pointName":"群控-制冷湿球温度设定","unit":"℃","current":15.0,"value":15.0,"lo":3,"hi":20,"link":"湿球阈值组","handling":"不下发","note":"与当前值相同"},
+    {"id":"4_303","device":"A路水冷群控系统","pointName":"群控-联合湿球温度高限设定","unit":"℃","current":12.5,"value":12.5,"lo":3,"hi":20,"link":"湿球阈值组","handling":"不下发","note":"与当前值相同"},
+    {"id":"4_304","device":"A路水冷群控系统","pointName":"群控-联合湿球温度低限设定","unit":"℃","current":9.5,"value":9.5,"lo":3,"hi":20,"link":"湿球阈值组","handling":"不下发","note":"与当前值相同"},
+    {"id":"4_305","device":"A路水冷群控系统","pointName":"群控-板换湿球温度设定","unit":"℃","current":6.5,"value":6.5,"lo":3,"hi":20,"link":"湿球阈值组","handling":"不下发","note":"与当前值相同"},
+    {"id":"4_306","device":"A路水冷群控系统","pointName":"蓄冷罐-正常模式流量设定","unit":"m³/h","current":80,"value":80,"lo":null,"hi":null,"link":"","handling":"直通","note":"规则直通"},
+    {"id":"4_307","device":"A路水冷群控系统","pointName":"蓄冷罐-快充模式流量设定","unit":"m³/h","current":150,"value":150,"lo":null,"hi":null,"link":"","handling":"直通","note":"规则直通"},
+    {"id":"4_308","device":"A路水冷群控系统","pointName":"蓄冷罐-超级充冷流量设定","unit":"m³/h","current":null,"value":null,"lo":null,"hi":null,"link":"","handling":"不下发","note":"当前值读不到"}
+  ];
+
+  var BA_NUM_RE = /^-?\d+(\.\d+)?$/;
+  var baRecordTimeBound = null;     /* 寻优记录时间已按哪种状态同步（带 / 不带规则文件） */
+  var baDispatchActive = false;     /* 手动下发弹窗当前是否为 BA 设定点模式 */
+  var baDispatchRows = [];          /* 手动下发弹窗里的行：寻优值与当前值不同的 BA 设定点 */
+  var baDispatchChecked = false;    /* 已点过「确认下发」：之后改输入框时实时刷新超限标红 */
+
+  /* 当前冷水系统绑定的下发策略是否上传了转写规则文件（演示：仅 A路冷水系统） */
+  function baRuleBound() {
+    var sel = document.getElementById('coldStationSelect');
+    return !!sel && sel.value === BA_RECORD_INFO.station;
+  }
+  /* 带规则文件的冷水系统：寻优记录栏和策略卡最新寻优时间定位到示例轮次；切到其他冷水系统时恢复原值。只在绑定状态变化时同步，不覆盖手动改的时间 */
+  function baSyncRecordTime() {
+    var bound = baRuleBound();
+    if (bound === baRecordTimeBound) return;
+    baRecordTimeBound = bound;
+    var parts = BA_RECORD_INFO.time.split(' ');
+    [['.record-bar-opt-tools input[type="date"]', parts[0]], ['.record-bar-opt-tools input[type="time"]', parts[1] + ':00']].forEach(function (p) {
+      var el = document.querySelector(p[0]);
+      if (!el) return;
+      if (el.getAttribute('data-orig-value') == null) el.setAttribute('data-orig-value', el.value);
+      el.value = bound ? p[1] : el.getAttribute('data-orig-value');
+    });
+    var latest = document.querySelector('#modOpt .confidence-value');
+    var node = latest && latest.firstChild;
+    if (node && node.nodeType === 3) {
+      if (latest.getAttribute('data-orig-text') == null) latest.setAttribute('data-orig-text', node.nodeValue);
+      node.nodeValue = bound ? BA_RECORD_INFO.time + ':00 ' : latest.getAttribute('data-orig-text');
+    }
+  }
+  /* 当前选中的寻优记录轮次是否在规则文件上传之后（规则文件保存后从下一轮起生效，之前的轮次没有 BA 设定点） */
+  function baRecordAfterRule() {
+    var d = document.querySelector('.record-bar-opt-tools input[type="date"]');
+    var t = document.querySelector('.record-bar-opt-tools input[type="time"]');
+    if (!d || !d.value) return true;
+    return (d.value + ' ' + ((t && t.value) || '00:00').slice(0, 5)) > BA_RULE_FILE.uploadTime;
+  }
+  /* 当前寻优记录是否含 BA 设定点 */
+  function baRecordAvailable() { return baRuleBound() && baRecordAfterRule() && BA_SETPOINT_DEMO.length > 0; }
+  function baEsc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  /* 数值写法沿用本页寻优记录：两位小数，读不到显示「—」 */
+  function baFmt(v) { return (v == null || isNaN(v)) ? '—' : Number(v).toFixed(2); }
+  function baFmtU(v, unit) { return (v == null || isNaN(v)) ? '—' : baFmt(v) + ' ' + unit; }
+  function baIsChanged(r) { return r.value != null && r.current != null && Math.abs(r.value - r.current) > 1e-6; }
+  /* 只下发寻优值与当前值不同的点（本轮转写且有变化）；直通、没变化、当前值读不到的点不下发 */
+  function baSendList() {
+    return BA_SETPOINT_DEMO.filter(function (r) { return r.handling === '转写' && baIsChanged(r); });
+  }
+
+  /* 寻优记录：群控系统设备对象，结构与其他设备一致，由原 renderTable 渲染（着色、筛选、隐藏关机、搜索、历史趋势都走原逻辑）
+     转写的点 → 控制变量（寻优中）；直通、不下发的点 → 控制变量（未寻优），AI寻优值同实际值、寻优变化一律「无变化」；当前值读不到时实际值、AI寻优值显示「—」 */
+  function baRecordObject() {
+    return {
+      name: BA_RECORD_INFO.device, status: 'running', statusText: '运行中', fi: 'in', fiText: '投入',
+      variables: BA_SETPOINT_DEMO.map(function (r) {
+        var opt = r.handling === '转写';
+        var actual = baFmtU(r.current, r.unit);
+        var change = '无变化';
+        if (opt && (r.current == null || r.value == null)) change = '—';
+        else if (opt && baIsChanged(r)) change = (r.value > r.current ? '+' : '') + (r.value - r.current).toFixed(2);
+        return { name: r.pointName, type: opt ? 'optimizing' : 'unopt', actual: actual, ai: opt ? baFmtU(r.value, r.unit) : actual, change: change };
+      })
+    };
+  }
+  /* 当前记录含 BA 设定点时，在系统对象之后插入群控系统对象；其他冷水系统、规则文件上传前的轮次保持原数据 */
+  function baRecordRows(list) {
+    baSyncRecordTime();
+    if (!baRecordAvailable()) return list;
+    var rows = list.slice();
+    rows.splice(Math.min(1, rows.length), 0, baRecordObject());
+    return rows;
+  }
+
+  /* ─ 手动下发弹窗 / 工单内容：沿用原 dispatch-table 的结构和列（设备 / 下发属性 / 当前值 / AI寻优值 / 下发值） ─ */
+  function baDispatchTableHtml(rows, editable) {
+    var html = '<div class="dispatch-section"><span class="ds-badge save">寻优</span> AI 建议调节（' + rows.length + ' 条）</div>';
+    html += '<table class="dispatch-table"><thead><tr><th>设备</th><th>下发属性</th><th>当前值</th><th>AI寻优值 <span class="confidence-pill low">数据积累中</span></th><th>下发值</th></tr></thead><tbody>';
+    if (!rows.length) html += '<tr class="empty-row"><td colspan="5">本轮没有需要下发的 BA 设定点</td></tr>';
+    rows.forEach(function (r, i) {
+      html += '<tr><td class="dev-name">' + baEsc(r.device) + '<span class="dev-type">' + baEsc(BA_RECORD_INFO.deviceType) + '</span></td>' +
+        '<td class="param-name">' + baEsc(r.pointName) + '</td>' +
+        '<td class="val-actual">' + baFmtU(r.current, r.unit) + '</td>' +
+        '<td class="val-ai">' + baFmtU(r.value, r.unit) + '</td>' +
+        '<td>' + (editable
+          ? '<input class="dispatch-val" type="text" data-i="' + i + '" value="' + baFmt(r.value) + '"><span class="dispatch-val-tip"></span>'
+          : baFmt(r.value)) + '</td></tr>';
+    });
+    return html + '</tbody></table>';
+  }
+  /* 下发值超出安全边界上下限（或不是数字）的输入框标红，并提示允许区间；清空的行本次不下发、不校验 */
+  function baValidateDispatch() {
+    var body = document.getElementById('dispatchModalBody');
+    var errs = 0;
+    baDispatchRows.forEach(function (r, i) {
+      var inp = body.querySelector('input.dispatch-val[data-i="' + i + '"]');
+      if (!inp) return;
+      var raw = inp.value.trim();
+      var err = '';
+      if (raw !== '') {
+        if (!BA_NUM_RE.test(raw)) {
+          err = '请输入数字';
+        } else {
+          var v = parseFloat(raw);
+          if ((r.lo != null && v < r.lo - 1e-9) || (r.hi != null && v > r.hi + 1e-9)) {
+            err = '超出允许区间 ' + baFmt(r.lo) + '～' + baFmt(r.hi) + ' ' + r.unit;
+          }
+        }
+      }
+      if (err) errs++;
+      inp.classList.toggle('is-error', !!err);
+      var tip = inp.nextElementSibling;
+      if (tip) tip.textContent = err;
+    });
+    return errs === 0;
+  }
+  /* 联动组：改其中一个，组内其他点按同一平移量跟着变；清空一行，整组一起清空 */
+  function baOnDispatchInput(inp) {
+    var i = +inp.getAttribute('data-i');
+    var r = baDispatchRows[i];
+    if (!r) return;
+    if (r.link) {
+      var body = document.getElementById('dispatchModalBody');
+      var raw = inp.value.trim();
+      baDispatchRows.forEach(function (y, j) {
+        if (j === i || y.link !== r.link) return;
+        var el = body.querySelector('input.dispatch-val[data-i="' + j + '"]');
+        if (!el) return;
+        if (raw === '') el.value = '';
+        else if (BA_NUM_RE.test(raw)) el.value = baFmt(y.value + (parseFloat(raw) - r.value));
+      });
+    }
+    if (baDispatchChecked) baValidateDispatch();
+    /* 下发值全部清空时「确认下发」置灰；填回任一值后恢复 */
+    var btn = document.getElementById('dispatchConfirmBtn');
+    if (btn) btn.disabled = !baDispatchHasValue();
+  }
+  /* 弹窗里是否还有非空的下发值 */
+  function baDispatchHasValue() {
+    var body = document.getElementById('dispatchModalBody');
+    return Array.prototype.some.call(body.querySelectorAll('input.dispatch-val'), function (el) { return el.value.trim() !== ''; });
+  }
+  function baResetDispatch() {
+    baDispatchActive = false;
+    baDispatchRows = [];
+    baDispatchChecked = false;
+    var btn = document.getElementById('dispatchConfirmBtn');
+    if (btn) btn.disabled = false;
+  }
+  function openBaDispatch() {
+    baDispatchActive = true;
+    baDispatchRows = baSendList();
+    var body = document.getElementById('dispatchModalBody');
+    body.innerHTML = baDispatchTableHtml(baDispatchRows, true);
+    body.querySelectorAll('input.dispatch-val').forEach(function (inp) {
+      inp.addEventListener('input', function () { baOnDispatchInput(this); });
+    });
+    var btn = document.getElementById('dispatchConfirmBtn');
+    if (btn) btn.disabled = !baDispatchRows.length;
+    openModal('modalDispatch');
+  }
+  /* 「确认下发」：带规则文件时先做上下限校验，不通过不放行；通过后走原有密码校验。原弹窗（一键回退、没上传规则文件）直接放行 */
+  window.baCheckDispatch = function () {
+    if (!baDispatchActive) return true;
+    if (!baDispatchHasValue()) return false;
+    baDispatchChecked = true;
+    return baValidateDispatch();
+  };
+
+  /* ─ 工单推送成功后展示工单内容：只列寻优值与当前值不同的 BA 设定点，列与手动下发弹窗一致 ─ */
+  function openBaWorkOrder() {
+    var body = document.getElementById('workOrderBody');
+    if (!body) return;
+    body.innerHTML = baDispatchTableHtml(baSendList(), false);
+    openModal('modalWorkOrder');
+  }
+
   function applyRecordDataForMode(mode) {
     if (typeof recordDataModes === 'undefined') return;
     recordData = (recordDataModes[mode] || recordDataModes.water).slice();
@@ -2483,6 +2849,13 @@
   }
 
   var COLD_STATION_STORAGE_KEY = 'coldStationOptimizeSelected';
+  /* v2.9：三个寻优页共用存储键；读写包 try/catch，预览环境禁用存储（SecurityError）时照常初始化，只是不记忆 */
+  function readColdStationStore() {
+    try { return window.localStorage.getItem(COLD_STATION_STORAGE_KEY); } catch (e) { return null; }
+  }
+  function writeColdStationStore(name) {
+    try { window.localStorage.setItem(COLD_STATION_STORAGE_KEY, name); } catch (e) { /* 存不了不影响切换 */ }
+  }
 
   function setColdStationFromTab(tab, persist) {
     if (!tab) return;
@@ -2495,8 +2868,9 @@
     var selectedName = tab.getAttribute('data-system-name') || tab.textContent.trim();
     var select = document.getElementById('coldStationSelect');
     if (select) select.value = selectedName;
-    if (persist) localStorage.setItem(COLD_STATION_STORAGE_KEY, selectedName);
+    if (persist) writeColdStationStore(selectedName);
     setStrategyMode(tab.getAttribute('data-mode'));
+    renderDispatchTable();   /* v2.9：下发记录随冷水系统刷新（群控系统设备的记录只在 A路冷水系统下显示） */
   }
 
   function findStationTabByName(systemName) {
@@ -2508,15 +2882,16 @@
   function initColdStationTopNav() {
     var select = document.getElementById('coldStationSelect');
     if (!select) return;
-    var cached = localStorage.getItem(COLD_STATION_STORAGE_KEY);
-    var tab = findStationTabByName(cached || select.value) || document.querySelector('#stationTabs .station-tab.active') || document.querySelector('#stationTabs .station-tab');
+    /* 没有存储值（首次进入）默认选中带规则文件的「A路冷水系统」，进页即可看到 v2.9 演示；手动切走后按存储值 */
+    var cached = readColdStationStore();
+    var tab = (cached && findStationTabByName(cached)) || findStationTabByName(BA_RECORD_INFO.station) || document.querySelector('#stationTabs .station-tab.active') || document.querySelector('#stationTabs .station-tab');
     setColdStationFromTab(tab, false);
     select.addEventListener('change', function () {
       setColdStationFromTab(findStationTabByName(this.value), true);
     });
     document.querySelectorAll('.page-nav-item[data-target-page]').forEach(function (nav) {
       nav.addEventListener('click', function () {
-        localStorage.setItem(COLD_STATION_STORAGE_KEY, select.value);
+        writeColdStationStore(select.value);
         window.location.assign(encodeURI(this.getAttribute('data-target-page')));
       });
     });
@@ -2542,7 +2917,8 @@
     var html = '';
     var visibleIdx = 0;
 
-    recordData.forEach(function (obj) {
+    /* v2.9：当前记录含 BA 设定点时，群控系统设备作为一个普通对象插入，下面照原逻辑渲染 */
+    baRecordRows(recordData).forEach(function (obj) {
       if (hideOff && (obj.status === 'stopped' || obj.fi === 'out')) return;
       var objectMatched = kw && obj.name.toLowerCase().indexOf(kw) >= 0;
       var filteredVars = obj.variables.filter(function (v) {
@@ -2597,6 +2973,10 @@
 
   document.getElementById('hideOffDevice').addEventListener('change', renderTable);
   document.getElementById('recordSearch').addEventListener('input', renderTable);
+  /* v2.9：切换寻优记录时间后重判本条记录是否含 BA 设定点（规则文件上传前的轮次没有群控系统对象） */
+  document.querySelectorAll('.record-bar-opt-tools .time-input').forEach(function (el) {
+    el.addEventListener('change', renderTable);
+  });
   document.querySelectorAll('#varTypeFilter .var-tag').forEach(function (tag) {
     tag.addEventListener('click', function () {
       document.querySelectorAll('#varTypeFilter .var-tag').forEach(function (t) { t.classList.remove('active'); });
@@ -2729,6 +3109,10 @@
       if (modeEl) modeEl.textContent = name ? (name.indexOf('自动') >= 0 ? '自动' : '手动') : '—';
       refreshDeliverCard();
     }
+    /* v2.9：带规则文件时，工单推送成功后展示工单内容（有变化的 BA 设定点）；规则文件挂在下发策略上，与手动下发一样先看是否绑定了下发策略 */
+    if (pendingPwdAction === '工单推送' && deliverBound && baRuleBound()) {
+      openBaWorkOrder();
+    }
     pendingPwdAction = null;
   };
   window.openDispatch = function (mode) {
@@ -2744,6 +3128,12 @@
     document.getElementById('dispatchTitle').textContent =
       '请仔细核对' + (isRollback ? '回退' : '下发') + '的指令参数，改为空值可不下发';
     document.getElementById('dispatchConfirmBtn').textContent = isRollback ? '确认回退' : '确认下发';
+    /* v2.9：只改手动下发；带规则文件时行换成 BA 设定点。一键回退、没上传规则文件仍走下方原逻辑 */
+    baResetDispatch();
+    if (!isRollback && baRuleBound()) {
+      openBaDispatch();
+      return;
+    }
     var rows = [
       { dev: '水冷离心式冷水机组CH01', param: '冷冻水出水温度', actual: '17.10 ℃', ai: '17.80 ℃' },
       { dev: '冷冻水泵-CHWP1', param: '频率反馈', actual: '30.45', ai: '28.00' },
@@ -2751,7 +3141,7 @@
       { dev: '冷却水泵-CWP01', param: '频率反馈', actual: '39.80', ai: '34.00' }
     ];
     var html = '<div class="dispatch-section"><span class="ds-badge save">寻优</span> AI 建议调节（' + rows.length + ' 条）</div>';
-    html += '<table class="dispatch-table"><thead><tr><th>对象</th><th>下发属性</th><th>当前值</th><th>AI寻优值 <span class="confidence-pill low">数据积累中</span></th><th>下发值</th></tr></thead><tbody>';
+    html += '<table class="dispatch-table"><thead><tr><th>设备</th><th>下发属性</th><th>当前值</th><th>AI寻优值 <span class="confidence-pill low">数据积累中</span></th><th>下发值</th></tr></thead><tbody>';
     rows.forEach(function (r) {
       var val = String(r.ai).replace(/\s*Hz\s*$/i, '').replace(/[℃%]/g, '').trim();
       html += '<tr><td class="dev-name">' + r.dev + '</td><td class="param-name">' + r.param + '</td><td class="val-actual">' + r.actual + '</td><td class="val-ai">' + r.ai + '</td><td><input class="dispatch-val" type="text" value="' + val + '"></td></tr>';
@@ -2762,6 +3152,21 @@
   };
 
   var DISPATCH_DATA = [
+    /* v2.9：带转写规则文件后的手动下发 —— 对象为群控系统设备，下发属性为测点名称；只记录实际下发的点（寻优值与当前值不同的点） */
+    { strategy: '冷站全局寻优手动下发策略', time: '2026-10-20 15:06:00', user: '系统管理员', target: 'A路水冷群控系统/01号制冷单元-冷机出水温度设定', actual: '10.00', dispatch: '10.50', result: '成功' },
+    { strategy: '', time: '2026-10-20 15:06:00', user: '系统管理员', target: 'A路水冷群控系统/02号制冷单元-制冷冷塔出水温度设定', actual: '20.00', dispatch: '19.00', result: '成功' },
+    { strategy: '', time: '2026-10-20 15:06:00', user: '系统管理员', target: 'A路水冷群控系统/02号制冷单元-冷却泵频率温差设定（制冷）', actual: '5.00', dispatch: '5.30', result: '成功' },
+    { strategy: '', time: '2026-10-20 15:06:00', user: '系统管理员', target: 'A路水冷群控系统/02号制冷单元-冷却泵频率温差设定（联合）', actual: '5.00', dispatch: '5.30', result: '成功' },
+    { strategy: '', time: '2026-10-20 15:06:00', user: '系统管理员', target: 'A路水冷群控系统/02号制冷单元-冷机出水温度设定', actual: '10.00', dispatch: '10.50', result: '成功' },
+    { strategy: '', time: '2026-10-20 15:06:00', user: '系统管理员', target: 'A路水冷群控系统/05号制冷单元-制冷冷塔出水温度设定', actual: '20.00', dispatch: '19.00', result: '成功' },
+    { strategy: '', time: '2026-10-20 15:06:00', user: '系统管理员', target: 'A路水冷群控系统/05号制冷单元-冷却泵频率温差设定（制冷）', actual: '5.00', dispatch: '5.50', result: '成功' },
+    { strategy: '', time: '2026-10-20 15:06:00', user: '系统管理员', target: 'A路水冷群控系统/05号制冷单元-冷却泵频率温差设定（联合）', actual: '5.00', dispatch: '5.50', result: '成功' },
+    { strategy: '', time: '2026-10-20 15:06:00', user: '系统管理员', target: 'A路水冷群控系统/05号制冷单元-冷机出水温度设定', actual: '10.00', dispatch: '10.50', result: '成功' },
+    { strategy: '', time: '2026-10-20 15:06:00', user: '系统管理员', target: 'A路水冷群控系统/二次泵-末端压差设定', actual: '1.20', dispatch: '1.10', result: '成功' },
+    { strategy: '', time: '2026-10-20 15:06:00', user: '系统管理员', target: 'A路水冷群控系统/二次泵-二次泵加泵压差设定', actual: '1.10', dispatch: '1.00', result: '成功' },
+    { strategy: '', time: '2026-10-20 15:06:00', user: '系统管理员', target: 'A路水冷群控系统/二次泵-二次泵减泵压差设定', actual: '1.30', dispatch: '1.20', result: '成功' },
+    { strategy: '', time: '2026-10-20 15:06:00', user: '系统管理员', target: 'A路水冷群控系统/群控-制冷模式加机负荷设定', actual: '85.00', dispatch: '73.00', result: '成功' },
+    { strategy: '', time: '2026-10-20 15:06:00', user: '系统管理员', target: 'A路水冷群控系统/群控-制冷模式减机负荷设定', actual: '35.00', dispatch: '23.00', result: '成功' },
     { strategy: '冷站全局寻优手动下发策略', time: '2025-12-25 08:57:00', user: '系统管理员', target: '水冷离心式冷水机组CH01/冷冻水出水温度', actual: '17.10', dispatch: '17.80', result: '成功' },
     { strategy: '', time: '2025-12-25 08:57:00', user: '系统管理员', target: '冷冻水泵-CHWP1/频率反馈', actual: '30.45', dispatch: '28.00', result: '成功' },
     { strategy: '', time: '2025-12-25 08:57:00', user: '系统管理员', target: '冷却塔-CT01/频率反馈', actual: '45.06', dispatch: '38.00', result: '成功' },
@@ -2770,7 +3175,7 @@
   ];
   function renderDispatchTable() {
     var tbody = document.getElementById('dispatchBody');
-    if (!tbody) return;
+    if (!tbody || !DISPATCH_DATA) return;   /* 初始化选冷水系统时示例数据还没定义，跳过；数据定义后下方会渲染一次 */
     var strategyFilter = (document.getElementById('dispatchStrategyFilter') || {}).value || '';
     var kw = ((document.getElementById('dispatchSearch') || {}).value || '').trim();
     var currentStrategy = '';
@@ -2778,6 +3183,8 @@
       if (d.strategy) currentStrategy = d.strategy;
       return Object.assign({}, d, { strategyGroup: currentStrategy });
     }).filter(function (d) {
+      /* v2.9：群控系统设备（BA 设定点）的下发记录只属于带规则文件的冷水系统（演示：A路冷水系统）；其他冷水系统保持原有记录 */
+      if (d.target.indexOf(BA_RECORD_INFO.device + '/') === 0 && !baRuleBound()) return false;
       if (strategyFilter && d.strategyGroup !== strategyFilter) return false;
       if (kw && (d.target + d.user + d.strategyGroup).indexOf(kw) < 0) return false;
       return true;
@@ -3040,6 +3447,49 @@
       <span class="modal-close" onclick="closeModal('modalDispatch')">&times;</span>
     </div>
     <div class="modal-body" style="padding-bottom:0;">
+      <div class="anno anno-ux" data-version="v2.9">
+        <span class="anno-tag">交互说明</span>
+        <span class="anno-version">v2.9</span>
+        <span class="anno-source">需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>手动下发弹窗（带转写规则文件时）；入口：智控下发卡片「手动下发」，含混合下发命中手动、从工单进入的手动下发</p>
+          <ul>
+            <li><b>适用范围：</b>只改手动下发模式，且仅在下发策略上传了转写规则文件时生效；一键回退共用本弹窗，保持原样；没上传规则文件时保持原 4 行设备量。</li>
+            <li><b>样式和结构不变：</b>标题、橙色提示、表格列（设备 / 下发属性 / 当前值 / AI寻优值 / 下发值）都沿用原弹窗；只是行换成 BA 设定点：对象列为「A路水冷群控系统」，下方灰字设备类型「水冷群控系统」（每行都显示），下发属性为测点名称（如「群控-制冷模式加机负荷设定」）。</li>
+            <li><b>下发值：</b>预填 AI寻优值，可编辑；清空即本次不下发该点；全部清空时「确认下发」置灰。</li>
+            <li><b>联动组：</b>同一联动组的点，改其中一个，其余点按同一平移量跟着变（如改制冷加机负荷 73 → 75，减机负荷 23 → 25）；清空其中一行，整组一起清空。</li>
+            <li><b>确认：</b>「确认下发」→ 先做上下限校验（见边界与异常）→ 通过后走本页原有密码校验。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="anno anno-data" data-version="v2.9">
+        <span class="anno-tag">数据逻辑</span>
+        <span class="anno-version">v2.9</span>
+        <span class="anno-source">需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>手动下发弹窗（带转写规则文件时）— 行的来源</p>
+          <ul>
+            <li><b>只下发有变化的点：</b>取最新一轮寻优记录里群控系统设备的 BA 设定点，只列出寻优值与当前值不同的点（本例 14 项）；直通、没变化、当前值读不到的点不显示，也不下发。</li>
+            <li><b>取数：</b>当前值、AI寻优值、安全边界上下限、联动组都取自同一轮寻优记录，与寻优记录表一致。</li>
+            <li><b>全局寻优：</b>开机台数和模式通过加减机、湿球阈值平移转写，由 BA 自己执行（本例制冷加机负荷 85 → 73、减机负荷 35 → 23）；弹窗里不出现主机启停、泵和冷却塔频率。</li>
+            <li><b>下发后：</b>沿用现有下发执行；下发记录的对象为「A路水冷群控系统」，下发属性为测点名称，实际参数 = 当前值，下发参数 = 下发值。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="anno anno-edge" data-version="v2.9">
+        <span class="anno-tag">边界与异常</span>
+        <span class="anno-version">v2.9</span>
+        <span class="anno-source">需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>手动下发弹窗（带转写规则文件时）— 校验与异常</p>
+          <ul>
+            <li><b>超出上下限：</b>点「确认下发」时，下发值超出安全边界上下限的输入框标红，下方提示「超出允许区间 下限～上限 单位」，不放行；改回区间内后标红消失。上下限未配置的点不校验。</li>
+            <li><b>全部清空：</b>下发值全部清空（没有任何要下发的值）时「确认下发」置灰；填回任一下发值后恢复可点。</li>
+            <li><b>非数字（产品推断）：</b>输入非数字时同样标红，提示「请输入数字」。</li>
+            <li><b>没有需要下发的点：</b>本轮没有寻优值与当前值不同的 BA 设定点时，表格空状态显示「本轮没有需要下发的 BA 设定点」，「确认下发」置灰；不退回显示频率。</li>
+          </ul>
+        </div>
+      </div>
       <div class="confidence-summary">
         <span class="confidence-pill low">数据积累中</span>
         <span>本轮建议因样本不足已按 γ(低) 折算；建议人工核对后下发。</span>
@@ -3050,8 +3500,50 @@
       <div class="modal-hint">1、点击后需密码权限校验，校验后才可正式下发<br>2、下发后需基于反馈结果确认是否成功，失败点位可再次下发</div>
       <div style="display:flex;justify-content:flex-end;gap:8px;">
         <button class="btn" onclick="closeModal('modalDispatch')">取 消</button>
-        <button class="btn btn-primary" id="dispatchConfirmBtn" onclick="closeModal('modalDispatch'); openPwdConfirm('确认下发');">确认下发</button>
+        <button class="btn btn-primary" id="dispatchConfirmBtn" onclick="if (!baCheckDispatch()) return; closeModal('modalDispatch'); openPwdConfirm('确认下发');">确认下发</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：工单内容（v2.9：带规则文件时，工单推送成功后展示，内容为有变化的 BA 设定点，列与手动下发弹窗一致） -->
+<div class="modal-mask" id="modalWorkOrder">
+  <div class="modal-box" style="max-width:780px;">
+    <div class="modal-head">
+      <span class="modal-title">工单已推送 — 工单内容</span>
+      <span class="modal-close" onclick="closeModal('modalWorkOrder')">&times;</span>
+    </div>
+    <div class="modal-body">
+      <div class="anno anno-data" data-version="v2.9">
+        <span class="anno-tag">数据逻辑</span>
+        <span class="anno-version">v2.9</span>
+        <span class="anno-source">需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>工单内容弹窗；入口：智控下发卡片「工单推送」→ 密码校验通过（带规则文件时）</p>
+          <ul>
+            <li><b>功能不改：</b>工单推送流程、推送对象和工单通知规则（不通知 / 每次寻优都通知 / 按需通知）沿用现有逻辑。</li>
+            <li><b>工单内容：</b>与手动下发同一份内容：只列出本轮寻优值与当前值不同的 BA 设定点（本例 14 项），列与手动下发弹窗一致（对象 + 设备类型 / 下发属性 / 当前值 / AI寻优值 / 下发值）；直通、没变化、当前值读不到的点不列；不出现泵、冷却塔频率等设备量。</li>
+            <li><b>按需通知：</b>通知条件可以选 BA 设定点。</li>
+            <li><b>处理工单：</b>运维按工单进入手动下发时，弹窗与智控下发卡片「手动下发」一致。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="anno anno-ux" data-version="v2.9">
+        <span class="anno-tag">交互说明</span>
+        <span class="anno-version">v2.9</span>
+        <span class="anno-source">产品推断</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>工单内容弹窗</p>
+          <ul>
+            <li>推送成功后弹出，只读展示本次工单内容（下发值为工单建议写入的值）；「知道了」关闭。</li>
+            <li>下发策略没上传规则文件时，工单推送保持原逻辑，不弹出本窗口。</li>
+          </ul>
+        </div>
+      </div>
+      <div id="workOrderBody" style="max-height:55vh;overflow-y:auto;"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-primary" onclick="closeModal('modalWorkOrder')">知道了</button>
     </div>
   </div>
 </div>

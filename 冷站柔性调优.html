@@ -939,6 +939,21 @@
       .system-panel { border-left:none; border-top:1px solid var(--border); }
       .topology-summary { grid-template-columns:repeat(2,1fr); }
     }
+
+    /* ===== v2.9 廊坊群控下发兼容：手动下发弹窗沿用原样式，只补设备类型灰字与确认时的上下限提示 ===== */
+    .dispatch-table .dev-type { display:block; font-size:10.5px; font-weight:400; color:var(--text-hint); margin-top:1px; }
+    .dispatch-table input.dispatch-val.invalid { border-color:var(--danger); color:var(--danger); }
+    .dispatch-table .val-err { display:block; font-size:10.5px; color:var(--danger); margin-top:2px; white-space:nowrap; }
+    .dispatch-table .val-err:empty { display:none; }
+    .page-toast {
+      position:fixed; top:72px; left:50%; z-index:500;
+      transform:translate(-50%,-8px); opacity:0; pointer-events:none;
+      background:var(--success-light); border:1px solid #BBF7D0; color:#15803D;
+      padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600;
+      box-shadow:var(--shadow-card); transition:opacity .2s, transform .2s;
+      max-width:calc(100vw - 32px);
+    }
+    .page-toast.show { opacity:1; transform:translate(-50%,0); }
   </style>
   <link rel="stylesheet" href="annotation-styles.css">
 </head>
@@ -959,6 +974,29 @@
       </div>
 
       <!-- ===== 版本信息 ===== -->
+      <div class="anno anno-version-header" data-version="v2.9">
+        <span class="anno-tag">版本信息</span>
+        <span class="anno-version">v2.9</span>
+        <span class="anno-source">需求文档</span>
+        <div class="anno-body">
+          <p><b>当前版本：</b>v2.9</p>
+          <p><b>更新日期：</b>2026-10-20</p>
+          <p><b>变更概述：</b>v2.9 廊坊群控下发兼容（需求 3）。下发策略开启群控下发并上传「转写规则文件」后，每轮寻优结果由转写引擎按规则文件换算成 BA 群控设定点。BA 设定点是群控系统设备（本例「A路水冷群控系统」，设备类型「水冷群控系统」）上的平级测点：寻优记录里按原有方式挂在该设备下展示；手动 / 自动 / 混合下发、工单和下发记录只针对寻优值与当前值不同的点。界面全部复用原有表格、弹窗和交互，不另加筛选项、列或标识。转写是平台标准能力，廊坊 A 路的逐点规则只是规则文件内容，不进页面逻辑；没上传规则文件的策略行为与 v2.8 一致。</p>
+          <p><b>本页说明：</b></p>
+          <ul>
+            <li><b>寻优记录：</b>表格里像其他设备一样多一个对象「A路水冷群控系统」（运行 / 投入标签沿用原写法），下面列出 58 个 BA 设定点，变量名称为测点名称；本轮转写的点归「控制变量（寻优中）」，其余归「控制变量（未寻优）」。分类着色、分类筛选、隐藏停机 / 投出、历史趋势沿用原有逻辑。规则文件版本记录在寻优记录里（界面不单独展示）。</li>
+            <li><b>智控下发卡片：</b>补「已绑定」状态，样式沿用原卡片（与冷站全局寻优一致）：策略名称、下发模式（手动 / 自动）、「手动下发」「策略切换」按钮。本页不新增工单入口。</li>
+            <li><b>手动下发弹窗：</b>沿用原弹窗的标题、列、密码校验提示和按钮；带规则文件时，行换成寻优值与当前值不同的 BA 设定点（设备 / 下发属性 / 当前值 / AI寻优值 / 下发值，首列名与真实系统一致为「设备」）。联动组、确认时的上下限校验不改变外观；确认后补接密码校验；一键回退不变。</li>
+            <li><b>寻优策略卡片：</b>去掉「最新寻优时间」旁的置信标签（数据积累中 / 数据充分）。在卡片上看不出用途，反而增加理解负担；置信只在寻优记录当前轮次旁和手动下发弹窗里展示。</li>
+            <li><b>下发记录：</b>功能和样式不改，示例换成实际下发的 BA 设定点（只有有变化的点），「对象名称、下发属性」写「A路水冷群控系统/测点名称」。</li>
+          </ul>
+          <p><b>示例数据：</b>A 路柔性寻优 2026-10-20 14:05 轮，规则文件「廊坊A路（人保北方）转写规则 v1」，58 个设定点：转写 6 / 直通 51 / 不下发 1；寻优值与当前值不同、需要下发的是 6 个转写点（02# 联合冷塔出水温度、02# 与 05# 温差组、05# 制冷冷塔出水温度）。需求依据：《廊坊群控设定点转写与下发需求文档》§八、§九、§十一。</p>
+          <p><b>演示入口：</b>v2.9 演示在 A路冷水系统下；切到其他冷水系统为原有演示。带转写规则文件的下发策略只绑在「A路冷水系统」上：选中它时，智控下发卡片显示已绑定策略，寻优记录出现「A路水冷群控系统」，手动下发列出 BA 设定点，策略卡和寻优记录时间定位到 2026-10-20 14:05 轮；选其他冷水系统时，智控下发卡片、寻优记录、手动下发和下发记录都保持 v2.8 及以前的原样，不出现 BA 设定点。</p>
+          <p><b>冷站记忆：</b>冷站柔性 / 全局 / 长周期三个寻优页共用同一个「已选冷水系统」记忆；首次进入（没有记忆）时默认选中「A路冷水系统」，便于评审进页就看到 v2.9 演示（v2.0 记的默认冷站为 3#，这里只是演示调整）；手动切走后按记住的冷水系统打开。浏览器禁止本地存储时不影响页面使用，按首次进入处理。</p>
+          <p><b>待确认：</b>寻优记录里原有寻优变量的示例仍是历史风冷数据，没有随冷站切换；是否整体换成 A 路水冷变量，待产品确认（PRD §十四 第 3 条）。</p>
+        </div>
+      </div>
+
       <div class="anno anno-version-header" data-version="v2.3">
         <span class="anno-tag">版本信息</span>
         <div class="anno-body">
@@ -985,7 +1023,7 @@
           <label class="selector cold-station-selector">
             <select id="coldStationSelect" aria-label="冷站选择">
               <option value="3#数据中心水冷冷水系统">3#数据中心水冷冷水系统</option>
-              <option value="A路冷水系统">A路冷水系统</option>
+              <option value="A路冷水系统" selected>A路冷水系统</option>
               <option value="B路风冷冷水系统">B路风冷冷水系统</option>
               <option value="C路冷水系统">C路冷水系统</option>
               <option value="G1栋A路冷水系统">G1栋A路冷水系统</option>
@@ -1012,8 +1050,8 @@
 
       <div class="station-tabs-bar station-source-tabs" aria-hidden="true">
         <div class="station-tabs" id="stationTabs">
-          <button class="station-tab active" data-system-name="3#数据中心水冷冷水系统" data-mode="water">3#数据中心水冷冷水系统</button>
-          <button class="station-tab" data-system-name="A路冷水系统" data-mode="water">A路冷水系统</button>
+          <button class="station-tab" data-system-name="3#数据中心水冷冷水系统" data-mode="water">3#数据中心水冷冷水系统</button>
+          <button class="station-tab active" data-system-name="A路冷水系统" data-mode="water">A路冷水系统</button>
           <button class="station-tab" data-system-name="B路风冷冷水系统" data-mode="wind">B路风冷冷水系统</button>
           <button class="station-tab" data-system-name="C路冷水系统" data-mode="water">C路冷水系统</button>
           <button class="station-tab" data-system-name="G1栋A路冷水系统" data-mode="water">G1栋A路冷水系统</button>
@@ -1034,6 +1072,51 @@
           <p><b>安全策略：</b>一键回退、切换回退策略；异常时触发回退（见边界批注）。</p>
         </div>
       </div>
+      <div class="anno anno-ux" data-version="v2.9">
+        <span class="anno-tag">交互说明</span>
+        <span class="anno-version">v2.9</span>
+        <span class="anno-source">需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>顶部「智控下发策略」卡片 — 已绑定状态</p>
+          <ul>
+            <li><b>已绑定：</b>样式沿用原卡片，显示当前下发策略名称和下发模式（「手动」/「自动」），以及「手动下发」「策略切换」按钮；策略是否上传了转写规则文件不在卡片上单独标识。</li>
+            <li><b>手动下发：</b>打开原手动下发弹窗；策略上传了规则文件时，弹窗里的行换成寻优值与当前值不同的 BA 设定点（规则见弹窗批注）。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="anno anno-ux" data-version="v2.9">
+        <span class="anno-tag">交互说明</span>
+        <span class="anno-version">v2.9</span>
+        <span class="anno-source">产品推断</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>顶部「智控下发策略」卡片 — 切换细节</p>
+          <ul>
+            <li><b>自动模式：</b>下发模式为自动时，「手动下发」按钮置灰。</li>
+            <li><b>策略切换：</b>打开「选择智控下发策略」弹窗 → 密码校验 → 生效。切到未上传规则文件的策略时，手动下发回到原逻辑；选「不选定」回到空状态「请选定下发策略」，可点「去选定」重新选择。</li>
+            <li><b>切换冷站：</b>下发策略按冷站绑定。本例带规则文件的策略只绑在「A路冷水系统」：选中它时卡片为已绑定状态；切到其他冷水系统时卡片保持 v2.8 原样（空状态「请选定下发策略」），手动下发和寻优记录都不出现 BA 设定点。各冷站的绑定互不影响，切回「A路冷水系统」仍是它自己的绑定。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="anno anno-data" data-version="v2.9">
+        <span class="anno-tag">数据逻辑</span>
+        <span class="anno-version">v2.9</span>
+        <span class="anno-source">需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>智控下发策略 — 各下发方式的下发对象</p>
+          <p>下发策略上传了规则文件时，本轮待下发内容 = 最新一轮 BA 设定点里寻优值与当前值不同的点，下发值为寻优值。没有变化的点、当前值读不到的点都不下发，也不出现在下发弹窗、工单和下发记录里（寻优记录里照常展示）。各下发方式的判定逻辑不改，只是下发对象换成 BA 设定点：</p>
+          <table class="anno-table">
+            <thead><tr><th>下发方式</th><th>带规则文件时的行为</th></tr></thead>
+            <tbody>
+              <tr><td>手动下发</td><td>原弹窗列出有变化的 BA 设定点，确认并通过密码校验后写入</td></tr>
+              <tr><td>自动下发</td><td>寻优、转写完成后按现有自动下发流程，只写入有变化的 BA 设定点；不写任何频率</td></tr>
+              <tr><td>混合下发</td><td>仍按现有混合规则和置信度规则判定走自动还是手动；命中手动时打开同一个手动下发弹窗</td></tr>
+              <tr><td>工单</td><td>按现有工单通知规则推送，工单内容只列有变化的 BA 设定点，列与手动下发弹窗相同（设备 / 下发属性 / 当前值 / AI寻优值 / 下发值），不出现频率；「按需通知」的条件可以选 BA 设定点</td></tr>
+            </tbody>
+          </table>
+          <p>没上传规则文件的策略：下发对象仍是寻优变量，行为与 v2.8 一致。</p>
+          <p><b>工单：</b>本页不新增「工单推送」入口；工单内容同样为 BA 设定点，只列有变化的点（工单内容的演示见冷站全局寻优页）。</p>
+        </div>
+      </div>
       <div class="module-strip">
 
         <div class="module-card" id="modOpt">
@@ -1050,8 +1133,7 @@
               <div class="status-item">
                 <span class="label">最新寻优时间</span>
                 <span class="value confidence-value">
-                  <span>2026-03-17 13:25:00</span>
-                  <span class="confidence-pill low">数据积累中</span>
+                  <span id="optLatestTime">2026-10-20 14:05:00</span>
                 </span>
               </div>
               <div class="status-item">
@@ -1082,9 +1164,32 @@
             智控下发策略
           </div>
           <div class="module-card-body">
-            <div class="policy-empty">
+            <!-- v2.9：已绑定状态（样式和文案沿用冷站全局寻优原卡片：策略名称、下发模式 手动/自动、手动下发 / 策略切换） -->
+            <div id="deliverBound">
+              <div class="module-status-row">
+                <div class="status-item">
+                  <span class="label">当前下发策略</span>
+                  <span class="value blue" id="deliverStrategyName">冷站柔性寻优手动下发策略</span>
+                </div>
+                <div class="status-item">
+                  <span class="label">下发模式</span>
+                  <span class="value" id="deliverModeText">手动</span>
+                </div>
+              </div>
+              <div class="module-actions">
+                <button class="btn" type="button" id="btnManualDeliver" onclick="openDispatch('手动下发')">
+                  <span class="btn-icon"><svg viewBox="0 0 24 24"><path d="M9 11.24V7.5a2.5 2.5 0 015 0v3.74l1.31-1.31 1.42 1.41L12 16.07l-4.73-4.73 1.42-1.41L9 11.24zM5 19h14v2H5z"/></svg></span>
+                  手动下发
+                </button>
+                <button class="btn" type="button" onclick="openModal('modalStrategySelect')">
+                  <span class="btn-icon"><svg viewBox="0 0 24 24"><path d="M7 7h11l-3-3 1.41-1.41L21.83 8l-5.42 5.41L15 12l3-3H7V7zm10 10H6l3 3-1.41 1.41L2.17 16l5.42-5.41L9 12l-3 3h11v2z"/></svg></span>
+                  策略切换
+                </button>
+              </div>
+            </div>
+            <div class="policy-empty" id="deliverEmpty" style="display:none;">
               <div class="empty-stone"></div>
-              <div>请选定下发策略 <span class="link-disabled">去选定</span></div>
+              <div>请选定下发策略 <span class="link-disabled" id="deliverPickLink" onclick="onDeliverPick()">去选定</span></div>
             </div>
           </div>
         </div>
@@ -1206,13 +1311,36 @@
 
       <!-- TAB: 寻优记录 -->
       <div class="content-body tab-pane active" id="pane-optRecord">
+        <div class="anno anno-ux" data-version="v2.9">
+          <span class="anno-tag">交互说明</span>
+          <span class="anno-version">v2.9</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>寻优记录 Tab — 群控系统设备「A路水冷群控系统」</p>
+            <ul>
+              <li><b>展示方式：</b>BA 设定点是群控系统设备上的平级测点，没有分组。表格里像其他设备一样多一个对象「A路水冷群控系统」，带原有的运行 / 投入状态标签，下面列出规则文件里的全部设定点（本例 58 个），变量名称为测点名称（如「02号制冷单元-联合冷塔出水温度设定」）。</li>
+              <li><b>沿用原有交互：</b>变量名称按变量分类着色；「变量分类」筛选、「隐藏停机/投出设备」、历史趋势都直接沿用原有逻辑（选「控制变量（寻优中）」只看本轮转写的点，选「控制变量（未寻优）」看其余点）；对象名称、变量名称搜索同样适用（原型里搜索框为静态示意）。不另加筛选项、列或横条。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="anno anno-ux" data-version="v2.9">
+          <span class="anno-tag">交互说明</span>
+          <span class="anno-version">v2.9</span>
+          <span class="anno-source">产品推断</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>寻优记录 Tab — 切换冷站时的显隐</p>
+            <ul>
+              <li><b>切换冷站：</b>只有当前这条寻优记录含 BA 设定点时（下发策略上传了规则文件，且本轮寻优产出了结果），表格里才出现群控系统设备。本例只有「A路冷水系统」含 BA 设定点，选中它时记录时间定位到 2026-10-20 14:05 轮；其他冷水系统保持原有演示（记录时间 2026-03-17 13:25），不出现「A路水冷群控系统」。</li>
+            </ul>
+          </div>
+        </div>
         <div class="filter-bar">
           <div class="filter-group">
             <span class="filter-label">时间：</span>
-            <input type="date" class="filter-input" value="2026-03-17">
+            <input type="date" class="filter-input" id="recordDateInput" value="2026-10-20">
             <button class="step-btn" title="上一条">‹</button>
             <button class="step-btn" title="下一条">›</button>
-            <input type="time" class="filter-input" value="13:25:00" step="1">
+            <input type="time" class="filter-input" id="recordTimeInput" value="14:05:00" step="1">
             <button class="step-btn" title="上一条">‹</button>
             <button class="step-btn" title="下一条">›</button>
             <span class="round-confidence">当前轮次 <span class="confidence-pill low">数据积累中</span></span>
@@ -1252,7 +1380,42 @@
           <span class="anno-source">需求文档</span>
           <div class="anno-body">
             <p><b>关联模块：</b>寻优策略卡片与寻优记录轮次置信度</p>
-            <p>置信度为一轮寻优结果的整体属性，按本轮仿真求解链路最低置信等级展示；因此仅在“最新寻优时间”和当前寻优记录轮次旁展示，不在变量明细表逐行新增列。</p>
+            <p>置信度为一轮寻优结果的整体属性，按本轮仿真求解链路最低置信等级展示；因此仅在当前寻优记录轮次旁展示，不在变量明细表逐行新增列（v2.9 起寻优策略卡片「最新寻优时间」旁不再展示置信标签）。</p>
+          </div>
+        </div>
+
+        <div class="anno anno-data" data-version="v2.9">
+          <span class="anno-tag">数据逻辑</span>
+          <span class="anno-version">v2.9</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>寻优记录 — 群控系统设备下 BA 设定点的数据来源与分类</p>
+            <ul>
+              <li><b>来源：</b>转写引擎。当前寻优绑定的下发策略开启了群控下发并上传了转写规则文件，且本轮寻优产出了结果时，引擎按规则文件对每个设定点生成一条记录；寻优失败或没有结果时不转写，这条记录里也没有群控系统设备。</li>
+              <li><b>归类：</b>本轮转写的点归「控制变量（寻优中）」；直通和不下发的点归「控制变量（未寻优）」。</li>
+              <li><b>列口径：</b>「实际值」= 转写时刻 BA 设定点的当前值，读不到显示「—」；寻优中的点「AI寻优值」= 寻优值，「寻优变化」= 寻优值 − 当前值，写法同原有变量（如「+0.4℃」）；未寻优的点按原有写法，「AI寻优值」显示「-」，「寻优变化」显示「无变化」。</li>
+              <li><b>规则文件版本：</b>本轮所用规则文件的名称和版本号记录在寻优记录里供追溯，界面不单独展示；规则文件覆盖上传后从下一轮起按新版本转写，历史记录保留当时的版本。</li>
+              <li><b>原有变量不变：</b>原有寻优变量照常显示；BA 设定点只用于展示和下发，不作为下一轮柔性寻优的基线。</li>
+              <li><b>本例：</b>「A路冷水系统」，2# 联合、5# 制冷运行，1#/4# 停机，3#/6# 投出；冷却塔频率、冷却水泵频率开关启用；冷机出水温度、二次泵频率开关未启用；柔性无设备数量规则，加减载和模式切换阈值全部直通 → 「控制变量（寻优中）」6 项，「控制变量（未寻优）」52 项（其中「蓄冷罐-超级充冷流量设定」当前值读不到，实际值显示「—」）。02# 温差组算出 5.6 ℃ 超出安全边界上限，整组贴到 5.5 ℃，AI寻优值显示贴边后的 5.5℃。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="anno anno-field" data-version="v2.9">
+          <span class="anno-tag">字段说明</span>
+          <span class="anno-version">v2.9</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>寻优记录表格 — 群控系统设备行（列与原表格一致，不新增列）</p>
+            <table class="anno-table">
+              <thead><tr><th>字段</th><th>说明</th></tr></thead>
+              <tbody>
+                <tr><td>对象名称</td><td>群控系统设备名「A路水冷群控系统」，下方运行 / 投入状态标签沿用原写法</td></tr>
+                <tr><td>变量名称</td><td>测点名称（如「群控-制冷模式加机负荷设定」）；颜色按变量分类，与上方筛选一致</td></tr>
+                <tr><td>实际值 / AI寻优值 / 寻优变化</td><td>见数据逻辑；单位取物模型（℃ / % / bar / m³/h）</td></tr>
+                <tr><td>操作</td><td>历史趋势，沿用原有图表弹窗</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -1284,6 +1447,19 @@
         </div>
       </div>
       <div class="content-body tab-pane" id="pane-dispatchRecord">
+        <div class="anno anno-data" data-version="v2.9">
+          <span class="anno-tag">数据逻辑</span>
+          <span class="anno-version">v2.9</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>下发记录 Tab — BA 设定点下发记录</p>
+            <ul>
+              <li><b>功能不改：</b>筛选、列、分页和样式沿用现有下发记录。</li>
+              <li><b>记录内容：</b>只记录实际下发的点，即寻优值与当前值不同、且下发时没有清空的 BA 设定点；没变化的点不下发，也不进下发记录。「对象名称、下发属性」写「A路水冷群控系统/测点名称」，与原有记录「设备/属性」写法一致（三个寻优页同一写法）；「实际参数」= 下发时的当前值，「下发参数」= 下发值。</li>
+              <li><b>本例：</b>2026-10-20 14:08 手动下发的 6 个 BA 设定点（02# 联合冷塔出水温度、02# 与 05# 温差组、05# 制冷冷塔出水温度）；其下方为历史的寻优变量下发记录，保留不动。BA 设定点下发记录只在选中「A路冷水系统」时出现，其他冷水系统只显示原有记录。</li>
+            </ul>
+          </div>
+        </div>
         <div class="filter-bar">
           <div class="filter-group">
             <span class="filter-label">策略：</span>
@@ -1297,7 +1473,7 @@
             <span class="filter-label">日期：</span>
             <input type="date" class="filter-input" value="2026-03-17">
             <span class="filter-sep">~</span>
-            <input type="date" class="filter-input" value="2026-03-17">
+            <input type="date" class="filter-input" value="2026-10-20">
           </div>
           <div class="filter-group" style="margin-left:auto;">
             <span class="filter-label">Q</span>
@@ -1515,6 +1691,19 @@
       <span class="modal-title" id="pwdTitle">密码权限校验</span>
     </div>
     <div class="modal-body">
+      <div class="anno anno-ux" data-version="v2.9">
+        <span class="anno-tag">交互说明</span>
+        <span class="anno-version">v2.9</span>
+        <span class="anno-source">需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>密码权限校验弹窗；新增入口：手动下发弹窗（带转写规则文件时）「确认下发」</p>
+          <ul>
+            <li><b>补齐校验：</b>柔性页手动下发原来没接密码校验，本期补上，写法与全局寻优页一致：确认下发（上下限校验通过）→ 本弹窗，标题「确认下发 — 密码校验」，提示「校验通过后将执行「确认下发」」。</li>
+            <li><b>确认：</b>校验通过后下发，页面顶部提示「下发指令已发送」，结果在「下发记录」查看；下发失败的点位按现有规则再次下发。</li>
+            <li><b>取消：</b>不下发，关闭弹窗。</li>
+          </ul>
+        </div>
+      </div>
       <div class="anno anno-ux" data-version="v1.0">
         <span class="anno-tag">交互说明</span>
         <span class="anno-version">v1.0</span>
@@ -1604,7 +1793,7 @@
         <span class="anno-source">引用自需求文档</span>
         <div class="anno-body">
           <p><b>关联模块：</b>选择智控下发策略弹窗（modalStrategySelect）</p>
-          <p><b>入口：</b>智控下发策略区「切换策略」。</p>
+          <p><b>入口：</b>智控下发策略区「策略切换」。</p>
           <ul><li><b>单选列表：</b>确认后进入密码校验。</li><li><b>清空：</b>末项清除当前策略。</li></ul>
         </div>
       </div>
@@ -1618,7 +1807,14 @@
         </div>
       </div>
       <ul class="strategy-list" id="strategyList">
-        <li class="strategy-item selected" data-name="节能模式" onclick="selectStrategy(this)">
+        <li class="strategy-item selected" data-name="冷站柔性寻优手动下发策略" onclick="selectStrategy(this)">
+          <div class="strategy-radio"></div>
+          <div class="strategy-info">
+            <div class="strategy-name">冷站柔性寻优手动下发策略</div>
+            <div class="strategy-desc">手动下发，已开启群控下发</div>
+          </div>
+        </li>
+        <li class="strategy-item" data-name="节能模式" onclick="selectStrategy(this)">
           <div class="strategy-radio"></div>
           <div class="strategy-info">
             <div class="strategy-name">节能模式</div>
@@ -1707,6 +1903,70 @@
       <span class="modal-title" id="dispatchTitle">请仔细核对下发的指令参数，改为空值可不下发</span>
     </div>
     <div class="modal-body" style="padding-bottom:0;">
+      <div class="anno anno-ux" data-version="v2.9">
+        <span class="anno-tag">交互说明</span>
+        <span class="anno-version">v2.9</span>
+        <span class="anno-source">需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>手动下发弹窗（带转写规则文件时）；入口：智控下发卡片「手动下发」，以及混合下发命中手动、按工单进入的手动下发</p>
+          <ul>
+            <li><b>适用范围：</b>只改手动下发，且绑定的下发策略上传了转写规则文件时生效；一键回退沿用原弹窗内容和逻辑，不变；没上传规则文件时保持原逻辑。</li>
+            <li><b>样式与结构：</b>完全沿用原弹窗：原标题、置信度提示、「AI 建议调节（N 条）」表格、橙色密码校验提示和按钮都不变，只是行换成需要下发的 BA 设定点，即寻优值与当前值不同的点。</li>
+            <li><b>下发值：</b>预填 AI寻优值，可编辑，清空即该点本轮不下发。</li>
+            <li><b>联动组（外观不变）：</b>同一联动组的点（本例 02# 温差组、05# 温差组各两点），改其中一个，组内其他点按同一个量跟着变；清空一行，整组一起清空。</li>
+            <li><b>确认：</b>点「确认下发」先做上下限校验（见边界与异常），通过后进入原有密码校验 → 下发，页面顶部提示「下发指令已发送」，结果在「下发记录」查看。点「取消」不下发。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="anno anno-data" data-version="v2.9">
+        <span class="anno-tag">数据逻辑</span>
+        <span class="anno-version">v2.9</span>
+        <span class="anno-source">需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>手动下发弹窗 — 待下发内容与取值</p>
+          <ul>
+            <li><b>待下发内容：</b>最新一轮 BA 设定点里寻优值与当前值不同的点（本轮转写且有变化）。直通、没变化、当前值读不到的点不显示，也不下发。</li>
+            <li><b>当前值：</b>取本轮寻优记录（转写时刻）该测点的当前值；当前值、AI寻优值、安全边界上下限、联动组都取自同一轮寻优记录，与寻优记录表一致。</li>
+            <li><b>下发值预填：</b>寻优值。</li>
+            <li><b>上下限：</b>取寻优绑定的安全边界中该设定点的上下限（软边界优先，未填回落硬边界）；没配边界的点不校验。</li>
+            <li><b>下发后：</b>下发执行、下发记录、一键回退沿用现有功能；下发记录只记实际下发的点，「实际参数」为下发时的当前值，「下发参数」为下发值。</li>
+            <li><b>本例：</b>6 行：02号制冷单元-联合冷塔出水温度设定 12.0→12.4；02号制冷单元两个冷却泵频率温差设定 5.0→5.5（已贴安全边界上限）；05号制冷单元-制冷冷塔出水温度设定 20.0→19.2；05号制冷单元两个冷却泵频率温差设定 5.0→4.8。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="anno anno-field" data-version="v2.9">
+        <span class="anno-tag">字段说明</span>
+        <span class="anno-version">v2.9</span>
+        <span class="anno-source">需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>手动下发弹窗 — 表格列（带转写规则文件时；与原弹窗同款，无额外列）</p>
+          <table class="anno-table">
+            <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+            <tbody>
+              <tr><td>设备</td><td>只读</td><td>列名与真实系统一致；群控系统设备名「A路水冷群控系统」加粗，下方灰字为设备类型「水冷群控系统」；每行都显示，和原弹窗一致</td></tr>
+              <tr><td>下发属性</td><td>只读</td><td>测点名称，如「02号制冷单元-联合冷塔出水温度设定」</td></tr>
+              <tr><td>当前值</td><td>只读</td><td>本轮寻优记录（转写时刻）该测点的当前值，带单位</td></tr>
+              <tr><td>AI寻优值</td><td>只读</td><td>本轮寻优值，蓝色，带单位</td></tr>
+              <tr><td>下发值</td><td>数字输入，非必填</td><td>预填寻优值；清空 = 本轮不下发该点</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="anno anno-edge" data-version="v2.9">
+        <span class="anno-tag">边界与异常</span>
+        <span class="anno-version">v2.9</span>
+        <span class="anno-source">需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>手动下发弹窗 — 校验与异常</p>
+          <ul>
+            <li><b>超出上下限：</b>点「确认下发」时校验，下发值超出安全边界上下限的输入框标红，下方提示「超出允许区间 下限～上限 单位」，不放行；改动该输入框（含联动带动的点）后提示消失。</li>
+            <li><b>非数字：</b>确认时提示「请输入数字」，不放行（产品推断）。</li>
+            <li><b>全部清空：</b>下发值全部清空时「确认下发」置灰，填回任一值后恢复（三个寻优页一致，产品推断）。</li>
+            <li><b>没有需要下发的点：</b>上传了规则文件，但最新一轮没有寻优值与当前值不同的点（都直通或没变化、寻优失败等）时，表格空状态显示「本轮没有需要下发的 BA 设定点」，「确认下发」置灰；不退回显示频率等寻优变量。</li>
+            <li><b>没上传规则文件：</b>保持原逻辑，按寻优变量展示。</li>
+          </ul>
+        </div>
+      </div>
       <div class="anno anno-ux" data-version="v1.0">
         <span class="anno-tag">交互说明</span>
         <span class="anno-version">v1.0</span>
@@ -1748,7 +2008,7 @@
       </div>
       <div class="btn-group" style="justify-content:flex-end;">
         <button class="btn" onclick="closeModal('modalDispatch')">取 消</button>
-        <button class="btn btn-primary" id="dispatchConfirmBtn" onclick="closeModal('modalDispatch')">确认下发</button>
+        <button class="btn btn-primary" id="dispatchConfirmBtn" onclick="onDispatchConfirm()">确认下发</button>
       </div>
     </div>
   </div>
@@ -1801,6 +2061,9 @@
     </div>
   </div>
 </div>
+
+<!-- v2.9：手动下发成功提示 -->
+<div class="page-toast" id="pageToast"></div>
 
 <script>
 
@@ -1866,6 +2129,160 @@ const DATA = [
   },
 ];
 
+/* ===== v2.9 廊坊群控下发兼容：BA 设定点示例（A 路柔性寻优 2026-10-20 14:05 轮，58 项：转写 6 / 直通 51 / 不下发 1）
+   BA 设定点是群控系统设备「A路水冷群控系统」上的平级测点：寻优记录里挂在该设备下按原有方式展示；
+   手动下发只列寻优值与当前值不同的点（本例 6 个转写点）。规则文件版本随寻优记录保存，界面不单独展示。 ===== */
+const BA_RULE_FILE = { name:'廊坊A路（人保北方）转写规则', file:'langfang-a-ba-v1.json', version:'v1', uploader:'admin', uploadTime:'2026-10-20 10:30' };
+const BA_DEVICE_TYPE = '水冷群控系统';        // 群控系统设备的设备类型（手动下发弹窗设备列灰字）
+const BA_SETPOINT_DEMO = [
+  { id:'4_290', device:'A路水冷群控系统', pointName:'01号制冷单元-制冷冷塔出水温度设定', unit:'℃', current:20.0, value:20.0, lo:16.5, hi:33.5, link:'', handling:'直通' },
+  { id:'4_287', device:'A路水冷群控系统', pointName:'01号制冷单元-联合冷塔出水温度设定', unit:'℃', current:12.0, value:12.0, lo:12.0, hi:20.0, link:'', handling:'直通' },
+  { id:'4_285', device:'A路水冷群控系统', pointName:'01号制冷单元-板换冷塔出水温度设定', unit:'℃', current:10.0, value:10.0, lo:5.0, hi:15.0, link:'', handling:'直通' },
+  { id:'4_286', device:'A路水冷群控系统', pointName:'01号制冷单元-冷却泵频率板换温度设定', unit:'℃', current:12.0, value:12.0, lo:8.0, hi:16.0, link:'', handling:'直通' },
+  { id:'4_291', device:'A路水冷群控系统', pointName:'01号制冷单元-冷却泵频率温差设定（制冷）', unit:'℃', current:5.0, value:5.0, lo:3.0, hi:5.5, link:'1# 温差组', handling:'直通' },
+  { id:'4_288', device:'A路水冷群控系统', pointName:'01号制冷单元-冷却泵频率温差设定（联合）', unit:'℃', current:5.0, value:5.0, lo:3.0, hi:5.5, link:'1# 温差组', handling:'直通' },
+  { id:'4_292', device:'A路水冷群控系统', pointName:'01号制冷单元-冷机出水温度设定', unit:'℃', current:10.0, value:10.0, lo:7.0, hi:12.0, link:'', handling:'直通' },
+  { id:'4_313', device:'A路水冷群控系统', pointName:'02号制冷单元-制冷冷塔出水温度设定', unit:'℃', current:20.0, value:20.0, lo:16.5, hi:33.5, link:'', handling:'直通' },
+  { id:'4_311', device:'A路水冷群控系统', pointName:'02号制冷单元-联合冷塔出水温度设定', unit:'℃', current:12.0, value:12.4, lo:12.0, hi:20.0, link:'', handling:'转写' },
+  { id:'4_309', device:'A路水冷群控系统', pointName:'02号制冷单元-板换冷塔出水温度设定', unit:'℃', current:10.0, value:10.0, lo:5.0, hi:15.0, link:'', handling:'直通' },
+  { id:'4_310', device:'A路水冷群控系统', pointName:'02号制冷单元-冷却泵频率板换温度设定', unit:'℃', current:12.0, value:12.0, lo:8.0, hi:16.0, link:'', handling:'直通' },
+  { id:'4_314', device:'A路水冷群控系统', pointName:'02号制冷单元-冷却泵频率温差设定（制冷）', unit:'℃', current:5.0, value:5.5, lo:3.0, hi:5.5, link:'2# 温差组', handling:'转写' },
+  { id:'4_312', device:'A路水冷群控系统', pointName:'02号制冷单元-冷却泵频率温差设定（联合）', unit:'℃', current:5.0, value:5.5, lo:3.0, hi:5.5, link:'2# 温差组', handling:'转写' },
+  { id:'4_315', device:'A路水冷群控系统', pointName:'02号制冷单元-冷机出水温度设定', unit:'℃', current:10.0, value:10.0, lo:7.0, hi:12.0, link:'', handling:'直通' },
+  { id:'4_320', device:'A路水冷群控系统', pointName:'03号制冷单元-制冷冷塔出水温度设定', unit:'℃', current:20.0, value:20.0, lo:16.5, hi:33.5, link:'', handling:'直通' },
+  { id:'4_318', device:'A路水冷群控系统', pointName:'03号制冷单元-联合冷塔出水温度设定', unit:'℃', current:12.0, value:12.0, lo:12.0, hi:20.0, link:'', handling:'直通' },
+  { id:'4_316', device:'A路水冷群控系统', pointName:'03号制冷单元-板换冷塔出水温度设定', unit:'℃', current:10.0, value:10.0, lo:5.0, hi:15.0, link:'', handling:'直通' },
+  { id:'4_317', device:'A路水冷群控系统', pointName:'03号制冷单元-冷却泵频率板换温度设定', unit:'℃', current:12.0, value:12.0, lo:8.0, hi:16.0, link:'', handling:'直通' },
+  { id:'4_321', device:'A路水冷群控系统', pointName:'03号制冷单元-冷却泵频率温差设定（制冷）', unit:'℃', current:5.0, value:5.0, lo:3.0, hi:5.5, link:'3# 温差组', handling:'直通' },
+  { id:'4_319', device:'A路水冷群控系统', pointName:'03号制冷单元-冷却泵频率温差设定（联合）', unit:'℃', current:5.0, value:5.0, lo:3.0, hi:5.5, link:'3# 温差组', handling:'直通' },
+  { id:'4_322', device:'A路水冷群控系统', pointName:'03号制冷单元-冷机出水温度设定', unit:'℃', current:10.0, value:10.0, lo:7.0, hi:12.0, link:'', handling:'直通' },
+  { id:'4_327', device:'A路水冷群控系统', pointName:'04号制冷单元-制冷冷塔出水温度设定', unit:'℃', current:20.0, value:20.0, lo:16.5, hi:33.5, link:'', handling:'直通' },
+  { id:'4_325', device:'A路水冷群控系统', pointName:'04号制冷单元-联合冷塔出水温度设定', unit:'℃', current:12.0, value:12.0, lo:12.0, hi:20.0, link:'', handling:'直通' },
+  { id:'4_323', device:'A路水冷群控系统', pointName:'04号制冷单元-板换冷塔出水温度设定', unit:'℃', current:10.0, value:10.0, lo:5.0, hi:15.0, link:'', handling:'直通' },
+  { id:'4_324', device:'A路水冷群控系统', pointName:'04号制冷单元-冷却泵频率板换温度设定', unit:'℃', current:12.0, value:12.0, lo:8.0, hi:16.0, link:'', handling:'直通' },
+  { id:'4_328', device:'A路水冷群控系统', pointName:'04号制冷单元-冷却泵频率温差设定（制冷）', unit:'℃', current:5.0, value:5.0, lo:3.0, hi:5.5, link:'4# 温差组', handling:'直通' },
+  { id:'4_326', device:'A路水冷群控系统', pointName:'04号制冷单元-冷却泵频率温差设定（联合）', unit:'℃', current:5.0, value:5.0, lo:3.0, hi:5.5, link:'4# 温差组', handling:'直通' },
+  { id:'4_329', device:'A路水冷群控系统', pointName:'04号制冷单元-冷机出水温度设定', unit:'℃', current:10.0, value:10.0, lo:7.0, hi:12.0, link:'', handling:'直通' },
+  { id:'4_334', device:'A路水冷群控系统', pointName:'05号制冷单元-制冷冷塔出水温度设定', unit:'℃', current:20.0, value:19.2, lo:16.5, hi:33.5, link:'', handling:'转写' },
+  { id:'4_332', device:'A路水冷群控系统', pointName:'05号制冷单元-联合冷塔出水温度设定', unit:'℃', current:12.0, value:12.0, lo:12.0, hi:20.0, link:'', handling:'直通' },
+  { id:'4_330', device:'A路水冷群控系统', pointName:'05号制冷单元-板换冷塔出水温度设定', unit:'℃', current:10.0, value:10.0, lo:5.0, hi:15.0, link:'', handling:'直通' },
+  { id:'4_331', device:'A路水冷群控系统', pointName:'05号制冷单元-冷却泵频率板换温度设定', unit:'℃', current:12.0, value:12.0, lo:8.0, hi:16.0, link:'', handling:'直通' },
+  { id:'4_335', device:'A路水冷群控系统', pointName:'05号制冷单元-冷却泵频率温差设定（制冷）', unit:'℃', current:5.0, value:4.8, lo:3.0, hi:5.5, link:'5# 温差组', handling:'转写' },
+  { id:'4_333', device:'A路水冷群控系统', pointName:'05号制冷单元-冷却泵频率温差设定（联合）', unit:'℃', current:5.0, value:4.8, lo:3.0, hi:5.5, link:'5# 温差组', handling:'转写' },
+  { id:'4_336', device:'A路水冷群控系统', pointName:'05号制冷单元-冷机出水温度设定', unit:'℃', current:10.0, value:10.0, lo:7.0, hi:12.0, link:'', handling:'直通' },
+  { id:'4_341', device:'A路水冷群控系统', pointName:'06号制冷单元-制冷冷塔出水温度设定', unit:'℃', current:20.0, value:20.0, lo:16.5, hi:33.5, link:'', handling:'直通' },
+  { id:'4_339', device:'A路水冷群控系统', pointName:'06号制冷单元-联合冷塔出水温度设定', unit:'℃', current:12.0, value:12.0, lo:12.0, hi:20.0, link:'', handling:'直通' },
+  { id:'4_337', device:'A路水冷群控系统', pointName:'06号制冷单元-板换冷塔出水温度设定', unit:'℃', current:10.0, value:10.0, lo:5.0, hi:15.0, link:'', handling:'直通' },
+  { id:'4_338', device:'A路水冷群控系统', pointName:'06号制冷单元-冷却泵频率板换温度设定', unit:'℃', current:12.0, value:12.0, lo:8.0, hi:16.0, link:'', handling:'直通' },
+  { id:'4_342', device:'A路水冷群控系统', pointName:'06号制冷单元-冷却泵频率温差设定（制冷）', unit:'℃', current:5.0, value:5.0, lo:3.0, hi:5.5, link:'6# 温差组', handling:'直通' },
+  { id:'4_340', device:'A路水冷群控系统', pointName:'06号制冷单元-冷却泵频率温差设定（联合）', unit:'℃', current:5.0, value:5.0, lo:3.0, hi:5.5, link:'6# 温差组', handling:'直通' },
+  { id:'4_343', device:'A路水冷群控系统', pointName:'06号制冷单元-冷机出水温度设定', unit:'℃', current:10.0, value:10.0, lo:7.0, hi:12.0, link:'', handling:'直通' },
+  { id:'4_293', device:'A路水冷群控系统', pointName:'二次泵-末端压差设定', unit:'bar', current:1.2, value:1.2, lo:0.8, hi:1.6, link:'二次泵压差组', handling:'直通' },
+  { id:'4_294', device:'A路水冷群控系统', pointName:'二次泵-二次泵加泵压差设定', unit:'bar', current:1.1, value:1.1, lo:0.7, hi:1.5, link:'二次泵压差组', handling:'直通' },
+  { id:'4_295', device:'A路水冷群控系统', pointName:'二次泵-二次泵减泵压差设定', unit:'bar', current:1.3, value:1.3, lo:0.9, hi:1.7, link:'二次泵压差组', handling:'直通' },
+  { id:'4_296', device:'A路水冷群控系统', pointName:'群控-制冷模式加机负荷设定', unit:'%', current:85, value:85, lo:50, hi:95, link:'制冷加减机组', handling:'直通' },
+  { id:'4_297', device:'A路水冷群控系统', pointName:'群控-制冷模式减机负荷设定', unit:'%', current:35, value:35, lo:15, hi:60, link:'制冷加减机组', handling:'直通' },
+  { id:'4_298', device:'A路水冷群控系统', pointName:'群控-联合模式加机负荷设定', unit:'%', current:85, value:85, lo:50, hi:95, link:'联合加减机组', handling:'直通' },
+  { id:'4_299', device:'A路水冷群控系统', pointName:'群控-联合模式减机负荷设定', unit:'%', current:35, value:35, lo:15, hi:60, link:'联合加减机组', handling:'直通' },
+  { id:'4_300', device:'A路水冷群控系统', pointName:'群控-板换模式加机温度设定', unit:'℃', current:16.0, value:16.0, lo:12, hi:20, link:'板换加减机组', handling:'直通' },
+  { id:'4_301', device:'A路水冷群控系统', pointName:'群控-板换模式减机温度设定', unit:'℃', current:14.0, value:14.0, lo:10, hi:18, link:'板换加减机组', handling:'直通' },
+  { id:'4_302', device:'A路水冷群控系统', pointName:'群控-制冷湿球温度设定', unit:'℃', current:15.0, value:15.0, lo:3, hi:20, link:'湿球阈值组', handling:'直通' },
+  { id:'4_303', device:'A路水冷群控系统', pointName:'群控-联合湿球温度高限设定', unit:'℃', current:12.5, value:12.5, lo:3, hi:20, link:'湿球阈值组', handling:'直通' },
+  { id:'4_304', device:'A路水冷群控系统', pointName:'群控-联合湿球温度低限设定', unit:'℃', current:9.5, value:9.5, lo:3, hi:20, link:'湿球阈值组', handling:'直通' },
+  { id:'4_305', device:'A路水冷群控系统', pointName:'群控-板换湿球温度设定', unit:'℃', current:6.5, value:6.5, lo:3, hi:20, link:'湿球阈值组', handling:'直通' },
+  { id:'4_306', device:'A路水冷群控系统', pointName:'蓄冷罐-正常模式流量设定', unit:'m³/h', current:80, value:80, lo:null, hi:null, link:'', handling:'直通' },
+  { id:'4_307', device:'A路水冷群控系统', pointName:'蓄冷罐-快充模式流量设定', unit:'m³/h', current:150, value:150, lo:null, hi:null, link:'', handling:'直通' },
+  { id:'4_308', device:'A路水冷群控系统', pointName:'蓄冷罐-超级充冷流量设定', unit:'m³/h', current:null, value:null, lo:null, hi:null, link:'', handling:'不下发' },
+];
+const BA_DELIVER_STRATEGY = '冷站柔性寻优手动下发策略';
+let deliverRuleFile = BA_RULE_FILE;          // 当前绑定的下发策略是否带转写规则文件
+const BA_DEMO_STATION = 'A路冷水系统';        // BA 示例所在冷站：只有该冷站绑定了带转写规则文件的下发策略
+/* v2.9 三页统一演示入口：下发策略按冷站绑定。带转写规则文件的策略只绑在 A路冷水系统；
+   其他冷站未绑定（= v2.8 原样：「请选定下发策略」空状态，不出现 BA 设定点） */
+const DELIVER_STRATEGY_BY_STATION = { 'A路冷水系统': BA_DELIVER_STRATEGY };
+/* 寻优记录时间：A路冷水系统定位到 BA 示例轮次；其他冷站保持 v2.8 原有演示时间 */
+const RECORD_TIME_BA = { date:'2026-10-20', time:'14:05:00' };
+const RECORD_TIME_LEGACY = { date:'2026-03-17', time:'13:25:00' };
+let dispatchMode = 'legacy';                  // 手动下发弹窗模式：ba（带转写规则文件的手动下发）/ legacy（原逻辑，含一键回退）
+
+function fmtBaNum(v, unit) {
+  if (v === null || v === undefined || v === '' || isNaN(Number(v))) return '—';
+  const n = Math.round(Number(v) * 100) / 100;
+  const s = String(n);
+  if (unit === '%' || unit === 'm³/h') return s;
+  return s.indexOf('.') >= 0 ? s : s + '.0';
+}
+function fmtBaVal(v, unit) {
+  const s = fmtBaNum(v, unit);
+  if (s === '—') return s;
+  return s + (unit === '℃' || unit === '%' ? '' : ' ') + unit;
+}
+/* 寻优值与当前值不同的点（本轮转写且有变化）：只有这些点下发 */
+function baChanged(r) {
+  return r.handling === '转写' && r.value !== null && r.current !== null && Math.abs(r.value - r.current) > 1e-9;
+}
+/* 寻优变化：写法同原有变量（如 +0.4℃、-0.8℃；没有变化写「无变化」） */
+function baChangeText(r) {
+  if (r.value === null || r.current === null) return '无变化';
+  const d = Math.round((r.value - r.current) * 100) / 100;
+  if (d === 0) return '无变化';
+  return (d > 0 ? '+' : '') + fmtBaVal(d, r.unit);
+}
+/* 寻优记录：把 BA 设定点按设备组装成原表格的对象结构（与 DATA 同构），交给原有渲染、筛选、着色、历史趋势逻辑
+   本轮转写的点 → 控制变量（寻优中）；直通 / 不下发的点 → 控制变量（未寻优），按原有「-」「无变化」写法 */
+function baRecordDevices() {
+  const devices = [];
+  BA_SETPOINT_DEMO.forEach(r => {
+    let dev = devices.find(x => x.name === r.device);
+    if (!dev) {
+      dev = { name:r.device, status:'running', statusText:'运行中', fi:'in', fiText:'投入', variables:[] };
+      devices.push(dev);
+    }
+    const optimizing = r.handling === '转写';
+    dev.variables.push({
+      name: r.pointName,
+      type: optimizing ? 'optimizing' : 'unopt',
+      actual: fmtBaVal(r.current, r.unit),
+      ai: optimizing ? fmtBaVal(r.value, r.unit) : '-',
+      change: optimizing ? baChangeText(r) : '无变化'
+    });
+  });
+  return devices;
+}
+
+/* 当前冷站名称 */
+function currentStationName() {
+  const tab = document.querySelector('#stationTabs .station-tab.active');
+  return tab ? (tab.dataset.systemName || tab.textContent.trim()) : '';
+}
+/* 当前冷站是否为 BA 示例冷站（A路冷水系统） */
+function isBaDemoStation() {
+  return currentStationName() === BA_DEMO_STATION;
+}
+/* 策略卡「最新寻优时间」与寻优记录时间：A路冷水系统定位到 BA 示例轮次，其他冷站保持原有演示时间 */
+function syncRecordTimeV29() {
+  const t = isBaDemoStation() ? RECORD_TIME_BA : RECORD_TIME_LEGACY;
+  const latest = document.getElementById('optLatestTime');
+  if (latest) latest.textContent = t.date + ' ' + t.time;
+  const d = document.getElementById('recordDateInput');
+  if (d) d.value = t.date;
+  const tm = document.getElementById('recordTimeInput');
+  if (tm) tm.value = t.time;
+}
+/* 当前这条寻优记录是否含 BA 设定点：示例只挂在 A路冷水系统 */
+function hasBaRecord() {
+  return BA_SETPOINT_DEMO.length > 0 && isBaDemoStation();
+}
+
+function showPageToast(msg) {
+  const t = document.getElementById('pageToast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._pageToastTimer);
+  window._pageToastTimer = setTimeout(function () { t.classList.remove('show'); }, 3200);
+}
+
 function getActiveVarFilter() {
   const el = document.querySelector('#varTypeFilter .var-tag.active');
   return el ? el.dataset.filter : 'all';
@@ -1875,9 +2292,11 @@ function renderTable() {
   const tbody = document.getElementById('tableBody');
   const hideOff = document.getElementById('hideOffDevice').checked;
   const typeFilter = getActiveVarFilter();
+  // v2.9：本条寻优记录含 BA 设定点时（本例只有 A路冷水系统），群控系统设备像其他设备一样追加进表格，渲染、筛选、着色、历史趋势沿用原逻辑
+  const objects = hasBaRecord() ? DATA.concat(baRecordDevices()) : DATA;
   let html = '';
   let visibleIdx = 0;
-  DATA.forEach((ac) => {
+  objects.forEach((ac) => {
     if (hideOff && (ac.status === 'stopped' || ac.fi === 'out')) return;
     const filteredVars = typeFilter === 'all'
       ? ac.variables
@@ -2048,9 +2467,23 @@ function setStationMode(tab) {
   if (objectTab) objectTab.textContent = mode === 'wind' ? '风冷系统对象' : '水冷系统对象';
   renderAnalogRules(mode);
   renderIoConfig(mode, systemName);
+  // v2.9：BA 示例只挂在 A路冷水系统；切换冷站后按该冷站绑定的下发策略同步智控下发卡片、记录时间、寻优记录与下发记录
+  setDeliverBoundV29(DELIVER_STRATEGY_BY_STATION[systemName] || '');
+  syncRecordTimeV29();
+  renderTable();
+  if (dispatchTableReady) renderDispatchTable();
 }
 
 const COLD_STATION_STORAGE_KEY = 'coldStationOptimizeSelected';
+/* v2.9 三页统一：没有存储值（首次进入）时默认选中 A路冷水系统，评审进页即可看到 v2.9 演示 */
+const COLD_STATION_DEFAULT = BA_DEMO_STATION;
+/* localStorage 读写包 try/catch：部分预览环境会抛 SecurityError，抛了也要能继续初始化 */
+function readColdStation() {
+  try { return localStorage.getItem(COLD_STATION_STORAGE_KEY); } catch (e) { return null; }
+}
+function writeColdStation(name) {
+  try { localStorage.setItem(COLD_STATION_STORAGE_KEY, name); } catch (e) { /* 存储不可用时不记忆，不影响页面 */ }
+}
 
 function findStationTabByName(systemName) {
   return Array.from(document.querySelectorAll('#stationTabs .station-tab')).find(function (tab) {
@@ -2064,21 +2497,21 @@ function setColdStation(systemName, persist) {
   const selectedName = tab.dataset.systemName || tab.textContent.trim();
   const select = document.getElementById('coldStationSelect');
   if (select) select.value = selectedName;
-  if (persist) localStorage.setItem(COLD_STATION_STORAGE_KEY, selectedName);
+  if (persist) writeColdStation(selectedName);
   setStationMode(tab);
 }
 
 function initColdStationTopNav() {
   const select = document.getElementById('coldStationSelect');
   if (!select) return;
-  const cached = localStorage.getItem(COLD_STATION_STORAGE_KEY);
-  setColdStation(cached || select.value, false);
+  const cached = readColdStation();
+  setColdStation(cached || COLD_STATION_DEFAULT, false);
   select.addEventListener('change', function () {
     setColdStation(this.value, true);
   });
   document.querySelectorAll('.page-nav-item[data-target-page]').forEach(function (nav) {
     nav.addEventListener('click', function () {
-      localStorage.setItem(COLD_STATION_STORAGE_KEY, select.value);
+      writeColdStation(select.value);
       window.location.assign(encodeURI(this.dataset.targetPage));
     });
   });
@@ -2212,6 +2645,13 @@ document.querySelectorAll('#varTypeFilter .var-tag').forEach(tag => {
 });
 
 const DISPATCH_DATA = [
+  // v2.9：BA 设定点下发记录示例（只有实际下发的点，即寻优值与当前值不同的 6 个点；写法同原有「设备/属性」）
+  { strategy:'冷站柔性寻优手动下发策略', time:'2026-10-20 14:08:00', user:'系统管理员', ba:true, target:'A路水冷群控系统/02号制冷单元-联合冷塔出水温度设定', actual:'12.0', dispatch:'12.4', result:'成功' },
+  { strategy:'',                          time:'2026-10-20 14:08:00', user:'系统管理员', ba:true, target:'A路水冷群控系统/02号制冷单元-冷却泵频率温差设定（制冷）', actual:'5.0', dispatch:'5.5', result:'成功' },
+  { strategy:'',                          time:'2026-10-20 14:08:00', user:'系统管理员', ba:true, target:'A路水冷群控系统/02号制冷单元-冷却泵频率温差设定（联合）', actual:'5.0', dispatch:'5.5', result:'成功' },
+  { strategy:'',                          time:'2026-10-20 14:08:00', user:'系统管理员', ba:true, target:'A路水冷群控系统/05号制冷单元-制冷冷塔出水温度设定', actual:'20.0', dispatch:'19.2', result:'成功' },
+  { strategy:'',                          time:'2026-10-20 14:08:00', user:'系统管理员', ba:true, target:'A路水冷群控系统/05号制冷单元-冷却泵频率温差设定（制冷）', actual:'5.0', dispatch:'4.8', result:'成功' },
+  { strategy:'',                          time:'2026-10-20 14:08:00', user:'系统管理员', ba:true, target:'A路水冷群控系统/05号制冷单元-冷却泵频率温差设定（联合）', actual:'5.0', dispatch:'4.8', result:'成功' },
   { strategy:'冷站柔性寻优自动下发策略', time:'2026-03-17 13:25:00', user:'系统管理员', target:'1#风冷冷水机组/冷冻水出水温度设定', actual:'6.50', dispatch:'6.20', result:'成功' },
   { strategy:'',                          time:'2026-03-17 13:25:00', user:'系统管理员', target:'1#风冷冷水机组/导叶开度上限', actual:'88', dispatch:'92', result:'成功' },
   { strategy:'',                          time:'2026-03-17 13:25:00', user:'系统管理员', target:'冷冻泵组/变频频率设定', actual:'42.0', dispatch:'38.5', result:'成功' },
@@ -2229,6 +2669,8 @@ function renderDispatchTable() {
     if (d.strategy) currentStrategy = d.strategy;
     return Object.assign({}, d, { strategyGroup: currentStrategy });
   }).filter(d => {
+    // v2.9：BA 设定点下发记录只属于 A路冷水系统（带转写规则文件的策略）；其他冷站保持原有记录
+    if (d.ba && !isBaDemoStation()) return false;
     return !strategyFilter || d.strategyGroup === strategyFilter;
   });
   const totalText = document.getElementById('dispatchTotalText');
@@ -2253,6 +2695,7 @@ function renderDispatchTable() {
   tbody.innerHTML = rows;
 }
 renderDispatchTable();
+var dispatchTableReady = true;   // v2.9：下发记录已初始化后，切换冷站时才重绘（用 var 避免初始化前的暂时性死区）
 
 ['dispatchStrategyFilter'].forEach(function(id) {
   const el = document.getElementById(id);
@@ -2301,8 +2744,34 @@ function onPwdConfirm() {
     const name = window._pendingStrategy;
     document.getElementById('deliverStrategyName').textContent = name || '—';
     document.getElementById('deliverStrategyName').style.color = name ? '' : 'var(--text-hint)';
+    DELIVER_STRATEGY_BY_STATION[currentStationName()] = name || '';   // v2.9：下发策略按冷站记住绑定
+    setDeliverBoundV29(name);
+  } else if (pendingPwdAction === '确认下发') {
+    // v2.9：手动下发（带转写规则文件）密码校验通过
+    showPageToast('下发指令已发送，结果见「下发记录」');
   }
   pendingPwdAction = null;
+}
+
+/* v2.9：智控下发卡片 已绑定 / 未选定 切换（样式沿用原卡片，不单独标识规则文件）；
+   绑定的策略带转写规则文件时，手动下发列 BA 设定点（示例：只有 A路冷水系统绑定的策略带规则文件，其他冷站走原逻辑） */
+function setDeliverBoundV29(name) {
+  const bound = document.getElementById('deliverBound');
+  const empty = document.getElementById('deliverEmpty');
+  if (bound) bound.style.display = name ? '' : 'none';
+  if (empty) empty.style.display = name ? 'none' : '';
+  deliverRuleFile = (name === BA_DELIVER_STRATEGY && isBaDemoStation()) ? BA_RULE_FILE : null;
+  // 已绑定：回填该冷站的策略名，并同步「选择智控下发策略」弹窗的选中项
+  const nameEl = document.getElementById('deliverStrategyName');
+  if (nameEl && name) { nameEl.textContent = name; nameEl.style.color = ''; }
+  document.querySelectorAll('#strategyList .strategy-item').forEach(i => i.classList.toggle('selected', (i.dataset.name || '') === (name || '')));
+  // 未选定：A路冷水系统可「去选定」；其他冷站保持 v2.8 原样（「去选定」不可点）
+  const pick = document.getElementById('deliverPickLink');
+  if (pick) pick.className = isBaDemoStation() ? 'link-btn' : 'link-disabled';
+}
+function onDeliverPick() {
+  if (!isBaDemoStation()) return;
+  openModal('modalStrategySelect');
 }
 
 function refreshOptUI() {
@@ -2328,10 +2797,10 @@ function refreshDeliverUI() {
   const modeText = document.getElementById('deliverModeText');
   if (!btn || !modeText) return;
   if (deliverMode === 'auto') {
-    modeText.textContent = '自动下发';
+    modeText.textContent = '自动';   // v2.9：与冷站全局寻优原卡片一致（手动 / 自动）
     btn.classList.add('disabled');
   } else {
-    modeText.textContent = '手动下发';
+    modeText.textContent = '手动';
     btn.classList.remove('disabled');
   }
 }
@@ -2371,38 +2840,120 @@ function openDispatch(mode) {
   document.getElementById('dispatchConfirmBtn').textContent =
     isRollback ? '确认回退' : '确认下发';
 
-  const rows = [];
-  DATA.forEach(eq => {
-    if (eq.fi === 'out' || eq.status === 'stopped') return;
-    eq.variables.forEach(v => {
-      if (v.type === 'optimizing' && v.ai !== '-') {
-        rows.push({ dev: eq.name, param: v.name, actual: v.actual, ai: v.ai });
-      }
-    });
-  });
+  // v2.9：手动下发且绑定的下发策略上传了转写规则文件 → 沿用原弹窗，行换成寻优值与当前值不同的 BA 设定点；
+  //       一键回退与没上传规则文件时走原逻辑
+  dispatchMode = (!isRollback && deliverRuleFile) ? 'ba' : 'legacy';
+  const isBa = dispatchMode === 'ba';
+  document.getElementById('dispatchConfirmBtn').disabled = false;
 
+  const rows = [];
+  if (isBa) {
+    BA_SETPOINT_DEMO.forEach((r, idx) => {
+      if (!baChanged(r)) return;   // 直通、没变化、当前值读不到的点不显示，也不下发
+      rows.push({ dev: r.device, devType: BA_DEVICE_TYPE, param: r.pointName, actual: fmtBaVal(r.current, r.unit), ai: fmtBaVal(r.value, r.unit), val: fmtBaNum(r.value, r.unit), baIdx: idx });
+    });
+  } else {
+    DATA.forEach(eq => {
+      if (eq.fi === 'out' || eq.status === 'stopped') return;
+      eq.variables.forEach(v => {
+        if (v.type === 'optimizing' && v.ai !== '-') {
+          rows.push({ dev: eq.name, param: v.name, actual: v.actual, ai: v.ai });
+        }
+      });
+    });
+  }
+
+  const tableHead = `<table class="dispatch-table"><thead><tr>
+      <th>设备</th><th>下发属性</th><th>当前值</th><th>AI寻优值 <span class="confidence-pill low">数据积累中</span></th><th>下发值</th>
+    </tr></thead><tbody>`;
   let html = '';
   if (rows.length) {
     html += `<div class="dispatch-section"><span class="ds-badge save">寻优</span> AI 建议调节（${rows.length} 条）— 冷站对象</div>`;
-    html += `<table class="dispatch-table"><thead><tr>
-      <th>对象</th><th>下发属性</th><th>当前值</th><th>AI寻优值 <span class="confidence-pill low">数据积累中</span></th><th>下发值</th>
-    </tr></thead><tbody>`;
+    html += tableHead;
     rows.forEach(r => {
+      const val = r.val !== undefined ? r.val : String(r.ai).replace(/\s*Hz\s*$/i,'').replace(/[℃%]/g,'').trim();
+      const baAttr = r.baIdx !== undefined ? ` data-ba-idx="${r.baIdx}"` : '';
       html += `<tr>
-        <td class="dev-name">${r.dev}</td>
+        <td class="dev-name">${r.dev}${r.devType ? `<span class="dev-type">${r.devType}</span>` : ''}</td>
         <td class="param-name">${r.param}</td>
         <td class="val-actual">${r.actual}</td>
         <td class="val-ai">${r.ai}</td>
-        <td><input class="dispatch-val" type="text" value="${String(r.ai).replace(/\s*Hz\s*$/i,'').replace(/[℃%]/g,'').trim()}"></td>
+        <td><input class="dispatch-val" type="text" value="${val}"${baAttr}>${baAttr ? '<span class="val-err"></span>' : ''}</td>
       </tr>`;
     });
     html += '</tbody></table>';
+  } else if (isBa) {
+    // v2.9：上传了规则文件但本轮没有需要下发的点：表格空状态，「确认下发」置灰；不退回显示寻优变量
+    html = tableHead + '<tr class="empty-row"><td colspan="5">本轮没有需要下发的 BA 设定点</td></tr></tbody></table>';
+    document.getElementById('dispatchConfirmBtn').disabled = true;
   } else {
     html = '<div style="text-align:center;padding:30px;color:var(--text-hint);">当前无需下发变更</div>';
   }
 
   document.getElementById('dispatchModalBody').innerHTML = html;
   openModal('modalDispatch');
+}
+
+/* v2.9：下发值输入框的校验提示（确认时上下限不通过：输入框标红，下方提示允许区间） */
+function setBaDispatchError(inp, msg) {
+  inp.classList.toggle('invalid', !!msg);
+  const err = inp.parentElement.querySelector('.val-err');
+  if (err) err.textContent = msg;
+}
+
+/* v2.9：联动组（外观不变）——改组内一个点，组内其他点按同一个量跟着变；清空一行，整组一起清空 */
+document.getElementById('dispatchModalBody').addEventListener('input', function (e) {
+  if (dispatchMode !== 'ba') return;
+  const inp = e.target.closest('input.dispatch-val[data-ba-idx]');
+  if (!inp) return;
+  const r = BA_SETPOINT_DEMO[Number(inp.dataset.baIdx)];
+  const raw = inp.value.trim();
+  const mates = !r.link ? [] : Array.from(document.querySelectorAll('#dispatchModalBody input.dispatch-val[data-ba-idx]'))
+    .filter(x => x !== inp && BA_SETPOINT_DEMO[Number(x.dataset.baIdx)].link === r.link);
+  if (raw === '') {
+    mates.forEach(m => { m.value = ''; });
+  } else if (!isNaN(Number(raw))) {
+    const delta = Number(raw) - r.value;
+    mates.forEach(m => {
+      const q = BA_SETPOINT_DEMO[Number(m.dataset.baIdx)];
+      m.value = fmtBaNum(q.value + delta, q.unit);
+    });
+  }
+  [inp].concat(mates).forEach(x => setBaDispatchError(x, ''));
+  // 下发值全部清空时「确认下发」置灰，填回任一值后恢复（与冷站全局寻优、长周期寻优一致）
+  const hasValue = Array.from(document.querySelectorAll('#dispatchModalBody input.dispatch-val[data-ba-idx]')).some(x => x.value.trim() !== '');
+  document.getElementById('dispatchConfirmBtn').disabled = !hasValue;
+});
+
+/* 确认下发：一键回退 / 原逻辑保持关闭弹窗；
+   v2.9 带规则文件时先校验安全边界上下限（超出的不放行），通过后走密码校验（写法同冷站全局寻优页） */
+function onDispatchConfirm() {
+  if (dispatchMode !== 'ba') { closeModal('modalDispatch'); return; }
+  let invalid = 0, count = 0;
+  document.querySelectorAll('#dispatchModalBody input.dispatch-val[data-ba-idx]').forEach(inp => {
+    const r = BA_SETPOINT_DEMO[Number(inp.dataset.baIdx)];
+    const raw = inp.value.trim();
+    let msg = '';
+    if (raw !== '') {
+      const n = Number(raw);
+      if (isNaN(n)) msg = '请输入数字';
+      else if ((r.lo !== null && n < r.lo) || (r.hi !== null && n > r.hi)) {
+        msg = `超出允许区间 ${r.lo === null ? '—' : fmtBaNum(r.lo, r.unit)}～${r.hi === null ? '—' : fmtBaNum(r.hi, r.unit)} ${r.unit}`;
+      } else {
+        count++;
+      }
+    }
+    setBaDispatchError(inp, msg);
+    if (msg) invalid++;
+  });
+  if (invalid) return;
+  closeModal('modalDispatch');
+  if (!count) return;   // 全部清空：本次没有要下发的点，不进入密码校验
+  pendingPwdAction = '确认下发';
+  document.getElementById('pwdTitle').textContent = pendingPwdAction + ' — 密码校验';
+  document.getElementById('pwdHint').textContent = '校验通过后将执行「' + pendingPwdAction + '」';
+  document.getElementById('pwdInput').value = '';
+  openModal('modalPwd');
 }
 
 let trendChartInstance = null;

@@ -533,6 +533,14 @@
       transition: opacity .2s;
     }
     .action-link:hover { opacity: .75; }
+
+    /* 原型演示：平台版 / GU 版切换（仅原型评审用） */
+    .page-header-right { display: flex; align-items: center; gap: 12px; }
+    .edition-switch { display: inline-flex; align-items: center; font-size: 12px; border: 1px dashed var(--border); border-radius: var(--radius); overflow: hidden; background: #fff; }
+    .edition-switch-label { padding: 5px 10px; color: var(--text-hint); background: #F8FAFC; border-right: 1px dashed var(--border); }
+    .edition-opt { padding: 5px 12px; color: var(--text-secondary); }
+    .edition-opt + .edition-opt { border-left: 1px solid var(--border-light); }
+    .edition-opt.is-active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
   </style>
   <link rel="stylesheet" href="annotation-styles.css">
 </head>
@@ -552,12 +560,27 @@
           <p><b>本页说明：</b>多步表单第二步；顶部面包屑显示当前步骤；底部「完成」提交并跳转列表，「上一步」回步骤1保留已填数据，「取消」回列表不落库。</p>
         </div>
       </div>
+      <div class="anno anno-version-header" data-version="v2.7" data-date="2026-10-20">
+        <span class="anno-tag">版本信息</span>
+        <span class="anno-version">v2.7</span>
+        <div class="anno-body">
+          <p><b>v2.7 GU 版兼容（2026-10-20）：</b>对应《GU版AI节能功能裁剪需求方案》§8.4。步骤 2 的空调、传感器均来自步骤 1 已关联的设备，GU 版不涉及机房选择，本页配置（含「同步3D数据」，GU 后续可支持 3D）与平台版一致。</p>
+          <p><b>演示方式：</b>页头右侧「原型演示」切换平台版 / GU 版（URL 参数 <code>?edition=gu</code>）；「上一步」保留当前版本状态。</p>
+        </div>
+      </div>
 
       <div class="page-header">
         <div class="page-header-left">
           <a class="back-link" href="机房寻优-机房热力模型列表.html">← 创建机房热力模型</a>
         </div>
-        <button type="button" class="btn btn-primary" id="btnSync3D" style="background:#fff; color:var(--primary); border-color:var(--primary);">同步3D数据</button>
+        <div class="page-header-right">
+          <div class="edition-switch" role="group" aria-label="原型演示版本">
+            <span class="edition-switch-label">原型演示</span>
+            <a class="edition-opt" data-edition="platform" href="机房寻优-创建机房模型-步骤2.html">平台版</a>
+            <a class="edition-opt" data-edition="gu" href="机房寻优-创建机房模型-步骤2.html?edition=gu">GU 版</a>
+          </div>
+          <button type="button" class="btn btn-primary" id="btnSync3D" style="background:#fff; color:var(--primary); border-color:var(--primary);">同步3D数据</button>
+        </div>
       </div>
 
       <div class="progress-container">
@@ -857,7 +880,7 @@
 
       <div class="foot-actions" style="margin:0;">
         <button type="button" class="btn">取消</button>
-        <a href="机房寻优-创建机房模型.html" class="btn">上一步</a>
+        <a href="机房寻优-创建机房模型.html" class="btn" id="btnPrevStep">上一步</a>
         <button type="button" class="btn btn-primary" id="btnComplete">完成</button>
       </div>
     </main>
@@ -904,6 +927,18 @@
   </div>
 
   <script>
+    /* ── 原型演示版本：?edition=gu 为 GU 版 ── */
+    (function () {
+      var isGu = new URLSearchParams(location.search).get('edition') === 'gu';
+      if (isGu) {
+        document.body.classList.add('is-gu');
+        document.getElementById('btnPrevStep').setAttribute('href', '机房寻优-创建机房模型.html?edition=gu');
+      }
+      document.querySelectorAll('.edition-opt').forEach(function (el) {
+        el.classList.toggle('is-active', el.getAttribute('data-edition') === (isGu ? 'gu' : 'platform'));
+      });
+    })();
+
     /* ── 同步3D弹窗 ── */
     (function () {
       var overlay = document.getElementById('modalSync3D');

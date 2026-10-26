@@ -543,6 +543,175 @@
       color: var(--text-hint);
     }
 
+    /* v2.9 群控下发：映射方式 + 转写规则文件 */
+    .rule-file-slot { min-width: 0; }
+    .rule-upload-empty {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 12px 14px;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      background: #FBFCFE;
+    }
+    .rule-upload-hint {
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+    .rule-validating {
+      padding: 12px 14px;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .rule-file-card {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 12px 14px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      background: #F8FAFC;
+    }
+    .rule-file-name {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .rule-file-meta {
+      display: flex;
+      gap: 6px 16px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .rule-file-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-height: 22px;
+    }
+    .rule-status {
+      display: inline-flex;
+      align-items: center;
+      height: 20px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .rule-status.ok { color: #15803D; background: #ECFDF3; border: 1px solid #BBF7D0; }
+    .rule-status.pending { color: var(--primary); background: #EEF4FF; border: 1px solid #C7D7FE; }
+    .rule-error-box {
+      padding: 12px 14px;
+      border: 1px solid #FECACA;
+      border-radius: var(--radius);
+      background: #FEF2F2;
+    }
+    .rule-error-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--danger);
+    }
+    .rule-error-desc {
+      margin-top: 4px;
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+    .rule-error-list {
+      margin: 8px 0 10px 18px;
+      font-size: 12px;
+      line-height: 1.8;
+      color: var(--text-primary);
+    }
+    .rule-error-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .rule-summary-wrap { min-width: 0; }
+    .rule-summary { margin-top: 0; }
+    .rule-summary .summary-row {
+      align-items: flex-start;
+      flex-wrap: nowrap;
+    }
+    .rule-summary .summary-label {
+      flex: 0 0 120px;
+      line-height: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .rule-summary-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-width: 0;
+    }
+    .rule-summary .summary-tag { height: auto; min-height: 22px; }
+    .action-bar .btn:disabled,
+    .rule-file-slot .btn:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, .35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s;
+    }
+    .modal-mask.show { opacity: 1; pointer-events: auto; }
+    .modal-box {
+      display: flex;
+      flex-direction: column;
+      width: 90%;
+      max-width: 460px;
+      max-height: 85vh;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      background: #fff;
+      box-shadow: 0 18px 42px rgba(15, 23, 42, .18);
+      transform: translateY(20px) scale(.97);
+      transition: transform .3s cubic-bezier(.4, 0, .2, 1);
+    }
+    .modal-mask.show .modal-box { transform: translateY(0) scale(1); }
+    .modal-head { padding: 16px 20px 12px; }
+    .modal-title { font-size: 14px; font-weight: 700; line-height: 1.5; }
+    .modal-body {
+      flex: 1;
+      padding: 0 20px 14px;
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+    .modal-foot {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 12px 20px;
+      border-top: 1px solid var(--border-light);
+    }
+
     .action-bar {
       position: fixed;
       right: 0;
@@ -628,6 +797,8 @@
       .data-table { min-width: 760px; }
       .condition-panel { overflow-x: auto; }
       .confidence-rule-grid { grid-template-columns: 1fr; }
+      .rule-summary .summary-row { flex-wrap: wrap; }
+      .rule-summary .summary-label { flex-basis: 100%; }
     }
   </style>
   <link rel="stylesheet" href="annotation-styles.css">
@@ -641,6 +812,19 @@
         <div class="anno-filter-bar" id="annoFilterBar">
           <span class="anno-filter-label">批注版本：</span>
           <div class="anno-filter-tags" id="annoFilterTags"></div>
+        </div>
+
+        <div class="anno anno-version-header" data-version="v2.9">
+          <span class="anno-tag">版本信息</span>
+          <span class="anno-version">v2.9</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>当前版本：</b>v2.9</p>
+            <p><b>更新日期：</b>2026-10-20</p>
+            <p><b>变更概述：</b>v2.9 廊坊群控下发兼容（需求 3）：「冷站群控下发策略」开关打开后增加「映射方式」，可选通用映射（保留原 9 类寻优项映射）或转写规则文件；转写规则文件支持上传、重新上传（覆盖）、下载、移除，上传后立即校验，不通过逐条列出错误且不能保存，通过后只读展示规则摘要（设定点总数、各规则类型数量、挂钩的寻优开关）；编辑 / 查看时回填群控开关、映射方式和规则文件信息；手动下发工单通知规则的「按需通知」条件新增物模型「水冷群控系统」，上传规则文件后可选该设备上的 BA 设定点作为条件。</p>
+            <p><b>本页说明：</b>转写规则文件是平台标准能力，每个项目上传自己的文件（示例为廊坊A路（人保北方）转写规则 v1，58 个 BA 设定点），页面不含任何项目定制逻辑。下发模式、混合规则、置信度规则、工单通知规则照常可选，不强制手动；开启转写后，各下发方式只下发 BA 设定点里寻优值与当前值不同的点，按需通知的条件可以选 BA 设定点。</p>
+            <p><b>展示口径：</b>BA 设定点都是群控系统设备（示例「A路水冷群控系统」，设备类型「水冷群控系统」）上的平级测点，不分组；寻优记录、手动下发弹窗、工单、下发记录里，它们挂在该设备下，按原有「设备 → 测点」方式展示，只显示测点名称，不显示 BA 点号。规则文件的名称和版本号记录在每轮寻优记录里用于追溯，寻优页面不单独展示。</p>
+          </div>
         </div>
 
         <div class="anno anno-version-header" data-version="v2.3">
@@ -699,6 +883,19 @@
                 <div class="anno-body">
                   <p><b>关联模块：</b>下发模式</p>
                   <p>手动下发表示寻优结果需人工处理；自动下发表示命中策略后按系统流程执行；混合下发表示先按日期和时间范围判断，命中时间段后进入自动流程，未命中时按兜底方式处理。</p>
+                </div>
+              </div>
+              <div class="anno anno-data" data-version="v2.9">
+                <span class="anno-tag">数据逻辑</span>
+                <span class="anno-version">v2.9</span>
+                <span class="anno-source">需求文档</span>
+                <div class="anno-body">
+                  <p><b>关联模块：</b>下发模式（与冷站群控下发策略「转写规则文件」的关系）</p>
+                  <ul>
+                    <li><b>不受限制：</b>下方「冷站群控下发策略」选了转写规则文件后，手动 / 自动 / 混合下发照常可选，混合规则、置信度规则、工单通知规则照常配置，不强制手动。</li>
+                    <li><b>下发对象：</b>开启转写后，手动、自动、混合下发和工单的下发对象都换成本轮 BA 设定点里寻优值与当前值不同的点，下发值为寻优值；直通的点、没有变化的点、当前值读不到的点都不下发，也不出现在下发弹窗、工单和下发记录里（寻优记录里照常展示）。下发判定逻辑本身不变（需求文档 §9.2）。</li>
+                    <li><b>按需通知条件：</b>上传规则文件后，按需通知的条件可以选 BA 设定点（需求文档 §9.2），配置见下方「手动下发时工单通知规则」。</li>
+                  </ul>
                 </div>
               </div>
               <div class="form-group">
@@ -799,6 +996,22 @@
                   <p>仅手动下发模式，以及混合规则最终命中手动下发时生效。选择“不通知”时不创建工单提醒；选择“每次寻优都通知”时每轮寻优均提醒；选择“按需通知”时需维护通知条件。</p>
                 </div>
               </div>
+              <div class="anno anno-field" data-version="v2.9">
+                <span class="anno-tag">字段说明</span>
+                <span class="anno-version">v2.9</span>
+                <span class="anno-source">需求文档</span>
+                <div class="anno-body">
+                  <p><b>关联模块：</b>手动下发时工单通知规则 — 按需通知条件（BA 设定点）</p>
+                  <ul>
+                    <li><b>可选范围：</b>本策略在下方「冷站群控下发策略」选了「转写规则文件」并已上传文件时，按需通知的条件可以选 BA 设定点；工单只列出寻优值与当前值不同的 BA 设定点，列与原手动下发弹窗一致（设备、下发属性、当前值、AI寻优值、下发值）（需求文档 §9.2、§9.5）。</li>
+                    <li><b>物模型：</b>新增「水冷群控系统」，与冷水主机、冷却塔等其他物模型同一写法（示例设备「A路水冷群控系统」）。未上传规则文件时该项置灰，并提示「需先上传转写规则文件」（产品推断）。</li>
+                    <li><b>变量名：</b>选「水冷群控系统」后，列出规则文件里的 BA 设定点（该设备上的平级测点，不分组），显示测点名称，不显示 BA 点号（示例为廊坊A路 58 个设定点）。</li>
+                    <li><b>变量类型：</b>选「水冷群控系统」后可选「当前值」「寻优值」，与工单里展示的两项一致（产品推断）；选其他物模型仍为原有选项。</li>
+                    <li><b>上下限：</b>与原逻辑一致，按该设定点的单位填写。</li>
+                    <li><b>失效处理（产品推断）：</b>移除规则文件或切回「通用映射」后，已选 BA 设定点的条件不再可用；保存时提示「请先上传转写规则文件，或改选其他条件」。</li>
+                  </ul>
+                </div>
+              </div>
               <div class="form-group">
                 <label class="field-label">
                   手动下发时工单通知规则<span class="required">*</span>
@@ -849,6 +1062,38 @@
                   <p>开启后将寻优对象映射到群控点位。适用于现场已接入 BA 群控系统的项目；未开启时按单设备点位下发。</p>
                 </div>
               </div>
+              <div class="anno anno-ux" data-version="v2.9">
+                <span class="anno-tag">交互说明</span>
+                <span class="anno-version">v2.9</span>
+                <span class="anno-source">需求文档</span>
+                <div class="anno-body">
+                  <p><b>关联模块：</b>冷站群控下发策略 — 映射方式与转写规则文件</p>
+                  <ul>
+                    <li><b>映射方式切换：</b>开关打开后出现「映射方式」单选，默认「通用映射」。选「通用映射」显示原 9 类寻优项映射；选「转写规则文件」隐藏 9 类映射，显示规则文件上传区。来回切换不清空已选内容，以保存时的映射方式为准（产品推断）。</li>
+                    <li><b>上传：</b>没有文件时点「上传规则文件」选择规则文件（原型按 .json / .yaml 示意，格式待确认），选完立即校验（显示「正在校验」）。通过 → 显示文件卡片和规则摘要，Toast「校验通过，保存后从下一轮寻优起生效」；不通过 → 逐条列出错误，「保存」置灰。</li>
+                    <li><b>重新上传（覆盖）：</b>已有文件时，无论从文件卡片「重新上传（覆盖）」还是校验失败框「重新上传」进入，都先弹确认「新文件将从下一轮寻优起生效」，确认后再选文件。新文件校验通过即替换当前文件，不通过则保留原文件，可点「放弃本次上传」回到原文件（产品推断）。</li>
+                    <li><b>下载：</b>下载当前规则文件原文，便于核对或改完再传；查看态也可下载（产品推断）。</li>
+                    <li><b>移除：</b>清空当前文件，保存后从下一轮寻优起不再转写（需求文档 §6.6）。移除前二次确认；移除后映射方式仍为「转写规则文件」时，须重新上传或切回「通用映射」才能保存（均为产品推断）。</li>
+                    <li><b>保存：</b>保存后规则文件从下一轮寻优起生效；保存成功 Toast 提示生效时机。</li>
+                    <li><b>原型演示：</b>新增态群控开关默认关闭、映射方式为通用映射，规则文件相关的字段说明、边界与异常、数据逻辑批注在开关打开并选「转写规则文件」后才显示。可 <span class="text-link" onclick="window.demoRuleFileMode &amp;&amp; window.demoRuleFileMode()">点此展开转写规则文件</span>，或 <span class="text-link" onclick="window.demoRuleFileError &amp;&amp; window.demoRuleFileError()">点此演示校验失败</span>（会自动打开开关并切到「转写规则文件」；已有文件时先弹覆盖确认）。</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="anno anno-state" data-version="v2.9">
+                <span class="anno-tag">状态说明</span>
+                <span class="anno-version">v2.9</span>
+                <span class="anno-source">需求文档</span>
+                <div class="anno-body">
+                  <p><b>关联模块：</b>冷站群控下发策略 — 新增 / 编辑 / 查看三态</p>
+                  <ul>
+                    <li><b>新增：</b>群控开关默认关闭；打开后映射方式默认「通用映射」，规则文件为空。</li>
+                    <li><b>编辑：</b>回填群控开关、映射方式、规则文件（名称、版本号、上传人、上传时间），可重新上传、移除、下载。</li>
+                    <li><b>查看：</b>回填同上，全部只读；规则文件卡片只保留「下载」。</li>
+                    <li><b>文件卡片状态标签：</b>「使用中」= 已保存的文件；「校验通过，待保存」= 本次新上传、未保存；「已保存，下一轮寻优起生效」= 本次上传并已保存（标签为产品推断）。</li>
+                    <li><b>原型示意：</b>从列表进入编辑 / 查看时，「末端手动下发」未开群控，「安全策略默认下发」回填通用映射，其余策略回填廊坊A路（人保北方）转写规则 v1。</li>
+                  </ul>
+                </div>
+              </div>
               <div class="form-group">
                 <div class="switch-row">
                   <span class="switch-label">冷站群控下发策略</span>
@@ -860,6 +1105,34 @@
                 </div>
 
                 <div class="group-control-panel hidden" id="groupPanel">
+                  <div class="anno anno-field" data-version="v2.9">
+                    <span class="anno-tag">字段说明</span>
+                    <span class="anno-version">v2.9</span>
+                    <span class="anno-source">需求文档</span>
+                    <div class="anno-body">
+                      <p><b>关联模块：</b>冷站群控下发策略 — 映射方式、规则文件</p>
+                      <table class="anno-table">
+                        <thead>
+                          <tr><th>字段</th><th>类型</th><th>必填</th><th>规则</th><th>默认值</th><th>备注</th></tr>
+                        </thead>
+                        <tbody>
+                          <tr><td>映射方式</td><td>单选</td><td>是（群控开关打开时）</td><td>通用映射 / 转写规则文件</td><td>通用映射</td><td>编辑时可改；以保存时的选择为准（产品推断）</td></tr>
+                          <tr><td>规则文件</td><td>文件上传</td><td>是（映射方式 = 转写规则文件时）</td><td>建议 .json / .yaml 声明式配置，具体格式和上传权限由研发定（需求文档 §十六第 8 条）；上传即校验，不通过不能保存</td><td>空</td><td>一个策略只挂一个文件（产品推断）；重新上传即覆盖</td></tr>
+                          <tr><td>文件信息</td><td>只读</td><td>—</td><td>规则名称、版本号取自文件内容；上传人 = 当前登录用户、上传时间 = 校验通过的时间（产品推断）</td><td>—</td><td>寻优记录按「名称 + 版本号」追溯</td></tr>
+                          <tr><td>规则摘要</td><td>只读</td><td>—</td><td>由文件内容解析：设定点总数、各规则类型数量、挂钩的寻优开关</td><td>—</td><td>不可在页面上改，改规则须改文件后重新上传</td></tr>
+                        </tbody>
+                      </table>
+                      <p>规则文件内容包含：文件信息（规则名称、版本号、适用项目与系统、编写人、修改说明）、设定点清单（测点名称、单位、联动组；群控系统设备上的测点是平级的，不分组）、前置条件（挂钩的寻优开关、对应设备）、转写条件、规则（规则类型：增量锚定 / 公式 / 直取 / 平移 / 直通）。上下限不写在文件里，统一在安全边界配置。</p>
+                    </div>
+                  </div>
+                  <div class="mapping-row">
+                    <div class="mapping-title">映射方式<span class="required">*</span></div>
+                    <div class="mapping-options">
+                      <label><input type="radio" name="groupMapWay" value="general" checked>通用映射</label>
+                      <label><input type="radio" name="groupMapWay" value="file">转写规则文件</label>
+                    </div>
+                  </div>
+                  <div id="generalMapPanel">
                   <div class="mapping-row">
                     <div class="mapping-title">冷水主机数量寻优</div>
                     <div class="mapping-options">
@@ -926,6 +1199,53 @@
                       <label><input type="radio" name="mapTowerFreq">群控-冷却塔逼近度设定</label>
                     </div>
                   </div>
+                  </div>
+
+                  <div id="ruleFilePanel" class="hidden">
+                    <input type="file" id="ruleFileInput" class="hidden" accept=".json,.yaml,.yml">
+                    <div class="anno anno-edge" data-version="v2.9">
+                      <span class="anno-tag">边界与异常</span>
+                      <span class="anno-version">v2.9</span>
+                      <span class="anno-source">需求文档</span>
+                      <div class="anno-body">
+                        <p><b>关联模块：</b>规则文件 — 导入校验</p>
+                        <ul>
+                          <li><b>校验内容：</b>① 格式正确、必填项齐全；② 设定点、来源变量、读点在本项目物模型实例里都能找到；③ 挂钩的寻优变量是平台认得的类型；④ 公式只引用文件里声明过的变量和平台允许的函数；⑤ 联动组成员都在设定点清单里。</li>
+                          <li><b>校验失败：</b>逐条列出「位置 + 原因」（如「第 12 个设定点：物模型点 4_289 在本项目中不存在」），「保存」置灰，失败的文件不保存。已有使用中的文件时，原文件继续有效，可「放弃本次上传」（产品推断）。</li>
+                          <li><b>文件格式：</b>建议 .json / .yaml 声明式配置，具体格式和上传权限由研发定（需求文档 §十六第 8 条）。原型按 .json / .yaml 演示：选了其他格式提示「仅支持 .json / .yaml 文件」，按校验失败处理（产品推断）。</li>
+                          <li><b>正在进行的一轮：</b>上传或覆盖时正在跑的那一轮寻优仍按旧文件转写，不中断。</li>
+                          <li><b>原型演示：</b>选择文件名含 error 的文件即模拟校验失败，也可用开关上方交互说明里的「点此演示校验失败」；其他 .json / .yaml 文件模拟校验通过。</li>
+                        </ul>
+                      </div>
+                    </div>
+                    <div class="mapping-row">
+                      <div class="mapping-title">规则文件<span class="required">*</span></div>
+                      <div class="rule-file-slot" id="ruleFileSlot"></div>
+                    </div>
+                    <div class="anno anno-data" data-version="v2.9">
+                      <span class="anno-tag">数据逻辑</span>
+                      <span class="anno-version">v2.9</span>
+                      <span class="anno-source">需求文档</span>
+                      <div class="anno-body">
+                        <p><b>关联模块：</b>规则文件 — 生效、追溯与规则摘要</p>
+                        <ul>
+                          <li><b>生效时机：</b>保存后从下一轮寻优起按新文件转写；正在进行的这一轮仍按旧文件。</li>
+                          <li><b>追溯：</b>每轮寻优记录都记下所用规则文件的名称和版本号，供追溯；寻优页面不单独展示规则文件（智控下发卡片、寻优记录都保持原样式）。</li>
+                          <li><b>寻优页展示：</b>BA 设定点挂在群控系统设备「A路水冷群控系统」下，在寻优记录里像其他设备一样按「设备 → 测点」展示（测点名称，按原有变量分类）；手动下发弹窗、工单、下发记录只列出寻优值与当前值不同的点。</li>
+                          <li><b>覆盖：</b>重新上传直接覆盖，平台不保留历史版本；旧版本由研发留存，要恢复就重新上传旧文件。</li>
+                          <li><b>移除 / 切回通用映射：</b>保存后从下一轮起不再转写，寻优记录不再出现 BA 设定点，行为恢复原样。</li>
+                          <li><b>作用范围：</b>本策略被柔性、全局、长周期寻优引用时都按此文件转写（长周期只转写首时段正式结果）。</li>
+                          <li><b>规则摘要：</b>解析文件内容只读展示三项（需求文档 §10.2）：设定点总数、各规则类型数量、挂钩的寻优开关。设定点是群控系统设备上的平级测点，不按分组统计。示例（廊坊A路 v1）：共 58 个设定点；规则类型 — 增量锚定 25、公式 14、直取 6、平移 10、直通 3；挂钩的寻优开关按点数列出（冷却塔频率 18、冷却水泵频率 18、冷水机组冷冻水出水温度 6、二次冷冻水泵频率 3、冷水机组运行状态 4、板式换热器运行状态 2、冷水机组 / 板式换热器运行状态（任一启用）4、无（规则直通）3）。上下限不在文件里，在安全边界配。</li>
+                        </ul>
+                      </div>
+                    </div>
+                    <div class="mapping-row hidden" id="ruleSummaryRow">
+                      <div class="mapping-title">规则摘要</div>
+                      <div class="rule-summary-wrap">
+                        <div class="mix-summary rule-summary" id="ruleSummary"></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -980,6 +1300,98 @@
   </div>
   <div class="toast" id="toast"></div>
 
+  <div class="modal-mask" id="ruleConfirmModal" role="dialog" aria-modal="true" aria-labelledby="ruleConfirmTitle">
+    <div class="modal-box">
+      <div class="modal-head">
+        <div class="modal-title" id="ruleConfirmTitle">确认</div>
+      </div>
+      <div class="modal-body">
+        <div class="anno anno-ux" data-version="v2.9">
+          <span class="anno-tag">交互说明</span>
+          <span class="anno-version">v2.9</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>规则文件覆盖 / 移除确认弹窗；入口：规则文件卡片「重新上传（覆盖）」「移除」，以及已有文件时校验失败框的「重新上传」</p>
+            <ul>
+              <li><b>重新上传（覆盖）：</b>提示「新文件将从下一轮寻优起生效」（需求文档 §10.2）；确定 → 打开文件选择，选完立即校验；取消 → 关闭弹窗，原文件不变（产品推断）。</li>
+              <li><b>移除：</b>提示移除后从下一轮寻优起不再转写（需求文档 §6.6）；确定 → 清空规则文件，回到待上传状态；取消 → 不变。移除前二次确认，以及移除后须重新上传或切回通用映射才能保存，均为产品推断。</li>
+              <li>点遮罩或「取消」都关闭弹窗，不做任何改动（产品推断）。</li>
+            </ul>
+          </div>
+        </div>
+        <p id="ruleConfirmText"></p>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" type="button" id="ruleConfirmCancel">取消</button>
+        <button class="btn btn-primary" type="button" id="ruleConfirmOk">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* v2.9 示例数据：廊坊A路（人保北方）转写规则 v1 的规则文件信息与 58 个 BA 设定点（规则摘要由此统计；按需通知条件的变量名取 pointName，设备 device 均为 A路水冷群控系统） */
+    var BA_RULE_FILE = {"name": "廊坊A路（人保北方）转写规则", "file": "langfang-a-ba-v1.json", "version": "v1", "uploader": "admin", "uploadTime": "2026-10-20 10:30"};
+    var BA_SETPOINT_DEMO = [
+        {"id": "4_290", "pointName": "01号制冷单元-制冷冷塔出水温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "增量锚定", "switch": "冷却塔频率", "link": ""},
+        {"id": "4_287", "pointName": "01号制冷单元-联合冷塔出水温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "增量锚定", "switch": "冷却塔频率", "link": ""},
+        {"id": "4_285", "pointName": "01号制冷单元-板换冷塔出水温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "增量锚定", "switch": "冷却塔频率", "link": ""},
+        {"id": "4_286", "pointName": "01号制冷单元-冷却泵频率板换温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "增量锚定", "switch": "冷却水泵频率", "link": ""},
+        {"id": "4_291", "pointName": "01号制冷单元-冷却泵频率温差设定（制冷）", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "公式", "switch": "冷却水泵频率", "link": "1# 温差组"},
+        {"id": "4_288", "pointName": "01号制冷单元-冷却泵频率温差设定（联合）", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "公式", "switch": "冷却水泵频率", "link": "1# 温差组"},
+        {"id": "4_292", "pointName": "01号制冷单元-冷机出水温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "直取", "switch": "冷水机组冷冻水出水温度", "link": ""},
+        {"id": "4_313", "pointName": "02号制冷单元-制冷冷塔出水温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "增量锚定", "switch": "冷却塔频率", "link": ""},
+        {"id": "4_311", "pointName": "02号制冷单元-联合冷塔出水温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "增量锚定", "switch": "冷却塔频率", "link": ""},
+        {"id": "4_309", "pointName": "02号制冷单元-板换冷塔出水温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "增量锚定", "switch": "冷却塔频率", "link": ""},
+        {"id": "4_310", "pointName": "02号制冷单元-冷却泵频率板换温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "增量锚定", "switch": "冷却水泵频率", "link": ""},
+        {"id": "4_314", "pointName": "02号制冷单元-冷却泵频率温差设定（制冷）", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "公式", "switch": "冷却水泵频率", "link": "2# 温差组"},
+        {"id": "4_312", "pointName": "02号制冷单元-冷却泵频率温差设定（联合）", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "公式", "switch": "冷却水泵频率", "link": "2# 温差组"},
+        {"id": "4_315", "pointName": "02号制冷单元-冷机出水温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "直取", "switch": "冷水机组冷冻水出水温度", "link": ""},
+        {"id": "4_320", "pointName": "03号制冷单元-制冷冷塔出水温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "增量锚定", "switch": "冷却塔频率", "link": ""},
+        {"id": "4_318", "pointName": "03号制冷单元-联合冷塔出水温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "增量锚定", "switch": "冷却塔频率", "link": ""},
+        {"id": "4_316", "pointName": "03号制冷单元-板换冷塔出水温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "增量锚定", "switch": "冷却塔频率", "link": ""},
+        {"id": "4_317", "pointName": "03号制冷单元-冷却泵频率板换温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "增量锚定", "switch": "冷却水泵频率", "link": ""},
+        {"id": "4_321", "pointName": "03号制冷单元-冷却泵频率温差设定（制冷）", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "公式", "switch": "冷却水泵频率", "link": "3# 温差组"},
+        {"id": "4_319", "pointName": "03号制冷单元-冷却泵频率温差设定（联合）", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "公式", "switch": "冷却水泵频率", "link": "3# 温差组"},
+        {"id": "4_322", "pointName": "03号制冷单元-冷机出水温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "直取", "switch": "冷水机组冷冻水出水温度", "link": ""},
+        {"id": "4_327", "pointName": "04号制冷单元-制冷冷塔出水温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "增量锚定", "switch": "冷却塔频率", "link": ""},
+        {"id": "4_325", "pointName": "04号制冷单元-联合冷塔出水温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "增量锚定", "switch": "冷却塔频率", "link": ""},
+        {"id": "4_323", "pointName": "04号制冷单元-板换冷塔出水温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "增量锚定", "switch": "冷却塔频率", "link": ""},
+        {"id": "4_324", "pointName": "04号制冷单元-冷却泵频率板换温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "增量锚定", "switch": "冷却水泵频率", "link": ""},
+        {"id": "4_328", "pointName": "04号制冷单元-冷却泵频率温差设定（制冷）", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "公式", "switch": "冷却水泵频率", "link": "4# 温差组"},
+        {"id": "4_326", "pointName": "04号制冷单元-冷却泵频率温差设定（联合）", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "公式", "switch": "冷却水泵频率", "link": "4# 温差组"},
+        {"id": "4_329", "pointName": "04号制冷单元-冷机出水温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "直取", "switch": "冷水机组冷冻水出水温度", "link": ""},
+        {"id": "4_334", "pointName": "05号制冷单元-制冷冷塔出水温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "增量锚定", "switch": "冷却塔频率", "link": ""},
+        {"id": "4_332", "pointName": "05号制冷单元-联合冷塔出水温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "增量锚定", "switch": "冷却塔频率", "link": ""},
+        {"id": "4_330", "pointName": "05号制冷单元-板换冷塔出水温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "增量锚定", "switch": "冷却塔频率", "link": ""},
+        {"id": "4_331", "pointName": "05号制冷单元-冷却泵频率板换温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "增量锚定", "switch": "冷却水泵频率", "link": ""},
+        {"id": "4_335", "pointName": "05号制冷单元-冷却泵频率温差设定（制冷）", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "公式", "switch": "冷却水泵频率", "link": "5# 温差组"},
+        {"id": "4_333", "pointName": "05号制冷单元-冷却泵频率温差设定（联合）", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "公式", "switch": "冷却水泵频率", "link": "5# 温差组"},
+        {"id": "4_336", "pointName": "05号制冷单元-冷机出水温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "直取", "switch": "冷水机组冷冻水出水温度", "link": ""},
+        {"id": "4_341", "pointName": "06号制冷单元-制冷冷塔出水温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "增量锚定", "switch": "冷却塔频率", "link": ""},
+        {"id": "4_339", "pointName": "06号制冷单元-联合冷塔出水温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "增量锚定", "switch": "冷却塔频率", "link": ""},
+        {"id": "4_337", "pointName": "06号制冷单元-板换冷塔出水温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "增量锚定", "switch": "冷却塔频率", "link": ""},
+        {"id": "4_338", "pointName": "06号制冷单元-冷却泵频率板换温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "增量锚定", "switch": "冷却水泵频率", "link": ""},
+        {"id": "4_342", "pointName": "06号制冷单元-冷却泵频率温差设定（制冷）", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "公式", "switch": "冷却水泵频率", "link": "6# 温差组"},
+        {"id": "4_340", "pointName": "06号制冷单元-冷却泵频率温差设定（联合）", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "公式", "switch": "冷却水泵频率", "link": "6# 温差组"},
+        {"id": "4_343", "pointName": "06号制冷单元-冷机出水温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "直取", "switch": "冷水机组冷冻水出水温度", "link": ""},
+        {"id": "4_293", "pointName": "二次泵-末端压差设定", "device": "A路水冷群控系统", "unit": "bar", "ruleType": "增量锚定", "switch": "二次冷冻水泵频率", "link": "二次泵压差组"},
+        {"id": "4_294", "pointName": "二次泵-二次泵加泵压差设定", "device": "A路水冷群控系统", "unit": "bar", "ruleType": "公式", "switch": "二次冷冻水泵频率", "link": "二次泵压差组"},
+        {"id": "4_295", "pointName": "二次泵-二次泵减泵压差设定", "device": "A路水冷群控系统", "unit": "bar", "ruleType": "公式", "switch": "二次冷冻水泵频率", "link": "二次泵压差组"},
+        {"id": "4_296", "pointName": "群控-制冷模式加机负荷设定", "device": "A路水冷群控系统", "unit": "%", "ruleType": "平移", "switch": "冷水机组运行状态", "link": "制冷加减机组"},
+        {"id": "4_297", "pointName": "群控-制冷模式减机负荷设定", "device": "A路水冷群控系统", "unit": "%", "ruleType": "平移", "switch": "冷水机组运行状态", "link": "制冷加减机组"},
+        {"id": "4_298", "pointName": "群控-联合模式加机负荷设定", "device": "A路水冷群控系统", "unit": "%", "ruleType": "平移", "switch": "冷水机组运行状态", "link": "联合加减机组"},
+        {"id": "4_299", "pointName": "群控-联合模式减机负荷设定", "device": "A路水冷群控系统", "unit": "%", "ruleType": "平移", "switch": "冷水机组运行状态", "link": "联合加减机组"},
+        {"id": "4_300", "pointName": "群控-板换模式加机温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "平移", "switch": "板式换热器运行状态", "link": "板换加减机组"},
+        {"id": "4_301", "pointName": "群控-板换模式减机温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "平移", "switch": "板式换热器运行状态", "link": "板换加减机组"},
+        {"id": "4_302", "pointName": "群控-制冷湿球温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "平移", "switch": "冷水机组或板式换热器运行状态", "link": "湿球阈值组"},
+        {"id": "4_303", "pointName": "群控-联合湿球温度高限设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "平移", "switch": "冷水机组或板式换热器运行状态", "link": "湿球阈值组"},
+        {"id": "4_304", "pointName": "群控-联合湿球温度低限设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "平移", "switch": "冷水机组或板式换热器运行状态", "link": "湿球阈值组"},
+        {"id": "4_305", "pointName": "群控-板换湿球温度设定", "device": "A路水冷群控系统", "unit": "℃", "ruleType": "平移", "switch": "冷水机组或板式换热器运行状态", "link": "湿球阈值组"},
+        {"id": "4_306", "pointName": "蓄冷罐-正常模式流量设定", "device": "A路水冷群控系统", "unit": "m³/h", "ruleType": "直通", "switch": "无", "link": ""},
+        {"id": "4_307", "pointName": "蓄冷罐-快充模式流量设定", "device": "A路水冷群控系统", "unit": "m³/h", "ruleType": "直通", "switch": "无", "link": ""},
+        {"id": "4_308", "pointName": "蓄冷罐-超级充冷流量设定", "device": "A路水冷群控系统", "unit": "m³/h", "ruleType": "直通", "switch": "无", "link": ""}
+    ];
+  </script>
   <script>
     (function () {
       var params = new URLSearchParams(window.location.search);
@@ -1097,13 +1509,16 @@
         conditionIndex += 1;
         document.getElementById('conditionEmpty').classList.add('hidden');
         var tr = document.createElement('tr');
+        tr.setAttribute('data-cond-ba', 'false');
         tr.innerHTML =
           '<td>' + conditionIndex + '</td>' +
-          '<td><select class="table-select"><option>请选择</option><option>冷水主机</option><option>冷冻泵</option><option>冷却塔</option><option>水冷冷水系统</option></select></td>' +
-          '<td><select class="table-select"><option>请选择</option><option>冷冻水出水温度</option><option>冷冻水温差</option><option>冷却塔逼近度</option><option>最不利压差</option></select></td>' +
-          '<td><select class="table-select"><option>请选择</option><option>实际值</option><option>预测值</option><option>偏差值</option><option>实际值-预测值</option><option>预测值-实际值</option></select></td>' +
+          '<td><select class="table-select" data-cond-model><option>请选择</option><option>冷水主机</option><option>冷冻泵</option><option>冷却塔</option><option>水冷冷水系统</option>' +
+          '<option value="ba" data-ba-opt>' + CONDITION_BA_MODEL + '</option></select></td>' +
+          '<td><select class="table-select" data-cond-var>' + conditionOptions(CONDITION_DEFAULT_VARS) + '</select></td>' +
+          '<td><select class="table-select" data-cond-type>' + conditionOptions(CONDITION_DEFAULT_TYPES) + '</select></td>' +
           '<td><div class="limit-inputs"><input class="table-input" placeholder="不限"><span>-</span><input class="table-input" placeholder="不限"></div></td>' +
           '<td><span class="text-link danger" data-delete-row>删除</span></td>';
+        tr.querySelector('[data-cond-model]').addEventListener('change', function () { updateConditionRowVars(tr); });
         tr.querySelector('[data-delete-row]').addEventListener('click', function () {
           tr.remove();
           if (!document.querySelector('#conditionTbody tr:not(.empty-row)')) {
@@ -1112,7 +1527,303 @@
           }
         });
         document.getElementById('conditionTbody').appendChild(tr);
+        syncConditionBaOptions();
       }
+
+      /* v2.9：按需通知条件可选 BA 设定点（本策略选了转写规则文件且已上传文件时可用）；物模型与其他设备同一写法，变量名为该设备上的测点（平铺） */
+      var CONDITION_BA_MODEL = '水冷群控系统';
+      var CONDITION_DEFAULT_VARS = ['冷冻水出水温度', '冷冻水温差', '冷却塔逼近度', '最不利压差'];
+      var CONDITION_DEFAULT_TYPES = ['实际值', '预测值', '偏差值', '实际值-预测值', '预测值-实际值'];
+      var CONDITION_BA_TYPES = ['当前值', '寻优值'];
+
+      function conditionOptions(items) {
+        return '<option>请选择</option>' + items.map(function (t) { return '<option>' + escHtml(t) + '</option>'; }).join('');
+      }
+
+      function conditionBaVarOptions() {
+        return '<option>请选择</option>' + BA_SETPOINT_DEMO.map(function (p) {
+          return '<option value="' + escHtml(p.id) + '">' + escHtml(p.pointName) + '</option>';
+        }).join('');
+      }
+
+      function updateConditionRowVars(tr) {
+        var isBa = String(tr.querySelector('[data-cond-model]').value === 'ba');
+        if (tr.getAttribute('data-cond-ba') === isBa) return;
+        tr.setAttribute('data-cond-ba', isBa);
+        tr.querySelector('[data-cond-var]').innerHTML = isBa === 'true' ? conditionBaVarOptions() : conditionOptions(CONDITION_DEFAULT_VARS);
+        tr.querySelector('[data-cond-type]').innerHTML = conditionOptions(isBa === 'true' ? CONDITION_BA_TYPES : CONDITION_DEFAULT_TYPES);
+      }
+
+      function baConditionAvailable() {
+        return isRuleFileMode() && !!ruleState.file;
+      }
+
+      function syncConditionBaOptions() {
+        var available = baConditionAvailable();
+        document.querySelectorAll('#conditionTbody option[data-ba-opt]').forEach(function (opt) {
+          opt.disabled = !available;
+          opt.textContent = CONDITION_BA_MODEL + (available ? '' : '（需先上传转写规则文件）');
+        });
+      }
+
+      function hasInvalidBaCondition() {
+        var notice = document.querySelector('input[name="noticeMode"]:checked');
+        if (!notice || notice.value !== 'condition' || baConditionAvailable()) return false;
+        return Array.prototype.some.call(document.querySelectorAll('#conditionTbody [data-cond-model]'), function (sel) {
+          return sel.value === 'ba';
+        });
+      }
+
+      /* ---------- v2.9 群控下发：映射方式 + 转写规则文件 ---------- */
+      var ruleState = { file: null, errors: null, validating: null };
+      var ruleConfirmAction = null;
+      var ruleValidateTimer = null;
+      var RULE_FILE_DEMO_ERRORS = [
+        { pos: '第 5 个设定点（4_291）', reason: '公式引用了未声明的变量「冷却水流量B」' },
+        { pos: '第 12 个设定点', reason: '物模型点 4_289 在本项目中不存在' },
+        { pos: '第 44 个设定点（4_294）', reason: '挂钩的寻优变量「二次泵频率反馈」不是平台认得的类型' }
+      ];
+      var RULE_TYPE_ORDER = ['增量锚定', '公式', '直取', '平移', '直通'];
+      var SWITCH_LABEL = {
+        '冷水机组或板式换热器运行状态': '冷水机组 / 板式换热器运行状态（任一启用）',
+        '无': '无（规则直通）'
+      };
+      /* 原型示意：编辑 / 查看时按策略名回填群控配置；未列出的策略回填廊坊A路规则文件 */
+      var GROUP_PRESETS = {
+        '末端手动下发': { on: false },
+        '安全策略默认下发': { on: true, way: 'general' }
+      };
+
+      function escHtml(text) {
+        return String(text == null ? '' : text).replace(/[&<>"']/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+      }
+
+      function nowText() {
+        var d = new Date();
+        function pad(n) { return n < 10 ? '0' + n : '' + n; }
+        return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+      }
+
+      function currentMapWay() {
+        var checked = document.querySelector('input[name="groupMapWay"]:checked');
+        return checked ? checked.value : 'general';
+      }
+
+      function isRuleFileMode() {
+        return document.getElementById('groupSwitch').checked && currentMapWay() === 'file';
+      }
+
+      function updateSaveState() {
+        var blocked = isRuleFileMode() && !!(ruleState.errors || ruleState.validating);
+        document.getElementById('saveBtn').disabled = blocked;
+      }
+
+      function countBy(list, keyFn) {
+        var order = [];
+        var map = {};
+        list.forEach(function (item) {
+          var key = keyFn(item);
+          if (!(key in map)) { map[key] = 0; order.push(key); }
+          map[key] += 1;
+        });
+        return { order: order, map: map };
+      }
+
+      function summaryTags(order, map, labelMap) {
+        return order.map(function (key) {
+          var label = (labelMap && labelMap[key]) || key;
+          return '<span class="summary-tag">' + escHtml(label) + ' ' + map[key] + '</span>';
+        }).join('');
+      }
+
+      /* 规则摘要：设定点总数 + 各规则类型数量 + 挂钩的寻优开关（群控系统设备上的测点平级，不按分组统计） */
+      function renderRuleSummary() {
+        var types = countBy(BA_SETPOINT_DEMO, function (p) { return p.ruleType; });
+        var typeOrder = RULE_TYPE_ORDER.filter(function (t) { return types.map[t]; });
+        var switches = countBy(BA_SETPOINT_DEMO, function (p) { return p.switch; });
+        var switchOrder = switches.order.filter(function (s) { return s !== '无'; });
+        if (switches.map['无']) switchOrder.push('无');
+        document.getElementById('ruleSummary').innerHTML =
+          '<div class="summary-row"><span class="summary-label">设定点</span><div class="rule-summary-tags"><span class="summary-tag">共 ' + BA_SETPOINT_DEMO.length + ' 个</span></div></div>' +
+          '<div class="summary-row"><span class="summary-label">规则类型</span><div class="rule-summary-tags">' + summaryTags(typeOrder, types.map) + '</div></div>' +
+          '<div class="summary-row"><span class="summary-label">挂钩的寻优开关</span><div class="rule-summary-tags">' + summaryTags(switchOrder, switches.map, SWITCH_LABEL) + '</div></div>';
+      }
+
+      function ruleStatusTag(status) {
+        if (status === 'pending') return '<span class="rule-status pending">校验通过，待保存</span>';
+        if (status === 'saved') return '<span class="rule-status ok">已保存，下一轮寻优起生效</span>';
+        return '<span class="rule-status ok">使用中</span>';
+      }
+
+      function renderRuleFile() {
+        var slot = document.getElementById('ruleFileSlot');
+        var readonly = pageMode === 'view';
+        var file = ruleState.file;
+        var html = '';
+        if (ruleState.validating) {
+          html = '<div class="rule-validating">正在校验「' + escHtml(ruleState.validating) + '」…</div>';
+        } else if (ruleState.errors) {
+          var errs = ruleState.errors;
+          html = '<div class="rule-error-box">' +
+            '<div class="rule-error-title">「' + escHtml(errs.fileName) + '」校验未通过，共 ' + errs.list.length + ' 处错误</div>' +
+            '<div class="rule-error-desc">请按以下提示修改文件后重新上传；未通过校验的文件不能保存。' +
+            (file ? '当前仍使用「' + escHtml(file.name) + ' ' + escHtml(file.version) + '」。' : '') + '</div>' +
+            '<ol class="rule-error-list">' + errs.list.map(function (e) {
+              return '<li><b>' + escHtml(e.pos) + '：</b>' + escHtml(e.reason) + '</li>';
+            }).join('') + '</ol>' +
+            '<div class="rule-error-actions">' +
+            '<button class="btn btn-ghost" type="button" data-rule-act="' + (file ? 'reupload' : 'upload') + '">重新上传</button>' +
+            (file ? '<span class="text-link" data-rule-act="discard">放弃本次上传</span>' : '') +
+            '</div></div>';
+        } else if (file) {
+          html = '<div class="rule-file-card">' +
+            '<div>' +
+            '<div class="rule-file-name"><span>' + escHtml(file.name) + '</span><span class="summary-tag">' + escHtml(file.version) + '</span>' + ruleStatusTag(file.status) + '</div>' +
+            '<div class="rule-file-meta"><span>文件：' + escHtml(file.file) + '</span><span>上传人：' + escHtml(file.uploader) + '</span><span>上传时间：' + escHtml(file.uploadTime) + '</span></div>' +
+            '</div>' +
+            '<div class="rule-file-actions">' +
+            '<span class="text-link" data-rule-act="download">下载</span>' +
+            (readonly ? '' : '<span class="text-link" data-rule-act="reupload">重新上传（覆盖）</span><span class="text-link danger" data-rule-act="remove">移除</span>') +
+            '</div></div>';
+        } else if (readonly) {
+          html = '<div class="rule-upload-empty"><span class="rule-upload-hint">未上传规则文件</span></div>';
+        } else {
+          html = '<div class="rule-upload-empty">' +
+            '<button class="btn btn-ghost" type="button" data-rule-act="upload">上传规则文件</button>' +
+            '<span class="rule-upload-hint">支持 .json / .yaml，上传后立即校验</span>' +
+            '</div>';
+        }
+        slot.innerHTML = html;
+        var showSummary = !!file && !ruleState.errors && !ruleState.validating;
+        document.getElementById('ruleSummaryRow').classList.toggle('hidden', !showSummary);
+        if (showSummary) renderRuleSummary();
+        updateSaveState();
+        syncConditionBaOptions();
+      }
+
+      function updateMapWay() {
+        var fileMode = currentMapWay() === 'file';
+        document.getElementById('generalMapPanel').classList.toggle('hidden', fileMode);
+        document.getElementById('ruleFilePanel').classList.toggle('hidden', !fileMode);
+        renderRuleFile();
+      }
+
+      function handleRuleFileChosen(fileName) {
+        clearTimeout(ruleValidateTimer);
+        ruleState.validating = fileName;
+        ruleState.errors = null;
+        renderRuleFile();
+        ruleValidateTimer = setTimeout(function () {
+          var ext = (fileName.split('.').pop() || '').toLowerCase();
+          ruleState.validating = null;
+          if (['json', 'yaml', 'yml'].indexOf(ext) === -1) {
+            ruleState.errors = { fileName: fileName, list: [{ pos: '文件格式', reason: '仅支持 .json / .yaml 文件' }] };
+          } else if (/error/i.test(fileName)) {
+            ruleState.errors = { fileName: fileName, list: RULE_FILE_DEMO_ERRORS };
+          } else {
+            ruleState.errors = null;
+            ruleState.file = {
+              name: BA_RULE_FILE.name,
+              version: BA_RULE_FILE.version,
+              file: fileName,
+              uploader: BA_RULE_FILE.uploader,
+              uploadTime: nowText(),
+              status: 'pending'
+            };
+            showToast('校验通过，保存后从下一轮寻优起生效');
+          }
+          renderRuleFile();
+        }, 700);
+      }
+
+      function openRuleConfirm(title, text, okText, onOk) {
+        document.getElementById('ruleConfirmTitle').textContent = title;
+        document.getElementById('ruleConfirmText').textContent = text;
+        document.getElementById('ruleConfirmOk').textContent = okText;
+        ruleConfirmAction = onOk;
+        document.getElementById('ruleConfirmModal').classList.add('show');
+      }
+
+      function closeRuleConfirm() {
+        ruleConfirmAction = null;
+        document.getElementById('ruleConfirmModal').classList.remove('show');
+      }
+
+      function openRuleFilePicker() {
+        var input = document.getElementById('ruleFileInput');
+        input.value = '';
+        input.click();
+      }
+
+      function confirmReupload(onOk) {
+        openRuleConfirm('重新上传（覆盖）规则文件？', '新文件将从下一轮寻优起生效；正在进行的这一轮仍按当前文件转写。平台不保留旧版本，如需恢复请重新上传旧文件。', '继续上传', onOk);
+      }
+
+      function handleRuleAction(act) {
+        if (act === 'upload') {
+          openRuleFilePicker();
+        } else if (act === 'reupload') {
+          confirmReupload(openRuleFilePicker);
+        } else if (act === 'remove') {
+          openRuleConfirm('移除规则文件？', '移除并保存后，从下一轮寻优起不再转写，回到原逻辑。移除后须重新上传或切回「通用映射」才能保存。', '移除', function () {
+            ruleState.file = null;
+            ruleState.errors = null;
+            renderRuleFile();
+            showToast('已移除规则文件');
+          });
+        } else if (act === 'download') {
+          if (ruleState.file) showToast('已下载「' + ruleState.file.file + '」（原型示意）');
+        } else if (act === 'discard') {
+          ruleState.errors = null;
+          renderRuleFile();
+        }
+      }
+
+      function applyGroupPreset() {
+        var name = document.getElementById('strategyName').value;
+        var preset = GROUP_PRESETS[name] || { on: true, way: 'file' };
+        document.getElementById('groupSwitch').checked = !!preset.on;
+        if (!preset.on) return;
+        var wayRadio = document.querySelector('input[name="groupMapWay"][value="' + preset.way + '"]');
+        if (wayRadio) wayRadio.checked = true;
+        if (preset.way === 'file') {
+          ruleState.file = {
+            name: BA_RULE_FILE.name,
+            version: BA_RULE_FILE.version,
+            file: BA_RULE_FILE.file,
+            uploader: BA_RULE_FILE.uploader,
+            uploadTime: BA_RULE_FILE.uploadTime,
+            status: 'active'
+          };
+        }
+      }
+
+      function openRuleFileMode() {
+        document.getElementById('groupSwitch').checked = true;
+        var fileRadio = document.querySelector('input[name="groupMapWay"][value="file"]');
+        if (fileRadio) fileRadio.checked = true;
+        updateGroupPanel();
+        updateMapWay();
+      }
+
+      window.demoRuleFileMode = function () {
+        if (pageMode === 'view') { showToast('查看态只读，不可切换映射方式'); return; }
+        openRuleFileMode();
+        document.getElementById('groupPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      };
+
+      window.demoRuleFileError = function () {
+        if (pageMode === 'view') { showToast('查看态不可上传'); return; }
+        openRuleFileMode();
+        var runDemo = function () { handleRuleFileChosen('langfang-a-ba-v1-error.json'); };
+        if (ruleState.file) {
+          confirmReupload(runDemo);
+        } else {
+          runDemo();
+        }
+      };
 
       function applyInitialData() {
         if (pageMode === 'edit' || pageMode === 'view') {
@@ -1120,6 +1831,7 @@
           var mode = strategyName === '末端手动下发' || strategyName === '手动下发' ? 'manual' : 'auto';
           var radio = document.querySelector('input[name="issueMode"][value="' + mode + '"]');
           if (radio) radio.checked = true;
+          applyGroupPreset();
         }
         if (pageMode === 'view') {
           document.querySelectorAll('input, select, button').forEach(function (el) {
@@ -1150,7 +1862,49 @@
       document.getElementById('cancelBtn').addEventListener('click', goList);
       document.getElementById('backBtn').addEventListener('click', goList);
       document.getElementById('saveBtn').addEventListener('click', function () {
+        if (hasInvalidBaCondition()) {
+          showToast('按需通知条件里选了 BA 设定点，请先上传转写规则文件，或改选其他条件');
+          return;
+        }
+        if (isRuleFileMode()) {
+          if (ruleState.errors || ruleState.validating) return;
+          if (!ruleState.file) {
+            showToast('请上传转写规则文件，或切换为通用映射');
+            return;
+          }
+          if (ruleState.file.status === 'pending') {
+            ruleState.file.status = 'saved';
+            renderRuleFile();
+            showToast('已保存（原型示意）：规则文件将从下一轮寻优起生效');
+            return;
+          }
+        }
         showToast('已保存（原型示意）');
+      });
+
+      /* v2.9 群控下发：映射方式 + 转写规则文件 */
+      document.getElementById('groupSwitch').addEventListener('change', updateSaveState);
+      document.getElementById('groupSwitch').addEventListener('change', syncConditionBaOptions);
+      document.querySelectorAll('input[name="groupMapWay"]').forEach(function (radio) {
+        radio.addEventListener('change', updateMapWay);
+      });
+      document.getElementById('ruleFileInput').addEventListener('change', function (e) {
+        var file = e.target.files && e.target.files[0];
+        if (file) handleRuleFileChosen(file.name);
+      });
+      document.getElementById('ruleFileSlot').addEventListener('click', function (e) {
+        var target = e.target.closest('[data-rule-act]');
+        if (!target || target.disabled) return;
+        handleRuleAction(target.getAttribute('data-rule-act'));
+      });
+      document.getElementById('ruleConfirmCancel').addEventListener('click', closeRuleConfirm);
+      document.getElementById('ruleConfirmOk').addEventListener('click', function () {
+        var action = ruleConfirmAction;
+        closeRuleConfirm();
+        if (action) action();
+      });
+      document.getElementById('ruleConfirmModal').addEventListener('click', function (e) {
+        if (e.target === this) closeRuleConfirm();
       });
 
       updateTitle();
@@ -1162,6 +1916,7 @@
       updateNoticeMode();
       updateGroupPanel();
       updateTerminalPanel();
+      updateMapWay();
     })();
   </script>
   <button type="button" class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>

@@ -1,7 +1,7 @@
 # AI 节能 — 产品关系图（机读）
 # 人读入口：AGENT-MAP.md（本目录）+ 07-产品文档/01-ai 节能/产品文档/00-产品全貌.md
 # 维护：改 nav.js / index 拓扑 / 主流程时同步本文件
-# 更新：2026-07-31
+# 更新：2026-10-20
 
 meta:
   product: ai-energy
@@ -126,21 +126,21 @@ pages:
     nav_label: 冷站柔性寻优
     nav_group: 冷站能效优化
     domain: cold_station_opt
-    version: v2.3
+    version: v2.9
     role: entry
   - id: page.cold_global_opt
     file: 冷站全局寻优.html
     nav_label: 冷站全局寻优
     nav_group: 冷站能效优化
     domain: cold_station_opt
-    version: v2.4
+    version: v2.9
     role: entry
   - id: page.cold_long_cycle_opt
     file: 冷站长周期寻优.html
     nav_label: 冷站长周期寻优
     nav_group: 冷站能效优化
     domain: cold_station_opt
-    version: v2.8
+    version: v2.9
     role: entry
   - id: page.multi_condition_list
     file: 多工况探索-列表.html
@@ -382,14 +382,14 @@ pages:
     nav_label: null
     nav_group: AI节能配置
     domain: safety_dispatch
-    version: v2.8
+    version: v2.9
     role: subflow
   - id: page.safety_boundary_edit
     file: 安全边界-编辑.html
     nav_label: null
     nav_group: AI节能配置
     domain: safety_dispatch
-    version: v2.8
+    version: v2.9
     role: subflow
   - id: page.dispatch_list
     file: 智控下发策略管理.html
@@ -403,7 +403,7 @@ pages:
     nav_label: null
     nav_group: AI节能配置
     domain: safety_dispatch
-    version: v2.3
+    version: v2.9
     role: subflow
   - id: page.safety_fallback
     file: 安全回退策略.html
@@ -777,6 +777,18 @@ requirements:
     algo_vs_ui: mixed
     notes: 通用内核+设备能力插件；既有加减机/柔性页不新增入口，规则配置使用居中弹窗并按对象类型生成规则行，结果概览/变量表/平面图/手动下发展示水冷与风冷DX能力差异；投入投出沿用既有动态对象类型分组；基础PowerModel供加减机消费；CoolingModel分离Q_constraint与Q_est，风冷Q_constraint按室外高温收紧，柔性以两类运行总冷量取小门控并补全全局同向节能信号；支持水冷、风冷及混合编队；柔性L3每轮按真实值重算且不设置固定响应等待，L4复用既有记录做回读确认和待生效目标去重；连续巡游按离线压力、影子运行、现场受控试验分层验证
 
+  - id: req.v27.gu_room_thermal_model
+    version: v2.7
+    status: 待评审
+    domain: room_opt
+    prd_path: 04-需求文档/AI节能v2.7 版本/GU版AI节能功能裁剪需求方案.md
+    prototype_pages:
+      - 机房寻优-创建机房模型.html
+      - 机房寻优-创建机房模型-步骤2.html
+    upstream: []
+    downstream: []
+    algo_vs_ui: ui_only
+    notes: 需求方案§8.4：GU无空间视图/无机房对象；热力模型不选机房，直接带入本机设备列表全部设备；关联空调/传感器/机柜候选为本机全部设备且均可勾选（不按机房、物模型过滤）；补必填机房名称；步骤2（含同步3D数据）与平台版一致；不限制热力模型数量；原型页头「原型演示」或?edition=gu切换
   - id: req.v28.room_opt_viz_detail
     version: v2.8
     status: 待评审
@@ -852,6 +864,36 @@ requirements:
     algo_vs_ui: algo_only
     notes: 需求12：相对v2.6去掉L0/L1压缩机转速特征；PLR仅由空气侧显冷量G计算；1_1052_0物模型保留、实施可不绑；无新页
 
+  - id: req.v28.air_dx_compressor_ctrl
+    version: v2.8
+    status: 待评审
+    domain: room_opt
+    prd_path: 04-需求文档/AI节能v2.8 版本/01-末端寻优/末端寻优设备能力抽象架构设计方案-v2.8定稿版.html
+    prototype_pages:
+      - 机房寻优-柔性寻优.html
+      - 机房寻优-加减机寻优.html
+    upstream: [req.v28.flex_margin_rewrite, req.v28.air_dx_fan_aux]
+    downstream: [req.v28.room_opt_explainability]
+    algo_vs_ui: mixed
+    notes: 需求13（定稿版 §7.10，2026-10-20）：风冷DX新增「压缩机控制」辅助通道（与风机转速上限并列），主控回风/送风设定照旧寻优、不替换；通道值=允许运行压缩机台数，写压缩机组件「压缩机状态设定」3_19989_10#j（1=允许运行、实际启停由机组PID执行；0=停）；增冷 风机→压缩机→设定，省电 压缩机→设定→风机；富余且送风窗口最高值≤Ts_shed且实际运行=允许才停、风机到N_max才放开、同一台压缩机启停间隔≥T_comp；L1按有功功率估实际运行台数n_run；可控压缩机不足2台不装配本通道（南京1～4号）；加减机配置不改；可解释性§5.4（action_channel增COMP）；原型已同步（2026-10-20：柔性规则表新增「风冷 DX · 压缩机控制」行+压缩机控制参数+变量表/浮层压缩机行与演示原因，关掉本行结果区与原演示逐字一致；加减机配置不改、仅补批注）；10-21 修订（等待窗口先于启停间隔、关机优先级、R1～R5：Ts_shed 缺省18℃、空转依据句、过冷试关只认剩1台运行）原型已同步；10-26 修订（新开机只放开 1 台、过冷试关前同区域先停压缩机）原型已同步；10-26·二 原型已同步（撤回按台覆盖与压缩机全开呼叫温差，Ts_shed 整类型一个值，抬设定统一用压缩机唤醒温差）
+
+  - id: req.v29.langfang_ba_dispatch
+    version: v2.9
+    status: 待评审
+    domain: safety_dispatch
+    prd_path: 04-需求文档/AI节能v2.9 版本/03-廊坊群控下发兼容/廊坊群控设定点转写与下发需求文档.md
+    prototype_pages:
+      - 冷站柔性调优.html
+      - 冷站全局寻优.html
+      - 冷站长周期寻优.html
+      - 安全边界-创建.html
+      - 安全边界-编辑.html
+      - 创建-编辑智控下发策略.html
+    upstream: [req.cross.safety_dispatch_base]
+    downstream: []
+    algo_vs_ui: mixed
+    notes: 版本清单需求3（ONES V3R5-7002，廊坊群控下发兼容）：不改寻优算法。标准功能——转写引擎（按下发策略上传的转写规则文件，把柔性/全局/长周期寻优结果逐点转写成 BA 设定点；长周期只转写首时段正式结果）、安全边界支持群控系统设定点（只给转写贴边和手动下发校验，不参与仿真结果校验）、寻优记录与下发复用原有界面（BA 设定点挂在群控系统设备下按原有变量分类展示；手动/自动/混合下发与工单只下发寻优值与当前值不同的点，一键回退不变）、下发策略配置页上传/校验/覆盖规则文件；项目定制——廊坊A路58点逐点规则（规则文件 v1 的内容，不进页面逻辑）；下发执行、下发记录与回退沿用；原型 2026-10-20 已同步 6 页
+
   - id: req.cross.safety_dispatch_base
     version: v1.6
     status: 已发布
@@ -866,7 +908,7 @@ requirements:
       - 安全回退策略.html
       - 创建-编辑安全回退策略.html
     upstream: []
-    downstream: [req.v24.multi_condition, req.v24.global_opt_round_result]
+    downstream: [req.v24.multi_condition, req.v24.global_opt_round_result, req.v29.langfang_ba_dispatch]
     algo_vs_ui: mixed
     notes: 安全边界、智控下发、安全回退策略均有独立页（列表+创建编辑）
 
@@ -1009,6 +1051,56 @@ edges:
   - from: req.v26.pac_power_predict
     to: req.v28.pac_power_drop_speed
     rel: refined_by
+  - from: req.v28.air_dx_compressor_ctrl
+    to: page.room_flex_opt
+    rel: enhances
+  - from: req.v28.air_dx_compressor_ctrl
+    to: page.room_add_remove_opt
+    rel: enhances
+  - from: req.v28.flex_margin_rewrite
+    to: req.v28.air_dx_compressor_ctrl
+    rel: refined_by
+  - from: req.v28.air_dx_compressor_ctrl
+    to: req.v28.room_opt_explainability
+    rel: provides_facts
+  - from: req.v27.gu_room_thermal_model
+    to: page.room_model_s1
+    rel: enhances
+  - from: req.v27.gu_room_thermal_model
+    to: page.room_model_s2
+    rel: enhances
+  # v2.9 廊坊群控下发兼容（转写引擎 + 群控设定点 + 记录与下发打通）
+  - from: req.v29.langfang_ba_dispatch
+    to: page.cold_flex_opt
+    rel: enhances
+  - from: req.v29.langfang_ba_dispatch
+    to: page.cold_global_opt
+    rel: enhances
+  - from: req.v29.langfang_ba_dispatch
+    to: page.cold_long_cycle_opt
+    rel: enhances
+  - from: req.v29.langfang_ba_dispatch
+    to: page.safety_boundary_create
+    rel: enhances
+  - from: req.v29.langfang_ba_dispatch
+    to: page.safety_boundary_edit
+    rel: enhances
+  - from: req.v29.langfang_ba_dispatch
+    to: page.dispatch_edit
+    rel: enhances
+  - from: req.v29.langfang_ba_dispatch
+    to: req.cross.safety_dispatch_base
+    rel: reuses
+  # v2.9 运行时数据依赖：下发策略的转写规则文件、安全边界群控设定点 → 冷站三类寻优的转写、贴边与手动下发校验
+  - from: page.dispatch_edit
+    to: domain.cold_station_opt
+    rel: provides_facts
+  - from: page.safety_boundary_create
+    to: domain.cold_station_opt
+    rel: provides_facts
+  - from: page.safety_boundary_edit
+    to: domain.cold_station_opt
+    rel: provides_facts
 
 noise:
   - id: noise.dual_data_quality
@@ -1023,3 +1115,9 @@ noise:
     note: 需求方案副本若残留 ../../05-原型/AI原型html/，GitHub Pages 评审 iframe 会打到用户站官方 404；发布副本与 publish.sh 须改写为 ../
   - id: noise.v25_topology_tier1
     note: v2.5 计量拓扑 2026-10-16 起为第一档（单一最新拓扑，保存选重算开始日期，按最新拓扑重算被改对象及递归上级实时历史）；旧批注 / PRD 中的线路记录、拓扑版本、配错 / 线路改造保存均已替代，勿再按其理解；第二 / 三档见需求池#73
+  - id: noise.v29_skill_path_06
+    note: html-ai-prototype / prototype-annotations 技能文件里原型目录仍写 06-原型，实际是 05-原型；按 05-原型 操作，古典原型html 仍只读
+  - id: noise.v29_rule_file_standard
+    note: v2.9 转写规则文件是平台标准能力（下发策略配置页上传、校验、覆盖），廊坊A路58点逐点规则只是规则文件 v1 的内容，不进页面或引擎逻辑；页面里的 58 点常量只是示例数据，其他 BA 群控项目换文件即可复用
+  - id: noise.v29_demo_scene
+    note: v2.9 演示默认场景有调整——安全边界-编辑 默认水冷 A 路（?type=terminal 或页顶「原型演示」回到 v2.8 末端机房）；三个冷站寻优页首次进入默认「A路冷水系统」，BA 演示只在 A路冷水系统下出现；硬边界量程为示例值，非物模型实值

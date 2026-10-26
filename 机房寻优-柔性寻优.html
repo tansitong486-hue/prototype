@@ -772,6 +772,15 @@
     .obj-tags .device-type-note { flex-basis:100%; margin-top:0; }
     .device-type-tag { display:inline-flex; align-items:center; min-height:20px; padding:1px 7px; border-radius:4px; background:#E6F4FF; color:#096DD9; font-size:10px; font-weight:600; white-space:nowrap; }
     .device-type-tag.air { background:#FFF7E6; color:#C2410C; }
+    .comp-chips { display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
+    .comp-chip { display:inline-flex; align-items:center; padding:0 6px; border-radius:9px; border:1px solid #D9D9D9; background:#FAFAFA; color:#595959; font-size:10.5px; line-height:18px; font-weight:500; white-space:nowrap; }
+    .comp-chip.run { border-color:#B7EB8F; background:#F6FFED; color:#389E0D; }
+    .comp-chip.stop { border-color:#D9D9D9; background:#F5F5F5; color:#8C8C8C; }
+    .comp-chip.change { border-color:#91CAFF; background:#E6F4FF; color:#0958D9; font-weight:600; }
+    .comp-chip.lock { border-color:#FFD591; background:#FFF7E6; color:#D46B08; }
+    .comp-chip.alarm { border-color:#FFA39E; background:#FFF1F0; color:#CF1322; }
+    .viz-detail-row.is-sub { grid-template-columns:minmax(0, 1fr); min-height:0; padding-top:0; }
+    .viz-detail-nochange { margin-left:6px; color:var(--text-hint); font-weight:500; }
     .io-list { margin-bottom:8px; }
     .io-item {
       display:flex; align-items:center; gap:12px;
@@ -987,6 +996,9 @@
           <p><b>v2.8（2026-09-04）：</b>对应需求 8。口径以《末端寻优设备能力抽象架构设计方案-v2.8定稿版》§7.6为准（原独立需求文档已并入删除）。规则表新增「风冷 DX · 辅助控制」，控制变量写死「风机转速上限」（下限不纳入本版）；「寻优步长」与水阀行同义（本轮上限相对当前上限实际值的最大偏差 <code>ΔV_fan,max</code>），包络半宽 <code>δ_fan</code> 为内置参数、不进规则表。算出的上限再夹该机安全边界「风机转速上限设定」。风冷主控下拉不加「风机转速上限」。本页变量表 / 浮层 / 手动下发仍按 2026-09-01 上下限两行演示，待同步只留上限一行。</p>
           <p><b>v2.8（2026-09-08）：</b>柔性引擎按《架构设计方案-v2.8定稿版》§七重写为「通道温度裕度驱动的修剪 / 响应」，本次只同步<strong>规则配置弹窗</strong>：①「安全约束参数 · K_safe」从本页移除（柔性不再消费冷量比；该参数归加减机，加减机页由其需求同步）；②新增「温度控制参数」区，四项均用用户语言命名：增冷触发距离（<code>ΔT_sens</code>）、省电安全距离（<code>ΔT_trim</code>）、温度观察时长（<code>W_env</code>，分钟）、压缩机唤醒温差（<code>ΔT_on</code>，有风冷 DX 才出）；掺混容差等算法判据不进配置页，用全局缺省；③「风冷 DX · 辅助控制」行去掉负荷包络口径，风机上限作为普通辅助通道按通道裕度修剪 / 响应，包络半宽 <code>δ_fan</code> 不再存在。<strong>结果展示区（寻优记录顶栏、浮窗原因、变量表）的批注仍按 v2.6 目标带口径书写，待下一轮按 §7.7 结果字段同步。</strong></p>
           <p><b>v2.8（2026-09-20）：</b>「温度控制参数」增补第五项<strong>高温确认点数</strong>（<code>N_hot</code>，整数 1～5，缺省 1）：同一责任簇里至少几个温湿度传感器同时高温，才允许超限增冷或加机。未凑齐时柔性仍走原来的请求增冷，不走超限大步。加减机读同一个值，本页可改、加减机页只读回显。存量回填 1，与现在相同。</p>
+          <p><b>v2.8（2026-10-20）：</b>对应需求 13「风冷 DX 压缩机控制（新增辅助通道）」（版本需求清单需求 13，待评审）。口径以《末端寻优设备能力抽象架构设计方案-v2.8定稿版》§7.10（锚点 <code>#710-风冷-dx-压缩机启停直控</code>）、§3.4、§3.6、附录 A.6 与《末端寻优结果可解释性需求方案-v2.8》§5.4 为准。压缩机控制是与风机转速上限并列的辅助通道，<strong>不替换主控制</strong>：「风冷 DX · 主控制」仍是送风 / 回风温度设定二选一、规则不变。① 规则表新增一行「风冷 DX · 压缩机控制」：控制变量写死「压缩机启停（压缩机状态设定）」，寻优步长 / 粒度「1 台（固定）」，产品缺省关。② 本行启用后显示「压缩机控制参数」两项：减压缩机送风温度阈值（缺省 18℃，整类型一个值）、压缩机最短启停间隔（缺省 20 分钟）。③ 寻优记录：装配了压缩机控制的机组在「控制（寻优中）」新增「压缩机」一行（允许运行 a 台 → b 台，实际运行 c 台，逐台标允许 / 停 / 告警 / 启停保护至 hh:mm），主控设定行与风机上限行不变；设备原因按 §5.4 出压缩机动作句。本页演示为打开压缩机控制后的结果（#9 停压缩机、#10 未装配按回风设定、#11 放开压缩机、#12 等待窗口中保持）；关掉本行，结果区回到原演示数据（与现在逐字一致；空转依据句除外）。</p>
+          <p><b>v2.8（2026-10-21）：</b>按《定稿版》附录 C「10-21 修订·二（关机优先级）」「10-21 修订·三（R1～R5）」与《可解释性》§5.4 规则 7～9 同步：① 减压缩机送风温度阈值缺省 14 → 18℃、合法范围 10～22℃，按台覆盖列表（已于 10-26 撤回）；② 压缩机全开呼叫温差（已于 10-26 撤回）；③ 停压缩机前「实际运行 = 允许」须连续 2 个快照；④ 空转改按压缩机实际运行判（独立运行状态 → 有功功率 → 送回风温差兜底），叫醒 / 富余空转保持原因里的依据句随之扩写，对压缩机控制开 / 关都生效；⑤ 关机优先级：装配压缩机控制的机组只剩 1 台压缩机在运行才进过冷试关（见加减机页）。演示 #9 原因里的阈值改为 18.0℃。</p>
+          <p><b>v2.8（2026-10-26 修订·二）：</b>按《定稿版》附录 C「10-26 修订·二」与《可解释性》§5.4 规则 8 同步，压缩机控制参数只留两项：① 撤回「压缩机全开呼叫温差」——装配压缩机控制的机组省电抬设定与其它机组同一条线「回风 / 送风 − 压缩机唤醒温差」，不分允许几台，贴线记到边界、复述压缩机唤醒温差（「设定守在呼叫区」改为「抬设定不另设温差」）；② 撤回按台覆盖——减压缩机送风温度阈值整类型一个值，缺省 18℃、范围 10～22℃。南京 5新 两台在转时窗口最高送风 19.6℃，高于 18℃，按「送风不够低」不停压缩机。</p>
         </div>
       </div>
 
@@ -1276,6 +1288,26 @@
             </div>
           </div>
         </div>
+        <div class="anno anno-data" data-version="v2.8">
+          <span class="anno-tag">产品说明</span>
+          <span class="anno-version">v2.8</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>本轮寻优结论条 + 平面图浮窗 / 手动下发弹窗设备原因 — 压缩机控制演示轮次（2026-10-20，需求 13）</p>
+            <p><b>真源：</b>《可解释性需求方案-v2.8》§5.1、§5.4、验收 38～41；《定稿版》§7.10、附录 A.6。解释层不新开主控制原因码，压缩机动作沿用 SAVE_ADJUST / COOL_ADJUST，以动作通道「压缩机」（COMP）换动作句：开启 / 停止压缩机 N（允许运行压缩机 a → b 台），已知实际运行台数时句末追加「当前实际运行 c 台」。一台机一轮只出一个主原因行（设定或压缩机），风机行另出。</p>
+            <p><b>演示轮次（打开压缩机控制时）：</b>结论条为「分区调节」（RM_ADJUST · normal）；水冷 6 台负责的通道都在保持带，本轮不动。</p>
+            <ul>
+              <li><b>#9 停压缩机（SAVE_ADJUST · 压缩机）：</b>负责的 C-D冷通道 近 40 分钟峰值 24.6℃、离上限 2.4℃（不少于省电安全距离 2.0℃），送风近 40 分钟最高 13.6℃，不高于减压缩机送风温度阈值 18.0℃（本机用缺省值），且实际运行 2 台 = 允许 2 台（连续 2 个快照） → 停累计运行时间长的压缩机 1（允许 2 → 1 台），回风设定与风机上限都不动。送风不够低或机组已自己少开时不停压缩机，按顺序去抬设定。本轮按顺序只停压缩机，回风设定 22.0℃ 不动（一轮一个通道）；之后只剩 1 台允许、压缩机到省电边界，才按原规则抬设定，上限仍是「回风 23.5℃ − 压缩机唤醒温差 1℃」= 22.5℃。</li>
+              <li><b>#10 未装配压缩机控制（SAVE_ADJUST · 设定）：</b>可控压缩机不足 2 台，只按回风设定与风机上限寻优，24.0℃ → 24.5℃；文案与现网逐字一致，不提压缩机。</li>
+              <li><b>#11 放开压缩机（COOL_ADJUST · 压缩机 · 请求）：</b>负责的 E-F冷通道 近 40 分钟峰值 26.4℃、只剩 0.6℃，风机转速上限已到 100% → 放开停着的压缩机 2（允许 1 → 2 台），回风设定不动。风机未到顶时本轮只出风机上限一行（FAN_UPPER_RAISE）；压缩机都已允许仍请求，才压设定。</li>
+              <li><b>#12 等待窗口中保持（SETTLE_WAIT）：</b>同在 E-F冷通道 请求、风机已到 100%，但本机 13:12 停了压缩机 2，近 40 分钟内控制值有变化 → 本轮不做请求响应，只记等待，不再判启停间隔；无设备原因对象，浮窗与下发弹窗都不出原因，计入结论条「不新增调节建议」台数，结论条台数不变。变量表 / 浮窗里压缩机 2 仍标「启停保护至 13:32」，这是事实状态，不是本轮原因。COMP_LOCKED 只在确认超限、空转放开或温度观察时长短于启停间隔时出现（定稿版 §7.10 判定顺序）。</li>
+            </ul>
+            <p><b>抬设定不另设温差（§5.4 规则 8，2026-10-26 撤回 10-21「设定守在呼叫区」）：</b>装配压缩机控制的机组省电抬设定贴到「回风 / 送风 − 压缩机唤醒温差」时，与未装配机组一样记到边界（AT_BOUND），不出设定省电原因；复述时写「压缩机唤醒温差」，不分允许几台。</p>
+            <p><b>空转依据句（§5.4 规则 9，2026-10-21）：</b>空转改按压缩机实际运行判（独立采集的压缩机运行状态 → 有功功率估台数 → 送回风温差兜底）。叫醒（ACTIVATE_IDLE）/ 富余空转保持（IDLE_SURPLUS_HOLD）原因里的「送风 {ts}℃、回风 {tr}℃」按依据扩写：有独立运行状态的（南京 1～4 号旧机）→「送风 {ts}℃、回风 {tr}℃，压缩机均未运行」；按有功功率的（南京 5新～11新）→「送风 {ts}℃、回风 {tr}℃、有功功率 {p} kW」；只有温差时不变。这一句对压缩机控制开 / 关都生效，所以「关掉压缩机控制回到原演示、逐字一致」不含这一句；本页两套演示轮次都没有空转设备，故未出现。</p>
+            <p><b>结论条计数：</b>增冷 1（#11）、省电 2（#9、#10）、不新增调节建议 7（水冷 6 台 + #12）。全房都只剩启停保护 / 排队这类保持时，结论条为「本轮无新的调节建议」（等待观察），并追加「其中 n 台的压缩机未满最短启停间隔 20 分钟」。</p>
+            <p><b>同口径：</b>浮窗「调节原因」与手动下发弹窗原因行是同一段文案、逐字相同；只描述本轮建议，不代表已执行；不写调节后送风温度、不写预计省电。关闭压缩机控制或未装配的机组，文案与现网逐字一致（上面的空转依据句除外）。</p>
+          </div>
+        </div>
         <div class="anno anno-ux" data-version="v2.8">
           <span class="anno-tag">交互说明</span>
           <span class="anno-version">v2.8</span>
@@ -1410,6 +1442,20 @@
             <p><b>关联模块：</b>寻优记录 Tab — 时间/变量筛选与变量表</p>
             <p><b>变量分类：</b>被控变量=Ts、Tr、Nfan及适用的水阀反馈；控制变量（寻优中）=各对象类型注册的 V1，水冷对象可另含 V2，风冷 DX 辅助打开后再含风机转速下限设定 / 上限设定两行；控制变量（未寻优）=投出或关机设备已注册但本轮不参与的控制变量；扰动变量=非寻优变量。变量表只展示真实测点和实际控制点。</p>
             <p><b>表格列：</b>对象名称、变量名称（颜色表示分类，与上方筛选一致）、实际值、AI寻优值、寻优变化、历史趋势。</p>
+          </div>
+        </div>
+
+        <div class="anno anno-field" data-version="v2.8">
+          <span class="anno-tag">字段说明</span>
+          <span class="anno-version">v2.8</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>变量表 / 对象明细浮层 —「控制变量（寻优中）」新增「压缩机」一行（2026-10-20，需求 13）</p>
+            <p><b>真源：</b>《可解释性需求方案-v2.8》§5.4 规则 5；《定稿版》§7.10「本机的压缩机与通道值」「输出增补」。</p>
+            <p><b>压缩机行：</b>只在装配了压缩机控制且本行启用的机组出现。变量名「压缩机」；实际值「允许运行 a 台，实际运行 c 台」、AI 寻优值「允许运行 b 台」，对象明细浮层合写为「允许运行 a 台 → b 台，实际运行 c 台」；寻优变化写「-1 台 / +1 台」，一轮最多变 1 台。实际运行台数按压缩机组件实例计台数（不读静态属性「压缩机数」），由平台按整机有功功率估算（功率缺测改用送回风温差）；装配了压缩机控制的机组「压缩机运行状态」只是状态设定的映射，不作运行证据。</p>
+            <p><b>逐台标注：</b>行内逐台列出「压缩机 1 / 压缩机 2」（现场叫法，不写组件编号或点位）：允许 / 停 / 告警；本轮要改的那台写「允许 → 停」或「停 → 允许」；未满压缩机最短启停间隔的追加「启停保护至 hh:mm」。告警的压缩机不计入允许台数、不选，算法不改写它。</p>
+            <p><b>不改时：</b>目标等于回读，寻优变化标「无变化」，对象明细浮层不画箭头、标「无变化」，与风机转速上限行同一口径。主控设定行与风机转速上限行不变；压缩机控制演示轮次按 v2.8 只出风机转速上限一行（原演示仍是下限 / 上限两行，待结果区整体同步）。</p>
+            <p><b>未装配的机组：</b>可控压缩机不足 2 台的机组（演示 #10，对应南京 1～4 号旧机）不出压缩机行，回风设定与风机上限照常显示。</p>
           </div>
         </div>
 
@@ -1582,6 +1628,21 @@
 
         <div id="algoConfigContent">
 
+          <div class="anno anno-field" data-version="v2.8">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.8</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>规则配置 —「风冷 DX · 压缩机控制」行（2026-10-20，需求 13）</p>
+              <p><b>真源：</b>《架构设计方案-v2.8定稿版》§7.10（锚点 <code>#710-风冷-dx-压缩机启停直控</code>）配置表、§3.4 柔性参数表、§3.6「柔性压缩机参数」、附录 A.6。</p>
+              <p><b>这一行是什么：</b>风冷 DX 新增的辅助通道，与「风冷 DX · 辅助控制」（风机转速上限）并列；控制变量写死「压缩机启停（压缩机状态设定）」，寻优步长 / 粒度显示「1 台（固定）」、不可编辑。通道值是本机允许运行的压缩机台数：写 1 = 允许运行（实际启停仍由机组 PID 执行），写 0 = 停；一轮最多放开或停止 1 台，至少留 1 台允许运行（最后一台交加减机整机关）。</p>
+              <p><b>不替换主控制：</b>「风冷 DX · 主控制」下拉仍只有送风 / 回风温度设定，规则不变；风机上限行也不变。增冷顺序：风机转速上限 → 压缩机 → 设定；省电顺序：压缩机 → 设定 → 风机。</p>
+              <p><b>出现条件与启用：</b>只在该类型物模型有压缩机组件「压缩机状态设定」时出现这一行。产品缺省关；关掉与现在一样不写压缩机，柔性结果与现在逐字段相同（空转依据句除外，见结论条处 v2.8 说明）。本页演示为打开后的结果。</p>
+              <p><b>按台装配：</b>可控压缩机（状态设定可读、可写、回读有效）满 2 台的机组才装配本通道；不足的只关这条通道，记 <code>COMP_POINT_UNBOUND</code>，主控与风机照常寻优，不阻断其余机组——南京二楼 1～4 号旧机就是这样，5新～11新 三个通道都在。</p>
+              <p><b>关闭或停用：</b>柔性停用、本行关闭或平台安全回退触发时，全部压缩机状态设定写回 1（允许运行），交还机组自控；这是退出动作，不受压缩机最短启停间隔约束。</p>
+              <p><b>演示联动：</b>打开 / 关闭本行，寻优记录在压缩机控制演示轮次与原演示数据之间切换（与「风冷 DX · 辅助控制」开关联动结果区同一做法）。</p>
+            </div>
+          </div>
           <div class="form-section">模拟量寻优规则</div>
           <div class="rule-table-wrap">
             <table class="rule-table" aria-label="按对象类型配置模拟量寻优规则">
@@ -1616,6 +1677,13 @@
                   <td><input class="form-control" value="风机转速上限" data-fixed disabled></td>
                   <td><div class="form-row"><input type="number" class="form-control" value="10"><span class="form-suffix">%</span></div></td>
                   <td><div class="form-row"><input type="number" class="form-control" value="1"><span class="form-suffix">%</span></div></td>
+                </tr>
+                <tr id="airDxCompRow">
+                  <td><span class="device-type-name">风冷 DX · 压缩机控制</span><span class="device-type-note">当前匹配 4 台设备</span></td>
+                  <td><label class="toggle-switch"><input type="checkbox" id="airCompCtrlSwitch" checked onchange="onAirCompCtrlToggle(this)"><span class="toggle-slider"></span></label></td>
+                  <td><input class="form-control" value="压缩机启停（压缩机状态设定）" title="压缩机启停（压缩机状态设定）" data-fixed disabled></td>
+                  <td><input class="form-control" value="1 台（固定）" data-fixed disabled></td>
+                  <td><input class="form-control" value="1 台（固定）" data-fixed disabled></td>
                 </tr>
               </tbody>
             </table>
@@ -1754,6 +1822,41 @@
                 <span class="form-suffix">个</span>
               </div>
               <div class="form-hint">同一责任簇里至少几个温湿度传感器同时高温，才允许超限增冷或加机；缺省 1 与现在相同。加减机读这个值，不另配</div>
+            </div>
+          </div>
+
+          <div id="compressorParamSection">
+            <div class="anno anno-field" data-version="v2.8">
+              <span class="anno-tag">字段说明</span>
+              <span class="anno-version">v2.8</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>规则配置 —「压缩机控制参数」区（2026-10-20，需求 13；2026-10-21、10-26 修订）</p>
+                <p><b>出现条件：</b>「风冷 DX · 压缩机控制」行启用后才显示，关掉即隐藏。真源：定稿版 §3.4 柔性参数表、§3.6、§7.10、附录 C「10-21 修订·三」。</p>
+                <p><b>减压缩机送风温度阈值（Ts_shed）：</b>必填，整类型一个值，缺省 18℃，范围 10～22℃（按台覆盖已于 2026-10-26 撤回）。用户语言：「送风温度在一个温度观察时长内始终不高于这个值，才允许停一台压缩机」。只在该机负责的通道都富余（离上限不少于省电安全距离）时才看它，且要求实际运行台数连续 2 个快照等于允许台数；送风不够低时不停压缩机，按顺序去抬设定、压风机。南京 5新 两台在转时窗口最高送风 19.6℃，高于 18℃，按「送风不够低」不停压缩机。南京 2026-09-05～10-12 回放：缺省 18℃ 时 6新 / 7新 / 8新 / 11新 富余时可停比例 70%～93%；原缺省 14℃ 时 5新 / 6新 / 7新 仅 0%～1%，故 2026-10-21 由 14℃ 改为 18℃。</p>
+                <p><b>压缩机最短启停间隔（T_comp）：</b>必填，缺省 20 分钟，范围 5～120 分钟。用户语言：「同一台压缩机放开后至少保持、停止后至少停这么久，算法才会再改它」。不论上次变化来自算法、人工还是机组自身，都以状态设定真实回读的变化时间计；任何区间（含通道超限）都不突破。不得小于机组自带的压缩机重开保护时间。</p>
+                <p><b>校验：</b>空或越界标红、不进入计算（定稿版 §3.6 ERROR）：减压缩机送风温度阈值 10～22℃，压缩机最短启停间隔 5～120 分钟；能读到机组「压缩机重开保护时间设定」时，压缩机最短启停间隔小于它也标红（例：读到 25 分钟而填 20 分钟）。</p>
+                <p><b>提交后：</b>保存即生效于下一轮寻优，不影响已生成的建议。</p>
+              </div>
+            </div>
+            <div class="form-section">压缩机控制参数</div>
+            <div class="form-row-2col">
+              <div class="form-group">
+                <div class="form-label"><span class="required">*</span> 减压缩机送风温度阈值</div>
+                <div class="form-row">
+                  <input type="number" class="form-control" value="18.0" min="10" max="22" step="0.1" style="width:140px;">
+                  <span class="form-suffix">℃</span>
+                </div>
+                <div class="form-hint">送风温度在一个温度观察时长内始终不高于这个值，才允许停一台压缩机</div>
+              </div>
+              <div class="form-group">
+                <div class="form-label"><span class="required">*</span> 压缩机最短启停间隔</div>
+                <div class="form-row">
+                  <input type="number" class="form-control" value="20" min="5" max="120" step="1" style="width:140px;">
+                  <span class="form-suffix">分钟</span>
+                </div>
+                <div class="form-hint">同一台压缩机放开后至少保持、停止后至少停这么久，算法才会再改它</div>
+              </div>
             </div>
           </div>
 
@@ -2080,6 +2183,17 @@
           <p><b>数据来源：</b>本轮 V1 或 V2 建议目标相对真实值变化的设备均输出解释对象。原因码为 SAVE_ADJUST、COOL_ADJUST、COOL_EMERGENCY、DEWPOINT_RECOVERY；通过 `action_channel` 区分 V1 / V2 / V1+V2，通过 `signal_branch` 区分省电分配、预防性增冷、热点增冷、热点在途保持、目标带保持、趋势阻尼、保障、紧急和凝露恢复。普通分支单台只建议 V1 或 V2；V2-only 设备必须独立成行并展示原因。接口参数包含控制类型、单位、真实值和建议目标，B 级附注使用本轮实际折减策略，不写死比例。参数不齐不输出并记日志，无 fallback_text。</p>
         </div>
       </div>
+      <div class="anno anno-data" data-version="v2.8">
+        <span class="anno-tag">产品说明</span>
+        <span class="anno-version">v2.8</span>
+        <span class="anno-source">需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>手动下发弹窗 — 压缩机控制设备行（2026-10-20，需求 13）</p>
+          <p><b>下发属性：</b>只列本轮要改的那台压缩机，一行「压缩机 N 状态设定」：当前值 / AI 寻优值写「1（允许运行）/ 0（停）」，下发值为 1 或 0；不写其它压缩机。停压缩机归「省电方向」，放开归「增冷」。同一台机本轮不会同时出设定行与压缩机行（一轮一个通道）。原因行与平面图浮窗逐字相同。</p>
+          <p><b>到位确认：</b>状态设定回读等于下发值即「允许 / 停」已生效；实际开没开看整机有功功率（或送回风温差）估算的运行台数，不看「压缩机运行状态」。放开后机组 PID 没开不算执行失败；停后实际运行持续多于允许台数，下发记录标「写 0 未生效」。相同「设备 + 压缩机 + 目标」待生效时不重复写。</p>
+          <p><b>退出：</b>柔性停用、压缩机控制关闭或平台安全回退触发时，全部压缩机状态设定写回 1（允许运行），交还机组自控，不受压缩机最短启停间隔约束。真源：定稿版 §7.10「下发、回读与安全回退」。</p>
+        </div>
+      </div>
             <div class="dispatch-notice" role="note">
         <svg class="dispatch-notice-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
         <div class="dispatch-notice-body">
@@ -2302,6 +2416,61 @@ const ROOM_TEMPLATES = {
   'tpl-3f': tpl3f,
 };
 
+// ===== v2.8 · 2026-10-20 需求 13：风冷 DX 压缩机控制（新增辅助通道）演示轮次（定稿版 §7.10 / 可解释性 §5.4） =====
+// 规则表「风冷 DX · 压缩机控制」打开时启用：水冷 6 台通道在保持带、本轮不动；
+// #9 富余且送风够低停压缩机、#10 未装配（可控压缩机不足 2 台）按回风设定省电、#11 请求且风机已到顶放开压缩机、#12 等待窗口中保持（SETTLE_WAIT，无对象；COMP_LOCKED 只在确认超限、空转放开或温度观察时长短于启停间隔时出现，定稿版 §7.10 判定顺序）
+const AIR_DX_COMP_DEMO = {
+  coldTc: {
+    c1:25.32, c2:25.48, c3:25.21, c4:25.56, c5:25.71, c6:25.43, c7:25.12, c8:25.36, c9:25.24,
+    c10:25.27, c11:25.62, c12:25.38, c13:24.05, c14:24.48, c15:23.86, c16:26.12, c17:26.31, c18:25.94
+  },
+  acs: {
+    AC9:  { compCtrl:true, controlVar:'回风温度设定', controlUnit:'℃', V1:'22.0', V1_ai:'22.0', Ts:'13.2', Tr:'23.5', Nfan:92, Nfan_lo:null, Nfan_lo_ai:null, Nfan_hi:95, Nfan_hi_ai:95,
+            compAllow:2, compAllow_ai:1, compRun:2,
+            comps:[ { name:'压缩机 1', cur:1, tgt:0, lockedUntil:null, alarm:false }, { name:'压缩机 2', cur:1, tgt:1, lockedUntil:null, alarm:false } ] },
+    AC10: { compCtrl:false, compUnbound:true, controlVar:'回风温度设定', controlUnit:'℃', V1:'24.0', V1_ai:'24.5', Ts:'17.6', Tr:'26.0', Nfan:86, Nfan_lo:null, Nfan_lo_ai:null, Nfan_hi:90, Nfan_hi_ai:90 },
+    AC11: { compCtrl:true, controlVar:'回风温度设定', controlUnit:'℃', V1:'23.0', V1_ai:'23.0', Ts:'19.4', Tr:'25.3', Nfan:100, Nfan_lo:null, Nfan_lo_ai:null, Nfan_hi:100, Nfan_hi_ai:100,
+            compAllow:1, compAllow_ai:2, compRun:1,
+            comps:[ { name:'压缩机 1', cur:1, tgt:1, lockedUntil:null, alarm:false }, { name:'压缩机 2', cur:0, tgt:1, lockedUntil:null, alarm:false } ] },
+    AC12: { compCtrl:true, controlVar:'回风温度设定', controlUnit:'℃', V1:'23.5', V1_ai:'23.5', Ts:'19.8', Tr:'25.6', Nfan:100, Nfan_lo:null, Nfan_lo_ai:null, Nfan_hi:100, Nfan_hi_ai:100,
+            compAllow:1, compAllow_ai:1, compRun:1,
+            comps:[ { name:'压缩机 1', cur:1, tgt:1, lockedUntil:null, alarm:false }, { name:'压缩机 2', cur:0, tgt:0, lockedUntil:'13:32', alarm:false } ] }
+  },
+  explain: {
+    tag: '分区调节',
+    tone: 'tone-success',
+    text: 'E-F冷通道 近 40 分钟峰值最高 26.4℃，距上限 27.0℃ 不足 1.0℃。建议 1 台增加供冷、2 台向省电方向调整一步，7 台不新增调节建议。'
+  },
+  // 设备级 reason_text（后端整句文案，演示照抄）；#12 为 SETTLE_WAIT（等待窗口），不出对象
+  reasons: {
+    AC9:  '本机负责的 C-D冷通道 近 40 分钟峰值最高 24.6℃，距上限 27.0℃ 还有 2.4℃（不少于 2.0℃）；本机送风近 40 分钟最高 13.6℃，不高于减压缩机送风温度阈值 18.0℃，建议停止压缩机 1（允许运行压缩机 2 → 1 台），当前实际运行 2 台。',
+    AC10: '本机负责的 C-D冷通道 近 40 分钟峰值最高 24.6℃，距上限 27.0℃ 还有 2.4℃（不少于 2.0℃），且近 40 分钟内本机控制值无变化，建议将回风温度设定由 24.0℃ 调至 24.5℃，向省电方向调整一步。',
+    AC11: '本机负责的 E-F冷通道 近 40 分钟峰值 26.4℃，距上限 27.0℃ 只剩 0.6℃，本机风机转速上限已到 100%，建议开启压缩机 2（允许运行压缩机 1 → 2 台），当前实际运行 1 台。'
+  },
+  // fan_upper.text（本轮风机上限均未变化，故为空；保留结构）
+  fanTexts: {}
+};
+
+const airDxCompRoomCache = new WeakMap();
+function withAirDxDemo(room) {
+  if (!room || !isAirCompCtrlEnabled()) return room;
+  if (airDxCompRoomCache.has(room)) return airDxCompRoomCache.get(room);
+  const r = JSON.parse(JSON.stringify(room));
+  (r.coldSensors || []).forEach(cs => {
+    if (AIR_DX_COMP_DEMO.coldTc[cs.id] != null) cs.Tc = AIR_DX_COMP_DEMO.coldTc[cs.id];
+  });
+  (r.acs || []).forEach(ac => {
+    const o = AIR_DX_COMP_DEMO.acs[ac.id];
+    if (o) { Object.assign(ac, JSON.parse(JSON.stringify(o))); return; }
+    if (ac.deviceType === 'water' && ac.Fi === '投入' && ac.si === 1) {
+      ac.V1_ai = ac.V1;
+      ac.V2_ai = ac.V2;
+    }
+  });
+  airDxCompRoomCache.set(room, r);
+  return r;
+}
+
 const SCADA_LIBRARY = [
   { id: 'scada-1f-101', name: '1F-IT机房101', templateId: 'tpl-1f' },
   { id: 'scada-2f-mod', name: '2F-模块间B（列编号方案二）', templateId: 'tpl-2f' },
@@ -2322,6 +2491,26 @@ function vizText(value) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+function compStateText(v) { return v === 1 ? '允许' : '停'; }
+function renderCompChips(comps) {
+  return (comps || []).map(c => {
+    if (c.alarm) return `<span class="comp-chip alarm">${c.name} 告警</span>`;
+    const changed = c.cur !== c.tgt;
+    let text = changed ? `${c.name} ${compStateText(c.cur)} → ${compStateText(c.tgt)}` : `${c.name} ${compStateText(c.cur)}`;
+    let cls = changed ? 'change' : (c.cur === 1 ? 'run' : 'stop');
+    if (c.lockedUntil) { text += ` · 启停保护至 ${c.lockedUntil}`; cls += ' lock'; }
+    return `<span class="comp-chip ${cls}">${text}</span>`;
+  }).join('');
+}
+function renderCompPlainText(comps) {
+  return (comps || []).map(c => {
+    if (c.alarm) return `${c.name} 告警`;
+    let t = c.cur !== c.tgt ? `${c.name} ${compStateText(c.cur)} → ${compStateText(c.tgt)}` : `${c.name} ${compStateText(c.cur)}`;
+    if (c.lockedUntil) t += ` · 启停保护至 ${c.lockedUntil}`;
+    return t;
+  }).join('；');
 }
 
 function getVizObjectDetail(type, id) {
@@ -2433,18 +2622,29 @@ function renderVizObjectDetail() {
       <span role="cell">${VIZ_VAR_TYPE_LABELS[type]}</span>
     </div>`);
     list.forEach(variable => {
-      const actualHtml = `<span class="viz-detail-actual">${vizText(variable.actual)}</span>`;
-      const aiHtml = hasVizAiValue(variable.ai)
-        ? `<span class="viz-detail-arrow" aria-hidden="true">→</span><span class="viz-detail-ai">${vizText(variable.ai)}</span>`
-        : '';
+      let valueHtml;
+      if (variable.noChange) {
+        valueHtml = `<span class="viz-detail-actual">${vizText(variable.actual)}</span><span class="viz-detail-nochange">无变化</span>`;
+      } else if (variable.pairActual) {
+        valueHtml = `<span class="viz-detail-actual">${vizText(variable.pairActual)}</span><span class="viz-detail-arrow" aria-hidden="true">→</span><span class="viz-detail-ai">${vizText(variable.pairAi)}</span>`;
+      } else {
+        const actualHtml = `<span class="viz-detail-actual">${vizText(variable.actual)}</span>`;
+        const aiHtml = hasVizAiValue(variable.ai)
+          ? `<span class="viz-detail-arrow" aria-hidden="true">→</span><span class="viz-detail-ai">${vizText(variable.ai)}</span>`
+          : '';
+        valueHtml = actualHtml + aiHtml;
+      }
       parts.push(`<div class="viz-detail-row" role="row">
         <span role="cell" title="${vizText(variable.name)}"><span class="var-name-type ${type}">${vizText(variable.name)}</span></span>
         <span role="cell" class="viz-detail-value">
           <button type="button" class="viz-detail-trend" title="查看历史趋势" data-chart-obj="${vizText(detail.name)}" data-chart-var="${vizText(variable.name)}" onclick="openChart(this.dataset.chartObj, this.dataset.chartVar)">
-            ${actualHtml}${aiHtml}${clickArrow}
+            ${valueHtml}${clickArrow}
           </button>
         </span>
       </div>`);
+      if (variable.compChipsHtml) {
+        parts.push(`<div class="viz-detail-row is-sub" role="row"><span role="cell"><div class="comp-chips">${variable.compChipsHtml}</div></span></div>`);
+      }
     });
   });
   document.getElementById('vizDetailBody').innerHTML = parts.join('');
@@ -2488,11 +2688,11 @@ function getCurrentRoom() {
   if (!scadaBinding) return null;
   const lib = SCADA_LIBRARY.find(s => s.id === scadaBinding.libraryId);
   if (!lib) return null;
-  return ROOM_TEMPLATES[lib.templateId] || null;
+  return withAirDxDemo(ROOM_TEMPLATES[lib.templateId] || null);
 }
 
 function getRoomForOptTable() {
-  return getCurrentRoom() || tpl1f;
+  return getCurrentRoom() || withAirDxDemo(tpl1f);
 }
 
 function getLibraryMeta(libraryId) {
@@ -2971,6 +3171,13 @@ function paintRoomSvg(R, cfg) {
         s += `<text x="${tagX + tagDir * 6}" y="${ay + 20}" font-size="8.5" fill="#434343" text-anchor="middle" font-weight="700">${v2Label}</text>`;
       }
     }
+    if (!isOut && isRunning && ac.compCtrl && ac.compAllow_ai !== ac.compAllow) {
+      const d = Number(ac.compAllow_ai) - Number(ac.compAllow);
+      const tagX = ac.side === 'L' ? ax + ox + VIZ_AC_BOX_W + 5 : ax + ox - 5;
+      const tagDir = ac.side === 'L' ? 1 : -1;
+      const compLabel = (d > 0 ? '+' : '') + d + '台';
+      s += `<text x="${tagX + tagDir * 6}" y="${ay + 20}" font-size="8.5" fill="#434343" text-anchor="middle" font-weight="700">${compLabel}</text>`;
+    }
   });
 
   if (!ovSimple) {
@@ -3012,6 +3219,7 @@ function paintRoomSvg(R, cfg) {
       } else if (d.type === 'hot') {
         html = `<b>热通道 ${d.id}</b><br>温度：<b>${parseFloat(d.th).toFixed(2)}℃</b><br>湿度：<b>${d.rh}%</b>`;
       } else if (d.type === 'ac') {
+        const acObj = (R.acs || []).find(a => a.id === d.id);
         const displayName = d.id.startsWith('AC') ? `101空调-${d.id.slice(2)}` : d.id;
         const deviceType = d.deviceType === 'air' ? '风冷 DX 空调' : '水冷空调';
         html = `<b>${displayName}（${d.fi}）</b><br><br>`;
@@ -3024,7 +3232,17 @@ function paintRoomSvg(R, cfg) {
         if (v2Changed && !v1Changed) {
           html += `水阀最大开度：${d.v2}% → <b>${d.v2ai}%</b><br>`;
         } else {
-          html += `${d.controlVar}：${v1Actual} → <b>${v1Target}</b><br>`;
+          html += isAirCompCtrlEnabled() && !v1Changed && d.v1ai !== '-'
+            ? `${d.controlVar}：${v1Actual}（无变化）<br>`
+            : `${d.controlVar}：${v1Actual} → <b>${v1Target}</b><br>`;
+        }
+        if (acObj && acObj.compCtrl) {
+          const compChanged = Number(acObj.compAllow_ai) !== Number(acObj.compAllow);
+          const runText = acObj.compRun != null ? '，实际运行 ' + acObj.compRun + ' 台' : '';
+          html += compChanged
+            ? `压缩机：允许运行 ${acObj.compAllow} 台 → <b>${acObj.compAllow_ai} 台</b>${runText}<br>`
+            : `压缩机：允许运行 ${acObj.compAllow} 台${runText}（无变化）<br>`;
+          html += `<span style="font-size:12px;opacity:.9;">${renderCompPlainText(acObj.comps)}</span><br>`;
         }
         html += `送风温度：${d.ts === '-' ? '—' : d.ts + ' ℃'}<br>`;
         html += `回风温度：${d.tr === '-' ? '—' : d.tr + ' ℃'}<br>`;
@@ -3032,9 +3250,14 @@ function paintRoomSvg(R, cfg) {
         if (d.deviceType === 'air' && isAirFanAuxEnabled() && d.nfanLoAi && d.nfanLoAi !== '-') {
           html += `<br>风机转速下限：${d.nfanLo === '-' ? '—' : d.nfanLo + '%'} → <b>${d.nfanLoAi}%</b>`;
           html += `<br>风机转速上限：${d.nfanHi === '-' ? '—' : d.nfanHi + '%'} → <b>${d.nfanHiAi}%</b>`;
+        } else if (acObj && acObj.Nfan_lo == null && acObj.Nfan_hi_ai != null && isAirFanAuxEnabled()) {
+          html += acObj.Nfan_hi === acObj.Nfan_hi_ai
+            ? `<br>风机转速上限：${acObj.Nfan_hi}%（无变化）`
+            : `<br>风机转速上限：${acObj.Nfan_hi}% → <b>${acObj.Nfan_hi_ai}%</b>`;
         }
-        const reason = (typeof EXPLAIN_REASONS !== 'undefined') && EXPLAIN_REASONS[d.id];
-        if (reason) html += `<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.25);max-width:280px;white-space:normal;"><b>调节原因：</b>${reason}</div>`;
+        const reason = getExplainReason(d.id);
+        const fanText = getExplainFanText(d.id);
+        if (reason) html += `<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.25);max-width:280px;white-space:normal;"><b>调节原因：</b>${reason}${fanText ? '<br>' + fanText : ''}</div>`;
       }
       tip.innerHTML = html;
       tip.classList.add('show');
@@ -3109,21 +3332,43 @@ function buildDataFromRoom(acs) {
     }
 
     const v1Name = (ac.controlVar || '送风温度设定') + '（V1）';
-    const fanAuxOn = ac.deviceType === 'air' && isAirFanAuxEnabled() && ac.Nfan_lo != null;
+    const fanAuxOn = ac.deviceType === 'air' && isAirFanAuxEnabled() && ac.Nfan_hi != null;
     if (isParticipating) {
       const v1Diff = ac.V1_ai !== '-' ? (parseFloat(ac.V1_ai) - parseFloat(ac.V1)) : 0;
       const v1Change = v1Diff > 0.01 ? '+' + v1Diff.toFixed(2) + unit : (v1Diff < -0.01 ? v1Diff.toFixed(2) + unit : '无变化');
-      vars.push({ name:v1Name, type:'optimizing', actual:ac.V1 + unit, ai:ac.V1_ai + unit, change:v1Change });
+      const v1Row = { name:v1Name, type:'optimizing', actual:ac.V1 + unit, ai:ac.V1_ai + unit, change:v1Change };
+      if (isAirCompCtrlEnabled() && Math.abs(v1Diff) <= 0.01) v1Row.noChange = true;
+      vars.push(v1Row);
       if (ac.deviceType === 'water') {
         const v2Diff = ac.V2_ai !== '-' ? (parseInt(ac.V2_ai) - parseInt(ac.V2)) : 0;
         const v2Change = v2Diff > 0 ? '+' + v2Diff + '%' : (v2Diff < 0 ? v2Diff + '%' : '无变化');
-        vars.push({ name:'水阀最大开度（V2）', type:'optimizing', actual:ac.V2 + '%', ai:ac.V2_ai + '%', change:v2Change });
+        const v2Row = { name:'水阀最大开度（V2）', type:'optimizing', actual:ac.V2 + '%', ai:ac.V2_ai + '%', change:v2Change };
+        if (isAirCompCtrlEnabled() && v2Diff === 0) v2Row.noChange = true;
+        vars.push(v2Row);
       }
       if (fanAuxOn) {
-        const loDiff = ac.Nfan_lo_ai - ac.Nfan_lo;
         const hiDiff = ac.Nfan_hi_ai - ac.Nfan_hi;
-        vars.push({ name:'风机转速下限设定', type:'optimizing', actual:ac.Nfan_lo + '%', ai:ac.Nfan_lo_ai + '%', change:loDiff > 0 ? '+' + loDiff + '%' : (loDiff < 0 ? loDiff + '%' : '无变化') });
-        vars.push({ name:'风机转速上限设定', type:'optimizing', actual:ac.Nfan_hi + '%', ai:ac.Nfan_hi_ai + '%', change:hiDiff > 0 ? '+' + hiDiff + '%' : (hiDiff < 0 ? hiDiff + '%' : '无变化') });
+        if (ac.Nfan_lo != null) {
+          const loDiff = ac.Nfan_lo_ai - ac.Nfan_lo;
+          vars.push({ name:'风机转速下限设定', type:'optimizing', actual:ac.Nfan_lo + '%', ai:ac.Nfan_lo_ai + '%', change:loDiff > 0 ? '+' + loDiff + '%' : (loDiff < 0 ? loDiff + '%' : '无变化') });
+        }
+        const hiRow = { name:'风机转速上限设定', type:'optimizing', actual:ac.Nfan_hi + '%', ai:ac.Nfan_hi_ai + '%', change:hiDiff > 0 ? '+' + hiDiff + '%' : (hiDiff < 0 ? hiDiff + '%' : '无变化') };
+        if (isAirCompCtrlEnabled() && hiDiff === 0) hiRow.noChange = true;
+        vars.push(hiRow);
+      }
+      if (ac.compCtrl) {
+        const d = Number(ac.compAllow_ai) - Number(ac.compAllow);
+        const runText = ac.compRun != null ? '，实际运行 ' + ac.compRun + ' 台' : '';
+        vars.push({
+          name:'压缩机', type:'optimizing',
+          actual:'允许运行 ' + ac.compAllow + ' 台' + runText,
+          ai:'允许运行 ' + ac.compAllow_ai + ' 台',
+          change:d > 0 ? '+' + d + ' 台' : (d < 0 ? d + ' 台' : '无变化'),
+          compChipsHtml:renderCompChips(ac.comps),
+          pairActual:'允许运行 ' + ac.compAllow + ' 台',
+          pairAi:ac.compAllow_ai + ' 台' + runText,
+          noChange:d === 0
+        });
       }
     } else {
       vars.push({ name:v1Name, type:'unopt', actual:ac.V1 !== '-' ? ac.V1 + unit : '—', ai:'-', change:'无变化' });
@@ -3131,9 +3376,10 @@ function buildDataFromRoom(acs) {
         vars.push({ name:'水阀最大开度（V2）', type:'unopt', actual:ac.V2 !== '-' ? ac.V2 + '%' : '—', ai:'-', change:'无变化' });
       }
       if (fanAuxOn) {
-        vars.push({ name:'风机转速下限设定', type:'unopt', actual:ac.Nfan_lo + '%', ai:'-', change:'无变化' });
+        if (ac.Nfan_lo != null) vars.push({ name:'风机转速下限设定', type:'unopt', actual:ac.Nfan_lo + '%', ai:'-', change:'无变化' });
         vars.push({ name:'风机转速上限设定', type:'unopt', actual:ac.Nfan_hi + '%', ai:'-', change:'无变化' });
       }
+      if (ac.compCtrl) vars.push({ name:'压缩机', type:'unopt', actual:'允许运行 ' + ac.compAllow + ' 台', ai:'-', change:'无变化', compChipsHtml:renderCompChips(ac.comps) });
     }
 
     return {
@@ -3174,11 +3420,27 @@ const EXPLAIN_REASONS = {
   'AC12': '本机负责的 E-F 冷通道当前温度 23.0℃，距上限 4.0℃；主控制本轮无新增调节。风冷辅助已打开，按机房风机包络建议下限 65%、上限 85%，该机安全边界「风机转速上限设定」软上为 80%，上沿夹到 80%。'
 };
 
+function getExplainReason(acId) {
+  if (isAirCompCtrlEnabled()) return AIR_DX_COMP_DEMO.reasons[acId] || '';
+  return EXPLAIN_REASONS[acId] || '';
+}
+function getExplainFanText(acId) {
+  if (isAirCompCtrlEnabled()) return AIR_DX_COMP_DEMO.fanTexts[acId] || '';
+  return '';
+}
+
 function renderExplainBar() {
   const bar = document.getElementById('optExplainBar');
   const tag = document.getElementById('optExplainTag');
   const txt = document.getElementById('optExplainText');
   if (!bar || !txt) return;
+  if (isAirCompCtrlEnabled()) {
+    const m = AIR_DX_COMP_DEMO.explain;
+    bar.className = 'opt-explain-bar ' + m.tone;
+    if (tag) tag.textContent = m.tag;
+    txt.textContent = m.text;
+    return;
+  }
   const meta = EXPLAIN_SCENE_META[ROOM_EXPLAIN.sceneCode] || { tag:'', tone:'tone-warning' };
   bar.className = 'opt-explain-bar ' + meta.tone;
   if (tag) tag.textContent = meta.tag;
@@ -3237,7 +3499,7 @@ function renderTable() {
           </div>
         </td>`;
       }
-      html += `<td><span class="var-name-type ${v.type}">${v.name}</span></td>`;
+      html += `<td><span class="var-name-type ${v.type}">${v.name}</span>${v.compChipsHtml ? `<div class="comp-chips">${v.compChipsHtml}</div>` : ''}</td>`;
       html += `<td>${v.actual}</td>`;
       html += `<td style="font-weight:500;">${v.ai}</td>`;
       html += `<td class="change-cell ${changeClass}">${v.change}</td>`;
@@ -3270,6 +3532,20 @@ function isAirFanAuxEnabled() {
   return !el || el.checked;
 }
 
+function isAirCompCtrlEnabled() {
+  const el = document.getElementById('airCompCtrlSwitch');
+  return !!el && el.checked;
+}
+function syncAirCompCtrlUI() {
+  const sec = document.getElementById('compressorParamSection');
+  if (sec) sec.style.display = isAirCompCtrlEnabled() ? '' : 'none';
+}
+function onAirCompCtrlToggle(input) {
+  onRuleToggle(input);
+  syncAirCompCtrlUI();
+  if (selectedVizObject) selectedVizObject = getVizObjectDetail(selectedVizObject.type, selectedVizObject.id);
+  refreshRoomScadaDataViews();
+}
 function onAirFanAuxToggle(input) {
   onRuleToggle(input);
   refreshRoomScadaDataViews();
@@ -3310,6 +3586,7 @@ document.querySelectorAll('.panel-tab').forEach(tab => {
     if (pane) pane.classList.add('active');
   });
 });
+syncAirCompCtrlUI();
 syncScadaActiveBinding();
 updateOptVizCardLayout();
 renderExplainBar();
@@ -3487,10 +3764,14 @@ function openDispatch(mode) {
   }
   cr.acs.forEach(ac => {
     if (ac.Fi !== '投入' || ac.si !== 1) return;
+    if (ac.compCtrl && Number(ac.compAllow_ai) !== Number(ac.compAllow)) {
+      (Number(ac.compAllow_ai) < Number(ac.compAllow) ? saveDevices : coolDevices).push(ac);
+      return;
+    }
     const v1Delta = ac.V1_ai === '-' ? 0 : parseFloat(ac.V1_ai) - parseFloat(ac.V1);
     const v2Delta = ac.V2_ai === '-' ? 0 : parseFloat(ac.V2_ai) - parseFloat(ac.V2);
-    const fanChanged = isAirFanAuxEnabled() && ac.deviceType === 'air' && ac.Nfan_lo != null &&
-      (ac.Nfan_lo_ai !== ac.Nfan_lo || ac.Nfan_hi_ai !== ac.Nfan_hi);
+    const fanChanged = isAirFanAuxEnabled() && ac.deviceType === 'air' &&
+      ((ac.Nfan_lo != null && ac.Nfan_lo_ai !== ac.Nfan_lo) || (ac.Nfan_hi != null && ac.Nfan_hi_ai !== ac.Nfan_hi));
     if (Math.abs(v1Delta) > 0.01) {
       (v1Delta > 0 ? saveDevices : coolDevices).push(ac);
     } else if (v2Delta > 0) {
@@ -3507,13 +3788,21 @@ function openDispatch(mode) {
     const v1Changed = ac.V1_ai !== '-' && Math.abs(parseFloat(ac.V1_ai) - parseFloat(ac.V1)) > 0.01;
     const v2Changed = ac.V2_ai !== '-' && parseFloat(ac.V2_ai) !== parseFloat(ac.V2);
     const controlUnit = ac.controlUnit || '℃';
+    if (ac.compCtrl) {
+      (ac.comps || []).forEach(c => {
+        if (c.cur !== c.tgt) rows.push({ name:c.name + ' 状态设定', actual:c.cur === 1 ? '1（允许运行）' : '0（停）', target:c.tgt === 1 ? '1（允许运行）' : '0（停）', value:String(c.tgt) });
+      });
+    }
     if (v1Changed) rows.push({ name:ac.controlVar || '送风温度设定', actual:`${ac.V1}${controlUnit}`, target:`${ac.V1_ai}${controlUnit}`, value:ac.V1_ai });
     if (v2Changed && ac.deviceType === 'water') rows.push({ name:'水阀最大开度', actual:`${ac.V2}%`, target:`${ac.V2_ai}%`, value:ac.V2_ai });
     if (isAirFanAuxEnabled() && ac.deviceType === 'air' && ac.Nfan_lo != null) {
       if (ac.Nfan_lo_ai !== ac.Nfan_lo) rows.push({ name:'风机转速下限设定', actual:`${ac.Nfan_lo}%`, target:`${ac.Nfan_lo_ai}%`, value:ac.Nfan_lo_ai });
       if (ac.Nfan_hi_ai !== ac.Nfan_hi) rows.push({ name:'风机转速上限设定', actual:`${ac.Nfan_hi}%`, target:`${ac.Nfan_hi_ai}%`, value:ac.Nfan_hi_ai });
+    } else if (isAirFanAuxEnabled() && ac.deviceType === 'air' && ac.Nfan_hi != null && ac.Nfan_hi_ai !== ac.Nfan_hi) {
+      rows.push({ name:'风机转速上限设定', actual:`${ac.Nfan_hi}%`, target:`${ac.Nfan_hi_ai}%`, value:ac.Nfan_hi_ai });
     }
-    const reason = EXPLAIN_REASONS[ac.id];
+    const reason = getExplainReason(ac.id);
+    const fanText = getExplainFanText(ac.id);
     let body = '';
     rows.forEach((row, index) => {
       body += '<tr>';
@@ -3521,6 +3810,7 @@ function openDispatch(mode) {
       body += `<td class="param-name">${row.name}</td><td class="val-actual">${row.actual}</td><td class="val-ai">${row.target}</td><td><input class="dispatch-val" type="text" value="${row.value}"></td></tr>`;
     });
     if (reason) body += `<tr><td class="ds-reason-cell" colspan="5">原因：${reason}</td></tr>`;
+    if (fanText) body += `<tr><td class="ds-reason-cell" colspan="5">原因：${fanText}</td></tr>`;
     return body;
   }
 

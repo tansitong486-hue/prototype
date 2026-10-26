@@ -293,6 +293,17 @@
       margin-bottom: 14px;
     }
 
+    /* 原型演示：平台版 / GU 版切换（仅原型评审用） */
+    .edition-switch { display: inline-flex; align-items: center; font-size: 12px; border: 1px dashed var(--border); border-radius: var(--radius); overflow: hidden; background: var(--bg-card); }
+    .edition-switch-label { padding: 5px 10px; color: var(--text-hint); background: #F8FAFC; border-right: 1px dashed var(--border); }
+    .edition-opt { padding: 5px 12px; color: var(--text-secondary); }
+    .edition-opt + .edition-opt { border-left: 1px solid var(--border-light); }
+    .edition-opt.is-active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+    .field-static { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid var(--border-light); border-radius: var(--radius); background: #F8FAFC; font-size: 13px; color: var(--text-primary); }
+    .field-static .field-static-sub { color: var(--text-hint); font-size: 12px; }
+    body:not(.is-gu) .gu-only { display: none !important; }
+    body.is-gu .platform-only { display: none !important; }
+
     @media (max-width: 768px) {
       .form-row { grid-template-columns: 1fr; }
       .page-header { flex-direction: column; align-items: flex-start; }
@@ -560,10 +571,28 @@
           <p><b>v2.8（2026-09-08）：</b>对应《末端寻优设备能力抽象架构设计方案-v2.8定稿版》§3.3、§3.4、§4.7、§4.9。①「气流组织信息」的冷 / 热通道温度上限即柔性的需求侧约束：柔性按每条通道近一个窗口的峰值离上限还剩几度决定省电还是增冷，热通道上限与冷通道上限取小；这里配的是机房级缺省，步骤 2 的传感器行可按传感器覆盖（可选）。②「送回风温差下限」即算法的未做功温差阈值 <code>ΔT_idle</code>：运行中送回风温差不超过此值连续两个快照判为压缩机未做功。③数据质量类判据（呼叫无冷升级轮数、数据过期倍数、大面积离线占比等）不进配置页，用全局缺省。</p>
         </div>
       </div>
+      <div class="anno anno-version-header" data-version="v2.7" data-date="2026-10-20">
+        <span class="anno-tag">版本信息</span>
+        <span class="anno-version">v2.7</span>
+        <div class="anno-body">
+          <p><b>v2.7 GU 版兼容（2026-10-20）：</b>对应《GU版AI节能功能裁剪需求方案》§8.4。GU 版没有空间视图，也就没有可选的机房对象，热力模型改为按<strong>本机设备列表</strong>建模：</p>
+          <ol style="margin:6px 0 0 1.25em;padding-left:0;line-height:1.55;">
+            <li><b>不选机房：</b>「选择机房」替换为只读「设备范围」，新建时直接带入本机设备列表中的全部设备；另补必填「机房名称」，用于列表和寻优页展示。</li>
+            <li><b>候选取本机全部设备：</b>关联空调、关联传感器、关联机柜三个弹窗的候选都是本机设备列表，列表里的所有设备都可勾选，不按机房、物模型过滤；弹窗内仍可按类型筛选、按名称搜索。</li>
+            <li><b>其余不变：</b>通道封闭模式、末端系统、额定参数、气流组织阈值、通道分组规则与平台版一致。</li>
+          </ol>
+          <p><b>演示方式：</b>页头右侧「原型演示」切换平台版 / GU 版（URL 参数 <code>?edition=gu</code>），GU 版状态会带到步骤 2。</p>
+        </div>
+      </div>
 
       <div class="page-header">
         <div class="page-header-left">
           <a class="back-link" href="机房寻优-机房热力模型列表.html">← 创建机房热力模型</a>
+        </div>
+        <div class="edition-switch" role="group" aria-label="原型演示版本">
+          <span class="edition-switch-label">原型演示</span>
+          <a class="edition-opt" data-edition="platform" href="机房寻优-创建机房模型.html">平台版</a>
+          <a class="edition-opt" data-edition="gu" href="机房寻优-创建机房模型.html?edition=gu">GU 版</a>
         </div>
       </div>
 
@@ -604,21 +633,43 @@
             </div>
           </div>
 
+          <div class="anno anno-field" data-version="v2.7">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.7</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>机房基础信息（GU 版兼容）</p>
+              <p><b>适用范围：</b>仅 GU 版（GU/LGU C02 Pro 及部署 GU 系统的通用服务器）。平台版仍按「选择机房」建模，字段不变。</p>
+              <p><b>设备范围</b>：只读，不可编辑。GU 版没有空间视图，不再选择机房；新建时系统直接带入本机设备列表中的全部设备，作为下方关联空调、传感器、机柜的候选范围。括号内显示当前设备总数，本机设备列表增减设备后，下次打开关联弹窗时按最新列表展示。</p>
+              <p><b>机房名称</b>：必填，1～30 个字符，替代平台版从空间视图带出的机房名称，用于热力模型列表「机房名称」列和加减机 / 柔性寻优页展示；为空时点「下一步」提示「请输入机房名称」。保存后可在编辑时修改。</p>            </div>
+          </div>
+
           <!-- 1. 机房基础信息 -->
           <section class="section-card">
             <div class="section-head">机房基础信息</div>
             <div class="section-body">
-              <div class="note-block">
+              <div class="note-block platform-only">
                 在选取空间视图的具体机房后，可按需关联当前机房下的空调实例，并在下方通道分组配置中分别关联温湿度传感器与 IT 机柜实例。
               </div>
+              <div class="note-block gu-only">
+                GU 版无空间视图，无需选择机房：建模范围直接取本机设备列表中的全部设备，下方关联空调、温湿度传感器与 IT 机柜时均可从本机全部设备中选择。
+              </div>
               <div class="form-row">
-                <div class="field">
+                <div class="field platform-only">
                   <label class="field-label"><span class="required">*</span>选择机房：</label>
                   <select class="field-select">
                     <option value="">请选择</option>
                     <option>1号机楼 / 1层 / A机房</option>
                     <option>1号机楼 / 2层 / B机房</option>
                   </select>
+                </div>
+                <div class="field gu-only">
+                  <label class="field-label">设备范围：</label>
+                  <div class="field-static">本机设备列表 · 全部设备<span class="field-static-sub" id="guDeviceCount"></span></div>
+                </div>
+                <div class="field gu-only">
+                  <label class="field-label"><span class="required">*</span>机房名称：</label>
+                  <input type="text" class="field-control" id="inputRoomName" maxlength="30" placeholder="请输入机房名称">
                 </div>
                 <div class="field">
                   <label class="field-label"><span class="required">*</span>通道封闭模式：</label>
@@ -736,6 +787,16 @@
               <p>若用户解除关联某台空调，仅影响该空调在本页建模中的参与范围，不影响机房下原始设备实例本身。</p>
             </div>
           </div>
+          <div class="anno anno-ux" data-version="v2.7">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v2.7</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>空调设备信息（GU 版兼容）</p>
+              <p>GU 版点击「关联空调」，弹窗候选为<strong>本机设备列表中的全部设备</strong>，不按机房、物模型过滤，所有设备均可勾选；可用弹窗内「类型」下拉和名称搜索缩小范围。确认后回写表格、补录额定参数的方式与平台版一致。</p>
+              <p>解除关联只影响该设备是否参与本模型，不影响本机设备列表中的设备本身。</p>
+            </div>
+          </div>
 
           <!-- 3. 空调设备信息 -->
           <section class="section-card">
@@ -774,6 +835,15 @@
               <p><b>无封闭</b>：统一就一个冷通道分组进行处理与展示，既可关联传感器，也可关联机柜，用于支撑非封闭机房的诊断。</p>
               <p><b>关联传感器</b>：在<strong>冷通道分组</strong>下关联的传感器，其实例上通道/位置类属性须选<strong>冷通道</strong>；在<strong>热通道分组</strong>下关联的传感器，该属性由系统<strong>自动置为热通道</strong>，与分组一致。</p>
               <p>步骤1必审；本配置决定诊断粒度能否到通道/区域级。</p>
+            </div>
+          </div>
+          <div class="anno anno-data" data-version="v2.7">
+            <span class="anno-tag">产品说明</span>
+            <span class="anno-version">v2.7</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>通道分组配置（GU 版兼容）</p>
+              <p>分组生成规则、冷 / 热通道属性规则与平台版一致；仅「关联传感器」「关联机柜」的候选改为本机设备列表中的全部设备，不按机房和物模型过滤。</p>
             </div>
           </div>
 
@@ -819,6 +889,18 @@
           <p>由「关联传感器」进入时，候选仍按机房与温湿度物模型过滤；确认写入对应冷/热通道分组后，冷分组要求传感器实例的通道/位置类属性为<strong>冷通道</strong>，热分组则<strong>自动置为热通道</strong>。</p>
         </div>
       </div>
+      <div class="anno anno-ux" data-version="v2.7" style="margin:12px 20px 0;">
+        <span class="anno-tag">交互说明</span>
+        <span class="anno-version">v2.7</span>
+        <span class="anno-source">需求文档</span>
+        <div class="anno-body">
+          <p><b>关联模块：</b>通用关联弹窗 — GU 版（触发入口：关联空调 / 关联传感器 / 关联机柜）</p>
+          <p><b>候选范围：</b>三个入口统一取<strong>本机设备列表中的全部设备</strong>，不按机房、物模型过滤，列表内所有设备都可勾选；底部数据来源文案相应改为「本机设备列表中的全部设备」。</p>
+          <p><b>筛选辅助：</b>保留名称搜索和「类型」下拉（选项为本机设备涉及的物模型），默认不筛选，仅用于缩小查找范围，不限制可选范围。</p>
+          <p><b>列表列：</b>GU 版没有空间层级，不展示「位置」列，仅展示名称与物模型。</p>
+          <p><b>其余不变：</b>右侧已选明细、确定回写、取消不保存，以及冷 / 热通道分组对传感器通道属性的规则，均与平台版一致。</p>
+        </div>
+      </div>
       <div class="modal-body">
         <div class="modal-left">
           <div class="modal-filters">
@@ -834,7 +916,7 @@
                   <th></th>
                   <th>名称</th>
                   <th>物模型</th>
-                  <th>位置</th>
+                  <th class="platform-only">位置</th>
                 </tr>
               </thead>
               <tbody>
@@ -842,7 +924,7 @@
             </table>
           </div>
           <div class="modal-pagination">
-            <span>总共 85 个项目</span>
+            <span id="assetTotalText">总共 85 个项目</span>
             <button type="button">‹</button>
             <button type="button" class="active">1</button>
             <button type="button">2</button>
@@ -871,7 +953,17 @@
   </div>
 
   <script>
+    /* 原型演示版本：?edition=gu 为 GU 版（无空间视图，按本机设备列表建模） */
+    window.ROOM_MODEL_IS_GU = new URLSearchParams(location.search).get('edition') === 'gu';
+    if (window.ROOM_MODEL_IS_GU) document.body.classList.add('is-gu');
+    document.querySelectorAll('.edition-opt').forEach(function (el) {
+      el.classList.toggle('is-active', el.getAttribute('data-edition') === (window.ROOM_MODEL_IS_GU ? 'gu' : 'platform'));
+    });
+  </script>
+  <script>
     (function () {
+      var IS_GU = window.ROOM_MODEL_IS_GU;
+      var GU_DATASOURCE_TEXT = '数据来源：本机设备列表中的全部设备（不按机房、物模型过滤）。';
       var AIRCON_ITEMS = [
         { id: 'ac-1', name: '1#空调', model: '冷冻水精密空调', location: '1号机楼/1层/A机房', cooling: '120', power: '18', airflow: '' },
         { id: 'ac-2', name: '2#空调', model: '冷冻水精密空调', location: '1号机楼/1层/A机房', cooling: '120', power: '18', airflow: '' },
@@ -890,6 +982,14 @@
         { id: 'cab-4', name: '机柜-B02', model: 'IT机柜', location: '1号机楼/1层/A机房' },
         { id: 'cab-5', name: '机柜-C01', model: 'IT机柜', location: '1号机楼/1层/A机房' }
       ];
+      /* GU 版：本机设备列表全部设备（含非空调/传感器/机柜类设备），三个关联入口共用 */
+      var GU_LOCAL_DEVICES = AIRCON_ITEMS.concat(SENSOR_ITEMS, CABINET_ITEMS, [
+        { id: 'ups-1', name: '1#UPS', model: 'UPS', location: '' },
+        { id: 'pdc-1', name: '1#配电柜', model: '低压配电柜', location: '' },
+        { id: 'leak-1', name: '漏水检测-1', model: '漏水传感器', location: '' }
+      ]);
+      var guCountEl = document.getElementById('guDeviceCount');
+      if (guCountEl) guCountEl.textContent = '（共 ' + GU_LOCAL_DEVICES.length + ' 台）';
 
       var overlay = document.getElementById('modalLinkAsset');
       var btnClose = document.getElementById('modalLinkAssetClose');
@@ -975,7 +1075,7 @@
             + '<td><input type="checkbox" class="asset-check"' + checked + '></td>'
             + '<td>' + item.name + '</td>'
             + '<td>' + item.model + '</td>'
-            + '<td>' + item.location + '</td>'
+            + (IS_GU ? '' : '<td>' + item.location + '</td>')
             + '</tr>';
         }).join('');
         table.querySelectorAll('.asset-check').forEach(function (cb) {
@@ -997,11 +1097,15 @@
       }
 
       function openModal(config) {
+        if (IS_GU) {
+          config = Object.assign({}, config, { items: GU_LOCAL_DEVICES, datasourceText: GU_DATASOURCE_TEXT });
+        }
         currentConfig = config;
         workingSelected = cloneItems(config.selectedItems || []);
         title.textContent = config.title;
         selectedTitle.textContent = config.selectedTitle || '已选择的对象明细';
         datasource.textContent = config.datasourceText || '数据来源：当前机房下可关联的对象实例。';
+        if (IS_GU) document.getElementById('assetTotalText').textContent = '总共 ' + config.items.length + ' 个项目';
         searchName.value = '';
         filterModel.innerHTML = '<option value=\"\">请选择类型</option>' + getModels(config.items).map(function (model) {
           return '<option value=\"' + model + '\">' + model + '</option>';
@@ -1083,7 +1187,21 @@
       selectMode.addEventListener('change', function () { applyMode(this.value); });
 
       if (btnNext) {
-        btnNext.addEventListener('click', function () {
+        if (window.ROOM_MODEL_IS_GU) {
+          btnNext.setAttribute('href', '机房寻优-创建机房模型-步骤2.html?edition=gu');
+          document.getElementById('inputRoomName').addEventListener('input', function () { this.style.borderColor = ''; });
+        }
+        btnNext.addEventListener('click', function (e) {
+          if (window.ROOM_MODEL_IS_GU) {
+            var roomName = document.getElementById('inputRoomName');
+            if (!roomName.value.trim()) {
+              e.preventDefault();
+              roomName.style.borderColor = 'var(--danger)';
+              roomName.focus();
+              alert('请输入机房名称');
+              return;
+            }
+          }
           localStorage.setItem('aisleMode', selectMode.value || '');
         });
       }
@@ -1267,7 +1385,7 @@
               + '</span>';
           }).join('');
           cabBlock = '<div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border-light);">'
-            + '<div style="font-size:11px;font-weight:500;color:var(--text-secondary);margin-bottom:6px;">关联 IT 机柜（当前机房下的机柜实例）</div>'
+            + '<div style="font-size:11px;font-weight:500;color:var(--text-secondary);margin-bottom:6px;">关联 IT 机柜（' + (window.ROOM_MODEL_IS_GU ? '本机设备列表中的设备' : '当前机房下的机柜实例') + '）</div>'
             + '<div class="tag-list">' + (cabTags || '<span class="section-empty">未关联机柜</span>') + '</div>'
             + '<button type="button" class="btn btn-primary" style="font-size:11px;padding:4px 10px;margin-top:6px;" onclick="ChannelGrouping.openCabinetModal(\'' + type + '\',' + g.id + ')">关联机柜</button>'
             + '</div>';
