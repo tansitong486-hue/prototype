@@ -545,18 +545,18 @@
 
     /* v2.9 群控下发：映射方式 + 转写规则编辑器 */
     .rule-editor { min-width: 0; }
-    .rule-editor-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 10px;
+    .rule-empty-hint {
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
     }
-    .rule-editor-actions .btn {
-      min-width: auto;
-      height: 32px;
-      padding: 0 14px;
+    .rule-empty-hint a,
+    .rule-saved-info a {
+      color: var(--primary);
+      text-decoration: none;
     }
+    .rule-empty-hint a:hover,
+    .rule-saved-info a:hover { text-decoration: underline; }
     .rule-code-wrap {
       display: flex;
       width: 100%;
@@ -656,8 +656,7 @@
       line-height: 1.6;
       color: var(--text-secondary);
     }
-    .action-bar .btn:disabled,
-    .rule-editor .btn:disabled {
+    .action-bar .btn:disabled {
       opacity: .45;
       cursor: not-allowed;
     }
@@ -769,7 +768,7 @@
           <div class="anno-body">
             <p><b>当前版本：</b>v2.9</p>
             <p><b>更新日期：</b>2026-10-26</p>
-            <p><b>变更概述：</b>v2.9 评审会确认取消文件导入，映射方式改为「通用映射 / 转写规则」；转写规则在策略内直接填写 ba-transcribe/2.0 JSON，支持填入模板、格式化、校验和下载当前配置。保存按钮保持可点，保存时自动按 §6.10 再校验一次，有错误则在输入框下方列出并中止保存；通过后整体覆盖该策略的独立规则，从下一轮寻优起生效。</p>
+            <p><b>变更概述：</b>v2.9 评审会确认取消文件导入，映射方式改为「通用映射 / 转写规则」；转写规则在策略内直接填写 ba-transcribe/2.0 JSON，输入框不设工具栏：空框时给「填入模板」链接，粘贴后或改完离开输入框时自动校验，已保存信息行可下载当前配置。保存按钮保持可点，保存时自动按 §6.10 再校验一次，有错误则在输入框下方列出并中止保存；通过后整体覆盖该策略的独立规则，从下一轮寻优起生效。</p>
             <p><b>本页说明：</b>转写规则是平台标准能力，每个下发策略独立维护一份规则；页面不含项目定制逻辑。下发模式、混合规则、置信度规则和工单通知规则照常可选；开启转写后，各下发方式只下发 BA 设定点中寻优值与当前值不同的点及其联动组成员（需求文档 §9.2）。</p>
             <p><b>展示口径：</b>BA 设定点是群控系统设备上的平级测点；寻优记录、手动下发弹窗、工单和下发记录仍按原有「设备 → 测点」展示。转写规则的名称和版本号记录在每轮寻优记录里用于追溯，寻优页面不单独展示。</p>
           </div>
@@ -956,7 +955,7 @@
                     <li><b>变量名：</b>选「水冷群控系统」后，列出转写规则里的 BA 设定点，显示测点名称，不显示 BA 点号。</li>
                     <li><b>变量类型：</b>选「水冷群控系统」后可选「当前值」「寻优值」，与工单里展示的两项一致（产品推断）；选其他物模型仍为原有选项。</li>
                     <li><b>上下限：</b>与原逻辑一致，按该设定点的单位填写。</li>
-                    <li><b>失效处理（产品推断）：</b>清空内容、修改后未重新校验，或切回「通用映射」后，已选 BA 设定点条件不再可用；保存时提示「请先配置并校验转写规则，或改选其他条件」。</li>
+                    <li><b>失效处理（产品推断）：</b>清空内容、修改后校验未通过，或切回「通用映射」后，已选 BA 设定点条件不再可用；保存时提示「请先配置并校验转写规则，或改选其他条件」。</li>
                   </ul>
                 </div>
               </div>
@@ -1018,10 +1017,9 @@
                   <p><b>关联模块：</b>冷站群控下发策略 — 映射方式与转写规则</p>
                   <ul>
                     <li><b>映射方式切换：</b>选「通用映射」显示原 9 类寻优项映射；选「转写规则」显示 JSON 输入框。切换或关闭群控时先保留框内内容；若直接保存，先确认「已填写的转写规则将被清除，可先下载留存」，确认后清除已保存规则并从下一轮起回到原逻辑（需求文档 §10.2）。</li>
-                    <li><b>填入模板：</b>空内容直接填入 ba-transcribe/2.0 标准示例；已有内容时先确认「将覆盖当前内容」。</li>
-                    <li><b>格式化：</b>通过 JSON 语法检查后按 2 空格缩进重排；解析失败时在错误列表标出行号、列号。</li>
-                    <li><b>校验：</b>按需求文档 §6.10 执行，结果常驻显示在输入框下方；通过时显示「校验通过，共 N 条规则」并列出不拦截的警告，不通过时逐条列错误。</li>
-                    <li><b>下载 .json：</b>将当前内容下载为「&lt;meta.name&gt;-&lt;meta.version&gt;.json」；解析失败或缺字段时用「转写规则.json」（需求文档 §10.2）。</li>
+                    <li><b>填入模板：</b>只在输入框为空时显示为文字链接；点击填入 ba-transcribe/2.0 标准示例并立即自动校验（需求文档 §10.2）。</li>
+                    <li><b>自动校验：</b>不设「校验」按钮，也不提供内容重排操作。粘贴后、改完离开输入框时按需求文档 §6.10 自动校验，结果常驻在输入框下方：通过时显示「校验通过，共 N 条规则」并列出不拦截的警告，不通过时逐条列错误；内容按填写原样保存，不重排。</li>
+                    <li><b>下载：</b>已保存信息行末尾的「下载」，下载已保存的规则，文件名「&lt;meta.name&gt;-&lt;meta.version&gt;.json」，取不到时为「转写规则.json」（需求文档 §10.2）。</li>
                     <li><b>保存：</b>按钮保持可点。转写规则为空时提示「请填写转写规则」；非空时自动按 §6.10 再校验一次，有错误中止保存，通过才覆盖。编辑态改过规则时，保存前确认「新规则将从下一轮寻优起生效」（需求文档 §10.2）。</li>
                     <li><b>原型演示：</b><span class="text-link" onclick="window.demoRuleSyntaxError &amp;&amp; window.demoRuleSyntaxError()">演示 JSON 语法错误</span>（只列出行列）；<span class="text-link" onclick="window.demoRuleSemanticError &amp;&amp; window.demoRuleSemanticError()">演示语义错误</span>（只列 RULE_FILE_DEMO_ERRORS 三条；示意：以 langfang-a-ba-v2.json 58 条为内容）。</li>
                   </ul>
@@ -1036,7 +1034,7 @@
                   <ul>
                     <li><b>新增：</b>群控开关默认关闭；打开后映射方式默认「通用映射」，转写规则为空。</li>
                     <li><b>编辑：</b>回填群控开关、映射方式与完整 JSON；输入框下方回填已保存规则的名称、版本、最后修改人和修改时间。</li>
-                    <li><b>查看：</b>输入框只读，操作只保留「下载 .json」，已保存规则信息照常展示。</li>
+                    <li><b>查看：</b>输入框只读，不显示「填入模板」；已保存信息行照常展示，可「下载」。</li>
                     <li><b>原型示意：</b>从列表进入编辑 / 查看时，「末端手动下发」未开群控，「安全策略默认下发」回填通用映射，其余策略回填廊坊A路（人保北方）转写规则 v2。</li>
                   </ul>
                 </div>
@@ -1064,7 +1062,7 @@
                         </thead>
                         <tbody>
                           <tr><td>映射方式</td><td>单选</td><td>是（群控开关打开时）</td><td>通用映射 / 转写规则</td><td>通用映射</td><td>编辑时可改；以保存时的选择为准（产品推断）</td></tr>
-                          <tr><td>转写规则</td><td>带行号的多行输入框</td><td>是（映射方式 = 转写规则时）</td><td>JSON ba-transcribe/2.0（需求文档 §6.5）；支持填入模板 / 格式化 / 校验 / 下载；保存时自动按 §6.10 再校验一次</td><td>空，可填入模板</td><td>每个下发策略独立维护；保存即覆盖，下一轮生效（需求文档 §10.2）；编辑权限由研发确定</td></tr>
+                          <tr><td>转写规则</td><td>带行号的多行输入框</td><td>是（映射方式 = 转写规则时）</td><td>JSON ba-transcribe/2.0（需求文档 §6.5）；空框时可填入模板；粘贴或离开输入框时自动校验，保存时再校验一次；已保存信息行可下载</td><td>空，显示「填入模板」链接</td><td>每个下发策略独立维护；保存即覆盖，下一轮生效（需求文档 §10.2）；编辑权限由研发确定</td></tr>
                         </tbody>
                       </table>
                       <p>转写规则内容包含 meta 信息和逐点 rules。编写工具的项目配置（如 langfang-a-ba-src.yaml）属于生成前输入，不粘贴到本输入框；上下限仍统一在安全边界配置。</p>
@@ -1164,15 +1162,10 @@
                     <div class="mapping-row">
                       <div class="mapping-title">转写规则<span class="required">*</span></div>
                       <div class="rule-editor">
-                        <div class="rule-editor-actions" id="ruleEditorActions">
-                          <button class="btn btn-ghost" type="button" id="fillRuleTemplateBtn">填入模板</button>
-                          <button class="btn btn-ghost" type="button" id="formatRuleBtn">格式化</button>
-                          <button class="btn btn-ghost" type="button" id="validateRuleBtn">校验</button>
-                          <button class="btn btn-ghost" type="button" id="downloadRuleBtn">下载 .json</button>
-                        </div>
+                        <div class="rule-empty-hint" id="ruleEmptyHint">没有现成规则？<a href="javascript:;" id="fillRuleTemplateLink">填入模板</a></div>
                         <div class="rule-code-wrap" id="ruleCodeWrap">
                           <div class="rule-line-numbers" id="ruleLineNumbers" aria-hidden="true">1</div>
-                          <textarea id="ruleContent" rows="18" spellcheck="false" placeholder="粘贴生成器输出的规则 JSON，或点击『填入模板』"></textarea>
+                          <textarea id="ruleContent" rows="18" spellcheck="false" placeholder="粘贴生成器输出的规则 JSON"></textarea>
                         </div>
                         <div class="rule-result-box hidden" id="ruleErrorBox">
                           <div class="rule-result-title" id="ruleErrorTitle"></div>
@@ -1539,6 +1532,7 @@
   ]
 }`;
       var ruleState = { validated: false, errors: [], warnings: [], demoSemantic: false, parsed: null };
+      var savedRuleContent = '';
       var RULE_FILE_DEMO_ERRORS = [
         { pos: '第 6 条（0_66_4_288_0）· delta', reason: '与联动组 G_DT_1 的 0_66_4_291_0 公式不一致（同值组要求两点公式相同）' },
         { pos: '第 12 条（0_66_4_314_0）· let.dt_opt2', reason: '测点 0_66_4_289_0 不在本项目 KE 测点中' },
@@ -1585,6 +1579,11 @@
         return JSON.stringify(data, null, 2);
       }
 
+      function syncRuleEmptyHint() {
+        document.getElementById('ruleEmptyHint').classList.toggle('hidden',
+          pageMode === 'view' || !!document.getElementById('ruleContent').value.trim());
+      }
+
       function updateRuleLineNumbers() {
         var editor = document.getElementById('ruleContent');
         var gutter = document.getElementById('ruleLineNumbers');
@@ -1609,7 +1608,8 @@
           name = data.meta && data.meta.name || name;
           version = data.meta && data.meta.version || version;
         } catch (error) {}
-        info.textContent = name + ' · ' + version + ' · ' + modifier + ' · ' + modifyTime;
+        info.innerHTML = '已保存：' + escHtml(name) + ' · ' + escHtml(version) + ' · ' + escHtml(modifier) + ' · ' + escHtml(modifyTime) +
+          '　<a href="javascript:;" id="downloadSavedRuleLink">下载</a>';
         info.classList.remove('hidden');
       }
 
@@ -1855,6 +1855,8 @@
         if (preset.way === 'rule') {
           var content = editRuleContent();
           document.getElementById('ruleContent').value = content;
+          savedRuleContent = content;
+          syncRuleEmptyHint();
           ruleState.validated = true;
           ruleState.parsed = JSON.parse(content);
           renderSavedRuleInfo(content, SAVED_RULE_CONFIG.modifier, SAVED_RULE_CONFIG.modifyTime);
@@ -1872,6 +1874,7 @@
       window.demoRuleMode = function () {
         if (pageMode === 'view') { showToast('查看态只读，不可切换映射方式'); return; }
         openRuleMode();
+        syncRuleEmptyHint();
         document.getElementById('groupPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
       };
 
@@ -1881,6 +1884,7 @@
         document.getElementById('ruleContent').value = RULE_TEMPLATE.replace('"rules": [', '"rules": [\n    BROKEN,');
         ruleState.demoSemantic = false;
         updateRuleLineNumbers();
+        syncRuleEmptyHint();
         validateRuleContent();
         syncConditionBaOptions();
         document.getElementById('groupPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1892,6 +1896,7 @@
         document.getElementById('ruleContent').value = editRuleContent();
         ruleState.demoSemantic = true;
         updateRuleLineNumbers();
+        syncRuleEmptyHint();
         validateRuleContent();
         syncConditionBaOptions();
         document.getElementById('groupPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1912,13 +1917,10 @@
         };
         if (pageMode === 'view') {
           document.querySelectorAll('input, select, button').forEach(function (el) {
-            if (el.id !== 'cancelBtn' && el.id !== 'backBtn' && el.id !== 'downloadRuleBtn') el.disabled = true;
+            if (el.id !== 'cancelBtn' && el.id !== 'backBtn') el.disabled = true;
           });
           document.getElementById('ruleContent').readOnly = true;
           document.getElementById('ruleCodeWrap').classList.add('is-readonly');
-          ['fillRuleTemplateBtn', 'formatRuleBtn', 'validateRuleBtn'].forEach(function (id) {
-            document.getElementById(id).classList.add('hidden');
-          });
           document.getElementById('saveBtn').classList.add('hidden');
           document.getElementById('cancelBtn').textContent = '返回';
         }
@@ -1956,7 +1958,8 @@
             showToast('按需通知条件里选了 BA 设定点，请先配置转写规则，或改选其他条件');
             return;
           }
-          renderSavedRuleInfo(document.getElementById('ruleContent').value, 'admin', nowText());
+          savedRuleContent = document.getElementById('ruleContent').value;
+          renderSavedRuleInfo(savedRuleContent, 'admin', nowText());
           initialRuleSnapshot = {
             groupOn: true,
             way: 'rule',
@@ -1974,11 +1977,13 @@
         }
         if (initialRuleSnapshot.way === 'rule') {
           document.getElementById('ruleContent').value = '';
+          savedRuleContent = '';
           ruleState.validated = false;
           ruleState.demoSemantic = false;
           clearRuleResult();
           renderSavedRuleInfo('', '', '');
           updateRuleLineNumbers();
+          syncRuleEmptyHint();
         }
         initialRuleSnapshot = {
           groupOn: document.getElementById('groupSwitch').checked,
@@ -1998,44 +2003,43 @@
         ruleState.demoSemantic = false;
         clearRuleResult();
         updateRuleLineNumbers();
+        syncRuleEmptyHint();
         syncConditionBaOptions();
+      });
+      document.getElementById('ruleContent').addEventListener('paste', function () {
+        setTimeout(function () { validateRuleContent(); }, 0);
+      });
+      document.getElementById('ruleContent').addEventListener('change', function () {
+        if (!this.value.trim()) {
+          clearRuleResult();
+          return;
+        }
+        validateRuleContent();
       });
       document.getElementById('ruleContent').addEventListener('scroll', function () {
         document.getElementById('ruleLineNumbers').scrollTop = this.scrollTop;
       });
-      document.getElementById('fillRuleTemplateBtn').addEventListener('click', function () {
+      document.getElementById('fillRuleTemplateLink').addEventListener('click', function () {
         var editor = document.getElementById('ruleContent');
-        if (editor.value.trim() && !window.confirm('将覆盖当前内容')) return;
         editor.value = RULE_TEMPLATE;
         ruleState.validated = false;
         ruleState.demoSemantic = false;
         clearRuleResult();
         updateRuleLineNumbers();
-        syncConditionBaOptions();
+        syncRuleEmptyHint();
+        validateRuleContent();
         editor.focus();
       });
-      document.getElementById('formatRuleBtn').addEventListener('click', function () {
-        var parsed = parseRuleContent();
-        if (parsed.error) {
-          showRuleErrors([parsed.error]);
-          return;
-        }
-        document.getElementById('ruleContent').value = JSON.stringify(parsed.data, null, 2);
-        ruleState.validated = false;
-        ruleState.demoSemantic = false;
-        clearRuleResult();
-        updateRuleLineNumbers();
-        syncConditionBaOptions();
-        showToast('已按 2 空格缩进格式化，请重新校验');
-      });
-      document.getElementById('validateRuleBtn').addEventListener('click', validateRuleContent);
-      document.getElementById('downloadRuleBtn').addEventListener('click', function () {
-        var content = document.getElementById('ruleContent').value;
+      document.getElementById('ruleSavedInfo').addEventListener('click', function (event) {
+        if (event.target.id !== 'downloadSavedRuleLink') return;
+        event.preventDefault();
+        var content = savedRuleContent;
         if (!content.trim()) {
           showToast('当前没有可下载的转写规则');
           return;
         }
-        var parsed = parseRuleContent();
+        var parsed = { data: null };
+        try { parsed.data = JSON.parse(content); } catch (error) {}
         var metaName = parsed.data && parsed.data.meta && String(parsed.data.meta.name || '').trim();
         var metaVersion = parsed.data && parsed.data.meta && String(parsed.data.meta.version || '').trim();
         var downloadName = metaName && metaVersion ? metaName + '-' + metaVersion + '.json' : '转写规则.json';
@@ -2061,6 +2065,7 @@
       updateTerminalPanel();
       updateMapWay();
       updateRuleLineNumbers();
+      syncRuleEmptyHint();
     })();
   </script>
   <button type="button" class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
