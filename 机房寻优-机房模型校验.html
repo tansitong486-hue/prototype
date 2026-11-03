@@ -272,15 +272,15 @@
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
               <p><b>关联模块：</b>校验统计 + 设备总览表</p>
-              <p><b>统计胶囊：</b>投入 / 投出台数、就绪、就绪·有提示、移出可动作集（按台计，一台有 ERROR 就只计入移出）、ERROR / WARN / 无法校验条数（按条计，含已移出设备的 WARN）、拓扑（通过 / N 条 ERROR）、机房结论（可继续 · 可动作集 N 台 / 阻断 · 本轮 SKIPPED）。</p>
+              <p><b>统计胶囊：</b>投入 / 投出台数、就绪、就绪·有提示、移出可动作集（按台计，一台有 ERROR 就只计入移出）、ERROR / WARN / 无法校验条数（按条计，含已移出及投出设备的 WARN）、拓扑（通过 / N 条 ERROR）、机房结论（可继续 · 可动作集 N 台 / 阻断 · 本轮 SKIPPED）。</p>
               <table class="anno-table">
                 <thead><tr><th>列</th><th>内容</th><th>说明</th></tr></thead>
                 <tbody>
                   <tr><td>空调末端</td><td>实例名称 + 位置</td><td>取机房热力模型已关联的空调（含投出）</td></tr>
                   <tr><td>对象类型</td><td>中文名 + 模型 ID</td><td><code>dtdl:asset:AirCooledPAC</code> / <code>dtdl:asset:ChilledWaterPAC</code>；本台跑哪几类校验由对象类型有哪些属性决定（属性存在即校验，按设备自动适配）</td></tr>
-                  <tr><td>投入 / 投出</td><td>只读</td><td>在热力模型配置中设置；投出不校验</td></tr>
+                  <tr><td>投入 / 投出</td><td>只读</td><td>设备属性（在机房热力模型或柔性寻优「投入/投出配置」中修改，两处是同一个值）；投出的空调只查额定风量与供冷关系两项，缺失记 WARN、仿真不计这台送风，不影响可动作集</td></tr>
                   <tr><td>主控制变量</td><td>按 <code>controlMode</code> 分派</td><td>0 回风温控 → 回风温度设定 <code>4_25_0</code>；1 送风温控 → 送风温度设定 <code>4_27_0</code>；不拆对象类型（按设备自动适配）；该写点未绑时下方小字「写点未绑」</td></tr>
-                  <tr><td>校验结论</td><td>就绪 / 就绪·有提示 / 移出可动作集 / 投出·不校验</td><td>有 ERROR → 移出可动作集；只有 WARN → 就绪·有提示；「无法校验」不影响结论</td></tr>
+                  <tr><td>校验结论</td><td>就绪 / 就绪·有提示 / 移出可动作集 / 投出 / 投出·有提示</td><td>投入空调：有 ERROR → 移出可动作集；只有 WARN → 就绪·有提示；「无法校验」不影响结论。投出空调：无 WARN → 投出，有 WARN → 投出·有提示；均不计就绪、不进可动作集、不影响机房结论</td></tr>
                   <tr><td>ERROR / WARN</td><td>条数</td><td>点「查看明细」下方明细表按该实例筛选并滚动定位</td></tr>
                 </tbody>
               </table>
@@ -327,7 +327,7 @@
                 </tbody>
               </table>
               <ul>
-                <li><b>每次校验读什么：</b>物模型实例属性（当前值）、实例绑点清单、压缩机组件实例、机房热力模型的投入 / 投出与关系、①所需的运行数据。不读缓存，所以去物模型补完属性回来点「重新校验」即可看到变化。</li>
+                <li><b>每次校验读什么：</b>物模型实例属性（当前值）、实例绑点清单、压缩机组件实例、设备的投入 / 投出属性、机房热力模型的关系、①所需的运行数据。不读缓存，所以去物模型补完属性回来点「重新校验」即可看到变化。</li>
                 <li><b>① 的数据窗口（待确认）：</b>原型写「近 7 天」，文档未定，评审时定。</li>
                 <li><b>PASS 行：</b>每台每个适用校验项都出一行「已校验」，便于实施确认「这一项查过了」；勾「只看问题项」隐藏。</li>
                 <li><b>验收参照（§4.5）：</b>0_100 机房导入后 <code>CONFIG_SUSPECT(COMP_NUM)</code> 11 条（属性 1、实例 2）；REG_TYPE 逐台输出「已校验 / 无法校验」（该站转速与频率点均未绑，预期 11 台无法校验）。</li>
@@ -478,14 +478,14 @@
               points: ['4_27_0', '4_90_0', '3_2001_0', '1_4_0'] },
             { id: 'ac-7', name: '7#空调', location: '1号机楼/1层/B机房', typeId: 'dtdl:asset:AirCooledPAC', active: false,
               attrs: { controlMode: '0', air_volume: '9800', refrigerating_capacity: '35', ratedPower: '11.8', regulationType: '0', compressors_num: '1', cop: '2.97' },
-              points: ['4_25_0'], compInstances: 1 }
+              points: ['4_25_0'], compInstances: 1, feedsAir: ['cold-1'] }
           ],
           topology: [
             { rule: '空调 → 冷点 feedsAir', ok: true, msg: '2 台投入空调均有 feedsAir 冷点边（共 4 条）' },
             { rule: '冷点入边', ok: false, target: '冷通道分组1 · 3#温湿度传感器（冷点）', msg: '投入冷点无任何入边：没有空调对它 feedsAir，仿真无法给出该点温度' },
             { rule: '热点换热入边', ok: true, msg: '2 个已配安全边界的热点均有换热入边' },
             { rule: '通道 → 热点', ok: false, target: '热通道分组2', msg: '投入通道未关联任何热点（温湿度传感器），无法评估该通道热侧约束' },
-            { rule: '热点 → 空调 回风', ok: false, target: '6#空调', msg: '封闭热通道机房每台参与寻优的空调须配回风关系：6#空调未配置回风来源热点，仿真无法确定它从哪些通道回风（5#空调已配 2 条；7#空调投出，不校验）' }
+            { rule: '热点 → 空调 回风', ok: false, target: '6#空调', msg: '封闭热通道机房每台参与寻优的空调须配回风关系：6#空调未配置回风来源热点，仿真无法确定它从哪些通道回风（5#空调已配 2 条；7#空调投出，不要求回风关系）' }
           ]
         },
         '103': {
@@ -536,10 +536,17 @@
       function checkDevice(item) {
         var schema = MODEL_SCHEMA[item.typeId];
         var f = [];
-        if (!item.active) return { status: 'off', findings: f };
         var A = item.attrs || {}, pts = item.points || [];
         var has = function (id) { return !!propOf(schema, id); };
         var add = function (level, check, code, prop, msg, fix) { f.push({ level: level, check: check, code: code, prop: prop, msg: msg, fix: fix || null }); };
+
+        if (!item.active) {
+          if (isEmpty(A.air_volume)) add('WARN', '投出空调送风计算项', 'INPUT_MISSING', 'air_volume', '投出空调未填额定风量，仿真不计这台送风');
+          else add('PASS', '投出空调送风计算项', '已校验', 'air_volume', '额定风量已填：' + A.air_volume + ' m³/h');
+          if (!(item.feedsAir || []).length) add('WARN', '投出空调送风计算项', 'INPUT_MISSING', 'feedsAir', '投出空调未配供冷关系（feedsAir 冷点边），仿真不计这台送风');
+          else add('PASS', '投出空调送风计算项', '已校验', 'feedsAir', '已配置 ' + item.feedsAir.length + ' 条 feedsAir 冷点边');
+          return { status: f.some(function (x) { return x.level === 'WARN'; }) ? 'offWarn' : 'off', findings: f };
+        }
 
         if (has('regulationType') && !isEmpty(A.regulationType)) {
           var ev = item.speedEvidence;
@@ -596,12 +603,12 @@
       }
 
       function stats(r) {
-        var c = { inUse: 0, off: 0, ok: 0, warn: 0, error: 0, errN: 0, warnN: 0, infoN: 0, topoErr: 0 };
+        var c = { inUse: 0, off: 0, ok: 0, warn: 0, error: 0, errN: 0, warnN: 0, activeWarnN: 0, infoN: 0, topoErr: 0 };
         room.devices.forEach(function (d) {
           var x = r.dev[d.id];
-          if (x.status === 'off') { c.off++; return; }
-          c.inUse++; c[x.status]++;
-          x.findings.forEach(function (f) { if (f.level === 'ERROR') c.errN++; if (f.level === 'WARN') c.warnN++; if (f.level === 'INFO') c.infoN++; });
+          if (!d.active) c.off++;
+          else { c.inUse++; c[x.status]++; }
+          x.findings.forEach(function (f) { if (f.level === 'ERROR') c.errN++; if (f.level === 'WARN') { c.warnN++; if (d.active) c.activeWarnN++; } if (f.level === 'INFO') c.infoN++; });
         });
         r.topo.forEach(function (t) { if (t.level === 'ERROR') c.topoErr++; });
         c.actionable = c.inUse - c.error;
@@ -629,9 +636,9 @@
           var why = c.topoErr ? '拓扑不完整（' + c.topoErr + ' 条 TOPOLOGY_INCOMPLETE）' : '可动作集为空';
           setBanner('block', '校验未通过：' + why + '，机房寻优将跳过（SKIPPED）', '请按明细「去配置 / 去维护」处理后重新校验。' + when);
         } else if (c.error) {
-          setBanner('warn', '校验完成：' + c.error + ' 台移出可动作集，机房不阻断', '移出的空调寻优时保持当前控制不动作，其余 ' + c.actionable + ' 台照常寻优' + (c.warnN ? '；另有 ' + c.warnN + ' 条 WARN 待核对' : '') + '。' + when);
+          setBanner('warn', '校验完成：' + c.error + ' 台移出可动作集，机房不阻断', '移出的空调寻优时保持当前控制不动作，其余 ' + c.actionable + ' 台照常寻优' + (c.activeWarnN ? '；另有 ' + c.activeWarnN + ' 条 WARN 待核对' : '') + '。' + when);
         } else {
-          var tips = c.warnN + c.infoN;
+          var tips = c.activeWarnN + c.infoN;
           setBanner('pass', tips ? '校验通过，有 ' + tips + ' 条提示' : '校验通过', '投入 ' + c.inUse + ' 台全部进入可动作集，拓扑完整。' + when);
         }
       }
@@ -655,7 +662,8 @@
         ok: '<span class="state-tag state-ok">就绪</span>',
         warn: '<span class="state-tag state-warn">就绪·有提示</span>',
         error: '<span class="state-tag state-err">移出可动作集</span>',
-        off: '<span class="state-tag state-off">投出·不校验</span>'
+        off: '<span class="state-tag state-off">投出</span>',
+        offWarn: '<span class="state-tag state-warn">投出·有提示</span>'
       };
       function renderOverview(r) {
         document.getElementById('overviewBody').innerHTML = room.devices.length ? room.devices.map(function (d) {
@@ -671,7 +679,7 @@
             + '<td>' + STATE[x.status] + '</td>'
             + '<td>' + (errN ? '<span class="lvl lvl-ERROR">' + errN + '</span>' : '0') + '</td>'
             + '<td>' + (warnN ? '<span class="lvl lvl-WARN">' + warnN + '</span>' : '0') + '</td>'
-            + '<td>' + (d.active ? '<span class="action-link" data-act="focus" data-id="' + d.id + '">查看明细</span>' : '<span class="cell-sub">—</span>') + '</td>'
+            + '<td><span class="action-link" data-act="focus" data-id="' + d.id + '">查看明细</span></td>'
             + '</tr>';
         }).join('') : '<tr><td colspan="8" class="empty-cell">尚未关联空调</td></tr>';
       }
@@ -691,7 +699,7 @@
         var sel = document.getElementById('filterDevice');
         var cur = sel.value;
         sel.innerHTML = '<option value="">全部实例</option>'
-          + room.devices.filter(function (d) { return d.active; }).map(function (d) { return '<option value="' + d.id + '">' + d.name + '</option>'; }).join('')
+          + room.devices.map(function (d) { return '<option value="' + d.id + '">' + d.name + '</option>'; }).join('')
           + '<option value="__topo">机房拓扑</option>';
         sel.value = cur;
       }
