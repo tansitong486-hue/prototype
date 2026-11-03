@@ -549,6 +549,18 @@
             </div>
           </div>
 
+          <div class="anno anno-version-header" data-version="v2.9">
+            <span class="anno-tag">版本信息</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v2.9</p>
+              <p><b>更新日期：</b>2026-11-02</p>
+              <p><b>变更概述：</b>自学习与触发新增最大预测偏差值，触发条件改为近期预测误差 &gt; min(n × RMSE, 最大预测偏差值)</p>
+              <p><b>本页说明：</b>查看本次变更请筛选 v2.9</p>
+            </div>
+          </div>
+
           <div class="anno anno-req" data-version="v1.0">
             <span class="anno-tag">需求说明</span>
             <span class="anno-version">v1.0</span>
@@ -1054,6 +1066,21 @@
             </div>
           </div>
 
+          <div class="anno anno-field" data-version="v2.9">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>自学习与触发</p>
+              <ul>
+                <li>触发：每个检查间隔（缺省 1 h）计算近期预测误差 E（最近一个间隔内有效 5 分钟点的预测与实测均方根，有效点 &lt; 6 不判断）；E &gt; min(n × RMSE, 最大预测偏差值) 且距上次训练完成 ≥ 最小周期即触发。RMSE 取在用模型 Loss 的 rmse。</li>
+                <li>最大预测偏差值：缺省取预测模型总表「自学习·最大预测偏差值缺省」列（取值与仿真模型默认偏差值一致，对应关系见需求文档附录 B；末端功率为 7% × 额定功率），按输出单位显示，可直接改写；必填、&gt; 0、2 位小数；按额定值比例计算但额定值缺失时须手填。</li>
+                <li>防反复重训：由超最大预测偏差触发的训练，新模型评估 RMSE 仍大于最大预测偏差记 1 次未达标，连续 3 次暂停该触发路径（误差超 n × RMSE 照常），人工训练成功或改配置后恢复。</li>
+                <li>字段：自学习最小周期（h，缺省 12）、自动训练系数 n（缺省 3）不变。</li>
+              </ul>
+            </div>
+          </div>
+
           <section class="section-card">
             <div class="section-head">自学习与触发</div>
             <div class="section-body">
@@ -1064,9 +1091,16 @@
                   <p class="field-hint field-hint-annoonly">必填整数，单位：小时；默认 12（古典 u8781）</p>
                 </div>
                 <div class="field">
-                  <label class="field-label"><span class="req">*</span>自动训练系数</label>
+                  <label class="field-label"><span class="req">*</span>自动训练系数 <span tabindex="0" role="img" aria-label="触发条件：近期预测误差 > min(n × RMSE, 最大预测偏差值)" title="触发条件：近期预测误差 > min(n × RMSE, 最大预测偏差值)" style="color:var(--text-hint);cursor:help;">ⓘ</span></label>
                   <input class="field-control" type="number" value="3" placeholder="请输入" step="0.01" min="0">
                   <p class="field-hint field-hint-annoonly">必填，保留 2 位小数，默认 3（古典 u8782）</p>
+                </div>
+                <div class="field">
+                  <label class="field-label" for="maxPredictionDeviation"><span class="req">*</span>最大预测偏差值</label>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <input class="field-control" id="maxPredictionDeviation" type="number" value="3.00" required min="0.01" step="0.01" style="flex:1;min-width:0;">
+                    <span style="color:var(--text-hint);font-size:13px;">kW</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1848,8 +1882,15 @@
         }
       });
       document.getElementById('btnSave').addEventListener('click', function () {
+        if (!maxDeviationInput.reportValidity()) return;
+        maxDeviationInput.value = Number(maxDeviationInput.value).toFixed(2);
         if (!validateStaticAttrs()) return;
         showToast('已保存预测模型服务模板（机理 + 混合增强）');
+      });
+
+      var maxDeviationInput = document.getElementById('maxPredictionDeviation');
+      maxDeviationInput.addEventListener('blur', function () {
+        if (this.checkValidity()) this.value = Number(this.value).toFixed(2);
       });
 
       document.getElementById('btnAddParam').addEventListener('click', function () {

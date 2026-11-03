@@ -219,15 +219,9 @@
     .page-foot {
       display: flex;
       align-items: flex-end;
-      justify-content: space-between;
+      justify-content: flex-end;
       gap: 16px;
       padding: 16px 18px;
-    }
-
-    .page-note {
-      font-size: 12px;
-      color: var(--text-secondary);
-      line-height: 1.75;
     }
 
     .pagination-wrap {
@@ -310,15 +304,14 @@
 
     @media (max-width: 900px) {
       .page-head,
-      .page-toolbar,
-      .page-foot {
+      .page-toolbar {
         flex-direction: column;
         align-items: flex-start;
       }
       .search-field { width: 100%; }
-      .pagination-wrap { align-items: flex-start; }
     }
   </style>
+  <link rel="stylesheet" href="annotation-styles.css">
 </head>
 <body>
   <div class="layout">
@@ -326,7 +319,31 @@
     <div class="body-wrap">
       <div id="app-sidebar"></div>
       <main class="main">
+        <div class="anno-filter-bar" id="annoFilterBar">
+          <span class="anno-filter-label">批注版本：</span>
+          <div class="anno-filter-tags" id="annoFilterTags"></div>
+        </div>
         <div class="page-shell">
+          <div class="anno anno-version-header" data-version="v2.9" data-date="2026-11-02">
+            <span class="anno-tag">版本信息</span>
+            <span class="anno-version">v2.9</span>
+            <div class="anno-body"><p><b>当前版本：</b>v2.9（需求 1 末端仿真寻优）</p><p><b>更新日期：</b>2026-11-02</p><p><b>变更概述：</b>仿真模型类型新增「末端机房」（对象为空调设备组），创建与仿真验证沿用冷站流程，由柔性寻优在下游引用。</p><p><b>本页说明：</b>筛选 v2.9；列表第 1、2 行为末端演示（0_100 机房与冷冻水 demo）。</p></div>
+          </div>
+
+          <div class="anno anno-req" data-version="v2.9">
+            <span class="anno-tag">需求说明</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body"><p><b>关联模块：</b>系统仿真建模列表 — 末端机房</p><ul><li><b>类型：</b>水冷冷水系统（冷站，不变）/ 末端机房。</li><li><b>仿真模型：</b>机房级独立对象，有自己的创建与实时仿真校验；不读安全边界页与寻优规则配置。</li><li><b>下游引用：</b>柔性寻优每轮把当前方案与候选方案交给它计算，安全与收益由寻优判断。</li><li><b>本期不含：</b>冷冻水型现场验证（只 demo）、动态过程仿真、封闭热通道机房、机房仿真对比（需求池 #78）。</li><li><b>排序与分页：</b>按创建时间倒序，每页 10 条。</li></ul></div>
+          </div>
+
+          <div class="anno anno-field" data-version="v2.9">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body"><p><b>关联模块：</b>列表行 — 末端机房</p><ul><li><b>仿真模型名称：</b>机房名 + 用途。</li><li><b>仿真模型对象：</b>空调设备组（含其下空调、通道、传感器）。</li><li><b>服务状态：</b>已生成 / 已引用；被柔性寻优引用时不可删除。</li><li><b>操作：</b>仿真验证 → 仿真校验（<code>?type=terminal</code>）；编辑 → 创建仿真模型（<code>?mode=edit&amp;type=terminal</code>）；删除，已引用时禁用。</li></ul></div>
+          </div>
+
           <section class="page-card">
             <div class="page-head">
               <h1 class="page-title">系统仿真建模</h1>
@@ -355,6 +372,34 @@
                   </tr>
                 </thead>
                 <tbody>
+                  <tr>
+                    <td>江苏分中心二层 0_100 末端机房</td>
+                    <td>0_100 空调设备组（风冷型精密空调 11 台 · 冷通道 2 · 温湿度传感器 12）</td>
+                    <td>末端机房</td>
+                    <td>2026-10-30 10:20</td>
+                    <td><span class="status-tag active">已引用</span></td>
+                    <td>
+                      <div class="actions">
+                        <a class="action-link" href="仿真校验.html?type=terminal">仿真验证</a>
+                        <a class="action-link" href="创建仿真模型.html?mode=edit&type=terminal">编辑</a>
+                        <span class="action-link delete disabled" aria-disabled="true">删除</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Demo-冷冻水末端机房</td>
+                    <td>CW-DEMO 空调设备组（冷冻水型精密空调 2 台 · 冷通道 1 · 温湿度传感器 4）</td>
+                    <td>末端机房</td>
+                    <td>2026-10-30 10:05</td>
+                    <td><span class="status-tag">已生成</span></td>
+                    <td>
+                      <div class="actions">
+                        <a class="action-link" href="仿真校验.html?type=terminal&site=demo">仿真验证</a>
+                        <a class="action-link" href="创建仿真模型.html?mode=edit&type=terminal&site=demo">编辑</a>
+                        <button type="button" class="action-link delete" data-action="delete">删除</button>
+                      </div>
+                    </td>
+                  </tr>
                   <tr>
                     <td>1号冷站基础版本</td>
                     <td>1号冷站</td>
@@ -430,12 +475,8 @@
             </div>
 
             <div class="page-foot">
-              <div class="page-note">
-                <div>排序：按照创建时间倒序排列</div>
-                <div>分页：10 条/页</div>
-              </div>
               <div class="pagination-wrap">
-                <div class="pagination-total">总共 85 个项目</div>
+                <div class="pagination-total">总共 87 个项目</div>
                 <div class="pagination" role="navigation" aria-label="分页">
                   <button type="button" class="page-arrow" data-page="prev" aria-label="上一页">‹</button>
                   <button type="button" class="page-item active" aria-current="page">1</button>
@@ -487,6 +528,12 @@
         })
       })
     })()
+  </script>
+  <button class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+  <script>
+function initAnnoVersionFilter(){var tags=document.getElementById('annoFilterTags');if(!document.body.classList.contains('annotation-mode'))return;var annos=document.querySelectorAll('.anno[data-version]');var versions=[];annos.forEach(function(a){var v=a.getAttribute('data-version');if(v&&versions.indexOf(v)===-1)versions.push(v);});versions.sort(function(a,b){var na=a.replace(/[^0-9.]/g,'').split('.').map(Number);var nb=b.replace(/[^0-9.]/g,'').split('.').map(Number);for(var i=0;i<Math.max(na.length,nb.length);i++){if((nb[i]||0)!==(na[i]||0))return (nb[i]||0)-(na[i]||0);}return 0;});tags.innerHTML='';var allBtn=document.createElement('span');allBtn.className='anno-filter-tag active';allBtn.textContent='全部';allBtn.onclick=function(){filterAnno('all',versions[0]);setActive(this);};tags.appendChild(allBtn);versions.forEach(function(v){var btn=document.createElement('span');btn.className='anno-filter-tag';btn.textContent=v;btn.onclick=function(){filterAnno(v,versions[0]);setActive(this);};tags.appendChild(btn);});if(versions.length>0)filterAnno('all',versions[0]);}
+function filterAnno(version,latest){document.querySelectorAll('.anno[data-version]').forEach(function(a){var v=a.getAttribute('data-version');if(version==='all'){a.style.display='';a.style.opacity=(v===latest)?'1':'0.6';}else{a.style.display=(v===version)?'':'none';a.style.opacity='1';}});}
+function setActive(el){el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function(t){t.classList.remove('active');});el.classList.add('active');}
   </script>
   <script src="components/nav.js" data-active-nav="AI智能能效" data-active-sidebar="系统仿真建模"></script>
 </body>

@@ -1,7 +1,7 @@
 # AI 节能 — 产品关系图（机读）
 # 人读入口：AGENT-MAP.md（本目录）+ 07-产品文档/01-ai 节能/产品文档/00-产品全貌.md
 # 维护：改 nav.js / index 拓扑 / 主流程时同步本文件
-# 更新：2026-10-20
+# 更新：2026-11-02
 
 meta:
   product: ai-energy
@@ -191,7 +191,7 @@ pages:
     nav_label: 机房柔性寻优
     nav_group: 机房能效优化
     domain: room_opt
-    version: v2.8
+    version: v2.9
     role: entry
   - id: page.room_add_remove_opt
     file: 机房寻优-加减机寻优.html
@@ -333,42 +333,42 @@ pages:
     nav_label: 机理模型训练
     nav_group: AI节能配置
     domain: sim_predict
-    version: v2.3
+    version: v2.9
     role: entry
   - id: page.model_create_edit
     file: 创建-编辑模型.html
     nav_label: null
     nav_group: AI节能配置
     domain: sim_predict
-    version: v2.3
+    version: v2.9
     role: subflow
   - id: page.model_eval
     file: 模型评估详情.html
     nav_label: null
     nav_group: AI节能配置
     domain: sim_predict
-    version: v2.3
+    version: v2.9
     role: subflow
   - id: page.system_sim
     file: 系统仿真建模.html
     nav_label: 系统仿真建模
     nav_group: AI节能配置
     domain: sim_predict
-    version: v2.3
+    version: v2.9
     role: entry
   - id: page.create_sim
     file: 创建仿真模型.html
     nav_label: null
     nav_group: AI节能配置
     domain: sim_predict
-    version: v2.3
+    version: v2.9
     role: subflow
   - id: page.sim_verify
     file: 仿真校验.html
     nav_label: null
     nav_group: AI节能配置
     domain: sim_predict
-    version: v2.3
+    version: v2.9
     role: subflow
   - id: page.safety_boundary_list
     file: 安全边界-列表.html
@@ -431,21 +431,28 @@ pages:
     nav_label: 机房热力模型
     nav_group: AI节能配置
     domain: room_opt
-    version: v1.6
+    version: v2.9
     role: entry
   - id: page.room_model_s1
     file: 机房寻优-创建机房模型.html
     nav_label: null
     nav_group: AI节能配置
     domain: room_opt
-    version: v1.9
+    version: v2.9
     role: subflow
   - id: page.room_model_s2
     file: 机房寻优-创建机房模型-步骤2.html
     nav_label: null
     nav_group: AI节能配置
     domain: room_opt
-    version: v1.6
+    version: v2.9
+    role: subflow
+  - id: page.room_model_verify
+    file: 机房寻优-机房模型校验.html
+    nav_label: null
+    nav_group: AI节能配置
+    domain: room_opt
+    version: v2.9
     role: subflow
 
   # —— orphan（有文件、未进侧栏/拓扑）——
@@ -582,6 +589,7 @@ flows:
       - page_id: page.room_thermal_list
       - page_id: page.room_model_s1
       - page_id: page.room_model_s2
+      - page_id: page.room_model_verify
     binds:
       - domain:room_opt
       - domain:room_diagnosis
@@ -592,6 +600,7 @@ flows:
       - page.room_thermal_list
       - page.room_model_s1
       - page.room_model_s2
+      - page.room_model_verify
 
   - id: flow.config_crud_safety_dispatch
     name: 安全与下发配置
@@ -788,7 +797,7 @@ requirements:
     upstream: []
     downstream: []
     algo_vs_ui: ui_only
-    notes: 需求方案§8.4：GU无空间视图/无机房对象；热力模型不选机房，直接带入本机设备列表全部设备；关联空调/传感器/机柜候选为本机全部设备且均可勾选（不按机房、物模型过滤）；补必填机房名称；步骤2（含同步3D数据）与平台版一致；不限制热力模型数量；原型页头「原型演示」或?edition=gu切换
+    notes: 需求方案§8.4 的 GU 版建模差异（不选机房、按本机设备列表关联、补机房名称）已不在原型中区分；GU 版当前与平台版一致，创建机房模型两步页只保留平台版，页头无「原型演示」切换
   - id: req.v28.room_opt_viz_detail
     version: v2.8
     status: 待评审
@@ -893,6 +902,42 @@ requirements:
     downstream: []
     algo_vs_ui: mixed
     notes: 版本清单需求3（ONES V3R5-7002，廊坊群控下发兼容）：不改寻优算法。标准功能——转写引擎（按下发策略内独立配置的转写规则，把柔性/全局/长周期寻优结果逐点转写成 BA 设定点；长周期只转写首时段正式结果）、安全边界支持群控系统设定点（只给转写贴边和手动下发校验，不参与仿真结果校验）、寻优记录与下发复用原有界面（BA 设定点挂在群控系统设备下按原有变量分类展示；手动/自动/混合下发与工单只下发寻优值与当前值不同的点，一键回退不变）、下发策略配置页在多行输入框填写 ba-transcribe/2.0 JSON，空框可填入模板、粘贴或离开输入框自动校验、已保存信息行可下载，保存即覆盖（不设工具栏）；项目定制——廊坊A路58点逐点规则（v2 内容，不进页面逻辑）；下发执行、下发记录与回退沿用；原型 2026-10-26 已同步 6 页
+
+  - id: req.v29.model_eval_revamp
+    version: v2.9
+    status: 待评审
+    domain: sim_predict
+    prd_path: 04-需求文档/AI节能v2.9 版本/06-机理模型训练/机理模型训练需求文档.md
+    prototype_pages:
+      - 机理模型训练.html
+      - 模型评估详情.html
+      - 创建-编辑模型.html
+    upstream: []
+    downstream: []
+    algo_vs_ui: mixed
+    notes: 版本清单需求6（《机理模型训练需求文档》，2026-10-30 按 KE xweb_pro_tuning 2.1.158 现网反写）：列表评估效果 8 项指标（原单位误差 + 相对误差 MAPE / CV(RMSE)，噪声底只作数据提示，训练 RMSE 仅诊断，重训稳定按需计算、评估覆盖只在报告）+ 固定评级；评估改为评估报告 + 手动预测；迁移学习先逐台迁移评估再开启；评级阈值固定取后台 assessment_thresholds.yaml 出厂默认（2026-11-02 去掉评估设置与演示模式）；新增/编辑/手动训练页与模型同步不在本条范围
+
+  - id: req.v29.terminal_sim_opt
+    version: v2.9
+    status: 评审稿
+    domain: room_opt
+    prd_path: 04-需求文档/AI节能v2.9 版本/末端仿真模型及寻优/末端仿真寻优需求文档.md
+    prototype_pages:
+      - 机房寻优-创建机房模型.html
+      - 机房寻优-创建机房模型-步骤2.html
+      - 机房寻优-机房热力模型列表.html
+      - 机房寻优-机房模型校验.html
+      - 安全边界-创建.html
+      - 安全边界-编辑.html
+      - 机理模型训练.html
+      - 系统仿真建模.html
+      - 创建仿真模型.html
+      - 仿真校验.html
+      - 机房寻优-柔性寻优.html
+    upstream: [req.v26.room_opt_device_capability, req.v28.flex_margin_rewrite, req.v23.l0_l1_confidence]
+    downstream: []
+    algo_vs_ui: mixed
+    notes: 版本清单需求1（ONES V3R5-7000，基于数理模型的末端仿真寻优）：两段式设备模型 + 气流热模型 + 机房稳态仿真 + 柔性寻优页寻优算法新增「仿真模型预测寻优」（一个寻优器两种模式），与 全局送风温度控制法、ThermoFlex热力柔性寻优 三选一，旧算法与加减机寻优保留不变（2026-11-02 用户确认，撤销 10-30 的「替代规则层、加减机页退役」；原型同步见本条末尾）。已同步原型（均 data-version v2.9）：§7.1 安全边界-创建/编辑 末端被控变量按温湿度传感器出行（2026-10-30）；§4.4 机房寻优-创建机房模型 步骤 1 空调表改为固定列（名称、对象类型含继承链、投入/投出、就绪状态）+ 按物模型属性定义渲染的属性区（真源 标准物模型 xlsx 静态数据 sheet：AirCooledPAC 7 项、ChilledWaterPAC 9 项含 5 个设计点；10-31 去掉型号 modelNumber），10-31 起页内直接编辑 + 同类型「复制到同类型设备」批量复制（保存写回设备实例），下一步逐台执行 §4.3 五类校验（WARN CONFIG_SUSPECT(REG_TYPE)/(COMP_NUM)/(DESIGN_POINT)，ERROR INPUT_MISSING 移出可动作集不阻断机房，TOPOLOGY_INCOMPLETE 在步骤 2 完成时校验），主控制变量按 controlMode 分派不拆对象类型（2026-10-30）；步骤 2 关系配置不变仅批注；安全边界两页末端区加一条批注说明行按对象类型与可写点位生成。后台与物模型依赖为后台事项不画。2026-10-30 第二批同步（§5 / §6 / §8 / §9 / §11）：机理模型训练 在原框架内接入末端 6 类模型（同列同评估同弹窗；容量指令 / 水阀开度为仿真控制器规则 A1 / B1、不单列，控制器稳态偏移 b0、b1 随 A2 / B2 训练，回风入口偏差 o_ra 不训练；C1 / C3 L1 为逐点读数映射；分组键 / 参数池 / 迁移 → 迁移学习，数据门 → 训练失败原因，配置校验 → 模型同步弹窗，§1.2 与两级置信 → 悬停数据提示；2026-10-31 按此重做，需求文档附录 B 为对齐表），演示 0_100 风冷 11 台真实拓扑口径 + 冷冻水 demo 2 台；系统仿真建模 新增「末端机房」类型，创建页沿用四段（末端可选模块 / 预测对象（每台 × 送风温度 / 功率、每测点 × 温度；容量指令由闭环求出）× 模型选择规则含自有 L1 / 池迁移 / L0 候选 / 仿真安全边界配置），仿真模型不读安全边界页与寻优规则配置，仿真校验 ?type=terminal 为与冷站一致的实时仿真校验（按机房当前运行状态仿真一次，逐对象逐指标对比实际值与预测值，填写了预测偏差的按同类量平均绝对偏差判达标（各机送风温度、功率、回风温度，全部冷点、全部热点；预测偏差缺省为空，未填只按硬边界；硬边界仍逐项检查）；不做历史时刻回放、不做人工试算，what-if 移入需求池 #78）——2026-10-31 修订（二）仿真 / 安全边界 / 寻优三层归位，柔性页策略卡加「引用仿真模型」（只在选用新算法时显示）；机房寻优-柔性寻优（2026-11-02 定）：寻优策略 = 寻优对象 + 寻优周期 + 安全边界 + 寻优算法（含配置项）；规则配置公共字段 寻优周期 → 安全边界 → 寻优算法（全局送风温度控制法 / ThermoFlex热力柔性寻优 / 仿真模型预测寻优 三选一），下方按算法动态显示配置项——仿真模型预测寻优：仿真模型（取系统仿真建模的仿真模型名称，只在选本算法时显示）、寻优模式 全局式 / 增量式、设备数量寻优规则 + 模拟量寻优规则（寻优步长 / 寻优粒度）、寻优计算、寻优目标偏好 · 设备切换容忍度滑块、设备保护时间；ThermoFlex 配置与 v2.8 一致；全局送风温度控制法字段取自古典原型；寻优记录用户语言（徽章 节能调优 / 保持现状 / 安全恢复 / 本轮跳过；本轮判断依据、调整前后预测对比与结果条已删，约束命中清单与稳态预测在 xdayu 后台日志），变量表与冷站同六列 + 开关机行，4 轮演示 + 全局式到时限演示；增量式启停与连续量按近 15 分钟累计（含人工变更），安全恢复只由当前实测越出硬边界触发；加减机寻优页面与功能保留不变（与新算法开关机互斥口径待评审）。柔性页演示机房为 1F-101 示例，数值为演示不是真实计算。2026-10-31 评审调整：模型就绪校验移出创建步骤 1（去掉就绪状态列、校验面板与下一步拦截，步骤 2「完成」也不做拓扑校验），改为保存后在新页 机房寻优-机房模型校验 执行（参照 仿真校验 页：结果横幅三态 + 重新校验 + 设备总览 + 校验明细，§4.3 五类含拓扑一次跑完，去修改（回步骤 1）/ 去绑点 / 去配置带回跳）；列表页操作列新增「模型校验」入口，列表与 nav 角标升 v2.9
 
   - id: req.cross.safety_dispatch_base
     version: v1.6
@@ -1069,6 +1114,47 @@ edges:
   - from: req.v27.gu_room_thermal_model
     to: page.room_model_s2
     rel: enhances
+  # v2.9 末端仿真寻优（机房热力模型配置 + §7.1 安全边界被控变量）
+  - from: req.v29.terminal_sim_opt
+    to: page.room_model_s1
+    rel: enhances
+  - from: req.v29.terminal_sim_opt
+    to: page.room_thermal_list
+    rel: enhances
+  - from: req.v29.terminal_sim_opt
+    to: page.room_model_verify
+    rel: implements
+  - from: req.v29.terminal_sim_opt
+    to: page.room_model_s2
+    rel: enhances
+  - from: req.v29.terminal_sim_opt
+    to: page.safety_boundary_create
+    rel: enhances
+  - from: req.v29.terminal_sim_opt
+    to: page.safety_boundary_edit
+    rel: enhances
+  - from: req.v26.room_opt_device_capability
+    to: req.v29.terminal_sim_opt
+    rel: refined_by
+  # v2.9 末端仿真寻优 第二批（2026-10-30：训练页 / 仿真三页 / 柔性寻优新增仿真模型预测寻优；11-02 加减机保留不变）
+  - from: req.v29.terminal_sim_opt
+    to: page.mechanism_train
+    rel: enhances
+  - from: req.v29.terminal_sim_opt
+    to: page.system_sim
+    rel: enhances
+  - from: req.v29.terminal_sim_opt
+    to: page.create_sim
+    rel: enhances
+  - from: req.v29.terminal_sim_opt
+    to: page.sim_verify
+    rel: enhances
+  - from: req.v29.terminal_sim_opt
+    to: page.room_flex_opt
+    rel: enhances
+  - from: req.v23.l0_l1_confidence
+    to: req.v29.terminal_sim_opt
+    rel: refined_by
   # v2.9 廊坊群控下发兼容（转写引擎 + 群控设定点 + 记录与下发打通）
   - from: req.v29.langfang_ba_dispatch
     to: page.cold_flex_opt
@@ -1121,3 +1207,11 @@ noise:
     note: v2.9 转写规则是平台标准能力（在下发策略里用输入框填写 ba-transcribe/2.0 JSON，校验后保存覆盖），每个下发策略独立配置；廊坊A路58点逐点规则只是 v2 示例内容，不进页面或引擎逻辑；页面里的 58 点常量只是演示数据
   - id: noise.v29_demo_scene
     note: v2.9 演示默认场景有调整——安全边界-编辑 默认水冷 A 路（?type=terminal 或页顶「原型演示」回到 v2.8 末端机房）；三个冷站寻优页首次进入默认「A路冷水系统」，BA 演示只在 A路冷水系统下出现；硬边界量程为示例值，非物模型实值
+  - id: noise.v29_req8_open_items
+    note: v2.9 机房热力模型配置原型待确认项——controlMode 与写点不一致的原因码 §4.3 未定，原型按 INPUT_MISSING 归类；对象类型继承链中间节点「末端空调」为产品推断，以物模型管理页为准；2026-10-31 起模型就绪校验在保存后的「机房模型校验」页执行（五类含拓扑一次跑完），不在创建步骤 1 / 2；未校验的模型能否寻优、物模型属性 / 绑点变化是否触发重新校验、REG_TYPE 证据数据窗口（原型写近 7 天）均待确认；「去修改 / 去绑点 / 去配置」原型只 toast 不跳转（真实系统带 return 回跳并自动重新校验）；10-31 去掉型号 modelNumber，迁移分组键改为设备类型 + regulationType + 铭牌组合；标准物模型 xlsx 中 modelNumber 两行已于 10-31 删除；页内编辑写回实例的共享值与权限口径待确认；2026-11-02 步骤 2 新增回风关系（复用 THSensor::feedsAir，热点 → 空调，不新增关系类型），必配判定属性 placement_position（行间 / 列间）只在后台 DTDL、标准物模型表未收录，底座式 / 未填按房间级，待确认；标准物模型表 aisleSealedMode 枚举缺「封闭热通道」；后台 THSensor::feedsAir 目标对象需放开到末端空调；0_100 的 11 台 placement_position 全为行间、疑似缺省
+  - id: noise.v29_add_remove_kept
+    note: v2.9 加减机寻优保留不变（2026-11-02 用户确认，撤销 10-30 的退役：页面、侧栏 label、角标都恢复 v2.8）；新算法「仿真模型预测寻优」是柔性寻优页寻优算法下拉的第三项，与 全局送风温度控制法、ThermoFlex热力柔性寻优 并列；新算法自带开关机寻优，与加减机的互斥口径（同一机房开关机只能一个来源）待评审确认
+  - id: noise.v29_terminal_demo_data
+    note: v2.9 末端仿真寻优原型演示数据分三套——机理模型训练 用 0_100 江苏分中心二层真实拓扑口径（风冷 11 台、旧机 1～4 / 新机 5新～11新、2 个参数池）+ 冷冻水 demo 2 台；系统仿真 / 仿真校验用同一 0_100 口径（仿真校验另有 ?site=demo 冷冻水 demo 行）；机房寻优-柔性寻优 仍用 1F-101 示例机房（AC1～AC12，冷冻水 8 + 风冷 4；策略卡与规则配置的仿真模型取系统仿真建模的仿真模型名称，演示选中「江苏分中心二层 0_100 末端机房」，与示例机房 1F-101 不是同一机房，属演示数据差异），结论条 / 稳态值 / 原因码为演示值不是真实计算；柔性页旧 v2.8 压缩机演示常量（AIR_DX_COMP_DEMO）保留为死代码
+  - id: noise.v29_sim_three_layers
+    note: v2.9 末端仿真 / 安全边界 / 寻优三层（2026-10-31 修订（二））：仿真模型（系统仿真建模 末端机房）只含步骤 0.1～0.4 + 1～4 + 自身仿真安全边界（硬边界 / 预测偏差阈值，越界终止），不读安全边界页与寻优规则配置；运行安全边界绑定在寻优策略卡，安全评价 / 安全阀 / J / 结果判定在柔性寻优页寻优层；仿真校验页是与冷站一致的实时仿真校验，只出实际值 / 预测值 / 达标判定，不出寻优侧原因码；人工试算（what-if）不在本期，需求池 #78；多候选模型与低置信回落走创建仿真模型的模型选择规则，不设「模型版本」

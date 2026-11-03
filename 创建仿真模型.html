@@ -537,6 +537,9 @@
         padding: 12px 16px;
       }
     }
+    /* v2.9 末端机房分支：.field 自带 display:flex，需显式让 hidden 生效；输入来源表跳转链接 */
+    .field[hidden] { display: none; }
+    .module-checks[hidden] { display: none; }
   </style>
   <link rel="stylesheet" href="annotation-styles.css">
 </head>
@@ -611,6 +614,12 @@
             </div>
           </div>
 
+          <div class="anno anno-version-header" data-version="v2.9" data-date="2026-11-02">
+            <span class="anno-tag">版本信息</span>
+            <span class="anno-version">v2.9</span>
+            <div class="anno-body"><p><b>当前版本：</b>v2.9（需求 1 末端仿真寻优）</p><p><b>更新日期：</b>2026-11-02</p><p><b>变更概述：</b>仿真模型类型新增「末端机房」，沿用冷站四段（基础信息 / 可选仿真模块 / 预测对象与预测参数 / 仿真安全边界配置）；水冷冷水系统分支不变。</p><p><b>本页说明：</b>筛选 v2.9；<code>?type=terminal</code> 直接进入末端分支。</p></div>
+          </div>
+
           <div class="anno anno-req" data-version="v1.0">
             <span class="anno-tag">需求说明</span>
             <span class="anno-version">v1.0</span>
@@ -653,6 +662,13 @@
             </div>
           </div>
 
+          <div class="anno anno-field" data-version="v2.9">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body"><p><b>关联模块：</b>基础信息 — 末端机房</p><ul><li><b>仿真模型类型：</b>必选，水冷冷水系统 / 末端机房。</li><li><b>仿真模型对象：</b>必选，末端类型下为空调设备组实例，一个设备组一个仿真模型。</li><li><b>随对象带入：</b>空调、通道、温湿度测点、供冷关系及空调铭牌、控制方式，来自机房热力模型配置，本页不重复配置；完整性在「机房模型校验」页检查。</li><li><b>仿真模型名称：</b>规则不变。</li></ul></div>
+          </div>
+
           <section class="section-card">
             <div class="section-head">
               <span class="step-num">1</span>
@@ -668,6 +684,7 @@
                   <label class="field-label" for="simType"><span class="required">*</span>仿真模型类型：</label>
                   <select id="simType" class="field-select" aria-label="仿真模型类型">
                     <option value="water" selected>水冷冷水系统</option>
+                    <option value="terminal">末端机房</option>
                   </select>
                 </div>
                 <div class="field">
@@ -682,6 +699,13 @@
               </div>
             </div>
           </section>
+
+          <div class="anno anno-data" data-version="v2.9">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body"><p><b>关联模块：</b>末端仿真模型与安全边界、寻优的关系</p><ul><li><b>仿真模型：</b>按机房当前（或给定）运行状态，计算各空调送风温度、功率与冷 / 热通道温湿度；仿真安全边界越界即终止仿真。</li><li><b>不读：</b>安全边界页与寻优规则配置；通道温度上下限、开机台数上下限、寻优周期、调整上限都由柔性寻优在拿到仿真结果后使用。</li><li><b>下游引用：</b>柔性寻优策略卡引用本模型，已被引用的不可删除。</li><li><b>配置完整性：</b>在「机房模型校验」页与机理模型训练「模型同步」弹窗检查。</li></ul></div>
+          </div>
 
           <div class="anno anno-field" data-version="v1.8">
             <span class="anno-tag">字段说明</span>
@@ -750,16 +774,26 @@
             </div>
           </div>
 
+          <div class="anno anno-field" data-version="v2.9">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body"><p><b>关联模块：</b>可选仿真模块 — 末端机房</p><ul><li><b>两项：</b>供冷与发热平衡校验、通道与送风湿度仿真，缺省勾选，取消即不输出对应结果；类型为末端机房时冷站三项隐藏，切回水冷恢复。</li><li><b>供冷与发热平衡校验：</b>核对空调供冷量合计与 IT 发热；对不上时仿真校验页提示，寻优中该方案不可行（不改计算结果）；不勾选不做该校验。</li><li><b>通道与送风湿度仿真：</b>同时算冷 / 热通道与送风湿度；空调除湿时湿度标为估算。不勾选时不输出湿度，寻优不做冷通道湿度与送风露点检查。</li><li><b>不作可选项：</b>回风闭环计算是仿真本身的计算过程。</li></ul></div>
+          </div>
           <section class="section-card">
             <div class="section-head">
               <span class="step-num">2</span>
               <span class="section-title">可选仿真模块</span>
             </div>
             <div class="section-body">
-              <div class="module-checks">
+              <div class="module-checks" id="waterModules">
                 <label><input type="checkbox" name="mod"> 最不利末端压差求解</label>
                 <label><input type="checkbox" name="mod"> 最不利末端空调送风温度求解</label>
                 <label><input type="checkbox" name="mod"> 蓄冷罐放冷时长求解</label>
+              </div>
+              <div class="module-checks" id="terminalModules" hidden>
+                <label><input type="checkbox" name="tmod" checked> 供冷与发热平衡校验</label>
+                <label><input type="checkbox" name="tmod" checked> 通道与送风湿度仿真</label>
               </div>
             </div>
           </section>
@@ -834,6 +868,12 @@
             </div>
           </div>
 
+          <div class="anno anno-field" data-version="v2.9">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body"><p><b>关联模块：</b>预测对象与预测参数 — 末端机房</p><ul><li><b>行：</b>每台空调 × 送风温度 / 有功功率，每个冷 / 热通道测点 × 温度；回风温度、湿度由仿真算出，不在本表。</li><li><b>模型候选：</b>本机混合增强、同型号迁移、本机机理只读，与机理模型训练页同名。</li><li>容量指令 / 水阀开度由控制器规则在仿真闭环中求出，不选模型。</li><li><b>模型选择规则：</b>同冷站；多工况泛化优先时显示「运行时动态选择」与当前选中模型，本机历史数据不足时自动改用迁移或机理只读模型；自定义时手动指定。</li><li><b>置信与失败：</b>高 / 低两级，同训练页；预测失败给出原因（如「实时输入缺失」），「预测」按钮逐行重新预测。</li></ul></div>
+          </div>
           <section class="section-card">
             <div class="section-head with-actions">
               <div class="section-head-main">
@@ -869,6 +909,136 @@
                       <th>失败原因</th>
                     </tr>
                   </thead>
+                  <tbody id="predictTableBodyTerminal" hidden>
+                    <tr data-predict-result="success" data-predict-value="14.5℃" data-predict-delta="0.3℃" data-auto-model="精密空调1-送风温度-混合增强预测模型">
+                      <td>精密空调1</td>
+                      <td>送风温度</td>
+                      <td>
+                        <select class="field-select tight rule-select" aria-label="精密空调1-送风温度-规则"><option>训练时间优先</option><option>RMSE 优先</option><option selected>多工况泛化优先</option><option>自定义</option></select>
+                      </td>
+                      <td>
+                        <select class="field-select tight model-select" aria-label="精密空调1-送风温度-模型"><option selected>精密空调1-送风温度-混合增强预测模型</option><option>精密空调2-送风温度-混合增强预测模型（迁移）</option><option>精密空调1-送风温度-机理只读预测模型</option></select>
+                      </td>
+                      <td class="cell-num">14.2℃</td>
+                      <td class="cell-num predict-value">14.5℃</td>
+                      <td class="cell-num predict-delta">0.3℃</td>
+                      <td><span class="predict-tag success">预测成功</span></td>
+                      <td><span class="confidence-tag high">高置信度</span></td>
+                      <td class="failure-text cell-muted">—</td>
+                    </tr>
+                    <tr data-predict-result="success" data-predict-value="16.4kW" data-predict-delta="0.4kW" data-auto-model="精密空调1-有功功率-混合增强预测模型">
+                      <td>精密空调1</td>
+                      <td>有功功率</td>
+                      <td>
+                        <select class="field-select tight rule-select" aria-label="精密空调1-有功功率-规则"><option>训练时间优先</option><option>RMSE 优先</option><option selected>多工况泛化优先</option><option>自定义</option></select>
+                      </td>
+                      <td>
+                        <select class="field-select tight model-select" aria-label="精密空调1-有功功率-模型"><option selected>精密空调1-有功功率-混合增强预测模型</option><option>精密空调2-有功功率-混合增强预测模型（迁移）</option><option>精密空调1-有功功率-机理只读预测模型</option></select>
+                      </td>
+                      <td class="cell-num">16.8kW</td>
+                      <td class="cell-num predict-value">16.4kW</td>
+                      <td class="cell-num predict-delta">0.4kW</td>
+                      <td><span class="predict-tag success">预测成功</span></td>
+                      <td><span class="confidence-tag high">高置信度</span></td>
+                      <td class="failure-text cell-muted">—</td>
+                    </tr>
+                    <tr data-predict-result="success" data-predict-value="14.1℃" data-predict-delta="0.5℃" data-auto-model="精密空调4-送风温度-混合增强预测模型" data-model-general="精密空调2-送风温度-混合增强预测模型（迁移）">
+                      <td>精密空调4</td>
+                      <td>送风温度</td>
+                      <td>
+                        <select class="field-select tight rule-select" aria-label="精密空调4-送风温度-规则"><option>训练时间优先</option><option>RMSE 优先</option><option selected>多工况泛化优先</option><option>自定义</option></select>
+                      </td>
+                      <td>
+                        <select class="field-select tight model-select" aria-label="精密空调4-送风温度-模型"><option selected>精密空调4-送风温度-混合增强预测模型</option><option>精密空调2-送风温度-混合增强预测模型（迁移）</option><option>精密空调4-送风温度-机理只读预测模型</option></select>
+                      </td>
+                      <td class="cell-num">13.6℃</td>
+                      <td class="cell-num predict-value">14.1℃</td>
+                      <td class="cell-num predict-delta">0.5℃</td>
+                      <td><span class="predict-tag success">预测成功</span></td>
+                      <td><span class="confidence-tag low">低置信度</span></td>
+                      <td class="failure-text cell-muted">—</td>
+                    </tr>
+                    <tr data-predict-result="success" data-predict-value="21.9kW" data-predict-delta="0.7kW" data-auto-model="精密空调5新-有功功率-混合增强预测模型（迁移）">
+                      <td>精密空调9新</td>
+                      <td>有功功率</td>
+                      <td>
+                        <select class="field-select tight rule-select" aria-label="精密空调9新-有功功率-规则"><option>训练时间优先</option><option>RMSE 优先</option><option selected>多工况泛化优先</option><option>自定义</option></select>
+                      </td>
+                      <td>
+                        <select class="field-select tight model-select" aria-label="精密空调9新-有功功率-模型"><option selected>精密空调5新-有功功率-混合增强预测模型（迁移）</option><option>精密空调9新-有功功率-机理只读预测模型</option></select>
+                      </td>
+                      <td class="cell-num">22.6kW</td>
+                      <td class="cell-num predict-value">21.9kW</td>
+                      <td class="cell-num predict-delta">0.7kW</td>
+                      <td><span class="predict-tag success">预测成功</span></td>
+                      <td><span class="confidence-tag low">低置信度</span></td>
+                      <td class="failure-text cell-muted">—</td>
+                    </tr>
+                    <tr data-predict-result="fail" data-predict-value="" data-predict-delta="" data-failure="实时输入缺失：有功功率未取到最新值" data-auto-model="精密空调5新-有功功率-混合增强预测模型（迁移）">
+                      <td>精密空调10新</td>
+                      <td>有功功率</td>
+                      <td>
+                        <select class="field-select tight rule-select" aria-label="精密空调10新-有功功率-规则"><option>训练时间优先</option><option>RMSE 优先</option><option selected>多工况泛化优先</option><option>自定义</option></select>
+                      </td>
+                      <td>
+                        <select class="field-select tight model-select" aria-label="精密空调10新-有功功率-模型"><option selected>精密空调5新-有功功率-混合增强预测模型（迁移）</option><option>精密空调10新-有功功率-机理只读预测模型</option></select>
+                      </td>
+                      <td class="cell-num">—</td>
+                      <td class="cell-num predict-value cell-muted">—</td>
+                      <td class="cell-num predict-delta cell-muted">—</td>
+                      <td><span class="predict-tag fail">预测失败</span></td>
+                      <td><span class="confidence-tag low">低置信度</span></td>
+                      <td class="failure-text">实时输入缺失：有功功率未取到最新值</td>
+                    </tr>
+                    <tr data-predict-result="success" data-predict-value="22.6℃" data-predict-delta="0.2℃" data-auto-model="冷点A-1-冷通道温度-混合增强预测模型">
+                      <td>冷点A-1</td>
+                      <td>冷通道温度</td>
+                      <td>
+                        <select class="field-select tight rule-select" aria-label="冷点A-1-冷通道温度-规则"><option>训练时间优先</option><option>RMSE 优先</option><option selected>多工况泛化优先</option><option>自定义</option></select>
+                      </td>
+                      <td>
+                        <select class="field-select tight model-select" aria-label="冷点A-1-冷通道温度-模型"><option selected>冷点A-1-冷通道温度-混合增强预测模型</option><option>冷点A-1-冷通道温度-机理只读预测模型</option></select>
+                      </td>
+                      <td class="cell-num">22.4℃</td>
+                      <td class="cell-num predict-value">22.6℃</td>
+                      <td class="cell-num predict-delta">0.2℃</td>
+                      <td><span class="predict-tag success">预测成功</span></td>
+                      <td><span class="confidence-tag high">高置信度</span></td>
+                      <td class="failure-text cell-muted">—</td>
+                    </tr>
+                    <tr data-predict-result="success" data-predict-value="23.9℃" data-predict-delta="0.8℃" data-auto-model="冷点B-2-冷通道温度-混合增强预测模型" data-model-general="冷点B-2-冷通道温度-机理只读预测模型">
+                      <td>冷点B-2</td>
+                      <td>冷通道温度</td>
+                      <td>
+                        <select class="field-select tight rule-select" aria-label="冷点B-2-冷通道温度-规则"><option>训练时间优先</option><option>RMSE 优先</option><option selected>多工况泛化优先</option><option>自定义</option></select>
+                      </td>
+                      <td>
+                        <select class="field-select tight model-select" aria-label="冷点B-2-冷通道温度-模型"><option selected>冷点B-2-冷通道温度-混合增强预测模型</option><option>冷点B-2-冷通道温度-机理只读预测模型</option></select>
+                      </td>
+                      <td class="cell-num">23.1℃</td>
+                      <td class="cell-num predict-value">23.9℃</td>
+                      <td class="cell-num predict-delta">0.8℃</td>
+                      <td><span class="predict-tag success">预测成功</span></td>
+                      <td><span class="confidence-tag low">低置信度</span></td>
+                      <td class="failure-text cell-muted">—</td>
+                    </tr>
+                    <tr data-predict-result="success" data-predict-value="31.6℃" data-predict-delta="0.4℃" data-auto-model="热点A-1-热通道温度-混合增强预测模型">
+                      <td>热点A-1</td>
+                      <td>热通道温度</td>
+                      <td>
+                        <select class="field-select tight rule-select" aria-label="热点A-1-热通道温度-规则"><option>训练时间优先</option><option>RMSE 优先</option><option selected>多工况泛化优先</option><option>自定义</option></select>
+                      </td>
+                      <td>
+                        <select class="field-select tight model-select" aria-label="热点A-1-热通道温度-模型"><option selected>热点A-1-热通道温度-混合增强预测模型</option><option>热点A-1-热通道温度-机理只读预测模型</option></select>
+                      </td>
+                      <td class="cell-num">31.2℃</td>
+                      <td class="cell-num predict-value">31.6℃</td>
+                      <td class="cell-num predict-delta">0.4℃</td>
+                      <td><span class="predict-tag success">预测成功</span></td>
+                      <td><span class="confidence-tag high">高置信度</span></td>
+                      <td class="failure-text cell-muted">—</td>
+                    </tr>
+                  </tbody>
                   <tbody id="predictTableBody">
                     <tr data-predict-result="success" data-predict-value="122.87m³/h" data-predict-delta="0.36m³/h" data-auto-model="冷冻泵流量泛化模型 V3">
                       <td>冷冻泵1</td>
@@ -1095,6 +1265,12 @@
             </div>
           </div>
 
+          <div class="anno anno-field" data-version="v2.9">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body"><p><b>关联模块：</b>仿真安全边界配置 — 末端机房</p><ul><li><b>结构：</b>每个输出变量一组硬边界上下限 + 预测偏差，与冷站同表；硬边界缺省按设备类型带出（其余空调与测点同类带出，演示省略），可逐行修改；预测偏差缺省为空；仿真校验页按本表判定达标。</li><li><b>变量：</b>设备组：空调总功率、回风温度均值、平衡偏差；每台空调：送风温度、有功功率、容量指令；冷点：温度、湿度；热点：温度。</li><li><b>硬边界：</b>预测值越界即终止本次仿真；空调总功率、容量指令、平衡偏差只受硬边界约束。</li><li><b>预测偏差：</b>缺省为空，不填不做偏差判定；填写后按同类量（各机送风温度、功率、回风温度，全部冷点、全部热点）平均绝对偏差判定，超过即终止本次仿真，不按单个对象。只对当前控制保持的方案判定（仿真校验与寻优的 baseline），寻优候选没有实测可比、不判。填写可参考：送风 1.5℃ / 4.6%RH，功率 额定的 7%，回风 0.65℃，冷点 1.3℃ / 5.6%RH，热点 0.65℃ / 2%RH。</li></ul></div>
+          </div>
           <section class="section-card boundary-card">
             <div class="section-head">
               <span class="section-title">仿真安全边界配置</span>
@@ -1115,7 +1291,21 @@
                       <th>预测偏差</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody id="boundaryBodyTerminal" hidden>
+                    <tr><td rowspan="3">0_100 空调设备组</td><td>0_100 空调设备组/空调总功率/kW</td><td><input class="field-control" type="text" value="0.00" style="max-width:140px"></td><td><input class="field-control" type="text" value="300.00" style="max-width:140px"></td><td><input class="field-control" type="text" value="" placeholder="不参与偏差判定" style="max-width:140px"></td></tr>
+                    <tr><td>0_100 空调设备组/回风温度均值/℃</td><td><input class="field-control" type="text" value="15.00" style="max-width:140px"></td><td><input class="field-control" type="text" value="35.00" style="max-width:140px"></td><td><input class="field-control" type="text" value="" placeholder="请输入" style="max-width:140px"></td></tr>
+                    <tr><td>0_100 空调设备组/供冷与发热平衡偏差/℃</td><td><input class="field-control" type="text" value="-1.00" style="max-width:140px"></td><td><input class="field-control" type="text" value="1.00" style="max-width:140px"></td><td></td></tr>
+                    <tr><td rowspan="3">精密空调1</td><td>精密空调1/送风温度/℃</td><td><input class="field-control" type="text" value="10.00" style="max-width:140px"></td><td><input class="field-control" type="text" value="30.00" style="max-width:140px"></td><td><input class="field-control" type="text" value="" placeholder="请输入" style="max-width:140px"></td></tr>
+                    <tr><td>精密空调1/有功功率/kW</td><td><input class="field-control" type="text" value="0.00" style="max-width:140px"></td><td><input class="field-control" type="text" value="30.00" style="max-width:140px"></td><td><input class="field-control" type="text" value="" placeholder="请输入" style="max-width:140px"></td></tr>
+                    <tr><td>精密空调1/容量指令/%</td><td><input class="field-control" type="text" value="0.00" style="max-width:140px"></td><td><input class="field-control" type="text" value="100.00" style="max-width:140px"></td><td><input class="field-control" type="text" value="" placeholder="不参与偏差判定" style="max-width:140px"></td></tr>
+                    <tr><td rowspan="3">精密空调5新</td><td>精密空调5新/送风温度/℃</td><td><input class="field-control" type="text" value="10.00" style="max-width:140px"></td><td><input class="field-control" type="text" value="30.00" style="max-width:140px"></td><td><input class="field-control" type="text" value="" placeholder="请输入" style="max-width:140px"></td></tr>
+                    <tr><td>精密空调5新/有功功率/kW</td><td><input class="field-control" type="text" value="0.00" style="max-width:140px"></td><td><input class="field-control" type="text" value="36.00" style="max-width:140px"></td><td><input class="field-control" type="text" value="" placeholder="请输入" style="max-width:140px"></td></tr>
+                    <tr><td>精密空调5新/容量指令/%</td><td><input class="field-control" type="text" value="0.00" style="max-width:140px"></td><td><input class="field-control" type="text" value="100.00" style="max-width:140px"></td><td><input class="field-control" type="text" value="" placeholder="不参与偏差判定" style="max-width:140px"></td></tr>
+                    <tr><td rowspan="2">冷点A-1</td><td>冷点A-1/温度/℃</td><td><input class="field-control" type="text" value="15.00" style="max-width:140px"></td><td><input class="field-control" type="text" value="32.00" style="max-width:140px"></td><td><input class="field-control" type="text" value="" placeholder="请输入" style="max-width:140px"></td></tr>
+                    <tr><td>冷点A-1/相对湿度/%RH</td><td><input class="field-control" type="text" value="20.00" style="max-width:140px"></td><td><input class="field-control" type="text" value="80.00" style="max-width:140px"></td><td><input class="field-control" type="text" value="" placeholder="请输入" style="max-width:140px"></td></tr>
+                    <tr><td rowspan="1">热点A-1</td><td>热点A-1/温度/℃</td><td><input class="field-control" type="text" value="20.00" style="max-width:140px"></td><td><input class="field-control" type="text" value="45.00" style="max-width:140px"></td><td><input class="field-control" type="text" value="" placeholder="请输入" style="max-width:140px"></td></tr>
+                  </tbody>
+                  <tbody id="boundaryBodyWater">
                     <tr>
                       <td>蓄冷罐组</td>
                       <td>蓄冷罐组/可放冷时长/min</td>
@@ -1274,11 +1464,71 @@
       })
 
       document.getElementById('btnSimVerify').addEventListener('click', function () {
-        window.location.assign('仿真校验.html')
+        window.location.assign(simVerifyHref())
       })
+      // v2.9 末端机房仿真模型类型切换；不带 ?type=terminal 时不执行切换，冷站演示保持原样
+      const simTypeSelect = document.getElementById('simType')
+      const simObjSelect = document.getElementById('simObj')
+      const simObjLabel = document.querySelector('label[for="simObj"]')
+      const waterModules = document.getElementById('waterModules')
+      const terminalModules = document.getElementById('terminalModules')
+      const predictBodyWater = document.getElementById('predictTableBody')
+      const predictBodyTerminal = document.getElementById('predictTableBodyTerminal')
+      const boundaryBodyWater = document.getElementById('boundaryBodyWater')
+      const boundaryBodyTerminal = document.getElementById('boundaryBodyTerminal')
+      let predictReady = false
+      const moduleChecks = document.querySelector('.module-checks')
+      const btnPredictEl = document.getElementById('btnPredict')
+      const waterOnlySections = [
+        moduleChecks ? moduleChecks.closest('.section-card') : null,
+        btnPredictEl ? btnPredictEl.closest('.section-card') : null,
+        document.querySelector('.section-card.boundary-card')
+      ]
+      const waterSimObjHtml = simObjSelect ? simObjSelect.innerHTML : ''
+      const waterSimObjLabelHtml = simObjLabel ? simObjLabel.innerHTML : ''
+      const isDemoSite = params.get('site') === 'demo'
+      let currentSimType = 'water'
+
+      function simVerifyHref() {
+        if (currentSimType !== 'terminal') return '仿真校验.html'
+        const isDemoObj = !!simObjSelect && simObjSelect.value.indexOf('CW-DEMO') === 0
+        return '仿真校验.html?type=terminal' + (isDemoObj ? '&site=demo' : '')
+      }
+
+      const applySimType = function (type) {
+        currentSimType = type === 'terminal' ? 'terminal' : 'water'
+        const terminal = currentSimType === 'terminal'
+        if (simObjSelect) {
+          simObjSelect.innerHTML = terminal
+            ? '<option value="">请选择</option>' +
+              '<option' + (isDemoSite ? '' : ' selected') + '>0_100 空调设备组（江苏分中心二层）</option>' +
+              '<option' + (isDemoSite ? ' selected' : '') + '>CW-DEMO 空调设备组（冷冻水 demo）</option>'
+            : waterSimObjHtml
+        }
+        if (simObjLabel) {
+          simObjLabel.innerHTML = terminal ? '<span class="required">*</span>仿真模型对象（空调设备组）：' : waterSimObjLabelHtml
+        }
+        if (waterModules) waterModules.hidden = terminal
+        if (terminalModules) terminalModules.hidden = !terminal
+        if (predictBodyWater) predictBodyWater.hidden = terminal
+        if (predictBodyTerminal) predictBodyTerminal.hidden = !terminal
+        if (boundaryBodyWater) boundaryBodyWater.hidden = terminal
+        if (boundaryBodyTerminal) boundaryBodyTerminal.hidden = !terminal
+        if (predictReady) renderPredictionResults()
+      }
+
+      if (simTypeSelect) {
+        simTypeSelect.addEventListener('change', function () {
+          applySimType(simTypeSelect.value)
+        })
+      }
 
       const predictTableBody = document.getElementById('predictTableBody')
-      const predictRows = Array.prototype.slice.call(document.querySelectorAll('#predictTableBody tr'))
+      // 冷站行与末端行共用同一套预测逻辑；只处理当前类型下可见的那组行
+      const predictRows = Array.prototype.slice.call(document.querySelectorAll('#predictTableBody tr, #predictTableBodyTerminal tr'))
+      const activeRows = function () {
+        return predictRows.filter(function (row) { var tb = row.closest('tbody'); return tb && !tb.hidden })
+      }
       const btnPredict = document.getElementById('btnPredict')
       const predictSummary = document.getElementById('predictSummary')
       const predictSummaryMain = document.getElementById('predictSummaryMain')
@@ -1382,7 +1632,7 @@
       }
 
       const setSummary = function (state, successCount, failCount) {
-        var total = predictRows.length
+        var total = activeRows().length
         predictSummary.className = 'predict-summary ' + state
         cntPredictTotal.textContent = total
         cntPredictSuccess.textContent = successCount
@@ -1401,7 +1651,7 @@
       const renderPredictionResults = function () {
         var successCount = 0
         var failCount = 0
-        predictRows.forEach(function (row) {
+        activeRows().forEach(function (row) {
           var valueCell = row.querySelector('.predict-value')
           var deltaCell = row.querySelector('.predict-delta')
           var failureCell = row.querySelector('.failure-text')
@@ -1429,7 +1679,7 @@
       }
 
       const setPredictionRunning = function () {
-        predictRows.forEach(function (row) {
+        activeRows().forEach(function (row) {
           var valueCell = row.querySelector('.predict-value')
           var deltaCell = row.querySelector('.predict-delta')
           var failureCell = row.querySelector('.failure-text')
@@ -1444,7 +1694,7 @@
         setSummary('running', 0, 0)
       }
 
-      predictTableBody.addEventListener('change', function (event) {
+      const onModelSelectChange = function (event) {
         var target = event.target
         if (!target.classList || !target.classList.contains('model-select')) return
         var row = target.closest('tr')
@@ -1465,6 +1715,9 @@
           row.dataset.failure = '未选择模型，请先在模型名称列选择可用模型'
         }
         renderPredictionResults()
+      }
+      ;[predictTableBody, document.getElementById('predictTableBodyTerminal')].forEach(function (tb) {
+        if (tb) tb.addEventListener('change', onModelSelectChange)
       })
 
       btnPredict.addEventListener('click', function () {
@@ -1479,9 +1732,15 @@
         }, 1200)
       })
 
-      var lastRuntimeRow = predictRows[predictRows.length - 1]
+      var waterRows = predictRows.filter(function (row) { return row.closest('tbody') === predictTableBody })
+      var lastRuntimeRow = waterRows[waterRows.length - 1]
       if (lastRuntimeRow && (lastRuntimeRow.dataset.failure || '').includes('未选择模型')) {
         lastRuntimeRow.dataset.failure = '适用范围内候选模型均不可用，请检查预测模型服务状态'
+      }
+      predictReady = true
+      if (simTypeSelect && params.get('type') === 'terminal') {
+        simTypeSelect.value = 'terminal'
+        applySimType('terminal')
       }
       renderAllModelCells()
       renderPredictionResults()

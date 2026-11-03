@@ -170,15 +170,9 @@
     .page-foot {
       display: flex;
       align-items: flex-end;
-      justify-content: space-between;
+      justify-content: flex-end;
       gap: 16px;
       padding: 16px 18px;
-    }
-
-    .page-note {
-      font-size: 12px;
-      color: var(--text-secondary);
-      line-height: 1.75;
     }
 
     .pagination-wrap {
@@ -258,15 +252,11 @@
         display: none;
       }
 
-      .page-head,
-      .page-foot {
+      .page-head {
         flex-direction: column;
         align-items: flex-start;
       }
 
-      .pagination-wrap {
-        align-items: flex-start;
-      }
     }
   </style>
   <link rel="stylesheet" href="annotation-styles.css">
@@ -286,6 +276,28 @@
               <p><b>更新日期：</b>2026-03-20</p>
               <p><b>变更概述：</b>机房热力模型列表页上线，展示当前末端水冷系统下已创建的全部机房热力模型，支持新建、编辑与删除操作。</p>
               <p><b>本页说明：</b>入口为侧栏「机房热力模型」；列表按创建时间倒序展示，含模型名称、机房、状态、操作列；点击「创建机房热力模型」进入两步创建流程。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-version-header" data-version="v2.9" data-date="2026-10-31">
+            <span class="anno-tag">版本信息</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v2.9</p>
+              <p><b>更新日期：</b>2026-10-31</p>
+              <p><b>变更概述：</b>v2.9 末端仿真寻优 · 机房模型校验。评审调整：校验不在创建步骤 1 执行，改为机房热力模型保存完成后单独校验（参照「系统仿真建模 → 仿真验证」）。本页操作列新增「模型校验」入口，进入新页「机房寻优-机房模型校验」查看结果、重新校验。</p>
+              <p><b>本页说明：</b>其余列、创建 / 编辑 / 删除与 v1.6 一致。从创建步骤 2「完成」回到本页时 toast 提示保存成功并引导校验（URL 带 <code>saved=1</code>）。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-field" data-version="v2.9">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">产品推断</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>操作列「模型校验」</p>
+              <p>每行常驻，点击进入「机房寻优-机房模型校验」查看最近一次结果，可「重新校验」；保存后从未校验或校验后又修改过的模型，进入即自动执行一次。</p>
             </div>
           </div>
 
@@ -323,6 +335,7 @@
                     <td>
                       <div class="actions">
                         <span class="action-link" data-action="view">查看</span>
+                        <a class="action-link" data-action="verify" href="机房寻优-机房模型校验.html?room=101">模型校验</a>
                         <span class="action-link" data-action="edit">编辑</span>
                         <span class="action-link delete" data-action="delete">删除</span>
                       </div>
@@ -340,6 +353,7 @@
                     <td>
                       <div class="actions">
                         <span class="action-link" data-action="view">查看</span>
+                        <a class="action-link" data-action="verify" href="机房寻优-机房模型校验.html?room=102">模型校验</a>
                         <span class="action-link" data-action="edit">编辑</span>
                         <span class="action-link delete" data-action="delete">删除</span>
                       </div>
@@ -357,6 +371,7 @@
                     <td>
                       <div class="actions">
                         <span class="action-link" data-action="view">查看</span>
+                        <a class="action-link" data-action="verify" href="机房寻优-机房模型校验.html?room=103">模型校验</a>
                         <span class="action-link" data-action="edit">编辑</span>
                         <span class="action-link delete" data-action="delete">删除</span>
                       </div>
@@ -374,6 +389,7 @@
                     <td>
                       <div class="actions">
                         <span class="action-link" data-action="view">查看</span>
+                        <a class="action-link" data-action="verify" href="机房寻优-机房模型校验.html?room=104">模型校验</a>
                         <span class="action-link" data-action="edit">编辑</span>
                         <span class="action-link delete" data-action="delete">删除</span>
                       </div>
@@ -391,6 +407,7 @@
                     <td>
                       <div class="actions">
                         <span class="action-link" data-action="view">查看</span>
+                        <a class="action-link" data-action="verify" href="机房寻优-机房模型校验.html?room=105">模型校验</a>
                         <span class="action-link" data-action="edit">编辑</span>
                         <span class="action-link delete" data-action="delete">删除</span>
                       </div>
@@ -401,10 +418,6 @@
             </div>
 
             <div class="page-foot">
-              <div class="page-note">
-                <div>排序：按照创建时间倒序排列</div>
-                <div>分页：20条/页</div>
-              </div>
               <div class="pagination-wrap">
                 <div class="pagination-total">总共 85 个项目</div>
                 <div class="pagination">
@@ -447,6 +460,7 @@
       document.querySelectorAll('.action-link').forEach(function (item) {
         item.addEventListener('click', function () {
           const action = item.getAttribute('data-action');
+          if (action === 'verify') return;
           const row = item.closest('tr');
           const roomName = row ? row.children[0].textContent.trim() : '当前机房';
 
@@ -459,6 +473,13 @@
           }
         });
       });
+
+      if (new URLSearchParams(location.search).get('saved') === '1') {
+        toast.style.maxWidth = '360px';
+        showToast('机房热力模型已保存。可在操作列点「模型校验」检查空调属性、写点与拓扑是否满足仿真寻优');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 4000);
+      }
 
       document.querySelectorAll('.page-item, .page-arrow').forEach(function (item) {
         item.addEventListener('click', function () {

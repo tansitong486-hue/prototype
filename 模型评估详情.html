@@ -1,1300 +1,871 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>模型评估详情 · 冷水主机功率预测</title>
-  <style>
-    :root {
-      --primary: #1E40AF;
-      --primary-dark: #17358A;
-      --primary-light: #EEF4FF;
-      --text-primary: #0F172A;
-      --text-secondary: #475569;
-      --text-hint: #94A3B8;
-      --border: #D8E1EB;
-      --border-light: #EAF0F6;
-      --bg-body: #F6F8FB;
-      --bg-card: #FFFFFF;
-      --danger: #DC2626;
-      --success: #16A34A;
-      --warning: #D97706;
-      --radius: 8px;
-      --radius-lg: 12px;
-      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
-      --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
-      --transition: .22s cubic-bezier(.4, 0, .2, 1);
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-      font-size: 14px;
-      color: var(--text-primary);
-      background: var(--bg-body);
-      -webkit-font-smoothing: antialiased;
-    }
-
-    a { text-decoration: none; color: inherit; }
-    button {
-      border: none;
-      background: none;
-      font: inherit;
-      cursor: pointer;
-    }
-
-    .layout { display: flex; flex-direction: column; min-height: 100vh; }
-    .body-wrap { display: flex; flex: 1; min-height: 0; }
-    .main {
-      flex: 1;
-      min-width: 0;
-      overflow-y: auto;
-      background: var(--bg-body);
-    }
-
-    .page-header {
-      background: var(--bg-card);
-      padding: 0 20px;
-      border-bottom: 1px solid var(--border-light);
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .page-header-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 0;
-    }
-
-    .back-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      color: var(--text-secondary);
-      transition: color var(--transition);
-    }
-
-    .back-link:hover { color: var(--primary); }
-
-    .page-title {
-      font-size: 18px;
-      font-weight: 700;
-      line-height: 1.4;
-    }
-
-    .page-subtitle {
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin-top: 2px;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      height: 34px;
-      padding: 0 14px;
-      border-radius: var(--radius);
-      transition: all var(--transition);
-      white-space: nowrap;
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    .btn-default {
-      background: #fff;
-      border: 1px solid var(--border);
-      color: var(--text-primary);
-    }
-
-    .btn-default:hover {
-      border-color: var(--primary);
-      color: var(--primary);
-      background: #FAFBFF;
-    }
-
-    .btn-primary {
-      color: #fff;
-      background: var(--primary);
-      border: 1px solid transparent;
-    }
-
-    .btn-primary:hover { background: var(--primary-dark); }
-
-    .content-body {
-      padding: 14px 20px 24px;
-      max-width: 1480px;
-      width: 100%;
-      margin: 0 auto;
-    }
-
-    .meta-strip {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    .meta-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-sm);
-      padding: 14px 16px;
-    }
-
-    .meta-label {
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin-bottom: 6px;
-    }
-
-    .meta-value {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--text-primary);
-    }
-
-    .meta-value.status-online { color: var(--success); }
-
-    .section-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-sm);
-      overflow: hidden;
-      margin-bottom: 16px;
-    }
-
-    .section-head {
-      padding: 14px 18px;
-      border-bottom: 1px solid var(--border-light);
-      background: #FBFCFE;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .section-head-main {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .step-num {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: var(--primary);
-      color: #fff;
-      font-size: 12px;
-      font-weight: 700;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .section-title {
-      font-size: 15px;
-      font-weight: 700;
-    }
-
-    .section-body { padding: 18px; }
-
-    .note-block {
-      background: #F8FAFC;
-      border: 1px dashed var(--border);
-      border-radius: var(--radius);
-      padding: 10px 12px;
-      font-size: 12px;
-      color: var(--text-secondary);
-      line-height: 1.7;
-      margin-bottom: 14px;
-    }
-
-    .overview-table {
-      width: 100%;
-      border-collapse: collapse;
-      overflow: hidden;
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius);
-    }
-
-    .overview-table th,
-    .overview-table td {
-      padding: 14px 14px;
-      border-bottom: 1px solid var(--border-light);
-      text-align: left;
-      vertical-align: top;
-    }
-
-    .overview-table thead th {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      background: #F8FAFC;
-    }
-
-    .overview-table tbody tr:last-child td { border-bottom: none; }
-
-    .metric-name {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-primary);
-      white-space: nowrap;
-    }
-
-    .metric-value {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--primary);
-      line-height: 1.2;
-      white-space: nowrap;
-    }
-
-    .metric-desc {
-      font-size: 12px;
-      color: var(--text-secondary);
-      line-height: 1.75;
-    }
-
-    .tab-group {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: #F1F5F9;
-      padding: 4px;
-      border-radius: 999px;
-    }
-
-    .tab-btn {
-      height: 30px;
-      padding: 0 14px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      transition: all var(--transition);
-    }
-
-    .tab-btn.active {
-      background: #fff;
-      color: var(--primary);
-      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
-    }
-
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
-
-    .chart-card {
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius);
-      background: #fff;
-      padding: 12px 12px 8px;
-    }
-
-    .chart-frame {
-      width: 100%;
-      min-height: 360px;
-      border-radius: var(--radius);
-      background:
-        linear-gradient(to right, rgba(216, 225, 235, 0.75) 1px, transparent 1px) 0 0 / 56px 56px,
-        linear-gradient(to bottom, rgba(216, 225, 235, 0.75) 1px, transparent 1px) 0 0 / 56px 56px,
-        linear-gradient(180deg, #FCFDFF 0%, #F8FAFC 100%);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .chart-frame svg {
-      display: block;
-      width: 100%;
-      height: 100%;
-      min-height: 360px;
-    }
-
-    .chart-axis-labels {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin-top: 10px;
-    }
-
-    .chart-side-label {
-      writing-mode: vertical-rl;
-      text-orientation: mixed;
-      position: absolute;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%) rotate(180deg);
-      font-size: 12px;
-      color: var(--text-secondary);
-      letter-spacing: 1px;
-    }
-
-    .chart-legend {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 14px;
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin-bottom: 10px;
-    }
-
-    .legend-item {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .legend-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-    }
-
-    .legend-line {
-      width: 18px;
-      height: 0;
-      border-top: 2px dashed #94A3B8;
-    }
-
-    .table-wrap {
-      overflow-x: auto;
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius);
-    }
-
-    .data-table {
-      width: 100%;
-      min-width: 1160px;
-      border-collapse: collapse;
-    }
-
-    .data-table thead th {
-      padding: 10px 12px;
-      text-align: left;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      background: #F8FAFC;
-      border-bottom: 1px solid var(--border);
-      white-space: nowrap;
-    }
-
-    .data-table tbody td {
-      padding: 10px 12px;
-      font-size: 13px;
-      border-bottom: 1px solid var(--border-light);
-      vertical-align: middle;
-      white-space: nowrap;
-    }
-
-    .data-table tbody tr:hover { background: #FAFCFF; }
-    .data-table tbody tr:last-child td { border-bottom: none; }
-
-    .pager {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-top: 12px;
-      flex-wrap: wrap;
-    }
-
-    .pager-info {
-      font-size: 12px;
-      color: var(--text-secondary);
-    }
-
-    .pager-actions {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .page-chip {
-      min-width: 30px;
-      height: 30px;
-      padding: 0 8px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: #fff;
-      font-size: 12px;
-      color: var(--text-secondary);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .page-chip.active {
-      color: #fff;
-      background: var(--primary);
-      border-color: var(--primary);
-    }
-
-    .split-layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
-      gap: 16px;
-      align-items: stretch;
-    }
-
-    .metric-side {
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius);
-      background: #fff;
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .side-title {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text-primary);
-    }
-
-    .mini-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    .mini-table th,
-    .mini-table td {
-      padding: 8px 0;
-      border-bottom: 1px solid var(--border-light);
-      text-align: left;
-      font-size: 12px;
-    }
-
-    .mini-table th {
-      color: var(--text-secondary);
-      font-weight: 600;
-    }
-
-    .mini-table td {
-      color: var(--text-primary);
-      font-variant-numeric: tabular-nums;
-    }
-
-    .mini-table tr:last-child th,
-    .mini-table tr:last-child td { border-bottom: none; }
-
-    .info-tip {
-      background: #F8FAFC;
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius);
-      padding: 10px 12px;
-      font-size: 12px;
-      line-height: 1.7;
-      color: var(--text-secondary);
-    }
-
-    .richness-table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #fff;
-    }
-
-    .richness-table thead th,
-    .richness-table tbody td {
-      padding: 12px 8px;
-      border-bottom: 1px solid var(--border-light);
-      text-align: left;
-      font-size: 12px;
-      vertical-align: middle;
-    }
-
-    .richness-table thead th {
-      color: var(--text-primary);
-      font-weight: 600;
-      white-space: nowrap;
-      border-bottom-color: var(--border);
-    }
-
-    .richness-table tbody td {
-      color: var(--text-primary);
-      font-variant-numeric: tabular-nums;
-    }
-
-    .richness-table tbody tr:last-child td { border-bottom: none; }
-
-    .richness-info-icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 12px;
-      height: 12px;
-      margin-left: 4px;
-      border: 1px solid #CBD5E1;
-      border-radius: 50%;
-      color: #94A3B8;
-      font-size: 9px;
-      line-height: 1;
-      vertical-align: middle;
-    }
-
-    /* 导出模态 */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.5);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 100000;
-      padding: 24px;
-    }
-    .modal-backdrop.show { display: flex; }
-    body.modal-open { overflow: hidden; }
-    .modal {
-      position: relative;
-      background: #fff;
-      border-radius: var(--radius-lg);
-      box-shadow: 0 24px 48px rgba(15,23,42,.18);
-      max-width: 440px;
-      width: 100%;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      animation: modal-in .2s ease;
-    }
-    @keyframes modal-in {
-      from { opacity: 0; transform: translateY(8px) scale(0.98); }
-      to   { opacity: 1; transform: translateY(0) scale(1); }
-    }
-    .modal-head {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border-light);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-    .modal-title { font-size: 16px; font-weight: 700; }
-    .modal-close {
-      width: 32px; height: 32px;
-      border-radius: var(--radius);
-      cursor: pointer;
-      color: var(--text-hint);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px; line-height: 1;
-    }
-    .modal-close:hover { background: #F1F5F9; color: var(--text-primary); }
-    .modal-body { padding: 20px; display: flex; flex-direction: column; gap: 18px; }
-    .modal-foot {
-      padding: 12px 20px;
-      border-top: 1px solid var(--border-light);
-      display: flex; justify-content: flex-end; gap: 10px;
-    }
-    .form-label {
-      display: block;
-      font-size: 12px; font-weight: 600;
-      color: var(--text-secondary);
-      margin-bottom: 8px;
-    }
-    .radio-group { display: flex; flex-direction: column; gap: 8px; }
-    .radio-opt {
-      display: inline-flex; align-items: center; gap: 8px;
-      font-size: 13px; cursor: pointer;
-    }
-    .radio-opt input { accent-color: var(--primary); width: 15px; height: 15px; cursor: pointer; }
-    .export-hint {
-      font-size: 12px; color: var(--text-secondary);
-      background: #F8FAFC; border: 1px solid var(--border-light);
-      border-radius: var(--radius); padding: 10px 12px; line-height: 1.7;
-    }
-
-    /* Toast */
-    .toast {
-      position: fixed; right: 24px; bottom: 24px;
-      min-width: 180px; max-width: 360px;
-      padding: 12px 14px; border-radius: 10px;
-      background: rgba(15,23,42,.92); color: #fff;
-      font-size: 12px; line-height: 1.6;
-      opacity: 0; transform: translateY(12px);
-      pointer-events: none; transition: all .25s ease; z-index: 100050;
-    }
-    .toast.show { opacity: 1; transform: translateY(0); }
-
-    /* 页头右侧区域 */
-    .page-header {
-      justify-content: space-between;
-    }
-    .page-header-right {
-      padding: 12px 0;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .layer-pill,
-    .confidence-pill {
-      display: inline-flex;
-      align-items: center;
-      height: 22px;
-      padding: 0 8px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-    .layer-pill.base { background: #EFF6FF; color: var(--primary); }
-    .layer-pill.standard { background: #ECFDF5; color: var(--success); }
-    .confidence-pill.high { background: #ECFDF5; color: var(--success); }
-    .confidence-pill.low { background: #F1F5F9; color: #475569; }
-    @media (max-width: 1200px) {
-      .meta-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .split-layout { grid-template-columns: 1fr; }
-    }
-
-    @media (max-width: 760px) {
-      .page-header,
-      .page-header-left { align-items: flex-start; }
-      .meta-strip { grid-template-columns: 1fr; }
-      .content-body { padding-left: 12px; padding-right: 12px; }
-      .section-head { align-items: flex-start; }
-    }
-  </style>
-  <link rel="stylesheet" href="annotation-styles.css">
-</head>
-<body>
-  <div class="layout">
-    <div class="body-wrap">
-      <main class="main">
-        <div class="anno-filter-bar" id="annoFilterBar">
-          <span class="anno-filter-label">批注版本：</span>
-          <div class="anno-filter-tags" id="annoFilterTags"></div>
-        </div>
-        <header class="page-header">
-          <div class="page-header-left">
-            <a class="back-link" href="javascript:history.back()">
-              <span>←</span>
-              <span>返回</span>
-            </a>
-            <div>
-              <div class="page-title">冷水主机功率预测&nbsp;|&nbsp;美的E3005预测模型服务</div>
-              <div class="page-subtitle">版本：v202508121230</div>
-            </div>
-          </div>
-          <div class="page-header-right">
-            <button type="button" class="btn btn-default" id="btnExportDataset">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="margin-right:5px;flex-shrink:0;" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              导出数据集
-            </button>
-          </div>
-        </header>
-
-        <div class="content-body">
-          <div class="anno anno-version-header" data-version="v2.2">
-            <span class="anno-tag">版本信息</span>
-            <div class="anno-body">
-              <p><b>当前版本：</b>v2.2</p>
-              <p><b>更新日期：</b>2026-05-28</p>
-              <p><b>变更概述：</b>v2.2 包含三项变更：① 评估指标区新增 Max-bin RMSE（最大分区误差）指标，位于 RMSE 与 MAPE 之间，是「多工况泛化优先」模型选择策略的排序依据；② 新增「分工况表现」区块，按模型参数的分层抽样配置对验证集分区，展示各区间 RMSE、样本量和数据覆盖率；③ 新增数据集导出功能：页头右侧增加「导出数据集」按钮，点击后下载原始数据集 CSV 文件。</p>
-            </div>
-          </div>
-
-          <div class="anno anno-version-header" data-version="v2.3">
-            <span class="anno-tag">版本信息</span>
-            <div class="anno-body">
-              <p><b>当前版本：</b>v2.3</p>
-              <p><b>更新日期：</b>2026-06-15</p>
-              <p><b>变更概述：</b>详情页从“单模型评估结果”调整为“两类模型评估结果”：「评估指标」保留混合增强模型（对外默认出值口径）与机理模型两行，去掉“整体出值口径”独立行和 MAE 指标；「分工况表现」复用统一高/低置信分箱，展示置信等级与区间 RMSE，去掉出值层级列。</p>
-            </div>
-          </div>
-
-          <div class="anno anno-ux" data-version="v2.2">
-            <span class="anno-tag">交互说明</span>
-            <span class="anno-version">v2.2</span>
-            <span class="anno-source">产品设计</span>
-            <div class="anno-body">
-              <p><b>关联模块：</b>数据集导出（页头「导出数据集」按钮）</p>
-              <ul>
-                <li><b>入口：</b>页面头部右侧「导出数据集」按钮，任意 Tab 下均可操作，与当前 Tab 视图无关联。</li>
-                <li><b>导出内容：</b>固定导出原始数据集（模型训练时使用的全量数据，含全部特征列及标签列）。</li>
-                <li><b>文件格式：</b>固定 CSV（UTF-8 BOM，逗号分隔），无需选择。</li>
-                <li><b>确定：</b>触发文件下载，文件名格式为「模型名称_原始数据集_时间戳.csv」（如 冷水主机功率预测_原始数据集_20260528.csv）；下载请求发起后关闭弹窗并展示 Toast 提示。</li>
-                <li><b>取消：</b>关闭弹窗，不触发下载。</li>
-              </ul>
-            </div>
-          </div>
-
-          <div class="anno anno-field" data-version="v2.2">
-            <span class="anno-tag">字段说明</span>
-            <span class="anno-version">v2.2</span>
-            <span class="anno-source">产品设计</span>
-            <div class="anno-body">
-              <p><b>关联模块：</b>导出文件内容</p>
-              <table class="anno-table">
-                <thead><tr><th>导出内容</th><th>包含列</th><th>数据范围</th></tr></thead>
-                <tbody>
-                  <tr><td>原始数据集</td><td>序号、标签（实际值）、特征值1…特征值N</td><td>模型训练时使用的全量原始数据</td></tr>
-                </tbody>
-              </table>
-              <p style="margin-top:8px;">特征列名称与顺序与模型训练时配置的特征一致，由后端动态返回。</p>
-            </div>
-          </div>
-
-          <div class="anno anno-field" data-version="v2.2">
-            <span class="anno-tag">字段说明</span>
-            <span class="anno-version">v2.2</span>
-            <span class="anno-source">需求文档</span>
-            <div class="anno-body">
-              <p><b>关联模块：</b>评估指标 · Max-bin RMSE 行</p>
-              <table class="anno-table">
-                <thead><tr><th>字段</th><th>说明</th></tr></thead>
-                <tbody>
-                  <tr><td>Max-bin RMSE（最大分区误差）</td><td><b>v2.2 新增。</b>取自「分工况表现」区块：所有样本充足区间（样本 ≥ 20）中 RMSE 的最大值。反映模型在最薄弱工况下的预测能力，值越低越好。该指标同时出现在机理模型训练列表的「评估效果」列、历史版本弹窗、迁移学习弹窗中，是「多工况泛化优先」模型选择策略的排序依据。</td></tr>
-                  <tr><td>展示位置</td><td>位于评估指标表的混合增强模型行；若模型训练未完成分工况评估（如分层数全为 1、或无充足区间），显示「—」。</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <section class="section-card">
-            <div class="section-head">
-              <div class="section-head-main">
-                <span class="step-num">1</span>
-                <h2 class="section-title">评估指标</h2>
-              </div>
-            </div>
-            <div class="section-body">
-              <div class="table-wrap">
-                <table class="data-table" style="min-width:980px;">
-                  <thead>
-                    <tr>
-                      <th>模型</th>
-                      <th style="text-align:right;">RMSE</th>
-                      <th style="text-align:right;">Max-bin RMSE</th>
-                      <th style="text-align:right;">MAPE</th>
-                      <th style="text-align:right;">R²</th>
-                      <th style="min-width:340px;">说明</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td><span class="layer-pill standard">混合增强模型</span></td>
-                      <td style="text-align:right;">0.012</td>
-                      <td style="text-align:right;">0.019</td>
-                      <td style="text-align:right;">2.45%</td>
-                      <td style="text-align:right;">0.994</td>
-                      <td>主力预测模型，结合现场历史数据持续校准，精度更高，日常预测默认使用本模型。</td>
-                    </tr>
-                    <tr>
-                      <td><span class="layer-pill base">机理模型</span></td>
-                      <td style="text-align:right;">0.063</td>
-                      <td style="text-align:right;">0.094</td>
-                      <td style="text-align:right;">12.8%</td>
-                      <td style="text-align:right;">0.812</td>
-                      <td>兜底保障模型，基于设备物理规律计算，无需历史数据，在数据不足时自动生效，保证预测不中断。</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </section>
-
-          <div class="anno anno-field" data-version="v2.3">
-            <span class="anno-tag">字段说明</span>
-            <span class="anno-version">v2.3</span>
-            <span class="anno-source">需求文档</span>
-            <div class="anno-body">
-              <p><b>关联模块：</b>评估指标 · 模型行标签</p>
-              <p>「评估指标」表默认展示两行：<b>混合增强模型</b>与<b>机理模型</b>。当混合增强槽位切换为数理算法时，行标签随之变更为对应算法名称，不再显示"混合增强模型"。</p>
-              <table class="anno-table">
-                <thead><tr><th>混合增强槽位形态</th><th>行标签</th><th>说明</th></tr></thead>
-                <tbody>
-                  <tr><td>机理模型（缺省）</td><td>混合增强模型</td><td>绝大多数模型的默认形态，如冷机、水泵、冷却塔等有机理公式的模型</td></tr>
-                  <tr><td>支持向量回归（SVR）</td><td>支持向量回归（SVR）</td><td>末端最不利压差、管路压差等无机理公式类模型的默认数理算法</td></tr>
-                  <tr><td>其他数理算法（神经网络、梯度提升等）</td><td>对应算法名称</td><td>高级模式下手动切换数理算法时生效</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="anno anno-field" data-version="v2.2">
-            <span class="anno-tag">字段说明</span>
-            <span class="anno-version">v2.2</span>
-            <span class="anno-source">需求文档</span>
-            <div class="anno-body">
-              <p><b>关联模块：</b>分工况表现</p>
-              <p><b>v2.2 新增，v2.3 调整：</b>模型训练评估完成后，对分层数 ≥ 2 的所有参与特征做笛卡尔积，生成多维组合工况。v2.3 起低样本组合不再隐藏，保留为低置信行；Max-bin RMSE（最大分区误差）汇总后已在「评估指标」区展示，本区不再重复。</p>
-              <table class="anno-table">
-                <thead><tr><th>字段</th><th>说明</th></tr></thead>
-                <tbody>
-                  <tr><td>工况区间</td><td>所有参与分区特征的区间组合，格式为「特征A 区间 · 特征B 区间 · …」。分区特征和分层数取自模型参数配置的「分层抽样」列（分层数 ≥ 2）；每个特征按值域等距切分，区间边界 = min + (max − min) × k / 分层数。样本量 &lt; 20 的组合不展示。</td></tr>
-                  <tr><td>样本量</td><td>该组合工况内验证集的数据条数（仅展示 ≥ 20 的组合）。</td></tr>
-                  <tr><td>区间 RMSE</td><td>该组合工况内的均方根误差。RMSE 最大的行（即 Max-bin 来源行）用警示色高亮，帮助用户快速定位最薄弱的多维工况。</td></tr>
-                </tbody>
-              </table>
-              <p><b>与模型参数配置的关联：</b>分区特征和分层数完全由模型参数的「分层抽样」驱动，不需人工定义分区规则。修改分层数后，重新训练即可获得新的分区评估结果。</p>
-            </div>
-          </div>
-          <div class="anno anno-field" data-version="v2.3">
-            <span class="anno-tag">字段说明</span>
-            <span class="anno-version">v2.3</span>
-            <span class="anno-source">需求文档</span>
-            <div class="anno-body">
-              <p><b>关联模块：</b>分工况表现 · 置信等级</p>
-              <table class="anno-table">
-                <thead><tr><th>字段</th><th>说明</th></tr></thead>
-                <tbody>
-                  <tr><td>置信等级</td><td>按统一工况分箱样本数判定，样本数 ≥ 20 为高置信，否则为低置信。</td></tr>
-                  <tr><td>低置信行</td><td>v2.3 不再默认隐藏样本不足分箱，保留低置信行用于解释覆盖缺口。区间 RMSE 显示"—"表示样本不足，不参与 Max-bin 统计。</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <section class="section-card">
-            <div class="section-head">
-              <div class="section-head-main">
-                <span class="step-num">2</span>
-                <h2 class="section-title">分工况表现</h2>
-              </div>
-            </div>
-            <div class="section-body">
-              <div class="table-wrap">
-                <table class="data-table" style="min-width:860px;">
-                  <thead>
-                    <tr>
-                      <th>工况区间</th>
-                      <th style="text-align:right;">样本量</th>
-                      <th>置信等级</th>
-                      <th style="text-align:right;">区间 RMSE</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td style="font-size:12px;">流量 低(≤200 m³/h) · 供水温度 低(≤7℃) · 频率 低(≤35Hz)</td>
-                      <td style="text-align:right;">40</td>
-                      <td><span class="confidence-pill high">数据充分</span></td>
-                      <td style="text-align:right;">0.013</td>
-                    </tr>
-                    <tr>
-                      <td style="font-size:12px;">流量 低(≤200 m³/h) · 供水温度 低(≤7℃) · 频率 高(&gt;35Hz)</td>
-                      <td style="text-align:right;">28</td>
-                      <td><span class="confidence-pill high">数据充分</span></td>
-                      <td style="text-align:right;">0.016</td>
-                    </tr>
-                    <tr>
-                      <td style="font-size:12px;">流量 中(200-400 m³/h) · 供水温度 低(≤7℃) · 频率 低(≤35Hz)</td>
-                      <td style="text-align:right;">68</td>
-                      <td><span class="confidence-pill high">数据充分</span></td>
-                      <td style="text-align:right;">0.010</td>
-                    </tr>
-                    <tr>
-                      <td style="font-size:12px;">流量 中(200-400 m³/h) · 供水温度 低(≤7℃) · 频率 高(&gt;35Hz)</td>
-                      <td style="text-align:right;">78</td>
-                      <td><span class="confidence-pill high">数据充分</span></td>
-                      <td style="text-align:right;">0.009</td>
-                    </tr>
-                    <tr>
-                      <td style="font-size:12px;">流量 中(200-400 m³/h) · 供水温度 中(7-10℃) · 频率 低(≤35Hz)</td>
-                      <td style="text-align:right;">48</td>
-                      <td><span class="confidence-pill high">数据充分</span></td>
-                      <td style="text-align:right;font-weight:700;color:var(--warning);">0.019 ▲</td>
-                    </tr>
-                    <tr>
-                      <td style="font-size:12px;">流量 中(200-400 m³/h) · 供水温度 中(7-10℃) · 频率 高(&gt;35Hz)</td>
-                      <td style="text-align:right;">52</td>
-                      <td><span class="confidence-pill high">数据充分</span></td>
-                      <td style="text-align:right;">0.015</td>
-                    </tr>
-                    <tr style="background:#F8FAFC;color:var(--text-hint);">
-                      <td style="font-size:12px;">流量 高(&gt;400 m³/h) · 供水温度 低(≤7℃) · 频率 低(≤35Hz)</td>
-                      <td style="text-align:right;">8</td>
-                      <td><span class="confidence-pill low">数据积累中</span></td>
-                      <td style="text-align:right;">—</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-            </div>
-          </section>
-
-          <section class="section-card">
-            <div class="section-head">
-              <div class="section-head-main">
-                <span class="step-num">3</span>
-                <h2 class="section-title">数据集丰富度评估</h2>
-              </div>
-            </div>
-            <div class="section-body">
-              <div class="table-wrap">
-                <table class="richness-table" style="min-width:980px;">
-                  <thead>
-                    <tr>
-                      <th style="width: 200px;">参数名称</th>
-                      <th>最小值</th>
-                      <th>下四分位数</th>
-                      <th>中位数</th>
-                      <th>上四分位数</th>
-                      <th>最大值</th>
-                      <th>IQRNR<span class="richness-info-icon">?</span></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>冷冻水出水温度(℃)</td>
-                      <td>6.68</td>
-                      <td>11.88</td>
-                      <td>11.9</td>
-                      <td>12.06</td>
-                      <td>12.12</td>
-                      <td>0.033</td>
-                    </tr>
-                    <tr>
-                      <td>冷却水进水温度（计算）(℃)</td>
-                      <td>17</td>
-                      <td>24.61</td>
-                      <td>26.9</td>
-                      <td>29.6</td>
-                      <td>31.87</td>
-                      <td>0.336</td>
-                    </tr>
-                    <tr>
-                      <td>冷冻水流量(m3/h)</td>
-                      <td>164.63</td>
-                      <td>199.17</td>
-                      <td>208.19</td>
-                      <td>458.17</td>
-                      <td>599.13</td>
-                      <td>0.596</td>
-                    </tr>
-                    <tr>
-                      <td>冷却水流量(m3/h)</td>
-                      <td>200.79</td>
-                      <td>236.95</td>
-                      <td>248.33</td>
-                      <td>645.64</td>
-                      <td>796.7</td>
-                      <td>0.686</td>
-                    </tr>
-                    <tr>
-                      <td>实时制冷量(kW)</td>
-                      <td>983.23</td>
-                      <td>1184.19</td>
-                      <td>1239.6</td>
-                      <td>2103.09</td>
-                      <td>2498.98</td>
-                      <td>0.606</td>
-                    </tr>
-                    <tr>
-                      <td>有功功率(kW)</td>
-                      <td>168.21</td>
-                      <td>193.34</td>
-                      <td>203.59</td>
-                      <td>263.46</td>
-                      <td>330.9</td>
-                      <td>0.431</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </section>
-
-          <section class="section-card">
-            <div class="section-head">
-              <div class="section-head-main">
-                <span class="step-num">4</span>
-                <h2 class="section-title">验证集预测效果评估</h2>
-              </div>
-              <div class="tab-group" role="tablist" aria-label="验证集评估视图切换">
-                <button class="tab-btn active" type="button" data-tab-target="scatter">散点图</button>
-                <button class="tab-btn" type="button" data-tab-target="table">表格</button>
-              </div>
-            </div>
-            <div class="section-body">
-              <div class="tab-panel active" data-tab-panel="scatter">
-                <div class="note-block">
-                  散点图：x 轴显示真实值、y 轴显示预测值，图中保留 <code>y=x</code> 的虚线作为对照基线，用于直观判断预测偏差。
-                </div>
-                <div class="chart-card">
-                  <div class="chart-legend">
-                    <span class="legend-item"><span class="legend-dot" style="background:#2563EB;"></span>验证集样本</span>
-                    <span class="legend-item"><span class="legend-line"></span>理想拟合线 y=x</span>
-                  </div>
-                  <div class="chart-frame">
-                    <span class="chart-side-label">预测值</span>
-                    <svg viewBox="0 0 920 360" aria-label="验证集预测效果散点图">
-                      <line x1="70" y1="300" x2="860" y2="300" stroke="#64748B" stroke-width="1.5" />
-                      <line x1="70" y1="300" x2="70" y2="34" stroke="#64748B" stroke-width="1.5" />
-                      <line x1="110" y1="280" x2="810" y2="70" stroke="#94A3B8" stroke-width="2" stroke-dasharray="8 8" />
-                      <g fill="#2563EB" opacity="0.92">
-                        <circle cx="132" cy="266" r="6" />
-                        <circle cx="178" cy="248" r="6" />
-                        <circle cx="224" cy="236" r="6" />
-                        <circle cx="264" cy="220" r="6" />
-                        <circle cx="312" cy="208" r="6" />
-                        <circle cx="348" cy="188" r="6" />
-                        <circle cx="398" cy="176" r="6" />
-                        <circle cx="438" cy="166" r="6" />
-                        <circle cx="488" cy="154" r="6" />
-                        <circle cx="536" cy="142" r="6" />
-                        <circle cx="584" cy="126" r="6" />
-                        <circle cx="624" cy="116" r="6" />
-                        <circle cx="672" cy="100" r="6" />
-                        <circle cx="724" cy="88" r="6" />
-                        <circle cx="770" cy="78" r="6" />
-                      </g>
-                    </svg>
-                  </div>
-                  <div class="chart-axis-labels">
-                    <span>真实值</span>
-                    <span>验证集样本点越靠近虚线，表示预测效果越好</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="tab-panel" data-tab-panel="table">
-                <div class="note-block">
-                  表格：展示验证集中预测值、真实值以及相关的特征参数。特征参数名称、数量不固定，由后端动态返回；当前原型按 10 条 / 页展示。
-                </div>
-                <div class="table-wrap">
-                  <table class="data-table">
-                    <thead>
-                      <tr>
-                        <th style="width:60px;">序号</th>
-                        <th>预测值</th>
-                        <th>实际值</th>
-                        <th>开关状态</th>
-                        <th>冷冻水流量</th>
-                        <th>频率</th>
-                        <th>特征值4</th>
-                        <th>特征值5</th>
-                        <th>特征值6</th>
-                        <th>特征值7</th>
-                        <th>特征值8</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr><td>1</td><td>279.64</td><td>281.02</td><td>1.00</td><td>25.52</td><td>12.23</td><td>7.82</td><td>6.18</td><td>55.60</td><td>3.41</td><td>18.72</td></tr>
-                      <tr><td>2</td><td>285.91</td><td>286.30</td><td>1.00</td><td>26.10</td><td>12.76</td><td>8.20</td><td>6.44</td><td>57.18</td><td>3.56</td><td>19.08</td></tr>
-                      <tr><td>3</td><td>291.07</td><td>290.42</td><td>1.00</td><td>26.84</td><td>13.10</td><td>8.61</td><td>6.65</td><td>58.02</td><td>3.62</td><td>19.34</td></tr>
-                      <tr><td>4</td><td>296.38</td><td>295.96</td><td>1.00</td><td>27.28</td><td>13.42</td><td>8.96</td><td>6.82</td><td>58.76</td><td>3.78</td><td>19.60</td></tr>
-                      <tr><td>5</td><td>301.62</td><td>301.05</td><td>1.00</td><td>27.80</td><td>13.83</td><td>9.22</td><td>7.06</td><td>59.30</td><td>3.85</td><td>20.12</td></tr>
-                      <tr><td>6</td><td>308.21</td><td>307.84</td><td>1.00</td><td>28.14</td><td>14.06</td><td>9.50</td><td>7.20</td><td>60.12</td><td>3.94</td><td>20.44</td></tr>
-                      <tr><td>7</td><td>314.37</td><td>315.02</td><td>1.00</td><td>28.66</td><td>14.24</td><td>9.84</td><td>7.42</td><td>61.05</td><td>4.02</td><td>20.88</td></tr>
-                      <tr><td>8</td><td>320.15</td><td>319.30</td><td>1.00</td><td>29.06</td><td>14.56</td><td>10.10</td><td>7.68</td><td>61.76</td><td>4.18</td><td>21.24</td></tr>
-                      <tr><td>9</td><td>325.92</td><td>326.44</td><td>1.00</td><td>29.58</td><td>14.88</td><td>10.42</td><td>7.84</td><td>62.34</td><td>4.26</td><td>21.56</td></tr>
-                      <tr><td>10</td><td>331.40</td><td>332.12</td><td>1.00</td><td>30.12</td><td>15.22</td><td>10.76</td><td>8.02</td><td>63.18</td><td>4.38</td><td>22.04</td></tr>
-                    </tbody>
-                  </table>
-                </div>
-                <div class="pager">
-                  <div class="pager-info">总共 85 个项目</div>
-                  <div class="pager-actions">
-                    <span class="page-chip">上一页</span>
-                    <span class="page-chip active">1</span>
-                    <span class="page-chip">2</span>
-                    <span class="page-chip">3</span>
-                    <span class="page-chip">4</span>
-                    <span class="page-chip">5</span>
-                    <span class="page-chip">下一页</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section class="section-card">
-            <div class="section-head">
-              <div class="section-head-main">
-                <span class="step-num">5</span>
-                <h2 class="section-title">模型泛化效果评估</h2>
-              </div>
-            </div>
-            <div class="section-body">
-              <div class="note-block">
-                每个模型类型，将自动输入 n 组特征，进行批量预测，并将预测结果进行散点图可视化呈现，来辅助分析当前模型的泛化性效果。具体的批量自动验证规则见预测模型配置 Excel。
-              </div>
-
-              <div class="table-wrap" style="margin-bottom:12px;">
-                <table class="data-table" style="min-width:1240px;">
-                  <thead>
-                    <tr>
-                      <th>预测值</th>
-                      <th>开关状态</th>
-                      <th>冷冻水流量</th>
-                      <th>频率</th>
-                      <th>特征值4</th>
-                      <th>特征值5</th>
-                      <th>特征值6</th>
-                      <th>特征值7</th>
-                      <th>特征值8</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>279.64</td>
-                      <td>1.00</td><td>25.52</td><td>12.23</td>
-                      <td>7.82</td><td>6.18</td><td>55.60</td>
-                      <td>3.41</td><td>18.72</td>
-                    </tr>
-                    <tr>
-                      <td>285.91</td>
-                      <td>1.00</td><td>26.10</td><td>12.76</td>
-                      <td>8.20</td><td>6.44</td><td>57.18</td>
-                      <td>3.56</td><td>19.08</td>
-                    </tr>
-                    <tr>
-                      <td>291.07</td>
-                      <td>1.00</td><td>26.84</td><td>13.10</td>
-                      <td>8.61</td><td>6.65</td><td>58.02</td>
-                      <td>3.62</td><td>19.34</td>
-                    </tr>
-                    <tr style="background:#FAFCFF;">
-                      <td style="color:var(--text-hint);">—</td>
-                      <td><input class="cell-input" placeholder="请输入" type="text" style="width:100%;min-width:56px;height:28px;padding:0 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;"></td>
-                      <td><input class="cell-input" placeholder="请输入" type="text" style="width:100%;min-width:56px;height:28px;padding:0 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;"></td>
-                      <td><input class="cell-input" placeholder="请输入" type="text" style="width:100%;min-width:56px;height:28px;padding:0 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;"></td>
-                      <td><input class="cell-input" placeholder="请输入" type="text" style="width:100%;min-width:56px;height:28px;padding:0 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;"></td>
-                      <td><input class="cell-input" placeholder="请输入" type="text" style="width:100%;min-width:56px;height:28px;padding:0 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;"></td>
-                      <td><input class="cell-input" placeholder="请输入" type="text" style="width:100%;min-width:56px;height:28px;padding:0 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;"></td>
-                      <td><input class="cell-input" placeholder="请输入" type="text" style="width:100%;min-width:56px;height:28px;padding:0 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;"></td>
-                      <td><input class="cell-input" placeholder="请输入" type="text" style="width:100%;min-width:56px;height:28px;padding:0 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;"></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap;">
-                <button class="btn btn-default" type="button" style="color:var(--primary);border-color:var(--primary);">＋ 新增验证</button>
-                <button class="btn btn-primary" type="button">预测</button>
-              </div>
-
-              <div class="chart-card">
-                <div class="chart-frame">
-                  <span class="chart-side-label">关键 y 轴属性</span>
-                  <svg viewBox="0 0 920 360" aria-label="模型泛化效果散点图">
-                    <line x1="70" y1="300" x2="860" y2="300" stroke="#64748B" stroke-width="1.5" />
-                    <line x1="70" y1="300" x2="70" y2="34" stroke="#64748B" stroke-width="1.5" />
-                    <g fill="#1D4ED8" opacity="0.92">
-                      <circle cx="138" cy="236" r="6" />
-                      <circle cx="178" cy="220" r="6" />
-                      <circle cx="214" cy="206" r="6" />
-                      <circle cx="262" cy="182" r="6" />
-                      <circle cx="316" cy="164" r="6" />
-                      <circle cx="368" cy="196" r="6" />
-                      <circle cx="418" cy="154" r="6" />
-                      <circle cx="468" cy="148" r="6" />
-                      <circle cx="520" cy="132" r="6" />
-                      <circle cx="574" cy="120" r="6" />
-                      <circle cx="616" cy="148" r="6" />
-                      <circle cx="666" cy="112" r="6" />
-                      <circle cx="724" cy="96" r="6" />
-                      <circle cx="776" cy="86" r="6" />
-                    </g>
-                  </svg>
-                </div>
-                <div class="chart-axis-labels">
-                  <span>关键 x 轴属性</span>
-                  <span>通过批量输入特征值，观察模型在不同样本分布下的泛化趋势</span>
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
-      </main>
-    </div>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>模型评估详情</title>
+<script>if(new URLSearchParams(location.search).get('embed')==='1')document.documentElement.classList.add('embed');</script>
+<style>
+:root{
+  --primary:#1E40AF;--primary-dark:#17358A;--primary-light:#EEF4FF;
+  --text-primary:#0F172A;--text-secondary:#475569;--text-hint:#94A3B8;
+  --border:#D8E1EB;--border-light:#EAF0F6;--bg-body:#F6F8FB;--bg-card:#FFFFFF;
+  --danger:#DC2626;--success:#16A34A;--warning:#D97706;
+  --radius:8px;--radius-lg:12px;
+  --shadow-sm:0 1px 2px rgba(15,23,42,.04);--shadow-card:0 1px 3px rgba(15,23,42,.06),0 8px 24px rgba(15,23,42,.04);
+  --transition:.22s cubic-bezier(.4,0,.2,1);
+  /* KE 灰阶（照抄 KE 变量） */
+  --ke-main:#001833;--ke-sec:#405266;--ke-aux:#8d98a4;--ke-line:#d9dde1;--ke-line2:#eceef1;
+  --ke-bg:#f7f8f9;--ke-bg2:#f3f4f5;--ke-dis:#e6e8eb;--ke-cur:#f5f9ff;
+  --s1:#2F6FDB;--s2:#E8743B;--s-red:#D9363E;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;font-size:14px;color:var(--ke-main);background:var(--bg-body);-webkit-font-smoothing:antialiased}
+[hidden]{display:none!important}
+a{color:var(--primary);text-decoration:none}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0}
+button:disabled{cursor:not-allowed}
+
+/* ---------- 外壳：直接打开保留导航；embed=1 时即 KE 弹窗内容 ---------- */
+.layout{display:flex;flex-direction:column;height:100vh}
+.body-wrap{display:flex;flex:1;min-height:0}
+.main{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;padding:16px;overflow:hidden}
+html.nav-app-shell .body-wrap>.main{display:flex;flex-direction:column;overflow:hidden}
+html.embed body{background:#fff}
+html.embed #app-header,html.embed #app-sidebar{display:none}
+html.embed .main{padding:0}
+.eval-card{flex:1;min-height:0;display:flex;flex-direction:column;background:#fff;border-radius:8px;box-shadow:0 4px 24px rgba(0,24,51,.10);padding:0 20px;position:relative}
+html.embed .eval-card{border-radius:0;box-shadow:none}
+
+/* ---------- 弹窗头 ---------- */
+.te-bar{display:flex;align-items:center;gap:12px;height:52px;flex-shrink:0}
+.te-title{flex-shrink:0;margin-right:12px;font-size:16px;font-weight:600;color:var(--ke-main)}
+.te-tabs{flex:1;min-width:0;display:flex;align-items:center;gap:14px;align-self:stretch}
+.te-tab{height:32px;line-height:30px;font-size:13px;color:var(--ke-main);border-bottom:2px solid transparent;margin-top:6px}
+.te-tab:hover{color:var(--primary)}
+.te-tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+.te-tab:disabled{color:var(--ke-aux)}
+.btn-pill{display:inline-flex;align-items:center;justify-content:center;height:26px;padding:0 13px;border-radius:14px;font-size:13px;border:1px solid var(--primary);color:var(--primary);background:#fff;white-space:nowrap;transition:background var(--transition)}
+.btn-pill:hover{background:var(--primary-light)}
+.btn-pill.solid{background:var(--primary);color:#fff}
+.btn-pill.solid:hover{background:var(--primary-dark)}
+.btn-pill.solid:disabled{background:#B8C4E8;border-color:#B8C4E8;color:#fff}
+.te-close{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;color:var(--ke-sec);border-radius:4px}
+.te-close:hover{background:var(--ke-bg2)}
+.te-body{flex:1;min-height:0;overflow-y:auto;scrollbar-gutter:stable;overflow-x:hidden;padding:2px 2px 16px 0}
+
+/* ---------- 报告头 ---------- */
+.eval-report{display:flex;flex-direction:column;gap:12px;color:var(--ke-main)}
+.rep-head{display:flex;flex-direction:column;gap:6px}
+.rep-tags{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.rep-solver{display:inline-flex;align-items:center;font-size:14px;font-weight:600;margin-right:2px}
+.rep-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--s1);margin-right:7px}
+.rep-tag{display:inline-flex;align-items:center;height:20px;padding:0 6px;border:1px solid var(--ke-aux);border-radius:2px;font-size:12px;color:var(--ke-sec);white-space:nowrap}
+.rep-model{font-size:12px;color:var(--ke-aux);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:480px}
+.rep-dataline{display:flex;flex-wrap:wrap;align-items:center;gap:2px 6px;font-size:11px;color:var(--ke-sec)}
+.rep-dataline b{color:var(--ke-main);font-weight:600}
+.rep-muted{color:var(--ke-aux)}
+.rep-sep{width:1px;height:11px;background:var(--ke-line);margin:0 6px}
+
+/* ---------- 关键指标条 + 判定依据浮层 ---------- */
+.verdict-bar{position:relative;display:flex;align-items:center;gap:10px;border:1px solid var(--ke-line);border-left:3px solid var(--ke-sec);border-radius:4px;padding:6px 14px;background:var(--ke-bg);min-height:34px}
+.verdict-bar__summary{flex:1;min-width:200px;font-size:13px}
+.verdict-bar__rules{flex-shrink:0;font-size:13px;color:var(--primary)}
+.rules-pop{position:absolute;right:0;top:calc(100% + 6px);z-index:30;width:424px;max-width:calc(100vw - 48px);max-height:min(70vh,640px);overflow:auto;background:#fff;border:1px solid var(--ke-line2);border-radius:4px;box-shadow:0 6px 20px rgba(0,24,51,.14);padding:8px 10px}
+.rules-table{font-size:12px;color:var(--ke-sec)}
+.rules-table table{width:100%;border-collapse:collapse}
+.rules-table td{padding:4px 6px;border-bottom:1px solid var(--ke-line2);vertical-align:top;line-height:18px}
+.rules-table__name{white-space:nowrap;color:var(--ke-main);width:58px}
+.rules-table__note{margin-top:6px;line-height:18px;color:var(--ke-main)}
+
+/* ---------- 五张指标卡（overview-tiles） ---------- */
+.overview-tiles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.ov-tile{display:flex;flex-direction:column;gap:2px;min-width:0;padding:12px 14px;border:1px solid var(--ke-line);border-radius:4px;background:#fff;text-align:left}
+.ov-label{font-size:12px;color:var(--ke-sec)}
+.ov-value{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px;font-size:20px;font-weight:600;line-height:28px;color:var(--ke-main);white-space:nowrap}
+.ov-value.lv-0{color:#389e0d}.ov-value.lv-1{color:#d48806}.ov-value.lv-2{color:#cf1322}
+.ov-unit{font-size:13px;font-weight:400;margin-left:4px;color:var(--ke-sec)}
+.ov-il{font-size:11px;font-weight:400;margin-right:6px;color:var(--ke-sec)}
+.ov-bars{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:2px 8px;font-size:11px;color:var(--ke-aux);margin:2px 0}
+.ov-sub{font-size:11px;color:var(--ke-aux);line-height:17px}
+.ov-assess{margin-top:4px;padding-top:4px;border-top:1px solid var(--ke-line2);font-size:11px;line-height:17px;color:var(--ke-main)}
+.assess-chip{display:inline-flex;align-items:center;gap:3px;border-radius:4px;padding:1px 6px 1px 2px;font-size:11px;line-height:14px;margin-right:4px;vertical-align:1px}
+.assess-chip i{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;color:#fff;font-style:normal;font-size:9px;font-weight:700}
+.assess-chip.lv-0{background:#eef9e8}.assess-chip.lv-0 i{background:#52c41a}
+.assess-chip.lv-1{background:#fef7e8}.assess-chip.lv-1 i{background:#faad14}
+.assess-chip.lv-2{background:#fdeceb}.assess-chip.lv-2 i{background:#f5222d}
+
+/* ---------- ZoneBar / RatioBar（照抄 KE） ---------- */
+.zone-bar{position:relative;width:100%;border-radius:2px;margin:6px 0}
+.zone-axis{position:relative;height:17px;margin:0 5px;font-size:9px;color:var(--ke-aux)}
+.zone-axis span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.data-tag{display:inline-block;padding:0 5px;border:1px solid var(--ke-line);border-radius:3px;font-size:10px;font-weight:400;color:var(--ke-sec);margin-left:4px}
+.zone-bar__zone{position:absolute;top:0;bottom:0}
+.zone-bar__zone:first-child{border-radius:2px 0 0 2px}
+.zone-bar__zone:last-of-type{border-radius:0 2px 2px 0}
+.zone-bar__marker{position:absolute;top:50%;width:10px;height:10px;transform:translate(-50%,-50%);background:var(--marker-color);box-shadow:0 0 0 2px #fff}
+.zone-bar__marker.is-circle{border-radius:50%}
+.zone-bar__marker.is-diamond{transform:translate(-50%,-50%) rotate(45deg) scale(.85)}
+.zone-bar__marker.is-diamond-empty{background:#fff;border:2px solid var(--marker-color);transform:translate(-50%,-50%) rotate(45deg) scale(.85)}
+.ratio-bar{display:flex;align-items:center;gap:8px;min-width:0}
+.ratio-bar__track{flex:1;height:6px;min-width:48px;border-radius:3px;background:var(--ke-line2);overflow:hidden}
+.ratio-bar__fill{height:100%;border-radius:3px}
+.ratio-bar__text{width:40px;text-align:right;font-variant-numeric:tabular-nums;color:var(--ke-main);font-size:12px}
+
+/* ---------- 分区 ---------- */
+.sec-h{display:inline-flex;align-items:center;gap:6px;align-self:flex-start;margin-top:10px;padding-left:6px;border-left:2px solid var(--primary);font-size:14px;font-weight:600;line-height:16px;cursor:pointer;user-select:none}
+.sec-h i{font-style:normal;font-size:9px;color:var(--ke-sec);transition:transform var(--transition)}
+.sec.collapsed .sec-h i{transform:rotate(180deg)}
+.sec{display:flex;flex-direction:column;gap:12px}
+.sec.collapsed .sec-b{display:none}
+.sec-b{display:flex;flex-direction:column;gap:12px}
+.rep-row{display:flex;gap:12px;align-items:stretch}
+.grow2{flex:2 1 0;min-width:0}.grow1{flex:1 1 0;min-width:320px}
+
+/* ---------- 图卡（chart-card） ---------- */
+.chart-card{border:1px solid var(--ke-line);border-radius:6px;background:#fff;padding:12px 16px;min-width:0}
+.chart-card__head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px}
+.chart-card__titles{min-width:0}
+.chart-card__title{font-size:13px;font-weight:600;color:var(--ke-main);line-height:20px}
+.chart-card__hint{font-weight:400;font-size:11px;color:var(--ke-aux);margin-left:8px}
+.chart-card__question{font-size:11px;color:var(--ke-aux);line-height:17px}
+.chart-card__extra{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.chart-card__foot{margin-top:6px;font-size:11px;color:var(--ke-sec);line-height:18px}
+.seg{display:inline-flex}
+.seg button{height:22px;padding:0 8px;font-size:12px;border:1px solid var(--ke-line);background:#fff;color:var(--ke-main);position:relative}
+.seg button:first-child{border-radius:3px 0 0 3px}
+.seg button:last-child{border-radius:0 3px 3px 0;margin-left:-1px}
+.seg button.on{border-color:var(--primary);color:var(--primary);z-index:1}
+.chart-box{width:100%;position:relative}
+.chart-box svg{display:block;overflow:visible}
+.lg{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;font-size:11px;color:var(--ke-sec);margin:2px 0 2px}
+.lg span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.lg-ring{width:10px;height:10px;border-radius:50%;border:2px solid var(--c,#2F6FDB);background:#fff}
+.lg-dot{width:8px;height:8px;border-radius:50%;background:var(--c,#2F6FDB)}
+.lg-sq{width:12px;height:8px;background:var(--c,#e6e8eb)}
+.lg-sq.dash{background:#fff;border:1px dashed var(--ke-aux)}
+.lg-sq.line{background:#fff;border:1px solid var(--ke-main)}
+.lg-grad{width:96px;height:8px;border-radius:2px;background:linear-gradient(90deg,#dbe7fa,#2a5db0)}
+.lg-line{width:16px;border-top:2.5px solid var(--c,#2F6FDB)}
+.lg-line.dash{border-top:2px dashed var(--c,#2F6FDB)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;flex-direction:column;align-items:flex-start;gap:2px;padding:5px 10px;border:1px solid var(--ke-line);border-radius:4px;background:#fff;text-align:left}
+.chip:hover{border-color:var(--primary)}
+.chip.on{border-color:var(--primary);background:var(--primary-light)}
+.chip b{font-size:12px;font-weight:400;color:var(--ke-main)}
+.chip small{font-size:10px;color:var(--ke-aux)}
+.sweep-controls{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;margin-bottom:4px}
+.overlay-opt{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ke-sec)}
+.overlay-opt input{accent-color:var(--primary)}
+.overlay-opt .lg-dot{--c:var(--s2)}
+.sweep-anchor{font-size:11px;color:var(--ke-sec);line-height:18px}
+.sweep-anchor span{margin-right:12px}
+.facts{display:flex;flex-wrap:wrap;gap:2px 14px;font-size:11px;color:var(--ke-sec);line-height:18px}
+.facts b{font-weight:600;color:var(--ke-main)}
+.facts .is-muted{color:var(--ke-aux)}
+.note{margin-top:2px;font-size:11px;color:var(--ke-aux);line-height:18px}
+.assess-line{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:11px;line-height:18px}
+.assess-line span{display:inline-flex;gap:6px}
+.assess-line em{font-style:normal;color:var(--ke-sec)}
+.cov-stats{display:flex;flex-wrap:wrap;gap:2px 18px;font-size:11px;color:var(--ke-main);line-height:18px;margin-bottom:2px}
+
+/* ---------- 表格 ---------- */
+.mini-table{width:100%;border-collapse:collapse;font-size:12px;color:var(--ke-main)}
+.mini-table th{padding:5px 8px;font-weight:600;text-align:left;white-space:nowrap;color:var(--ke-sec);border-bottom:1px solid var(--ke-line)}
+.mini-table td{padding:6px 8px;border-bottom:1px solid var(--ke-line2)}
+.mini-table .is-num{text-align:right;font-variant-numeric:tabular-nums}
+.mini-table .is-group{text-align:center}
+.table-note{margin-top:6px;font-size:11px;color:var(--ke-aux)}
+.slope-table td{height:38px;vertical-align:middle}
+.slope-dir{display:flex;flex-direction:column;gap:2px;width:150px;font-size:11px;color:var(--ke-sec)}
+.slope-dir .ratio-bar__track{min-width:0;width:150px;flex:none}
+.stability{display:grid;grid-template-columns:minmax(260px,1fr) minmax(360px,1.4fr);gap:12px}
+.stability__block{border:1px solid var(--ke-line);border-radius:6px;padding:12px 16px;min-width:0}
+.stability__label{font-size:13px;font-weight:600;margin-bottom:6px}
+.stability__hint{font-weight:400;font-size:11px;color:var(--ke-aux);margin-left:8px}
+.stability__value{font-size:20px;font-weight:600}
+.stability__sub{font-size:11px;font-weight:400;color:var(--ke-sec);margin-left:8px}
+.stability__note{font-size:11px;color:var(--ke-aux);margin-top:4px}
+.stability__table{width:100%;border-collapse:collapse;font-size:12px}
+.stability__table th{text-align:left;font-size:11px;font-weight:600;color:var(--ke-sec);padding:4px 8px 4px 0;border-bottom:1px solid var(--ke-line);line-height:14px}
+.stability__table td{padding:6px 8px 6px 0;border-bottom:1px solid var(--ke-line2)}
+.stability__num{width:64px;text-align:right;font-variant-numeric:tabular-nums}
+.perf__tiles{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px}
+.perf__tile{min-width:0;padding:10px 12px;border:1px solid var(--ke-line);border-radius:4px;background:#fff}
+.perf__label{font-size:11px;color:var(--ke-sec)}
+.perf__value{margin-top:2px;font-size:16px;font-weight:600;color:var(--ke-main);font-variant-numeric:tabular-nums;white-space:nowrap}
+.perf__note{margin-top:2px;font-size:11px;line-height:15px;color:var(--ke-aux)}
+.perf__platform{font-size:11px;color:var(--ke-sec)}
+.cc-matrix{width:100%;margin-top:8px;table-layout:fixed;border-collapse:separate;border-spacing:0;font-size:12px}
+.cc-matrix th,.cc-matrix td{text-align:left;border-bottom:1px solid var(--ke-line2)}
+.cc-matrix td{padding:5px 8px;vertical-align:middle;height:26px}
+.cc-matrix td.is-current,.cc-matrix th.is-current{background:var(--ke-cur)}
+.cc-corner{width:212px;padding:8px 6px;vertical-align:bottom;font-size:11px;font-weight:400;color:var(--ke-sec);border-bottom-color:var(--ke-line)!important}
+.cc-head{padding:8px 10px 8px;vertical-align:top;font-weight:400;border-top:3px solid var(--model-color);border-bottom-color:var(--ke-line)!important}
+.cc-name{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--ke-main)}
+.cc-selected{display:inline-flex;align-items:center;gap:2px;padding:0 6px;border-radius:4px;background:#52c41a1f;color:#389e0d;font-size:11px;line-height:18px;font-weight:400}
+.cc-meta{margin-top:2px;font-size:11px;color:var(--ke-aux)}
+.cc-label{color:var(--ke-sec);white-space:nowrap;padding-left:6px!important}
+.cc-cell{display:flex;align-items:center;gap:10px}
+.cc-num{min-width:0;flex:0 1 auto;font-variant-numeric:tabular-nums;white-space:normal;line-height:18px}
+.cc-zone{flex:1;min-width:44px;max-width:146px}
+.limited{padding:28px 0;text-align:center;color:var(--ke-aux);font-size:13px}
+
+/* ---------- 手动预测 ---------- */
+.manual-predict{display:flex;flex-direction:column;gap:12px;min-height:560px;height:100%}
+.mp-axis{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ke-sec)}
+.ke-select{width:160px;height:24px;border:1px solid var(--ke-line);border-radius:4px;padding:0 6px;font-size:12px;color:var(--ke-main);background:#fff}
+.mp-chart{position:relative}
+.mp-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;color:var(--ke-sec);background:rgba(255,255,255,.75)}
+.mp-overlay.is-empty{color:var(--ke-sec);background:transparent;pointer-events:none}
+.mp-overlay .link{color:var(--primary);cursor:pointer}
+.mp-legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:11px;color:var(--ke-sec)}
+.mp-legend i{display:inline-block;width:16px;margin-right:4px;vertical-align:middle}
+.mp-legend .is-band{height:8px;background:#8d98a42e}
+.mp-legend .is-solid{border-top:2.5px solid var(--s1)}
+.mp-legend .is-dashed{border-top:2px dashed var(--s1)}
+.mp-legend .is-dot{width:9px;height:9px;border-radius:50%;background:var(--ke-main)}
+.mp-toolbar{display:flex;align-items:center;gap:12px;flex:none}
+.mp-count{font-size:12px;color:var(--ke-sec)}
+.mp-list{flex:1;min-height:300px;overflow:auto;border:1px solid var(--ke-line);border-radius:6px}
+.mp-table{width:100%;min-width:1080px;border-collapse:collapse;table-layout:fixed;font-size:12px;color:var(--ke-main)}
+.mp-table th{position:sticky;top:0;z-index:2;padding:8px 10px;text-align:left;vertical-align:bottom;font-weight:600;background:var(--ke-bg);border-bottom:1px solid var(--ke-line);font-size:12px}
+.mp-table th small{display:block;font-size:10px;font-weight:400;color:var(--ke-aux);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp-table td{height:34px;padding:4px 10px;vertical-align:middle;border-bottom:1px solid var(--ke-line2)}
+.mp-table .is-out{width:180px;border-left:2px solid var(--ke-line)}
+.mp-table .is-idx{width:44px;color:var(--ke-aux);font-variant-numeric:tabular-nums}
+.mp-table .is-conf{width:72px}
+.mp-table .is-ops{width:96px;white-space:nowrap}
+.mp-table tbody tr{cursor:pointer}
+.mp-table tbody tr:hover td{background:#f7faff}
+.mp-table tbody tr.is-selected td{background:#eef2fb}
+.mp-table tbody tr.is-selected td:first-child{box-shadow:inset 3px 0 0 var(--primary)}
+.mp-table tbody tr.is-draft{cursor:default}
+.mp-num{width:100%;max-width:114px;height:24px;padding:0 8px;border:1px solid var(--ke-line);border-radius:3px;background:#fff;font-variant-numeric:tabular-nums;font-size:12px;outline:none}
+.mp-num:focus{border-color:var(--primary)}
+.is-draft .mp-num{border-style:dashed;color:var(--ke-aux)}
+.mp-num.is-outr{border-color:var(--danger);background:#FEF2F2;color:var(--danger)}
+.mp-num.is-missing{border-color:var(--danger)}
+.mp-range{display:block;font-size:10px;line-height:13px;color:var(--danger);white-space:nowrap}
+.mp-res{font-weight:600;font-variant-numeric:tabular-nums}
+.mp-res.is-stale{font-weight:400;color:var(--ke-aux);text-decoration:line-through}
+.mp-tag{margin-left:6px;padding:0 5px;border-radius:3px;font-size:11px;white-space:nowrap;color:var(--ke-sec);background:var(--ke-bg2)}
+.mp-tag.is-error{margin-left:0;color:var(--danger);background:#FEF2F2}
+.mp-tag.first{margin-left:0}
+.mp-hint{color:var(--ke-sec);font-size:12px}
+.mp-conf{padding:0 6px;border-radius:3px;font-size:11px}
+.mp-conf.is-high{color:#389e0d;background:#52c41a21}
+.mp-conf.is-low{color:#9a5b00;background:#faad1438}
+.mp-op{color:var(--primary);font-size:12px;margin-right:10px}
+.mp-op.danger{color:var(--danger)}
+
+/* ---------- 导出数据集（小弹窗，无标题栏） ---------- */
+.modal-backdrop{position:fixed;inset:0;z-index:100020;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45);padding:16px}
+.modal-backdrop.show{display:flex}
+.export-modal{width:456px;max-width:100%;background:#fff;border-radius:6px;box-shadow:0 12px 40px rgba(0,0,0,.2);padding:24px 20px 20px}
+.ex-row{display:flex;gap:16px;margin-bottom:20px;font-size:13px}
+.ex-label{width:58px;flex-shrink:0;line-height:22px;color:var(--ke-main)}
+.ex-radios{display:flex;flex-direction:column;gap:12px}
+.ex-radios.inline{flex-direction:row;gap:24px}
+.ex-radio{display:inline-flex;align-items:center;gap:8px;line-height:22px;cursor:pointer;color:var(--ke-main)}
+.ex-radio input{accent-color:var(--primary);margin:0}
+.ex-radio input:checked+span{color:var(--primary)}
+.ex-hint{padding:12px 16px;border-radius:4px;background:var(--ke-dis);color:var(--ke-main);font-size:12px;line-height:20px}
+.ex-hint div+div{margin-top:4px;color:var(--ke-sec)}
+.ex-foot{display:flex;justify-content:flex-end;gap:12px;margin-top:20px}
+.toast{position:fixed;left:50%;top:24px;transform:translate(-50%,-8px);z-index:100050;background:#fff;color:var(--ke-main);font-size:13px;padding:9px 16px;border-radius:4px;box-shadow:0 6px 20px rgba(0,24,51,.16);opacity:0;pointer-events:none;transition:all var(--transition)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- 批注适配 ---------- */
+.anno-toggle{z-index:100100}
+.annotation-mode{padding-top:0!important}
+.anno-filter-bar{position:static!important;flex-shrink:0;margin-bottom:8px;border-radius:6px}
+html.embed .anno-filter-bar{margin:0;border-radius:0}
+
+@media(max-width:1280px){.perf__tiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:900px){.rep-row{flex-direction:column}.grow1{min-width:0}.stability{grid-template-columns:1fr}.perf__tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.main{padding:8px}.eval-card{padding:0 12px}}
+html.embed .anno-toggle{display:none!important}
+</style><link rel="stylesheet" href="annotation-styles.css"></head><body><div class="layout"><div id="app-header"></div><div class="body-wrap"><div id="app-sidebar"></div><main class="main">
+<div class="anno-filter-bar" id="annoFilterBar"><span class="anno-filter-label">批注版本：</span><div class="anno-filter-tags" id="annoFilterTags"></div></div>
+<div class="eval-card" id="evalCard" role="dialog" aria-label="评估">
+  <div class="te-bar">
+    <div class="te-title">评估</div>
+    <div class="te-tabs" role="tablist"><button class="te-tab active" id="reportTab" role="tab" onclick="switchEvaluationTab('report')">评估报告</button><button class="te-tab" id="predictionTab" role="tab" onclick="switchEvaluationTab('prediction')">手动预测</button></div>
+    <button class="btn-pill" onclick="openExport()">导出数据集</button>
+    <button class="te-close" aria-label="关闭" title="关闭" onclick="closeEval()"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
   </div>
-
-  <!-- 导出数据集弹窗 -->
-  <div class="modal-backdrop" id="modalExport" aria-hidden="true">
-    <div class="modal" role="dialog" aria-labelledby="exportTitle">
-      <div class="modal-head">
-        <div class="modal-title" id="exportTitle">导出数据集</div>
-        <button type="button" class="modal-close" id="btnCloseExport" aria-label="关闭">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="export-hint">
-          将导出当前模型的原始数据集，包含全部特征列与标签列。<br>
-          文件格式：CSV（UTF-8）<br>
-          示例文件名：冷水主机功率预测_原始数据集_20260528.csv
-        </div>
-      </div>
-      <div class="modal-foot">
-        <button type="button" class="btn btn-default" id="btnCancelExport">取 消</button>
-        <button type="button" class="btn btn-primary" id="btnConfirmExport">导 出</button>
+  <div class="te-body" id="teBody">
+    <div class="anno anno-version-header" data-version="v2.2">
+      <span class="anno-tag">版本信息</span>
+      <div class="anno-body">
+        <p><b>当前版本：</b>v2.2</p>
+        <p><b>更新日期：</b>2026-05-28</p>
+        <p><b>变更概述：</b>v2.2 包含三项变更：① 评估指标区新增 Max-bin RMSE（最大分区误差）指标，位于 RMSE 与 MAPE 之间，是「多工况泛化优先」模型选择策略的排序依据；② 新增「分工况表现」区块，按模型参数的分层抽样配置对验证集分区，展示各区间 RMSE、样本量和数据覆盖率；③ 新增数据集导出功能：页头右侧增加「导出数据集」按钮，点击后下载原始数据集 CSV 文件。</p>
       </div>
     </div>
+    <div class="anno anno-version-header" data-version="v2.3">
+      <span class="anno-tag">版本信息</span>
+      <div class="anno-body">
+        <p><b>当前版本：</b>v2.3</p>
+        <p><b>更新日期：</b>2026-06-15</p>
+        <p><b>变更概述：</b>详情页从“单模型评估结果”调整为“两类模型评估结果”：「评估指标」保留混合增强模型（对外默认出值口径）与机理模型两行，去掉“整体出值口径”独立行和 MAE 指标；「分工况表现」复用统一高/低置信分箱，展示置信等级与区间 RMSE，去掉出值层级列。</p>
+      </div>
+    </div>
+    <div class="anno anno-version-header" data-version="v2.9"><span class="anno-tag">版本信息</span><span class="anno-version">v2.9</span><span class="anno-source">需求文档</span><div class="anno-body"><p><b>当前版本：</b>v2.9</p><p><b>更新日期：</b>2026-11-02</p><p><b>变更概述：</b>评估改为列表上的弹窗（评估报告 + 手动预测）。报告为 5 张指标卡（评估误差、噪声底、物理规律、曲线平顺度、超范围表现）+ 误差、物理规律、覆盖与稳定、性能与资源、候选对比五个分区；分项评级，无综合评级。</p><p><b>本页说明：</b>查看本次变更请筛选 v2.9；指标口径见《机理模型训练需求文档》第四章。</p></div></div>
+    <div class="anno anno-ux" data-version="v2.9"><span class="anno-tag">交互说明</span><span class="anno-version">v2.9</span><span class="anno-source">需求文档</span><div class="anno-body"><p><b>关联模块：</b>评估弹窗与页签</p><p>页签「评估报告 | 手动预测」，右上「导出数据集」、×。embed=1 时隐藏顶栏侧栏，× / ESC 通知列表关闭弹窗。</p></div></div>
+
+    <!-- ================= 评估报告 ================= -->
+    <div id="reportView" class="eval-report">
+      <div class="anno anno-req" data-version="v2.9"><span class="anno-tag">需求说明</span><span class="anno-version">v2.9</span><span class="anno-source">需求文档</span><div class="anno-body"><p><b>关联模块：</b>评估报告范围</p><ul><li>只做分项评级，阈值由接口下发、不可修改；无综合评级。</li><li>噪声底、评估覆盖为数据提示；训练 RMSE、R² 只作参考，不评级。</li><li>重训稳定只对随机性算法或开启自学习的模型计算。</li></ul></div></div>
+      <div class="rep-head">
+        <div class="rep-tags"><span class="rep-solver"><i class="rep-dot"></i>物理灰箱</span><span class="rep-tag">评估切分：按天分块留出 + 缓冲带</span><span class="rep-tag">分布内判定：训练段最小值～最大值</span><span class="rep-model" id="reportModelName">水冷离心式冷水机组CH05-有功功率-混合增强预测模型</span></div>
+        <div class="rep-dataline" id="reportDataline"><span>训练段 06-02 04:25 ~ 10-30 11:25（6327 行）</span><span>· 评估段 06-01 01:10 ~ 10-30 00:55（1857 行，分 20 块）</span><span>· 缓冲带 2 h</span><i class="rep-sep"></i><span>原始 20329 行</span><span>· 剔除冻结 <b>11833</b> 行 <span class="rep-muted">（58.2%）</span></span><span class="rep-muted">（去重 11251 · 卡死 582 · 疑似冻结 11101）</span><span>· 缓冲带剔除 312 行</span></div>
+      </div>
+      <div class="anno anno-data" data-version="v2.9"><span class="anno-tag">数据逻辑</span><span class="anno-version">v2.9</span><span class="anno-source">需求文档</span><div class="anno-body"><p><b>关联模块：</b>报告头与数据漏斗</p><ul><li>报告头：算法 + 切分方式 + 分布内判定 + 模型名。</li><li>切分：有时间戳按天分块留出 + 缓冲带（跨度 ≥5 天按 24 h 分块，否则均分 10 块），无时间戳用随机 / 分层随机。分布内 = 每个输入都在训练段最小～最大之间。</li><li>数据行：训练段、评估段、缓冲带、原始行数与冻结剔除（去重 / 卡死 / 疑似冻结可重叠）。</li></ul></div></div>
+      <div class="anno anno-data" data-version="v2.9"><span class="anno-tag">数据逻辑</span><span class="anno-version">v2.9</span><span class="anno-source">需求文档</span><div class="anno-body"><p><b>关联模块：</b>关键指标条与五张指标卡</p><ul><li>关键指标条：「评估误差 {RMSE}（{MAPE 或 CV(RMSE)} {相对误差}）· 趋势反向 x% · 幅度异常 x%」+「需关注：」按评估误差、物理规律、曲线平顺度、超范围表现、重训稳定、性能顺序列出注意 / 不佳项并标级别；都良好写「各分项均在参考范围内」。</li><li>五卡：评估误差（RMSE + 相对误差 + 分布内 / 外推）、噪声底（数据提示）、物理规律（三项取最差）、曲线平顺度（‰）、超范围表现（四项取最差）。</li><li>判定依据：列出当前阈值；阈值文件不可用时首行标「内置默认值」。</li></ul></div></div>
+      <div class="verdict-bar" id="verdictBar"><span class="verdict-bar__summary" id="verdictSummary"></span><button class="verdict-bar__rules" id="basisButton" onclick="toggleRules(event)">判定依据</button><div class="rules-pop" id="rulesPop" hidden></div></div>
+      <div id="limitedReport" hidden></div>
+      <div id="completeReport" class="eval-report">
+        <div class="overview-tiles" id="reportMetricCards"></div>
+
+        <!-- 误差 -->
+        <section class="sec" id="secNoise">
+          <div class="sec-h" onclick="toggleSec(this)">误差 <i>▲</i></div>
+          <div class="anno anno-ux" data-version="v2.9"><span class="anno-tag">交互说明</span><span class="anno-version">v2.9</span><span class="anno-source">需求文档</span><div class="anno-body"><p><b>关联模块：</b>误差分区</p><ul><li>误差明细：评估段 / 分布内 / 外推 × RMSE、相对误差、R²（参考）；诊断行：训练 RMSE、评估 ÷ 训练 RMSE，不评级。</li><li>时序图标出剔除段，残差叠噪声底 ±σ；散点带 ±RMSE 参考带。</li></ul></div></div>
+          <div class="sec-b">
+            <div class="chart-card" data-card="error" data-default-mode="table">
+              <div class="chart-card__head"><div class="chart-card__titles"><div class="chart-card__title">误差明细</div><div class="chart-card__question">评估段误差有多大？分布内与外推分别表现如何？</div></div><div class="chart-card__extra"></div></div>
+              <div class="cc-chart" hidden><div class="chart-box" data-chart="error"></div></div><div class="cc-table"></div>
+              <div class="note">诊断，不评级：训练 RMSE 6.790 kW</div>
+              <div class="note">诊断，不评级：评估 ÷ 训练 RMSE 0.81（&lt; 1 表示评估段误差不高于训练段，无过拟合迹象）</div>
+            </div>
+            <div class="rep-row">
+              <div class="chart-card grow2" data-card="ts">
+                <div class="chart-card__head"><div class="chart-card__titles"><div class="chart-card__title">实测与预测（按时间）</div><div class="chart-card__question">在哪段时间、哪种工况下开始偏离？下方为残差与噪声底 ±σ（参考）带。</div></div><div class="chart-card__extra"></div></div>
+                <div class="cc-chart"><div class="lg"><span><i class="lg-ring" style="--c:#24468F"></i>实测</span><span><i class="lg-ring"></i>预测（物理灰箱）</span><span><i class="lg-ring" style="--c:#6E9BE8"></i>残差</span></div><div class="chart-box" data-chart="ts" id="tsBox"></div></div><div class="cc-table" hidden></div>
+              </div>
+              <div class="chart-card grow1" data-card="scatter">
+                <div class="chart-card__head"><div class="chart-card__titles"><div class="chart-card__title">实测 vs 预测</div><div class="chart-card__question">是否系统性偏高或偏低？外推点偏离多少？</div></div><div class="chart-card__extra"></div></div>
+                <div class="cc-chart"><div class="lg"><span><i class="lg-dot" style="--c:#c3c9d1"></i>训练段</span><span><i class="lg-dot"></i>评估·分布内</span><span><i class="lg-ring"></i>评估·外推</span><span><i class="lg-sq" style="--c:#cfe0f8"></i>±RMSE 参考带</span></div><div class="chart-box" data-chart="scatter"></div></div><div class="cc-table" hidden></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 物理规律 -->
+        <section class="sec" id="secPhys">
+          <div class="sec-h" onclick="toggleSec(this)">物理规律 <i>▲</i></div>
+          <div class="anno anno-ux" data-version="v2.9"><span class="anno-tag">交互说明</span><span class="anno-version">v2.9</span><span class="anno-source">需求文档</span><div class="anno-body"><p><b>关联模块：</b>物理规律分区</p><ul><li>检查方法：每个评估点把输入上下各挪训练量程 1%，看预测变化。趋势反向 = 方向与应有趋势相反的占比；不响应 = 变化 ≈ 0（≤ 1e-9 × 预测标准差 ÷ 量程）；幅度异常 = 超出合理变化幅度的占比；各输入取最大。</li><li>响应曲线：其余输入固定为训练段中位数，扫 60 点；灰底为训练范围，叠合理幅度带。</li><li>明细表：输入、应有趋势、合理变化幅度、趋势反向 · 不响应、幅度异常、变化幅度分布（p10 / 中位 / p90）、统计点数。</li></ul></div></div>
+          <div class="sec-b">
+            <div class="chart-card" data-card="sweep">
+              <div class="chart-card__head"><div class="chart-card__titles"><div class="chart-card__title">单输入响应曲线</div><div class="chart-card__question">只改变一个输入时，输出怎样变化？与合理变化幅度的相对位置如何？出了训练范围是什么形状？</div></div><div class="chart-card__extra"></div></div>
+              <div class="sweep-controls"><div class="chips" id="sweepChips"></div><label class="overlay-opt">叠加候选 <input type="checkbox" id="overlayCandidate" onchange="toggleOverlay(this.checked)"><i class="lg-dot"></i>物理灰箱 #2</label></div>
+              <div class="cc-chart">
+                <div class="lg"><span><i class="lg-ring"></i>物理灰箱</span><span><i class="lg-sq" style="--c:#dce8fb"></i>重训 3 次 p5–p95</span><span><i class="lg-ring" style="--c:#c3c9d1"></i>训练范围</span><span id="sweepLg2" hidden><i class="lg-ring" style="--c:var(--s2)"></i>物理灰箱 #2</span></div>
+                <div class="chart-box" data-chart="sweep"></div>
+              </div><div class="cc-table" hidden></div>
+              <div class="sweep-anchor" id="sweepAnchor"></div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-card__head"><div class="chart-card__titles"><div class="chart-card__title">物理规律明细</div><div class="chart-card__question">在每个评估点把该输入挪动一点，看预测怎么变；点为中位值，灰条为合理变化幅度，中位值落在范围外时点改为红色描边</div></div></div>
+              <table class="mini-table slope-table"><thead><tr><th style="width:24%">输入</th><th style="width:8%">应有趋势</th><th style="width:17%">合理变化幅度</th><th style="width:13%">趋势反向 · 不响应</th><th style="width:10%">幅度异常</th><th style="width:20%">变化幅度分布（p10 · 中位 · p90）</th><th class="is-num">统计点数</th></tr></thead><tbody id="slopeRows"></tbody></table>
+              <div class="assess-line" style="margin-top:6px"><span><em>物理规律</em>幅度异常最多占 1%</span><span><em>趋势反向 · 不响应</em>趋势反向最多占 0%，不响应最多占 0%</span></div>
+            </div>
+            <div class="anno anno-data" data-version="v2.9"><span class="anno-tag">数据逻辑</span><span class="anno-version">v2.9</span><span class="anno-source">需求文档</span><div class="anno-body"><p><b>关联模块：</b>超范围表现（超出历史范围后趋势是否可信）</p><ul><li>从 60 条训练样本出发，每次只改一个配置了约束的输入，向训练范围外各延伸 20% 量程（不超上下限，余量 &lt;2% 不延伸），步长 = 量程 ÷ 59，只统计范围外那段。</li><li>四项：趋势反向、不响应（|Δ预测| ≤ 1e-6 × 曲线量级）、幅度异常（变化率超出合理变化幅度）、平顺度中位；各输入取最大，评级取四项最差，阈值同物理规律与平顺度。</li></ul></div></div>
+            <div class="chart-card" data-card="extrap">
+              <div class="chart-card__head"><div class="chart-card__titles"><div class="chart-card__title">超范围表现</div><div class="chart-card__question">超出历史范围后趋势是否可信</div><div class="note">从 60 条真实训练样本出发，每次只改一个配置了应有趋势或合理变化幅度的输入，从训练范围边界向外各延伸量程的 20%（不超出模板上下限），只统计范围外那一段：趋势反向 = 相邻两步变化方向与应有趋势相反的占比；不响应 = 相邻两步预测几乎不变的占比（输入继续变、预测停住）；幅度异常 = 相邻两步变化率不在合理变化幅度内的占比；平顺度 = 范围外曲线平顺度。四项取最差一级。例：CH05 制冷量超过历史最大 3357 kW 后预测功率不再增加，每多 1 kW 冷量功率增加约 0，低于 0.08 kW 下限，这些段同时算幅度异常和不响应。</div></div><div class="chart-card__extra"></div></div>
+              <div class="chips" id="extrapChips" style="margin-bottom:6px"></div>
+              <div class="cc-chart">
+                <div class="lg"><span><i class="lg-ring"></i>典型起点</span><span><i class="lg-ring" style="--c:var(--s-red)"></i>异常最多的起点</span><span><i class="lg-ring" style="--c:#c3c9d1"></i>训练范围</span></div>
+                <div class="chart-box" data-chart="extrap"></div>
+              </div><div class="cc-table" hidden></div>
+              <div class="facts" id="extrapFacts"></div>
+              <div class="note">实线为训练范围外（计分段），虚线为训练范围内（对照）；空心圈为起点本身</div>
+              <div class="assess-line"><span><em>超范围表现</em>趋势反向 0% · 不响应 51% · 幅度异常 88% · 平顺度 1.59‰</span></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 覆盖与稳定 -->
+        <section class="sec" id="secCover">
+          <div class="sec-h" onclick="toggleSec(this)">覆盖与稳定 <i>▲</i></div>
+          <div class="anno anno-data" data-version="v2.9"><span class="anno-tag">数据逻辑</span><span class="anno-version">v2.9</span><span class="anno-source">需求文档</span><div class="anno-body"><p><b>关联模块：</b>覆盖与稳定分区</p><ul><li>评估覆盖（数据提示）：评估点落在训练段有样本工况格内的比例，网格取前两个分层输入。</li><li>重训稳定：仅随机配置网络、单调性神经网络、随机森林、梯度提升、极致梯度提升、混合增强 + 单调残差，或开启自学习时执行；按天分块重抽样重训 3 次，重训波动 = 评估点预测标准差均值，重训波动率 = 重训波动 ÷ |实测均值|（2% / 5%）。未执行显示「未计算」。</li><li>平顺度明细：输入、平顺度 ‰、拐点数、起伏小图。</li></ul></div></div>
+          <div class="sec-b">
+            <div class="chart-card" data-card="coverage">
+              <div class="chart-card__head"><div class="chart-card__titles"><div class="chart-card__title">评估覆盖<span class="data-tag">数据提示</span></div><div class="chart-card__question">训练数据覆盖了哪些工况？评估点有没有落到覆盖之外？</div><div class="note">按天交替切分时评估点通常都落在训练工况内，此项多为 100%，只作参考</div></div><div class="chart-card__extra"></div></div>
+              <div class="cov-stats"><span>网格 1 × 6</span><span>有样本的格子 6（其中仅评估段有样本 0）</span><span>样本充足的格子 0（每个工况组合至少 10 个样本）</span><span>评估点落在训练段有样本的格子内 <b>100%</b>（500/500）</span></div>
+              <div class="cc-chart"><div class="chart-box" data-chart="coverage"></div>
+                <div class="lg"><span>训练段样本数 210 <i class="lg-grad"></i> 4549</span><span><i class="lg-sq dash"></i>部分工况组合样本不足</span><span><i class="lg-sq line"></i>仅评估段有样本</span><span><i class="lg-dot"></i>评估点·分布内</span><span><i class="lg-ring" style="--c:var(--s-red)"></i>评估点·外推</span></div>
+              </div><div class="cc-table" hidden></div>
+              <div class="assess-line"><span><em>评估覆盖</em>100% 的评估点落在训练覆盖内</span></div>
+            </div>
+            <div class="stability">
+              <div class="stability__block"><div class="stability__label">重训稳定</div><div class="stability__note">仅随机性算法（随机配置网络、神经网络、随机森林、梯度提升类）或开启自学习的模型计算；结果确定的算法且未开自学习时不重训</div><div class="stability__note">CH05 已开启自学习</div><div><span class="stability__sub" style="margin-left:0">重训波动</span> <span class="stability__value">1.570 kW</span><span class="stability__sub">· 重训波动率 0.77%（良好）· p95 6.308 kW</span></div><div id="retrainZone"></div><div class="stability__note">按时间分块自助采样，重训 3 次；在每个评估点上求预测标准差后取均值</div></div>
+              <div class="stability__block"><div class="stability__label">曲线平顺度明细<span class="stability__hint">输入平滑变化时预测的起伏程度，0 为完全平顺</span></div>
+                <table class="stability__table"><thead><tr><th>输入</th><th class="stability__num">平顺度（‰）</th><th class="stability__num" style="width:56px">拐点数</th><th style="padding-left:12px">起伏</th></tr></thead><tbody id="smoothRows"></tbody></table>
+                <div class="stability__note">小图为响应曲线的局部起伏，越平越好</div></div>
+            </div>
+            <div class="assess-line"><span><em>曲线平顺度</em>曲线平顺度 9.18‰，0 为完全平顺</span><span><em>重训稳定</em>重训波动 1.570 kW，重训波动率 0.77%</span></div>
+          </div>
+        </section>
+
+        <!-- 性能与资源 -->
+        <section class="sec" id="secPerf">
+          <div class="sec-h" onclick="toggleSec(this)">性能与资源 <i>▲</i></div>
+          <div class="anno anno-data" data-version="v2.9"><span class="anno-tag">数据逻辑</span><span class="anno-version">v2.9</span><span class="anno-source">需求文档</span><div class="anno-body"><p><b>关联模块：</b>性能与资源分区</p><ul><li>1 万样本训练 = 训练耗时 × (10000 ÷ 样本数)^b，b 由半量重训测得（0～2），样本 &lt;1000 不折算；单次预测 = 50 次调用中位数；评级 30 s / 120 s、5 ms / 20 ms，取较差。</li><li>另显示批量预测每行、峰值内存、模型大小、任务总耗时、本机基准、耗时—样本量图。</li></ul></div></div>
+          <div class="sec-b">
+            <div class="perf__tiles" id="perfTiles"></div>
+            <div class="perf__platform">测于 x86_64 · 16 核 · 本机基准 0.11 s</div>
+            <div class="chart-card" data-card="perf">
+              <div class="chart-card__head"><div class="chart-card__titles"><div class="chart-card__title">耗时—样本量</div><div class="chart-card__question">训练耗时随样本量怎样增长？点为实测，线按耗时增长指数外推，竖线为 1 万样本。</div></div><div class="chart-card__extra"></div></div>
+              <div class="cc-chart"><div class="lg"><span><i class="lg-dot"></i>物理灰箱 #1</span><span><i class="lg-dot" style="--c:var(--s2)"></i>物理灰箱 #2</span></div><div class="chart-box" data-chart="perf"></div></div><div class="cc-table" hidden></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 候选对比 -->
+        <section class="sec" id="secCand">
+          <div class="sec-h" onclick="toggleSec(this)">候选对比 <i>▲</i></div>
+          <div class="anno anno-state" data-version="v2.9"><span class="anno-tag">状态说明</span><span class="anno-version">v2.9</span><span class="anno-source">需求文档</span><div class="anno-body"><p><b>关联模块：</b>候选对比分区</p><ul><li>同设备同模板、有新报告的模型，按训练时间倒序最多 4 个，当前选用的标「已选用」。</li><li>对比评估误差、相对误差、分布内 / 外推、R²、训练 RMSE、物理规律、平顺度、超范围、重训、覆盖、性能、模型大小、内存；参考 / 诊断行不着色。只有一个模型时提示暂无可对比。</li></ul></div></div>
+          <div class="sec-b">
+            <div class="chart-card" data-card="cand">
+              <div class="chart-card__head"><div class="chart-card__titles"><div class="chart-card__title">同一数据下的候选模型</div><div class="chart-card__question">同一设备、同一模型模板下用不同算法训练的模型。</div></div><div class="chart-card__extra"></div></div>
+              <div class="cc-chart"><div class="chart-box" data-chart="cand"></div></div><div class="cc-table" hidden></div>
+              <table class="cc-matrix" id="candMatrix"></table>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- ================= 手动预测 ================= -->
+    <div id="predictionView" class="manual-predict" hidden>
+      <div class="anno anno-field" data-version="v2.9"><span class="anno-tag">字段说明</span><span class="anno-version">v2.9</span><span class="anno-source">需求文档</span><div class="anno-body"><p><b>关联模块：</b>手动预测：响应曲线与输入表</p><p>表头为「输入名 / 单位 · 训练 下限–上限」，右侧预测值、置信；首行为草稿行，预填训练段中位数。选中一行后按「横轴」所选输入画响应曲线，灰底为训练范围。</p></div></div>
+      <div class="anno anno-ux" data-version="v2.9"><span class="anno-tag">交互说明</span><span class="anno-version">v2.9</span><span class="anno-source">需求文档</span><div class="anno-body"><p><b>关联模块：</b>手动预测：预测流程</p><p>改草稿行任一格即成为待预测行；「预测」批量提交待预测行，行状态依次为排队、预测中、完成；已预测行再改显示「已修改，待预测」。置信：所有输入在训练范围内为高，否则为低。</p></div></div>
+      <div class="anno anno-edge" data-version="v2.9"><span class="anno-tag">边界与异常</span><span class="anno-version">v2.9</span><span class="anno-source">需求文档</span><div class="anno-body"><p><b>关联模块：</b>手动预测：输入异常</p><p>超出训练范围的格子标红并提示范围，仍可预测；空值或非数字标「输入无效」，不计入预测。</p></div></div>
+      <div class="chart-card">
+        <div class="chart-card__head"><div class="chart-card__titles"><div class="chart-card__title">响应曲线</div></div><div class="chart-card__extra"><label class="mp-axis">横轴 <select class="ke-select" id="responseAxis" onchange="changeAxis(this.value)"></select></label></div></div>
+        <div class="mp-chart"><div class="chart-box" data-chart="resp"></div><div class="mp-overlay is-empty" id="respOverlay">在下方选中一行，查看这一行的响应曲线</div></div>
+        <div class="mp-legend"><span><i class="is-band"></i>训练范围</span><span><i class="is-solid"></i>训练范围内</span><span><i class="is-dashed"></i>训练范围外</span><span><i class="is-dot"></i>选中行</span></div>
+      </div>
+      <div class="mp-toolbar"><button class="btn-pill solid" id="predictButton" onclick="predictRows()" disabled>预测</button><span class="mp-count" id="predictCount">共 0 行</span></div>
+      <div class="mp-list"><table class="mp-table"><thead id="predictHead"></thead><tbody id="predictRows"></tbody></table></div>
+    </div>
   </div>
+</div>
+</main></div></div>
 
-  <div class="toast" id="toast"></div>
+<div class="modal-backdrop" id="modalExport" role="dialog" aria-modal="true" aria-label="导出数据集"><div class="export-modal">
+  <div class="anno anno-field" data-version="v2.9" style="margin:0 0 14px"><span class="anno-tag">字段说明</span><span class="anno-version">v2.9</span><span class="anno-source">需求文档</span><div class="anno-body"><p><b>关联模块：</b>导出数据集；入口：评估弹窗右上</p><p>导出内容二选一（验证集：预测值、实际值、特征列；训练集：标签、特征列），格式 CSV / Excel；文件名「模型名称_导出内容_日期.扩展名」。</p></div></div>
+  <div class="ex-row"><div class="ex-label">导出内容</div><div class="ex-radios"><label class="ex-radio"><input type="radio" name="exportContent" value="验证集数据" checked onchange="updateExportName()"><span>验证集数据（含预测值、实际值、特征列）</span></label><label class="ex-radio"><input type="radio" name="exportContent" value="训练集数据" onchange="updateExportName()"><span>训练集数据（含标签、特征列）</span></label></div></div>
+  <div class="ex-row"><div class="ex-label">文件格式</div><div class="ex-radios inline"><label class="ex-radio"><input type="radio" name="exportFormat" value="csv" checked onchange="updateExportName()"><span>CSV (UTF-8)</span></label><label class="ex-radio"><input type="radio" name="exportFormat" value="xlsx" onchange="updateExportName()"><span>Excel (.xlsx)</span></label></div></div>
+  <div class="ex-hint"><div>文件名格式：模型名称_导出内容_日期.扩展名</div><div id="exportFileName">示例：2116009264542650368_验证集数据_20261030.csv</div></div>
+  <div class="ex-foot"><button class="btn-pill" style="border-color:var(--primary)" onclick="closeModal('modalExport')">取消</button><button class="btn-pill solid" onclick="exportDataset()">导出</button></div>
+</div></div>
+<div class="toast" id="toast" role="status"></div>
 
-  <button type="button" class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoFilter();">批注</button>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const QS=new URLSearchParams(location.search);
+const EMBED=QS.get('embed')==='1';
+const C1='#2F6FDB',C2='#E8743B',CR='#D9363E',G={main:'#001833',sec:'#405266',aux:'#8d98a4',line:'#d9dde1',light:'#eceef1'};
 
-  <script>
-    (function () {
-      const buttons = Array.from(document.querySelectorAll('[data-tab-target]'));
-      const panels = Array.from(document.querySelectorAll('[data-tab-panel]'));
+/* ================= 评级（固定出厂默认阈值） ================= */
+const ratingNames=['良好','注意','不佳'];
+// [key, 分项, 类型]
+const thresholdDefs=[['eval','评估误差'],['slope','物理规律'],['direction','物理规律'],['zero','物理规律','notice'],['legacyDirection','物理规律','notice'],['smooth','曲线平顺度'],['extReverse','超范围表现'],['extBound','超范围表现'],['extSmooth','超范围表现'],['extZero','超范围表现','notice'],['retrain','重训稳定'],['perf','性能'],['predict','性能'],['cover','数据提示','coverage']];
+// 评估误差与重训波动率已确认；其他默认阈值待业务专家标定，页面不可修改。
+const FACTORY_RULES={eval:{good:10,warn:20},slope:{good:.2,warn:.5},direction:{good:.05,warn:.2},zero:{good:.5,warn:null},legacyDirection:{good:.2,warn:null},smooth:{good:5,warn:30},extReverse:{good:.05,warn:.2},extBound:{good:.2,warn:.5},extSmooth:{good:5,warn:30},extZero:{good:.5,warn:null},retrain:{good:2,warn:5},perf:{good:30,warn:120},predict:{good:5,warn:20},noiseZero:{good:.3},cover:{good:.8,warn:.5}};
+const settings={rules:FACTORY_RULES};
+const numberOrNull=v=>v===null||v===undefined||String(v).trim()===''||!Number.isFinite(Number(v))?null:Number(v);
+function grade(key,v){v=numberOrNull(v);if(v===null)return -1;const r=settings.rules[key],d=thresholdDefs.find(d=>d[0]===key);if(!r||!d)return -1;if(d[2]==='coverage')return v>=r.good?0:v>=r.warn?1:2;if(d[2]==='notice')return v>r.good?1:0;return v<=r.good?0:v<=r.warn?1:2;}
+const CH05V={eval:2.1,slope:.01,direction:0,zero:0,legacyDirection:null,smooth:9.18,extReverse:0,extBound:.88,extSmooth:1.59,extZero:.51,retrain:1.570/205*100,perf:5.1,predict:.24,cover:1};
+function ratings(values){const parts={};thresholdDefs.forEach(d=>{if(d[1]==='数据提示')return;const g=grade(d[0],values[d[0]]);parts[d[1]]=Math.max(parts[d[1]]??-1,g);});return {parts,concerns:Object.entries(parts).filter(([,g])=>g>0).map(([k])=>k)};}
 
-      function switchTab(target) {
-        buttons.forEach((button) => {
-          button.classList.toggle('active', button.dataset.tabTarget === target);
-        });
-        panels.forEach((panel) => {
-          panel.classList.toggle('active', panel.dataset.tabPanel === target);
-        });
-      }
 
-      buttons.forEach((button) => {
-        button.addEventListener('click', function () {
-          switchTab(button.dataset.tabTarget);
-        });
-      });
+/* ================= 通用 ================= */
+let toastTimer;function showToast(t){$('toast').textContent=t;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),2600);}
+let openLayers=[];
+function openModal(id){const el=$(id);if(!el)return;el._prev=document.activeElement;el.classList.add('show');openLayers=openLayers.filter(x=>x!==id);openLayers.push(id);el.querySelector('button')?.focus();refreshAnnotations();}
+function closeModal(id){$(id)?.classList.remove('show');openLayers=openLayers.filter(x=>x!==id);$(id)?._prev?.focus?.();}
+function closeEval(){if(EMBED){try{window.parent.postMessage({type:'close-eval'},'*');}catch(e){}return;}if(history.length>1&&document.referrer)history.back();else location.href='机理模型训练.html';}
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(openLayers.length){closeModal(openLayers.at(-1));return;}if(!$('rulesPop').hidden){$('rulesPop').hidden=true;return;}if(EMBED)closeEval();});
+document.addEventListener('click',e=>{if(e.target.classList&&e.target.classList.contains('modal-backdrop'))closeModal(e.target.id);if(!$('rulesPop').hidden&&!e.target.closest('#verdictBar'))$('rulesPop').hidden=true;});
+function refreshAnnotations(){if(!document.body.classList.contains('annotation-mode'))return;const cur=document.querySelector('.anno-filter-tag.active')?.textContent||'全部';if(typeof filterAnno==='function')filterAnno(cur==='全部'?'all':cur);}
 
-      // Toast
-      const toast = document.getElementById('toast');
-      let toastTimer = null;
-      function showToast(msg) {
-        toast.textContent = msg;
-        toast.classList.add('show');
-        clearTimeout(toastTimer);
-        toastTimer = setTimeout(() => toast.classList.remove('show'), 2400);
-      }
+/* SVG helpers */
+const n1=v=>Math.round(v*10)/10;
+const lin=(d0,d1,r0,r1)=>v=>r0+(v-d0)/(d1-d0)*(r1-r0);
+const logs=(d0,d1,r0,r1)=>{const a=Math.log10(d0),b=Math.log10(d1);return v=>r0+(Math.log10(v)-a)/(b-a)*(r1-r0);};
+function rng(seed){let s=seed>>>0;return()=>{s=(Math.imul(s,1664525)+1013904223)>>>0;return s/4294967296;};}
+const gauss=r=>(r()+r()+r()+r()+r()+r()-3)*1.41;
+function tw(s,fs){let n=0;for(const ch of String(s))n+=/[　-鿿＀-￯]/.test(ch)?fs:fs*.58;return n;}
+function tx(x,y,t,o={}){return `<text x="${n1(x)}" y="${n1(y)}" font-size="${o.fs||11}" fill="${o.c||G.aux}" text-anchor="${o.a||'start'}"${o.w?` font-weight="${o.w}"`:''}${o.rot?` transform="rotate(-90 ${n1(x)} ${n1(y)})"`:''}>${t}</text>`;}
+const ln=(x1,y1,x2,y2,c,o='')=>`<line x1="${n1(x1)}" y1="${n1(y1)}" x2="${n1(x2)}" y2="${n1(y2)}" stroke="${c}" ${o}/>`;
+const dia=(x,y,s,fill,stroke,sw=1.5)=>`<path d="M${n1(x)} ${n1(y-s)}L${n1(x+s)} ${n1(y)}L${n1(x)} ${n1(y+s)}L${n1(x-s)} ${n1(y)}Z" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+const svgWrap=(w,h,body,label)=>`<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="${label||''}（示意）">${body}</svg>`;
+function pathOf(pts){let d='',pen=false;pts.forEach(p=>{if(!p){pen=false;return;}d+=(pen?'L':'M')+n1(p[0])+' '+n1(p[1]);pen=true;});return d;}
+function zoneColor(i,g){return g<0?(i%2?'#e6e8eb':'#f3f4f5'):['#e3f4d9','#fff1d6','#fde2df'][g];}
+const gradeFill=g=>g<0?'#8d98a4':['#52c41a','#faad14','#f5222d'][g];
+function zoneMax(kind){return {eval:30,retrain:7.5,slope:1,direction:1,extBound:1,smooth:45,perf:180,predict:30}[kind]||1;}
+function zonesFor(kind){const r=settings.rules[kind];return [[0,r.good,0],[r.good,r.warn,1],[r.warn,zoneMax(kind),2]];}
+function zoneBar(kind,markers,h=8,axis=false){const max=zoneMax(kind),pos=v=>Math.max(0,Math.min(100,v/max*100));return `<div class="zone-bar" style="height:${h}px">${zonesFor(kind).map((z,i)=>`<i class="zone-bar__zone" style="left:${pos(z[0])}%;width:${Math.max(0,pos(z[1])-pos(z[0]))}%;background:${zoneColor(i,z[2])}"></i>`).join('')}${markers.filter(m=>numberOrNull(m.v)!==null).map(m=>`<i class="zone-bar__marker is-${m.s}" title="${esc(m.t||'')}" style="left:${pos(m.v)}%;--marker-color:${m.c||C1}"></i>`).join('')}</div>${axis?`<div class="zone-axis">${[0,settings.rules[kind].good,settings.rules[kind].warn,max].map(v=>`<span style="left:${pos(v)}%">${v}%</span>`).join('')}</div>`:''}`;}
+function ratioBar(p,g=-1,text='',fill){return `<div class="ratio-bar"><div class="ratio-bar__track"><div class="ratio-bar__fill" style="width:${Math.min(100,p)}%;background:${fill||gradeFill(g)}"></div></div>${text?`<span class="ratio-bar__text">${text}</span>`:''}</div>`;}
+const chip=g=>g<0?'':`<span class="assess-chip lv-${g}"><i>${['✓','!','×'][g]}</i>${ratingNames[g]}</span>`;
+function miniTable(head,rows,note){return `<table class="mini-table"><thead><tr>${head.map(h=>`<th${/kW|σ|s$|行|点|数|%|‰/.test(h)?' class="is-num"':''}>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((c,i)=>`<td${i&&/^[-\d.<>~（）%σ ‰,]+$|^--$/.test(String(c))?' class="is-num"':''}>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>${note?`<div class="table-note">${note}</div>`:''}`;}
 
-      // 导出弹窗
-      const modalExport = document.getElementById('modalExport');
-      function openExport() {
-        modalExport.classList.add('show');
-        modalExport.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('modal-open');
-      }
-      function closeExport() {
-        modalExport.classList.remove('show');
-        modalExport.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('modal-open');
-      }
-      document.getElementById('btnExportDataset').addEventListener('click', openExport);
-      document.getElementById('btnCancelExport').addEventListener('click', closeExport);
-      document.getElementById('btnCloseExport').addEventListener('click', closeExport);
-      modalExport.addEventListener('click', (e) => { if (e.target === modalExport) closeExport(); });
+/* ================= 数据（CH05） ================= */
+const INPUTS=[
+ {name:'冷冻水出水温度',unit:'℃',lo:17.22,hi:17.73,med:17.5,medS:'17.50',draft:'17.5',dom:[17.1,17.82],ticks:[17.1,17.2,17.3,17.4,17.5,17.6,17.7,17.8],dec:1,meta:'趋势反向 0%',ymax:180,ext:0},
+ {name:'冷却水进水温度（计算）',unit:'℃',lo:21.5,hi:27.9,med:23.3,medS:'23.30',draft:'23.3',dom:[21,28.5],ticks:[21,22,23,24,25,26,27,28],dec:0,meta:'趋势反向 0%',ymax:240,ext:0},
+ {name:'冷冻水流量',unit:'m3/h',lo:366.21,hi:452.57,med:406.2,medS:'406.2',draft:'406.56',dom:[350,470],ticks:[360,380,400,420,440,460],dec:0,meta:'',ymax:180,ext:0},
+ {name:'冷却水流量',unit:'m3/h',lo:299.93,hi:605.3,med:484.4,medS:'484.4',draft:'485.64',dom:[280,630],ticks:[300,350,400,450,500,550,600],dec:0,meta:'',ymax:180,ext:1},
+ {name:'实时制冷量',unit:'kW',lo:513.83,hi:3356.7,med:2278,medS:'2278.0',draft:'2276.67',dom:[400,3500],ticks:[500,1000,1500,2000,2500,3000,3500],dec:0,meta:'幅度异常 1%',ymax:360,ext:0}
+];
+const MED=INPUTS.map(i=>i.med);
+// 实时制冷量分量：过 (510,40) (2278,156.3) (3356.7,290) 的二次曲线
+function pq(q){const P=[[510,40],[2278,156.3],[3356.7,290]];let s=0;for(let i=0;i<3;i++){let t=P[i][1];for(let j=0;j<3;j++)if(j!==i)t*=(q-P[j][0])/(P[i][0]-P[j][0]);s+=t;}return s;}
+function model(v,cand=1){const p=pq(v[4])-11*(v[0]-17.5)+10.4*(v[1]-23.3)+.002*(v[2]-406.2)+2.2*Math.exp(-(((v[3]-455)/9)**2));return cand===2?p*.982+1.6-1.2*(v[0]-17.5):p;}
+const sweepAt=(i,x,cand=1)=>{const v=[...MED];v[i]=x;return model(v,cand);};
 
-      document.getElementById('btnConfirmExport').addEventListener('click', function () {
-        const filename = '冷水主机功率预测_原始数据集_20260528.csv';
-        closeExport();
-        showToast(`正在导出 ${filename}，请稍候…`);
-      });
-    }());
-  </script>
+/* ---------- 五张指标卡 ---------- */
+function renderCards(){const gv=k=>grade(k,CH05V[k]);
+ const as=(g,t)=>`<div class="ov-assess">${chip(g)}${t}</div>`;
+ const val=(g,html)=>`<div class="ov-value${g>=0?' lv-'+g:''}">${html}</div>`;
+ const tiles=[
+  `<div class="ov-label">评估误差</div><div class="ov-sub">在没参与训练的日子上准不准</div>${val(gv('eval'),'5.486<span class="ov-unit">kW</span>')}${zoneBar('eval',[{v:2.1,s:'diamond',t:'MAPE 2.1%'}],8,true)}<div class="ov-sub">MAPE 2.1%<br>分布内 5.49 kW（100%）· 外推 14.06 kW（0%）</div>${as(gv('eval'),'评估误差 5.49 kW，MAPE 2.1%')}`,
+  `<div class="ov-label">噪声底 σ<span class="data-tag">数据提示</span></div>${val(-1,'0.513<span class="ov-unit">kW</span>')}<div class="ov-sub">相邻 5 分钟样本对差分 · 32 对<br>相邻差分无变化 3%</div>${as(-1,noiseHint(5.486,.513,.03))}`,
+  `<div class="ov-label">物理规律</div><div class="ov-sub">模型有没有违反物理规律</div>${val(ratings(CH05V).parts['物理规律'],'<span class="ov-il">幅度异常</span>1%')}<div class="ov-sub">趋势反向 0%<br>不响应 0%<br>幅度异常 1%（最大：实时制冷量）</div>${as(ratings(CH05V).parts['物理规律'],'三项取最差一级')}`,
+  `<div class="ov-label">曲线平顺度</div><div class="ov-sub">输入平滑变化时预测是否也平滑</div>${val(gv('smooth'),'9.18<span class="ov-unit">‰</span>')}<svg width="100%" height="16" viewBox="0 0 122 16" preserveAspectRatio="none" style="margin:4px 0"><path d="M0 12H40L43 11.4L45.5 4L48 11.4L51 12H122" fill="none" stroke="${C1}" stroke-width="1.2" vector-effect="non-scaling-stroke"/></svg><div class="ov-sub">0 为完全平顺；有台阶、锯齿时寻优可能被假的高低点误导<br>最不平顺：冷却水流量</div>${as(gv('smooth'),'曲线平顺度 9.18‰')}`,
+  `<div class="ov-label">超范围表现</div><div class="ov-sub">超出历史范围后趋势是否可信</div>${val(ratings(CH05V).parts['超范围表现'],'<span class="ov-il">幅度异常</span>88%')}<div class="ov-sub">趋势反向 0%<br>不响应 51%<br>幅度异常 88%，平顺度 1.59‰<br>最差：实时制冷量</div>${as(ratings(CH05V).parts['超范围表现'],'制冷量超出历史范围后预测功率不再增加，趋势不可信')}`
+ ];
+ $('reportMetricCards').innerHTML=tiles.map(t=>`<div class="ov-tile">${t}</div>`).join('');
+}
+function noiseHint(rmse,sigma,zero){const r=numberOrNull(rmse),s=numberOrNull(sigma),z=numberOrNull(zero);const hints=[];if(s===null)hints.push('噪声底不可用：可用相邻样本不足，其余指标照常评级');else if(s>0&&r!==null)hints.push(r<=1.5*s?'误差已接近传感器精度':`评估 RMSE 为 ${(r/s).toFixed(1)}σ，未接近传感器精度`);if(z!==null&&z>settings.rules.noiseZero.good)hints.push('相邻差分无变化 > 30%，噪声底可能被低估');return hints.join('；')||'噪声底仅作数据提示';}
 
-  <script>
+/* ---------- 判定依据 ---------- */
+function rulesHTML(){const r=settings.rules,p=v=>+(v*100).toFixed(2),n=v=>+(+v).toFixed(3);
+ const rows=[
+  ['噪声底（数据提示）',`评估 RMSE ≤ 1.5σ 提示误差已接近传感器精度；相邻差分无变化 &gt; ${p(r.noiseZero.good)}% 提示可能被低估；不着色、不评级`],
+  ['评估误差（已确认）',`相对误差（MAPE 或 CV(RMSE)，按模板配置）≤ ${n(r.eval.good)}% 良好，${n(r.eval.good)}–${n(r.eval.warn)}% 注意，&gt; ${n(r.eval.warn)}% 不佳`],
+  ['物理规律 · 趋势反向',`趋势反向 ≤ ${p(r.direction.good)}% 良好，${p(r.direction.good)}–${p(r.direction.warn)}% 注意，&gt; ${p(r.direction.warn)}% 不佳`],
+  ['物理规律 · 不响应',`不响应 &gt; ${p(r.zero.good)}% 为注意；未拆分趋势反向与不响应的老报告，趋势违例 &gt; ${p(r.legacyDirection.good)}% 为注意`],
+  ['物理规律 · 幅度异常',`幅度异常 ≤ ${p(r.slope.good)}% 良好，${p(r.slope.good)}–${p(r.slope.warn)}% 注意，&gt; ${p(r.slope.warn)}% 不佳；未配置合理变化幅度时不评估。物理规律取三项最差一级`],
+  ['曲线平顺度',`平顺度 ≤ ${n(r.smooth.good)}‰ 良好，${n(r.smooth.good)}–${n(r.smooth.warn)}‰ 注意，&gt; ${n(r.smooth.warn)}‰ 不佳；0 为完全平顺`],
+  ['超范围表现',`从 60 条真实训练样本出发，每次只改一个配置了应有趋势或合理变化幅度的输入，从训练范围边界向外各延伸量程的 20%（不超出模板上下限），只统计范围外那一段：趋势反向 = 相邻两步变化方向与应有趋势相反的占比；不响应 = 相邻两步预测几乎不变的占比（输入继续变、预测停住）；幅度异常 = 相邻两步变化率不在合理变化幅度内的占比；平顺度 = 范围外曲线平顺度。四项取最差一级。例：CH05 制冷量超过历史最大 3357 kW 后预测功率不再增加，每多 1 kW 冷量功率增加约 0，低于 0.08 kW 下限，这些段同时算幅度异常和不响应。 范围外趋势反向 ≤ ${p(r.extReverse.good)}%、幅度异常 ≤ ${p(r.extBound.good)}%、平顺度 ≤ ${n(r.extSmooth.good)}‰ 且不响应 ≤ ${p(r.extZero.good)}% 为良好；趋势反向 ${p(r.extReverse.good)}–${p(r.extReverse.warn)}%、幅度异常 ${p(r.extBound.good)}–${p(r.extBound.warn)}%、平顺度 ${n(r.extSmooth.good)}–${n(r.extSmooth.warn)}‰ 或不响应 &gt; ${p(r.extZero.good)}% 为注意；趋势反向 &gt; ${p(r.extReverse.warn)}%、幅度异常 &gt; ${p(r.extBound.warn)}% 或平顺度 &gt; ${n(r.extSmooth.warn)}‰ 为不佳。没有延伸空间或未配置应有趋势和合理变化幅度时不评估`],
+  ['重训稳定（已确认）',`（仅随机性算法或开启自学习时计算）重训波动率（重训波动 ÷ 评估段实测均值绝对值）≤ ${n(r.retrain.good)}% 良好，${n(r.retrain.good)}–${n(r.retrain.warn)}% 注意，&gt; ${n(r.retrain.warn)}% 不佳；未做重训或实测均值接近 0 时未评估`],
+  ['评估覆盖（数据提示）',`评估点落在训练段有样本格子内比例 ≥ ${p(r.cover.good)}% 为良好，${p(r.cover.warn)}–${p(r.cover.good)}% 为注意，&lt; ${p(r.cover.warn)}% 为不佳；只作数据提示，不给模型评级`],
+  ['性能',`1 万样本训练耗时 ≤ ${n(r.perf.good)} s 且单次预测 ≤ ${n(r.predict.good)} ms 良好；训练 ${n(r.perf.good)}–${n(r.perf.warn)} s 或预测 ${n(r.predict.good)}–${n(r.predict.warn)} ms 注意；更长为不佳`]
+ ];
+ return `<div class="rules-table"><table>${rows.map(([a,b])=>`<tr><td class="rules-table__name">${a}</td><td>${b}</td></tr>`).join('')}</table><div class="note">评估误差与重训波动率已确认；其余默认阈值待业务专家标定，页面不可修改。</div><div class="rules-table__note">只做分项评级，不做综合评级；噪声底和覆盖为数据提示；训练 RMSE 只作诊断</div></div>`;}
+
+function toggleRules(e){e.stopPropagation();const p=$('rulesPop');if(p.hidden)p.innerHTML=rulesHTML();p.hidden=!p.hidden;}
+
+/* ---------- 时序数据 ---------- */
+const T0=Date.UTC(2025,5,1),TS_END=516;
+const TS=(()=>{const r=rng(7),pts=[];const segs=[[3,12,152,34],[22.5,37.5,262,40],[44,54,252,30],[393.6,394.4,150,8],[405.8,406.4,152,6],[435.7,436.3,150,5],[486,487.2,148,8],[499,499.6,152,6],[513.2,515.8,150,10]];
+ segs.forEach(([a,b,base,amp])=>{for(let t=a;t<=b;t+=.06){const act=base+amp*Math.sin(t*1.7)+amp*.45*Math.sin(t*5.3)+gauss(r)*5;const res=gauss(r)*1.8+(r()<.035?-(7+r()*18):0);pts.push({t,act,pred:act-res,res});}pts.push(null);});return pts;})();
+const TS_BLOCKS=[[0,3,''],[12.5,22,'冻结剔除'],[38,43.5,'去重剔除'],[54.5,61,''],[392,393.4,''],[394.8,405.5,'去重剔除'],[407,435.4,'冻结剔除'],[436.6,442,''],[494,498.6,''],[500,512.8,'']];
+let tsWin=[0,TS_END];
+function timeTicks(a,b){const span=b-a,res=[];if(span>60){const step=span>200?2:1;for(let m=0;m<20;m++){const d=new Date(Date.UTC(2025,5+m,1)),t=(d-T0)/864e5;if(t>=a-.01&&t<=b+.01&&d.getUTCMonth()%step===0)res.push([t,String(d.getUTCMonth()+1).padStart(2,'0')+'-01']);}}else{const step=span>21?7:span>7?2:1;for(let t=Math.ceil(a/step)*step;t<=b;t+=step){const d=new Date(T0+t*864e5);res.push([t,String(d.getUTCMonth()+1).padStart(2,'0')+'-'+String(d.getUTCDate()).padStart(2,'0')]);}}return res;}
+const CHARTS={},TABLES={};
+CHARTS.ts=w=>{const L=44,R=w-14,mT=30,mB=206,rT=238,rB=304,axY=322,sT=334,sH=18,H=sT+sH+4,[a,b]=tsWin,x=lin(a,b,L,R),y=lin(0,350,mB,mT),yr=lin(-60,30,rB,rT),sig=.513;let s='';
+ s+=`<defs><clipPath id="tsc1"><rect x="${L}" y="${mT}" width="${R-L}" height="${mB-mT}"/></clipPath><clipPath id="tsc2"><rect x="${L}" y="${rT}" width="${R-L}" height="${rB-rT}"/></clipPath></defs>`;
+ s+=`<rect x="${L}" y="${mT}" width="${R-L}" height="${mB-mT}" fill="#f5f6f7"/>`;
+ s+=`<g clip-path="url(#tsc1)">`+TS_BLOCKS.map(([p,q,l])=>`<rect x="${n1(x(p))}" y="${mT}" width="${n1(Math.max(1,x(q)-x(p)))}" height="${mB-mT}" fill="#dde1e6"/>`+(l&&x(q)-x(p)>44?tx(x(p)+2,mT+11,l,{fs:10,c:G.sec}):'')).join('')+`</g>`;
+ for(let v=0;v<=350;v+=50){s+=ln(L,y(v),R,y(v),'#e3e6ea','stroke-width="1"')+tx(L-6,y(v)+4,v,{a:'end',fs:10});}
+ s+=tx(L+2,mT-8,'kW',{fs:10});
+ const vis=TS.map(p=>p&&p.t>=a-1&&p.t<=b+1?p:null);
+ s+=`<g clip-path="url(#tsc1)"><path d="${pathOf(vis.map(p=>p&&[x(p.t),y(p.act)]))}" fill="none" stroke="#24468F" stroke-width="1.1"/><path d="${pathOf(vis.map(p=>p&&[x(p.t),y(p.pred)]))}" fill="none" stroke="${C1}" stroke-width="1.1" opacity=".9"/></g>`;
+ s+=tx(L+2,rT-8,'残差 kW',{fs:10});
+ [-60,-30,0,30].forEach(v=>{s+=ln(L,yr(v),R,yr(v),v===0?'#8d98a4':'#e3e6ea')+tx(L-6,yr(v)+4,v,{a:'end',fs:10});});
+ s+=`<rect x="${L}" y="${n1(yr(sig))}" width="${R-L}" height="${n1(yr(-sig)-yr(sig))}" fill="#cfe0f8"/>`;
+ s+=tx(R-2,rT-8,'噪声底 ±σ（参考）',{a:'end',fs:10,c:G.sec});
+ s+=`<g clip-path="url(#tsc2)"><path d="${pathOf(vis.map(p=>p&&[x(p.t),yr(p.res)]))}" fill="none" stroke="#6E9BE8" stroke-width="1"/></g>`;
+ s+=ln(L,rB,R,rB,G.line);
+ timeTicks(a,b).forEach(([t,l])=>{s+=ln(x(t),rB,x(t),rB+4,G.line)+tx(x(t),axY,l,{a:'middle',fs:10,c:G.sec});});
+ const xs=lin(0,TS_END,L,R),ys=lin(0,350,sT+sH-2,sT+2);
+ s+=`<rect x="${L}" y="${sT}" width="${R-L}" height="${sH}" fill="#f0f4fb" stroke="${G.line}"/>`;
+ s+=`<path d="${pathOf(TS.filter((p,i)=>!p||i%3===0).map(p=>p&&[xs(p.t),ys(p.act)]))}" fill="none" stroke="#9db8e6" stroke-width="1"/>`;
+ const wa=xs(a),wb=xs(b);
+ s+=`<rect data-h="m" x="${n1(wa)}" y="${sT}" width="${n1(Math.max(2,wb-wa))}" height="${sH}" fill="rgba(47,111,219,.14)" stroke="#9db8e6" style="cursor:grab"/>`;
+ [wa,wb].forEach((hx,i)=>{s+=`<g data-h="${i}" style="cursor:ew-resize"><rect x="${n1(hx-4)}" y="${sT-3}" width="8" height="${sH+6}" rx="2" fill="#fff" stroke="#8d98a4"/>${ln(hx-1.2,sT+5,hx-1.2,sT+sH-5,'#8d98a4')}${ln(hx+1.2,sT+5,hx+1.2,sT+sH-5,'#8d98a4')}</g>`;});
+ return svgWrap(w,H,s,'实测与预测（按时间）');};
+TABLES.ts=()=>{const [a,b]=tsWin,vis=TS.filter(p=>p&&p.t>=a&&p.t<=b),k=Math.max(1,Math.floor(vis.length/12)),rows=vis.filter((p,i)=>i%k===0).slice(0,12).map(p=>{const d=new Date(T0+p.t*864e5);return [d.toISOString().slice(0,16).replace('T',' '),p.act.toFixed(1),p.pred.toFixed(1),(p.res).toFixed(2)];});return miniTable(['时间','实测 kW','预测（物理灰箱） kW','残差 kW'],rows,`当前时间窗口共 ${vis.length} 个点，表中等距抽取 ${rows.length} 个；曲线为示意数据。`);};
+
+/* ---------- 散点 ---------- */
+const SC=(()=>{const r=rng(11),tr=[],ev=[];const pick=()=>r()<.3?118+r()*48:196+r()*104;for(let i=0;i<260;i++){const a=pick();tr.push([a,a+gauss(r)*6.5]);}for(let i=0;i<240;i++){const a=pick();ev.push([a,a+gauss(r)*5.2]);}tr.push([56,46]);return {tr,ev,ex:[[326,329],[328,322],[331,331],[334,326],[319,310],[338,334],[321,318]]};})();
+CHARTS.scatter=w=>{const H=356,L=50,T=10,R=w-12,B=H-46,x=lin(30,350,L,R),y=lin(30,350,B,T),ticks=[30,50,100,150,200,250,300,350],rmse=5.486;let s='';
+ ticks.forEach(v=>{s+=ln(x(v),T,x(v),B,'#eef0f2')+ln(L,y(v),R,y(v),'#eef0f2')+tx(x(v),B+15,v,{a:'middle',fs:10})+tx(L-6,y(v)+4,v,{a:'end',fs:10});});
+ s+=`<rect x="${L}" y="${T}" width="${R-L}" height="${B-T}" fill="none" stroke="${G.line}"/>`;
+ const band=k=>`<polygon points="${n1(x(30))},${n1(y(30+k))} ${n1(x(350-k))},${n1(y(350))} ${n1(x(350))},${n1(y(350-k))} ${n1(x(30+k))},${n1(y(30))}" fill="#cfe0f8"/>`;
+ s+=band(rmse)+ln(x(30),y(30),x(350),y(350),'#5b6878','stroke-width="1"');
+ s+=SC.tr.map(p=>`<circle cx="${n1(x(p[0]))}" cy="${n1(y(p[1]))}" r="2" fill="#c3c9d1" opacity=".85"/>`).join('');
+ s+=SC.ev.map(p=>`<circle cx="${n1(x(p[0]))}" cy="${n1(y(p[1]))}" r="2.6" fill="${C1}" stroke="#fff" stroke-width=".6"/>`).join('');
+ s+=SC.ex.map(p=>`<circle cx="${n1(x(p[0]))}" cy="${n1(y(p[1]))}" r="3" fill="#fff" stroke="${C1}" stroke-width="1.2"/>`).join('');
+ s+=tx((L+R)/2,B+32,'实测 kW',{a:'middle',fs:11,c:G.sec})+tx(14,(T+B)/2,'预测 kW',{a:'middle',fs:11,c:G.sec,rot:1});
+ return svgWrap(w,H,s,'实测 vs 预测');};
+TABLES.scatter=()=>miniTable(['数据段','样本数 / 占比','RMSE（kW）'],[['训练段','6327','6.790（诊断）'],['评估·分布内','1857 / 100%','5.49'],['评估·外推','0%','14.06']],'对角线两侧为 ±RMSE 参考带（评估 RMSE 5.486 kW）；散点为示意。');
+
+/* ---------- 原单位误差明细与横条对比 ---------- */
+function svgRMSEBars(w,rows,noise=false){const L=Math.min(146,w*.3),R=w-62,T=34,rh=32,B=T+rh*rows.length,max=Math.ceil(Math.max(...rows.map(r=>r.value))*1.15/2)*2,x=lin(0,max,L,R);let s='';
+ for(let k=0;k<=4;k++){const v=max*k/4;s+=ln(x(v),T-10,x(v),B,G.light)+tx(x(v),B+18,+v.toFixed(1),{a:'middle',fs:10,c:G.sec});}
+ rows.forEach((r,i)=>{const y=T+rh*i;s+=tx(L-10,y+14,r.name,{a:'end',fs:11,c:G.sec})+`<rect x="${L}" y="${y}" width="${n1(x(r.value)-L)}" height="20" rx="2" fill="${r.color}"/>`+tx(x(r.value)+7,y+14,r.text,{fs:11,c:G.main});});
+ if(noise)s+=ln(x(.513),T-14,x(.513),B,G.sec,'stroke-dasharray="3 2"')+tx(x(.513)+5,13,'噪声底（参考）0.513 kW',{fs:10,c:G.sec});
+ s+=ln(L,B,R,B,G.line)+tx(R,B+34,'RMSE（kW）',{a:'end',fs:10,c:G.sec});return svgWrap(w,B+44,s,'RMSE 原单位横条对比');}
+CHARTS.error=w=>svgRMSEBars(w,[{name:'训练（诊断）',value:6.790,text:'6.790',color:G.aux},{name:'评估·分布内',value:5.49,text:'5.49',color:C1},{name:'评估·外推',value:14.06,text:'14.06',color:C2}],true);
+CHARTS.cand=w=>svgRMSEBars(w,[{name:'物理灰箱 #1',value:5.486,text:'5.486',color:C1},{name:'物理灰箱 #2',value:4.908,text:'4.908',color:C2}]);
+TABLES.error=()=>miniTable(['指标','评估段','分布内','外推'],[['RMSE（kW）','5.486','5.49（100%）','14.06（0%）'],['相对误差（MAPE）','2.1%','--','--'],['R²（参考）','0.9879','--','--']],'分布内 / 外推未提供的相对误差与 R² 显示 --。');
+TABLES.cand=()=>miniTable(['候选','评估 RMSE（kW）','相对误差（MAPE）'],[['物理灰箱 #1（已选用）','5.486','2.1%'],['物理灰箱 #2','4.908','1.9%（示意）']]);
+
+/* ---------- 单输入响应曲线 ---------- */
+let sweepIdx=0,overlayOn=false;
+function hist(i){const inp=INPUTS[i];if(i===0)return {w:.034,start:17.22,c:[6,10,22,150,105,560,520,400,1260,360,960,80,80,30,8]};const r=rng(31+i),n=15,wd=(inp.hi-inp.lo)/n,mu=inp.med,sd=(inp.hi-inp.lo)/5,c=[];for(let k=0;k<n;k++){const ctr=inp.lo+wd*(k+.5);c.push(Math.round(1150*Math.exp(-(((ctr-mu)/sd)**2)/2)*(.55+.9*r())));}return {w:wd,start:inp.lo,c};}
+function fmtTick(v,dec){return dec?v.toFixed(dec):String(v);}
+CHARTS.sweep=w=>{const i=sweepIdx,inp=INPUTS[i],L=56,R=w-16,mT=28,mB=236,hT=254,hB=292,axY=308,H=326,x=lin(inp.dom[0],inp.dom[1],L,R),y=lin(0,inp.ymax,mB,mT);let s='';
+ s+=tx(L,mT-12,'有功功率 kW',{fs:11,c:G.sec});
+ const st=inp.ymax/6;for(let v=0;v<=inp.ymax+.1;v+=st){s+=ln(L,y(v),R,y(v),'#eceef1')+tx(L-8,y(v)+4,Math.round(v),{a:'end',fs:10});}
+ s+=`<rect x="${n1(x(inp.lo))}" y="${mT}" width="${n1(x(inp.hi)-x(inp.lo))}" height="${mB-mT}" fill="#f3f4f5"/>`+tx(x(inp.lo)+4,mT+12,'训练范围',{fs:10,c:G.sec});
+ const N=140,xsv=[];for(let k=0;k<=N;k++)xsv.push(inp.dom[0]+(inp.dom[1]-inp.dom[0])*k/N);
+ const half=xv=>2.6*(1+(xv<inp.lo?(inp.lo-xv)/(inp.hi-inp.lo)*4:xv>inp.hi?(xv-inp.hi)/(inp.hi-inp.lo)*4:0));
+ const up=xsv.map(xv=>[x(xv),y(sweepAt(i,xv)+half(xv))]),dn=xsv.map(xv=>[x(xv),y(sweepAt(i,xv)-half(xv))]).reverse();
+ s+=`<path d="${pathOf(up)}L${dn.map(p=>n1(p[0])+' '+n1(p[1])).join('L')}Z" fill="#dce8fb" opacity=".8"/>`;
+ if(overlayOn)s+=`<path d="${pathOf(xsv.map(xv=>[x(xv),y(sweepAt(i,xv,2))]))}" fill="none" stroke="${C2}" stroke-width="1.6"/>`;
+ s+=`<path d="${pathOf(xsv.map(xv=>[x(xv),y(sweepAt(i,xv))]))}" fill="none" stroke="${C1}" stroke-width="2"/>`;
+ s+=`<circle cx="${n1(x(inp.med))}" cy="${n1(y(sweepAt(i,inp.med)))}" r="3.5" fill="#fff" stroke="${C1}" stroke-width="1.5"><title>响应基准点（${inp.medS}, 156.3）</title></circle>`;
+ // 样本数直方图
+ const h=hist(i),mx=2000,yh=lin(0,mx,hB,hT);
+ s+=tx(L+2,hT-4,'样本数',{fs:9});
+ [[0,'0'],[1000,'1,000'],[2000,'2,000']].forEach(([v,l])=>s+=tx(L-8,yh(v)+3,l,{a:'end',fs:9}));
+ h.c.forEach((c,k)=>{const a=x(h.start+h.w*k)+1,b=x(h.start+h.w*(k+1))-1;s+=`<rect x="${n1(a)}" y="${n1(yh(Math.min(c,mx)))}" width="${n1(Math.max(1,b-a))}" height="${n1(hB-yh(Math.min(c,mx)))}" fill="#b4bbc4"><title>${c} 个样本</title></rect>`;});
+ s+=ln(L,hB,R,hB,G.line);
+ inp.ticks.forEach(v=>s+=tx(x(v),axY,fmtTick(v,inp.dec),{a:'middle',fs:10,c:G.sec}));
+ s+=tx((L+R)/2,axY+15,inp.name+'（'+inp.unit+'）',{a:'middle',fs:11,c:G.sec});
+ return svgWrap(w,H,s,'单输入响应曲线：'+inp.name);};
+TABLES.sweep=()=>{const i=sweepIdx,inp=INPUTS[i],rows=[];for(let k=0;k<=10;k++){const xv=inp.dom[0]+(inp.dom[1]-inp.dom[0])*k/10,v=sweepAt(i,xv);rows.push([xv.toFixed(inp.dec?2:1),v.toFixed(1),(v-2.6).toFixed(1),(v+2.6).toFixed(1),...(overlayOn?[sweepAt(i,xv,2).toFixed(1)]:[]),xv<inp.lo||xv>inp.hi?'训练范围外':'训练范围内']);}return miniTable([inp.name+'（'+inp.unit+'）','物理灰箱 kW','p5 kW','p95 kW',...(overlayOn?['物理灰箱 #2 kW']:[]),'位置'],rows,'其余输入固定为训练段中位数；p5–p95 为重训 3 次的分位带。');};
+function renderSweepChips(){$('sweepChips').innerHTML=INPUTS.map((inp,i)=>`<button class="chip${i===sweepIdx?' on':''}" onclick="selectSweep(${i})"><b>${inp.name}</b>${inp.meta?`<small>${inp.meta}</small>`:''}</button>`).join('');
+ const others=INPUTS.map((p,k)=>k===sweepIdx?'':`${p.name} ${p.medS} ${p.unit}`).filter(Boolean).join('　');
+ $('sweepAnchor').innerHTML=`<span>其余输入固定为训练段中位数：${others}</span><span>· 响应基准点（${INPUTS[sweepIdx].medS}, 156.3）</span><span>· 训练范围内拐点数 ${INPUTS[sweepIdx].ext} 个</span>`;}
+function selectSweep(i){sweepIdx=i;renderSweepChips();redrawCard('sweep');}
+function toggleOverlay(on){overlayOn=on;$('sweepLg2').hidden=!on;redrawCard('sweep');}
+
+/* ---------- 物理规律明细 / 曲线平顺度明细 ---------- */
+function slopeDist(o){const W=180,H=30,x=lin(o.d[0],o.d[1],6,W-6),cy=11;let s=ln(6,cy,W-6,cy,'#eceef1','stroke-width="1"')+ln(x(0),cy-5,x(0),cy+5,'#c3c9d1');
+ if(o.band)s+=`<rect x="${n1(x(o.band[0]))}" y="${cy-4}" width="${n1(x(o.band[1])-x(o.band[0]))}" height="8" rx="2" fill="#e6e8eb"/>`;
+ const out=o.band&&(o.med<o.band[0]||o.med>o.band[1]);
+ s+=ln(x(o.p10),cy,x(o.p90),cy,C1,'stroke-width="2"')+`<circle cx="${n1(x(o.med))}" cy="${cy}" r="3.5" fill="${out?'#fff':C1}" stroke="${out?CR:'#fff'}" stroke-width="${out?1.5:1}"/>`+tx(x(o.med),cy+15,o.med,{a:'middle',fs:9,c:G.sec});
+ return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${s}</svg>`;}
+function renderSlope(){const rows=[
+  ['冷冻水出水温度（℃）','↓ 递减','未设定（只统计趋势）',0,0,null,{d:[-20,6],p10:-16.3,med:-10.4,p90:-9.2},1857],
+  ['冷却水进水温度（计算）（℃）','↑ 递增','未设定（只统计趋势）',0,0,null,{d:[-4,16],p10:9.2,med:10.4,p90:14.9},1857],
+  ['实时制冷量（kW）','↑ 递增','0.08 ~ 0.35 kW/kW',0,0,1,{d:[-.05,.4],p10:.08,med:.09,p90:.12,band:[.08,.35]},1857]];
+ $('slopeRows').innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td><div class="slope-dir">${ratioBar(r[3],grade('direction',r[3]/100))}<span>趋势反向 ${r[3]}% · 不响应 ${r[4]}%</span></div></td><td>${r[5]==null?'--':`<div style="max-width:120px">${ratioBar(r[5],grade('slope',r[5]/100),r[5]+'%')}</div>`}</td><td>${slopeDist(r[6])}</td><td class="is-num">${r[7]}</td></tr>`).join('');
+}
+function renderSmooth(){const sp=['M0 8H130','M0 8.6L65 8.3L130 7.4','M0 8H130','M0 8H48L50.5 7.4L52.5 1.5L55 1.5L57 7.4L59 8H130','M0 8L2 6.4L4.5 7.6L7 8H106L108 9.5L110 14L112 9.5L114 8H130'],vals=[['冷冻水出水温度（℃）','0.02',0],['冷却水进水温度（计算）（℃）','0.42',0],['冷冻水流量（m3/h）','1.06e-10',0],['冷却水流量（m3/h）','9.18',1],['实时制冷量（kW）','0.58',0]];
+ $('smoothRows').innerHTML=vals.map((v,i)=>`<tr><td>${v[0]}</td><td class="stability__num">${v[1]}</td><td class="stability__num">${v[2]}</td><td style="padding-left:12px"><svg width="130" height="16" viewBox="0 0 130 16"><path d="${sp[i]}" fill="none" stroke="${C1}" stroke-width="1"/></svg></td></tr>`).join('');
+ $('retrainZone').innerHTML=zoneBar('retrain',[{v:CH05V.retrain,s:'circle',t:'重训波动率 0.77%'}],8);}
+
+/* ---------- 超范围表现 ---------- */
+const EXTRAP=[
+ {i:0,meta:'不响应 0%',dom:[17.12,17.83],ymax:180,ticks:[17.2,17.3,17.4,17.5,17.6,17.7,17.8],dec:1,curves:[{c:C1,a:17.41,off:0},{c:C1,a:17.64,off:-11},{c:CR,a:17.32,off:-24}],facts:[['范围外：','趋势反向 0% · 不响应 0% · 平顺度（中位）0.03‰'],['范围内：','趋势反向 0% · 不响应 0%',1],['延伸（下 / 上）','20% / 20%'],['起点','60 条'],['合理变化幅度：','未设定（只统计趋势）']],tb:['0%','0%','--','0.03‰','0%','0%','--']},
+ {i:1,meta:'不响应 0%',dom:[20.2,29.2],ymax:240,ticks:[21,22,23,24,25,26,27,28,29],dec:0,curves:[{c:C1,a:22.6,off:0},{c:C1,a:25.9,off:-14},{c:CR,a:24.1,off:-26}],facts:[['范围外：','趋势反向 0% · 不响应 0% · 平顺度（中位）0.41‰'],['范围内：','趋势反向 0% · 不响应 0%',1],['延伸（下 / 上）','20% / 20%'],['起点','60 条'],['合理变化幅度：','未设定（只统计趋势）']],tb:['0%','0%','--','0.41‰','0%','0%','--']},
+ {i:4,meta:'幅度异常 88%',dom:[0,3800],ymax:400,ticks:[0,1000,2000,3000],dec:0,flat:true,curves:[{c:C1,a:3080,off:29},{c:C1,a:1970,off:-5,flat:1},{c:CR,a:2250,off:-12,flat:1}],facts:[['范围外：','趋势反向 0% · 不响应 51% · 幅度异常 88% · 平顺度（中位）1.59‰'],['范围内：','趋势反向 0% · 不响应 0% · 幅度异常 44%',1],['延伸（下 / 上）','20% / 20%'],['起点','60 条'],['合理变化幅度：','0.08 ~ 0.35 kW/kW']],tb:['0%','51%','88%','1.59‰','0%','0%','44%']}];
+let extrapIdx=2;
+function extVal(e,cv,xv){const inp=INPUTS[e.i],base=v=>sweepAt(e.i,v)+cv.off;if(!cv.flat||(xv>=inp.lo&&xv<=inp.hi))return base(xv);if(xv>inp.hi)return base(inp.hi);const d=Math.min(inp.lo-xv,inp.lo*.7);return base(inp.lo)-.02*d;}
+CHARTS.extrap=w=>{const e=EXTRAP[extrapIdx],inp=INPUTS[e.i],L=56,R=w-16,T=28,B=236,axY=252,H=272,x=lin(e.dom[0],e.dom[1],L,R),y=lin(0,e.ymax,B,T);let s='';
+ s+=tx(L,T-12,'有功功率 kW',{fs:11,c:G.sec});
+ const st=e.ymax>300?100:e.ymax/6;for(let v=0;v<=e.ymax+.1;v+=st)s+=ln(L,y(v),R,y(v),'#eceef1')+tx(L-8,y(v)+4,Math.round(v),{a:'end',fs:10});
+ s+=`<rect x="${n1(x(inp.lo))}" y="${T}" width="${n1(x(inp.hi)-x(inp.lo))}" height="${B-T}" fill="#f3f4f5"/>`+tx(x(inp.lo)+4,T+12,'训练范围',{fs:10,c:G.sec});
+ const seg=(cv,a,b,dash)=>{const pts=[];for(let k=0;k<=60;k++){const xv=a+(b-a)*k/60;pts.push([x(xv),y(Math.max(0,extVal(e,cv,xv)))]);}return `<path d="${pathOf(pts)}" fill="none" stroke="${cv.c}" stroke-width="${dash?1.3:2}"${dash?' stroke-dasharray="4 3" opacity=".85"':''}/>`;};
+ e.curves.forEach(cv=>{s+=seg(cv,e.dom[0],inp.lo,false)+seg(cv,inp.lo,inp.hi,true)+seg(cv,inp.hi,e.dom[1],false)+`<circle cx="${n1(x(cv.a))}" cy="${n1(y(extVal(e,cv,cv.a)))}" r="3.5" fill="#fff" stroke="${cv.c}" stroke-width="1.5"/>`;});
+ s+=ln(L,B,R,B,G.line);
+ e.ticks.forEach(v=>s+=tx(x(v),axY,v===0&&e.i===4?'0.00':fmtTick(v,e.dec),{a:'middle',fs:10,c:G.sec}));
+ s+=tx((L+R)/2,axY+15,inp.name+'（'+inp.unit+'）',{a:'middle',fs:11,c:G.sec});
+ return svgWrap(w,H,s,'超范围表现：'+inp.name);};
+TABLES.extrap=()=>`<table class="mini-table"><thead><tr><th rowspan="2">输入</th><th class="is-group" colspan="4">训练范围外（计分段）</th><th class="is-group" colspan="3">训练范围内（对照）</th></tr><tr><th class="is-num">趋势反向</th><th class="is-num">不响应</th><th class="is-num">幅度异常</th><th class="is-num">平顺度（中位）</th><th class="is-num">趋势反向</th><th class="is-num">不响应</th><th class="is-num">幅度异常</th></tr></thead><tbody>${EXTRAP.map(e=>`<tr><td>${INPUTS[e.i].name}</td>${e.tb.map(v=>`<td class="is-num">${v}</td>`).join('')}</tr>`).join('')}</tbody></table><div class="table-note">延伸（下 / 上） 20% / 20% · 起点 60 条；冷冻水流量、冷却水流量未配置应有趋势和合理变化幅度，不评估外推。</div>`;
+function renderExtrapChips(){$('extrapChips').innerHTML=EXTRAP.map((e,k)=>`<button class="chip${k===extrapIdx?' on':''}" onclick="selectExtrap(${k})"><b>${INPUTS[e.i].name}</b><small>${e.meta}</small></button>`).join('');
+ $('extrapFacts').innerHTML=EXTRAP[extrapIdx].facts.map(f=>`<span class="${f[2]?'is-muted':''}">${f[0]==='范围外：'?'<b>'+f[0]+'</b>':f[0]} ${f[1]}</span>`).join('');}
+function selectExtrap(k){extrapIdx=k;renderExtrapChips();redrawCard('extrap');}
+
+/* ---------- 分箱覆盖 ---------- */
+const COV_COUNTS=[560,4549,420,300,288,210];
+const COV_PTS=(()=>{const r=rng(23),pts=[];for(let k=0;k<500;k++){let xv=Math.round((17.5+gauss(r)*.075)*100)/100;xv=Math.min(17.7,Math.max(17.3,xv));let yv,u=r();if(u<.46)yv=23.1+(r()<.5?0:.1);else if(u<.68)yv=21.5+r()*1.05;else yv=23.7+r()*2.95;pts.push([xv,Math.round(yv*10)/10]);}return pts;})();
+const COV_DRAW=[...new Map(COV_PTS.map(p=>[p.join(','),p])).values()];
+function mixHex(a,b,t){const p=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));const A=p(a),B=p(b);return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join('');}
+CHARTS.coverage=w=>{const L=56,R=w-20,T=8,B=278,axY=294,H=314,x=lin(17.2,17.8,L,R),y=lin(21,29,B,T),bins=6,step=(27.9-21.5)/bins;let s='';
+ [21,22,24,26,28,29].forEach(v=>s+=tx(L-8,y(v)+4,v.toFixed(1),{a:'end',fs:10}));
+ s+=ln(L,T,L,B,G.line)+ln(L,B,R,B,G.line);
+ const lmin=Math.log(210),lmax=Math.log(4549);
+ COV_COUNTS.forEach((c,k)=>{const y0=21.5+step*k,y1=y0+step,t=(Math.log(c)-lmin)/(lmax-lmin);s+=`<rect x="${n1(x(17.22))}" y="${n1(y(y1)+1)}" width="${n1(x(17.73)-x(17.22))}" height="${n1(y(y0)-y(y1)-2)}" fill="${mixHex('#a9c6f0','#2a5db0',t)}" opacity=".72" stroke="#fff" stroke-dasharray="3 2"><title>冷却水进水温度 ${y0.toFixed(2)}～${y1.toFixed(2)} ℃ · 训练段样本 ${c}（部分工况组合样本不足）</title></rect>`;});
+ s+=COV_DRAW.map(p=>`<circle cx="${n1(x(p[0]))}" cy="${n1(y(p[1]))}" r="2.4" fill="${C1}" stroke="#fff" stroke-width=".8"/>`).join('');
+ [17.2,17.3,17.4,17.5,17.6,17.7,17.8].forEach(v=>s+=tx(x(v),axY,v.toFixed(1),{a:'middle',fs:10,c:G.sec}));
+ s+=tx((L+R)/2,axY+16,'冷冻水出水温度（℃）',{a:'middle',fs:11,c:G.sec})+tx(16,(T+B)/2,'冷却水进水温度（计算）（℃）',{a:'middle',fs:11,c:G.sec,rot:1});
+ return svgWrap(w,H,s,'分箱覆盖');};
+TABLES.coverage=()=>{const step=(27.9-21.5)/6;return miniTable(['格子（冷冻水出水温度 17.22～17.73 ℃）','训练段样本数','评估点数','样本充足'],COV_COUNTS.map((c,k)=>{const y0=21.5+step*k,y1=y0+step,e=COV_PTS.filter(p=>p[1]>=y0&&(k===5?p[1]<=y1:p[1]<y1)).length;return ['冷却水进水温度（计算） '+y0.toFixed(2)+'～'+y1.toFixed(2)+' ℃',c,e,'否（部分工况组合不足 10 个样本）'];}).reverse(),'有样本的格子 6（其中仅评估段有样本 0）；评估点落在训练段有样本的格子内 100%（500/500）。各格样本分布为示意。');};
+
+/* ---------- 性能 ---------- */
+const t1=n=>4.7*Math.pow(n/6327,.14),t2=n=>4.558*Math.pow(n/6327,.02);
+CHARTS.perf=w=>{const L=56,R=w-20,T=24,B=196,H=236,x=logs(1974,16000,L,R),y=logs(1,10,B,T);let s='';
+ s+=ln(L,y(10),R,y(10),'#eceef1')+ln(L,B,R,B,G.line)+ln(L,T,L,B,G.line)+tx(L-8,y(10)+4,'10.0',{a:'end',fs:10})+tx(L-8,y(1)+4,'1.00',{a:'end',fs:10});
+ s+=tx(16,(T+B)/2,'耗时（秒）',{a:'middle',fs:10,c:G.aux,rot:1});
+ s+=ln(x(10000),T,x(10000),B,'#5b6878','stroke-dasharray="3 3"')+tx(x(10000),T-8,'1万样本',{a:'middle',fs:10,c:G.sec});
+ const line=(f,c)=>{const pts=[];for(let k=0;k<=40;k++){const nv=1974*Math.pow(16000/1974,k/40);pts.push([x(nv),y(f(nv))]);}return `<path d="${pathOf(pts)}" fill="none" stroke="${c}" stroke-width="1.6"/>`;};
+ s+=line(t2,C2)+line(t1,C1);
+ s+=dia(x(3164),y(3.75),4,C2,C2,1)+dia(x(3164),y(3.3),4,C1,C1,1);
+ [[6420,3.6,C2],[6380,3.48,C2],[6460,4.1,C1],[6480,3.42,C1]].forEach(([nv,t,c])=>s+=`<circle cx="${n1(x(nv))}" cy="${n1(y(t))}" r="3.2" fill="#fff" stroke="${c}" stroke-width="1.3"/>`);
+ s+=`<circle cx="${n1(x(6327))}" cy="${n1(y(4.56))}" r="3.6" fill="${C2}"/><circle cx="${n1(x(6327))}" cy="${n1(y(4.7))}" r="3.6" fill="${C1}"/>`;
+ [[1974,'1974'],[10000,'10000'],[16000,'16000']].forEach(([v,l])=>s+=tx(x(v),B+14,l,{a:'middle',fs:10,c:G.sec}));
+ s+=tx((L+R)/2,B+32,'样本量',{a:'middle',fs:11,c:G.sec});
+ return svgWrap(w,H,s,'耗时—样本量');};
+TABLES.perf=()=>miniTable(['样本量','物理灰箱 #1 耗时 s','物理灰箱 #2 耗时 s','来源'],[[1974,t1(1974).toFixed(2),t2(1974).toFixed(2),'外推'],[3164,'3.30','3.75','实测'],[6327,'4.70','4.56','实测'],[10000,'5.1','4.6','按增长指数折算'],[16000,t1(16000).toFixed(2),t2(16000).toFixed(2),'外推']],'物理灰箱 #1 耗时增长指数 0.14（数据量翻倍时耗时变为原来的 1.10 倍）。');
+function renderPerf(){const tiles=[['训练耗时','4.7 s','6327 样本 · 一次完整训练，不含读数据和评估'],['耗时增长指数','0.14','数据量翻倍时耗时变为原来的 1.10 倍'],['折算到 1 万样本','5.1 s','训练所在机器本机实测'],['单次预测','0.24 ms',''],['批量预测每行','0.30 μs',''],['训练峰值内存','2481 MB',''],['模型大小','1.8 KB',''],['训练任务总耗时','27.4 s','含读数据、评估，以及按需执行的重训']];
+ $('perfTiles').innerHTML=tiles.map(t=>`<div class="perf__tile"><div class="perf__label">${t[0]}</div><div class="perf__value">${t[1]}</div>${t[2]?`<div class="perf__note">${t[2]}</div>`:''}</div>`).join('');}
+
+/* ---------- 候选对比表 ---------- */
+function renderCandMatrix(){const z=(k,v,c)=>`<div class="cc-zone">${zoneBar(k,[{v,s:'circle',c}],8)}</div>`;
+ const rows=[
+  ['评估 RMSE（kW）',['5.486'],['4.908']],
+  ['相对误差（MAPE）',['2.1%',z('eval',2.1,C1)],['1.9%（示意）',z('eval',1.9,C2)]],
+  ['评估·分布内 RMSE',['5.49 kW（100%）'],['4.67 kW（100%）']],
+  ['评估·外推 RMSE',['14.06 kW（0%）'],['38.2 kW（0%）']],
+  ['R²（参考）',['0.9879'],['0.9903']],
+  ['训练 RMSE（诊断）',['6.790 kW'],['6.46 kW']],
+  ['评估 ÷ 训练 RMSE（诊断）',['0.81'],['0.76']],
+  ['幅度异常（最大）',['1%',z('slope',.01,C1)],['6%',z('slope',.06,C2)]],
+  ['趋势反向 · 不响应',['趋势反向 0% · 不响应 0%',z('direction',0,C1)],['趋势反向 0% · 不响应 3%',z('direction',0,C2)]],
+  ['曲线平顺度',['9.18‰',z('smooth',9.18,C1)],['--']],
+  ['超范围表现',['趋势反向 0% · 不响应 51% · 幅度异常 88% · 平顺度 1.59‰',z('extBound',.88,C1)],['趋势反向 0% · 不响应 24%']],
+  ['重训波动（kW）',['1.570（0.77%）',z('retrain',CH05V.retrain,C1)],['1.60（0.78%）',z('retrain',1.60/205*100,C2)]],
+  ['评估覆盖',['100%'],['100%']],
+  ['1万样本训练耗时',['5.1 s',z('perf',5.1,C1)],['4.6 s',z('perf',4.6,C2)]],
+  ['单次预测耗时',['0.24 ms',z('predict',.24,C1)],['0.21 ms',z('predict',.21,C2)]],
+  ['模型大小',['1.8 KB'],['1.8 KB']],
+  ['训练峰值内存',['2481 MB'],['2481 MB']]];
+ const head=`<thead><tr><th class="cc-corner">指标</th><th class="cc-head is-current" style="--model-color:${C1}"><div class="cc-name">物理灰箱 #1<span class="cc-selected">✓ 已选用</span></div><div class="cc-meta">10-30 11:28 训练</div></th><th class="cc-head" style="--model-color:${C2}"><div class="cc-name">物理灰箱 #2</div><div class="cc-meta">10-30 11:20 训练</div></th></tr></thead>`;
+ $('candMatrix').innerHTML=head+'<tbody>'+rows.map(r=>`<tr><td class="cc-label">${r[0]}</td><td class="is-current"><div class="cc-cell"><span class="cc-num">${r[1][0]}</span>${r[1][1]||''}</div></td><td><div class="cc-cell"><span class="cc-num">${r[2][0]}</span>${r[2][1]||''}</div></td></tr>`).join('')+'</tbody>';}
+
+/* ================= 图卡挂载 / 图表切换 / 折叠 ================= */
+function mountChart(el,force){const fn=CHARTS[el.dataset.chart];if(!fn)return;const w=Math.round(el.clientWidth);if(!w)return;if(!force&&el._w===w)return;el._w=w;el.innerHTML=fn(w);}
+function redrawCard(name){document.querySelectorAll(`[data-chart="${name}"]`).forEach(el=>mountChart(el,true));const card=document.querySelector(`[data-card="${name}"]`);if(card&&!card.querySelector('.cc-table').hidden)card.querySelector('.cc-table').innerHTML=TABLES[name]();}
+function drawAll(force){document.querySelectorAll('[data-chart]').forEach(el=>mountChart(el,force));}
+const ro=typeof ResizeObserver!=='undefined'?new ResizeObserver(entries=>entries.forEach(en=>mountChart(en.target))):null;
+document.querySelectorAll('[data-chart]').forEach(el=>ro&&ro.observe(el));
+window.addEventListener('resize',()=>{clearTimeout(window._rz);window._rz=setTimeout(()=>drawAll(),100);});
+document.querySelectorAll('.chart-card[data-card]').forEach(card=>{const ex=card.querySelector('.chart-card__extra'),isT=card.dataset.defaultMode==='table';ex.insertAdjacentHTML('beforeend',`<span class="seg" role="group" aria-label="图表切换"><button class="${isT?'':'on'}" data-mode="chart">图</button><button class="${isT?'on':''}" data-mode="table">表</button></span>`);});
+document.addEventListener('click',e=>{const b=e.target.closest('.seg button');if(!b)return;const card=b.closest('.chart-card'),isT=b.dataset.mode==='table',name=card.dataset.card;card.querySelectorAll('.seg button').forEach(x=>x.classList.toggle('on',x===b));card.querySelector('.cc-chart').hidden=isT;const t=card.querySelector('.cc-table');t.hidden=!isT;if(isT)t.innerHTML=TABLES[name]?TABLES[name]():'';else card.querySelectorAll('[data-chart]').forEach(el=>mountChart(el,true));});
+function toggleSec(h){const sec=h.closest('.sec');sec.classList.toggle('collapsed');if(!sec.classList.contains('collapsed'))sec.querySelectorAll('[data-chart]').forEach(el=>mountChart(el,true));}
+// 时间缩放条拖动
+(function(){const box=$('tsBox');let drag=null;box.addEventListener('pointerdown',e=>{const h=e.target.closest('[data-h]');if(!h)return;e.preventDefault();drag={h:h.dataset.h,x0:e.clientX,w0:[...tsWin]};});
+ window.addEventListener('pointermove',e=>{if(!drag)return;const svg=box.querySelector('svg');if(!svg)return;const rc=svg.getBoundingClientRect(),L=44,R=rc.width-14,tAt=cx=>Math.max(0,Math.min(TS_END,(cx-rc.left-L)/(R-L)*TS_END));const minSpan=6;let [a,b]=drag.w0;
+  if(drag.h==='0')a=Math.min(tAt(e.clientX),b-minSpan);else if(drag.h==='1')b=Math.max(tAt(e.clientX),a+minSpan);else{const d=(e.clientX-drag.x0)/(R-L)*TS_END,sp=b-a;a=Math.max(0,Math.min(TS_END-sp,a+d));b=a+sp;}
+  tsWin=[a,b];mountChart(box,true);});
+ window.addEventListener('pointerup',()=>{if(drag){drag=null;const t=document.querySelector('[data-card="ts"] .cc-table');if(t&&!t.hidden)t.innerHTML=TABLES.ts();}});
+ box.addEventListener('dblclick',e=>{if(e.target.closest('[data-h]')){tsWin=[0,TS_END];mountChart(box,true);}});})();
+
+/* ================= 报告渲染 ================= */
+let reportModel=null;const modelParam=QS.get('model');
+try{const payload=QS.get('reportData')||(modelParam?sessionStorage.getItem('ke-report-model'):null),passed=JSON.parse(payload||'null');if(passed&&(!modelParam||passed.id===modelParam)&&(passed.id!=='CH05'||passed.legacy))reportModel=passed;}catch(e){}
+if(!reportModel&&modelParam&&modelParam!=='CH05')reportModel={id:modelParam,name:modelParam,v:[]};
+function renderVerdict(r,summary){$('verdictBar').className='verdict-bar';const assessed=Object.values(r.parts).filter(g=>g>=0),missing=Object.values(r.parts).some(g=>g<0);const status=r.concerns.length?'需关注：'+r.concerns.join('、'):!assessed.length?'暂无可评级分项':missing?'已评估分项均在参考范围内；另有分项未评估':'各分项均在参考范围内';$('verdictSummary').textContent=(summary?summary+'　':'')+status;}
+const isStochasticAlgo=algo=>/随机配置网络|神经网络|随机森林|梯度提升/.test(algo||'');
+const skipsRetraining=m=>m.learning===false&&!isStochasticAlgo(m.algo);
+function summaryMetrics(m){const v=Array.from({length:10},(_,i)=>numberOrNull(m.v?.[i])),relKind=/CV/i.test(m.relKind||'')?'CV(RMSE)':'MAPE',mean=numberOrNull(m.yMean),nearZero=mean!==null&&Math.abs(mean)<=1e-9;
+ const relative=relKind==='CV(RMSE)'&&nearZero?null:v[2],retrainRate=!skipsRetraining(m)&&v[7]!==null&&mean!==null&&!nearZero?v[7]/Math.abs(mean)*100:null;
+ const pct=i=>v[i]===null?null:v[i]/100;
+ // 列表只传外推汇总比例；沿用幅度异常比例阈值。四项细分缺失时不补造。
+ const values={eval:relative,slope:pct(3),direction:pct(4),zero:numberOrNull(m.slopeFlat),smooth:v[5],extBound:numberOrNull(m.extBound)??pct(6),extReverse:numberOrNull(m.extReverse),extZero:numberOrNull(m.extZero),extSmooth:numberOrNull(m.extSmooth),retrain:retrainRate,cover:pct(8),perf:v[9],predict:numberOrNull(m.predictMs)};
+ const r=ratings(values);if(skipsRetraining(m))delete r.parts['重训稳定'];
+ return {v,relative,relKind,retrainRate,values,r};}
+function limitedCoverageHTML(m,{v,retrainRate,r}){const f=x=>x===null?'--':esc(x),unit=esc(m.unit||''),rate=retrainRate===null?'--':retrainRate.toFixed(2)+'%',g=r.parts['重训稳定']??-1;
+ const retrain=skipsRetraining(m)?'<div class="stability__note">未计算：该算法结果确定且未开启自学习</div>':`<div>重训波动 ${f(v[7])}${v[7]===null||!unit?'':' '+unit} · 重训波动率 ${rate} ${chip(g)||'未评估'} · p95 --</div>${retrainRate===null?'':zoneBar('retrain',[{v:retrainRate,s:'circle',t:'重训波动率 '+rate}])}<div class="stability__note">重训方式 -- · 重训次数 --；当前传入报告未提供明细</div>`;
+ return `<section class="sec"><div class="sec-h" onclick="toggleSec(this)">覆盖与稳定 <i>▲</i></div><div class="sec-b"><div class="stability"><div class="stability__block"><div class="stability__label">评估覆盖<span class="data-tag">数据提示</span></div><div>评估点落在训练段有样本的格子内 ${f(v[8])}${v[8]===null?'':'%'}</div><div class="stability__note">按天交替切分时评估点通常都落在训练工况内，此项多为 100%，只作参考</div></div><div class="stability__block"><div class="stability__label">重训稳定</div><div class="stability__note">仅随机性算法（随机配置网络、神经网络、随机森林、梯度提升类）或开启自学习的模型计算；结果确定的算法且未开自学习时不重训</div>${retrain}</div></div></div></section>`;}
+function renderReport(){
+ if(reportModel){const m=reportModel;$('reportModelName').textContent=(m.name||m.id||'')+'-'+(m.target||'')+'-混合增强预测模型';$('reportDataline').hidden=true;$('completeReport').hidden=true;$('limitedReport').hidden=false;
+  if(m.legacy){$('verdictBar').hidden=true;$('limitedReport').innerHTML='<div class="chart-card"><div class="limited">重新训练后可查看评估报告</div><div class="facts" style="justify-content:center">MAPE: 2.148 · RMSE: 5.647 · R2: 0.990 · MAX_BIN_RMSE: 15.982</div></div>';}
+  else{const {v,relative,relKind,retrainRate,values,r}=summaryMetrics(m),unit=esc(m.unit||''),f=x=>x===null?'--':String(x),fu=x=>f(x)+(x===null||!unit?'':' '+unit),pc=x=>f(x)+(x===null?'':'%'),rating=k=>chip(r.parts[k]??-1)||'未评估';
+   renderVerdict(r,`评估误差 ${f(v[1])}${v[1]===null?'':' '+(m.unit||'')}（${relKind} ${pc(relative)}）· 趋势反向 ${pc(v[4])} · 幅度异常 ${pc(v[3])}`);
+   const noise=esc(noiseHint(v[1],v[0],numberOrNull(m.noiseZero)));
+   const percent=x=>x===null?'--':+(x*100).toFixed(2)+'%',worst=(...xs)=>{const a=xs.filter(x=>numberOrNull(x)!==null);return a.length?Math.max(...a):null;},extBound=numberOrNull(m.extBound);
+   const card=(name,value,hint,key)=>{const g=key?r.parts[key]??-1:-1;return `<div class="ov-tile"><div class="ov-label">${name}${key?'':'<span class="data-tag">数据提示</span>'}</div><div class="ov-value${g>=0?' lv-'+g:''}">${value}</div><div class="ov-sub">${hint}</div>${key?`<div class="ov-assess">${rating(key)}</div>`:''}</div>`;};
+   const tiles=[
+    card('评估误差',fu(v[1]),`在没参与训练的日子上准不准<br>${relKind} ${pc(relative)}${relative===null?' · 实测均值接近 0 或有效点不足，评估误差未评估':''}`,'评估误差'),
+    card('噪声底 σ',fu(v[0]),noise),
+    card('物理规律',percent(worst(values.direction,values.zero,values.slope)),`模型有没有违反物理规律<br>趋势反向 ${pc(v[4])}<br>不响应 ${percent(values.zero)}<br>幅度异常 ${pc(v[3])}<br>各项最差输入：--；三项取最差一级，缺失项未评估`,'物理规律'),
+    card('曲线平顺度',f(v[5])+(v[5]===null?'':'‰'),'输入平滑变化时预测是否也平滑<br>0 为完全平顺；有台阶、锯齿时寻优可能被假的高低点误导<br>最不平顺：--','曲线平顺度'),
+    card('超范围表现',percent(worst(values.extReverse,values.extZero,values.extBound)),`超出历史范围后趋势是否可信<br>趋势反向 ${percent(values.extReverse)}<br>不响应 ${percent(values.extZero)}<br>幅度异常 ${percent(extBound)}，平顺度 ${f(values.extSmooth)}${values.extSmooth===null?'':'‰'}<br>最差输入：--；主值为最大异常占比，缺失明细未评估`,'超范围表现')
+   ];
+   const rows=[['1万样本训练耗时',f(v[9])+(v[9]===null?'':' s'),rating('性能')]];
+   $('limitedReport').innerHTML=`<div class="overview-tiles">${tiles.join('')}</div>${limitedCoverageHTML(m,{v,retrainRate,r})}<div class="chart-card"><div class="chart-card__title">评估效果汇总</div><div class="chart-card__question" style="margin-bottom:8px">当前原型仅内置该模型的列表汇总；完整报告示例见 CH05。</div>${miniTable(['指标','数值','评级 / 提示'],rows)}<div class="note">相对误差按模板口径显示；重训波动率 = 重训波动 ÷ 评估段实测均值绝对值 ×100%。均值缺失或接近 0 时重训稳定未评估。超范围表现仅有汇总比例时按幅度异常阈值提示，缺失的四项明细不补造；缺失项显示 --，其余分项照常评级。<a href="${EMBED?'模型评估详情.html?embed=1':'模型评估详情.html'}">查看 CH05 完整报告示例 →</a></div></div>`;}
+
+  if(!$('rulesPop').hidden)$('rulesPop').innerHTML=rulesHTML();$('predictionTab').disabled=true;$('predictionTab').title='当前仅内置 CH05 手动预测示例';refreshAnnotations();return;}
+ renderVerdict(ratings(CH05V),'评估误差 5.49 kW（MAPE 2.1%）· 趋势反向 0% · 幅度异常 1%');
+ if(!$('rulesPop').hidden)$('rulesPop').innerHTML=rulesHTML();
+ document.querySelector('[data-card="error"] .cc-table').innerHTML=TABLES.error();
+ renderCards();renderSlope();renderSmooth();renderPerf();renderCandMatrix();renderSweepChips();renderExtrapChips();drawAll(true);refreshAnnotations();}
+
+/* ================= 页签 ================= */
+function switchEvaluationTab(tab){$('reportView').hidden=tab!=='report';$('predictionView').hidden=tab!=='prediction';$('reportTab').classList.toggle('active',tab==='report');$('predictionTab').classList.toggle('active',tab==='prediction');$('teBody').scrollTop=0;if(tab==='prediction')renderPredictionTable();drawAll(true);}
+
+/* ================= 手动预测 ================= */
+let respAxis=0,nextId=1,rows=[],draft=INPUTS.map(i=>i.draft),selectedId=null,respTicket=0,respState='empty';
+const isOut=(v,i)=>v!==''&&Number.isFinite(Number(v))&&(Number(v)<INPUTS[i].lo||Number(v)>INPUTS[i].hi);
+const rowValid=r=>r.values.every(v=>String(v).trim()!==''&&Number.isFinite(Number(v)));
+const rowOutside=r=>r.values.some((v,i)=>isOut(v,i));
+const predictable=r=>['pending','modified'].includes(r.status)&&rowValid(r);
+$('responseAxis').innerHTML=INPUTS.map((x,i)=>`<option value="${i}">${x.name}</option>`).join('');
+$('predictHead').innerHTML='<tr><th class="is-idx"></th>'+INPUTS.map(x=>`<th>${x.name}<small>${x.unit} · 训练 ${x.lo}–${x.hi}</small></th>`).join('')+'<th class="is-out">预测值<small>有功功率 kW</small></th><th class="is-conf">置信</th><th class="is-ops"></th></tr>';
+function cellHTML(rowId,v,i,disabled){const out=isOut(v,i),missing=String(v).trim()===''||!Number.isFinite(Number(v));return `<input class="mp-num${out?' is-outr':''}${missing&&rowId!=='d'?' is-missing':''}" data-r="${rowId}" data-c="${i}" value="${esc(v)}" inputmode="decimal" aria-label="${INPUTS[i].name}"${disabled?' disabled':''} title="${out?'超出训练范围 '+INPUTS[i].lo+'–'+INPUTS[i].hi:''}"><span class="mp-range" data-note="${rowId}-${i}">${out?'超出训练范围 '+INPUTS[i].lo+'–'+INPUTS[i].hi:''}</span>`;}
+function outHTML(r){const S={pending:'待预测',queued:'排队',predicting:'预测中',modified:'已修改，待预测'};if(!rowValid(r))return '<span class="mp-tag is-error">输入无效</span>';if(r.status==='done')return `<span class="mp-res">${r.result.toFixed(2)}</span>`;if(r.status==='modified'&&r.result!=null)return `<span class="mp-res is-stale">${r.result.toFixed(2)}</span><span class="mp-tag">${S.modified}</span>`;return `<span class="mp-tag first">${S[r.status]||'待预测'}</span>`;}
+function confHTML(r){return r.status==='done'?(r.conf==='高'?'<span class="mp-conf is-high">高</span>':'<span class="mp-conf is-low">低</span>'):'<span class="rep-muted">--</span>';}
+function renderPredictionTable(focus){const body=[`<tr class="is-draft" data-row="d"><td class="is-idx">+</td>${draft.map((v,i)=>`<td>${cellHTML('d',v,i)}</td>`).join('')}<td class="is-out"><span class="mp-hint">新行 · 改任意一格开始</span></td><td class="is-conf"></td><td class="is-ops"></td></tr>`];
+ rows.forEach((r,k)=>body.push(`<tr class="${selectedId===r.id?'is-selected':''}" data-row="${r.id}" onclick="rowClick(event,${r.id})"><td class="is-idx">${k+1}</td>${r.values.map((v,i)=>`<td>${cellHTML(r.id,v,i,['queued','predicting'].includes(r.status))}</td>`).join('')}<td class="is-out" data-out="${r.id}">${outHTML(r)}</td><td class="is-conf" data-conf="${r.id}">${confHTML(r)}</td><td class="is-ops"><button class="mp-op" onclick="copyRow(event,${r.id})">复制</button><button class="mp-op danger" onclick="deleteRow(event,${r.id})">删除</button></td></tr>`));
+ $('predictRows').innerHTML=body.join('');updatePredictButton();
+ if(focus){const el=document.querySelector(`.mp-num[data-r="${focus[0]}"][data-c="${focus[1]}"]`);if(el){el.focus();const l=el.value.length;try{el.setSelectionRange(l,l);}catch(e){}}}}
+function updatePredictButton(){const n=rows.filter(predictable).length;$('predictButton').disabled=!n;$('predictButton').textContent=n?'预测 '+n+' 行':'预测';$('predictCount').textContent='共 '+rows.length+' 行';}
+$('predictRows').addEventListener('input',e=>{const el=e.target.closest('.mp-num');if(!el)return;const id=el.dataset.r,i=Number(el.dataset.c);
+ if(id==='d'){const vals=[...draft];vals[i]=el.value;const r={id:nextId++,values:vals,status:'pending',result:null,conf:null};rows.push(r);draft=INPUTS.map(x=>x.draft);selectedId=r.id;renderPredictionTable([r.id,i]);updateResponse();return;}
+ const r=rows.find(x=>x.id===Number(id));if(!r)return;r.values[i]=el.value;r.status=r.result!=null?'modified':'pending';r.conf=null;
+ const out=isOut(el.value,i),missing=el.value.trim()===''||!Number.isFinite(Number(el.value));el.classList.toggle('is-outr',out);el.classList.toggle('is-missing',missing);el.title=out?'超出训练范围 '+INPUTS[i].lo+'–'+INPUTS[i].hi:'';document.querySelector(`[data-note="${id}-${i}"]`).textContent=out?'超出训练范围 '+INPUTS[i].lo+'–'+INPUTS[i].hi:'';
+ document.querySelector(`[data-out="${id}"]`).innerHTML=outHTML(r);document.querySelector(`[data-conf="${id}"]`).innerHTML=confHTML(r);updatePredictButton();if(selectedId===r.id)updateResponse();});
+$('predictRows').addEventListener('focusin',e=>{const el=e.target.closest('.mp-num');if(!el||el.dataset.r==='d')return;const id=Number(el.dataset.r);if(selectedId!==id)selectRow(id);});
+function rowClick(e,id){if(e.target.closest('.mp-op'))return;selectRow(id);}
+function selectRow(id){selectedId=id;document.querySelectorAll('#predictRows tr').forEach(tr=>tr.classList.toggle('is-selected',tr.dataset.row===String(id)));updateResponse();}
+function copyRow(e,id){e.stopPropagation();const r=rows.find(x=>x.id===id);if(!r)return;const c={id:nextId++,values:[...r.values],status:'pending',result:null,conf:null};rows.splice(rows.indexOf(r)+1,0,c);renderPredictionTable();}
+function deleteRow(e,id){e.stopPropagation();rows=rows.filter(x=>x.id!==id);if(selectedId===id){selectedId=null;}renderPredictionTable();updateResponse();}
+async function predictRows(){const list=rows.filter(predictable);if(!list.length)return;list.forEach(r=>r.status='queued');renderPredictionTable();
+ for(const r of list){if(!rows.includes(r))continue;r.status='predicting';renderPredictionTable();await new Promise(res=>setTimeout(res,360));if(!rows.includes(r))continue;r.result=Number(model(r.values.map(Number)).toFixed(2));r.conf=rowOutside(r)?'低':'高';r.status='done';renderPredictionTable();}
+ showToast('预测完成（示例结果）');if(selectedId!=null)updateResponse();}
+function changeAxis(v){respAxis=Number(v);updateResponse();}
+function updateResponse(){const t=++respTicket,r=rows.find(x=>x.id===selectedId),ov=$('respOverlay');
+ if(!r){respState='empty';ov.className='mp-overlay is-empty';ov.textContent='在下方选中一行，查看这一行的响应曲线';redrawCard('resp');return;}
+ if(!rowValid(r)){respState='empty';ov.className='mp-overlay';ov.innerHTML='曲线计算失败 · <span class="link" onclick="updateResponse()">重试</span>';redrawCard('resp');return;}
+ ov.className='mp-overlay';ov.textContent='曲线排队中，前面还有 0 项';
+ setTimeout(()=>{if(t!==respTicket)return;ov.textContent='正在计算曲线';setTimeout(()=>{if(t!==respTicket)return;respState='ready';ov.className='mp-overlay is-empty';ov.textContent='';redrawCard('resp');},220);},140);}
+CHARTS.resp=w=>{const inp=INPUTS[respAxis],L=48,R=w-16,T=26,B=150,axY=166,H=186,r=rows.find(q=>q.id===selectedId),ready=respState==='ready'&&r&&rowValid(r);let s='',y=null;
+ const dom=[...inp.dom];if(ready){const v=Number(r.values[respAxis]),span=inp.dom[1]-inp.dom[0];if(v<dom[0])dom[0]=v-span*.05;if(v>dom[1])dom[1]=v+span*.05;}
+ const x=lin(dom[0],dom[1],L,R),ticks=(dom[0]===inp.dom[0]&&dom[1]===inp.dom[1])?inp.ticks:niceTicks(dom[0],dom[1],7);
+ s+=tx(L-30,T-12,'有功功率（kW）',{fs:11,c:G.sec});
+ if(ready){const base=r.values.map(Number),f=xv=>{const v=[...base];v[respAxis]=xv;return model(v);},N=100,xs=[];for(let k=0;k<=N;k++)xs.push(dom[0]+(dom[1]-dom[0])*k/N);const ys=xs.map(f);let lo=Math.min(...ys),hi=Math.max(...ys);const pad=Math.max(4,(hi-lo)*.15);lo=Math.max(0,Math.floor((lo-pad)/5)*5);hi=Math.ceil((hi+pad)/5)*5;y=lin(lo,hi,B,T);
+  for(let k=0;k<=4;k++){const v=lo+(hi-lo)*k/4;s+=ln(L,y(v),R,y(v),'#eceef1')+tx(L-6,y(v)+4,+v.toFixed(1),{a:'end',fs:10});}
+  s+=`<rect x="${n1(x(inp.lo))}" y="${T}" width="${n1(x(inp.hi)-x(inp.lo))}" height="${B-T}" fill="#8d98a42e"/>`;
+  const segs=[[dom[0],inp.lo,1],[inp.lo,inp.hi,0],[inp.hi,dom[1],1]];segs.forEach(([a,b,d])=>{const pts=[a,...xs.filter(v=>v>a&&v<b),b].map(v=>[x(v),y(f(v))]);s+=`<path d="${pathOf(pts)}" fill="none" stroke="${C1}" stroke-width="${d?2:2.5}"${d?' stroke-dasharray="5 4"':''}/>`;});
+  const cx=base[respAxis],cy=r.status==='done'&&r.result!=null?r.result:f(cx);s+=`<circle cx="${n1(x(cx))}" cy="${n1(y(cy))}" r="4.5" fill="${G.main}"><title>${inp.name} ${base[respAxis]} → ${cy.toFixed(2)} kW</title></circle>`;}
+ else s+=`<rect x="${n1(x(inp.lo))}" y="${T}" width="${n1(x(inp.hi)-x(inp.lo))}" height="${B-T}" fill="#8d98a42e"/>`;
+ s+=tx(x(inp.lo)+4,T+11,'训练范围 '+inp.lo+'–'+inp.hi,{fs:10,c:G.sec});
+ s+=ln(L,T,L,B,'#5b6878')+ln(L,B,R,B,'#5b6878');
+ ticks.forEach(v=>s+=tx(x(v),axY,fmtTick(v,inp.dec||(ticks!==inp.ticks&&dom[1]-dom[0]<5?2:0)),{a:'middle',fs:10,c:G.sec}));
+ s+=tx((L+R)/2,axY+15,inp.name+'（'+inp.unit+'）',{a:'middle',fs:11,c:G.sec});
+ return svgWrap(w,H,s,'响应曲线');};
+function niceTicks(a,b,n){const raw=(b-a)/n,mag=Math.pow(10,Math.floor(Math.log10(raw))),st=[1,2,5,10].map(k=>k*mag).find(k=>k>=raw);const res=[];for(let v=Math.ceil(a/st)*st;v<=b+1e-9;v+=st)res.push(Math.round(v/st)*st);return res;}
+
+/* ================= 导出 ================= */
+function openExport(){updateExportName();openModal('modalExport');}
+function updateExportName(){const c=document.querySelector('[name=exportContent]:checked').value,f=document.querySelector('[name=exportFormat]:checked').value;$('exportFileName').textContent='示例：2116009264542650368_'+c+'_20261030.'+f;}
+function exportDataset(){closeModal('modalExport');showToast('原型演示：已确认导出选项；完整数据集由实际系统生成');}
+
+
+renderReport();renderPredictionTable();
+if(!EMBED){const s=document.createElement('script');s.src='components/nav.js';s.setAttribute('data-active-nav','AI智能能效');s.setAttribute('data-active-sidebar','机理模型训练');document.body.appendChild(s);}
+</script><button type="button" class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoFilter();">批注</button><script>
     function initAnnoFilter() {
       if (!document.body.classList.contains('annotation-mode')) return;
       var tags = document.getElementById('annoFilterTags');
@@ -1328,7 +899,12 @@
       el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function(t) { t.classList.remove('active'); });
       el.classList.add('active');
     }
-  </script>
-  <script src="components/nav.js" data-active-nav="AI智能能效" data-active-sidebar="机理模型训练"></script>
-</body>
-</html>
+  </script><script>
+(function(){
+  window.initAnnoVersionFilter=function(){ if(typeof initAnnoFilter==='function') initAnnoFilter(); };
+  function setAnno(on){ document.body.classList.toggle('annotation-mode', !!on); if(on && typeof initAnnoFilter==='function') initAnnoFilter(); }
+  if(new URLSearchParams(location.search).get('anno')==='1') setAnno(true);
+  window.addEventListener('message', function(e){ if(e.data && e.data.type==='annotation-mode') setAnno(e.data.on); });
+})();
+</script>
+</body></html>

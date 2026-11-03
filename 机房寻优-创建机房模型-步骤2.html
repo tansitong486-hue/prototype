@@ -198,6 +198,7 @@
     .edge-pill-text { font-size: 10px; font-weight: 500; text-anchor: middle; dominant-baseline: middle; }
     .edge-pill-text.cold { fill: #3B82F6; }
     .edge-pill-text.hot { fill: #F59E0B; }
+    .edge-return { stroke: #DC2626; stroke-dasharray: 4 3; }
 
     .toolbar-row { display: flex; justify-content: flex-end; margin-bottom: 12px; }
     .btn {
@@ -534,13 +535,7 @@
     }
     .action-link:hover { opacity: .75; }
 
-    /* 原型演示：平台版 / GU 版切换（仅原型评审用） */
     .page-header-right { display: flex; align-items: center; gap: 12px; }
-    .edition-switch { display: inline-flex; align-items: center; font-size: 12px; border: 1px dashed var(--border); border-radius: var(--radius); overflow: hidden; background: #fff; }
-    .edition-switch-label { padding: 5px 10px; color: var(--text-hint); background: #F8FAFC; border-right: 1px dashed var(--border); }
-    .edition-opt { padding: 5px 12px; color: var(--text-secondary); }
-    .edition-opt + .edition-opt { border-left: 1px solid var(--border-light); }
-    .edition-opt.is-active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
   </style>
   <link rel="stylesheet" href="annotation-styles.css">
 </head>
@@ -560,12 +555,21 @@
           <p><b>本页说明：</b>多步表单第二步；顶部面包屑显示当前步骤；底部「完成」提交并跳转列表，「上一步」回步骤1保留已填数据，「取消」回列表不落库。</p>
         </div>
       </div>
-      <div class="anno anno-version-header" data-version="v2.7" data-date="2026-10-20">
+
+      <div class="anno anno-version-header" data-version="v2.9" data-date="2026-11-02">
         <span class="anno-tag">版本信息</span>
-        <span class="anno-version">v2.7</span>
+        <span class="anno-version">v2.9</span>
+        <span class="anno-source">需求文档</span>
         <div class="anno-body">
-          <p><b>v2.7 GU 版兼容（2026-10-20）：</b>对应《GU版AI节能功能裁剪需求方案》§8.4。步骤 2 的空调、传感器均来自步骤 1 已关联的设备，GU 版不涉及机房选择，本页配置（含「同步3D数据」，GU 后续可支持 3D）与平台版一致。</p>
-          <p><b>演示方式：</b>页头右侧「原型演示」切换平台版 / GU 版（URL 参数 <code>?edition=gu</code>）；「上一步」保留当前版本状态。</p>
+          <p><b>更新日期：</b>2026-11-02</p>
+          <p><b>v2.9 末端仿真寻优 · 回风关系（2026-10-30；11-02 新增回风关系）：</b>本页供冷关系、换热关系、通道分组、机柜 / PDU 映射与坐标<b>不改</b>；2026-11-02 新增第三段「回风关系」（热通道传感器 → 空调）。步骤 1 的空调表已改为按物模型属性定义动态渲染（固定列 + 只读属性区、缺失标红 + 去维护回跳、模型就绪校验），本页读取的空调、传感器清单与对象类型来自步骤 1，不受影响。</p>
+          <ul style="margin:6px 0 0 1.25em;padding-left:0;line-height:1.55;">
+            <li><b>本页读什么：</b>供冷 / 换热关系的候选空调与传感器仍取步骤 1 已关联且「投入」的实例；步骤 1 被 <code>INPUT_MISSING</code> 移出可动作集的空调（示例 4#空调，存量冷冻水项目设计点缺失）仍可配关系，只是寻优时不动作、不阻断机房（缺数据处理）。</li>
+            <li><b>拓扑完整性校验（§4.3 第 5 行，2026-10-31 调整）：</b>「完成」<b>不做</b>拓扑校验，只做 v1.9 已有的必填校验并保存；保存后回到机房热力模型列表（toast 引导），在操作列「模型校验」进入「机房寻优-机房模型校验」页，与 §4.3 其余四类一起执行：每台参与寻优的空调 ≥ 1 条 <code>feedsAir</code> 冷点边；每个投入冷点 ≥ 1 条入边；每个投入且配置安全边界的热点 ≥ 1 条换热入边；每条投入通道 ≥ 1 个热点；不满足记 ERROR <code>TOPOLOGY_INCOMPLETE</code>（机房本轮 SKIPPED）。2026-11-02 起另加一条：须配回风关系的空调至少 1 条回风入边（必配规则见回风关系段批注）。校验页的「去配置 →」会跳回本页编辑态并定位到对应冷点 / 通道分组 / 空调回风行。</li>
+            <li><b>按设备自动适配：</b>本页关系表的空调列按步骤 1 实例的对象类型显示，不区分水冷 / 风冷写死分支；混合编队同一张表。</li>
+            <li><b>回风关系（2026-11-02 新增，本版实现）：</b>原预留的「热通道 → 回流空调」第三类关系改为本版实现，<b>复用换热关系的关系类型</b> <code>dtdl:asset:THSensor::feedsAir</code>（方向：热点 → 空调），不新增关系类型、关系记录不加字段。每台空调多选回风来源热点，多对多；无封闭时与换热关系一起隐藏。左侧拓扑图同步画出回风边（红色虚线）。仿真用途、必配规则与待确认项见回风关系段批注。</li>
+          </ul>
+          <p><b>依据：</b>《末端仿真寻优需求文档》§4.3～4.4、§5.4；《末端机房仿真模型.xlsx》0.3「换热关系 / 回风关系」行。「完成」由原型 alert 改为保存后跳回列表（<code>?saved=1</code>）；本页其余内容与 v1.9 / v2.7 一致，未改。</p>
         </div>
       </div>
 
@@ -574,11 +578,6 @@
           <a class="back-link" href="机房寻优-机房热力模型列表.html">← 创建机房热力模型</a>
         </div>
         <div class="page-header-right">
-          <div class="edition-switch" role="group" aria-label="原型演示版本">
-            <span class="edition-switch-label">原型演示</span>
-            <a class="edition-opt" data-edition="platform" href="机房寻优-创建机房模型-步骤2.html">平台版</a>
-            <a class="edition-opt" data-edition="gu" href="机房寻优-创建机房模型-步骤2.html?edition=gu">GU 版</a>
-          </div>
           <button type="button" class="btn btn-primary" id="btnSync3D" style="background:#fff; color:var(--primary); border-color:var(--primary);">同步3D数据</button>
         </div>
       </div>
@@ -599,6 +598,18 @@
 
       <div class="content-body">
         <div class="content-left">
+          <div class="anno anno-data" data-version="v2.9">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>气流组织拓扑图（2026-11-02 加回风边）</p>
+              <ul>
+                <li><b>三类边：</b>蓝色实线 = 供冷关系（空调 → 冷通道）；橙色实线 = 换热关系（冷通道 → 热通道）；<b>红色虚线 = 回风关系</b>（热通道 → 空调）。回风与换热同为 <code>THSensor::feedsAir</code>，按终点对象区分画法：终点是温湿度传感器画换热边，终点是空调画回风边。</li>
+                <li><b>示意数据：</b>风冷精密空调1 ← 热通道1、热通道2；风冷精密空调2 ← 热通道2、热通道3（热通道2 同时给两台空调回风，即多对多）。新风机不是精密空调，不配回风关系。原型图为静态示意，不随右侧选择联动。</li>
+              </ul>
+            </div>
+          </div>
           <div class="topology-wrap">
             <button class="target-btn" aria-label="定位" title="定位居中">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
@@ -611,6 +622,9 @@
                 </marker>
                 <marker id="arrow-hot" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
                   <path d="M0,0 L6,3 L0,6" fill="none" stroke="#F59E0B" stroke-width="1.5"/>
+                </marker>
+                <marker id="arrow-return" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                  <path d="M0,0 L6,3 L0,6" fill="none" stroke="#DC2626" stroke-width="1.5"/>
                 </marker>
               </defs>
 
@@ -646,6 +660,12 @@
 
               <path class="edge-line edge-hot" d="M 570 230 Q 620 270 670 310" marker-end="url(#arrow-hot)" />
               <path class="edge-line edge-hot" d="M 670 230 Q 670 270 670 310" marker-end="url(#arrow-hot)" />
+
+              <!-- v2.9 回风关系：热通道 → 精密空调（复用 THSensor::feedsAir，红色虚线；新风机不配回风） -->
+              <path class="edge-line edge-return" d="M 52 322 C 18 270, 18 110, 94 58" marker-end="url(#arrow-return)" />
+              <path class="edge-line edge-return" d="M 156 316 C 128 262, 134 196, 140 168 C 146 140, 176 124, 176 104 Q 176 72, 146 60" marker-end="url(#arrow-return)" />
+              <path class="edge-line edge-return" d="M 184 316 C 214 270, 214 160, 226 110 Q 234 76, 254 62" marker-end="url(#arrow-return)" />
+              <path class="edge-line edge-return" d="M 284 316 C 314 270, 318 160, 328 110 Q 334 76, 306 62" marker-end="url(#arrow-return)" />
 
               <!-- Row 1: AC Nodes -->
               <!-- AC 1 -->
@@ -872,7 +892,95 @@
               </table>
             </div>
             <div id="sectionHeatExchangeHint" style="display:none;margin-top:16px;">
-              <div class="section-note">无封闭模式下不区分冷热通道，无需配置换热配对关系。</div>
+              <div class="section-note">无封闭模式下不区分冷热通道，无需配置换热与回风关系。</div>
+            </div>
+
+            <!-- 回风关系（v2.9 新增，复用 THSensor::feedsAir；无封闭模式时隐藏） -->
+            <div id="sectionReturnAir" style="margin-top:24px;">
+              <div class="anno anno-field" data-version="v2.9">
+                <span class="anno-tag">字段说明</span>
+                <span class="anno-version">v2.9</span>
+                <span class="anno-source">需求文档</span>
+                <div class="anno-body">
+                  <p><b>关联模块：</b>热通道传感器与空调的回风关系（2026-11-02 新增）</p>
+                  <ul>
+                    <li><b>空调末端（只读行）：</b>步骤 1 已关联且「投入」的精密空调，一台一行，与供冷关系表同序；新风机、加除湿器不出现。被 <code>INPUT_MISSING</code> 移出可动作集的空调仍出现、仍可配（同供冷关系）。</li>
+                    <li><b>回风来源传感器（多选 tag，交互同供冷关系）：</b>候选只列热通道传感器（所属通道的通道类型为热通道）；一台空调可选多个热点，一个热点也可被多台空调选（多对多）。默认空（请选择）。</li>
+                    <li><b>必填：</b>表单不强制，「完成」不拦；按必配规则在「机房模型校验」页校验（见下方数据逻辑）。</li>
+                    <li><b>其他：</b>保存后可改，编辑态回填已配关系；无封闭时本段隐藏（与换热关系一致）。</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="anno anno-data" data-version="v2.9">
+                <span class="anno-tag">数据逻辑</span>
+                <span class="anno-version">v2.9</span>
+                <span class="anno-source">需求文档</span>
+                <div class="anno-body">
+                  <p><b>关联模块：</b>回风关系 — 关系类型、仿真用途、必配规则</p>
+                  <ul>
+                    <li><b>关系类型（复用，不新增）：</b>每选一个热点存一条 <code>dtdl:asset:THSensor::feedsAir</code> 边，起点 = 热通道温湿度传感器（热点），终点 = 空调。与换热关系（冷点 → 热点）是同一关系类型，按终点对象区分：终点是温湿度传感器 = 换热，终点是空调 = 回风。关系记录不加字段、不填权重。</li>
+                    <li><b>回风来源通道：</b>每台空调所连热点所属的通道，就是它的回风来源通道。</li>
+                    <li><b>仿真怎么用（以需求文档 §5.4 为准）：</b>仿真回推每台空调的回风时，取本机回风来源通道的排风温度加权：<b>已配置</b>回风关系，取所连热点所属通道的排风温度等权平均；<b>未配置</b>，按该台对各通道的供风份额加权，即供气对称。每台另有回风入口偏差（回风读数与回推回风之差），每轮按实测重算。回风关系只回答「这台空调从哪些通道回风」，不填权重。</li>
+                    <li><b>必配规则（逐台判定）：</b>满足任一条，该空调至少要有 1 条回风关系：① 机房通道封闭模式 = 封闭热通道（空调组 <code>PrecisionACGroup.aisleSealedMode</code> = 1，即步骤 1「通道封闭模式」），组内每台参与寻优的空调都必配；② 空调摆放位置 = 行间 / 列间（<code>PrecisionAC.placement_position</code> = 1 / 2，判定属性待确认，见下方边界与异常）。其余房间级空调可不配，未配按供气对称。无封闭机房没有热点，本段隐藏、不校验。</li>
+                    <li><b>在哪校验：</b>「完成」不校验；保存后在「机房模型校验」页随拓扑完整性一起执行，必配未配记 ERROR <code>TOPOLOGY_INCOMPLETE</code>（逐台一条，机房本轮 SKIPPED）；处置「去配置 →」跳回本页编辑态，定位到该空调的回风行。</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="anno anno-edge" data-version="v2.9">
+                <span class="anno-tag">边界与异常</span>
+                <span class="anno-version">v2.9</span>
+                <span class="anno-source">待确认</span>
+                <div class="anno-body">
+                  <p><b>关联模块：</b>回风关系 — 待确认项</p>
+                  <ul>
+                    <li><b>「行间 / 列间」由哪个属性判定：</b>标准物模型表与需求文档都没有空调摆放位置属性；后台物模型（DTDL）的精密空调已有 <code>placement_position</code> 摆放位置（1 行间 / 2 列间 / 3 底座式），原型暂按它判定、底座式视为房间级。待确认：是否收进标准物模型表；底座式是否等同房间级；未填时是否按房间级（可不配）处理。送风方式 <code>air_supply_mode</code>（上送风 / 下送风 / 水平送风）不作判定依据。</li>
+                    <li><b>现场取值可信度：</b>0_100 验证机房 11 台空调 <code>placement_position</code> 全为「行间」，但风量 30000 m³/h、下送风，更像房间级，疑似缺省值。按规则 ② 该机房要补回风关系或先核对属性，否则模型校验报 <code>TOPOLOGY_INCOMPLETE</code>。</li>
+                    <li><b>封闭热通道取值：</b>后台 <code>aisleSealedMode</code> 有 0 封闭冷通道 / 1 封闭热通道 / 2 无封闭三档；标准物模型表该属性只写了「封闭冷通道 / 无封闭」，需补「封闭热通道」。</li>
+                    <li><b>关系的目标对象：</b>后台 <code>THSensor::feedsAir</code> 现定义的目标对象是温湿度传感器，回风边的终点是空调，需后台把目标放开到末端空调（同一关系类型扩目标，不是新增类型）。</li>
+                    <li><b>「所属通道」口径：</b>原型按「热点的换热入边来自哪些冷通道」理解（与热点关联通道权重 w(h,A) 同一集合），不是热点所在的热通道分组——封闭冷通道机房热通道只有一组，按分组理解则所有空调来源通道相同。</li>
+                    <li><b>来源热点投出（产品推断）：</b>投出热点的回风边不参与；空调因此没有有效回风边时按未配置处理，必配时在校验页报出。</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="panel-title">热通道传感器与空调的回风关系</div>
+              <table class="data-table" id="tableReturnAir">
+                <thead>
+                  <tr>
+                    <th style="white-space:nowrap;">空调末端</th>
+                    <th>回风来源传感器（可多选）</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="white-space:nowrap;">1#空调</td>
+                    <td>
+                      <div class="multi-select-wrap" data-ac="1">
+                        <div class="multi-select-trigger" role="button" tabindex="0">
+                          <span class="ms-placeholder">请选择</span>
+                        </div>
+                        <div class="ms-dropdown">
+                          <label class="ms-option"><input type="checkbox" value="3#温湿度传感器"> 3#温湿度传感器</label>
+                          <label class="ms-option"><input type="checkbox" value="4#温湿度传感器"> 4#温湿度传感器</label>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="white-space:nowrap;">2#空调</td>
+                    <td>
+                      <div class="multi-select-wrap" data-ac="2">
+                        <div class="multi-select-trigger" role="button" tabindex="0">
+                          <span class="ms-placeholder">请选择</span>
+                        </div>
+                        <div class="ms-dropdown">
+                          <label class="ms-option"><input type="checkbox" value="3#温湿度传感器"> 3#温湿度传感器</label>
+                          <label class="ms-option"><input type="checkbox" value="4#温湿度传感器"> 4#温湿度传感器</label>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -927,18 +1035,6 @@
   </div>
 
   <script>
-    /* ── 原型演示版本：?edition=gu 为 GU 版 ── */
-    (function () {
-      var isGu = new URLSearchParams(location.search).get('edition') === 'gu';
-      if (isGu) {
-        document.body.classList.add('is-gu');
-        document.getElementById('btnPrevStep').setAttribute('href', '机房寻优-创建机房模型.html?edition=gu');
-      }
-      document.querySelectorAll('.edition-opt').forEach(function (el) {
-        el.classList.toggle('is-active', el.getAttribute('data-edition') === (isGu ? 'gu' : 'platform'));
-      });
-    })();
-
     /* ── 同步3D弹窗 ── */
     (function () {
       var overlay = document.getElementById('modalSync3D');
@@ -1011,10 +1107,11 @@
 
     /* ── 完成按钮 ── */
     document.getElementById('btnComplete').addEventListener('click', function () {
-      alert('完成：可在此对接提交接口，并跳转至列表或详情。');
+      /* v2.9（2026-10-31）：保存后回列表，模型就绪校验在列表「模型校验」入口单独执行 */
+      window.location.href = '机房寻优-机房热力模型列表.html?saved=1';
     });
 
-    /* ── 多选供冷关系 ── */
+    /* ── 多选供冷关系 / 回风关系 ── */
     (function () {
       function initMultiSelect(wrap) {
         var trigger  = wrap.querySelector('.multi-select-trigger');
@@ -1070,9 +1167,11 @@
 
       var sectionHE     = document.getElementById('sectionHeatExchange');
       var sectionHEHint = document.getElementById('sectionHeatExchangeHint');
+      var sectionRA     = document.getElementById('sectionReturnAir');
 
       if (sectionHE)     sectionHE.style.display     = isNoSeal ? 'none' : '';
       if (sectionHEHint) sectionHEHint.style.display  = isNoSeal ? '' : 'none';
+      if (sectionRA)     sectionRA.style.display     = isNoSeal ? 'none' : '';
     })();
   </script>
   <script src="components/nav.js" data-active-nav="AI智能能效" data-active-sidebar="机房热力模型"></script>

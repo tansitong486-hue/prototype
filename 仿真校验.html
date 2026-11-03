@@ -424,6 +424,7 @@
     }
 
     tr.row-hidden { display: none; }
+    /* v2.9 末端 what-if 输入表：复用 .filter-select / .search-input，仅补表格内尺寸与边框 */
 
     /* 有明细时的成功条（与失败条互斥展示） */
     .banner-success {
@@ -532,6 +533,19 @@
             </div>
           </div>
 
+          <div class="anno anno-version-header" data-version="v2.9" data-date="2026-11-02">
+            <span class="anno-tag">版本信息</span>
+            <span class="anno-version">v2.9</span>
+            <div class="anno-body"><p><b>当前版本：</b>v2.9（需求 1 末端仿真寻优）</p><p><b>更新日期：</b>2026-11-02</p><p><b>变更概述：</b>新增末端机房实时仿真校验：按机房当前运行状态仿真一次，逐对象逐指标对比实际值与预测值，按仿真安全边界判定达标；页面结构与交互同冷站，冷站模式不变。</p><p><b>本页说明：</b>筛选 v2.9；<code>?type=terminal</code> 进入末端机房，<code>?type=terminal&amp;site=demo</code> 看冷冻水 demo 机房。</p></div>
+          </div>
+
+          <div class="anno anno-state" data-version="v2.9">
+            <span class="anno-tag">状态说明</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body"><p><b>关联模块：</b>末端机房模式 — 页面状态</p><ul><li><b>校验完成：</b>绿色横幅「仿真校验完成」并写出各组平均偏差，下方出对比明细；「重新校验」按当前运行状态再仿真一次并重置筛选。</li><li><b>仿真未完成：</b>计算未得到稳定结果或超出物理范围时，横幅显示「本次仿真未完成：模型计算未得到稳定结果，请检查模型配置与实时数据」，不出明细。</li><li><b>实时数据缺失：</b>某台空调必需测点无最新值时，能估计的照常参与仿真并标低置信，该行实际值显示「实时输入缺失」；运行中且无法估计时本次仿真未完成，横幅提示实时数据缺失，不出明细。</li><li><b>不做：</b>不判断运行安全边界、不给寻优建议。</li></ul></div>
+          </div>
+
           <div class="banner-tip" role="region" aria-label="提示">
             <svg class="banner-tip-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
@@ -559,6 +573,12 @@
             <button type="button" class="btn-revalidate" id="btnRevalidate">重新校验</button>
           </div>
 
+          <div class="anno anno-data" data-version="v2.9">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body"><p><b>关联模块：</b>校验数据表 — 末端机房</p><ul><li><b>对象与指标：</b>设备组：空调总功率、回风温度均值、供冷与发热平衡偏差（勾选平衡校验才出）；运行中空调：送风温度、有功功率、容量指令（无实测容量不出）；冷点：温度、湿度（勾选湿度仿真才出）；热点：温度。</li><li><b>预测偏差：</b>仿真模型填写了预测偏差的同类量（各机送风温度、有功功率、回风温度，全部冷点温度、冷点湿度、热点温度）平均绝对偏差超过所填值时，该组各行标「未达标（同类平均偏差 x，超过 y）」，否则全组「达标」；未填写预测偏差的只按硬边界判定。</li><li><b>硬边界：</b>逐行检查，越界标「未达标（超出上限值 / 下限值 x）」；空调总功率、容量指令、平衡偏差只按硬边界判定。</li><li><b>置信：</b>迁移或机理只读模型出值的空调、样本不足的测点为「数据积累中」，其余为「数据充分」，同训练页高 / 低置信；顶部统计两类数量。</li></ul></div>
+          </div>
           <section class="data-card" aria-label="校验数据">
             <div class="confidence-summary">
               <span>本次仿真置信统计：</span>
@@ -707,10 +727,344 @@
                     <td><span class="dev-none">无变化</span></td>
                     <td><span class="pred-ok">达标</span></td>
                   </tr>
+                  <tr class="data-row row-hidden" data-site="0_100" data-object="空调设备组" data-metric="空调总功率（kW）">
+                    <td class="col-object">0_100 空调设备组</td>
+                    <td>空调总功率（kW）</td>
+                    <td>173.20 kW</td>
+                    <td>171.90 kW</td>
+                    <td><span class="confidence-pill high">数据充分</span></td>
+                    <td><span class="dev-down">-1.30 kW</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="0_100" data-object="空调设备组" data-metric="回风温度均值（℃）">
+                    <td class="col-object">0_100 空调设备组</td>
+                    <td>回风温度均值（℃）</td>
+                    <td>23.60℃</td>
+                    <td>23.90℃</td>
+                    <td><span class="confidence-pill high">数据充分</span></td>
+                    <td><span class="dev-up">+0.30</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="0_100" data-object="空调设备组" data-metric="供冷与发热平衡偏差（℃）">
+                    <td class="col-object">0_100 空调设备组</td>
+                    <td>供冷与发热平衡偏差（℃）</td>
+                    <td>—</td>
+                    <td>+0.40℃</td>
+                    <td><span class="confidence-pill high">数据充分</span></td>
+                    <td><span class="dev-none">—</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="0_100" data-object="精密空调-精密空调1" data-metric="送风温度（℃）">
+                    <td class="col-object">精密空调1</td>
+                    <td>送风温度（℃）</td>
+                    <td>14.20℃</td>
+                    <td>14.50℃</td>
+                    <td><span class="confidence-pill high">数据充分</span></td>
+                    <td><span class="dev-up">+0.30</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="0_100" data-object="精密空调-精密空调1" data-metric="有功功率（kW）">
+                    <td class="col-object">精密空调1</td>
+                    <td>有功功率（kW）</td>
+                    <td>16.80 kW</td>
+                    <td>16.40 kW</td>
+                    <td><span class="confidence-pill high">数据充分</span></td>
+                    <td><span class="dev-down">-0.40 kW</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="0_100" data-object="精密空调-精密空调1" data-metric="容量指令（%）">
+                    <td class="col-object">精密空调1</td>
+                    <td>容量指令（%）</td>
+                    <td>62%</td>
+                    <td>60%</td>
+                    <td><span class="confidence-pill high">数据充分</span></td>
+                    <td><span class="dev-down">-2</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="0_100" data-object="精密空调-精密空调4" data-metric="送风温度（℃）">
+                    <td class="col-object">精密空调4</td>
+                    <td>送风温度（℃）</td>
+                    <td>13.60℃</td>
+                    <td>14.10℃</td>
+                    <td><span class="confidence-pill low">数据积累中</span></td>
+                    <td><span class="dev-up">+0.50</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="0_100" data-object="精密空调-精密空调4" data-metric="有功功率（kW）">
+                    <td class="col-object">精密空调4</td>
+                    <td>有功功率（kW）</td>
+                    <td>15.90 kW</td>
+                    <td>19.20 kW</td>
+                    <td><span class="confidence-pill low">数据积累中</span></td>
+                    <td><span class="dev-up">+3.30 kW</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="0_100" data-object="精密空调-精密空调4" data-metric="容量指令（%）">
+                    <td class="col-object">精密空调4</td>
+                    <td>容量指令（%）</td>
+                    <td>58%</td>
+                    <td>55%</td>
+                    <td><span class="confidence-pill high">数据充分</span></td>
+                    <td><span class="dev-down">-3</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="0_100" data-object="精密空调-精密空调5新" data-metric="送风温度（℃）">
+                    <td class="col-object">精密空调5新</td>
+                    <td>送风温度（℃）</td>
+                    <td>13.10℃</td>
+                    <td>13.30℃</td>
+                    <td><span class="confidence-pill high">数据充分</span></td>
+                    <td><span class="dev-up">+0.20</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="0_100" data-object="精密空调-精密空调5新" data-metric="有功功率（kW）">
+                    <td class="col-object">精密空调5新</td>
+                    <td>有功功率（kW）</td>
+                    <td>21.30 kW</td>
+                    <td>20.90 kW</td>
+                    <td><span class="confidence-pill high">数据充分</span></td>
+                    <td><span class="dev-down">-0.40 kW</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="0_100" data-object="精密空调-精密空调5新" data-metric="容量指令（%）">
+                    <td class="col-object">精密空调5新</td>
+                    <td>容量指令（%）</td>
+                    <td>71%</td>
+                    <td>69%</td>
+                    <td><span class="confidence-pill high">数据充分</span></td>
+                    <td><span class="dev-down">-2</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="0_100" data-object="精密空调-精密空调9新" data-metric="送风温度（℃）">
+                    <td class="col-object">精密空调9新</td>
+                    <td>送风温度（℃）</td>
+                    <td>12.80℃</td>
+                    <td>13.40℃</td>
+                    <td><span class="confidence-pill low">数据积累中</span></td>
+                    <td><span class="dev-up">+0.60</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="0_100" data-object="精密空调-精密空调9新" data-metric="有功功率（kW）">
+                    <td class="col-object">精密空调9新</td>
+                    <td>有功功率（kW）</td>
+                    <td>22.60 kW</td>
+                    <td>21.90 kW</td>
+                    <td><span class="confidence-pill low">数据积累中</span></td>
+                    <td><span class="dev-down">-0.70 kW</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="0_100" data-object="精密空调-精密空调11新" data-metric="送风温度（℃）">
+                    <td class="col-object">精密空调11新</td>
+                    <td>送风温度（℃）</td>
+                    <td>13.30℃</td>
+                    <td>13.50℃</td>
+                    <td><span class="confidence-pill high">数据充分</span></td>
+                    <td><span class="dev-up">+0.20</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="0_100" data-object="精密空调-精密空调11新" data-metric="有功功率（kW）">
+                    <td class="col-object">精密空调11新</td>
+                    <td>有功功率（kW）</td>
+                    <td>21.20 kW</td>
+                    <td>21.60 kW</td>
+                    <td><span class="confidence-pill high">数据充分</span></td>
+                    <td><span class="dev-up">+0.40 kW</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="0_100" data-object="精密空调-精密空调11新" data-metric="容量指令（%）">
+                    <td class="col-object">精密空调11新</td>
+                    <td>容量指令（%）</td>
+                    <td>66%</td>
+                    <td>64%</td>
+                    <td><span class="confidence-pill high">数据充分</span></td>
+                    <td><span class="dev-down">-2</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="0_100" data-object="冷通道-冷点A-1" data-metric="温度（℃）">
+                    <td class="col-object">冷点A-1</td>
+                    <td>温度（℃）</td>
+                    <td>22.40℃</td>
+                    <td>22.60℃</td>
+                    <td><span class="confidence-pill high">数据充分</span></td>
+                    <td><span class="dev-up">+0.20</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="0_100" data-object="冷通道-冷点A-1" data-metric="相对湿度（%RH）">
+                    <td class="col-object">冷点A-1</td>
+                    <td>相对湿度（%RH）</td>
+                    <td>44%</td>
+                    <td>43%</td>
+                    <td><span class="confidence-pill high">数据充分</span></td>
+                    <td><span class="dev-down">-1</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="0_100" data-object="冷通道-冷点B-1" data-metric="温度（℃）">
+                    <td class="col-object">冷点B-1</td>
+                    <td>温度（℃）</td>
+                    <td>22.60℃</td>
+                    <td>22.80℃</td>
+                    <td><span class="confidence-pill high">数据充分</span></td>
+                    <td><span class="dev-up">+0.20</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="0_100" data-object="冷通道-冷点B-1" data-metric="相对湿度（%RH）">
+                    <td class="col-object">冷点B-1</td>
+                    <td>相对湿度（%RH）</td>
+                    <td>46%</td>
+                    <td>45%</td>
+                    <td><span class="confidence-pill high">数据充分</span></td>
+                    <td><span class="dev-down">-1</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="0_100" data-object="冷通道-冷点B-2" data-metric="温度（℃）">
+                    <td class="col-object">冷点B-2</td>
+                    <td>温度（℃）</td>
+                    <td>23.10℃</td>
+                    <td>23.90℃</td>
+                    <td><span class="confidence-pill low">数据积累中</span></td>
+                    <td><span class="dev-up">+0.80</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="0_100" data-object="冷通道-冷点B-2" data-metric="相对湿度（%RH）">
+                    <td class="col-object">冷点B-2</td>
+                    <td>相对湿度（%RH）</td>
+                    <td>42%</td>
+                    <td>41%</td>
+                    <td><span class="confidence-pill low">数据积累中</span></td>
+                    <td><span class="dev-down">-1</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="0_100" data-object="热通道-热点A-1" data-metric="温度（℃）">
+                    <td class="col-object">热点A-1</td>
+                    <td>温度（℃）</td>
+                    <td>31.20℃</td>
+                    <td>31.60℃</td>
+                    <td><span class="confidence-pill high">数据充分</span></td>
+                    <td><span class="dev-up">+0.40</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="0_100" data-object="热通道-热点A-3" data-metric="温度（℃）">
+                    <td class="col-object">热点A-3</td>
+                    <td>温度（℃）</td>
+                    <td>32.40℃</td>
+                    <td>33.30℃</td>
+                    <td><span class="confidence-pill low">数据积累中</span></td>
+                    <td><span class="dev-up">+0.90</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="0_100" data-object="热通道-热点B-1" data-metric="温度（℃）">
+                    <td class="col-object">热点B-1</td>
+                    <td>温度（℃）</td>
+                    <td>30.90℃</td>
+                    <td>31.10℃</td>
+                    <td><span class="confidence-pill high">数据充分</span></td>
+                    <td><span class="dev-up">+0.20</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="demo" data-object="空调设备组" data-metric="空调总功率（kW）">
+                    <td class="col-object">CW-DEMO 空调设备组</td>
+                    <td>空调总功率（kW）</td>
+                    <td>9.60 kW</td>
+                    <td>9.90 kW</td>
+                    <td><span class="confidence-pill low">数据积累中</span></td>
+                    <td><span class="dev-up">+0.30 kW</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="demo" data-object="空调设备组" data-metric="回风温度均值（℃）">
+                    <td class="col-object">CW-DEMO 空调设备组</td>
+                    <td>回风温度均值（℃）</td>
+                    <td>24.10℃</td>
+                    <td>24.40℃</td>
+                    <td><span class="confidence-pill low">数据积累中</span></td>
+                    <td><span class="dev-up">+0.30</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="demo" data-object="精密空调-冷冻水型空调CW-01" data-metric="送风温度（℃）">
+                    <td class="col-object">冷冻水型空调CW-01</td>
+                    <td>送风温度（℃）</td>
+                    <td>15.20℃</td>
+                    <td>15.50℃</td>
+                    <td><span class="confidence-pill low">数据积累中</span></td>
+                    <td><span class="dev-up">+0.30</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="demo" data-object="精密空调-冷冻水型空调CW-01" data-metric="有功功率（kW）">
+                    <td class="col-object">冷冻水型空调CW-01</td>
+                    <td>有功功率（kW）</td>
+                    <td>4.80 kW</td>
+                    <td>5.00 kW</td>
+                    <td><span class="confidence-pill low">数据积累中</span></td>
+                    <td><span class="dev-up">+0.20 kW</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="demo" data-object="精密空调-冷冻水型空调CW-01" data-metric="水阀开度（%）">
+                    <td class="col-object">冷冻水型空调CW-01</td>
+                    <td>水阀开度（%）</td>
+                    <td>64%</td>
+                    <td>61%</td>
+                    <td><span class="confidence-pill high">数据充分</span></td>
+                    <td><span class="dev-down">-3</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="demo" data-object="精密空调-冷冻水型空调CW-02" data-metric="送风温度（℃）">
+                    <td class="col-object">冷冻水型空调CW-02</td>
+                    <td>送风温度（℃）</td>
+                    <td>15.60℃</td>
+                    <td>16.40℃</td>
+                    <td><span class="confidence-pill low">数据积累中</span></td>
+                    <td><span class="dev-up">+0.80</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="demo" data-object="精密空调-冷冻水型空调CW-02" data-metric="有功功率（kW）">
+                    <td class="col-object">冷冻水型空调CW-02</td>
+                    <td>有功功率（kW）</td>
+                    <td>4.80 kW</td>
+                    <td>4.90 kW</td>
+                    <td><span class="confidence-pill low">数据积累中</span></td>
+                    <td><span class="dev-up">+0.10 kW</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="demo" data-object="精密空调-冷冻水型空调CW-02" data-metric="水阀开度（%）">
+                    <td class="col-object">冷冻水型空调CW-02</td>
+                    <td>水阀开度（%）</td>
+                    <td>58%</td>
+                    <td>52%</td>
+                    <td><span class="confidence-pill high">数据充分</span></td>
+                    <td><span class="dev-down">-6</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="demo" data-object="冷通道-冷点D-1" data-metric="温度（℃）">
+                    <td class="col-object">冷点D-1</td>
+                    <td>温度（℃）</td>
+                    <td>22.90℃</td>
+                    <td>23.20℃</td>
+                    <td><span class="confidence-pill low">数据积累中</span></td>
+                    <td><span class="dev-up">+0.30</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="demo" data-object="冷通道-冷点D-1" data-metric="相对湿度（%RH）">
+                    <td class="col-object">冷点D-1</td>
+                    <td>相对湿度（%RH）</td>
+                    <td>45%</td>
+                    <td>44%</td>
+                    <td><span class="confidence-pill low">数据积累中</span></td>
+                    <td><span class="dev-down">-1</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
+                  <tr class="data-row row-hidden" data-site="demo" data-object="热通道-热点D-1" data-metric="温度（℃）">
+                    <td class="col-object">热点D-1</td>
+                    <td>温度（℃）</td>
+                    <td>31.80℃</td>
+                    <td>32.30℃</td>
+                    <td><span class="confidence-pill low">数据积累中</span></td>
+                    <td><span class="dev-up">+0.50</span></td>
+                    <td><span class="pred-ok">达标</span></td>
+                  </tr>
                 </tbody>
               </table>
             </div>
           </section>
+
 
 
         </div>
@@ -723,6 +1077,10 @@
   <script>
     (function () {
       const G = function (id) { return document.getElementById(id) }
+      // v2.9：?type=terminal 时切为末端机房（与冷站同一套实时仿真校验）；不带参数时与原冷站演示一致
+      const pageParams = new URLSearchParams(window.location.search)
+      const isTerminal = pageParams.get('type') === 'terminal'
+      const site = isTerminal ? (pageParams.get('site') === 'demo' ? 'demo' : '0_100') : ''
 
       // ── toast ──
       const toast = G('toast')
@@ -745,7 +1103,7 @@
         badOnly = false
         syncBadFilterButton()
         applyFilters()
-        showToast('已重新校验（示意，列表已重置为全部明细）')
+        showToast(isTerminal ? '已按机房当前运行状态重新仿真校验（示意，列表已重置为全部明细）' : '已重新校验（示意，列表已重置为全部明细）')
       })
 
       const hydrateConfidenceColumn = function () {
@@ -763,13 +1121,14 @@
       hydrateConfidenceColumn()
 
       // ── 筛选 / 搜索 ──
+      // 冷站行无 data-site；末端行 data-site = 0_100 / demo，只在对应模式下出现
+      const rowInMode = function (row) {
+        const s = row.getAttribute('data-site') || ''
+        return isTerminal ? s === site : !s
+      }
       const objectMatches = function (objAttr, filterVal) {
         if (!filterVal) return true
-        if (filterVal === '金华制冷系统') return objAttr === '金华制冷系统'
-        if (filterVal === '1号集成冷站') {
-          return objAttr === '1号集成冷站' || objAttr.indexOf('1号集成冷站-') === 0
-        }
-        return true
+        return objAttr === filterVal || objAttr.indexOf(filterVal + '-') === 0
       }
 
       const applyFilters = function () {
@@ -780,7 +1139,7 @@
           const obj = row.getAttribute('data-object') || ''
           const metric = (row.getAttribute('data-metric') || '').toLowerCase()
           const resultBad = !!row.querySelector('.pred-bad')
-          const show = objectMatches(obj, filterVal) && (!q || metric.indexOf(q) !== -1) && (!badOnly || resultBad)
+          const show = rowInMode(row) && objectMatches(obj, filterVal) && (!q || metric.indexOf(q) !== -1) && (!badOnly || resultBad)
           row.classList.toggle('row-hidden', !show)
           if (show) visible += 1
         })
@@ -794,6 +1153,40 @@
         applyFilters()
       })
 
+      const applyTerminalMode = function () {
+        const isDemo = site === 'demo'
+        G('filterSelect').innerHTML = '<option value="">全部对象</option><option value="空调设备组">空调设备组（汇总）</option><option value="精密空调">精密空调</option><option value="冷通道">冷通道测点</option><option value="热通道">热通道测点</option>'
+
+        const tips = document.querySelectorAll('.banner-tip-text p')
+        if (tips[0]) tips[0].textContent = '1、通过机理模型 + 机房气流模型，构建与机房一致的数字仿真模型，按机房当前真实运行状态（空调开关机、温度设定、风机转速上限等）实时计算各空调的送风温度、功率和冷 / 热通道温湿度。'
+        if (tips[1]) tips[1].textContent = '2、通过实际值和预测值进行对比，可观察机房仿真模型的精准度，两者偏差越小说明模型越精准。'
+
+        const desc = document.querySelector('.banner-success-desc')
+        if (desc) desc.textContent = isDemo
+          ? '已按机房当前运行状态完成一次仿真。同类平均偏差：送风温度 0.55℃（≤ 1.5℃）、有功功率 额定的 2.5%（≤ 7%）、回风温度 0.35℃（≤ 0.65℃）、冷点温度 0.30℃（≤ 1.3℃）、冷点湿度 1.0%RH（≤ 5.6%RH）、热点温度 0.50℃（≤ 0.65℃），全部达标（演示数据）'
+          : '已按机房当前运行状态完成一次仿真。同类平均偏差：送风温度 0.36℃（≤ 1.5℃）、有功功率 额定的 3.3%（≤ 7%）、回风温度 0.38℃（≤ 0.65℃）、冷点温度 0.40℃（≤ 1.3℃）、冷点湿度 1.0%RH（≤ 5.6%RH）、热点温度 0.50℃（≤ 0.65℃），全部达标（演示数据）'
+
+        const heading = document.querySelector('h1.page-heading')
+        if (heading) {
+          const sub = document.createElement('span')
+          sub.style.cssText = 'font-size:13px;color:var(--text-secondary);margin-left:10px;font-weight:400'
+          sub.textContent = '末端机房 · ' + (isDemo ? 'CW-DEMO 空调设备组（冷冻水 demo）' : '0_100 空调设备组（江苏分中心二层）')
+          heading.insertAdjacentElement('afterend', sub)
+        }
+
+        let hi = 0
+        let lo = 0
+        document.querySelectorAll('tr.data-row').forEach(function (row) {
+          if (!rowInMode(row)) return
+          if (row.querySelector('.confidence-pill.low')) lo += 1
+          else hi += 1
+        })
+        const pills = document.querySelectorAll('.confidence-summary .confidence-pill')
+        if (pills[0]) pills[0].textContent = '数据充分 ' + hi + ' 项'
+        if (pills[1]) pills[1].textContent = '数据积累中 ' + lo + ' 项'
+      }
+
+      if (isTerminal) applyTerminalMode()
       syncBadFilterButton()
       applyFilters()
     })()

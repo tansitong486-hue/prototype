@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>机房寻优 - 机房模型校验</title>
+  <link rel="stylesheet" href="annotation-styles.css">
+  <style>
+    /* 版式与 仿真校验.html（系统仿真建模 → 仿真验证）一致 */
+    :root {
+      --primary: #1E40AF;
+      --text-primary: #262626;
+      --text-secondary: #595959;
+      --text-hint: #8C8C8C;
+      --border: #D9D9D9;
+      --border-light: #F0F0F0;
+      --bg-body: #F5F5F5;
+      --bg-card: #FFFFFF;
+      --tip-bg: #FFFBE6;
+      --tip-border: #FFE58F;
+      --error-bg: #FFF2F0;
+      --error-border: #FFCCC7;
+      --error-text: #CF1322;
+      --warn-text: #D46B08;
+      --green-btn: #52C41A;
+      --radius: 6px;
+      --radius-lg: 8px;
+      --transition: .2s ease;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+    a { text-decoration: none; color: inherit; }
+    button { border: none; background: none; font: inherit; cursor: pointer; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main { flex: 1; min-width: 0; overflow-y: auto; background: var(--bg-body); }
+    .content-wrap { padding: 16px 20px 24px; max-width: 100%; }
+
+    .breadcrumb { font-size: 13px; color: var(--text-hint); margin-bottom: 12px; line-height: 1.5; }
+    .breadcrumb a { color: var(--text-secondary); transition: color var(--transition); }
+    .breadcrumb a:hover { color: var(--primary); }
+    .breadcrumb-sep { margin: 0 8px; color: var(--text-hint); }
+    .breadcrumb-current { color: var(--text-primary); }
+
+    .page-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .back-ico {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 32px; height: 32px; color: var(--text-secondary); border-radius: var(--radius);
+      transition: background var(--transition), color var(--transition);
+    }
+    .back-ico:hover { background: rgba(0, 0, 0, 0.04); color: var(--primary); }
+    .page-heading { font-size: 20px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.02em; }
+    .page-heading-sub { font-size: 13px; color: var(--text-hint); font-weight: 400; margin-left: 4px; }
+
+    /* 原型演示：场景切换（仅原型评审用） */
+    .demo-switch { margin-left: auto; display: inline-flex; align-items: center; font-size: 12px; border: 1px dashed var(--border); border-radius: var(--radius); overflow: hidden; background: var(--bg-card); }
+    .demo-switch-label { padding: 5px 10px; color: var(--text-hint); background: #FAFAFA; border-right: 1px dashed var(--border); }
+    .demo-opt { padding: 5px 12px; color: var(--text-secondary); }
+    .demo-opt + .demo-opt { border-left: 1px solid var(--border-light); }
+    .demo-opt.is-active { background: #EEF4FF; color: var(--primary); font-weight: 600; }
+
+    .banner-tip {
+      display: flex; gap: 12px; padding: 12px 16px; margin-bottom: 12px;
+      background: var(--tip-bg); border: 1px solid var(--tip-border); border-radius: var(--radius-lg); align-items: flex-start;
+    }
+    .banner-tip-ico { flex-shrink: 0; width: 22px; height: 22px; margin-top: 2px; color: #1890FF; }
+    .banner-tip-body { min-width: 0; }
+    .banner-tip-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+    .banner-tip-text { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
+    .banner-tip-text p + p { margin-top: 8px; }
+
+    /* 结果横幅：通过 / 有设备移出 / 阻断，三态互斥 */
+    .banner-result {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 14px 16px; margin-bottom: 16px; border-radius: var(--radius-lg); flex-wrap: wrap; border: 1px solid;
+    }
+    .banner-result.is-pass  { background: #F6FFED; border-color: #B7EB8F; }
+    .banner-result.is-warn  { background: var(--tip-bg); border-color: var(--tip-border); }
+    .banner-result.is-block { background: var(--error-bg); border-color: var(--error-border); }
+    .banner-result.is-running { background: #F0F5FF; border-color: #ADC6FF; }
+    .banner-msg-left { display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
+    .banner-ico { flex-shrink: 0; width: 22px; height: 22px; margin-top: 2px; }
+    .is-pass .banner-ico { color: #52C41A; }
+    .is-warn .banner-ico { color: #FA8C16; }
+    .is-block .banner-ico { color: var(--error-text); }
+    .is-running .banner-ico { color: var(--primary); }
+    .banner-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .is-pass .banner-title { color: #389E0D; }
+    .is-warn .banner-title { color: var(--warn-text); }
+    .is-block .banner-title { color: var(--error-text); }
+    .is-running .banner-title { color: var(--primary); }
+    .banner-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+    .btn-revalidate {
+      flex-shrink: 0; height: 32px; padding: 0 16px; font-size: 13px; font-weight: 500;
+      color: var(--green-btn); background: #fff; border: 1px solid var(--green-btn); border-radius: var(--radius);
+      transition: opacity var(--transition), box-shadow var(--transition);
+    }
+    .btn-revalidate:hover { opacity: 0.88; }
+    .btn-revalidate:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(82, 196, 26, 0.35); }
+    .btn-revalidate:disabled { opacity: .5; cursor: not-allowed; }
+
+    .data-card { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 16px; }
+    .card-title { padding: 12px 16px; font-size: 14px; font-weight: 600; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .card-title .sub { font-size: 12px; font-weight: 400; color: var(--text-hint); }
+    .confidence-summary {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px;
+      border-bottom: 1px solid var(--border-light); background: #FAFAFA; font-size: 13px; color: var(--text-secondary);
+    }
+    .confidence-pill { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; border: 1px solid; }
+    .confidence-pill.high { background: #F6FFED; color: #389E0D; border-color: #B7EB8F; }
+    .confidence-pill.low  { background: #F1F5F9; color: #475569; border-color: #E2E8F0; }
+    .confidence-pill.warn { background: #FFF7E6; color: var(--warn-text); border-color: #FFD591; }
+    .confidence-pill.err  { background: var(--error-bg); color: var(--error-text); border-color: var(--error-border); }
+
+    .filter-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; border-bottom: 1px solid var(--border-light); }
+    .filter-select { min-width: 160px; height: 32px; padding: 0 11px; font-size: 14px; color: var(--text-primary); border: 1px solid var(--border); border-radius: var(--radius); background: #fff; outline: none; }
+    .filter-select:focus-visible { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.15); }
+    .search-wrap { display: inline-flex; align-items: center; gap: 8px; flex: 1; min-width: 200px; max-width: 320px; height: 32px; padding: 0 11px; border: 1px solid var(--border); border-radius: var(--radius); background: #fff; }
+    .search-wrap:focus-within { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.15); }
+    .search-wrap svg { flex-shrink: 0; width: 14px; height: 14px; color: var(--text-hint); }
+    .search-input { flex: 1; border: none; outline: none; font-size: 14px; min-width: 0; }
+    .search-input::placeholder { color: var(--text-hint); }
+    .quick-filter-check { display: inline-flex; align-items: center; gap: 6px; height: 32px; font-size: 13px; font-weight: 500; color: #334155; cursor: pointer; user-select: none; }
+
+    .table-scroll { overflow-x: auto; }
+    .data-table { width: 100%; min-width: 960px; border-collapse: collapse; }
+    .data-table thead th { padding: 12px 16px; text-align: left; font-size: 13px; font-weight: 600; color: var(--text-secondary); background: #FAFAFA; border-bottom: 1px solid var(--border-light); white-space: nowrap; }
+    .data-table tbody td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid var(--border-light); vertical-align: middle; line-height: 1.5; }
+    .data-table tbody tr:hover { background: #FAFAFA; }
+    .data-table tbody tr.is-focus { background: #F0F5FF; }
+    .cell-sub { display: block; font-size: 12px; color: var(--text-hint); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--primary); background: #EEF4FF; padding: 0 4px; border-radius: 3px; }
+    .lvl { font-weight: 700; white-space: nowrap; }
+    .lvl-ERROR { color: var(--error-text); }
+    .lvl-WARN  { color: var(--warn-text); }
+    .lvl-INFO  { color: var(--text-hint); }
+    .lvl-PASS  { color: #389E0D; }
+    .code-tag { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; padding: 1px 6px; border-radius: 4px; background: #F5F5F5; color: var(--text-secondary); white-space: nowrap; }
+    .code-tag.err  { background: var(--error-bg); color: var(--error-text); }
+    .code-tag.warn { background: #FFF7E6; color: var(--warn-text); }
+    .state-tag { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 4px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+    .state-ok   { background: #F6FFED; color: #389E0D; }
+    .state-warn { background: #FFF7E6; color: var(--warn-text); }
+    .state-err  { background: var(--error-bg); color: var(--error-text); }
+    .state-off  { background: #F5F5F5; color: var(--text-hint); }
+    .action-link { font-size: 13px; color: #1890FF; cursor: pointer; white-space: nowrap; }
+    .action-link:hover { opacity: .72; }
+    .action-link.danger { color: var(--error-text); }
+    .empty-cell { text-align: center; color: var(--text-hint); padding: 32px 16px !important; }
+
+    .toast {
+      position: fixed; right: 24px; bottom: 72px; max-width: 380px; padding: 12px 16px; border-radius: var(--radius);
+      background: rgba(0, 0, 0, 0.78); color: #fff; font-size: 13px; line-height: 1.6; white-space: pre-line;
+      opacity: 0; transform: translateY(8px); pointer-events: none; transition: all .22s ease; z-index: 300;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    @media (max-width: 768px) {
+      .btn-revalidate { width: 100%; }
+      .demo-switch { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <div id="app-header"></div>
+    <div class="body-wrap">
+      <div id="app-sidebar"></div>
+      <main class="main">
+        <div class="anno-filter-bar" id="annoFilterBar">
+          <span class="anno-filter-label">批注版本：</span>
+          <div class="anno-filter-tags" id="annoFilterTags"></div>
+        </div>
+
+        <div class="content-wrap">
+          <nav class="breadcrumb" aria-label="面包屑">
+            <a href="机房寻优-机房热力模型列表.html">机房热力模型</a>
+            <span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">模型校验</span>
+          </nav>
+
+          <div class="page-title-row">
+            <a href="机房寻优-机房热力模型列表.html" class="back-ico" aria-label="返回机房热力模型列表">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+            </a>
+            <h1 class="page-heading">模型校验<span class="page-heading-sub" id="roomHeading"></span></h1>
+            <div class="demo-switch" role="group" aria-label="原型演示场景">
+              <span class="demo-switch-label">原型演示</span>
+              <a class="demo-opt" data-room="101" href="机房寻优-机房模型校验.html?room=101">101 设备移出</a>
+              <a class="demo-opt" data-room="102" href="机房寻优-机房模型校验.html?room=102">102 拓扑阻断</a>
+              <a class="demo-opt" data-room="103" href="机房寻优-机房模型校验.html?room=103">103 通过</a>
+            </div>
+          </div>
+
+          <div class="anno anno-version-header" data-version="v2.9" data-date="2026-10-31">
+            <span class="anno-tag">版本信息</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>当前版本：</b>v2.9（新建页）</p>
+              <p><b>更新日期：</b>2026-10-31</p>
+              <p><b>变更概述：</b>v2.9 末端仿真寻优 · 机房模型校验。2026-10-31 评审调整：校验<b>移出创建步骤 1</b>，改为机房热力模型<b>保存完成后</b>单独执行，交互参照「系统仿真建模 → 仿真验证」（<code>仿真校验.html</code>）：进入即出最近一次结果，「重新校验」按当前物模型属性、绑点、关系与运行数据实时重跑。§4.3 五类校验在本页一次跑完（含拓扑完整性，步骤 2 不再单独校验），提示精确到「实例 · 属性名」。</p>
+              <p><b>2026-10-31 补充：</b>属性改为在热力模型配置步骤 1 页内直接填写，本页属性类 ERROR 的处置改为「去修改 →」（跳编辑态步骤 1），写点类仍「去绑点 →」（设备管理）；型号 <code>modelNumber</code> 去掉，不再校验。</p>
+              <p><b>2026-11-02 补充：</b>步骤 2 新增回风关系（热通道传感器 → 空调，复用 <code>THSensor::feedsAir</code>），⑤ 拓扑完整性加一条「热点 → 空调 回风」：封闭热通道机房的每台空调、摆放位置为行间 / 列间的空调必须配回风关系，未配记 <code>TOPOLOGY_INCOMPLETE</code>（逐台一条，机房阻断）；房间级空调可不配。三个演示机房各补一行结果（102 机房按封闭热通道演示 6#空调未配）。不加列、不加统计项，结果进现有「拓扑」胶囊与校验明细。</p>
+              <p><b>本页说明：</b>入口为「机房热力模型」列表操作列「模型校验」（URL 带 <code>room</code>）。页头「原型演示」切 3 个场景：101 机房（2 台 ERROR 移出可动作集、机房不阻断，含 WARN）、102 机房（封闭热通道，拓扑不完整含 1 台空调未配回风关系，机房阻断）、103 机房（通过，含 1 条「无法校验」）。属性定义真源：《标准物模型-静态属性与动态参数.xlsx》静态数据 sheet；规则真源：《末端仿真寻优需求文档》§4.3～4.4、§六、§7.2。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-req" data-version="v2.9">
+            <span class="anno-tag">需求说明</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>页面级：</b>让实施在机房热力模型上线寻优前，看清每台空调能否被仿真寻优动作、为什么不能，以及机房拓扑是否完整。</p>
+              <ul>
+                <li><b>覆盖场景：</b>新建保存后首次校验；去物模型补属性 / 补绑点 / 改关系后重新校验；编辑模型后结果过期再校验。</li>
+                <li><b>本期不覆盖：</b>不在本页修改任何属性、绑点或关系（只读 + 跳转去维护 / 去配置）；不做定时自动校验与告警推送；不校验仿真精度（精度看「仿真验证」页）。</li>
+                <li><b>与寻优的关系：</b>寻优每轮按同一规则表逐台判定，本页结果不是寻优的开关；未校验的模型照常寻优（产品推断）。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="banner-tip" role="region" aria-label="提示">
+            <svg class="banner-tip-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            <div class="banner-tip-body">
+              <div class="banner-tip-title">提示</div>
+              <div class="banner-tip-text">
+                <p>1、模型校验按每台空调的对象类型，检查仿真寻优所需的物模型属性、写点与组件实例是否齐全、是否与运行数据一致，并检查机房供冷 / 换热 / 回风关系是否完整。</p>
+                <p>2、ERROR 的空调会移出可动作集（寻优时保持当前控制不动作），其余空调照常寻优；拓扑不完整时机房寻优跳过。WARN 只提示，请实施核对。</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="anno anno-state" data-version="v2.9">
+            <span class="anno-tag">状态说明</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">产品推断</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>校验结果横幅（三态互斥 + 校验中）</p>
+              <ul>
+                <li><b>通过（绿）：</b>无 ERROR；有 WARN / 无法校验时标题写「校验通过，有 N 条提示」。描述带可动作集台数与校验时间。</li>
+                <li><b>有设备移出（橙）：</b>有设备级 ERROR（<code>INPUT_MISSING</code>）但可动作集不为空、拓扑完整：「校验完成：N 台移出可动作集，机房不阻断」（缺数据处理）。</li>
+                <li><b>阻断（红）：</b>拓扑完整性 ERROR（<code>TOPOLOGY_INCOMPLETE</code>），或投入空调全部 ERROR / 全部投出（可动作集为空）：「校验未通过：机房寻优将跳过（SKIPPED）」（§7.2「拓扑不完整 → 机房本轮 SKIPPED」）。</li>
+                <li><b>校验中（蓝）：</b>点「重新校验」后横幅变「校验中…」，按钮置灰；完成后刷新横幅、统计和两张表，toast「校验完成」。</li>
+                <li><b>未校验或已修改：</b>模型保存后从未校验，或校验后模型被编辑，进入本页自动执行一次，不展示旧结果。</li>
+                <li><b>校验失败：</b>取数超时等系统原因时横幅显示「校验失败，请重试」，保留上一次结果不覆盖（原型不演示）。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="banner-result" id="resultBanner" role="status">
+            <div class="banner-msg-left">
+              <svg class="banner-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+              <div>
+                <div class="banner-title" id="bannerTitle">—</div>
+                <div class="banner-desc" id="bannerDesc">—</div>
+              </div>
+            </div>
+            <button type="button" class="btn-revalidate" id="btnRevalidate">重新校验</button>
+          </div>
+
+          <div class="anno anno-field" data-version="v2.9">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>校验统计 + 设备总览表</p>
+              <p><b>统计胶囊：</b>投入 / 投出台数、就绪、就绪·有提示、移出可动作集（按台计，一台有 ERROR 就只计入移出）、ERROR / WARN / 无法校验条数（按条计，含已移出设备的 WARN）、拓扑（通过 / N 条 ERROR）、机房结论（可继续 · 可动作集 N 台 / 阻断 · 本轮 SKIPPED）。</p>
+              <table class="anno-table">
+                <thead><tr><th>列</th><th>内容</th><th>说明</th></tr></thead>
+                <tbody>
+                  <tr><td>空调末端</td><td>实例名称 + 位置</td><td>取机房热力模型已关联的空调（含投出）</td></tr>
+                  <tr><td>对象类型</td><td>中文名 + 模型 ID</td><td><code>dtdl:asset:AirCooledPAC</code> / <code>dtdl:asset:ChilledWaterPAC</code>；本台跑哪几类校验由对象类型有哪些属性决定（属性存在即校验，按设备自动适配）</td></tr>
+                  <tr><td>投入 / 投出</td><td>只读</td><td>在热力模型配置中设置；投出不校验</td></tr>
+                  <tr><td>主控制变量</td><td>按 <code>controlMode</code> 分派</td><td>0 回风温控 → 回风温度设定 <code>4_25_0</code>；1 送风温控 → 送风温度设定 <code>4_27_0</code>；不拆对象类型（按设备自动适配）；该写点未绑时下方小字「写点未绑」</td></tr>
+                  <tr><td>校验结论</td><td>就绪 / 就绪·有提示 / 移出可动作集 / 投出·不校验</td><td>有 ERROR → 移出可动作集；只有 WARN → 就绪·有提示；「无法校验」不影响结论</td></tr>
+                  <tr><td>ERROR / WARN</td><td>条数</td><td>点「查看明细」下方明细表按该实例筛选并滚动定位</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <section class="data-card" aria-label="设备总览">
+            <div class="card-title">设备总览<span class="sub" id="overviewSub"></span></div>
+            <div class="confidence-summary" id="summaryPills"></div>
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>空调末端</th>
+                    <th>对象类型</th>
+                    <th>投入 / 投出</th>
+                    <th>主控制变量</th>
+                    <th>校验结论</th>
+                    <th>ERROR</th>
+                    <th>WARN</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="overviewBody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <div class="anno anno-data" data-version="v2.9">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>校验明细 — 校验规则（《末端仿真寻优需求文档》§4.3；规则放「对象类型 + 表达式」校验表，不写进页面代码）</p>
+              <table class="anno-table">
+                <thead><tr><th>校验项</th><th>适用对象</th><th>规则</th><th>级别 / 原因码</th></tr></thead>
+                <tbody>
+                  <tr><td>① regulationType 与压缩机转速反馈一致性</td><td>有 <code>regulationType</code> 的类型（风冷型）</td><td>证据源：组件转速反馈 <code>1_1052_10#j</code> 或系统 A / B 压缩机运行频率 <code>1_2985_0</code> / <code>1_2994_0</code>；属性为 0 定频启停但持续出现中间值（10%～90% 占比 &gt; 20%）。本体 <code>1_1052_0</code> 为项目表达式聚合，不用于校验。证据源都没绑 → 「无法校验」</td><td>WARN <code>CONFIG_SUSPECT(REG_TYPE)</code></td></tr>
+                  <tr><td>② compressors_num 与压缩机组件实例数一致性</td><td>有 <code>compressors_num</code> 的类型（风冷型）</td><td>孪生组件「压缩机」（组件 ID 10）实例 <code>#j</code> 计数 N_comp ≠ 属性值；模型按实例数计算</td><td>WARN <code>CONFIG_SUSPECT(COMP_NUM)</code></td></tr>
+                  <tr><td>③ controlMode 与绑点一致性</td><td>风冷型 / 冷冻水型</td><td>回风温控（0）必须绑 <code>4_25_0</code> 写点；送风温控（1）必须绑 <code>4_27_0</code>；controlMode 未维护同记 ERROR</td><td>ERROR（原型按 <code>INPUT_MISSING</code>，原因码待定）</td></tr>
+                  <tr><td>④ 冷冻水型设计点完整性</td><td>有设计点属性的类型（冷冻水型）</td><td><code>designWaterInTemp</code>、<code>designAirInTemp</code>、<code>designAirOutTemp</code> 缺一 → ERROR；<code>designAirOutTemp ≥ designAirInTemp</code> 或设计点反解不收敛 → WARN；<code>designWaterDeltaT</code> / <code>designAirInRH</code> 未填按缺省 5 ℃ / 50 %RH</td><td>ERROR <code>INPUT_MISSING</code> / WARN <code>CONFIG_SUSPECT(DESIGN_POINT)</code></td></tr>
+                  <tr><td>⑤ 拓扑完整性</td><td>机房级</td><td>每台参与寻优的空调 ≥ 1 条 <code>feedsAir</code> 冷点边；每个投入冷点 ≥ 1 条入边；每个投入且配置安全边界的热点 ≥ 1 条换热入边；每条投入通道 ≥ 1 个热点。无封闭机房没有热点，不查这两项。须配回风关系的空调 ≥ 1 条回风入边（投入热点 <code>THSensor::feedsAir</code> → 空调；2026-11-02 新增）——须配 = 空调组 <code>aisleSealedMode</code> = 1 封闭热通道时组内每台参与寻优的空调，或空调 <code>placement_position</code> = 1 行间 / 2 列间（判定属性待确认）；房间级可不配，无封闭不校验</td><td>ERROR <code>TOPOLOGY_INCOMPLETE</code>（机房本轮 SKIPPED；回风关系逐台一条）</td></tr>
+                  <tr><td>⑥ 其他必填属性完整性（推断）</td><td>全部</td><td>对象类型定义的必填属性（如 <code>ratedPower</code>、<code>cop</code>）未填（型号 <code>modelNumber</code> 已于 2026-10-31 去掉，不校验）</td><td>ERROR <code>INPUT_MISSING</code>（§六 必需输入缺失先移出可动作集）</td></tr>
+                </tbody>
+              </table>
+              <ul>
+                <li><b>每次校验读什么：</b>物模型实例属性（当前值）、实例绑点清单、压缩机组件实例、机房热力模型的投入 / 投出与关系、①所需的运行数据。不读缓存，所以去物模型补完属性回来点「重新校验」即可看到变化。</li>
+                <li><b>① 的数据窗口（待确认）：</b>原型写「近 7 天」，文档未定，评审时定。</li>
+                <li><b>PASS 行：</b>每台每个适用校验项都出一行「已校验」，便于实施确认「这一项查过了」；勾「只看问题项」隐藏。</li>
+                <li><b>验收参照（§4.5）：</b>0_100 机房导入后 <code>CONFIG_SUSPECT(COMP_NUM)</code> 11 条（属性 1、实例 2）；REG_TYPE 逐台输出「已校验 / 无法校验」（该站转速与频率点均未绑，预期 11 台无法校验）。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="anno anno-ux" data-version="v2.9">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">产品推断</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>校验明细 — 筛选、去维护、去配置、重新校验</p>
+              <ul>
+                <li><b>筛选：</b>级别（全部 / ERROR / WARN / 无法校验 / 已校验）、实例（全部 / 各空调 / 机房拓扑）、按属性或说明关键字搜索、「只看问题项」（隐藏已校验行）；条件即时生效，不需点查询。总览「查看明细」= 实例筛选设为该台并滚动到明细。</li>
+                <li><b>去修改 →（属性类 ERROR，2026-10-31 调整）：</b>属性已改为在热力模型配置步骤 1 页内直接填写，故跳「编辑机房热力模型 › 步骤 1」并展开、定位到该设备该属性格；URL 带 <code>return=机房寻优-机房模型校验.html?room=…</code>，保存后回到本页并自动重新校验。不再跳设备管理。</li>
+                <li><b>去绑点 →（写点 / 证据源类）：</b>测点绑定仍在「工程配置 › 设备管理 › 该实例 › 测点绑定」，带同样回跳。controlMode 与写点不一致时两个入口都给：「改控制型 →」（步骤 1）或「去绑点 →」。原型均只 toast。</li>
+                <li><b>去配置 →（拓扑 ERROR）：</b>跳机房热力模型编辑态步骤 2 并定位到对应冷点 / 通道分组 / 空调回风行，带同样的回跳参数；保存后回到本页自动重新校验。原型只 toast。</li>
+                <li><b>重新校验：</b>按当前数据重跑全部校验项（含拓扑），完成后刷新横幅、统计和两张表；校验中按钮置灰防重复点击。</li>
+                <li><b>返回：</b>面包屑「机房热力模型」或标题左侧 ← 回列表。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="anno anno-edge" data-version="v2.9">
+            <span class="anno-tag">边界与异常</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">待确认</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>校验明细 — 口径待确认项</p>
+              <ul>
+                <li><b>controlMode 与写点不一致的原因码：</b>§4.3 只定级别 ERROR 未定码，原型按「缺少该控制型必需的写点」归入 <code>INPUT_MISSING</code>，评审定是否单列。</li>
+                <li><b>未校验能否寻优：</b>原型按「能，寻优每轮自己判」处理；若要求「校验通过才能绑寻优」需另加门槛（未画）。</li>
+                <li><b>运行中设备：</b>ERROR 设备若运行中且物理量无法估计，寻优整轮 SKIPPED（§六）；本页是静态配置校验，不判运行态，只在横幅描述里提示。</li>
+                <li><b>空态：</b>模型未关联空调时本页只出拓扑校验与「尚未关联空调」，机房结论为阻断。</li>
+                <li><b>回风关系必配的判定属性（2026-11-02）：</b>「封闭热通道」读空调组 <code>aisleSealedMode</code>（后台三档，标准物模型表需补「封闭热通道」）；「行间 / 列间」暂读后台 DTDL 已有的精密空调 <code>placement_position</code>（标准物模型表与需求文档未收录），底座式视为房间级、未填按房间级，均待确认。0_100 验证机房 11 台该属性全为「行间」、疑似缺省，按此规则会报回风关系未配。</li>
+              </ul>
+            </div>
+          </div>
+
+          <section class="data-card" aria-label="校验明细" id="detailCard">
+            <div class="card-title">校验明细<span class="sub">每条精确到「实例 · 属性名」，附原因码与依据</span></div>
+            <div class="filter-row">
+              <select class="filter-select" id="filterLevel" aria-label="级别">
+                <option value="">全部级别</option>
+                <option value="ERROR">ERROR</option>
+                <option value="WARN">WARN</option>
+                <option value="INFO">无法校验</option>
+                <option value="PASS">已校验</option>
+              </select>
+              <select class="filter-select" id="filterDevice" aria-label="实例"></select>
+              <label class="search-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                <input class="search-input" type="search" id="filterKeyword" placeholder="属性 ID / 说明关键字">
+              </label>
+              <label class="quick-filter-check"><input type="checkbox" id="filterProblem">只看问题项</label>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>级别</th>
+                    <th>实例 · 属性</th>
+                    <th>校验项</th>
+                    <th>原因码</th>
+                    <th style="min-width:340px;">说明</th>
+                    <th>处置</th>
+                  </tr>
+                </thead>
+                <tbody id="detailBody"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function () {
+      /* 物模型属性定义（真源：标准物模型-静态属性与动态参数.xlsx · 静态数据 sheet；与创建页 MODEL_SCHEMA 同一份，真实系统从物模型拉取） */
+      var MODEL_SCHEMA = {
+        'dtdl:asset:AirCooledPAC': {
+          name: '风冷型精密空调',
+          props: [
+            { id: 'controlMode', label: '控制型', required: true, options: { '0': '回风温控', '1': '送风温控' } },
+            { id: 'air_volume', label: '风量', required: true },
+            { id: 'refrigerating_capacity', label: '额定制冷量', required: true },
+            { id: 'ratedPower', label: '额定功率', required: true },
+            { id: 'regulationType', label: '压缩机调节方式', required: true, options: { '0': '定频启停', '1': '数码涡旋', '2': '变频' } },
+            { id: 'compressors_num', label: '压缩机数量', required: true },
+            { id: 'cop', label: '制冷系数', required: true }
+          ]
+        },
+        'dtdl:asset:ChilledWaterPAC': {
+          name: '冷冻水型精密空调',
+          props: [
+            { id: 'controlMode', label: '控制型', required: true, options: { '0': '回风温控', '1': '送风温控' } },
+            { id: 'air_volume', label: '风量', required: true },
+            { id: 'refrigerating_capacity', label: '额定制冷量', required: true },
+            { id: 'ratedPower', label: '额定功率', required: true },
+            { id: 'designWaterInTemp', label: '设计进水温度', required: true },
+            { id: 'designWaterDeltaT', label: '设计进出水温差', required: false, defaultValue: 5 },
+            { id: 'designAirInTemp', label: '设计进风温度', required: true },
+            { id: 'designAirInRH', label: '设计进风相对湿度', required: false, defaultValue: 50 },
+            { id: 'designAirOutTemp', label: '设计出风温度', required: true }
+          ]
+        }
+      };
+      var CONTROL_POINTS = { '0': { id: '4_25_0', label: '回风温度设定' }, '1': { id: '4_27_0', label: '送风温度设定' } };
+
+      /* 演示场景：101 = 创建页示例 4 台（2 台 ERROR 不阻断）；102 = 拓扑不完整阻断；103 = 通过 */
+      var ROOMS = {
+        '101': {
+          name: '101机房', checkedAt: '2026-10-31 10:20:15',
+          devices: [
+            { id: 'ac-1', name: '1#空调', location: '1号机楼/1层/A机房', typeId: 'dtdl:asset:AirCooledPAC', active: true,
+              attrs: { controlMode: '1', air_volume: '12000', refrigerating_capacity: '45', ratedPower: '14.5', regulationType: '2', compressors_num: '2', cop: '3.10' },
+              points: ['4_25_0', '4_27_0', '4_90_0', '4_91_0'], compInstances: 2, speedEvidence: { source: '1_1052_10#j', midRatio: 0.58 } },
+            { id: 'ac-2', name: '2#空调', location: '1号机楼/1层/A机房', typeId: 'dtdl:asset:AirCooledPAC', active: true,
+              attrs: { controlMode: '1', air_volume: '9800', refrigerating_capacity: '35', ratedPower: '11.8', regulationType: '0', compressors_num: '2', cop: '2.97' },
+              points: ['4_25_0', '4_90_0'], compInstances: 3, speedEvidence: { source: '1_1052_10#j', midRatio: 0.34 } },
+            { id: 'ac-3', name: '3#空调', location: '1号机楼/1层/A机房', typeId: 'dtdl:asset:ChilledWaterPAC', active: true,
+              attrs: { controlMode: '0', air_volume: '21000', refrigerating_capacity: '80', ratedPower: '6.5', designWaterInTemp: '12', designWaterDeltaT: '5', designAirInTemp: '30', designAirInRH: '', designAirOutTemp: '18' },
+              points: ['4_25_0', '4_90_0', '4_91_0', '3_2001_0', '1_4_0'] },
+            { id: 'ac-4', name: '4#空调', location: '1号机楼/1层/A机房', typeId: 'dtdl:asset:ChilledWaterPAC', active: true, legacy: true,
+              attrs: { controlMode: '0', air_volume: '21000', refrigerating_capacity: '80', ratedPower: '6.5', designWaterInTemp: '12', designWaterDeltaT: '', designAirInTemp: '30', designAirInRH: '', designAirOutTemp: '' },
+              points: ['4_25_0', '4_90_0', '3_2001_0', '1_4_0'] }
+          ],
+          topology: [
+            { rule: '空调 → 冷点 feedsAir', ok: true, msg: '4 台投入空调均有 feedsAir 冷点边（共 9 条）' },
+            { rule: '冷点入边', ok: true, msg: '6 个投入冷点均有 ≥ 1 条入边' },
+            { rule: '热点换热入边', ok: true, msg: '4 个已配安全边界的热点均有换热入边' },
+            { rule: '通道 → 热点', ok: true, msg: '3 条投入通道均关联热点' },
+            { rule: '热点 → 空调 回风', ok: true, msg: '封闭冷通道机房：1#、2#空调摆放位置为列间，须配回风关系，均已配置（共 3 条）；3#、4#空调为底座式（房间级），未配置，仿真按供气对称' }
+          ]
+        },
+        '102': {
+          name: '102机房', checkedAt: '2026-10-31 09:48:02',
+          devices: [
+            { id: 'ac-5', name: '5#空调', location: '1号机楼/1层/B机房', typeId: 'dtdl:asset:AirCooledPAC', active: true,
+              attrs: { controlMode: '0', air_volume: '12000', refrigerating_capacity: '45', ratedPower: '14.5', regulationType: '2', compressors_num: '2', cop: '3.10' },
+              points: ['4_25_0', '4_90_0'], compInstances: 2, speedEvidence: { source: '1_2985_0 / 1_2994_0', midRatio: 0.61 } },
+            { id: 'ac-6', name: '6#空调', location: '1号机楼/1层/B机房', typeId: 'dtdl:asset:ChilledWaterPAC', active: true,
+              attrs: { controlMode: '1', air_volume: '21000', refrigerating_capacity: '80', ratedPower: '6.5', designWaterInTemp: '12', designWaterDeltaT: '6', designAirInTemp: '32', designAirInRH: '45', designAirOutTemp: '20' },
+              points: ['4_27_0', '4_90_0', '3_2001_0', '1_4_0'] },
+            { id: 'ac-7', name: '7#空调', location: '1号机楼/1层/B机房', typeId: 'dtdl:asset:AirCooledPAC', active: false,
+              attrs: { controlMode: '0', air_volume: '9800', refrigerating_capacity: '35', ratedPower: '11.8', regulationType: '0', compressors_num: '1', cop: '2.97' },
+              points: ['4_25_0'], compInstances: 1 }
+          ],
+          topology: [
+            { rule: '空调 → 冷点 feedsAir', ok: true, msg: '2 台投入空调均有 feedsAir 冷点边（共 4 条）' },
+            { rule: '冷点入边', ok: false, target: '冷通道分组1 · 3#温湿度传感器（冷点）', msg: '投入冷点无任何入边：没有空调对它 feedsAir，仿真无法给出该点温度' },
+            { rule: '热点换热入边', ok: true, msg: '2 个已配安全边界的热点均有换热入边' },
+            { rule: '通道 → 热点', ok: false, target: '热通道分组2', msg: '投入通道未关联任何热点（温湿度传感器），无法评估该通道热侧约束' },
+            { rule: '热点 → 空调 回风', ok: false, target: '6#空调', msg: '封闭热通道机房每台参与寻优的空调须配回风关系：6#空调未配置回风来源热点，仿真无法确定它从哪些通道回风（5#空调已配 2 条；7#空调投出，不校验）' }
+          ]
+        },
+        '103': {
+          name: '103机房', checkedAt: '2026-10-30 18:05:40',
+          devices: [
+            { id: 'ac-8', name: '8#空调', location: '1号机楼/2层/C机房', typeId: 'dtdl:asset:AirCooledPAC', active: true,
+              attrs: { controlMode: '0', air_volume: '15000', refrigerating_capacity: '60', ratedPower: '18.2', regulationType: '1', compressors_num: '2', cop: '3.30' },
+              points: ['4_25_0', '4_90_0'], compInstances: 2 },
+            { id: 'ac-9', name: '9#空调', location: '1号机楼/2层/C机房', typeId: 'dtdl:asset:ChilledWaterPAC', active: true,
+              attrs: { controlMode: '0', air_volume: '24000', refrigerating_capacity: '95', ratedPower: '7.2', designWaterInTemp: '14', designWaterDeltaT: '', designAirInTemp: '32', designAirInRH: '', designAirOutTemp: '21' },
+              points: ['4_25_0', '4_90_0', '3_2001_0', '1_4_0'] }
+          ],
+          topology: [
+            { rule: '空调 → 冷点 feedsAir', ok: true, msg: '2 台投入空调均有 feedsAir 冷点边（共 4 条）' },
+            { rule: '冷点入边', ok: true, msg: '4 个投入冷点均有 ≥ 1 条入边' },
+            { rule: '热点换热入边', ok: true, msg: '2 个已配安全边界的热点均有换热入边' },
+            { rule: '通道 → 热点', ok: true, msg: '2 条投入通道均关联热点' },
+            { rule: '热点 → 空调 回风', ok: true, msg: '封闭冷通道机房：8#、9#空调为底座式（房间级），回风关系可不配；8#空调已配 2 条，回推回风取所连热点所属通道的排风温度等权平均；9#空调未配，按供气份额加权（供气对称）' }
+          ]
+        }
+      };
+
+      var params = new URLSearchParams(location.search);
+      var roomKey = params.get('room') || '101';
+      /* 未校验或已修改的机房（示例 104 / 105）没有历史结果：进入即自动执行一次（复用 103 的示例数据） */
+      var autoRun = !ROOMS[roomKey];
+      var room = ROOMS[roomKey] || Object.assign({}, ROOMS['103'], { name: roomKey + '机房', checkedAt: null });
+      var results = null;
+
+      document.getElementById('roomHeading').textContent = ' · ' + room.name;
+      document.querySelectorAll('.demo-opt').forEach(function (el) {
+        el.classList.toggle('is-active', el.getAttribute('data-room') === roomKey);
+      });
+
+      function isEmpty(v) { return v === undefined || v === null || String(v).trim() === ''; }
+      function propOf(schema, id) { return schema ? (schema.props.filter(function (p) { return p.id === id; })[0] || null) : null; }
+      function labelOf(schema, id) { var p = propOf(schema, id); return p ? p.label : id; }
+      var toastTimer = null;
+      function showToast(msg) {
+        var el = document.getElementById('toast');
+        el.textContent = msg;
+        el.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { el.classList.remove('show'); }, 3200);
+      }
+
+      /* §4.3 ①～④ + ⑥ 逐台；属性存在即校验（只对有该属性定义的对象类型执行） */
+      function checkDevice(item) {
+        var schema = MODEL_SCHEMA[item.typeId];
+        var f = [];
+        if (!item.active) return { status: 'off', findings: f };
+        var A = item.attrs || {}, pts = item.points || [];
+        var has = function (id) { return !!propOf(schema, id); };
+        var add = function (level, check, code, prop, msg, fix) { f.push({ level: level, check: check, code: code, prop: prop, msg: msg, fix: fix || null }); };
+
+        if (has('regulationType') && !isEmpty(A.regulationType)) {
+          var ev = item.speedEvidence;
+          var regLabel = propOf(schema, 'regulationType').options[A.regulationType];
+          if (!ev) add('INFO', '① 调节方式一致性', '无法校验', 'regulationType', '证据源 1_1052_10#j、1_2985_0 / 1_2994_0 均未绑点，无法判断属性「' + regLabel + '」是否与运行一致；补绑后重新校验', 'bind');
+          else if (A.regulationType === '0' && ev.midRatio > 0.2) add('WARN', '① 调节方式一致性', 'CONFIG_SUSPECT(REG_TYPE)', 'regulationType', '属性为 0 定频启停，但 ' + ev.source + ' 近 7 天持续出现中间值（10%～90% 占比 ' + Math.round(ev.midRatio * 100) + '% > 20%），疑似应为数码涡旋 / 变频');
+          else add('PASS', '① 调节方式一致性', '已校验', 'regulationType', '证据源 ' + ev.source + '，中间值占比 ' + Math.round(ev.midRatio * 100) + '%，与「' + regLabel + '」一致');
+        }
+        if (has('compressors_num') && !isEmpty(A.compressors_num)) {
+          var n = Number(A.compressors_num), nc = item.compInstances || 0;
+          if (n !== nc) add('WARN', '② 压缩机数量一致性', 'CONFIG_SUSPECT(COMP_NUM)', 'compressors_num', '属性值 ' + n + ' 台，压缩机组件（组件 ID 10）实例 #j 计数 N_comp = ' + nc + '；模型按实例数 ' + nc + ' 台计算');
+          else add('PASS', '② 压缩机数量一致性', '已校验', 'compressors_num', '属性值 ' + n + ' 台 = 压缩机组件实例数 ' + nc);
+        }
+        var cp = CONTROL_POINTS[A.controlMode];
+        if (!cp) {
+          add('ERROR', '③ 控制型与绑点一致性', 'INPUT_MISSING', 'controlMode', '控制型未维护，无法分派主控制变量（缺省可按绑点推断：有 4_27_0 历史为送风温控，否则回风温控，需确认）', 'attr');
+        } else if (pts.indexOf(cp.id) < 0) {
+          var bound = pts.filter(function (x) { return x === '4_25_0' || x === '4_27_0'; }).join('、') || '无';
+          add('ERROR', '③ 控制型与绑点一致性', 'INPUT_MISSING', 'controlMode', 'controlMode = ' + A.controlMode + ' ' + propOf(schema, 'controlMode').options[A.controlMode] + '，但未绑 ' + cp.label + ' 写点 ' + cp.id + '（已绑温度设定写点：' + bound + '）；二选一：改控制型或补绑写点', 'point');
+        } else {
+          add('PASS', '③ 控制型与绑点一致性', '已校验', 'controlMode', propOf(schema, 'controlMode').options[A.controlMode] + '，已绑 ' + cp.label + ' ' + cp.id);
+        }
+        if (has('designWaterInTemp')) {
+          var need = ['designWaterInTemp', 'designAirInTemp', 'designAirOutTemp'];
+          var miss = need.filter(function (id) { return isEmpty(A[id]); });
+          if (miss.length) {
+            add('ERROR', '④ 设计点完整性', 'INPUT_MISSING', miss.join(' / '), '设计点缺 ' + miss.map(function (id) { return labelOf(schema, id) + '（' + id + '）'; }).join('、') + '；设计水流量与盘管 UA 由设计点反算，缺失无法建模' + (item.legacy ? '。存量冷冻水项目：移出可动作集，不阻断机房' : ''), 'attr');
+          } else if (Number(A.designAirOutTemp) >= Number(A.designAirInTemp)) {
+            add('WARN', '④ 设计点完整性', 'CONFIG_SUSPECT(DESIGN_POINT)', 'designAirOutTemp', '设计出风温度 ' + A.designAirOutTemp + '℃ ≥ 设计进风温度 ' + A.designAirInTemp + '℃');
+          } else {
+            var dft = [];
+            if (isEmpty(A.designWaterDeltaT)) dft.push('designWaterDeltaT 按缺省 5 ℃');
+            if (isEmpty(A.designAirInRH)) dft.push('designAirInRH 按缺省 50 %RH');
+            add('PASS', '④ 设计点完整性', '已校验', '设计点', '3 个必填设计点齐全，出风 ' + A.designAirOutTemp + '℃ < 进风 ' + A.designAirInTemp + '℃' + (dft.length ? '；' + dft.join('，') : ''));
+          }
+        }
+        var handled = ['controlMode', 'designWaterInTemp', 'designAirInTemp', 'designAirOutTemp'];
+        schema.props.forEach(function (p) {
+          if (p.required && isEmpty(A[p.id]) && handled.indexOf(p.id) < 0) add('ERROR', '⑥ 必填属性完整性', 'INPUT_MISSING', p.id, p.label + ' 未维护', 'attr');
+        });
+        var status = f.some(function (x) { return x.level === 'ERROR'; }) ? 'error' : f.some(function (x) { return x.level === 'WARN'; }) ? 'warn' : 'ok';
+        return { status: status, findings: f };
+      }
+
+      function runCheck() {
+        var dev = {};
+        room.devices.forEach(function (d) { dev[d.id] = checkDevice(d); });
+        var topo = room.topology.map(function (t) {
+          return t.ok
+            ? { level: 'PASS', check: '⑤ 拓扑完整性', code: '已校验', prop: t.rule, msg: t.msg, target: '机房拓扑' }
+            : { level: 'ERROR', check: '⑤ 拓扑完整性', code: 'TOPOLOGY_INCOMPLETE', prop: t.rule, msg: t.msg, target: t.target, fix: 'topo' };
+        });
+        return { dev: dev, topo: topo };
+      }
+
+      function stats(r) {
+        var c = { inUse: 0, off: 0, ok: 0, warn: 0, error: 0, errN: 0, warnN: 0, infoN: 0, topoErr: 0 };
+        room.devices.forEach(function (d) {
+          var x = r.dev[d.id];
+          if (x.status === 'off') { c.off++; return; }
+          c.inUse++; c[x.status]++;
+          x.findings.forEach(function (f) { if (f.level === 'ERROR') c.errN++; if (f.level === 'WARN') c.warnN++; if (f.level === 'INFO') c.infoN++; });
+        });
+        r.topo.forEach(function (t) { if (t.level === 'ERROR') c.topoErr++; });
+        c.actionable = c.inUse - c.error;
+        c.blocked = c.topoErr > 0 || c.actionable <= 0;
+        return c;
+      }
+
+      var ICONS = {
+        pass: '<circle cx="12" cy="12" r="10"/><polyline points="16 9 10.5 15 8 12.5"/>',
+        warn: '<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
+        block: '<circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/>',
+        running: '<path d="M21 12a9 9 0 1 1-6.2-8.6"/>'
+      };
+      function setBanner(kind, title, desc) {
+        var b = document.getElementById('resultBanner');
+        b.className = 'banner-result is-' + kind;
+        b.querySelector('.banner-ico').innerHTML = ICONS[kind];
+        document.getElementById('bannerTitle').textContent = title;
+        document.getElementById('bannerDesc').textContent = desc;
+      }
+
+      function renderBanner(c) {
+        var when = '校验时间 ' + room.checkedAt + '；按当前物模型属性、绑点、关系与运行数据执行。';
+        if (c.blocked) {
+          var why = c.topoErr ? '拓扑不完整（' + c.topoErr + ' 条 TOPOLOGY_INCOMPLETE）' : '可动作集为空';
+          setBanner('block', '校验未通过：' + why + '，机房寻优将跳过（SKIPPED）', '请按明细「去配置 / 去维护」处理后重新校验。' + when);
+        } else if (c.error) {
+          setBanner('warn', '校验完成：' + c.error + ' 台移出可动作集，机房不阻断', '移出的空调寻优时保持当前控制不动作，其余 ' + c.actionable + ' 台照常寻优' + (c.warnN ? '；另有 ' + c.warnN + ' 条 WARN 待核对' : '') + '。' + when);
+        } else {
+          var tips = c.warnN + c.infoN;
+          setBanner('pass', tips ? '校验通过，有 ' + tips + ' 条提示' : '校验通过', '投入 ' + c.inUse + ' 台全部进入可动作集，拓扑完整。' + when);
+        }
+      }
+
+      function renderSummary(c) {
+        var pills = [
+          '<span>本次校验：</span>',
+          '<span class="confidence-pill low">投入 ' + c.inUse + ' 台 · 投出 ' + c.off + ' 台</span>',
+          '<span class="confidence-pill high">就绪 ' + c.ok + ' 台</span>',
+          '<span class="confidence-pill ' + (c.warn ? 'warn' : 'low') + '">就绪·有提示 ' + c.warn + ' 台</span>',
+          '<span class="confidence-pill ' + (c.error ? 'err' : 'low') + '">移出可动作集 ' + c.error + ' 台</span>',
+          '<span class="confidence-pill ' + (c.errN ? 'err' : (c.warnN ? 'warn' : 'low')) + '">ERROR ' + c.errN + ' 条 · WARN ' + c.warnN + ' 条' + (c.infoN ? ' · 无法校验 ' + c.infoN + ' 条' : '') + '</span>',
+          '<span class="confidence-pill ' + (c.topoErr ? 'err' : 'high') + '">拓扑 ' + (c.topoErr ? c.topoErr + ' 条 ERROR' : '通过') + '</span>',
+          '<span class="confidence-pill ' + (c.blocked ? 'err' : 'high') + '">机房结论：' + (c.blocked ? '阻断 · 本轮 SKIPPED' : '可继续 · 可动作集 ' + c.actionable + ' 台') + '</span>'
+        ];
+        document.getElementById('summaryPills').innerHTML = pills.join('');
+        document.getElementById('overviewSub').textContent = room.name + ' · 共 ' + room.devices.length + ' 台空调';
+      }
+
+      var STATE = {
+        ok: '<span class="state-tag state-ok">就绪</span>',
+        warn: '<span class="state-tag state-warn">就绪·有提示</span>',
+        error: '<span class="state-tag state-err">移出可动作集</span>',
+        off: '<span class="state-tag state-off">投出·不校验</span>'
+      };
+      function renderOverview(r) {
+        document.getElementById('overviewBody').innerHTML = room.devices.length ? room.devices.map(function (d) {
+          var x = r.dev[d.id], schema = MODEL_SCHEMA[d.typeId];
+          var errN = x.findings.filter(function (f) { return f.level === 'ERROR'; }).length;
+          var warnN = x.findings.filter(function (f) { return f.level === 'WARN'; }).length;
+          var cp = CONTROL_POINTS[(d.attrs || {}).controlMode];
+          return '<tr>'
+            + '<td>' + d.name + '<span class="cell-sub">' + d.location + (d.legacy ? ' · 存量项目导入' : '') + '</span></td>'
+            + '<td>' + schema.name + '<span class="cell-sub">' + d.typeId + '</span></td>'
+            + '<td>' + (d.active ? '投入' : '投出') + '</td>'
+            + '<td>' + (cp ? cp.label + ' <span class="mono">' + cp.id + '</span>' + ((d.points || []).indexOf(cp.id) < 0 ? '<span class="cell-sub">写点未绑</span>' : '') : '—') + '</td>'
+            + '<td>' + STATE[x.status] + '</td>'
+            + '<td>' + (errN ? '<span class="lvl lvl-ERROR">' + errN + '</span>' : '0') + '</td>'
+            + '<td>' + (warnN ? '<span class="lvl lvl-WARN">' + warnN + '</span>' : '0') + '</td>'
+            + '<td>' + (d.active ? '<span class="action-link" data-act="focus" data-id="' + d.id + '">查看明细</span>' : '<span class="cell-sub">—</span>') + '</td>'
+            + '</tr>';
+        }).join('') : '<tr><td colspan="8" class="empty-cell">尚未关联空调</td></tr>';
+      }
+
+      function allRows(r) {
+        var rows = [];
+        room.devices.forEach(function (d) {
+          r.dev[d.id].findings.forEach(function (f) { rows.push(Object.assign({ deviceId: d.id, target: d.name, typeId: d.typeId }, f)); });
+        });
+        r.topo.forEach(function (t) { rows.push(Object.assign({ deviceId: '__topo' }, t)); });
+        var order = { ERROR: 0, WARN: 1, INFO: 2, PASS: 3 };
+        rows.sort(function (a, b) { return order[a.level] - order[b.level]; });
+        return rows;
+      }
+
+      function renderDeviceFilter() {
+        var sel = document.getElementById('filterDevice');
+        var cur = sel.value;
+        sel.innerHTML = '<option value="">全部实例</option>'
+          + room.devices.filter(function (d) { return d.active; }).map(function (d) { return '<option value="' + d.id + '">' + d.name + '</option>'; }).join('')
+          + '<option value="__topo">机房拓扑</option>';
+        sel.value = cur;
+      }
+
+      function renderDetail() {
+        if (!results) return;
+        var lv = document.getElementById('filterLevel').value;
+        var dv = document.getElementById('filterDevice').value;
+        var kw = document.getElementById('filterKeyword').value.trim().toLowerCase();
+        var onlyProblem = document.getElementById('filterProblem').checked;
+        var rows = allRows(results).filter(function (x) {
+          if (lv && x.level !== lv) return false;
+          if (dv && x.deviceId !== dv) return false;
+          if (onlyProblem && x.level === 'PASS') return false;
+          if (kw && (x.prop + ' ' + x.msg + ' ' + x.target).toLowerCase().indexOf(kw) < 0) return false;
+          return true;
+        });
+        var body = document.getElementById('detailBody');
+        if (!rows.length) { body.innerHTML = '<tr><td colspan="6" class="empty-cell">没有符合条件的校验项</td></tr>'; return; }
+        body.innerHTML = rows.map(function (x, i) {
+          var schema = MODEL_SCHEMA[x.typeId];
+          var propCn = (schema && x.prop.indexOf(' / ') < 0 && propOf(schema, x.prop)) ? ' <span class="cell-sub">' + labelOf(schema, x.prop) + '</span>' : '';
+          var codeCls = x.level === 'ERROR' ? ' err' : (x.level === 'WARN' ? ' warn' : '');
+          var handle;
+          if (x.fix === 'attr') handle = '<span class="action-link danger" data-act="maintain" data-kind="attr" data-target="' + x.target + '" data-prop="' + x.prop.split(' / ')[0] + '">去修改 →</span>';
+          else if (x.fix === 'point') handle = '<span class="action-link danger" data-act="maintain" data-kind="attr" data-target="' + x.target + '" data-prop="' + x.prop + '">改控制型 →</span><br><span class="action-link danger" data-act="maintain" data-kind="point" data-target="' + x.target + '" data-prop="' + x.prop + ' 对应写点">去绑点 →</span>';
+          else if (x.fix === 'topo') handle = '<span class="action-link danger" data-act="topo" data-target="' + x.target + '">去配置 →</span>';
+          else if (x.fix === 'bind') handle = '<span class="action-link" data-act="maintain" data-kind="point" data-target="' + x.target + '" data-prop="证据源">去绑点 →</span>';
+          else if (x.level === 'WARN') handle = '<span class="cell-sub">实施核对属性</span>';
+          else handle = '<span class="cell-sub">—</span>';
+          return '<tr>'
+            + '<td class="lvl lvl-' + x.level + '">' + (x.level === 'INFO' ? '无法校验' : (x.level === 'PASS' ? '已校验' : x.level)) + '</td>'
+            + '<td><b>' + x.target + '</b> · <span class="mono">' + x.prop + '</span>' + propCn + '</td>'
+            + '<td style="white-space:nowrap;">' + x.check + '</td>'
+            + '<td><span class="code-tag' + codeCls + '">' + x.code + '</span></td>'
+            + '<td>' + x.msg + '</td>'
+            + '<td>' + handle + '</td>'
+            + '</tr>';
+        }).join('');
+      }
+
+      function renderAll() {
+        var c = stats(results);
+        renderBanner(c);
+        renderSummary(c);
+        renderOverview(results);
+        renderDeviceFilter();
+        renderDetail();
+      }
+
+      function pad(n) { return n < 10 ? '0' + n : '' + n; }
+      function nowText() {
+        var d = new Date();
+        return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+      }
+
+      var btn = document.getElementById('btnRevalidate');
+      btn.addEventListener('click', function () {
+        btn.disabled = true;
+        setBanner('running', '校验中…', '正在按当前物模型属性、绑点、关系与运行数据逐台执行 §4.3 校验');
+        setTimeout(function () {
+          room.checkedAt = nowText();
+          results = runCheck();
+          renderAll();
+          btn.disabled = false;
+          showToast('校验完成');
+        }, 900);
+      });
+
+      document.addEventListener('click', function (e) {
+        var el = e.target.closest ? e.target.closest('[data-act]') : null;
+        if (!el) return;
+        var act = el.getAttribute('data-act');
+        var ret = '机房寻优-机房模型校验.html?room=' + roomKey;
+        if (act === 'focus') {
+          document.getElementById('filterDevice').value = el.getAttribute('data-id');
+          document.getElementById('filterLevel').value = '';
+          renderDetail();
+          document.getElementById('detailCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else if (act === 'maintain') {
+          var kind = el.getAttribute('data-kind');
+          if (kind === 'point') {
+            showToast('去绑点（原型不跳转）：工程配置 › 设备管理 › ' + el.getAttribute('data-target') + ' › 测点绑定 › ' + el.getAttribute('data-prop')
+              + '\n回跳参数 return=' + ret + '\n绑定保存后回到本页并自动重新校验');
+          } else {
+            showToast('去修改（原型不跳转）：编辑机房热力模型 › 步骤 1 › ' + el.getAttribute('data-target') + ' 属性区 › ' + el.getAttribute('data-prop') + '（页内直接改）'
+              + '\n回跳参数 return=' + ret + '\n保存后回到本页并自动重新校验');
+          }
+        } else if (act === 'topo') {
+          showToast('去配置（原型不跳转）：编辑机房热力模型 › 步骤 2 › ' + el.getAttribute('data-target')
+            + '\n回跳参数 return=' + ret + '\n保存后回到本页并自动重新校验');
+        }
+      });
+      ['filterLevel', 'filterDevice', 'filterProblem'].forEach(function (id) { document.getElementById(id).addEventListener('change', renderDetail); });
+      document.getElementById('filterKeyword').addEventListener('input', renderDetail);
+
+      if (autoRun) room.checkedAt = nowText();
+      results = runCheck();
+      renderAll();
+      if (autoRun) showToast('该模型未校验或结果已过期，已自动执行一次校验');
+    })();
+  </script>
+  <script src="components/nav.js" data-active-nav="AI智能能效" data-active-sidebar="机房热力模型"></script>
+
+  <button class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
+  <script>
+  function initAnnoVersionFilter() {
+    var tags = document.getElementById('annoFilterTags');
+    if (!document.body.classList.contains('annotation-mode')) return;
+    var annos = document.querySelectorAll('.anno[data-version]');
+    var versions = [];
+    annos.forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (v && versions.indexOf(v) === -1) versions.push(v);
+    });
+    versions.sort(function(a, b) {
+      var na = a.replace(/[^0-9.]/g, '').split('.').map(Number);
+      var nb = b.replace(/[^0-9.]/g, '').split('.').map(Number);
+      for (var i = 0; i < Math.max(na.length, nb.length); i++) {
+        if ((nb[i] || 0) !== (na[i] || 0)) return (nb[i] || 0) - (na[i] || 0);
+      }
+      return 0;
+    });
+    tags.innerHTML = '';
+    var allBtn = document.createElement('span');
+    allBtn.className = 'anno-filter-tag active';
+    allBtn.textContent = '全部';
+    allBtn.onclick = function() { filterAnno('all', versions[0]); setActive(this); };
+    tags.appendChild(allBtn);
+    versions.forEach(function(v) {
+      var btn = document.createElement('span');
+      btn.className = 'anno-filter-tag';
+      btn.textContent = v;
+      btn.onclick = function() { filterAnno(v, versions[0]); setActive(this); };
+      tags.appendChild(btn);
+    });
+    if (versions.length > 0) filterAnno('all', versions[0]);
+  }
+  function filterAnno(version, latest) {
+    document.querySelectorAll('.anno[data-version]').forEach(function(a) {
+      var v = a.getAttribute('data-version');
+      if (version === 'all') {
+        a.style.display = '';
+        a.style.opacity = (v === latest) ? '1' : '0.6';
+      } else {
+        a.style.display = (v === version) ? '' : 'none';
+        a.style.opacity = '1';
+      }
+    });
+  }
+  function setActive(el) {
+    el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function(t) { t.classList.remove('active'); });
+    el.classList.add('active');
+  }
+  </script>
+</body>
+</html>
