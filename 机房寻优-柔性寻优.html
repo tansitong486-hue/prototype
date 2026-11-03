@@ -776,6 +776,7 @@
     .rule-table th { background:#F7F9FC; color:var(--text-secondary); font-weight:600; }
     .rule-table tr:last-child td { border-bottom:none; }
     .rule-table .form-control { min-width:0; padding:5px 7px; font-size:12px; }
+    .rule-help { display:inline-flex; align-items:center; justify-content:center; width:15px; height:15px; border:1px solid var(--text-hint); border-radius:50%; font-size:10px; color:var(--text-secondary); cursor:help; margin-left:4px; }
     .device-type-name { font-weight:600; color:var(--text-primary); }
     .device-type-note { display:block; margin-top:2px; color:var(--text-hint); font-size:10px; line-height:1.35; }
     .obj-tags .device-type-note { flex-basis:100%; margin-top:0; }
@@ -1017,13 +1018,13 @@
       <div class="anno anno-version-header" data-version="v2.9" data-date="2026-11-02">
         <span class="anno-tag">版本信息</span>
         <span class="anno-version">v2.9</span>
-        <div class="anno-body"><p><b>当前版本：</b>v2.9（需求 1 末端仿真寻优）</p><p><b>更新日期：</b>2026-11-02</p><p><b>变更概述：</b>寻优算法新增「仿真模型预测寻优」，与全局送风温度控制法、ThermoFlex热力柔性寻优三选一，下方按所选算法显示配置项；寻优记录按新算法输出结论条与开关机变量行；加减机寻优保留不变。</p><p><b>本页说明：</b>筛选 v2.9 查看本次变更；另两种算法的配置见 v2.8 批注；寻优记录演示仿真模型预测寻优的轮次。</p></div>
+        <div class="anno-body"><p><b>当前版本：</b>v2.9（需求 1 末端仿真寻优）</p><p><b>更新日期：</b>2026-11-02</p><p><b>变更概述：</b>寻优算法新增「仿真模型预测寻优」，与全局送风温度控制法、ThermoFlex热力柔性寻优三选一，下方按所选算法显示配置项；新算法只调模拟量，寻优记录展示结论条与模拟量变量行；启停由加减机寻优页负责。</p><p><b>本页说明：</b>筛选 v2.9 查看本次变更；另两种算法的配置见 v2.8 批注；寻优记录演示仿真模型预测寻优的轮次。</p></div>
       </div>
       <div class="anno anno-req" data-version="v2.9">
         <span class="anno-tag">需求说明</span>
         <span class="anno-version">v2.9</span>
         <span class="anno-source">需求文档</span>
-        <div class="anno-body"><p><b>关联模块：</b>机房寻优-柔性寻优 — 仿真模型预测寻优</p><ul><li><b>与既有功能：</b>寻优算法三选一，全局送风温度控制法、ThermoFlex热力柔性寻优保留不变；加减机寻优页保留不变。</li><li><b>每轮计算：</b>按周期取一次数，「保持当前设置」与全部候选共用同一快照；每个候选调用所选仿真模型解一次机房稳态。</li><li><b>选方案：</b>按绑定的安全边界与设备保护时间判定合规，在合规方案中取 J（空调总功率 + 开关机代价）最小者，达到最低节能门槛才下发（L4 不改）。</li><li><b>边界：</b>仿真模型不读本页规则配置与安全边界。</li><li><b>本期不含：</b>动态推进 / 事件触发、定频多压缩机台数级控制、氟泵 / AHU、封闭热通道、冷站改动。</li></ul></div>
+        <div class="anno-body"><p><b>关联模块：</b>机房寻优-柔性寻优 — 仿真模型预测寻优</p><p>寻优算法三选一，既有两种算法的配置与逻辑不变。新算法只调温度设定、风机转速上限、水阀最大开度。每轮取一次数，保持现状与候选共用快照，逐个调用所选模型计算稳态；按安全边界筛选，兼顾空调总功率与参数平稳，达到最低节能门槛才采纳。启停只在加减机寻优页（全局寻优）寻优；两页同时到期时先全局寻优，本轮柔性寻优跳过。仿真模型不读本页规则与安全边界。</p></div>
       </div>
 
       <div class="page-header">
@@ -1071,7 +1072,7 @@
             <div class="module-status-row">
               <div class="status-item">
                 <span class="label">当前寻优周期</span>
-                <span class="value"><span id="optPeriodText">5 分钟</span> · <span id="optModeText">增量式</span> <span class="module-status-badge active" id="optBadge">寻优中</span></span>
+                <span class="value"><span id="optPeriodText">5 分钟</span> <span class="module-status-badge active" id="optBadge">寻优中</span></span>
               </div>
               <div class="status-item">
                 <span class="label">最新寻优时间</span>
@@ -1300,7 +1301,7 @@
           <span class="anno-tag">状态说明</span>
           <span class="anno-version">v2.9</span>
           <span class="anno-source">需求文档</span>
-          <div class="anno-body"><p><b>关联模块：</b>寻优记录 — 时间条与安全底线</p><ul><li><b>时间条：</b>‹ › 按轮次切换；该时刻无记录显示「该时刻无寻优记录」；v2.9 上线前的轮次按原口径展示。</li><li><b>温湿度：</b>不越安全上下限，越限不拿节能抵消。</li><li><b>开关机：</b>开 / 停机满最短时间才可再动；开机台数在上下限内；每条冷通道至少一台空调负责；故障空调关机锁定。</li><li><b>数据：</b>数据过期的空调不参与，过期超过一半本轮跳过；每轮按实时数据重新计算，不累加上一轮建议。</li><li><b>调整幅度：</b>增量式每次调整不超过寻优步长。</li></ul></div>
+          <div class="anno-body"><p><b>关联模块：</b>寻优记录 — 时间条与安全底线</p><p>‹ › 按轮次切换，无记录时显示「该时刻无寻优记录」；旧轮次按原口径展示。新算法保持启停，只调模拟量，每次相对当前回读值的调整不超过寻优步长。温湿度不越安全边界，越限不拿节能抵消。数据过期的空调不参与，超过一半过期则本轮跳过。每轮重新计算，不累加上轮建议；输出前控制量回读、设备状态或配置版本变化则本轮作废并跳过。</p></div>
         </div>
         <div class="records-time-bar" id="optRecordsTimeBar">
           <span class="filter-label">时间</span>
@@ -1316,7 +1317,7 @@
           <span class="anno-tag">数据逻辑</span>
           <span class="anno-version">v2.9</span>
           <span class="anno-source">需求文档</span>
-          <div class="anno-body"><p><b>关联模块：</b>寻优记录 — 本轮寻优结论条</p><ul><li><b>结构：</b>徽章 + 一段「建议 + 原因 + 预计」。建议 = 每台空调的调整；原因 = 约束命中清单中优先级最高的一条（数量 &gt; 控制 &gt; 被控 &gt; 兜底）；预计 = 仿真预测的空调总功率与节能率，标「仿真预测值」。</li><li><b>徽章：</b>节能调优（绿）/ 保持现状（橙：收益不足、无可行方案或到时限仍无收益）/ 安全恢复（红：当前实测越出硬边界，先拉回安全、不比节能）/ 本轮跳过（灰：数据缺失或仿真无法计算）。</li><li><b>安全恢复：</b>只越出内缩可行域的测点不触发，候选对它只需不变差。</li><li><b>显示：</b>页面不出现原因码、J 等算法字样，中文由前端按原因码映射；约束命中清单、稳态预测、迭代轮数在 xdayu 后台日志查询；平面图浮窗「本轮建议」、手动下发说明行与本条同一段文案。</li></ul></div>
+          <div class="anno-body"><p><b>关联模块：</b>寻优记录 — 本轮寻优结论条</p><p>徽章加「建议 + 原因 + 预计」三段：建议只写模拟量调整；原因写首条命中原因；预计写空调总功率、节能率并标「仿真预测值」。徽章为节能调优、保持现状、安全恢复、本轮跳过。当前实测越硬边界时先恢复安全；只越内缩可行域时要求不恶化。页面不展示原因码、目标函数、稳态明细与迭代轮数；平面图「本轮建议」与手动下发使用相同文案。</p></div>
         </div>
         <div class="opt-explain-bar tone-success" id="optExplainBar" role="status" aria-live="polite">
           <div class="opt-explain-strip" aria-hidden="true"></div>
@@ -1503,7 +1504,7 @@
           <span class="anno-tag">字段说明</span>
           <span class="anno-version">v2.9</span>
           <span class="anno-source">需求文档</span>
-          <div class="anno-body"><p><b>关联模块：</b>寻优记录 — 变量表与对象浮层</p><ul><li><b>列：</b>对象名称 | 变量名称 | 实际值 | AI寻优值 | 寻优变化 | 操作，与冷站寻优记录一致。</li><li><b>开关机行：</b>实际值 / AI寻优值为 运行 / 停机，寻优变化为 关机 −1 台 / 开机 +1 台 / 无变化；其余行变量名称为 回风温度设定（V1） / 送风温度设定（V1）（按空调控制方式）、风机转速上限设定、水阀最大开度（V2），不显示测点 ID。</li><li><b>分组：</b>投入的空调（含停机中）在「控制变量（寻优中）」，投出的在「未寻优」。</li><li><b>不调整：</b>「数据积累中」的空调本轮只允许开关机，其余行 AI寻优值 = 实际值、寻优变化写「不调整」；未接入风机转速上限控制点的空调该行同样写「不调整」。</li><li><b>对象浮层：</b>只显示名称与实际值，末尾「本轮建议」与手动下发说明行同一段文案；「历史趋势」不变。</li></ul></div>
+          <div class="anno-body"><p><b>关联模块：</b>寻优记录 — 变量表与对象浮层</p><p>沿用六列：对象名称、变量名称、实际值、AI寻优值、寻优变化、操作。新算法只出模拟量控制行：按控制方式显示回风或送风温度设定（V1），另有风机转速上限设定、水阀最大开度（V2），不显示测点 ID。运行且投入的空调列为寻优中；停机或投出列为未寻优。「数据积累中」及未接入写点的控制量保持当前值，标「不调整」。对象浮层与手动下发使用相同建议；历史趋势不变。</p></div>
         </div>
         <div class="data-table-wrap">
           <table class="data-table">
@@ -1614,7 +1615,7 @@
           <span class="anno-tag">字段说明</span>
           <span class="anno-version">v2.9</span>
           <span class="anno-source">需求文档</span>
-          <div class="anno-body"><p><b>关联模块：</b>规则配置 — 公共字段与寻优算法</p><ul><li><b>组成：</b>寻优对象（页面顶部所选机房）+ 寻优周期 + 安全边界 + 寻优算法（含所选算法的配置项）共同决定每轮寻优计算。</li><li><b>顺序：</b>寻优周期 → 安全边界 → 寻优算法，下方按所选算法动态显示配置项；仿真模型只在选仿真模型预测寻优时显示。</li><li><b>寻优算法：</b>全局送风温度控制法 / ThermoFlex热力柔性寻优 / 仿真模型预测寻优，三选一。</li><li><b>寻优周期：</b>选仿真模型预测寻优时按寻优模式带出缺省（增量式 5 分钟、下限 5；全局式 60 分钟）。</li><li><b>安全边界：</b>寻优层每轮读取做安全判定，开机台数上下限也取自这里。</li><li><b>与加减机互斥（待评审确认）：</b>选本算法且启用设备数量寻优规则时，该机房加减机寻优须停止，保存时校验提示。每轮取数时复核，加减机寻优运行中则本轮跳过（原因：开关机来源冲突）。</li></ul></div>
+          <div class="anno-body"><p><b>关联模块：</b>规则配置 — 公共字段与寻优算法</p><p>机房、寻优周期、安全边界与所选算法共同决定每轮计算。字段依次为寻优周期、安全边界、寻优算法，下方只显示所选算法配置。三种算法为全局送风温度控制法、ThermoFlex热力柔性寻优、仿真模型预测寻优。新算法周期缺省 5 分钟、最小 5 分钟，仿真模型仅在此算法显示；安全边界每轮读取。启停只在加减机寻优页（全局寻优）寻优，本页新算法只调模拟量；两页同时到期时先全局寻优，本轮柔性寻优跳过。</p></div>
         </div>
 
         <div class="form-group">
@@ -1907,12 +1908,12 @@
               <span class="anno-tag">字段说明</span>
               <span class="anno-version">v2.9</span>
               <span class="anno-source">需求文档</span>
-              <div class="anno-body"><p><b>关联模块：</b>规则配置 — 仿真模型（仿真模型预测寻优）</p><ul><li><b>出现条件：</b>只在寻优算法选「仿真模型预测寻优」时显示，位于寻优算法下方、寻优模式上方；另两种算法不需要仿真模型。</li><li><b>取值：</b>必选，下拉取系统仿真建模中末端机房类型的「仿真模型名称」。</li><li><b>联动：</b>策略卡「引用仿真模型」显示所选名称；策略用另两种算法时，策略卡不显示「引用仿真模型」。</li><li><b>边界：</b>仿真模型不读本页规则配置与安全边界。</li></ul></div>
+              <div class="anno-body"><p><b>关联模块：</b>规则配置 — 仿真模型（仿真模型预测寻优）</p><ul><li><b>出现条件：</b>只在寻优算法选「仿真模型预测寻优」时显示，为新算法配置区首项、位于寻优器上方；另两种算法不需要仿真模型。</li><li><b>取值：</b>必选，下拉取系统仿真建模中末端机房类型的「仿真模型名称」。</li><li><b>联动：</b>策略卡「引用仿真模型」显示所选名称；策略用另两种算法时，策略卡不显示「引用仿真模型」。</li><li><b>边界：</b>仿真模型不读本页规则配置与安全边界。</li></ul></div>
             </div>
 
             <div class="form-group">
               <div class="form-label"><span class="required">*</span> 仿真模型</div>
-              <select class="form-control" id="simModelSelect" onchange="onSimModelChange()">
+              <select class="form-control" id="simModelSelect" required onchange="onSimModelChange()">
                 <option value="">请选择</option>
                 <option selected>江苏分中心二层 0_100 末端机房</option>
                 <option>Demo-冷冻水末端机房</option>
@@ -1924,164 +1925,104 @@
               <span class="anno-tag">字段说明</span>
               <span class="anno-version">v2.9</span>
               <span class="anno-source">需求文档</span>
-              <div class="anno-body"><p><b>关联模块：</b>规则配置 — 寻优模式（仿真模型预测寻优）</p><ul><li><b>全局式：</b>开机组合整体寻优；连续量在安全边界软范围内取值，不受寻优步长限制；缺省周期 60 分钟、试算方案上限 2048、每轮计算时限 12 分钟。</li><li><b>增量式：</b>15 分钟内最多开或关 1 台；连续量近 15 分钟累计变化 ≤ 寻优步长；缺省周期 5 分钟（下限 5）、试算方案上限 512、每轮计算时限 60 秒。</li><li><b>切换模式：</b>按缺省带出，可按机房修改；每轮计算时限缺省为周期的 20%，全局式最长 20 分钟、增量式最长 60 秒。</li><li><b>轮次：</b>同一机房同一时刻只运行一个轮次，同时到期先全局式、增量式跳过；输出前控制量回读、设备状态或配置版本有变化则本轮作废，记为本轮跳过。</li></ul></div>
+              <div class="anno-body"><p><b>关联模块：</b>规则配置 — 寻优器</p><p>三选一，缺省 L-SHADE 优化器，只显示所选寻优器的参数。L-SHADE：最大迭代数 20、种群最终数量 10、种群初始化数量 30，最终数量不得大于初始化数量；遗传算法：种群规模 60、最大进化代数 50；SLSQP：最大迭代数 200、收敛精度（小数位数）1。SLSQP 在连续值上求解，最终方案按寻优粒度取整后再仿真和检查安全。参数均需填写，迭代数与种群数量为正整数，小数位数为非负整数。保存后下一轮生效。</p></div>
             </div>
 
             <div class="form-group">
-              <div class="form-label"><span class="required">*</span> 寻优模式</div>
-              <select class="form-control" id="optModeSelect" onchange="onOptModeChange(this.value)">
-                <option value="incremental" selected>增量式</option>
-                <option value="global">全局式</option>
+              <div class="form-label"><span class="required">*</span> 寻优器</div>
+              <select class="form-control" id="optimizerSelect" required onchange="onOptimizerChange(this.value)">
+                <option value="lshade" selected>L-SHADE 优化器</option>
+                <option value="genetic">遗传算法</option>
+                <option value="slsqp">SLSQP 梯度优化器</option>
               </select>
-              <div class="form-hint" id="optModeHint">15 分钟内最多开或关 1 台空调，温度设定、风机转速上限、水阀最大开度近 15 分钟累计调整不超过「寻优步长」；适合日常小步调整，缺省 5 分钟一轮。</div>
+            </div>
+            <div class="optimizer-params" data-optimizer="lshade">
+              <div class="form-group">
+                <div class="form-label"><span class="required">*</span> 最大迭代数</div>
+                <input type="number" class="form-control" id="lshadeIterations" value="20" min="1" step="1" required>
+              </div>
+              <div class="form-group">
+                <div class="form-label"><span class="required">*</span> 种群最终数量</div>
+                <input type="number" class="form-control" id="lshadeFinalPopulation" value="10" min="1" step="1" required>
+              </div>
+              <div class="form-group">
+                <div class="form-label"><span class="required">*</span> 种群初始化数量</div>
+                <input type="number" class="form-control" id="lshadeInitialPopulation" value="30" min="1" step="1" required>
+              </div>
+            </div>
+            <div class="optimizer-params" data-optimizer="genetic" style="display:none;">
+              <div class="form-group">
+                <div class="form-label"><span class="required">*</span> 种群规模</div>
+                <input type="number" class="form-control" id="geneticPopulation" value="60" min="1" step="1" required>
+              </div>
+              <div class="form-group">
+                <div class="form-label"><span class="required">*</span> 最大进化代数</div>
+                <input type="number" class="form-control" id="geneticGenerations" value="50" min="1" step="1" required>
+              </div>
+            </div>
+            <div class="optimizer-params" data-optimizer="slsqp" style="display:none;">
+              <div class="form-group">
+                <div class="form-label"><span class="required">*</span> 最大迭代数</div>
+                <input type="number" class="form-control" id="slsqpIterations" value="200" min="1" step="1" required>
+              </div>
+              <div class="form-group">
+                <div class="form-label"><span class="required">*</span> 收敛精度（小数位数）</div>
+                <input type="number" class="form-control" id="slsqpPrecision" value="1" min="0" step="1" required>
+              </div>
             </div>
 
             <div class="anno anno-field" data-version="v2.9">
               <span class="anno-tag">字段说明</span>
               <span class="anno-version">v2.9</span>
               <span class="anno-source">需求文档</span>
-              <div class="anno-body"><p><b>关联模块：</b>规则配置 — 设备数量 / 模拟量寻优规则</p><ul><li><b>设备数量寻优规则：</b>每种空调类型一行「开关机」，控制方式「开关机设定」或「开机指令 + 关机指令」；寻优范围随寻优模式只读。</li><li><b>模拟量寻优规则：</b>回风 / 送风温度设定（按空调控制方式自动选用）、风机转速上限、水阀最大开度（只冷冻水型）。</li><li><b>寻优步长：</b>单轮变化上限，如温度设定 冷冻水型 2.0℃ / 风冷 1.5℃、风机 10%、水阀 10%；只约束增量式，按近 15 分钟累计（含人工变更）。</li><li><b>寻优粒度：</b>温度 0.5℃、风机 1%、水阀 5%，寻优值按它取整。</li><li><b>不调整：</b>启用开关关闭、未接入可写控制点，或风机转速反馈与上限设定偏差 ≤ 5% 的历史占比 &lt; 90%，该行冻结当前值。</li></ul></div>
+              <div class="anno-body"><p><b>关联模块：</b>规则配置 — 模拟量寻优规则</p><p>按设备类型与控制方式分行：回风温控归回风温度设定，送风温控归送风温度设定。风机、水阀只纳入已接入写点的空调；没有可写设备的行不显示。「?」列出每台空调与控制变量，同类型未接入的标「未接入，不调整」，不显示测点 ID。寻优步长为单次相对当前值的最大调整量（同冷站），候选还须落在安全边界内。粒度缺省温度 0.5℃、风机 1%、水阀 5%；步长与粒度均大于 0。关闭一行则该控制量不调整。</p></div>
             </div>
-            <div class="form-section">设备数量寻优规则</div>
-            <div class="rule-table-wrap">
-              <table class="rule-table" aria-label="按设备类型配置开关机寻优">
-                <thead>
-                  <tr><th style="width:170px;">规则名称</th><th style="width:62px;">启用开关</th><th style="width:220px;">控制方式</th><th style="width:170px;">寻优范围</th></tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><span class="device-type-name">冷冻水型 · 开关机</span><span class="device-type-note">当前匹配 8 台设备</span></td>
-                    <td><label class="toggle-switch"><input type="checkbox" checked onchange="onRuleToggle(this)"><span class="toggle-slider"></span></label></td>
-                    <td><select class="form-control"><option selected>开关机设定（1 开 / 0 关）</option><option>开机指令 + 关机指令</option></select></td>
-                    <td><input class="form-control onoff-limit" data-fixed disabled value="15 分钟内最多开或关 1 台" title="随寻优模式变化"></td>
-                  </tr>
-                  <tr>
-                    <td><span class="device-type-name">风冷 DX · 开关机</span><span class="device-type-note">当前匹配 4 台设备</span></td>
-                    <td><label class="toggle-switch"><input type="checkbox" checked onchange="onRuleToggle(this)"><span class="toggle-slider"></span></label></td>
-                    <td><select class="form-control"><option>开关机设定（1 开 / 0 关）</option><option selected>开机指令 + 关机指令</option></select></td>
-                    <td><input class="form-control onoff-limit" data-fixed disabled value="15 分钟内最多开或关 1 台" title="随寻优模式变化"></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="form-hint rule-table-hint">寻优范围随寻优模式变化：增量式 15 分钟内最多开或关 1 台（人工开关机也计入），全局式在全部开机组合中整体寻优。开机台数上下限与开 / 停机最短时间照常生效。</div>
-
             <div class="form-section">模拟量寻优规则</div>
             <div class="rule-table-wrap">
-              <table class="rule-table" aria-label="按设备类型配置温度设定、风机转速上限与水阀最大开度的寻优步长和寻优粒度">
+              <table class="rule-table" aria-label="按设备类型和实际控制变量配置模拟量寻优规则">
                 <thead>
-                  <tr><th style="width:170px;">规则名称</th><th style="width:62px;">启用开关</th><th style="width:190px;">控制变量</th><th style="width:110px;">寻优步长<span class="required">*</span></th><th style="width:110px;">寻优粒度<span class="required">*</span></th></tr>
+                  <tr><th style="width:280px;">规则名称</th><th style="width:80px;">启用开关</th><th style="width:145px;" title="单次寻优相对当前值的最大调整量">寻优步长<span class="required">*</span> <span class="rule-help">?</span></th><th style="width:145px;">寻优粒度<span class="required">*</span></th></tr>
                 </thead>
-                <tbody>
-                  <tr>
-                    <td><span class="device-type-name">冷冻水型 · 温度设定</span><span class="device-type-note">当前匹配 8 台设备 · 按空调控制方式自动选用</span></td>
-                    <td><label class="toggle-switch"><input type="checkbox" checked onchange="onRuleToggle(this)"><span class="toggle-slider"></span></label></td>
-                    <td><input class="form-control" data-fixed disabled value="回风 / 送风温度设定" title="按空调控制方式自动选用回风温度设定或送风温度设定"></td>
-                    <td><div class="form-row"><input type="number" class="form-control" value="2.00" step="0.01"><span class="form-suffix">℃</span></div></td>
-                    <td><div class="form-row"><input type="number" class="form-control" value="0.50" step="0.01"><span class="form-suffix">℃</span></div></td>
-                  </tr>
-                  <tr>
-                    <td><span class="device-type-name">风冷 DX · 温度设定</span><span class="device-type-note">当前匹配 4 台设备 · 按空调控制方式自动选用</span></td>
-                    <td><label class="toggle-switch"><input type="checkbox" checked onchange="onRuleToggle(this)"><span class="toggle-slider"></span></label></td>
-                    <td><input class="form-control" data-fixed disabled value="回风 / 送风温度设定" title="按空调控制方式自动选用回风温度设定或送风温度设定"></td>
-                    <td><div class="form-row"><input type="number" class="form-control" value="1.50" step="0.01"><span class="form-suffix">℃</span></div></td>
-                    <td><div class="form-row"><input type="number" class="form-control" value="0.50" step="0.01"><span class="form-suffix">℃</span></div></td>
-                  </tr>
-                  <tr>
-                    <td><span class="device-type-name">冷冻水型 · 风机转速上限</span><span class="device-type-note">当前匹配 8 台设备 · 未接入此控制点的空调不调整</span></td>
-                    <td><label class="toggle-switch"><input type="checkbox" checked onchange="onRuleToggle(this)"><span class="toggle-slider"></span></label></td>
-                    <td><input class="form-control" data-fixed disabled value="风机转速上限设定" title="风机转速上限设定"></td>
-                    <td><div class="form-row"><input type="number" class="form-control" value="10"><span class="form-suffix">%</span></div></td>
-                    <td><div class="form-row"><input type="number" class="form-control" value="1"><span class="form-suffix">%</span></div></td>
-                  </tr>
-                  <tr>
-                    <td><span class="device-type-name">风冷 DX · 风机转速上限</span><span class="device-type-note">当前匹配 4 台设备</span></td>
-                    <td><label class="toggle-switch"><input type="checkbox" id="airFanAuxSwitch" checked onchange="onAirFanAuxToggle(this)"><span class="toggle-slider"></span></label></td>
-                    <td><input class="form-control" data-fixed disabled value="风机转速上限设定" title="风机转速上限设定"></td>
-                    <td><div class="form-row"><input type="number" class="form-control" value="10"><span class="form-suffix">%</span></div></td>
-                    <td><div class="form-row"><input type="number" class="form-control" value="1"><span class="form-suffix">%</span></div></td>
-                  </tr>
-                  <tr>
-                    <td><span class="device-type-name">冷冻水型 · 水阀最大开度</span><span class="device-type-note">当前匹配 8 台设备</span></td>
-                    <td><label class="toggle-switch"><input type="checkbox" checked onchange="onRuleToggle(this)"><span class="toggle-slider"></span></label></td>
-                    <td><input class="form-control" data-fixed disabled value="水阀最大开度" title="水阀最大开度"></td>
-                    <td><div class="form-row"><input type="number" class="form-control" value="10"><span class="form-suffix">%</span></div></td>
-                    <td><div class="form-row"><input type="number" class="form-control" value="5"><span class="form-suffix">%</span></div></td>
-                  </tr>
-                </tbody>
+                <tbody id="simAnalogRuleBody"></tbody>
               </table>
             </div>
-            <div class="form-hint rule-table-hint">寻优步长：增量式近 15 分钟累计最多调整多少（本轮建议与人工改动都计入），在剩余额度内寻优；全局式在安全边界范围内整体寻优，不受此限制。寻优粒度：调整的最小单位，寻优值按它取整。关闭某一行，该类空调的这一项保持当前值、不调整。</div>
+            <div class="form-hint rule-table-hint">寻优步长：单次寻优相对当前值的最大调整量。寻优粒度：调整的最小单位。关闭某一行，该控制量保持当前值。</div>
 
             <div class="anno anno-field" data-version="v2.9">
               <span class="anno-tag">字段说明</span>
               <span class="anno-version">v2.9</span>
               <span class="anno-source">需求文档</span>
-              <div class="anno-body"><p><b>关联模块：</b>规则配置 — 寻优计算、寻优目标偏好、设备保护时间</p><ul><li><b>寻优计算：</b>达试算方案上限或每轮计算时限即停止，按已试算方案判定（到时限标「已到时限」），方案去重计数。</li><li><b>最低节能门槛：</b>缺省 1%；最优方案 J ≤ 保持现状 J × (1 − 门槛) 且全部合规才采纳，否则保持现状。</li><li><b>设备切换容忍度：</b>滑块 0～0.50，缺省 0.12，越大越倾向不动设备；J = 归一化空调总功率（只计投入的空调）+ 容忍度 × 开关机台次 ÷ 投入台数（不含投出）；滑块上方显示 容忍度 ÷ 投入台数。</li><li><b>设备保护时间：</b>开机后最短运行时间缺省 20 分钟，关机后最短停机时间缺省 60 分钟且不小于前者；开停时长未知视为未满足。</li><li><b>校验：</b>各项必填、非负，增量式周期 ≥ 5；保存后下一轮生效。</li></ul></div>
+              <div class="anno-body"><p><b>关联模块：</b>规则配置 — 每轮计算时限与寻优目标偏好</p><p>所选寻优器迭代结束或达到每轮计算时限即停止，按已评价方案判定；时限缺省为周期 × 20%，最长 60 秒，到时标「已到时限」。最低节能门槛缺省 1%，最优方案 J ≤ 保持现状 J ×（1 − 门槛）且合规才采纳。参数平稳偏好 λ₃ 为 0～0.30，缺省 0.05，步进 0.01。J = 归一化空调总功率（只计投入的空调）+ λ₃ × C_swing；C_swing 为各控制量调整量与其寻优步长之比的平方均值。K 为本轮可调控制量个数，冻结量不计；K = 0 时平稳代价为 0。</p></div>
             </div>
-            <div class="form-section">寻优计算</div>
 
-            <div class="form-row-2col">
-              <div class="form-group">
-                <div class="form-label"><span class="required">*</span> 试算方案上限</div>
-                <div class="form-row">
-                  <input type="number" class="form-control" id="evalBudgetInput" value="512" min="1" step="1" style="width:140px;">
-                  <span class="form-suffix">个</span>
-                </div>
-                <div class="form-hint">每轮最多试算多少组调整方案；越大越可能找到更省电的方案，计算也越久。缺省 增量式 512、全局式 2048。</div>
+            <div class="form-section">寻优计算</div>
+            <div class="form-group">
+              <div class="form-label"><span class="required">*</span> 每轮计算时限</div>
+              <div class="form-row">
+                <input type="number" class="form-control" id="roundTimeInput" value="60" min="1" max="60" step="1" required style="width:140px;">
+                <span class="form-suffix">秒</span>
               </div>
-              <div class="form-group">
-                <div class="form-label"><span class="required">*</span> 每轮计算时限</div>
-                <div class="form-row">
-                  <input type="number" class="form-control" id="roundTimeInput" value="60" min="1" step="1" style="width:140px;">
-                  <span class="form-suffix" id="roundTimeUnit">秒</span>
-                </div>
-                <div class="form-hint" id="roundTimeHint">从取数到给出建议的最长时间，到时限后从已试算的方案中选最优。缺省为寻优周期的 20%，增量式最长 60 秒。</div>
-              </div>
+              <div class="form-hint">从取数到给出建议的最长时间，缺省为寻优周期的 20%，最长 60 秒；到时从已评价方案中选最优。</div>
             </div>
 
             <div class="form-section">寻优目标偏好</div>
-            <p style="font-size:11.5px;color:var(--text-secondary);line-height:1.5;margin:-6px 0 14px;">在省电的基础上调节两项偏好：节能收益多大才调整，以及开关机是否谨慎。</p>
-
             <div class="form-group">
               <div class="form-label"><span class="required">*</span> 最低节能门槛</div>
               <div class="form-row">
-                <input type="number" class="form-control" id="minSavingInput" value="1" min="0" step="0.1" style="width:140px;">
+                <input type="number" class="form-control" id="minSavingInput" value="1" min="0" step="0.1" required style="width:140px;">
                 <span class="form-suffix">%</span>
               </div>
-              <div class="form-hint">扣除开关机代价后，预计节能低于该值时本轮保持现状，避免为很小的收益频繁调整。缺省 1%。</div>
+              <div class="form-hint">综合节能与参数调整幅度，收益低于门槛时保持现状，避免为很小的收益频繁调整。</div>
             </div>
 
             <div class="form-group pref-slider-group">
-              <div class="form-label">设备切换容忍度</div>
-              <div class="pref-slider-end-labels"><span>随意切换</span><span>尽量别动</span></div>
-              <div class="pref-slider-ticks"><span>0.00</span><span>0.10</span><span>0.20</span><span>0.30</span><span>0.40</span><span>0.50</span></div>
-              <div class="pref-slider-default-cap">当前设置：每开或关 1 台空调，需多省约 <span id="prefSwitchTolPct">1.1%</span> 的电才划算（按本轮投入 11 台计；缺省 0.12）</div>
-              <input type="range" class="range-pref" id="prefSwitchTol" min="0" max="0.5" step="0.01" value="0.12" aria-label="设备切换容忍度">
-              <div class="pref-slider-meta"><span>当前值</span><span class="pref-val" id="prefSwitchTolVal">0.12</span></div>
+              <div class="form-label">参数平稳偏好（λ₃）</div>
+              <div class="pref-slider-end-labels"><span>可以跳</span><span>越平越好</span></div>
+              <div class="pref-slider-ticks"><span>0.00</span><span>0.05</span><span>0.15</span><span>0.30</span></div>
+              <div class="pref-slider-default-cap">每个控制量多调一个寻优步长，需多省约 λ₃ / K 的电（K = <span id="prefControlCount">0</span>，当前约 <span id="prefLambda3Pct">0.00%</span>）</div>
+              <input type="range" class="range-pref" id="prefLambda3" min="0" max="0.30" step="0.01" value="0.05" aria-label="参数平稳偏好">
+              <div class="pref-slider-meta"><span>当前值</span><span class="pref-val" id="prefLambda3Val">0.05</span></div>
             </div>
-
-            <div class="form-section">设备保护时间</div>
-
-            <div class="form-row-2col">
-              <div class="form-group">
-                <div class="form-label"><span class="required">*</span> 开机后最短运行时间</div>
-                <div class="form-row">
-                  <input type="number" class="form-control" value="20" min="0" step="1" style="width:140px;">
-                  <span class="form-suffix">分钟</span>
-                </div>
-                <div class="form-hint">开机后至少运行这么久，才允许再关机。</div>
-              </div>
-              <div class="form-group">
-                <div class="form-label"><span class="required">*</span> 关机后最短停机时间</div>
-                <div class="form-row">
-                  <input type="number" class="form-control" value="60" min="0" step="1" style="width:140px;">
-                  <span class="form-suffix">分钟</span>
-                </div>
-                <div class="form-hint">关机后至少停这么久，才允许再开机；不小于开机后最短运行时间。</div>
-              </div>
-            </div>
-            <div class="form-hint">开机台数上下限不在本页配置，读所选安全边界的「空调开启数量」（当前下限 3 台、上限不限），请在安全边界页修改。</div>
           </div>
 
         </div>
@@ -2184,7 +2125,7 @@
 
       <div class="panel-footer">
         <button class="btn" onclick="togglePanel()">取 消</button>
-        <button class="btn btn-primary btn-solid" onclick="togglePanel();">保 存</button>
+        <button class="btn btn-primary btn-solid" onclick="saveRuleConfig()">保 存</button>
       </div>
     </div>
   </div>
@@ -2555,11 +2496,11 @@ const tpl1f = {
   acs: [
     { id:'AC1',  x:0,  y:16.5, side:'L', deviceType:'water', typeLabel:'冷冻水型', controlVar:'送风温度设定', controlUnit:'℃', Qsafe:76, Qest:78, quality:'A', capability:'基础出值', Qc:127, P:17, Va:30000, Fi:'投入', si:1, V1:20.00, V1_ai:20.00, V2:80, V2_ai:90, Nfan:65, Ts:'16.0', Tr:'26.0', Ei:-0.117, Nfan_hi:85, Nfan_hi_ai:85, fanWritable:true, confidence:'高', controlMode:'1', onoffPoint:'3_48_0', softV1:'18.0～24.0℃', softFan:'60～100%', softValve:'40～100%' },
     { id:'AC2',  x:0,  y:14.0, side:'L', deviceType:'water', typeLabel:'冷冻水型', controlVar:'送风温度设定', controlUnit:'℃', Qsafe:76, Qest:78, quality:'A', capability:'基础出值', Qc:127, P:17, Va:30000, Fi:'投入', si:1, V1:19.50, V1_ai:19.50, V2:75, V2_ai:80, Nfan:70, Ts:'15.5', Tr:'25.0', Ei:-0.056, Nfan_hi:85, Nfan_hi_ai:85, fanWritable:true, confidence:'高', controlMode:'1', onoffPoint:'3_48_0', softV1:'18.0～24.0℃', softFan:'60～100%', softValve:'40～100%' },
-    { id:'AC3',  x:0,  y:11.0, side:'L', deviceType:'water', typeLabel:'冷冻水型', controlVar:'送风温度设定', controlUnit:'℃', Qsafe:76, Qest:78, quality:'A', capability:'基础出值', Qc:127, P:17, Va:30000, Fi:'投出', si:1, V1:20.00, V1_ai:'-', V2:80, V2_ai:'-', Nfan:65, Ts:'20.5', Tr:'28.5', Ei:0, Nfan_hi:80, Nfan_hi_ai:'-', fanWritable:true, confidence:'高', controlMode:'1', onoffPoint:'3_48_0', softV1:'18.0～24.0℃', softFan:'60～100%', softValve:'40～100%' },
+    { id:'AC3',  x:0,  y:11.0, side:'L', deviceType:'water', typeLabel:'冷冻水型', controlVar:'回风温度设定', controlUnit:'℃', Qsafe:76, Qest:78, quality:'A', capability:'基础出值', Qc:127, P:17, Va:30000, Fi:'投出', si:1, V1:28.00, V1_ai:'-', V2:80, V2_ai:'-', Nfan:65, Ts:'20.5', Tr:'28.5', Ei:0, Nfan_hi:80, Nfan_hi_ai:'-', fanWritable:true, confidence:'高', controlMode:'0', onoffPoint:'3_48_0', softV1:'24.0～30.0℃', softFan:'60～100%', softValve:'40～100%' },
     { id:'AC4',  x:0,  y:8.0,  side:'L', deviceType:'water', typeLabel:'冷冻水型', controlVar:'送风温度设定', controlUnit:'℃', Qsafe:76, Qest:78, quality:'C', capability:'能力不可用', Qc:127, P:17, Va:30000, Fi:'投入', si:0, V1:'-', V1_ai:'-', V2:'-', V2_ai:'-', Nfan:0, Ts:'-', Tr:'-', Ei:0, Nfan_hi:'-', Nfan_hi_ai:'-', fanWritable:true, confidence:'低', controlMode:'1', onoffPoint:'3_48_0', softV1:'18.0～24.0℃', softFan:'60～100%', softValve:'40～100%' },
     { id:'AC5',  x:0,  y:5.0,  side:'L', deviceType:'water', typeLabel:'冷冻水型', controlVar:'送风温度设定', controlUnit:'℃', Qsafe:76, Qest:78, quality:'A', capability:'基础出值', Qc:127, P:17, Va:30000, Fi:'投入', si:1, V1:21.00, V1_ai:23.00, V2:85, V2_ai:85, Nfan:55, Ts:'17.0', Tr:'24.0', Ei:0.214, Nfan_hi:80, Nfan_hi_ai:80, fanWritable:true, confidence:'高', controlMode:'1', onoffPoint:'3_48_0', softV1:'18.0～24.0℃', softFan:'60～100%', softValve:'40～100%' },
     { id:'AC6',  x:0,  y:2.0,  side:'L', deviceType:'water', typeLabel:'冷冻水型', controlVar:'送风温度设定', controlUnit:'℃', Qsafe:76, Qest:78, quality:'A', capability:'基础出值', Qc:127, P:17, Va:30000, Fi:'投入', si:1, V1:20.00, V1_ai:20.00, V2:70, V2_ai:80, Nfan:60, Ts:'16.5', Tr:'25.5', Ei:-0.096, Nfan_hi:85, Nfan_hi_ai:85, fanWritable:true, confidence:'高', controlMode:'1', onoffPoint:'3_48_0', softV1:'18.0～24.0℃', softFan:'60～100%', softValve:'40～100%' },
-    { id:'AC7',  x:24, y:16.5, side:'R', deviceType:'water', typeLabel:'冷冻水型', controlVar:'送风温度设定', controlUnit:'℃', Qsafe:76, Qest:78, quality:'B', capability:'保守出值', Qc:127, P:17, Va:30000, Fi:'投入', si:1, V1:18.50, V1_ai:18.50, V2:80, V2_ai:85, Nfan:75, Ts:'15.0', Tr:'27.0', Ei:-0.03, Nfan_hi:90, Nfan_hi_ai:90, fanWritable:false, confidence:'高', controlMode:'1', onoffPoint:'3_48_0', softV1:'18.0～24.0℃', softFan:'60～100%', softValve:'40～100%' },
+    { id:'AC7',  x:24, y:16.5, side:'R', deviceType:'water', typeLabel:'冷冻水型', controlVar:'回风温度设定', controlUnit:'℃', Qsafe:76, Qest:78, quality:'B', capability:'保守出值', Qc:127, P:17, Va:30000, Fi:'投入', si:1, V1:26.50, V1_ai:26.50, V2:80, V2_ai:85, Nfan:75, Ts:'15.0', Tr:'27.0', Ei:-0.03, Nfan_hi:90, Nfan_hi_ai:90, fanWritable:false, confidence:'高', controlMode:'0', onoffPoint:'3_48_0', softV1:'24.0～30.0℃', softFan:'60～100%', softValve:'40～100%' },
     { id:'AC8',  x:24, y:14.0, side:'R', deviceType:'water', typeLabel:'冷冻水型', controlVar:'送风温度设定', controlUnit:'℃', Qsafe:76, Qest:78, quality:'A', capability:'基础出值', Qc:127, P:17, Va:30000, Fi:'投入', si:1, V1:18.50, V1_ai:19.00, V2:80, V2_ai:80, Nfan:75, Ts:'15.2', Tr:'26.5', Ei:0.05, Nfan_hi:85, Nfan_hi_ai:85, fanWritable:true, confidence:'高', controlMode:'1', onoffPoint:'3_48_0', softV1:'18.0～24.0℃', softFan:'60～100%', softValve:'40～100%' },
     { id:'AC9',  x:24, y:11.0, side:'R', deviceType:'air', typeLabel:'风冷 DX', controlVar:'回风温度设定', controlUnit:'℃', Qsafe:67, Qest:69.5, quality:'A', capability:'基础出值', Qc:92, P:22.4, Va:30000, Fi:'投入', si:1, V1:21.00, V1_ai:22.50, V2:'-', V2_ai:'-', Nfan:65, Nfan_lo:null, Nfan_lo_ai:null, Nfan_hi:100, Nfan_hi_ai:100, fanWritable:true, confidence:'高', Ts:'17.5', Tr:'25.0', Ei:0.18, controlMode:'0', onoffPoint:'3_18_0 / 3_19_0', softV1:'20.0～26.0℃', softFan:'60～100%' },
     { id:'AC10', x:24, y:8.0,  side:'R', deviceType:'air', typeLabel:'风冷 DX', controlVar:'回风温度设定', controlUnit:'℃', Qsafe:67, Qest:69.5, quality:'A', capability:'基础出值', Qc:92, P:22.4, Va:30000, Fi:'投入', si:1, V1:22.00, V1_ai:23.50, V2:'-', V2_ai:'-', Nfan:60, Nfan_lo:null, Nfan_lo_ai:null, Nfan_hi:100, Nfan_hi_ai:100, fanWritable:true, confidence:'高', Ts:'18.0', Tr:'24.5', Ei:0.21, controlMode:'0', onoffPoint:'3_18_0 / 3_19_0', softV1:'20.0～26.0℃', softFan:'60～100%' },
@@ -2706,39 +2647,32 @@ function withAirDxDemo(room) {
   return r;
 }
 
-// ===== v2.9 需求 1：仿真模型预测寻优演示轮次（一个寻优器两种配置）。页面只显示中文；约束命中清单（constraints_hit[]）只进接口与 xdayu 后台日志，页面不展示 =====
-const OPT_STATE = { mode:'incremental', roundIndex:0 };
-const OPT_ROUNDS = {
-  incremental: [
+// ===== v2.9 需求 1：仿真模型预测寻优演示轮次（只调模拟量）。页面只显示中文；约束命中清单（constraints_hit[]）只进接口与 xdayu 后台日志，页面不展示 =====
+const OPT_STATE = { roundIndex:0 };
+const OPT_ROUNDS = [
     { time:'13:25:00', status:'ACCEPT', tag:'节能调优', tone:'tone-success',
-      explain:'<b>建议：</b>关停 #2 空调；#1、#5、#8、#9、#10、#11 调高温度设定 0.5～1.5℃；#9、#10、#11 风机转速上限降低 5～10%；#5 水阀开小 10%，#6 水阀开大 10%。<b>原因：</b>调整后各冷 / 热通道温度预计都在安全范围内；#12 空调模型历史数据不足，本轮只允许开关机、不调设定。<b>预计：</b>空调总功率 196.4 → 183.1 kW，节能约 6.8%（仿真预测值）。',
-      overrides:{ AC2:{ si_ai:0 }, AC1:{ V1_ai:'20.50' }, AC5:{ V1_ai:'22.00', V2_ai:75 }, AC6:{ V2_ai:80 }, AC8:{ V1_ai:'19.50' }, AC9:{ V1_ai:'22.50', Nfan_hi_ai:90 }, AC10:{ V1_ai:'23.50', Nfan_hi_ai:90 }, AC11:{ V1_ai:'22.00', Nfan_hi_ai:95 } } },
+      explain:'<b>建议：</b>#1、#5、#8、#9、#10、#11 调高温度设定 0.5～1.5℃；#9、#10、#11 风机转速上限降低 5～10%；#5 水阀开小 10%，#6 水阀开大 10%。<b>原因：</b>调整后各冷 / 热通道温度预计都在安全范围内；#12 空调模型历史数据不足，本轮保持当前设定。<b>预计：</b>空调总功率 191.6 → 179.9 kW，节能约 6.1%（仿真预测值）。',
+      overrides:{ AC1:{ V1_ai:'20.50' }, AC5:{ V1_ai:'22.00', V2_ai:75 }, AC6:{ V2_ai:80 }, AC8:{ V1_ai:'19.50' }, AC9:{ V1_ai:'22.50', Nfan_hi_ai:90 }, AC10:{ V1_ai:'23.50', Nfan_hi_ai:90 }, AC11:{ V1_ai:'22.00', Nfan_hi_ai:95 } } },
     { time:'13:10:00', status:'HOLD', tag:'保持现状', tone:'tone-warning',
-      explain:'<b>建议：</b>本轮不做调整，保持当前设置。<b>原因：</b>试算了 512 个方案，最好的方案也只能节能 0.4%，低于 1% 的最低节能门槛。<b>预计：</b>空调总功率维持在约 196 kW。',
+      explain:'<b>建议：</b>本轮不做调整，保持当前设置。<b>原因：</b>试算了 512 个方案，最好的方案也只能节能 0.4%，低于 1% 的最低节能门槛。<b>预计：</b>空调总功率维持在约 192 kW。',
       overrides:'none' },
     { time:'12:55:00', status:'SAFETY_RECOVERY', tag:'安全恢复', tone:'tone-danger',
-      explain:'<b>建议：</b>#6 空调水阀开大 10%（70% → 80%）。<b>原因：</b>E-F 冷通道 c16 测点当前实测 27.3℃，已越出硬上限 27.0℃；本轮先把温度拉回安全范围，选改动最小的方案，不追求节能。<b>预计：</b>c16 测点降到约 26.6℃，空调总功率基本不变（约 197 kW）。',
+      explain:'<b>建议：</b>#6 空调水阀开大 10%（70% → 80%）。<b>原因：</b>E-F 冷通道 c16 测点当前实测 27.3℃，已越出硬上限 27.0℃；本轮先把温度拉回安全范围，选改动最小的方案，不追求节能。<b>预计：</b>c16 测点降到约 26.6℃，空调总功率基本不变（约 192 kW）。',
       overrides:{ AC6:{ V2_ai:80 } } },
     { time:'12:40:00', status:'SKIPPED', tag:'本轮跳过', tone:'tone-muted',
       explain:'<b>建议：</b>本轮不给出调整建议。<b>原因：</b>#7 空调回风温度已超过 45 分钟没有更新，无法可靠计算。<b>预计：</b>不适用。',
       overrides:'none' }
-  ],
-  global: [
-    { time:'13:00:00', status:'ACCEPT', tag:'节能调优', tone:'tone-success',
-      explain:'<b>建议：</b>关停 #2、#8 空调；其余运行空调重新分配温度设定（如 #1 20.0 → 22.0℃、#5 21.0 → 23.0℃、#9 21.0 → 24.0℃）；#9、#10、#11 风机转速上限降到 80～85%。<b>原因：</b>调整后各通道温度预计都在安全范围内，开机台数不低于下限 3 台；本轮计算到 12 分钟时限，从已试算的 1732 个方案中选出最优。<b>预计：</b>空调总功率 196.4 → 177.5 kW，节能约 9.6%（仿真预测值，已计入开关机的影响）。',
-      overrides:{ AC2:{ si_ai:0 }, AC8:{ si_ai:0 }, AC1:{ V1_ai:'22.00', V2_ai:90 }, AC5:{ V1_ai:'23.00' }, AC6:{ V1_ai:'21.00', V2_ai:85 }, AC7:{ V1_ai:'20.00', V2_ai:90 }, AC9:{ V1_ai:'24.00', Nfan_hi_ai:80 }, AC10:{ V1_ai:'24.00', Nfan_hi_ai:85 }, AC11:{ V1_ai:'23.50', Nfan_hi_ai:85 } } }
-  ]
-};
+];
 function currentRound() {
-  const list = OPT_ROUNDS[OPT_STATE.mode] || OPT_ROUNDS.incremental;
+  const list = OPT_ROUNDS;
   return list[Math.min(OPT_STATE.roundIndex, list.length - 1)];
 }
 const optRoundRoomCache = new Map();
-// 按当前模式 / 轮次给房间打上目标方案：先全部置为「无变化」，再套用 overrides；低置信设备连续量冻结
+// 按当前轮次给房间打上模拟量目标方案：先全部置为「无变化」，再套用 overrides；低置信设备连续量冻结
 function withOptRound(room) {
   if (!room) return room;
   const round = currentRound();
-  const key = OPT_STATE.mode + '#' + OPT_STATE.roundIndex;
+  const key = OPT_STATE.roundIndex;
   let bucket = optRoundRoomCache.get(room);
   if (bucket && bucket.key === key) return bucket.value;
   const r = JSON.parse(JSON.stringify(room));
@@ -2748,9 +2682,8 @@ function withOptRound(room) {
     ac.V2_ai = ac.V2;
     if (ac.Nfan_hi != null) ac.Nfan_hi_ai = ac.Nfan_hi;
     const o = round.overrides !== 'none' && round.overrides ? round.overrides[ac.id] : null;
-    if (o && ac.Fi === '投入') {
+    if (o && ac.Fi === '投入' && ac.si === 1) {
       const frozen = ac.confidence === '低';
-      if (o.si_ai != null) ac.si_ai = o.si_ai;
       if (!frozen) {
         if (o.V1_ai != null) ac.V1_ai = o.V1_ai;
         if (o.V2_ai != null) ac.V2_ai = o.V2_ai;
@@ -3634,10 +3567,6 @@ function buildDataFromRoom(acs) {
 
     const fanOn = ac.Nfan_hi != null && ac.Nfan_hi !== '-' && (ac.deviceType !== 'air' || isAirFanAuxEnabled());
     if (isParticipating) {
-      // 开关机：投入的空调（含停机中）都在「控制变量（寻优中）」
-      const siAi = ac.si_ai != null ? ac.si_ai : ac.si;
-      const onoffChange = running && siAi === 0 ? '关机 −1 台' : (!running && siAi === 1 ? '开机 +1 台' : '无变化');
-      vars.push({ name:'开关机', type:'optimizing', actual:running ? '运行' : '停机', ai:siAi === 1 ? '运行' : '停机', change:onoffChange, noChange:onoffChange === '无变化' });
       if (running) {
         const v1Ai = lowConf ? ac.V1 : ac.V1_ai;
         const v1Change = lowConf ? '不调整' : numChange(ac.V1, v1Ai, unit, 2);
@@ -3659,7 +3588,6 @@ function buildDataFromRoom(acs) {
         if (ac.deviceType === 'water') vars.push({ name:'水阀最大开度（V2）', type:'unopt', actual:ac.V2 !== '-' ? ac.V2 + '%' : dash, ai:'-', change:'无变化'});
       }
     } else {
-      vars.push({ name:'开关机', type:'unopt', actual:running ? '运行' : '停机', ai:'-', change:'无变化'});
       vars.push({ name:v1Name, type:'unopt', actual:ac.V1 !== '-' ? ac.V1 + unit : dash, ai:'-', change:'无变化'});
       if (fanOn) vars.push({ name:'风机转速上限设定', type:'unopt', actual:ac.Nfan_hi + '%', ai:'-', change:'无变化'});
       if (ac.deviceType === 'water') vars.push({ name:'水阀最大开度（V2）', type:'unopt', actual:ac.V2 !== '-' ? ac.V2 + '%' : dash, ai:'-', change:'无变化'});
@@ -3678,23 +3606,23 @@ function buildDataFromRoom(acs) {
   });
 }
 
-// ===== v2.9 需求 1：设备原因按「建议 + 原因 + 预计」三段写，用户语言（只对增量式默认轮演示；浮窗与手动下发逐字相同） =====
+// ===== v2.9 需求 1：设备原因按「建议 + 原因 + 预计」三段写，用户语言（只对默认轮演示；浮窗与手动下发逐字相同） =====
 const EXPLAIN_REASONS_V29 = {
-  'AC1':  '送风温度设定 20.0 → 20.5℃，风机转速上限不变。原因：#2 空调关停后由本机负责 G-H 冷通道，该通道预计最高 24.5℃，低于安全上限 26.4℃。预计：本机功率 17.0 → 15.6 kW。',
-  'AC2':  '关机。原因：G-H 冷通道由 #1 空调继续负责；关机后开机台数 10 台，高于下限 3 台；本机已满最短运行时间。预计：本机功率 17.0 kW → 待机 0.3 kW。',
-  'AC4':  '保持停机。原因：本机模型历史数据不足，试算中开启本机的方案耗电更多，未采用。预计：不适用。',
+  'AC1':  '送风温度设定 20.0 → 20.5℃，风机转速上限不变。原因：G-H 冷通道预计最高 24.5℃，低于安全上限 26.4℃。预计：本机功率 17.0 → 15.6 kW。',
+  'AC2':  '保持当前设定。原因：当前温度设定和风机、水阀上限已是本轮最优组合。预计：本机功率不变（17.0 kW）。',
+  'AC4':  '保持当前设定。原因：本机处于停机状态，本轮不调模拟量。预计：不适用。',
   'AC5':  '送风温度设定 21.0 → 22.0℃，水阀最大开度 85% → 75%。原因：K-L 冷通道预计最高 23.4℃，离安全上限还有余量。预计：本机功率 17.0 → 15.2 kW。',
   'AC6':  '水阀最大开度 70% → 80%，送风温度设定不变。原因：E-F 冷通道预计最高 26.1℃，已接近安全上限 26.4℃；调高本机设定的方案会让 c16 测点超限，已排除。预计：本机功率不变（17.0 kW）。',
   'AC7':  '不调整。原因：本机未接入风机转速上限控制点，风机不调；温度设定和水阀保持当前已是本轮最优。预计：本机功率不变（17.0 kW）。',
-  'AC8':  '送风温度设定 18.5 → 19.5℃。原因：I-J 冷通道预计最高 26.3℃，仍低于安全上限 26.4℃；关停本机的方案会让 c5 测点超限，已排除。预计：本机功率 17.0 → 15.5 kW。',
-  'AC9':  '回风温度设定 21.0 → 22.5℃，风机转速上限 100% → 90%。原因：A-B 冷通道离安全上限还有余量；温度设定 15 分钟内累计最多调 1.5℃，所以只调到 22.5℃。预计：本机功率 22.4 → 19.8 kW。',
+  'AC8':  '送风温度设定 18.5 → 19.5℃。原因：I-J 冷通道预计最高 26.3℃，仍低于安全上限 26.4℃；继续调高设定的方案会让 c5 测点超限，已排除。预计：本机功率 17.0 → 15.5 kW。',
+  'AC9':  '回风温度设定 21.0 → 22.5℃，风机转速上限 100% → 90%。原因：A-B 冷通道离安全上限还有余量；温度设定单次最多调 1.5℃，所以只调到 22.5℃。预计：本机功率 22.4 → 19.8 kW。',
   'AC10': '回风温度设定 22.0 → 23.5℃，风机转速上限 100% → 90%。原因：C-D 冷通道预计最高 23.9℃，离安全上限还有余量。预计：本机功率 22.4 → 19.8 kW。',
   'AC11': '回风温度设定 21.0 → 22.0℃，风机转速上限 100% → 95%。原因：C-D 冷通道预计最高 23.9℃，离安全上限还有余量。预计：本机功率 22.4 → 20.6 kW。',
-  'AC12': '不调整温度设定和风机。原因：本机模型历史数据不足（功率预测误差 23%），本轮只允许开关机，未被选中开关。预计：本机功率不变（22.4 kW）。'
+  'AC12': '不调整温度设定和风机。原因：本机模型历史数据不足（功率预测误差 23%），本轮保持当前设定。预计：本机功率不变（22.4 kW）。'
 };
 
 function getExplainReason(acId) {
-  if (OPT_STATE.mode === 'incremental' && OPT_STATE.roundIndex === 0) return EXPLAIN_REASONS_V29[acId] || '';
+  if (OPT_STATE.roundIndex === 0) return EXPLAIN_REASONS_V29[acId] || '';
   return '';
 }
 function getExplainFanText(acId) { return ''; }
@@ -3711,7 +3639,7 @@ function renderExplainBar() {
 }
 
 function stepOptRound(dir) {
-  const list = OPT_ROUNDS[OPT_STATE.mode] || [];
+  const list = OPT_ROUNDS;
   if (!list.length) return;
   OPT_STATE.roundIndex = (OPT_STATE.roundIndex + dir + list.length) % list.length;
   const t = document.getElementById('optRoundTimeInput');
@@ -3720,52 +3648,92 @@ function stepOptRound(dir) {
   refreshRoomScadaDataViews();
 }
 
-// 寻优模式切换：按 §8.2 两种配置带出缺省值（寻优周期 / 试算方案上限 / 每轮计算时限 / 开关机寻优范围），并切换演示轮次；页面只用用户语言
-function applyOptModeDefaults(mode) {
-  const isGlobal = mode === 'global';
+// 新算法仅寻优模拟量；配置按当前机房的控制方式与可写能力生成。
+function simControlWritable(ac, kind) {
+  if (kind === 'return' || kind === 'supply') return String(ac.controlMode) === (kind === 'return' ? '0' : '1') && ac.tempWritable !== false;
+  if (kind === 'fan') return ac.fanWritable === true;
+  return ac.deviceType === 'water' && ac.valveWritable !== false && (ac.hasValve === true || ac.softValve != null);
+}
+function simAnalogRules(acs) {
+  const rules = [];
+  [...new Set(acs.map(ac => ac.deviceType))].forEach(type => {
+    const devices = acs.filter(ac => ac.deviceType === type);
+    [
+      { kind:'return', name:'回风温度设定', unit:'℃', step:type === 'water' ? 2 : 1.5, grain:0.5 },
+      { kind:'supply', name:'送风温度设定', unit:'℃', step:type === 'water' ? 2 : 1.5, grain:0.5 },
+      { kind:'fan', name:'风机转速上限设定', unit:'%', step:10, grain:1 },
+      { kind:'valve', name:'水阀最大开度', unit:'%', step:10, grain:5 }
+    ].forEach(rule => {
+      const members = devices.filter(ac => simControlWritable(ac, rule.kind));
+      if (members.length) rules.push({ ...rule, type, label:devices[0].typeLabel, devices, members, key:type + '-' + rule.kind });
+    });
+  });
+  return rules;
+}
+function renderSimAnalogRules() {
+  const tbody = document.getElementById('simAnalogRuleBody');
+  const rules = simAnalogRules(getRoomForOptTable().acs);
+  const signature = rules.map(r => r.key + ':' + r.members.map(ac => ac.id).join(',')).join('|');
+  if (tbody.dataset.signature === signature) { syncLambda3Slider(); return; }
+  tbody.dataset.signature = signature;
+  tbody.innerHTML = rules.map(rule => {
+    const details = rule.devices.filter(ac => !['return', 'supply'].includes(rule.kind) || String(ac.controlMode) === (rule.kind === 'return' ? '0' : '1')).map(ac =>
+      ac.id.replace('AC', '') + '#空调 ' + (simControlWritable(ac, rule.kind) ? rule.name : '未接入，不调整')
+    ).join('\n');
+    const switchId = rule.type === 'air' && rule.kind === 'fan' ? ' id="airFanAuxSwitch"' : '';
+    return `<tr data-rule-key="${rule.key}">
+      <td><span class="device-type-name">${vizText(rule.label)} · ${rule.name}</span><span class="device-type-note">${rule.members.length} 台 <span class="rule-help" tabindex="0" title="${vizText(details)}" aria-label="查看空调明细">?</span></span></td>
+      <td><label class="toggle-switch"><input type="checkbox"${switchId} checked onchange="onRuleToggle(this); syncLambda3Slider()"><span class="toggle-slider"></span></label></td>
+      <td><div class="form-row"><input type="number" class="form-control" value="${rule.step}" min="0.01" step="0.01" required aria-label="${vizText(rule.label)}${rule.name}寻优步长" title="单次寻优相对当前值的最大调整量"><span class="form-suffix">${rule.unit}</span></div></td>
+      <td><div class="form-row"><input type="number" class="form-control" value="${rule.grain}" min="0.01" step="0.01" required aria-label="${vizText(rule.label)}${rule.name}寻优粒度"><span class="form-suffix">${rule.unit}</span></div></td>
+    </tr>`;
+  }).join('');
+  syncLambda3Slider();
+}
+function syncLambda3Slider() {
+  const slider = document.getElementById('prefLambda3');
+  const rules = simAnalogRules(getRoomForOptTable().acs);
+  const count = rules.reduce((sum, rule) => {
+    const toggle = document.querySelector('#simAnalogRuleBody [data-rule-key="' + rule.key + '"] input[type="checkbox"]');
+    return sum + (toggle && !toggle.checked ? 0 : rule.members.filter(ac => ac.Fi === '投入' && ac.si === 1 && ac.confidence !== '低').length);
+  }, 0);
+  document.getElementById('prefLambda3Val').textContent = Number(slider.value).toFixed(2);
+  document.getElementById('prefControlCount').textContent = count;
+  document.getElementById('prefLambda3Pct').textContent = count ? (Number(slider.value) / count * 100).toFixed(2) + '%' : '0.00%';
+}
+function onOptimizerChange(value) {
+  document.querySelectorAll('.optimizer-params').forEach(el => {
+    const active = el.dataset.optimizer === value;
+    el.style.display = active ? '' : 'none';
+    el.querySelectorAll('input').forEach(input => { input.disabled = !active; });
+  });
+  validateLshadePopulation();
+}
+function validateLshadePopulation() {
+  const final = document.getElementById('lshadeFinalPopulation');
+  const initial = document.getElementById('lshadeInitialPopulation');
+  final.setCustomValidity(!final.disabled && Number(final.value) > Number(initial.value) ? '种群最终数量不能大于种群初始化数量' : '');
+}
+function syncRoundTimeDefault() {
   const period = document.getElementById('optPeriodInput');
-  const budget = document.getElementById('evalBudgetInput');
-  const rt = document.getElementById('roundTimeInput');
-  const rtUnit = document.getElementById('roundTimeUnit');
-  const hint = document.getElementById('optModeHint');
-  const rtHint = document.getElementById('roundTimeHint');
-  if (period) { period.value = isGlobal ? 60 : 5; period.min = 5; }
-  if (budget) budget.value = isGlobal ? 2048 : 512;
-  if (rt) rt.value = isGlobal ? 12 : 60;
-  if (rtUnit) rtUnit.textContent = isGlobal ? '分钟' : '秒';
-  if (hint) hint.textContent = isGlobal
-    ? '每轮重新考虑全部空调的开关组合，温度设定、风机转速上限、水阀最大开度在安全边界范围内整体重新排布；计算量较大，缺省 60 分钟一轮。'
-    : '15 分钟内最多开或关 1 台空调，温度设定、风机转速上限、水阀最大开度近 15 分钟累计调整不超过「寻优步长」；适合日常小步调整，缺省 5 分钟一轮。';
-  if (rtHint) rtHint.textContent = isGlobal
-    ? '从取数到给出建议的最长时间，到时限后从已试算的方案中选最优。缺省为寻优周期的 20%（60 分钟周期为 12 分钟），全局式最长 20 分钟。'
-    : '从取数到给出建议的最长时间，到时限后从已试算的方案中选最优。缺省为寻优周期的 20%，增量式最长 60 秒。';
-  document.querySelectorAll('.onoff-limit').forEach(el => { el.value = isGlobal ? '开机组合整体寻优' : '15 分钟内最多开或关 1 台'; });
-  const pt = document.getElementById('optPeriodText');
-  const mt = document.getElementById('optModeText');
-  if (pt) pt.textContent = isGlobal ? '60 分钟' : '5 分钟';
-  if (mt) mt.textContent = isGlobal ? '全局式' : '增量式';
+  if (document.getElementById('algoSelect').value !== 'sim_predict') return;
+  document.getElementById('roundTimeInput').value = Math.min(60, Number(period.value) * 60 * 0.2);
 }
-function syncSwitchTolSlider() {
-  const r = document.getElementById('prefSwitchTol');
-  if (!r) return;
-  const val = Number(r.value) || 0;
-  const v = document.getElementById('prefSwitchTolVal');
-  const p = document.getElementById('prefSwitchTolPct');
-  if (v) v.textContent = val.toFixed(2);
-  if (p) p.textContent = (val / 11 * 100).toFixed(1) + '%';
-}
-function onOptModeChange(mode) {
-  OPT_STATE.mode = mode === 'global' ? 'global' : 'incremental';
-  OPT_STATE.roundIndex = 0;
-  applyOptModeDefaults(OPT_STATE.mode);
-  const t = document.getElementById('optRoundTimeInput');
-  if (t) t.value = currentRound().time;
-  if (selectedVizObject) selectedVizObject = getVizObjectDetail(selectedVizObject.type, selectedVizObject.id);
-  refreshRoomScadaDataViews();
+function saveRuleConfig() {
+  if (document.getElementById('algoSelect').value === 'sim_predict') {
+    validateLshadePopulation();
+    const controls = [document.getElementById('optPeriodInput'), ...document.querySelectorAll('[data-algo="sim_predict"] input, [data-algo="sim_predict"] select')];
+    const invalid = controls.find(input => !input.disabled && !input.checkValidity());
+    if (invalid) { invalid.reportValidity(); return; }
+    document.getElementById('optPeriodText').textContent = document.getElementById('optPeriodInput').value + ' 分钟';
+    onSimModelChange();
+  }
+  togglePanel();
 }
 
 function refreshRoomScadaDataViews() {
   syncScadaActiveBinding();
+  renderSimAnalogRules();
   DATA = buildDataFromRoom(getRoomForOptTable().acs);
   renderTable();
   updateOptVizCardLayout();
@@ -3810,7 +3778,7 @@ function renderTable() {
                 <span class="obj-status-dot"></span>${ac.statusText}
               </span>
               <span class="obj-fi-tag ${ac.fi}">${ac.fiText}</span>
-              ${ac.confidence === '低' ? '<span class="tag off" title="该空调模型历史数据不足，本轮只允许开关机">数据积累中</span>' : ''}
+              ${ac.confidence === '低' ? '<span class="tag off" title="该空调模型历史数据不足，本轮保持当前设定">数据积累中</span>' : ''}
             </div>
           </div>
         </td>`;
@@ -3840,6 +3808,12 @@ function onAlgoChange(sel) {
     el.style.display = el.dataset.algo === v ? '' : 'none';
   });
   document.getElementById('statusSimModelItem').style.display = v === 'sim_predict' ? '' : 'none';
+  if (v === 'sim_predict') {
+    document.getElementById('optPeriodInput').value = 5;
+    document.getElementById('optPeriodInput').min = 5;
+    syncRoundTimeDefault();
+    renderSimAnalogRules();
+  }
 }
 // ThermoFlex 区的「风冷 DX · 压缩机控制」行：只联动本区「压缩机控制参数」显示，不影响新算法演示数据
 function onTfCompToggle(input) {
@@ -3924,12 +3898,14 @@ document.querySelectorAll('.panel-tab').forEach(tab => {
   });
 });
 syncAirCompCtrlUI();
-applyOptModeDefaults(OPT_STATE.mode);
+renderSimAnalogRules();
+onOptimizerChange(document.getElementById('optimizerSelect').value);
 onAlgoChange(document.getElementById('algoSelect'));
 (function () {
-  const r = document.getElementById('prefSwitchTol');
-  if (r) r.addEventListener('input', syncSwitchTolSlider);
-  syncSwitchTolSlider();
+  document.getElementById('prefLambda3').addEventListener('input', syncLambda3Slider);
+  document.getElementById('optPeriodInput').addEventListener('input', syncRoundTimeDefault);
+  ['lshadeFinalPopulation', 'lshadeInitialPopulation'].forEach(id => document.getElementById(id).addEventListener('input', validateLshadePopulation));
+  syncLambda3Slider();
 })();
 syncScadaActiveBinding();
 updateOptVizCardLayout();
@@ -4116,9 +4092,7 @@ function openDispatch(mode) {
     const v2Delta = ac.V2_ai === '-' ? 0 : parseFloat(ac.V2_ai) - parseFloat(ac.V2);
     const fanChanged = (ac.deviceType !== 'air' || isAirFanAuxEnabled()) && ac.Nfan_hi != null && ac.Nfan_hi !== '-' &&
       ((ac.Nfan_lo != null && ac.Nfan_lo_ai !== ac.Nfan_lo) || (ac.Nfan_hi_ai != null && ac.Nfan_hi_ai !== '-' && Number(ac.Nfan_hi_ai) !== Number(ac.Nfan_hi)));
-    if (ac.si_ai === 0) {
-      saveDevices.push(ac);
-    } else if (Math.abs(v1Delta) > 0.01) {
+    if (Math.abs(v1Delta) > 0.01) {
       (v1Delta > 0 ? saveDevices : coolDevices).push(ac);
     } else if (v2Delta > 0) {
       coolDevices.push(ac);
@@ -4139,7 +4113,6 @@ function openDispatch(mode) {
         if (c.cur !== c.tgt) rows.push({ name:c.name + ' 状态设定', actual:c.cur === 1 ? '1（允许运行）' : '0（停）', target:c.tgt === 1 ? '1（允许运行）' : '0（停）', value:String(c.tgt) });
       });
     }
-    if (ac.si_ai === 0) rows.push(ac.onoffPoint === '3_18_0 / 3_19_0' ? { name:'关机指令', actual:'—', target:'执行关机', value:'1' } : { name:'开关机设定', actual:'1（运行）', target:'0（停机）', value:'0' });
     if (v1Changed) rows.push({ name:(ac.controlVar || '送风温度设定'), actual:`${ac.V1}${controlUnit}`, target:`${ac.V1_ai}${controlUnit}`, value:ac.V1_ai });
     if (v2Changed && ac.deviceType === 'water') rows.push({ name:'水阀最大开度', actual:`${ac.V2}%`, target:`${ac.V2_ai}%`, value:ac.V2_ai });
     if ((ac.deviceType !== 'air' || isAirFanAuxEnabled()) && ac.Nfan_hi != null && ac.Nfan_hi !== '-' && ac.Nfan_hi_ai != null && ac.Nfan_hi_ai !== '-' && Number(ac.Nfan_hi_ai) !== Number(ac.Nfan_hi)) {
@@ -4169,7 +4142,7 @@ function openDispatch(mode) {
   }
 
   let html = '';
-  html += renderGroup(saveDevices, 'save', '省电方向', '建议：关机 / 调高温度设定 / 降低风机转速上限');
+  html += renderGroup(saveDevices, 'save', '省电方向', '建议：调高温度设定 / 降低风机转速上限');
   html += renderGroup(coolDevices, 'cool', '增冷', '建议：增加供冷');
   html += renderGroup(redistributeDevices, 'save', '冷量调整', '建议：开小水阀');
 

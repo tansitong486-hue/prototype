@@ -536,6 +536,26 @@
     .action-link:hover { opacity: .75; }
 
     .page-header-right { display: flex; align-items: center; gap: 12px; }
+    .auto-config-heading { gap: 8px; margin-top: 24px; }
+    .auto-config-heading .panel-title { margin-bottom: 0; flex: 1; }
+    .auto-config-heading .panel-title::before { flex-shrink: 0; }
+    .auto-config-heading .btn { padding: 6px 10px; white-space: nowrap; }
+    .multi-select-wrap.is-auto .multi-select-trigger { border-style: dashed; border-color: var(--secondary); }
+    .auto-relation-badge { font-size: 10px; color: var(--text-secondary); white-space: nowrap; }
+    #modalAutoConfig .modal-dialog { max-width: 720px; max-height: 90vh; display: flex; flex-direction: column; }
+    #modalAutoConfig .modal-body { overflow-y: auto; line-height: 1.7; }
+    #modalAutoConfigConfirm:disabled { opacity: .5; cursor: not-allowed; }
+    .auto-config-rules p + p { margin-top: 8px; }
+    .auto-config-count { box-sizing: content-box; width: 3ch; padding: 2px 4px; border: 1px solid var(--border-light); border-radius: 4px; font: inherit; text-align: center; appearance: textfield; }
+    .auto-config-count::-webkit-inner-spin-button, .auto-config-count::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .auto-config-count[aria-invalid="true"] { border-color: #DC2626; color: #DC2626; background: #FEF2F2; }
+    .auto-config-modes { border: 0; margin: 20px 0; }
+    .auto-config-modes legend { font-weight: 600; margin-bottom: 8px; }
+    .auto-config-modes label { display: inline-flex; align-items: center; gap: 6px; margin-right: 20px; }
+    .auto-config-preview { padding: 12px; background: var(--bg-body); border: 1px solid var(--border-light); border-radius: var(--radius); }
+    .auto-config-preview p + p { margin-top: 6px; }
+    #autoConfigSkipped { max-height: 120px; overflow-y: auto; padding-left: 22px; font-size: 12px; color: var(--text-secondary); }
+    .relation-toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); z-index: 1200; padding: 12px 20px; border-radius: var(--radius); background: var(--text-primary); color: #fff; box-shadow: var(--shadow-card); max-width: calc(100vw - 32px); }
   </style>
   <link rel="stylesheet" href="annotation-styles.css">
 </head>
@@ -564,12 +584,12 @@
           <p><b>更新日期：</b>2026-11-02</p>
           <p><b>v2.9 末端仿真寻优 · 回风关系（2026-10-30；11-02 新增回风关系）：</b>本页供冷关系、换热关系、通道分组、机柜 / PDU 映射与坐标<b>不改</b>；2026-11-02 新增第三段「回风关系」（热通道传感器 → 空调）。步骤 1 的空调表已改为按物模型属性定义动态渲染（固定列 + 只读属性区、缺失标红 + 去维护回跳、模型就绪校验），本页读取的空调、传感器清单与对象类型来自步骤 1，不受影响。</p>
           <ul style="margin:6px 0 0 1.25em;padding-left:0;line-height:1.55;">
-            <li><b>本页读什么：</b>供冷 / 换热关系的候选空调与传感器仍取步骤 1 已关联且「投入」的实例；步骤 1 被 <code>INPUT_MISSING</code> 移出可动作集的空调（示例 4#空调，存量冷冻水项目设计点缺失）仍可配关系，只是寻优时不动作、不阻断机房（缺数据处理）。</li>
-            <li><b>拓扑完整性校验（§4.3 第 5 行，2026-10-31 调整）：</b>「完成」<b>不做</b>拓扑校验，只做 v1.9 已有的必填校验并保存；保存后回到机房热力模型列表（toast 引导），在操作列「模型校验」进入「机房寻优-机房模型校验」页，与 §4.3 其余四类一起执行：每台参与寻优的空调 ≥ 1 条 <code>feedsAir</code> 冷点边；每个投入冷点 ≥ 1 条入边；每个投入且配置安全边界的热点 ≥ 1 条换热入边；每条投入通道 ≥ 1 个热点；不满足记 ERROR <code>TOPOLOGY_INCOMPLETE</code>（机房本轮 SKIPPED）。2026-11-02 起另加一条：须配回风关系的空调至少 1 条回风入边（必配规则见回风关系段批注）。校验页的「去配置 →」会跳回本页编辑态并定位到对应冷点 / 通道分组 / 空调回风行。</li>
+            <li><b>本页读什么：</b>机房关联的空调都可以配关系，包括投出的空调（运行时靠供冷关系计算它的送风）；AI 是否调节由投入 / 投出决定。</li>
+            <li><b>拓扑完整性校验（§4.3 第 5 行，2026-10-31 调整）：</b>「完成」<b>不做</b>拓扑校验，只做 v1.9 已有的必填校验并保存；保存后回到机房热力模型列表（toast 引导），在操作列「模型校验」进入「机房寻优-机房模型校验」页，与 §4.3 其余六类一起执行：每台参与寻优的空调 ≥ 1 条 <code>feedsAir</code> 冷点边；每个投入冷点 ≥ 1 条入边；每个投入且配置安全边界的热点 ≥ 1 条换热入边；每条投入通道 ≥ 1 个热点；不满足记 ERROR <code>TOPOLOGY_INCOMPLETE</code>（机房本轮 SKIPPED）。2026-11-02 起另加一条：须配回风关系的空调至少 1 条回风入边（必配规则见回风关系段批注）。校验页的「去配置 →」会跳回本页编辑态并定位到对应冷点 / 通道分组 / 空调回风行。</li>
             <li><b>按设备自动适配：</b>本页关系表的空调列按步骤 1 实例的对象类型显示，不区分水冷 / 风冷写死分支；混合编队同一张表。</li>
             <li><b>回风关系（2026-11-02 新增，本版实现）：</b>原预留的「热通道 → 回流空调」第三类关系改为本版实现，<b>复用换热关系的关系类型</b> <code>dtdl:asset:THSensor::feedsAir</code>（方向：热点 → 空调），不新增关系类型、关系记录不加字段。每台空调多选回风来源热点，多对多；无封闭时与换热关系一起隐藏。左侧拓扑图同步画出回风边（红色虚线）。仿真用途、必配规则与待确认项见回风关系段批注。</li>
           </ul>
-          <p><b>依据：</b>《末端仿真寻优需求文档》§4.3～4.4、§5.4；《末端机房仿真模型.xlsx》0.3「换热关系 / 回风关系」行。「完成」由原型 alert 改为保存后跳回列表（<code>?saved=1</code>）；本页其余内容与 v1.9 / v2.7 一致，未改。</p>
+          <p><b>依据：</b>《末端仿真寻优需求文档》§4.2～4.3、§6.2；《末端机房仿真模型.xlsx》0.3「换热关系 / 回风关系」行。「完成」由原型 alert 改为保存后跳回列表（<code>?saved=1</code>）；本页其余内容与 v1.9 / v2.7 一致，未改。</p>
         </div>
       </div>
 
@@ -759,7 +779,7 @@
         <div class="content-right">
           <div class="panel-card" style="overflow-y: auto;">
             <div class="panel-title">空间位置</div>
-            <table class="data-table">
+            <table class="data-table" id="tablePositions">
               <thead>
                 <tr>
                   <th>空调末端</th>
@@ -767,13 +787,13 @@
                 </tr>
               </thead>
               <tbody>
-                <tr><td>空调-空调1</td><td>
+                <tr data-object="ac1" data-kind="ac" data-placement-position="1"><td>1#空调<br><span class="badge badge-blue">行间</span></td><td>
                   <div style="display:flex;gap:4px;">
                     <input type="text" class="field-control" placeholder="x坐标" value="80" style="width:60px;text-align:center;">
                     <input type="text" class="field-control" placeholder="y坐标" value="60" style="width:60px;text-align:center;">
                   </div>
                 </td></tr>
-                <tr><td>空调-空调2</td><td>
+                <tr data-object="ac2" data-kind="ac" data-placement-position="3"><td>2#空调<br><span class="badge badge-blue">房间级</span> <span class="badge">投出</span></td><td>
                   <div style="display:flex;gap:4px;">
                     <input type="text" class="field-control" placeholder="x坐标" value="200" style="width:60px;text-align:center;">
                     <input type="text" class="field-control" placeholder="y坐标" value="60" style="width:60px;text-align:center;">
@@ -797,41 +817,53 @@
                     <input type="text" class="field-control" placeholder="y坐标" value="60" style="width:60px;text-align:center;">
                   </div>
                 </td></tr>
-                <tr><td>冷通道1</td><td>
+                <tr data-object="cold1" data-kind="cold" data-group="冷通道1"><td>1#温湿度传感器<br><span class="badge badge-blue">冷通道1</span></td><td>
                   <div style="display:flex;gap:4px;">
                     <input type="text" class="field-control" placeholder="x坐标" value="60" style="width:60px;text-align:center;">
                     <input type="text" class="field-control" placeholder="y坐标" value="180" style="width:60px;text-align:center;">
                   </div>
                 </td></tr>
-                <tr><td>冷通道2</td><td>
+                <tr data-object="cold2" data-kind="cold" data-group="冷通道1"><td>2#温湿度传感器<br><span class="badge badge-blue">冷通道1</span></td><td>
                   <div style="display:flex;gap:4px;">
-                    <input type="text" class="field-control" placeholder="x坐标" value="160" style="width:60px;text-align:center;">
-                    <input type="text" class="field-control" placeholder="y坐标" value="180" style="width:60px;text-align:center;">
+                    <input type="text" class="field-control" placeholder="x坐标" value="60" style="width:60px;text-align:center;">
+                    <input type="text" class="field-control" placeholder="y坐标" value="240" style="width:60px;text-align:center;">
                   </div>
                 </td></tr>
-                <tr><td>冷通道3</td><td>
+                <tr data-object="cold5" data-kind="cold" data-group="冷通道2"><td>5#温湿度传感器<br><span class="badge badge-blue">冷通道2</span></td><td>
                   <div style="display:flex;gap:4px;">
                     <input type="text" class="field-control" placeholder="x坐标" value="260" style="width:60px;text-align:center;">
                     <input type="text" class="field-control" placeholder="y坐标" value="180" style="width:60px;text-align:center;">
                   </div>
                 </td></tr>
-                <tr><td>热通道1</td><td>
+                <tr data-object="hot3" data-kind="hot" data-group="热通道1"><td>3#温湿度传感器<br><span class="badge badge-blue">热通道1</span></td><td>
                   <div style="display:flex;gap:4px;">
-                    <input type="text" class="field-control" placeholder="x坐标" value="60" style="width:60px;text-align:center;">
-                    <input type="text" class="field-control" placeholder="y坐标" value="300" style="width:60px;text-align:center;">
+                    <input type="text" class="field-control" placeholder="x坐标" value="20" style="width:60px;text-align:center;">
+                    <input type="text" class="field-control" placeholder="y坐标" value="210" style="width:60px;text-align:center;">
                   </div>
                 </td></tr>
-                <tr><td>热通道2</td><td>
+                <tr data-object="hot4" data-kind="hot" data-group="热通道2"><td>4#温湿度传感器<br><span class="badge badge-blue">热通道2</span></td><td>
                   <div style="display:flex;gap:4px;">
                     <input type="text" class="field-control" placeholder="x坐标" value="160" style="width:60px;text-align:center;">
-                    <input type="text" class="field-control" placeholder="y坐标" value="300" style="width:60px;text-align:center;">
+                    <input type="text" class="field-control" placeholder="y坐标" value="210" style="width:60px;text-align:center;">
                   </div>
                 </td></tr>
               </tbody>
             </table>
 
             <!-- 供冷关系（多选） -->
-            <div class="panel-title" style="margin-top:24px;">空调与冷通道传感器的供冷关系</div>
+            <div class="anno anno-data" data-version="v2.9">
+              <span class="anno-tag">数据逻辑</span>
+              <span class="anno-version">v2.9</span>
+              <span class="anno-source">需求文档</span>
+              <div class="anno-body">
+                <p><b>关联模块：</b>一键自动配置</p>
+                <p>关联空调与传感器均参与，不区分投入、投出。按坐标、通道、摆放位置和封闭模式生成。连接数量可在弹窗中修改，缺省 1 / 3 / 1 / 2 / 3。供冷连接最近通道的全部冷点。换热按冷点连线方向分侧，各取指定数量的最近热点；单点或方向不明取两侧数量之和，一侧无点只连另一侧。回风只给必配空调生成。数量不足取全部。无封闭不生成换热、回风；缺坐标或未分组的对象跳过并列名。</p>
+              </div>
+            </div>
+            <div class="panel-title-bar auto-config-heading">
+              <div class="panel-title">空调与冷通道传感器的供冷关系</div>
+              <button type="button" class="btn" id="btnAutoConfig">一键自动配置</button>
+            </div>
             <table class="data-table" id="tableSupply">
               <thead>
                 <tr>
@@ -850,14 +882,13 @@
                       <div class="ms-dropdown">
                         <label class="ms-option"><input type="checkbox" value="1#温湿度传感器"> 1#温湿度传感器</label>
                         <label class="ms-option"><input type="checkbox" value="2#温湿度传感器"> 2#温湿度传感器</label>
-                        <label class="ms-option"><input type="checkbox" value="3#温湿度传感器"> 3#温湿度传感器</label>
-                        <label class="ms-option"><input type="checkbox" value="4#温湿度传感器"> 4#温湿度传感器</label>
+                        <label class="ms-option"><input type="checkbox" value="5#温湿度传感器"> 5#温湿度传感器</label>
                       </div>
                     </div>
                   </td>
                 </tr>
                 <tr>
-                  <td style="white-space:nowrap;">2#空调</td>
+                  <td style="white-space:nowrap;">2#空调 <span class="badge">投出</span></td>
                   <td>
                     <div class="multi-select-wrap" data-ac="2">
                       <div class="multi-select-trigger" role="button" tabindex="0">
@@ -866,8 +897,7 @@
                       <div class="ms-dropdown">
                         <label class="ms-option"><input type="checkbox" value="1#温湿度传感器"> 1#温湿度传感器</label>
                         <label class="ms-option"><input type="checkbox" value="2#温湿度传感器"> 2#温湿度传感器</label>
-                        <label class="ms-option"><input type="checkbox" value="3#温湿度传感器"> 3#温湿度传感器</label>
-                        <label class="ms-option"><input type="checkbox" value="4#温湿度传感器"> 4#温湿度传感器</label>
+                        <label class="ms-option"><input type="checkbox" value="5#温湿度传感器"> 5#温湿度传感器</label>
                       </div>
                     </div>
                   </td>
@@ -878,16 +908,41 @@
             <!-- 换热关系（无封闭模式时隐藏） -->
             <div id="sectionHeatExchange" style="margin-top:24px;">
               <div class="panel-title">冷通道与热通道传感器的换热关系</div>
-              <table class="data-table">
+              <table class="data-table" id="tableHeatExchange">
                 <thead>
                   <tr>
                     <th>冷通道传感器</th>
-                    <th>配对热通道传感器</th>
+                    <th>配对热通道传感器（可多选）</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr><td>1#温湿度传感器</td><td><select class="field-select" style="width:100%;"><option value="">请选择</option><option>2#温湿度传感器</option><option>3#温湿度传感器</option></select></td></tr>
-                  <tr><td>2#温湿度传感器</td><td><select class="field-select" style="width:100%;"><option value="">请选择</option><option>3#温湿度传感器</option><option>4#温湿度传感器</option></select></td></tr>
+                  <tr><td>1#温湿度传感器</td><td>
+                    <div class="multi-select-wrap" data-cold="1">
+                      <div class="multi-select-trigger" role="button" tabindex="0"><span class="ms-placeholder">请选择</span></div>
+                      <div class="ms-dropdown">
+                        <label class="ms-option"><input type="checkbox" value="3#温湿度传感器"> 3#温湿度传感器</label>
+                        <label class="ms-option"><input type="checkbox" value="4#温湿度传感器"> 4#温湿度传感器</label>
+                      </div>
+                    </div>
+                  </td></tr>
+                  <tr><td>2#温湿度传感器</td><td>
+                    <div class="multi-select-wrap" data-cold="2">
+                      <div class="multi-select-trigger" role="button" tabindex="0"><span class="ms-placeholder">请选择</span></div>
+                      <div class="ms-dropdown">
+                        <label class="ms-option"><input type="checkbox" value="3#温湿度传感器"> 3#温湿度传感器</label>
+                        <label class="ms-option"><input type="checkbox" value="4#温湿度传感器"> 4#温湿度传感器</label>
+                      </div>
+                    </div>
+                  </td></tr>
+                  <tr><td>5#温湿度传感器</td><td>
+                    <div class="multi-select-wrap" data-cold="5">
+                      <div class="multi-select-trigger" role="button" tabindex="0"><span class="ms-placeholder">请选择</span></div>
+                      <div class="ms-dropdown">
+                        <label class="ms-option"><input type="checkbox" value="3#温湿度传感器"> 3#温湿度传感器</label>
+                        <label class="ms-option"><input type="checkbox" value="4#温湿度传感器"> 4#温湿度传感器</label>
+                      </div>
+                    </div>
+                  </td></tr>
                 </tbody>
               </table>
             </div>
@@ -904,7 +959,7 @@
                 <div class="anno-body">
                   <p><b>关联模块：</b>热通道传感器与空调的回风关系（2026-11-02 新增）</p>
                   <ul>
-                    <li><b>空调末端（只读行）：</b>步骤 1 已关联且「投入」的精密空调，一台一行，与供冷关系表同序；新风机、加除湿器不出现。被 <code>INPUT_MISSING</code> 移出可动作集的空调仍出现、仍可配（同供冷关系）。</li>
+                    <li><b>空调末端（只读行）：</b>步骤 1 已关联的精密空调都列出，包含投出空调；一台一行，与供冷关系表同序。AI 是否调节由投入 / 投出决定；新风机、加除湿器不出现。</li>
                     <li><b>回风来源传感器（多选 tag，交互同供冷关系）：</b>候选只列热通道传感器（所属通道的通道类型为热通道）；一台空调可选多个热点，一个热点也可被多台空调选（多对多）。默认空（请选择）。</li>
                     <li><b>必填：</b>表单不强制，「完成」不拦；按必配规则在「机房模型校验」页校验（见下方数据逻辑）。</li>
                     <li><b>其他：</b>保存后可改，编辑态回填已配关系；无封闭时本段隐藏（与换热关系一致）。</li>
@@ -920,7 +975,7 @@
                   <ul>
                     <li><b>关系类型（复用，不新增）：</b>每选一个热点存一条 <code>dtdl:asset:THSensor::feedsAir</code> 边，起点 = 热通道温湿度传感器（热点），终点 = 空调。与换热关系（冷点 → 热点）是同一关系类型，按终点对象区分：终点是温湿度传感器 = 换热，终点是空调 = 回风。关系记录不加字段、不填权重。</li>
                     <li><b>回风来源通道：</b>每台空调所连热点所属的通道，就是它的回风来源通道。</li>
-                    <li><b>仿真怎么用（以需求文档 §5.4 为准）：</b>仿真回推每台空调的回风时，取本机回风来源通道的排风温度加权：<b>已配置</b>回风关系，取所连热点所属通道的排风温度等权平均；<b>未配置</b>，按该台对各通道的供风份额加权，即供气对称。每台另有回风入口偏差（回风读数与回推回风之差），每轮按实测重算。回风关系只回答「这台空调从哪些通道回风」，不填权重。</li>
+                    <li><b>仿真怎么用（以《末端机房仿真模型》为准）：</b>仿真回推每台空调的回风时，取本机回风来源通道的排风温度加权：<b>已配置</b>回风关系，取所连热点所属通道的排风温度等权平均；<b>未配置</b>，按该台对各通道的供风份额加权，即供气对称。每台另有回风入口偏差（回风读数与回推回风之差），每轮按实测重算。回风关系只回答「这台空调从哪些通道回风」，不填权重。</li>
                     <li><b>必配规则（逐台判定）：</b>满足任一条，该空调至少要有 1 条回风关系：① 机房通道封闭模式 = 封闭热通道（空调组 <code>PrecisionACGroup.aisleSealedMode</code> = 1，即步骤 1「通道封闭模式」），组内每台参与寻优的空调都必配；② 空调摆放位置 = 行间 / 列间（<code>PrecisionAC.placement_position</code> = 1 / 2，判定属性待确认，见下方边界与异常）。其余房间级空调可不配，未配按供气对称。无封闭机房没有热点，本段隐藏、不校验。</li>
                     <li><b>在哪校验：</b>「完成」不校验；保存后在「机房模型校验」页随拓扑完整性一起执行，必配未配记 ERROR <code>TOPOLOGY_INCOMPLETE</code>（逐台一条，机房本轮 SKIPPED）；处置「去配置 →」跳回本页编辑态，定位到该空调的回风行。</li>
                   </ul>
@@ -966,7 +1021,7 @@
                     </td>
                   </tr>
                   <tr>
-                    <td style="white-space:nowrap;">2#空调</td>
+                    <td style="white-space:nowrap;">2#空调 <span class="badge">投出</span></td>
                     <td>
                       <div class="multi-select-wrap" data-ac="2">
                         <div class="multi-select-trigger" role="button" tabindex="0">
@@ -994,6 +1049,47 @@
     </main>
     </div>
   </div>
+
+  <div class="modal-overlay" id="modalAutoConfig" aria-hidden="true">
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modalAutoConfigTitle">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalAutoConfigTitle">一键自动配置气流关系</h2>
+        <button type="button" class="modal-close" id="modalAutoConfigClose" aria-label="关闭">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="anno anno-ux" data-version="v2.9">
+          <span class="anno-tag">交互说明</span>
+          <span class="anno-version">v2.9</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>一键自动配置气流关系弹窗；供冷关系标题右侧「一键自动配置」打开。</p>
+            <p>连接数量只接受 ≥ 1 的整数，非法值标红并禁用「确认生成」。修改数量实时刷新预览，确认按当前值生成。默认「只补空的关系」，按每类关系的整行是否为空判断；「覆盖已有关系」替换可生成行的选择。切换时实时预览各类新增条数、生成总数及缺坐标、未分组的跳过数量和名称。取消不改表格；确认回填三张表，生成行带虚线与「自动」标识，仍可逐项增删，手改该行即去标。成功提示「已自动生成N条关系，请逐条核对」；完成保存沿用原逻辑。</p>
+          </div>
+        </div>
+        <div class="auto-config-rules">
+          <p>供冷：行间 / 列间空调连最近 <input type="number" class="auto-config-count" id="autoSupplyInRow" min="1" step="1" value="1" aria-label="供冷行间或列间冷通道数量"> 条冷通道的全部冷点，其余空调连最近 <input type="number" class="auto-config-count" id="autoSupplyOther" min="1" step="1" value="3" aria-label="供冷其余空调冷通道数量"> 条冷通道的全部冷点。</p>
+          <p>换热：每个冷点在所属冷通道两侧各连最近的 <input type="number" class="auto-config-count" id="autoHeatPerSide" min="1" step="1" value="1" aria-label="换热每侧热点数量"> 个热点。</p>
+          <p>回风：只给必须配回风关系的空调生成。行间 / 列间连最近 <input type="number" class="auto-config-count" id="autoReturnInRow" min="1" step="1" value="2" aria-label="回风行间或列间热点数量"> 个热点，封闭热通道机房的其余空调连最近 <input type="number" class="auto-config-count" id="autoReturnOther" min="1" step="1" value="3" aria-label="回风其余空调热通道数量"> 条热通道的全部热点。</p>
+        </div>
+        <fieldset class="auto-config-modes">
+          <legend>生成方式</legend>
+          <label><input type="radio" name="autoConfigMode" value="empty" checked>只补空的关系</label>
+          <label><input type="radio" name="autoConfigMode" value="overwrite">覆盖已有关系</label>
+        </fieldset>
+        <div class="auto-config-preview" aria-live="polite" aria-atomic="true">
+          <p id="autoConfigCounts"></p>
+          <p id="autoConfigTotal"></p>
+          <p id="autoConfigSkipCount"></p>
+          <ul id="autoConfigSkipped"></ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn" id="modalAutoConfigCancel">取消</button>
+        <button type="button" class="btn btn-primary" id="modalAutoConfigConfirm">确认生成</button>
+      </div>
+    </div>
+  </div>
+  <div class="relation-toast" id="autoConfigToast" role="status" hidden></div>
 
   <!-- 同步3D配置数据弹窗 -->
   <div class="modal-overlay" id="modalSync3D" aria-hidden="true">
@@ -1111,7 +1207,7 @@
       window.location.href = '机房寻优-机房热力模型列表.html?saved=1';
     });
 
-    /* ── 多选供冷关系 / 回风关系 ── */
+    /* ── 多选供冷 / 换热 / 回风关系 ── */
     (function () {
       function initMultiSelect(wrap) {
         var trigger  = wrap.querySelector('.multi-select-trigger');
@@ -1131,10 +1227,16 @@
               tag.querySelector('.ms-tag-remove').addEventListener('click', function (e) {
                 e.stopPropagation();
                 c.checked = false;
-                renderTags();
+                c.dispatchEvent(new Event('change', { bubbles: true }));
               });
               trigger.appendChild(tag);
             });
+          }
+          if (wrap.classList.contains('is-auto')) {
+            var badge = document.createElement('span');
+            badge.className = 'auto-relation-badge';
+            badge.textContent = '自动';
+            trigger.appendChild(badge);
           }
         }
 
@@ -1145,7 +1247,18 @@
         });
 
         cbs.forEach(function (cb) {
-          cb.addEventListener('change', renderTags);
+          cb.addEventListener('change', function () {
+            wrap.classList.remove('is-auto');
+            renderTags();
+          });
+        });
+        wrap.addEventListener('relationsupdated', renderTags);
+        trigger.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); trigger.click(); }
+          if (e.key === 'Escape') {
+            dropdown.classList.remove('is-open');
+            trigger.classList.remove('is-open');
+          }
         });
 
         document.addEventListener('click', function () {
@@ -1158,6 +1271,180 @@
       }
 
       document.querySelectorAll('.multi-select-wrap').forEach(initMultiSelect);
+    })();
+
+    /* ── 一键自动配置：演示分组、摆放位置由空间位置行携带，坐标实时读取 ── */
+    (function () {
+      var overlay = document.getElementById('modalAutoConfig');
+      var openButton = document.getElementById('btnAutoConfig');
+      var confirmButton = document.getElementById('modalAutoConfigConfirm');
+      var toast = document.getElementById('autoConfigToast');
+      var toastTimer;
+      var countInputs = Array.from(overlay.querySelectorAll('.auto-config-count'));
+
+      function readCounts() {
+        var counts = {}, valid = true;
+        countInputs.forEach(function (input) {
+          var value = Number(input.value);
+          var ok = /^\d+$/.test(input.value) && Number.isSafeInteger(value) && value >= 1;
+          input.setAttribute('aria-invalid', String(!ok));
+          if (!ok) valid = false;
+          counts[input.id] = value;
+        });
+        return valid ? counts : null;
+      }
+
+      function distance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+      function nearest(origin, points, count) {
+        return points.slice().sort(function (a, b) {
+          return distance(origin, a) - distance(origin, b) || a.id.localeCompare(b.id);
+        }).slice(0, count);
+      }
+      function groupPoints(points) {
+        var groups = Object.create(null);
+        points.forEach(function (p) { (groups[p.group] || (groups[p.group] = [])).push(p); });
+        return Object.keys(groups).map(function (name) { return groups[name]; });
+      }
+      function nearestChannels(origin, groups, count) {
+        return groups.slice().sort(function (a, b) {
+          var da = Math.min.apply(null, a.map(function (p) { return distance(origin, p); }));
+          var db = Math.min.apply(null, b.map(function (p) { return distance(origin, p); }));
+          return da - db || a[0].group.localeCompare(b[0].group);
+        }).slice(0, count).reduce(function (all, group) { return all.concat(group); }, []);
+      }
+      function heatTargets(cold, channel, hotPoints, count) {
+        // 用同通道最远两点确定主方向；重合点与单点通道回退为两侧数量之和。
+        var a, b, span = 0;
+        channel.forEach(function (p, i) {
+          channel.slice(i + 1).forEach(function (q) {
+            var d = distance(p, q);
+            if (d > span) { span = d; a = p; b = q; }
+          });
+        });
+        if (!span) return nearest(cold, hotPoints, count * 2);
+        var dx = b.x - a.x, dy = b.y - a.y;
+        var vertical = Math.abs(dy) > Math.abs(dx);
+        function side(hot) {
+          return vertical ? hot.x - (a.x + (hot.y - a.y) * dx / dy)
+            : hot.y - (a.y + (hot.x - a.x) * dy / dx);
+        }
+        return nearest(cold, hotPoints.filter(function (p) { return side(p) < -1e-8; }), count)
+          .concat(nearest(cold, hotPoints.filter(function (p) { return side(p) > 1e-8; }), count));
+      }
+      function buildPlan(counts) {
+        var mode = localStorage.getItem('aisleMode') || '封闭冷通道';
+        var overwrite = overlay.querySelector('input[name="autoConfigMode"]:checked').value === 'overwrite';
+        var objects = Object.create(null), coldPoints = [], hotPoints = [], skipped = [];
+        document.querySelectorAll('#tablePositions tr[data-object]').forEach(function (row) {
+          if (mode === '无封闭' && row.dataset.kind === 'hot') return;
+          var inputs = row.querySelectorAll('input');
+          var point = {
+            id: row.dataset.object, kind: row.dataset.kind, group: row.dataset.group,
+            name: row.cells[0].firstChild.textContent.trim(), placement: row.dataset.placementPosition,
+            x: Number(inputs[0].value), y: Number(inputs[1].value)
+          };
+          var reasons = [];
+          if (!inputs[0].value.trim() || !inputs[1].value.trim() || !Number.isFinite(point.x) || !Number.isFinite(point.y)) reasons.push('缺坐标');
+          if (point.kind !== 'ac' && !(point.group || '').trim()) reasons.push('未分组');
+          if (reasons.length) { skipped.push(point.name + '（' + reasons.join(' / ') + '）'); return; }
+          objects[point.id] = point;
+          if (point.kind === 'cold') coldPoints.push(point);
+          if (point.kind === 'hot') hotPoints.push(point);
+        });
+        var coldChannels = groupPoints(coldPoints), hotChannels = groupPoints(hotPoints);
+        var plan = [], added = { supply: 0, heat: 0, returnAir: 0 }, total = 0;
+        function addRow(wrap, targets, type) {
+          var boxes = Array.from(wrap.querySelectorAll('input[type="checkbox"]'));
+          var current = boxes.filter(function (box) { return box.checked; }).map(function (box) { return box.value; });
+          if (!overwrite && current.length) return;
+          var values = targets.map(function (p) { return p.name; });
+          if (!values.length) return; // 无可用目标时保留原行，不清空人工关系。
+          added[type] += values.filter(function (name) { return current.indexOf(name) === -1; }).length;
+          total += values.length;
+          plan.push({ wrap: wrap, boxes: boxes, values: values });
+        }
+        function isInRow(ac) { return ac.placement === '1' || ac.placement === '2'; }
+        document.querySelectorAll('#tableSupply .multi-select-wrap').forEach(function (wrap) {
+          var ac = objects['ac' + wrap.dataset.ac];
+          if (ac) addRow(wrap, nearestChannels(ac, coldChannels, isInRow(ac) ? counts.autoSupplyInRow : counts.autoSupplyOther), 'supply');
+        });
+        if (mode !== '无封闭') {
+          document.querySelectorAll('#tableHeatExchange .multi-select-wrap').forEach(function (wrap) {
+            var cold = objects['cold' + wrap.dataset.cold];
+            if (cold) addRow(wrap, heatTargets(cold, coldPoints.filter(function (p) { return p.group === cold.group; }), hotPoints, counts.autoHeatPerSide), 'heat');
+          });
+          document.querySelectorAll('#tableReturnAir .multi-select-wrap').forEach(function (wrap) {
+            var ac = objects['ac' + wrap.dataset.ac];
+            if (!ac || (!isInRow(ac) && mode !== '封闭热通道')) return;
+            addRow(wrap, isInRow(ac) ? nearest(ac, hotPoints, counts.autoReturnInRow) : nearestChannels(ac, hotChannels, counts.autoReturnOther), 'returnAir');
+          });
+        }
+        return { rows: plan, added: added, total: total, skipped: skipped };
+      }
+      function refreshPreview() {
+        var counts = readCounts();
+        if (!counts) {
+          document.getElementById('autoConfigCounts').textContent = '连接数量须为 ≥ 1 的整数，请修改标红项。';
+          document.getElementById('autoConfigTotal').textContent = '';
+          document.getElementById('autoConfigSkipCount').textContent = '';
+          document.getElementById('autoConfigSkipped').innerHTML = '';
+          confirmButton.disabled = true;
+          return null;
+        }
+        var result = buildPlan(counts);
+        document.getElementById('autoConfigCounts').textContent = '供冷关系将新增 ' + result.added.supply + ' 条、换热关系 ' + result.added.heat + ' 条、回风关系 ' + result.added.returnAir + ' 条';
+        document.getElementById('autoConfigTotal').textContent = '本次将生成 ' + result.total + ' 条关系；覆盖时按整行替换，缺少可用对象的行保留原选择。';
+        document.getElementById('autoConfigSkipCount').textContent = '跳过 ' + result.skipped.length + ' 个对象（缺坐标 / 未分组）';
+        var list = document.getElementById('autoConfigSkipped');
+        list.innerHTML = '';
+        result.skipped.forEach(function (name) {
+          var item = document.createElement('li');
+          item.textContent = name;
+          list.appendChild(item);
+        });
+        confirmButton.disabled = result.total === 0;
+        return result;
+      }
+      function closeModal() {
+        overlay.classList.remove('is-open');
+        overlay.setAttribute('aria-hidden', 'true');
+        openButton.focus();
+      }
+      openButton.addEventListener('click', function () {
+        overlay.querySelector('input[value="empty"]').checked = true;
+        refreshPreview();
+        overlay.classList.add('is-open');
+        overlay.setAttribute('aria-hidden', 'false');
+        document.getElementById('modalAutoConfigClose').focus();
+      });
+      overlay.querySelectorAll('input[name="autoConfigMode"]').forEach(function (radio) { radio.addEventListener('change', refreshPreview); });
+      countInputs.forEach(function (input) { input.addEventListener('input', refreshPreview); });
+      document.getElementById('modalAutoConfigClose').addEventListener('click', closeModal);
+      document.getElementById('modalAutoConfigCancel').addEventListener('click', closeModal);
+      overlay.addEventListener('click', function (e) { if (e.target === overlay) closeModal(); });
+      overlay.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeModal();
+        if (e.key === 'Tab') {
+          var focusable = Array.from(overlay.querySelectorAll('button:not(:disabled), input:checked, .auto-config-count'));
+          var first = focusable[0], last = focusable[focusable.length - 1];
+          if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+          else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+      });
+      confirmButton.addEventListener('click', function () {
+        var result = refreshPreview();
+        if (!result || !result.total) return;
+        result.rows.forEach(function (row) {
+          row.boxes.forEach(function (box) { box.checked = row.values.indexOf(box.value) !== -1; });
+          row.wrap.classList.add('is-auto');
+          row.wrap.dispatchEvent(new Event('relationsupdated'));
+        });
+        closeModal();
+        toast.textContent = '已自动生成 ' + result.total + ' 条关系，请逐条核对';
+        toast.hidden = false;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toast.hidden = true; }, 4000);
+      });
     })();
 
     /* ── 通道封闭模式联动（读取步骤1 localStorage） ── */

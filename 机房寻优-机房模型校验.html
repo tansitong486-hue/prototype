@@ -204,12 +204,10 @@
             <span class="anno-version">v2.9</span>
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
-              <p><b>当前版本：</b>v2.9（新建页）</p>
-              <p><b>更新日期：</b>2026-10-31</p>
-              <p><b>变更概述：</b>v2.9 末端仿真寻优 · 机房模型校验。2026-10-31 评审调整：校验<b>移出创建步骤 1</b>，改为机房热力模型<b>保存完成后</b>单独执行，交互参照「系统仿真建模 → 仿真验证」（<code>仿真校验.html</code>）：进入即出最近一次结果，「重新校验」按当前物模型属性、绑点、关系与运行数据实时重跑。§4.3 五类校验在本页一次跑完（含拓扑完整性，步骤 2 不再单独校验），提示精确到「实例 · 属性名」。</p>
-              <p><b>2026-10-31 补充：</b>属性改为在热力模型配置步骤 1 页内直接填写，本页属性类 ERROR 的处置改为「去修改 →」（跳编辑态步骤 1），写点类仍「去绑点 →」（设备管理）；型号 <code>modelNumber</code> 去掉，不再校验。</p>
-              <p><b>2026-11-02 补充：</b>步骤 2 新增回风关系（热通道传感器 → 空调，复用 <code>THSensor::feedsAir</code>），⑤ 拓扑完整性加一条「热点 → 空调 回风」：封闭热通道机房的每台空调、摆放位置为行间 / 列间的空调必须配回风关系，未配记 <code>TOPOLOGY_INCOMPLETE</code>（逐台一条，机房阻断）；房间级空调可不配。三个演示机房各补一行结果（102 机房按封闭热通道演示 6#空调未配）。不加列、不加统计项，结果进现有「拓扑」胶囊与校验明细。</p>
-              <p><b>本页说明：</b>入口为「机房热力模型」列表操作列「模型校验」（URL 带 <code>room</code>）。页头「原型演示」切 3 个场景：101 机房（2 台 ERROR 移出可动作集、机房不阻断，含 WARN）、102 机房（封闭热通道，拓扑不完整含 1 台空调未配回风关系，机房阻断）、103 机房（通过，含 1 条「无法校验」）。属性定义真源：《标准物模型-静态属性与动态参数.xlsx》静态数据 sheet；规则真源：《末端仿真寻优需求文档》§4.3～4.4、§六、§7.2。</p>
+              <p><b>当前版本：</b>v2.9</p>
+              <p><b>本页说明：</b>热力模型保存后，从列表「模型校验」进入。七类校验检查属性、绑点、运行数据与拓扑，问题定位到实例、属性或测点；创建步骤不执行校验。</p>
+              <p><b>结果：</b>101 机房有 2 台空调移出可动作集，机房不阻断；102 机房拓扑不完整且 IT 功率未绑，机房阻断；103 机房通过，含无法校验提示。</p>
+              <p><b>处置：</b>属性问题回步骤 1 修改，关系问题回步骤 2 配置，测点问题到设备管理核对。返回后可重新校验。规则见需求文档 §4.3、附录 A。</p>
             </div>
           </div>
 
@@ -232,8 +230,8 @@
             <div class="banner-tip-body">
               <div class="banner-tip-title">提示</div>
               <div class="banner-tip-text">
-                <p>1、模型校验按每台空调的对象类型，检查仿真寻优所需的物模型属性、写点与组件实例是否齐全、是否与运行数据一致，并检查机房供冷 / 换热 / 回风关系是否完整。</p>
-                <p>2、ERROR 的空调会移出可动作集（寻优时保持当前控制不动作），其余空调照常寻优；拓扑不完整时机房寻优跳过。WARN 只提示，请实施核对。</p>
+                <p>1、模型校验按每台空调的对象类型，检查仿真寻优所需的属性、关键测点绑定与测点数据合理性，并检查机房供冷 / 换热 / 回风关系是否完整。</p>
+                <p>2、ERROR 的空调会移出可动作集（寻优时保持当前控制不动作），其余空调照常寻优；拓扑不完整、IT 功率未绑或投入传感器温度未绑时机房寻优跳过。温度未绑：机房不能寻优；不需要检查的测点请投出。WARN 请核对。</p>
               </div>
             </div>
           </div>
@@ -243,15 +241,9 @@
             <span class="anno-version">v2.9</span>
             <span class="anno-source">产品推断</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>校验结果横幅（三态互斥 + 校验中）</p>
-              <ul>
-                <li><b>通过（绿）：</b>无 ERROR；有 WARN / 无法校验时标题写「校验通过，有 N 条提示」。描述带可动作集台数与校验时间。</li>
-                <li><b>有设备移出（橙）：</b>有设备级 ERROR（<code>INPUT_MISSING</code>）但可动作集不为空、拓扑完整：「校验完成：N 台移出可动作集，机房不阻断」（缺数据处理）。</li>
-                <li><b>阻断（红）：</b>拓扑完整性 ERROR（<code>TOPOLOGY_INCOMPLETE</code>），或投入空调全部 ERROR / 全部投出（可动作集为空）：「校验未通过：机房寻优将跳过（SKIPPED）」（§7.2「拓扑不完整 → 机房本轮 SKIPPED」）。</li>
-                <li><b>校验中（蓝）：</b>点「重新校验」后横幅变「校验中…」，按钮置灰；完成后刷新横幅、统计和两张表，toast「校验完成」。</li>
-                <li><b>未校验或已修改：</b>模型保存后从未校验，或校验后模型被编辑，进入本页自动执行一次，不展示旧结果。</li>
-                <li><b>校验失败：</b>取数超时等系统原因时横幅显示「校验失败，请重试」，保留上一次结果不覆盖（原型不演示）。</li>
-              </ul>
+              <p><b>关联模块：</b>校验结果横幅</p>
+              <p>拓扑不完整、IT 功率未绑、投入传感器温度未绑或可动作集为空，机房本轮跳过。部分空调 ERROR，仅移出这些空调，其余照常寻优。WARN 与无法校验均只提示。</p>
+              <p>点「重新校验」后按钮置灰，完成后刷新横幅、统计和两张表。未校验或模型已修改时进入自动校验；取数失败保留上次结果并提示重试。改完可返回重新校验。</p>
             </div>
           </div>
 
@@ -271,15 +263,52 @@
             <span class="anno-version">v2.9</span>
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>校验统计 + 设备总览表</p>
-              <p><b>统计胶囊：</b>投入 / 投出台数、就绪、就绪·有提示、移出可动作集（按台计，一台有 ERROR 就只计入移出）、ERROR / WARN / 无法校验条数（按条计，含已移出及投出设备的 WARN）、拓扑（通过 / N 条 ERROR）、机房结论（可继续 · 可动作集 N 台 / 阻断 · 本轮 SKIPPED）。</p>
+              <p><b>关联模块：</b>校验统计</p>
+              <p>投入 / 投出、就绪、就绪·有提示、移出可动作集按空调台数统计，一台有多条 ERROR 仍只移出一次。ERROR / WARN / 无法校验按明细条数统计，含拓扑、传感器、设备组及投出空调的提示。拓扑单列通过 / ERROR 条数；机房结论显示可动作集台数或阻断、本轮 SKIPPED。设备总览只列空调。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-field" data-version="v2.9">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>设备总览 — 对象</p>
               <table class="anno-table">
                 <thead><tr><th>列</th><th>内容</th><th>说明</th></tr></thead>
                 <tbody>
                   <tr><td>空调末端</td><td>实例名称 + 位置</td><td>取机房热力模型已关联的空调（含投出）</td></tr>
                   <tr><td>对象类型</td><td>中文名 + 模型 ID</td><td><code>dtdl:asset:AirCooledPAC</code> / <code>dtdl:asset:ChilledWaterPAC</code>；本台跑哪几类校验由对象类型有哪些属性决定（属性存在即校验，按设备自动适配）</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="anno anno-field" data-version="v2.9">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>设备总览 — 投入状态与控制变量</p>
+              <table class="anno-table">
+                <thead><tr><th>列</th><th>内容</th><th>说明</th></tr></thead>
+                <tbody>
                   <tr><td>投入 / 投出</td><td>只读</td><td>设备属性（在机房热力模型或柔性寻优「投入/投出配置」中修改，两处是同一个值）；投出的空调只查额定风量与供冷关系两项，缺失记 WARN、仿真不计这台送风，不影响可动作集</td></tr>
                   <tr><td>主控制变量</td><td>按 <code>controlMode</code> 分派</td><td>0 回风温控 → 回风温度设定 <code>4_25_0</code>；1 送风温控 → 送风温度设定 <code>4_27_0</code>；不拆对象类型（按设备自动适配）；该写点未绑时下方小字「写点未绑」</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="anno anno-field" data-version="v2.9">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>设备总览 — 结论与明细</p>
+              <table class="anno-table">
+                <thead><tr><th>列</th><th>内容</th><th>说明</th></tr></thead>
+                <tbody>
                   <tr><td>校验结论</td><td>就绪 / 就绪·有提示 / 移出可动作集 / 投出 / 投出·有提示</td><td>投入空调：有 ERROR → 移出可动作集；只有 WARN → 就绪·有提示；「无法校验」不影响结论。投出空调：无 WARN → 投出，有 WARN → 投出·有提示；均不计就绪、不进可动作集、不影响机房结论</td></tr>
                   <tr><td>ERROR / WARN</td><td>条数</td><td>点「查看明细」下方明细表按该实例筛选并滚动定位</td></tr>
                 </tbody>
@@ -314,24 +343,83 @@
             <span class="anno-version">v2.9</span>
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>校验明细 — 校验规则（《末端仿真寻优需求文档》§4.3；规则放「对象类型 + 表达式」校验表，不写进页面代码）</p>
-              <table class="anno-table">
-                <thead><tr><th>校验项</th><th>适用对象</th><th>规则</th><th>级别 / 原因码</th></tr></thead>
-                <tbody>
-                  <tr><td>① regulationType 与压缩机转速反馈一致性</td><td>有 <code>regulationType</code> 的类型（风冷型）</td><td>证据源：组件转速反馈 <code>1_1052_10#j</code> 或系统 A / B 压缩机运行频率 <code>1_2985_0</code> / <code>1_2994_0</code>；属性为 0 定频启停但持续出现中间值（10%～90% 占比 &gt; 20%）。本体 <code>1_1052_0</code> 为项目表达式聚合，不用于校验。证据源都没绑 → 「无法校验」</td><td>WARN <code>CONFIG_SUSPECT(REG_TYPE)</code></td></tr>
-                  <tr><td>② compressors_num 与压缩机组件实例数一致性</td><td>有 <code>compressors_num</code> 的类型（风冷型）</td><td>孪生组件「压缩机」（组件 ID 10）实例 <code>#j</code> 计数 N_comp ≠ 属性值；模型按实例数计算</td><td>WARN <code>CONFIG_SUSPECT(COMP_NUM)</code></td></tr>
-                  <tr><td>③ controlMode 与绑点一致性</td><td>风冷型 / 冷冻水型</td><td>回风温控（0）必须绑 <code>4_25_0</code> 写点；送风温控（1）必须绑 <code>4_27_0</code>；controlMode 未维护同记 ERROR</td><td>ERROR（原型按 <code>INPUT_MISSING</code>，原因码待定）</td></tr>
-                  <tr><td>④ 冷冻水型设计点完整性</td><td>有设计点属性的类型（冷冻水型）</td><td><code>designWaterInTemp</code>、<code>designAirInTemp</code>、<code>designAirOutTemp</code> 缺一 → ERROR；<code>designAirOutTemp ≥ designAirInTemp</code> 或设计点反解不收敛 → WARN；<code>designWaterDeltaT</code> / <code>designAirInRH</code> 未填按缺省 5 ℃ / 50 %RH</td><td>ERROR <code>INPUT_MISSING</code> / WARN <code>CONFIG_SUSPECT(DESIGN_POINT)</code></td></tr>
-                  <tr><td>⑤ 拓扑完整性</td><td>机房级</td><td>每台参与寻优的空调 ≥ 1 条 <code>feedsAir</code> 冷点边；每个投入冷点 ≥ 1 条入边；每个投入且配置安全边界的热点 ≥ 1 条换热入边；每条投入通道 ≥ 1 个热点。无封闭机房没有热点，不查这两项。须配回风关系的空调 ≥ 1 条回风入边（投入热点 <code>THSensor::feedsAir</code> → 空调；2026-11-02 新增）——须配 = 空调组 <code>aisleSealedMode</code> = 1 封闭热通道时组内每台参与寻优的空调，或空调 <code>placement_position</code> = 1 行间 / 2 列间（判定属性待确认）；房间级可不配，无封闭不校验</td><td>ERROR <code>TOPOLOGY_INCOMPLETE</code>（机房本轮 SKIPPED；回风关系逐台一条）</td></tr>
-                  <tr><td>⑥ 其他必填属性完整性（推断）</td><td>全部</td><td>对象类型定义的必填属性（如 <code>ratedPower</code>、<code>cop</code>）未填（型号 <code>modelNumber</code> 已于 2026-10-31 去掉，不校验）</td><td>ERROR <code>INPUT_MISSING</code>（§六 必需输入缺失先移出可动作集）</td></tr>
-                </tbody>
-              </table>
-              <ul>
-                <li><b>每次校验读什么：</b>物模型实例属性（当前值）、实例绑点清单、压缩机组件实例、设备的投入 / 投出属性、机房热力模型的关系、①所需的运行数据。不读缓存，所以去物模型补完属性回来点「重新校验」即可看到变化。</li>
-                <li><b>① 的数据窗口（待确认）：</b>原型写「近 7 天」，文档未定，评审时定。</li>
-                <li><b>PASS 行：</b>每台每个适用校验项都出一行「已校验」，便于实施确认「这一项查过了」；勾「只看问题项」隐藏。</li>
-                <li><b>验收参照（§4.5）：</b>0_100 机房导入后 <code>CONFIG_SUSPECT(COMP_NUM)</code> 11 条（属性 1、实例 2）；REG_TYPE 逐台输出「已校验 / 无法校验」（该站转速与频率点均未绑，预期 11 台无法校验）。</li>
-              </ul>
+              <p><b>关联模块：</b>校验明细 — 七类校验</p>
+              <p>前五类：① 调节方式与转速反馈一致；② 压缩机数量与组件实例数一致；③ 控制型对应主温度设定写点；④ 冷冻水型设计点完整；⑤ 供冷、换热、通道与回风拓扑完整。另查必填静态属性，不另计一类。新增⑥关键测点绑定、⑦测点数据合理性，仅查投入空调、投入传感器与空调设备组。</p>
+              <p>每次读取当前属性、绑点、组件、投入状态、关系和近 7 天 5 分钟数据。① 无转速或频率证据则无法校验；定频但 10%～90% 中间值占比 &gt;20% 记 WARN。每台每类最多一行 PASS 汇总，「只看问题项」隐藏 PASS。</p>
+            </div>
+          </div>
+          <div class="anno anno-data" data-version="v2.9">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>数量、控制型与设计点</p>
+              <p>② 数量与组件数不一致记 WARN / CONFIG_SUSPECT(COMP_NUM)，按实例数计算。</p>
+              <p>③ 回风温控需绑 4_25_0，送风温控需绑 4_27_0；控制型或写点缺失记 ERROR / INPUT_MISSING。</p>
+              <p>④ 冷冻水型 designWaterInTemp、designAirInTemp、designAirOutTemp 缺一记 ERROR / INPUT_MISSING；设计出风≥进风或反解不收敛记 WARN / CONFIG_SUSPECT(DESIGN_POINT)。缺设计进出水温差、进风湿度分别按 5℃、50%RH。其他必填缺失记 ERROR。</p>
+            </div>
+          </div>
+          <div class="anno anno-data" data-version="v2.9">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>原有校验 — 拓扑完整性</p>
+              <p>⑤ 每台参与寻优空调至少有 1 条供冷冷点边，每个投入冷点至少有 1 条入边。每个投入且有安全边界的热点至少有 1 条换热入边；每条投入通道至少有 1 个热点，无封闭机房不查这两项。</p>
+              <p>封闭热通道机房里每台参与寻优空调，或摆放位置为行间 / 列间的空调，须有来自投入热点的回风入边；房间级可不配，无封闭不查。上述缺失均记 ERROR / TOPOLOGY_INCOMPLETE，机房本轮 SKIPPED，回风关系逐台一条。</p>
+            </div>
+          </div>
+
+          <div class="anno anno-data" data-version="v2.9">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>关键测点绑定 — 投入空调必需测点</p>
+              <p>运行状态 <code>2_167_0</code>、回风温度 <code>1_21_0</code>、送风温度 <code>1_22_0</code>、有功功率 <code>1_627_0</code> 必需；风冷型另需室外干球 <code>1_2987_0</code>。未绑记 ERROR / INPUT_MISSING，该空调移出可动作集，点「去绑点」。主温度设定写点仍由③检查，不重复。</p>
+              <p>已绑但近 7 天有效样本不足 50%，记 WARN / INPUT_MISSING「长期无值」。投出空调只查额定风量与供冷关系，不查新增两类。</p>
+            </div>
+          </div>
+          <div class="anno anno-data" data-version="v2.9">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>关键测点绑定 — 投入空调可选测点</p>
+              <p>未绑均记 WARN / INPUT_MISSING。风机转速 <code>1_3152_0</code> 缺失，风量按风机转速上限设定估算；上限写点 <code>4_90_0</code> 缺失，该空调风机上限不调整。</p>
+              <p>冷冻水型：水阀最大开度写点 <code>3_2001_0</code> 缺失则水阀不调整；进水温度 <code>1_27_0</code> 缺失取冷站供水温度 +0.5℃；水阀开度 <code>1_4_0</code> 缺失则无容量真值。</p>
+              <p>风冷型逐组件查转速 / 状态 <code>1_1052_10#j</code> / <code>2_186_10#j</code>。无容量真值时，送风温度、功率模型标低置信。</p>
+            </div>
+          </div>
+          <div class="anno anno-data" data-version="v2.9">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>关键测点绑定 — 传感器与设备组</p>
+              <p>投入温湿度传感器：温度 <code>1_1_0</code> 未绑记 ERROR / INPUT_MISSING，机房结论为阻断、本轮 SKIPPED。温度未绑：机房不能寻优；不需要检查的测点请投出。湿度 <code>1_960_0</code> 未绑记 WARN / INPUT_MISSING，「该点不做湿度检查」。</p>
+              <p>空调设备组 IT 功率 <code>1_105_0</code> 未绑记 ERROR / INPUT_MISSING，「机房不能寻优」，横幅与机房结论显示阻断、本轮 SKIPPED。以上问题进明细及 ERROR / WARN 统计，不进入空调总览。</p>
+            </div>
+          </div>
+          <div class="anno anno-data" data-version="v2.9">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>测点数据合理性 — 窗口、越界、写死与跳变</p>
+              <p>只查已绑且近 7 天有数据的测点，用 5 分钟数据；不足 24 小时记 INFO「无法校验」。异常记 WARN / CONFIG_SUSPECT(POINT_DATA)，操作「核对测点」。</p>
+              <p>越界：超出物模型量程或物理范围，温度 0～60℃、湿度 0～100%RH、转速 / 开度 0～100%、功率≥0；占比&gt;5%提示。</p>
+              <p>写死：连续 12 小时极差&lt;ε且邻点同期有变化；温度 ε=0.02℃、功率 0.1 kW、转速 / 开度 0.1%。跳变：相邻 5 分钟温差&gt;5℃或功率差&gt;额定功率50%，排除启停。近7天出现即提示并写次数。</p>
+            </div>
+          </div>
+          <div class="anno anno-data" data-version="v2.9">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body">
+              <p><b>关联模块：</b>测点数据合理性 — 物理关系与证据</p>
+              <p>命中占比&gt;5%提示：运行时送风温度≥回风温度，疑似送回风绑反；热点温度&lt;所连冷点温度，疑似冷 / 热通道传感器装反或分组错；运行时功率≤待机功率、停机时功率&gt;1 kW；风机转速&gt;风机转速上限设定+5%。</p>
+              <p>明细写近7天命中占比、命中数 / 有效样本数、最近时间；写死写持续时长与次数，跳变写次数。每台空调每类最多一行「已校验」，汇总必需测点绑定数或无异常测点数，不逐测点出 PASS。</p>
             </div>
           </div>
 
@@ -340,36 +428,27 @@
             <span class="anno-version">v2.9</span>
             <span class="anno-source">产品推断</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>校验明细 — 筛选、去维护、去配置、重新校验</p>
-              <ul>
-                <li><b>筛选：</b>级别（全部 / ERROR / WARN / 无法校验 / 已校验）、实例（全部 / 各空调 / 机房拓扑）、按属性或说明关键字搜索、「只看问题项」（隐藏已校验行）；条件即时生效，不需点查询。总览「查看明细」= 实例筛选设为该台并滚动到明细。</li>
-                <li><b>去修改 →（属性类 ERROR，2026-10-31 调整）：</b>属性已改为在热力模型配置步骤 1 页内直接填写，故跳「编辑机房热力模型 › 步骤 1」并展开、定位到该设备该属性格；URL 带 <code>return=机房寻优-机房模型校验.html?room=…</code>，保存后回到本页并自动重新校验。不再跳设备管理。</li>
-                <li><b>去绑点 →（写点 / 证据源类）：</b>测点绑定仍在「工程配置 › 设备管理 › 该实例 › 测点绑定」，带同样回跳。controlMode 与写点不一致时两个入口都给：「改控制型 →」（步骤 1）或「去绑点 →」。原型均只 toast。</li>
-                <li><b>去配置 →（拓扑 ERROR）：</b>跳机房热力模型编辑态步骤 2 并定位到对应冷点 / 通道分组 / 空调回风行，带同样的回跳参数；保存后回到本页自动重新校验。原型只 toast。</li>
-                <li><b>重新校验：</b>按当前数据重跑全部校验项（含拓扑），完成后刷新横幅、统计和两张表；校验中按钮置灰防重复点击。</li>
-                <li><b>返回：</b>面包屑「机房热力模型」或标题左侧 ← 回列表。</li>
-              </ul>
+              <p><b>关联模块：</b>校验明细 — 筛选与处置</p>
+              <p>级别、实例、关键字及「只看问题项」即时筛选。实例含各空调、温湿度传感器、空调设备组和机房拓扑；总览「查看明细」定位到该空调。</p>
+              <p>「去修改」回编辑步骤 1 并定位属性；控制型不符可改控制型或去绑点；「去配置」回步骤 2 定位关系；「去绑点」到设备管理的该实例测点绑定；「核对测点」查看该实例测点曲线与绑定。均带回跳，保存返回后自动重新校验。原型以提示演示。</p>
+              <p>「重新校验」重跑全部规则，刷新两张表与统计；执行期间禁用。面包屑与标题左箭头返回列表。</p>
             </div>
           </div>
 
           <div class="anno anno-edge" data-version="v2.9">
             <span class="anno-tag">边界与异常</span>
             <span class="anno-version">v2.9</span>
-            <span class="anno-source">待确认</span>
+            <span class="anno-source">需求文档</span>
             <div class="anno-body">
-              <p><b>关联模块：</b>校验明细 — 口径待确认项</p>
-              <ul>
-                <li><b>controlMode 与写点不一致的原因码：</b>§4.3 只定级别 ERROR 未定码，原型按「缺少该控制型必需的写点」归入 <code>INPUT_MISSING</code>，评审定是否单列。</li>
-                <li><b>未校验能否寻优：</b>原型按「能，寻优每轮自己判」处理；若要求「校验通过才能绑寻优」需另加门槛（未画）。</li>
-                <li><b>运行中设备：</b>ERROR 设备若运行中且物理量无法估计，寻优整轮 SKIPPED（§六）；本页是静态配置校验，不判运行态，只在横幅描述里提示。</li>
-                <li><b>空态：</b>模型未关联空调时本页只出拓扑校验与「尚未关联空调」，机房结论为阻断。</li>
-                <li><b>回风关系必配的判定属性（2026-11-02）：</b>「封闭热通道」读空调组 <code>aisleSealedMode</code>（后台三档，标准物模型表需补「封闭热通道」）；「行间 / 列间」暂读后台 DTDL 已有的精密空调 <code>placement_position</code>（标准物模型表与需求文档未收录），底座式视为房间级、未填按房间级，均待确认。0_100 验证机房 11 台该属性全为「行间」、疑似缺省，按此规则会报回风关系未配。</li>
-              </ul>
+              <p><b>关联模块：</b>校验明细 — 边界与异常</p>
+              <p>控制型或对应写点缺失记 ERROR / INPUT_MISSING。空调缺必需输入先移出可动作集；运行中且物理量无法估计时寻优整轮跳过，本页不替代每轮运行态判定。</p>
+              <p>全部投出或未关联空调，可动作集为空，机房阻断。投出空调只查额定风量和供冷关系，缺失仅 WARN、仿真不计该台送风。</p>
+              <p>封闭热通道机房的投入空调、行间 / 列间空调须配回风关系；无封闭机房不查。摆放位置读 placement_position，底座式或未填按房间级；封闭方式读空调组 aisleSealedMode。缺 IT 功率或投入传感器温度未绑均独立阻断机房。</p>
             </div>
           </div>
 
           <section class="data-card" aria-label="校验明细" id="detailCard">
-            <div class="card-title">校验明细<span class="sub">每条精确到「实例 · 属性名」，附原因码与依据</span></div>
+            <div class="card-title">校验明细<span class="sub">每条精确到「对象 · 属性或测点」，附原因码与依据</span></div>
             <div class="filter-row">
               <select class="filter-select" id="filterLevel" aria-label="级别">
                 <option value="">全部级别</option>
@@ -381,7 +460,7 @@
               <select class="filter-select" id="filterDevice" aria-label="实例"></select>
               <label class="search-wrap">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-                <input class="search-input" type="search" id="filterKeyword" placeholder="属性 ID / 说明关键字">
+                <input class="search-input" type="search" id="filterKeyword" placeholder="属性 / 测点 / 说明关键字">
               </label>
               <label class="quick-filter-check"><input type="checkbox" id="filterProblem">只看问题项</label>
             </div>
@@ -390,7 +469,7 @@
                 <thead>
                   <tr>
                     <th>级别</th>
-                    <th>实例 · 属性</th>
+                    <th>对象 · 属性 / 测点</th>
                     <th>校验项</th>
                     <th>原因码</th>
                     <th style="min-width:340px;">说明</th>
@@ -508,6 +587,47 @@
         }
       };
 
+      /* 演示用近 7 天 5 分钟数据汇总；真实校验由规则服务提供，不在原型请求现场数据。 */
+      Object.keys(ROOMS).forEach(function (key) {
+        var demo = ROOMS[key];
+        demo.devices.forEach(function (d) {
+          if (!d.active) return;
+          var common = ['2_167_0', '1_21_0', '1_22_0', '1_627_0', '1_3152_0'];
+          var extra = d.typeId === 'dtdl:asset:AirCooledPAC' ? ['1_2987_0'] : ['1_27_0'];
+          if (d.typeId === 'dtdl:asset:AirCooledPAC') {
+            for (var j = 1; j <= d.compInstances; j++) extra.push((key === '103' ? '2_186_10#' : '1_1052_10#') + j);
+          }
+          d.points = d.points.concat(common, extra);
+        });
+        demo.sensors = [
+          { id: 'cold-' + key, name: '冷通道分组1 · 1#温湿度传感器（冷点）', active: true, points: ['1_1_0', '1_960_0'] },
+          { id: 'hot-' + key, name: '热通道分组1 · 1#温湿度传感器（热点）', active: true, points: ['1_1_0', '1_960_0'] }
+        ];
+        demo.group = { id: 'group-' + key, name: key + '机房空调设备组', points: ['1_105_0'] };
+        demo.devices.concat(demo.sensors, [demo.group]).forEach(function (item) {
+          item.pointData = {};
+          item.points.forEach(function (id) { item.pointData[id] = { valid: 2016, hours: 168, latest: '10-30 14:05' }; });
+        });
+      });
+      ROOMS['101'].devices[0].points = ROOMS['101'].devices[0].points.filter(function (id) { return id !== '1_3152_0'; });
+      ROOMS['101'].sensors[0].points = ['1_1_0'];
+      ROOMS['101'].devices[2].pointData['1_22_0'].relations = [
+        { hits: 242, total: 2016, msg: '运行时送风温度 ≥ 回风温度，疑似送回风绑反' }
+      ];
+      ROOMS['101'].sensors[1].pointData['1_1_0'].flat = [
+        { hours: 14, range: 0.01, neighborChanged: true }
+      ];
+      ROOMS['101'].devices[2].pointData['1_27_0'] = { valid: 720, hours: 60, latest: '10-30 11:00' };
+      ROOMS['102'].devices[0].points = ROOMS['102'].devices[0].points.filter(function (id) { return id !== '1_627_0'; });
+      ROOMS['102'].devices[1].pointData['1_22_0'].outOfRange = 141;
+      ROOMS['102'].devices[1].pointData['1_627_0'].jumps = [
+        { minutes: 5, delta: 4.1, startStop: false }, { minutes: 5, delta: -3.8, startStop: false },
+        { minutes: 5, delta: 6.2, startStop: true }
+      ];
+      ROOMS['102'].group.points = [];
+      ROOMS['102'].sensors[1].points = ['1_960_0'];
+      ROOMS['102'].sensors[0].pointData['1_1_0'] = { valid: 144, hours: 12, latest: '10-30 14:05' };
+
       var params = new URLSearchParams(location.search);
       var roomKey = params.get('room') || '101';
       /* 未校验或已修改的机房（示例 104 / 105）没有历史结果：进入即自动执行一次（复用 103 的示例数据） */
@@ -532,7 +652,91 @@
         toastTimer = setTimeout(function () { el.classList.remove('show'); }, 3200);
       }
 
-      /* §4.3 ①～④ + ⑥ 逐台；属性存在即校验（只对有该属性定义的对象类型执行） */
+      function pointRules(item, kind) {
+        if (kind === 'sensor') return [
+          ['1_1_0', '温度', true, '温度未绑：机房不能寻优；不需要检查的测点请投出。'],
+          ['1_960_0', '湿度', false, '该点不做湿度检查']
+        ];
+        if (kind === 'group') return [['1_105_0', 'IT 功率', true, '机房不能寻优，本轮 SKIPPED']];
+        var list = [
+          ['2_167_0', '运行状态', true], ['1_21_0', '回风温度', true],
+          ['1_22_0', '送风温度', true], ['1_627_0', '有功功率', true],
+          ['1_3152_0', '风机转速', false, '风量按风机转速上限设定估算'],
+          ['4_90_0', '风机转速上限设定写点', false, '该空调风机上限不调整']
+        ];
+        if (item.typeId === 'dtdl:asset:AirCooledPAC') {
+          list.push(['1_2987_0', '室外干球', true]);
+          for (var j = 1; j <= item.compInstances; j++) list.push([
+            '1_1052_10#' + j + ' / 2_186_10#' + j, '压缩机组件 #' + j + ' 转速 / 状态', false,
+            '无容量真值，送风温度、功率模型标低置信'
+          ]);
+        } else list = list.concat([
+          ['3_2001_0', '水阀最大开度设定写点', false, '该空调水阀不调整'],
+          ['1_27_0', '进水温度', false, '取冷站冷冻水供水温度 + 0.5℃'],
+          ['1_4_0', '水阀开度', false, '无容量真值，送风温度、功率模型标低置信']
+        ]);
+        return list;
+      }
+
+      function checkPoints(item, kind) {
+        if (kind !== 'group' && !item.active) return [];
+        var f = [], pts = item.points || [], data = item.pointData || {};
+        var need = 0, bound = 0, optional = 0, optionalBound = 0;
+        function add(level, check, code, prop, msg, fix) {
+          f.push({ level: level, check: check, code: code, prop: prop, msg: msg, fix: fix });
+        }
+        pointRules(item, kind).forEach(function (rule) {
+          var ids = rule[0].split(' / ');
+          var exists = ids.some(function (id) { return pts.indexOf(id) >= 0; });
+          if (rule[2]) { need++; if (exists) bound++; }
+          else { optional++; if (exists) optionalBound++; }
+          if (!exists) add(rule[2] ? 'ERROR' : 'WARN', '关键测点绑定', 'INPUT_MISSING', rule[0],
+            rule[1] + '未绑定；' + (rule[3] || '该空调移出可动作集'), 'bind');
+        });
+        pts.forEach(function (id) {
+          var h = data[id];
+          if (!h || h.valid / 2016 < 0.5) add('WARN', '关键测点绑定', 'INPUT_MISSING', id,
+            '长期无值：近 7 天有效样本 ' + (h ? h.valid : 0) + ' / 2,016（' + (h ? Math.round(h.valid / 2016 * 100) : 0) + '%），不足 50%', 'data');
+        });
+        if (bound === need) add('PASS', '关键测点绑定', '已校验', '测点绑定汇总',
+          '必需测点 ' + bound + ' / ' + need + ' 已绑；可选测点 ' + optionalBound + ' / ' + optional + ' 已绑');
+
+        var checked = 0, issues = 0;
+        pts.forEach(function (id) {
+          var h = data[id];
+          if (!h || !h.valid) return;
+          if (h.hours < 24) {
+            add('INFO', '测点数据合理性', '无法校验', id, '近 7 天仅有 ' + h.hours + ' 小时数据，不足 24 小时', 'data');
+            issues++; return;
+          }
+          checked++;
+          function warn(sub, msg) {
+            issues++;
+            add('WARN', '测点数据合理性 · ' + sub, 'CONFIG_SUSPECT(POINT_DATA)', id,
+              msg + '；最近 ' + h.latest, 'data');
+          }
+          function evidence(hits, total) { return '近 7 天命中 ' + Math.round(hits / total * 100) + '%（' + hits.toLocaleString('en-US') + ' / ' + total.toLocaleString('en-US') + ' 个样本）'; }
+          // outOfRange 为超出物模型量程或物理范围的样本数，合并计数不重复。
+          if (h.outOfRange / h.valid > 0.05) warn('越界', evidence(h.outOfRange, h.valid) + '，超出物模型量程或物理范围');
+          var isTemp = ['1_21_0', '1_22_0', '1_2987_0', '1_27_0', '1_1_0'].indexOf(id) >= 0;
+          var isPower = id === '1_627_0' || id === '1_105_0';
+          var isPercent = ['1_3152_0', '4_90_0', '3_2001_0', '1_4_0'].indexOf(id) >= 0 || id.indexOf('1_1052_10#') === 0;
+          var eps = isTemp ? 0.02 : ((isPower || isPercent) ? 0.1 : null);
+          var flat = (h.flat || []).filter(function (x) { return eps !== null && x.hours >= 12 && x.range < eps && x.neighborChanged; });
+          if (flat.length) warn('写死', '近 7 天出现 ' + flat.length + ' 次；最长连续 ' + Math.max.apply(null, flat.map(function (x) { return x.hours; })) + ' 小时极差 < ' + eps + (isTemp ? '℃' : (isPower ? ' kW' : '%')) + '，同期邻近测点有变化');
+          var threshold = isTemp ? 5 : (isPower && item.attrs ? Number(item.attrs.ratedPower) * 0.5 : null);
+          var jumps = (h.jumps || []).filter(function (x) { return threshold !== null && x.minutes === 5 && !x.startStop && Math.abs(x.delta) > threshold; });
+          if (jumps.length) warn('跳变', '近 7 天出现 ' + jumps.length + ' 次，相邻 5 分钟差 > ' + threshold + (isTemp ? '℃' : ' kW') + '，已排除启停时刻');
+          // relations 按送回风、冷热通道、运行状态与功率、风机上限四种关系分别汇总。
+          (h.relations || []).forEach(function (rel) {
+            if (rel.hits / rel.total > 0.05) warn('物理关系', evidence(rel.hits, rel.total) + '；' + rel.msg);
+          });
+        });
+        if (checked && !issues) add('PASS', '测点数据合理性', '已校验', '测点数据汇总', checked + ' 个测点近 7 天无异常（5 分钟数据）');
+        return f;
+      }
+
+      /* §4.3 前五类及必填属性逐台检查；新增两类复用明细与状态。 */
       function checkDevice(item) {
         var schema = MODEL_SCHEMA[item.typeId];
         var f = [];
@@ -585,8 +789,9 @@
         }
         var handled = ['controlMode', 'designWaterInTemp', 'designAirInTemp', 'designAirOutTemp'];
         schema.props.forEach(function (p) {
-          if (p.required && isEmpty(A[p.id]) && handled.indexOf(p.id) < 0) add('ERROR', '⑥ 必填属性完整性', 'INPUT_MISSING', p.id, p.label + ' 未维护', 'attr');
+          if (p.required && isEmpty(A[p.id]) && handled.indexOf(p.id) < 0) add('ERROR', '必填属性完整性', 'INPUT_MISSING', p.id, p.label + ' 未维护', 'attr');
         });
+        f = f.concat(checkPoints(item, 'ac'));
         var status = f.some(function (x) { return x.level === 'ERROR'; }) ? 'error' : f.some(function (x) { return x.level === 'WARN'; }) ? 'warn' : 'ok';
         return { status: status, findings: f };
       }
@@ -599,11 +804,18 @@
             ? { level: 'PASS', check: '⑤ 拓扑完整性', code: '已校验', prop: t.rule, msg: t.msg, target: '机房拓扑' }
             : { level: 'ERROR', check: '⑤ 拓扑完整性', code: 'TOPOLOGY_INCOMPLETE', prop: t.rule, msg: t.msg, target: t.target, fix: 'topo' };
         });
-        return { dev: dev, topo: topo };
+        var extra = [];
+        (room.sensors || []).concat([room.group]).forEach(function (item) {
+          var kind = item === room.group ? 'group' : 'sensor';
+          checkPoints(item, kind).forEach(function (f) {
+            extra.push(Object.assign({ deviceId: kind === 'group' ? '__group' : '__sensors', target: item.name }, f));
+          });
+        });
+        return { dev: dev, topo: topo, extra: extra };
       }
 
       function stats(r) {
-        var c = { inUse: 0, off: 0, ok: 0, warn: 0, error: 0, errN: 0, warnN: 0, activeWarnN: 0, infoN: 0, topoErr: 0 };
+        var c = { inUse: 0, off: 0, ok: 0, warn: 0, error: 0, errN: 0, warnN: 0, activeWarnN: 0, infoN: 0, topoErr: 0, groupErr: 0, sensorErr: 0 };
         room.devices.forEach(function (d) {
           var x = r.dev[d.id];
           if (!d.active) c.off++;
@@ -611,8 +823,14 @@
           x.findings.forEach(function (f) { if (f.level === 'ERROR') c.errN++; if (f.level === 'WARN') { c.warnN++; if (d.active) c.activeWarnN++; } if (f.level === 'INFO') c.infoN++; });
         });
         r.topo.forEach(function (t) { if (t.level === 'ERROR') c.topoErr++; });
+        r.extra.forEach(function (f) {
+          if (f.level === 'ERROR') { c.errN++; if (f.deviceId === '__group') c.groupErr++; else c.sensorErr++; }
+          if (f.level === 'WARN') { c.warnN++; c.activeWarnN++; }
+          if (f.level === 'INFO') c.infoN++;
+        });
+        c.errN += c.topoErr;
         c.actionable = c.inUse - c.error;
-        c.blocked = c.topoErr > 0 || c.actionable <= 0;
+        c.blocked = c.topoErr > 0 || c.groupErr > 0 || c.sensorErr > 0 || c.actionable <= 0;
         return c;
       }
 
@@ -631,14 +849,19 @@
       }
 
       function renderBanner(c) {
-        var when = '校验时间 ' + room.checkedAt + '；按当前物模型属性、绑点、关系与运行数据执行。';
+        var when = (c.sensorErr ? '有 ' + c.sensorErr + ' 个投入传感器温度未绑。温度未绑：机房不能寻优；不需要检查的测点请投出。' : '') + '校验时间 ' + room.checkedAt + '；按当前物模型属性、绑点、关系与运行数据执行。';
         if (c.blocked) {
-          var why = c.topoErr ? '拓扑不完整（' + c.topoErr + ' 条 TOPOLOGY_INCOMPLETE）' : '可动作集为空';
-          setBanner('block', '校验未通过：' + why + '，机房寻优将跳过（SKIPPED）', '请按明细「去配置 / 去维护」处理后重新校验。' + when);
+          var reasons = [];
+          if (c.topoErr) reasons.push('拓扑不完整（' + c.topoErr + ' 条）');
+          if (c.groupErr) reasons.push('IT 功率未绑定，机房不能寻优');
+          if (c.sensorErr) reasons.push('投入传感器温度未绑定（' + c.sensorErr + ' 个），机房不能寻优');
+          if (c.actionable <= 0) reasons.push('可动作集为空');
+          var why = reasons.join('；');
+          setBanner('block', '校验未通过：' + why + '，机房寻优将跳过（SKIPPED）', '请按明细「去配置 / 去修改 / 去绑点」处理后重新校验。' + when);
         } else if (c.error) {
           setBanner('warn', '校验完成：' + c.error + ' 台移出可动作集，机房不阻断', '移出的空调寻优时保持当前控制不动作，其余 ' + c.actionable + ' 台照常寻优' + (c.activeWarnN ? '；另有 ' + c.activeWarnN + ' 条 WARN 待核对' : '') + '。' + when);
         } else {
-          var tips = c.activeWarnN + c.infoN;
+          var tips = c.activeWarnN + c.infoN + c.sensorErr;
           setBanner('pass', tips ? '校验通过，有 ' + tips + ' 条提示' : '校验通过', '投入 ' + c.inUse + ' 台全部进入可动作集，拓扑完整。' + when);
         }
       }
@@ -690,6 +913,7 @@
           r.dev[d.id].findings.forEach(function (f) { rows.push(Object.assign({ deviceId: d.id, target: d.name, typeId: d.typeId }, f)); });
         });
         r.topo.forEach(function (t) { rows.push(Object.assign({ deviceId: '__topo' }, t)); });
+        rows = rows.concat(r.extra);
         var order = { ERROR: 0, WARN: 1, INFO: 2, PASS: 3 };
         rows.sort(function (a, b) { return order[a.level] - order[b.level]; });
         return rows;
@@ -700,6 +924,7 @@
         var cur = sel.value;
         sel.innerHTML = '<option value="">全部实例</option>'
           + room.devices.map(function (d) { return '<option value="' + d.id + '">' + d.name + '</option>'; }).join('')
+          + '<option value="__sensors">温湿度传感器</option><option value="__group">空调设备组</option>'
           + '<option value="__topo">机房拓扑</option>';
         sel.value = cur;
       }
@@ -727,7 +952,8 @@
           if (x.fix === 'attr') handle = '<span class="action-link danger" data-act="maintain" data-kind="attr" data-target="' + x.target + '" data-prop="' + x.prop.split(' / ')[0] + '">去修改 →</span>';
           else if (x.fix === 'point') handle = '<span class="action-link danger" data-act="maintain" data-kind="attr" data-target="' + x.target + '" data-prop="' + x.prop + '">改控制型 →</span><br><span class="action-link danger" data-act="maintain" data-kind="point" data-target="' + x.target + '" data-prop="' + x.prop + ' 对应写点">去绑点 →</span>';
           else if (x.fix === 'topo') handle = '<span class="action-link danger" data-act="topo" data-target="' + x.target + '">去配置 →</span>';
-          else if (x.fix === 'bind') handle = '<span class="action-link" data-act="maintain" data-kind="point" data-target="' + x.target + '" data-prop="证据源">去绑点 →</span>';
+          else if (x.fix === 'bind') handle = '<span class="action-link" data-act="maintain" data-kind="point" data-target="' + x.target + '" data-prop="' + x.prop + '">去绑点 →</span>';
+          else if (x.fix === 'data') handle = '<span class="action-link" data-act="point-data" data-target="' + x.target + '" data-prop="' + x.prop + '">核对测点 →</span>';
           else if (x.level === 'WARN') handle = '<span class="cell-sub">实施核对属性</span>';
           else handle = '<span class="cell-sub">—</span>';
           return '<tr>'
@@ -788,6 +1014,9 @@
             showToast('去修改（原型不跳转）：编辑机房热力模型 › 步骤 1 › ' + el.getAttribute('data-target') + ' 属性区 › ' + el.getAttribute('data-prop') + '（页内直接改）'
               + '\n回跳参数 return=' + ret + '\n保存后回到本页并自动重新校验');
           }
+        } else if (act === 'point-data') {
+          showToast('核对测点（原型不跳转）：工程配置 › 设备管理 › ' + el.getAttribute('data-target') + ' › ' + el.getAttribute('data-prop')
+            + '，查看近 7 天 5 分钟曲线、采集记录与绑定信息；核对后返回重新校验');
         } else if (act === 'topo') {
           showToast('去配置（原型不跳转）：编辑机房热力模型 › 步骤 2 › ' + el.getAttribute('data-target')
             + '\n回跳参数 return=' + ret + '\n保存后回到本页并自动重新校验');

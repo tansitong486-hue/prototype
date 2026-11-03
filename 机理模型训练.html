@@ -1445,7 +1445,7 @@ const rawModels=[
  ['OLD','CWP04','功率','冷却水泵','2025-06~2025-08',null,'完成训练','2025-08-12 12:30:00',false,'kW','MAPE',null]
 ];
 let models=rawModels.map(([id,name,target,type,window,v,status,time,learning,unit,relKind,yMean])=>({id,name,target,type,window,v,status,time,learning,unit,relKind,yMean,algo:'混合增强',legacy:id==='OLD',transfer:0}));
-// ===== v2.9 需求 1：末端模型按原框架接入（同列、同评估、同迁移学习；§1.2 / 置信 / 分组键 / 数据门 / 配置校验放悬停数据提示）=====
+// ===== v2.9 需求 1：末端模型按原框架接入（同列、同评估、同迁移学习；§1.3 / 置信 / 分组键 / 数据门 / 配置校验放悬停数据提示）=====
 // 末端既有演示数据换算为完整 10 项评估指标（含报告专用的重训、覆盖），保留逐设备扰动。
 function tv(b,i,cov,perf){const j=k=>Math.round(b[k]*(1+(((i*7+k*3)%5)-2)*.04)*100)/100,sigma=j(0),raw=v=>Number(v.toFixed(5));return [sigma,raw(j(2)*sigma),null,b[3],b[4],j(5),b[6],raw(j(7)*sigma),cov,perf];}
 const TV={a2:[.12,1.4,1.6,0,0,1.2,3,.4],a4:[.21,2.1,2.4,0,0,2.5,8,.6],a4w:[.21,2.8,3.3,0,0,2.9,12,.8],a2bad:[.14,2.9,5.1,6,2,5.5,28,2.1],a4bad:[.23,3.4,7.2,12,4,7.1,35,2.9],b2:[.1,1.2,1.5,0,0,1,2,.3],b4:[.15,1.1,1.3,0,0,.8,1,.2],c1:[.09,1.9,2.2,0,0,1.8,5,.5],c1low:[.11,2.6,4.9,3,0,4,22,1.8],c3:[.13,2.4,2.9,0,0,2.2,7,.7],c3low:[.15,3.1,5.6,4,2,4.6,25,2]};
@@ -1488,22 +1488,22 @@ function buildTerminalModels(){
    :l1?'本机参数：控制器稳态偏移 b0 = 0℃、b1 = 0℃（随送风温度模型训练；样本不足，取缺省）'
    :`本机参数：控制器稳态偏移 b0 ${offsets[0].toFixed(1)}℃、b1 ${offsets[1].toFixed(1)}℃（随送风温度模型训练，b(u) = b0 + b1·u）`;
   out.push(mk(Object.assign({},common,{id:id+'A2',target:'送风温度',status:mig?'训练失败':'完成训练',time:tm(),v:mig?null:tv(l1?TV.a2bad:TV.a2,idx,l1?72:96,.9),failMsg,controllerHint,
-   hint:[controllerHint,mig?'§1.2 验收：送风温度 MAE —（自身模型训练失败，迁移出值）':`§1.2 验收：送风温度 MAE ${mae.toFixed(2)}℃（≤ 0.5℃）${mae<=.5?'达标':'未达标'}`,confLine,groupLine,gate].concat(l1?['L1 未辨识：δ_sa 样本不足取 0']:[],cfg.map(x=>'配置校验：'+x))})));
+   hint:[controllerHint,mig?'§1.3 验收：送风温度 MAE —（自身模型训练失败，迁移出值）':`§1.3 验收：送风温度 MAE ${mae.toFixed(2)}℃（≤ 0.5℃）${mae<=.5?'达标':'未达标'}`,confLine,groupLine,gate].concat(l1?['L1 未辨识：δ_sa 样本不足取 0']:[],cfg.map(x=>'配置校验：'+x))})));
   out.push(mk(Object.assign({},common,{id:id+'A4',target:'功率',status:mig?'训练失败':'完成训练',time:tm(),v:mig?null:tv(l1?TV.a4bad:(wape>(isOld?15:10)?TV.a4w:TV.a4),idx+3,l1?71:wape>(isOld?15:10)?90:94,1.3),failMsg,
-   hint:[mig?'§1.2 验收：功率 WAPE —（自身模型训练失败，迁移出值）':`§1.2 验收：功率 WAPE ${wape.toFixed(1)}%（${wapeStd}）${wape<=(isOld?15:10)?'达标':'未达标'} · 置信门 ≤ 20%`,confLine,groupLine,gate].concat(l1?['L1 未辨识：P_fan,r 激励不足（12 次 < 20）用 L0 k_fan × ratedPower；k_P 缺失率 6.8% > 5% 不辨识']:[],cfg.map(x=>'配置校验：'+x))})));
+   hint:[mig?'§1.3 验收：功率 WAPE —（自身模型训练失败，迁移出值）':`§1.3 验收：功率 WAPE ${wape.toFixed(1)}%（${wapeStd}）${wape<=(isOld?15:10)?'达标':'未达标'} · 置信门 ≤ 20%`,confLine,groupLine,gate].concat(l1?['L1 未辨识：P_fan,r 激励不足（12 次 < 20）用 L0 k_fan × ratedPower；k_P 缺失率 6.8% > 5% 不辨识']:[],cfg.map(x=>'配置校验：'+x))})));
  });
  TERMINAL_CW.forEach(([name,mae,wape,cfg],idx)=>{
   const id='TC'+(idx+1),common={name,type:'冷冻水型精密空调',window:'demo 2026-09-01~2026-09-21 · 6048样本（合成）'};
   const confLine='置信：低 — 无现场历史，demo 验证；可启停、连续量冻结，寻优输出标 MODEL_LOW_CONF',group='型号参数池 C（分组键 冷冻水型 · 变频(regulationType 2) · 铭牌 风量 21000 m³/h + 制冷量 80 kW；2 台）· 本机偏置 k_P 1.00 / δ_sa 0.0℃（demo）',gate='数据门：demo 数据集 21 天 · 激励 20 次（合成）· 无现场数据';
   const controllerHint=`本机参数：控制器稳态偏移 b0 ${idx?'0.2':'0.1'}℃、b1 ${idx?'0.5':'0.7'}℃（随送风温度模型训练，demo）`;
-  out.push(mk(Object.assign({},common,{id:id+'B2',target:'送风温度',status:'完成训练',time:tm(),v:tv(TV.b2,idx,99,.6),controllerHint,hint:[controllerHint,`§1.2 验收：送风温度 MAE ${mae.toFixed(2)}℃（≤ 0.5℃）达标（demo）`,confLine,group,gate].concat(cfg.map(x=>'配置校验：'+x))})));
-  out.push(mk(Object.assign({},common,{id:id+'B4',target:'功率',status:'完成训练',time:tm(),v:tv(TV.b4,idx+1,99,.5),hint:[`§1.2 验收：功率 WAPE ${wape.toFixed(1)}%（新机 ≤ 10%）达标（demo）· 冷冻水型功率 = 风机 + 辅助`,confLine,group,gate].concat(cfg.map(x=>'配置校验：'+x))})));
+  out.push(mk(Object.assign({},common,{id:id+'B2',target:'送风温度',status:'完成训练',time:tm(),v:tv(TV.b2,idx,99,.6),controllerHint,hint:[controllerHint,`§1.3 验收：送风温度 MAE ${mae.toFixed(2)}℃（≤ 0.5℃）达标（demo）`,confLine,group,gate].concat(cfg.map(x=>'配置校验：'+x))})));
+  out.push(mk(Object.assign({},common,{id:id+'B4',target:'功率',status:'完成训练',time:tm(),v:tv(TV.b4,idx+1,99,.5),hint:[`§1.3 验收：功率 WAPE ${wape.toFixed(1)}%（新机 ≤ 10%）达标（demo）· 冷冻水型功率 = 风机 + 辅助`,confLine,group,gate].concat(cfg.map(x=>'配置校验：'+x))})));
  });
  TERMINAL_SENSORS.forEach(([name,kind,mae,second,ident,bins,conf,edge],idx)=>{
   const cold=kind==='c',low=conf==='低',id='TS'+String(idx+1).padStart(2,'0');
   out.push(mk({id,name,type:'温湿度传感器',target:cold?'冷通道温度':'热通道温度',status:'完成训练',time:tm(),window:'2026-09-09~2026-10-12 · 2184稳态行',
    v:tv(cold?(low?TV.c1low:TV.c1):(low?TV.c3low:TV.c3),idx,low?(cold?64:68):(cold?97:95),.7),
-   hint:[cold?`§1.2 验收：冷点整链 MAE ${mae.toFixed(2)}℃（≤ 0.6℃）${mae<=.6?'达标':'未达标'} · 倒挂 ${second}（= 0）达标`:`§1.2 验收：热点 MAE ${mae.toFixed(2)}℃（≤ 1.0℃）${mae<=1?'达标':'未达标'} · R² ${second.toFixed(2)}（> 0）达标`,
+   hint:[cold?`§1.3 验收：冷点整链 MAE ${mae.toFixed(2)}℃（≤ 0.6℃）${mae<=.6?'达标':'未达标'} · 倒挂 ${second}（= 0）达标`:`§1.3 验收：热点 MAE ${mae.toFixed(2)}℃（≤ 1.0℃）${mae<=1?'达标':'未达标'} · R² ${second.toFixed(2)}（> 0）达标`,
     `置信：${conf} — 工况分箱 ${bins}/14 箱样本 ≥ 20（N_min）`+(low?'；低置信测点仍参与安全检查，用预测区间 [T̂−0.5, T̂+0.5]℃（上限查区间上端、下限查区间下端）':''),
     '辨识：'+ident,'拓扑：'+edge+'（所属通道 aisleType 定冷 / 热）','数据门：同机房 33 天 · 稳态行 2 184 条 · 剔除全房同时冻结段']}));
  });

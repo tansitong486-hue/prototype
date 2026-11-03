@@ -1015,6 +1015,31 @@
       display:flex; justify-content:flex-end; gap:10px;
     }
 
+    /* 新算法独立规则区：六列表格与设备多选 */
+    .right-panel.jj-sim-active { width:1120px; }
+    #jjSimConfigArea [hidden] { display:none !important; }
+    #jjSimConfigArea .jj-sim-qty-wrap { overflow-x:auto; }
+    #jjSimConfigArea .qty-rule-table { min-width:0; }
+    #jjSimConfigArea .qty-rule-table td:nth-child(3) { width:220px; }
+    #jjSimConfigArea .qty-rule-table .rule-device { display:block; }
+    #jjSimConfigArea .qty-rule-table .qty-radio-label { white-space:normal; }
+    #jjSimConfigArea .qty-rule-table .form-control { font-size:12px; padding:6px; }
+    .jj-sim-devices { min-width:135px; font-size:12px; }
+    .jj-sim-devices summary { padding:7px; border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; }
+    .jj-sim-devices.is-disabled summary { color:var(--text-hint); background:#F5F5F5; cursor:not-allowed; }
+    .jj-sim-device-options { max-height:170px; overflow-y:auto; padding:6px; border:1px solid var(--border); background:#fff; }
+    .jj-sim-device-options label { display:flex; align-items:center; gap:5px; padding:5px 0; white-space:nowrap; }
+    .jj-sim-device-options input { accent-color:var(--success); }
+    #jjSimConfigArea .rule-table-wrap { border:1px solid var(--border-light); border-radius:6px; overflow:auto; margin-bottom:16px; }
+    #jjSimConfigArea .rule-table { width:100%; min-width:680px; border-collapse:collapse; table-layout:fixed; }
+    #jjSimConfigArea .rule-table th, #jjSimConfigArea .rule-table td { padding:10px 9px; border-bottom:1px solid var(--border-light); text-align:left; vertical-align:middle; font-size:12px; }
+    #jjSimConfigArea .rule-table th { background:#F7F9FC; color:var(--text-secondary); font-weight:600; }
+    #jjSimConfigArea .rule-table tr:last-child td { border-bottom:none; }
+    #jjSimConfigArea .rule-table .form-control { min-width:0; padding:5px 7px; font-size:12px; }
+    #jjSimConfigArea .rule-help { display:inline-flex; align-items:center; justify-content:center; width:15px; height:15px; border:1px solid var(--text-hint); border-radius:50%; font-size:10px; color:var(--text-secondary); cursor:help; margin-left:4px; }
+    #jjSimConfigArea .device-type-name { font-weight:600; color:var(--text-primary); }
+    #jjSimConfigArea .rule-table-hint { margin:-10px 0 16px; }
+
     @media (max-width:900px) {
       .module-strip { flex-direction:column; }
       .module-strip .module-card,
@@ -1049,6 +1074,13 @@
       </div>
 
       <!-- ===== 版本信息 ===== -->
+      <div class="anno anno-version-header" data-version="v2.9">
+            <span class="anno-tag">版本信息</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body"><p><b>关联模块：</b>加减机寻优（末端全局寻优）</p><p><b>当前版本：</b>v2.9</p><p><b>本页说明：</b>仿真模型预测寻优调开关机，并同时优化开关机后的温度设定、风机转速上限、水阀最大开度。遗传算法同时搜索开机组合和设定值。</p></div>
+          </div>
+
       <div class="anno anno-version-header" data-version="v1.0">
         <span class="anno-tag">版本信息</span>
         <div class="anno-body">
@@ -1343,6 +1375,12 @@
 
       <!-- TAB: 寻优记录 -->
       <div class="content-body tab-pane active" id="pane-optRecord">
+        <div class="anno anno-data" data-version="v2.9">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body"><p><b>关联模块：</b>寻优记录 · 仿真模型预测寻优（需求 §8.4、§11.2）</p><p>沿用结论条与变量表。每台空调显示「开关机」行，实际值 / AI寻优值为运行 / 停机；另按控制方式与已接入写点显示温度设定、风机转速上限、水阀最大开度行。结论徽章为「节能调优 / 保持现状 / 安全恢复 / 本轮跳过」，正文按「建议 + 原因 + 预计」组织，预计展示预测功率与预测节能率。原因使用页面文案，不显示原因码。低置信空调标「数据积累中」。</p></div>
+          </div>
         <div class="anno anno-req" data-version="v1.0">
           <span class="anno-tag">需求说明</span>
           <span class="anno-version">v1.0</span>
@@ -1694,7 +1732,7 @@
         <div class="form-group">
           <div class="form-label"><span class="required">*</span> 寻优周期 T_opt</div>
           <div class="form-row">
-            <input type="number" class="form-control" value="60" style="width:140px;">
+            <input type="number" class="form-control" id="jjOptPeriod" value="60" min="1" step="1" style="width:140px;" oninput="updateJjSimTimeLimit()" aria-label="寻优周期">
             <span class="form-suffix">分钟</span>
           </div>
           <div class="form-hint field-hint-annoonly">定时触发寻优计算的时间间隔</div>
@@ -1751,6 +1789,7 @@
           <select class="form-control" id="algorithmSelect" onchange="toggleAlgorithmConfig()">
             <option value="">请选择寻优算法</option>
             <option value="multi-obj-switch" selected>多目标加减机寻优算法</option>
+            <option value="sim_predict">仿真模型预测寻优</option>
           </select>
           <div class="form-hint field-hint-annoonly">选定算法后展示对应的配置参数</div>
         </div>
@@ -1942,6 +1981,146 @@
 
         </div>
 
+        <!-- 仿真模型预测寻优：独立配置，不复用既有算法参数 -->
+        <div id="jjSimConfigArea" style="display:none;">
+          <div class="anno anno-field" data-version="v2.9">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body"><p><b>关联模块：</b>规则配置 · 仿真模型预测寻优（需求 §8.2）</p><p>选中本算法才显示本区；切回后恢复既有算法配置。寻优周期缺省 60 分钟。仿真模型需选择末端机房模型，无默认选择。遗传算法同时搜索开机组合与设定值；种群规模缺省 60、最大进化代数缺省 50，两项始终可编辑，须为正整数。每轮计算时限缺省为周期的 20%，最长 20 分钟。开机台数上下限只读所选安全边界，在安全边界页修改。</p></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="jjSimModel"><span class="required">*</span> 仿真模型</label>
+            <select class="form-control" id="jjSimModel" required>
+              <option value="">请选择仿真模型</option>
+              <option>江苏分中心二层 0_100 末端机房</option>
+              <option>江苏分中心一层 0_101 末端机房</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="jjSimOptimizer">寻优器</label>
+            <input class="form-control" id="jjSimOptimizer" value="遗传算法" readonly>
+            <div class="form-hint">开机组合与设定值一起用遗传算法搜索。</div>
+          </div>
+          <div class="form-row-2col" id="jjSimOptimizerParams">
+            <div class="form-group"><label class="form-label" for="jjSimPopulation">种群规模</label><input type="number" class="form-control" id="jjSimPopulation" value="60" min="1" step="1" required></div>
+            <div class="form-group"><label class="form-label" for="jjSimGenerations">最大进化代数</label><input type="number" class="form-control" id="jjSimGenerations" value="50" min="1" step="1" required></div>
+          </div>
+
+          <div class="anno anno-ux" data-version="v2.9">
+            <span class="anno-tag">交互说明</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body"><p><b>关联模块：</b>设备数量寻优规则（需求 §8.2）</p><p>每种空调类型一行，缺省开启、增量式。开启时只显示寻优范围：全局式搜索全部开机组合，增量式为该类空调每轮最多开或关 1 台；默认开机设备与指定设备列置空。关闭时只显示默认开机设备，缺省跟随实际；选指定开机设备后可多选该类型实例，至少选 1 台，其余关机。选中单选项绿色高亮。控制方式沿用单点位或双点位；两种组合均须通过仿真与安全评价。</p></div>
+          </div>
+          <div class="form-section">设备数量寻优规则</div>
+          <div class="qty-rule-wrap jj-sim-qty-wrap">
+            <table class="qty-rule-table">
+              <thead><tr><th>规则名称</th><th>启用开关</th><th>控制方式</th><th>默认开机设备</th><th>指定设备 <span class="required">*</span></th><th>寻优范围</th></tr></thead>
+              <tbody>
+                <tr class="jj-sim-qty-row">
+                  <td><span class="rule-device">冷冻水型精密空调</span><span class="rule-param">运行状态</span><span class="device-type-note">当前机房 8 台</span></td>
+                  <td><label class="toggle-switch"><input type="checkbox" class="jj-sim-enabled" checked aria-label="冷冻水型精密空调启用寻优" onchange="syncJjSimRules()"><span class="toggle-slider"></span></label></td>
+                  <td><select class="form-control jj-sim-control" aria-label="冷冻水型精密空调控制方式"><option value="dual">开机 / 关机指令（双点位）</option><option value="single" selected>开关机设定（单点位）</option></select></td>
+                  <td><div class="qty-radio-stack jj-sim-default" hidden>
+                    <label class="qty-radio-label"><input type="radio" name="jjSimDefault0" value="follow" checked onchange="syncJjSimRules()"><span class="qty-radio-text active">跟随实际开机设备</span></label>
+                    <label class="qty-radio-label"><input type="radio" name="jjSimDefault0" value="specify" onchange="syncJjSimRules()"><span class="qty-radio-text">指定开机设备</span></label>
+                  </div></td>
+                  <td><details class="jj-sim-devices" hidden><summary>请选择设备</summary><div class="jj-sim-device-options" onchange="syncJjSimDeviceLabel(this)"><label><input type="checkbox" value="0-1" aria-label="冷冻水型精密空调 1号空调">冷冻水型精密空调 1号空调</label><label><input type="checkbox" value="0-2" aria-label="冷冻水型精密空调 2号空调">冷冻水型精密空调 2号空调</label><label><input type="checkbox" value="0-3" aria-label="冷冻水型精密空调 3号空调">冷冻水型精密空调 3号空调</label><label><input type="checkbox" value="0-4" aria-label="冷冻水型精密空调 4号空调">冷冻水型精密空调 4号空调</label><label><input type="checkbox" value="0-5" aria-label="冷冻水型精密空调 5号空调">冷冻水型精密空调 5号空调</label><label><input type="checkbox" value="0-6" aria-label="冷冻水型精密空调 6号空调">冷冻水型精密空调 6号空调</label><label><input type="checkbox" value="0-7" aria-label="冷冻水型精密空调 7号空调">冷冻水型精密空调 7号空调</label><label><input type="checkbox" value="0-8" aria-label="冷冻水型精密空调 8号空调">冷冻水型精密空调 8号空调</label></div></details></td>
+                  <td><div class="qty-radio-stack jj-sim-scope">
+                    <label class="qty-radio-label"><input type="radio" name="jjSimScope0" value="global" onchange="syncJjSimRules()"><span class="qty-radio-text">全局式开机组合寻优</span></label>
+                    <label class="qty-radio-label"><input type="radio" name="jjSimScope0" value="incremental" checked onchange="syncJjSimRules()"><span class="qty-radio-text active">增量式开机组合寻优</span></label>
+                  </div></td>
+                </tr>
+                <tr class="jj-sim-qty-row">
+                  <td><span class="rule-device">风冷 DX 精密空调</span><span class="rule-param">运行状态</span><span class="device-type-note">当前机房 4 台</span></td>
+                  <td><label class="toggle-switch"><input type="checkbox" class="jj-sim-enabled" checked aria-label="风冷 DX 精密空调启用寻优" onchange="syncJjSimRules()"><span class="toggle-slider"></span></label></td>
+                  <td><select class="form-control jj-sim-control" aria-label="风冷 DX 精密空调控制方式"><option value="dual" selected>开机 / 关机指令（双点位）</option><option value="single">开关机设定（单点位）</option></select></td>
+                  <td><div class="qty-radio-stack jj-sim-default" hidden>
+                    <label class="qty-radio-label"><input type="radio" name="jjSimDefault1" value="follow" checked onchange="syncJjSimRules()"><span class="qty-radio-text active">跟随实际开机设备</span></label>
+                    <label class="qty-radio-label"><input type="radio" name="jjSimDefault1" value="specify" onchange="syncJjSimRules()"><span class="qty-radio-text">指定开机设备</span></label>
+                  </div></td>
+                  <td><details class="jj-sim-devices" hidden><summary>请选择设备</summary><div class="jj-sim-device-options" onchange="syncJjSimDeviceLabel(this)"><label><input type="checkbox" value="1-1" aria-label="风冷 DX 精密空调 1号空调">风冷 DX 精密空调 1号空调</label><label><input type="checkbox" value="1-2" aria-label="风冷 DX 精密空调 2号空调">风冷 DX 精密空调 2号空调</label><label><input type="checkbox" value="1-3" aria-label="风冷 DX 精密空调 3号空调">风冷 DX 精密空调 3号空调</label><label><input type="checkbox" value="1-4" aria-label="风冷 DX 精密空调 4号空调">风冷 DX 精密空调 4号空调</label></div></details></td>
+                  <td><div class="qty-radio-stack jj-sim-scope">
+                    <label class="qty-radio-label"><input type="radio" name="jjSimScope1" value="global" onchange="syncJjSimRules()"><span class="qty-radio-text">全局式开机组合寻优</span></label>
+                    <label class="qty-radio-label"><input type="radio" name="jjSimScope1" value="incremental" checked onchange="syncJjSimRules()"><span class="qty-radio-text active">增量式开机组合寻优</span></label>
+                  </div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="anno anno-field" data-version="v2.9">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body"><p><b>关联模块：</b>规则配置 · 模拟量寻优规则</p><p>按空调类型与实际控制变量分行，只显示至少有 1 台具备的行。温度按控制方式分回风、送风；风机和水阀只计已接入写点的空调。行名后显示台数，「?」列出空调及控制变量，未接入的标「未接入，不调整」。运行中设定在「当前值 ± 寻优步长」与安全边界内取值；新开机设定在安全边界内取值，风机转速按它平时运行的转速计算。步长与粒度均大于 0；粒度缺省温度 0.5℃、风机 1%、水阀 5%。关闭某行，该控制量保持当前值。</p></div>
+          </div>
+          <div class="form-section">模拟量寻优规则</div>
+          <div class="rule-table-wrap">
+            <table class="rule-table" aria-label="按设备类型和实际控制变量配置模拟量寻优规则">
+              <thead><tr><th style="width:280px;">规则名称</th><th style="width:80px;">启用开关</th><th style="width:145px;">寻优步长 <span class="required">*</span></th><th style="width:145px;">寻优粒度 <span class="required">*</span></th></tr></thead>
+              <tbody id="jjSimAnalogRuleBody"></tbody>
+            </table>
+          </div>
+          <div class="form-hint rule-table-hint">运行中的空调在「当前值 ± 寻优步长」内调，新开机的空调在安全边界范围内调；关闭某行，该控制量保持当前值。</div>
+
+          <div class="form-section">寻优计算</div>
+          <div class="form-group">
+            <label class="form-label" for="jjSimTimeLimit">每轮计算时限</label>
+            <div class="form-row"><input type="number" class="form-control" id="jjSimTimeLimit" value="12" min="0.01" max="20" step="any" required style="width:140px;"><span class="form-suffix">分钟</span></div>
+            <div class="form-hint">缺省为寻优周期的 20%，最长 20 分钟</div>
+          </div>
+
+          <div class="anno anno-field" data-version="v2.9">
+            <span class="anno-tag">字段说明</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body"><p><b>关联模块：</b>寻优目标偏好与设备保护时间（需求 §8.2～§8.4）</p><p>最低节能门槛缺省 1%；合规候选的综合目标改善达到门槛才接受，否则保持现状。设备切换容忍度 λ₂ 为 0～0.50，缺省 0.12，越大越少开关机；每开或关 1 台需多省约 λ₂ / N_unit 的电，N_unit 为本轮投入空调台数。开机后最短运行时间缺省 20 分钟，关机后最短停机时间缺省 60 分钟，后者不得小于前者；未满足保护时间不能动作。</p></div>
+          </div>
+          <div class="form-section">寻优目标偏好</div>
+          <div class="form-group">
+            <label class="form-label" for="jjSimMinSaving">最低节能门槛</label>
+            <div class="form-row"><input type="number" class="form-control" id="jjSimMinSaving" value="1" min="0" max="100" step="0.1" required style="width:140px;"><span class="form-suffix">%</span></div>
+          </div>
+          <div class="form-group pref-slider-group">
+            <label class="form-label" for="jjSimLambda2">设备切换容忍度（λ₂）</label>
+            <div class="pref-slider-end-labels"><span>随意切换</span><span>尽量别动</span></div>
+            <div class="pref-slider-ticks"><span>0.00</span><span>0.12</span><span>0.30</span><span>0.50</span></div>
+            <input type="range" class="range-pref" id="jjSimLambda2" min="0" max="0.50" step="0.01" value="0.12" oninput="document.getElementById('jjSimLambda2Val').textContent = Number(this.value).toFixed(2)">
+            <div class="pref-slider-meta"><span>当前值</span><span class="pref-val" id="jjSimLambda2Val">0.12</span></div>
+            <div class="form-hint">每开或关 1 台需多省约 λ₂ / N_unit 的电</div>
+          </div>
+
+          <div class="form-section">设备保护时间</div>
+          <div class="form-row-2col">
+            <div class="form-group">
+              <label class="form-label" for="jjSimMinRun">开机后最短运行时间</label>
+              <div class="form-row"><input type="number" class="form-control" id="jjSimMinRun" value="20" min="1" step="1" required style="width:140px;" oninput="validateJjSimProtection()"><span class="form-suffix">分钟</span></div>
+              <div class="form-hint">空调开机后至少运行这么久，才允许再建议关它</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="jjSimMinOff">关机后最短停机时间</label>
+              <div class="form-row"><input type="number" class="form-control" id="jjSimMinOff" value="60" min="1" step="1" required style="width:140px;" oninput="validateJjSimProtection()"><span class="form-suffix">分钟</span></div>
+              <div class="form-hint">被建议关掉的空调，这么久内不再建议开它，避免反复启停；不小于开机后最短运行时间</div>
+            </div>
+          </div>
+          <div class="form-section">开机台数上下限</div>
+          <div class="form-hint">读所选安全边界「空调开启数量」：下限 3 台、上限不限，请在安全边界页修改</div>
+          <div class="anno anno-data" data-version="v2.9">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body"><p><b>关联模块：</b>全局寻优与柔性寻优协同（需求 §8.1）</p><p>开关机只在本页调，同一机房开关机来源由本页所选算法唯一确定。全局寻优同时优化开关机后的设定值；柔性寻优页在两轮全局寻优之间按寻优步长微调设定值。两页同时到期时先全局寻优，本轮柔性寻优跳过。输出前复核控制量回读、设备状态与配置版本，任一变化则本轮跳过。</p></div>
+          </div>
+          <div class="anno anno-data" data-version="v2.9">
+            <span class="anno-tag">数据逻辑</span>
+            <span class="anno-version">v2.9</span>
+            <span class="anno-source">需求文档</span>
+            <div class="anno-body"><p><b>关联模块：</b>仿真模型预测寻优 · 候选（需求 §8.1）</p><p>遗传算法同时搜索开机组合和温度设定、风机转速上限、水阀最大开度。全局式类型可取任意开机组合；增量式类型限定为「不变，或开 / 关其中 1 台」。运行中设定在「当前值 ± 寻优步长」与安全边界内取值；新开机设定在安全边界内取值，风机转速按它平时运行的转速计算。每轮重新取数，以当前控制保持的同模型预测为比较基准。候选须满足设备保护时间、通道覆盖与开机台数上下限。J = 归一化功率 + λ₂ × 开关机台次 ÷ 投入台数，不计参数平稳。</p></div>
+          </div>
+        </div>
+
       </div>
 
       <!-- 面板TAB: 投入/投出配置 -->
@@ -2034,7 +2213,7 @@
 
       <div class="panel-footer">
         <button class="btn" onclick="togglePanel()">取 消</button>
-        <button class="btn btn-primary btn-solid" onclick="togglePanel();">保 存</button>
+        <button class="btn btn-primary btn-solid" onclick="saveJjRuleConfig()">保 存</button>
       </div>
     </div>
   </div>
@@ -3830,11 +4009,129 @@ onPwdConfirm = function() {
 
 refreshDeliverUI();
 
+var jjSelectedAlgorithm = 'multi-obj-switch';
+var jjAlgorithmCycles = { 'multi-obj-switch': '60', sim_predict: '60' };
 function toggleAlgorithmConfig() {
   var sel = document.getElementById('algorithmSelect');
-  var area = document.getElementById('algorithmConfigArea');
-  area.style.display = sel.value ? 'block' : 'none';
+  var period = document.getElementById('jjOptPeriod');
+  var isSim = sel.value === 'sim_predict';
+  jjAlgorithmCycles[jjSelectedAlgorithm] = period.value;
+  if (sel.value !== jjSelectedAlgorithm) {
+    period.value = jjAlgorithmCycles[sel.value] || '60';
+    jjSelectedAlgorithm = sel.value;
+    if (isSim) updateJjSimTimeLimit();
+  }
+  document.getElementById('algorithmConfigArea').style.display = sel.value === 'multi-obj-switch' ? 'block' : 'none';
+  document.getElementById('jjSimConfigArea').style.display = isSim ? 'block' : 'none';
+  document.getElementById('rulePanel').classList.toggle('jj-sim-active', isSim);
+  syncJjSimRules();
 }
+
+function updateJjSimTimeLimit() {
+  if (document.getElementById('algorithmSelect').value !== 'sim_predict') return;
+  var period = Number(document.getElementById('jjOptPeriod').value);
+  if (Number.isFinite(period) && period > 0) {
+    document.getElementById('jjSimTimeLimit').value = Number(Math.min(period * 0.2, 20).toFixed(2));
+  }
+}
+
+function syncJjSimRules() {
+  document.querySelectorAll('.jj-sim-qty-row').forEach(function(row) {
+    var enabled = row.querySelector('.jj-sim-enabled').checked;
+    var specified = !enabled && row.querySelector('input[value="specify"]').checked;
+    var defaults = row.querySelector('.jj-sim-default');
+    var scope = row.querySelector('.jj-sim-scope');
+    var devices = row.querySelector('.jj-sim-devices');
+    defaults.hidden = enabled;
+    scope.hidden = !enabled;
+    devices.hidden = enabled;
+    devices.classList.toggle('is-disabled', !specified);
+    devices.querySelector('summary').setAttribute('aria-disabled', String(!specified));
+    devices.querySelector('summary').tabIndex = specified ? 0 : -1;
+    if (!specified) devices.open = false;
+    defaults.querySelectorAll('input').forEach(function(input) { input.disabled = enabled; });
+    scope.querySelectorAll('input').forEach(function(input) { input.disabled = !enabled; });
+    devices.querySelectorAll('input').forEach(function(input) { input.disabled = !specified; });
+  });
+}
+
+// 新算法独立的演示控制能力，不改既有算法的空调数据。
+function renderJjSimAnalogRules() {
+  var devices = ROOM.acs.map(function(ac) {
+    return { id:ac.id, deviceType:ac.deviceType, typeLabel:ac.typeLabel,
+      controlMode:['AC3', 'AC7', 'AC9', 'AC10', 'AC11', 'AC12'].includes(ac.id) ? 'return' : 'supply',
+      fanWritable:!['AC7', 'AC12'].includes(ac.id), valveWritable:ac.deviceType === 'water' && ac.id !== 'AC8' };
+  });
+  var rows = [];
+  ['water', 'air'].forEach(function(type) {
+    var sameType = devices.filter(function(ac) { return ac.deviceType === type; });
+    [
+      { kind:'return', name:'回风温度设定', unit:'℃', step:type === 'water' ? 2 : 1.5, grain:0.5 },
+      { kind:'supply', name:'送风温度设定', unit:'℃', step:type === 'water' ? 2 : 1.5, grain:0.5 },
+      { kind:'fan', name:'风机转速上限设定', unit:'%', step:10, grain:1 },
+      { kind:'valve', name:'水阀最大开度', unit:'%', step:10, grain:5 }
+    ].forEach(function(rule) {
+      var isTemp = rule.kind === 'return' || rule.kind === 'supply';
+      var candidates = sameType.filter(function(ac) { return !isTemp || ac.controlMode === rule.kind; });
+      var writable = function(ac) { return isTemp || (rule.kind === 'fan' ? ac.fanWritable : ac.valveWritable); };
+      var members = candidates.filter(writable);
+      if (!members.length) return;
+      var label = sameType[0].typeLabel + ' · ' + rule.name;
+      var details = candidates.map(function(ac) {
+        return ac.id.replace('AC', '') + '#空调 ' + rule.name + (writable(ac) ? '' : '：未接入，不调整');
+      }).join('\n');
+      rows.push(`<tr data-rule-key="${type}-${rule.kind}">
+        <td><span class="device-type-name">${vizText(label)}</span><span class="device-type-note">${members.length} 台 <span class="rule-help" tabindex="0" title="${vizText(details)}" aria-label="查看空调明细">?</span></span></td>
+        <td><label class="toggle-switch"><input type="checkbox" checked aria-label="${vizText(label)}启用寻优" onchange="this.closest('tr').querySelectorAll('input[type=number]').forEach(function(input) { input.disabled = !this.checked; }, this)"><span class="toggle-slider"></span></label></td>
+        <td><div class="form-row"><input type="number" class="form-control" value="${rule.step}" min="0.01" step="0.01" required aria-label="${vizText(label)}寻优步长"><span class="form-suffix">${rule.unit}</span></div></td>
+        <td><div class="form-row"><input type="number" class="form-control" value="${rule.grain}" min="0.01" step="0.01" required aria-label="${vizText(label)}寻优粒度"><span class="form-suffix">${rule.unit}</span></div></td>
+      </tr>`);
+    });
+  });
+  document.getElementById('jjSimAnalogRuleBody').innerHTML = rows.join('');
+}
+renderJjSimAnalogRules();
+
+function syncJjSimDeviceLabel(options) {
+  var count = options.querySelectorAll('input:checked').length;
+  options.parentElement.querySelector('summary').textContent = count ? '已选 ' + count + ' 台空调' : '请选择设备';
+}
+
+document.querySelectorAll('.jj-sim-devices summary').forEach(function(summary) {
+  summary.addEventListener('click', function(event) {
+    if (this.getAttribute('aria-disabled') === 'true') event.preventDefault();
+  });
+});
+
+function validateJjSimProtection() {
+  var run = document.getElementById('jjSimMinRun');
+  var off = document.getElementById('jjSimMinOff');
+  off.min = run.value || '1';
+  off.setCustomValidity(Number(off.value) < Number(run.value) ? '关机后最短停机时间不能小于开机后最短运行时间' : '');
+}
+
+function saveJjRuleConfig() {
+  if (document.getElementById('algorithmSelect').value === 'sim_predict') {
+    validateJjSimProtection();
+    var fields = [document.getElementById('jjOptPeriod')].concat(Array.from(document.querySelectorAll('#jjSimConfigArea input, #jjSimConfigArea select')));
+    var invalid = fields.find(function(input) { return !input.disabled && !input.checkValidity(); });
+    var emptyDevices = Array.from(document.querySelectorAll('.jj-sim-qty-row')).find(function(row) {
+      return !row.querySelector('.jj-sim-enabled').checked && row.querySelector('input[value="specify"]').checked && !row.querySelector('.jj-sim-devices input:checked');
+    });
+    if (invalid || emptyDevices) document.querySelector('[data-ptab="ruleConfig"]').click();
+    if (invalid) { invalid.reportValidity(); return; }
+    if (emptyDevices) {
+      var devices = emptyDevices.querySelector('.jj-sim-devices');
+      devices.open = true;
+      devices.scrollIntoView({ block:'nearest' });
+      devices.querySelector('summary').focus();
+      alert('请选择至少一台' + emptyDevices.querySelector('.rule-device').textContent + '作为指定开机设备');
+      return;
+    }
+  }
+  togglePanel();
+}
+syncJjSimRules();
 
 function openDispatch(mode) {
   const isRollback = mode === '一键回退';
