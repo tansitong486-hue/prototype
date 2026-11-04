@@ -6,10 +6,13 @@
  *     data-active-nav="AI智能能效"
  *     data-active-sidebar="机房总览">
  *   </script>
+ *   内部键 AI智能能效 显示为 AI智控中枢。
  */
 
 (function () {
   'use strict';
+
+  const NAV_LABELS = { 'AI智能能效': 'AI智控中枢' };
 
   const NAV_ITEMS = ['设施监控', 'AI智能能效', '系统管理', '数据分析', '工程配置', '原型导航'];
 
@@ -31,7 +34,7 @@
     { label: '物模型', linkKey: '物模型' }
   ];
 
-  /** AI智能能效侧栏（配置类入口已迁至工程配置；「原型导航」在顶栏全局入口） */
+  /** AI智控中枢侧栏（配置类入口已迁至工程配置；「原型导航」在顶栏全局入口） */
   const SIDEBAR_TREE_AI = [
     { label: '总览看板' },
     {
@@ -67,15 +70,15 @@
       children: ['节能分析']
     },
     {
-      group: 'AI节能配置',
+      group: '智控配置',
       open: true,
       children: [
-        '机理模型训练',
+        '设备预测模型',
         '系统仿真建模',
         '安全边界',
         '智控下发策略',
         '安全回退策略',
-        '机房热力模型',
+        '机房配置',
         '冷站诊断规则'
       ]
     }
@@ -111,13 +114,13 @@
     '能源配置': '能源配置.html',
     '能源计费配置': '能源配置.html',
     '能源拓扑配置': '能源计量关系.html',
-    '机理模型训练': '机理模型训练.html',
+    '设备预测模型': '机理模型训练.html',
     '系统仿真建模': '系统仿真建模.html',
     '机房总览': '机房总览.html',
     '机房柔性寻优': '机房寻优-柔性寻优.html',
     '机房全局寻优': '机房寻优-加减机寻优.html',
     '机房智能诊断': '机房智能诊断.html',
-    '机房热力模型': '机房寻优-机房热力模型列表.html',
+    '机房配置': '机房寻优-机房热力模型列表.html',
     '冷站柔性寻优': '冷站柔性调优.html',
     '冷站全局寻优': '冷站全局寻优.html',
     '冷站长周期寻优': '冷站长周期寻优.html',
@@ -144,13 +147,13 @@
     '能效视图': 'v2.5',
     '能源计费配置': 'v2.5',
     '能源拓扑配置': 'v2.5',
-    '机理模型训练': 'v2.9',
+    '设备预测模型': 'v2.9',
     '系统仿真建模': 'v2.9',
     '机房总览': 'v1.9',
     '机房柔性寻优': 'v2.9',
     '机房全局寻优': 'v2.9',
     '机房智能诊断': 'v1.9',
-    '机房热力模型': 'v2.9',
+    '机房配置': 'v2.9',
     '冷站仿真对比': 'v2.8',
     '冷站柔性寻优': 'v2.9',
     '冷站全局寻优': 'v2.9',
@@ -179,7 +182,7 @@
     '机房能效优化': ICON_SERVER,
     '冷站能效优化': ICON_COOL,
     '节能效果评估': ICON_LEAF,
-    'AI节能配置': ICON_GEAR,
+    '智控配置': ICON_GEAR,
     '能源配置': ICON_SLIDERS
   };
 
@@ -215,7 +218,7 @@
     const mode = getSidebarMode();
     if (mode === 'energy') return '能源配置';
     if (mode === 'model') return '物模型';
-    return 'AI智能能效';
+    return NAV_LABELS['AI智能能效'];
   }
 
   function resolveSidebarChild(child) {
@@ -892,7 +895,7 @@
       const item = document.createElement(href ? 'a' : 'div');
       if (href) item.href = href;
       item.className = 'header-nav-item' + (text === config.activeNav ? ' active' : '');
-      item.textContent = text;
+      item.textContent = NAV_LABELS[text] || text;
       nav.appendChild(item);
     });
 

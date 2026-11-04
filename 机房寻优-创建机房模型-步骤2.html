@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>机房寻优 - 创建机房模型（步骤2）</title>
+  <title>机房寻优 - 新建机房配置（步骤2）</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -585,17 +585,18 @@
           <p><b>v2.9 末端仿真寻优 · 回风关系（2026-10-30；11-02 新增回风关系）：</b>本页供冷关系、换热关系、通道分组、机柜 / PDU 映射与坐标<b>不改</b>；2026-11-02 新增第三段「回风关系」（热通道传感器 → 空调）。步骤 1 的空调表已改为按物模型属性定义动态渲染（固定列 + 只读属性区、缺失标红 + 去维护回跳、模型就绪校验），本页读取的空调、传感器清单与对象类型来自步骤 1，不受影响。</p>
           <ul style="margin:6px 0 0 1.25em;padding-left:0;line-height:1.55;">
             <li><b>本页读什么：</b>机房关联的空调都可以配关系，包括投出的空调（运行时靠供冷关系计算它的送风）；AI 是否调节由投入 / 投出决定。</li>
-            <li><b>拓扑完整性校验（§4.3 第 5 行，2026-10-31 调整）：</b>「完成」<b>不做</b>拓扑校验，只做 v1.9 已有的必填校验并保存；保存后回到机房热力模型列表（toast 引导），在操作列「模型校验」进入「机房寻优-机房模型校验」页，与 §4.3 其余六类一起执行：每台参与寻优的空调 ≥ 1 条 <code>feedsAir</code> 冷点边；每个投入冷点 ≥ 1 条入边；每个投入且配置安全边界的热点 ≥ 1 条换热入边；每条投入通道 ≥ 1 个热点；不满足记 ERROR <code>TOPOLOGY_INCOMPLETE</code>（机房本轮 SKIPPED）。2026-11-02 起另加一条：须配回风关系的空调至少 1 条回风入边（必配规则见回风关系段批注）。校验页的「去配置 →」会跳回本页编辑态并定位到对应冷点 / 通道分组 / 空调回风行。</li>
+            <li><b>拓扑完整性校验（§4.3 第 5 行，2026-10-31 调整）：</b>「完成」<b>不做</b>拓扑校验，只做 v1.9 已有的必填校验并保存；保存后回到机房配置列表（toast 引导），在操作列「机房配置校验」进入「机房配置校验」页，与 §4.3 其余六类一起执行：每台参与寻优的空调 ≥ 1 条 <code>feedsAir</code> 冷点边；每个投入冷点 ≥ 1 条入边；每个投入且配置安全边界的热点 ≥ 1 条换热入边；每条投入通道 ≥ 1 个热点；不满足记 ERROR <code>TOPOLOGY_INCOMPLETE</code>（机房本轮 SKIPPED）。2026-11-02 起另加一条：须配回风关系的空调至少 1 条回风入边（必配规则见回风关系段批注）。校验页的「去配置 →」会跳回本页编辑态并定位到对应冷点 / 通道分组 / 空调回风行。</li>
             <li><b>按设备自动适配：</b>本页关系表的空调列按步骤 1 实例的对象类型显示，不区分水冷 / 风冷写死分支；混合编队同一张表。</li>
             <li><b>回风关系（2026-11-02 新增，本版实现）：</b>原预留的「热通道 → 回流空调」第三类关系改为本版实现，<b>复用换热关系的关系类型</b> <code>dtdl:asset:THSensor::feedsAir</code>（方向：热点 → 空调），不新增关系类型、关系记录不加字段。每台空调多选回风来源热点，多对多；无封闭时与换热关系一起隐藏。左侧拓扑图同步画出回风边（红色虚线）。仿真用途、必配规则与待确认项见回风关系段批注。</li>
           </ul>
+          <p><b>本页说明：</b>菜单更名「机房配置」（原机房热力模型）。</p>
           <p><b>依据：</b>《末端仿真寻优需求文档》§4.2～4.3、§6.2；《末端机房仿真模型.xlsx》0.3「换热关系 / 回风关系」行。「完成」由原型 alert 改为保存后跳回列表（<code>?saved=1</code>）；本页其余内容与 v1.9 / v2.7 一致，未改。</p>
         </div>
       </div>
 
       <div class="page-header">
         <div class="page-header-left">
-          <a class="back-link" href="机房寻优-机房热力模型列表.html">← 创建机房热力模型</a>
+          <a class="back-link" href="机房寻优-机房热力模型列表.html">← 新建机房配置</a>
         </div>
         <div class="page-header-right">
           <button type="button" class="btn btn-primary" id="btnSync3D" style="background:#fff; color:var(--primary); border-color:var(--primary);">同步3D数据</button>
@@ -961,7 +962,7 @@
                   <ul>
                     <li><b>空调末端（只读行）：</b>步骤 1 已关联的精密空调都列出，包含投出空调；一台一行，与供冷关系表同序。AI 是否调节由投入 / 投出决定；新风机、加除湿器不出现。</li>
                     <li><b>回风来源传感器（多选 tag，交互同供冷关系）：</b>候选只列热通道传感器（所属通道的通道类型为热通道）；一台空调可选多个热点，一个热点也可被多台空调选（多对多）。默认空（请选择）。</li>
-                    <li><b>必填：</b>表单不强制，「完成」不拦；按必配规则在「机房模型校验」页校验（见下方数据逻辑）。</li>
+                    <li><b>必填：</b>表单不强制，「完成」不拦；按必配规则在「机房配置校验」页校验（见下方数据逻辑）。</li>
                     <li><b>其他：</b>保存后可改，编辑态回填已配关系；无封闭时本段隐藏（与换热关系一致）。</li>
                   </ul>
                 </div>
@@ -977,7 +978,7 @@
                     <li><b>回风来源通道：</b>每台空调所连热点所属的通道，就是它的回风来源通道。</li>
                     <li><b>仿真怎么用（以《末端机房仿真模型》为准）：</b>仿真回推每台空调的回风时，取本机回风来源通道的排风温度加权：<b>已配置</b>回风关系，取所连热点所属通道的排风温度等权平均；<b>未配置</b>，按该台对各通道的供风份额加权，即供气对称。每台另有回风入口偏差（回风读数与回推回风之差），每轮按实测重算。回风关系只回答「这台空调从哪些通道回风」，不填权重。</li>
                     <li><b>必配规则（逐台判定）：</b>满足任一条，该空调至少要有 1 条回风关系：① 机房通道封闭模式 = 封闭热通道（空调组 <code>PrecisionACGroup.aisleSealedMode</code> = 1，即步骤 1「通道封闭模式」），组内每台参与寻优的空调都必配；② 空调摆放位置 = 行间 / 列间（<code>PrecisionAC.placement_position</code> = 1 / 2，判定属性待确认，见下方边界与异常）。其余房间级空调可不配，未配按供气对称。无封闭机房没有热点，本段隐藏、不校验。</li>
-                    <li><b>在哪校验：</b>「完成」不校验；保存后在「机房模型校验」页随拓扑完整性一起执行，必配未配记 ERROR <code>TOPOLOGY_INCOMPLETE</code>（逐台一条，机房本轮 SKIPPED）；处置「去配置 →」跳回本页编辑态，定位到该空调的回风行。</li>
+                    <li><b>在哪校验：</b>「完成」不校验；保存后在「机房配置校验」页随拓扑完整性一起执行，必配未配记 ERROR <code>TOPOLOGY_INCOMPLETE</code>（逐台一条，机房本轮 SKIPPED）；处置「去配置 →」跳回本页编辑态，定位到该空调的回风行。</li>
                   </ul>
                 </div>
               </div>
@@ -989,7 +990,7 @@
                   <p><b>关联模块：</b>回风关系 — 待确认项</p>
                   <ul>
                     <li><b>「行间 / 列间」由哪个属性判定：</b>标准物模型表与需求文档都没有空调摆放位置属性；后台物模型（DTDL）的精密空调已有 <code>placement_position</code> 摆放位置（1 行间 / 2 列间 / 3 底座式），原型暂按它判定、底座式视为房间级。待确认：是否收进标准物模型表；底座式是否等同房间级；未填时是否按房间级（可不配）处理。送风方式 <code>air_supply_mode</code>（上送风 / 下送风 / 水平送风）不作判定依据。</li>
-                    <li><b>现场取值可信度：</b>0_100 验证机房 11 台空调 <code>placement_position</code> 全为「行间」，但风量 30000 m³/h、下送风，更像房间级，疑似缺省值。按规则 ② 该机房要补回风关系或先核对属性，否则模型校验报 <code>TOPOLOGY_INCOMPLETE</code>。</li>
+                    <li><b>现场取值可信度：</b>0_100 验证机房 11 台空调 <code>placement_position</code> 全为「行间」，但风量 30000 m³/h、下送风，更像房间级，疑似缺省值。按规则 ② 该机房要补回风关系或先核对属性，否则机房配置校验报 <code>TOPOLOGY_INCOMPLETE</code>。</li>
                     <li><b>封闭热通道取值：</b>后台 <code>aisleSealedMode</code> 有 0 封闭冷通道 / 1 封闭热通道 / 2 无封闭三档；标准物模型表该属性只写了「封闭冷通道 / 无封闭」，需补「封闭热通道」。</li>
                     <li><b>关系的目标对象：</b>后台 <code>THSensor::feedsAir</code> 现定义的目标对象是温湿度传感器，回风边的终点是空调，需后台把目标放开到末端空调（同一关系类型扩目标，不是新增类型）。</li>
                     <li><b>「所属通道」口径：</b>原型按「热点的换热入边来自哪些冷通道」理解（与热点关联通道权重 w(h,A) 同一集合），不是热点所在的热通道分组——封闭冷通道机房热通道只有一组，按分组理解则所有空调来源通道相同。</li>
@@ -1203,7 +1204,7 @@
 
     /* ── 完成按钮 ── */
     document.getElementById('btnComplete').addEventListener('click', function () {
-      /* v2.9（2026-10-31）：保存后回列表，模型就绪校验在列表「模型校验」入口单独执行 */
+      /* v2.9（2026-10-31）：保存后回列表，模型就绪校验在列表「机房配置校验」入口单独执行 */
       window.location.href = '机房寻优-机房热力模型列表.html?saved=1';
     });
 
@@ -1461,7 +1462,7 @@
       if (sectionRA)     sectionRA.style.display     = isNoSeal ? 'none' : '';
     })();
   </script>
-  <script src="components/nav.js" data-active-nav="AI智能能效" data-active-sidebar="机房热力模型"></script>
+  <script src="components/nav.js" data-active-nav="AI智能能效" data-active-sidebar="机房配置"></script>
 
   <button class="anno-toggle" onclick="document.body.classList.toggle('annotation-mode'); initAnnoVersionFilter();">批注</button>
   <div class="anno-filter-bar" id="annoFilterBar">
