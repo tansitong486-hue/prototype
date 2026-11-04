@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>机房总览 - 机房详情 - 加减机寻优</title>
+  <title>机房总览 - 机房详情 - 全局寻优</title>
   <style>
     :root {
       --primary: #007AFF;
@@ -1078,7 +1078,7 @@
             <span class="anno-tag">版本信息</span>
             <span class="anno-version">v2.9</span>
             <span class="anno-source">需求文档</span>
-            <div class="anno-body"><p><b>关联模块：</b>加减机寻优（末端全局寻优）</p><p><b>当前版本：</b>v2.9</p><p><b>本页说明：</b>仿真模型预测寻优调开关机，并同时优化开关机后的温度设定、风机转速上限、水阀最大开度。遗传算法同时搜索开机组合和设定值。</p></div>
+            <div class="anno-body"><p><b>关联模块：</b>全局寻优</p><p><b>当前版本：</b>v2.9</p><p><b>本页说明：</b>仿真模型预测寻优调开关机，并同时优化开关机后的温度设定、风机转速上限、水阀最大开度。遗传算法同时搜索开机组合和设定值。页面更名全局寻优；新算法寻优记录每轮输出结论文案。</p></div>
           </div>
 
       <div class="anno anno-version-header" data-version="v1.0">
@@ -1133,7 +1133,7 @@
           <div class="selector">1F-101 <span class="arrow-down">▾</span></div>
         </div>
         <div class="page-header-nav">
-          <div class="page-nav-item active">加减机寻优</div>
+          <div class="page-nav-item active">全局寻优</div>
           <div class="page-nav-item" onclick="window.location.assign(encodeURI('机房寻优-柔性寻优.html'))">柔性寻优</div>
           <button type="button" class="page-refresh-btn" title="刷新" onclick="location.reload()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
@@ -1379,7 +1379,7 @@
             <span class="anno-tag">数据逻辑</span>
             <span class="anno-version">v2.9</span>
             <span class="anno-source">需求文档</span>
-            <div class="anno-body"><p><b>关联模块：</b>寻优记录 · 仿真模型预测寻优（需求 §8.4、§11.2）</p><p>沿用结论条与变量表。每台空调显示「开关机」行，实际值 / AI寻优值为运行 / 停机；另按控制方式与已接入写点显示温度设定、风机转速上限、水阀最大开度行。结论徽章为「节能调优 / 保持现状 / 安全恢复 / 本轮跳过」，正文按「建议 + 原因 + 预计」组织，预计展示预测功率与预测节能率。原因使用页面文案，不显示原因码。低置信空调标「数据积累中」。</p></div>
+            <div class="anno-body"><p><b>关联模块：</b>寻优记录 · 仿真模型预测寻优（需求 §8.4、§11.2）</p><p>徽章：节能调优 / 保持现状 / 安全恢复 / 本轮跳过。建议先写开关机，再按控制量和方向分组写设定，同组多台用「a～b」幅度；新开机直接写设定值，有启停时句末写开机台数变化。原因：节能调优写关机后谁供冷、最小余量测点预计值与上限、低置信不调设定；保持现状写最好节能率未达门槛，或首条不合规原因与测点，或到达计算时限；安全恢复写越界测点实测值与硬边界；跳过写页面文案与具体对象。预计写空调总功率、节能率，标「仿真预测值」。平面图浮窗、手动下发与结论条同口径；页面不出现原因码、目标函数和迭代数。</p></div>
           </div>
         <div class="anno anno-req" data-version="v1.0">
           <span class="anno-tag">需求说明</span>
@@ -1448,9 +1448,9 @@
         <div class="records-time-bar" id="optRecordsTimeBar">
           <span class="filter-label">时间</span>
           <input type="date" class="filter-input" value="2026-03-17">
-          <button class="step-btn" title="上一条">‹</button>
-          <button class="step-btn" title="下一条">›</button>
-          <input type="time" class="filter-input" value="13:19:01" step="1">
+          <button class="step-btn" title="上一条" onclick="stepOptRound(1)">‹</button>
+          <button class="step-btn" title="下一条" onclick="stepOptRound(-1)">›</button>
+          <input type="time" class="filter-input" id="optRoundTimeInput" value="13:00:00" step="1">
           <button type="button" class="page-refresh-btn" title="刷新记录" onclick="location.reload()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
           </button>
@@ -1717,7 +1717,7 @@
     <!-- 规则配置面板：对齐算法文档16个参数 -->
     <div class="right-panel" id="rulePanel">
       <div class="panel-header">
-        <h3>加减机寻优规则配置</h3>
+        <h3>全局寻优规则配置</h3>
         <span class="panel-close" onclick="togglePanel()">&times;</span>
       </div>
       <div class="panel-tabs">
@@ -1788,13 +1788,13 @@
           <div class="form-label"><span class="required">*</span> 寻优算法</div>
           <select class="form-control" id="algorithmSelect" onchange="toggleAlgorithmConfig()">
             <option value="">请选择寻优算法</option>
-            <option value="multi-obj-switch" selected>多目标加减机寻优算法</option>
-            <option value="sim_predict">仿真模型预测寻优</option>
+            <option value="multi-obj-switch">多目标加减机寻优算法</option>
+            <option value="sim_predict" selected>仿真模型预测寻优</option>
           </select>
           <div class="form-hint field-hint-annoonly">选定算法后展示对应的配置参数</div>
         </div>
 
-        <div id="algorithmConfigArea">
+        <div id="algorithmConfigArea" style="display:none;">
 
           <div class="form-section">设备状态寻优规则</div>
           <div class="qty-rule-wrap">
@@ -1982,7 +1982,7 @@
         </div>
 
         <!-- 仿真模型预测寻优：独立配置，不复用既有算法参数 -->
-        <div id="jjSimConfigArea" style="display:none;">
+        <div id="jjSimConfigArea">
           <div class="anno anno-field" data-version="v2.9">
             <span class="anno-tag">字段说明</span>
             <span class="anno-version">v2.9</span>
@@ -2059,11 +2059,11 @@
           <div class="form-section">模拟量寻优规则</div>
           <div class="rule-table-wrap">
             <table class="rule-table" aria-label="按设备类型和实际控制变量配置模拟量寻优规则">
-              <thead><tr><th style="width:280px;">规则名称</th><th style="width:80px;">启用开关</th><th style="width:145px;">寻优步长 <span class="required">*</span></th><th style="width:145px;">寻优粒度 <span class="required">*</span></th></tr></thead>
+              <thead><tr><th style="width:280px;">规则名称</th><th style="width:80px;">启用开关</th><th style="width:145px;" title="单次寻优相对当前值的最大调整量">寻优步长<span class="required">*</span> <span class="rule-help">?</span></th><th style="width:145px;">寻优粒度<span class="required">*</span></th></tr></thead>
               <tbody id="jjSimAnalogRuleBody"></tbody>
             </table>
           </div>
-          <div class="form-hint rule-table-hint">运行中的空调在「当前值 ± 寻优步长」内调，新开机的空调在安全边界范围内调；关闭某行，该控制量保持当前值。</div>
+          <div class="form-hint rule-table-hint">寻优步长：单次寻优相对当前值的最大调整量。寻优粒度：调整的最小单位。运行中的空调在「当前值 ± 寻优步长」内调，新开机的空调在安全边界范围内调；关闭某行，该控制量保持当前值。</div>
 
           <div class="form-section">寻优计算</div>
           <div class="form-group">
@@ -2764,6 +2764,100 @@ const ROOM = {
   ]
 };
 
+// 新算法独立快照；已保存算法控制记录，配置草稿不改变当前记录。
+let jjSavedAlgorithm = 'sim_predict';
+const JJ_OPT_STATE = { roundIndex:0 };
+const JJ_SIM_CAPABILITIES = {
+  AC1:{ controlVar:'送风温度设定', V1:20.00, V2:80, Nfan_hi:85, fanWritable:true, confidence:'高' },
+  AC2:{ controlVar:'送风温度设定', V1:19.50, V2:75, Nfan_hi:85, fanWritable:true, confidence:'高' },
+  AC3:{ controlVar:'回风温度设定', V1:28.00, V2:80, Nfan_hi:80, fanWritable:true, confidence:'高' },
+  AC4:{ controlVar:'送风温度设定', V1:20.0, V2:80, Nfan_hi:85, fanWritable:true, confidence:'低' },
+  AC5:{ controlVar:'送风温度设定', V1:21.00, V2:85, Nfan_hi:80, fanWritable:true, confidence:'高' },
+  AC6:{ controlVar:'送风温度设定', V1:20.00, V2:70, Nfan_hi:85, fanWritable:true, confidence:'高' },
+  AC7:{ controlVar:'回风温度设定', V1:26.50, V2:80, Nfan_hi:90, fanWritable:false, confidence:'高' },
+  AC8:{ controlVar:'送风温度设定', V1:18.50, V2:80, Nfan_hi:85, fanWritable:true, confidence:'高' },
+  AC9:{ controlVar:'回风温度设定', V1:21.00, V2:'-', Nfan_hi:100, fanWritable:true, confidence:'高' },
+  AC10:{ controlVar:'回风温度设定', V1:22.00, V2:'-', Nfan_hi:100, fanWritable:true, confidence:'高' },
+  AC11:{ controlVar:'回风温度设定', V1:21.00, V2:'-', Nfan_hi:100, fanWritable:true, confidence:'高' },
+  AC12:{ controlVar:'回风温度设定', V1:20.00, V2:'-', Nfan_hi:100, fanWritable:true, confidence:'低' }
+};
+const JJ_OPT_ROUNDS = [
+  { time:'13:00:00', tag:'节能调优', tone:'tone-success',
+    explain:'<b>建议：</b>关闭 AC5；AC2、AC6 送风温度设定调低 0.5℃；AC9、AC10 回风温度设定调高 1.0℃，AC11 调高 0.5℃；AC9、AC10 风机转速上限降低 5%（开机 10 → 9 台）。<b>原因：</b>关闭 AC5 后，它负责的 I-J、K-L 冷通道由 AC4、AC6 继续供冷；调整后各冷 / 热通道温湿度预计都在安全范围内，余量最小的是 G-H 冷通道 c1，预计 26.2℃（上限 27.0℃）；AC4 数据积累中，本轮不调它的设定。<b>预计：</b>空调总功率 214.6 → 203.1 kW，节能约 5.4%（仿真预测值）。',
+    overrides:{ AC5:{zi:0}, AC2:{V1_ai:19.0}, AC6:{V1_ai:19.5}, AC9:{V1_ai:22.0,Nfan_hi_ai:95}, AC10:{V1_ai:23.0,Nfan_hi_ai:95}, AC11:{V1_ai:21.5} } },
+  { time:'12:00:00', tag:'保持现状', tone:'tone-warning',
+    explain:'<b>建议：</b>本轮不做调整，保持当前开关机和设定。<b>原因：</b>试算 1 920 个方案，合规方案中最好的预计只能节能 0.6%，未达到 1% 的最低节能门槛。<b>预计：</b>空调总功率维持约 214.6 kW。', overrides:{} },
+  { time:'11:00:00', tag:'安全恢复', tone:'tone-danger',
+    explain:'<b>建议：</b>开启 AC1，送风温度设定 19.0℃（开机 10 → 11 台）。<b>原因：</b>G-H 冷通道 c1 当前实测 27.4℃，已超出硬上限 27.0℃；本轮先恢复安全，在合规方案中选开关机和设定改动最小的，不比较功率。<b>预计：</b>c1 降到约 26.1℃；空调总功率 214.6 → 229.5 kW（仿真预测值）。', overrides:{ AC1:{zi:1,V1_ai:19.0} } },
+  { time:'10:00:00', tag:'本轮跳过', tone:'tone-muted',
+    explain:'<b>建议：</b>本轮不给出调整建议。<b>原因：</b>输出前复核发现 AC7 回风温度设定回读由 26.5℃ 变为 25.0℃（现场可能有人工调整），本轮结果作废。<b>预计：</b>不适用。', overrides:null }
+];
+function isJjSimRecord() { return jjSavedAlgorithm === 'sim_predict'; }
+function currentJjRound() { return JJ_OPT_ROUNDS[JJ_OPT_STATE.roundIndex]; }
+function jjSimDevices() {
+  return ROOM.acs.map(ac => ({ ...ac, ...JJ_SIM_CAPABILITIES[ac.id] }));
+}
+function jjRecordDevices() {
+  if (!isJjSimRecord()) return ROOM.acs;
+  const round = currentJjRound();
+  return jjSimDevices().map(ac => {
+    const target = { ...ac, zi:ac.si, V1_ai:ac.V1, V2_ai:ac.V2, Nfan_hi_ai:ac.Nfan_hi };
+    const override = round.overrides && round.overrides[ac.id];
+    if (override) Object.assign(target, override);
+    if (ac.confidence === '低') Object.assign(target, { V1_ai:ac.V1, V2_ai:ac.V2, Nfan_hi_ai:ac.Nfan_hi });
+    return target;
+  });
+}
+function jjSimVariables(ac) {
+  const skip = !currentJjRound().overrides;
+  const fmt = (v, unit) => v === '-' || v == null ? '—' : Number(v).toFixed(unit === '℃' ? 1 : 0) + unit;
+  const vars = [{ name:'开关机', type:'optimizing', actual:ac.si ? '运行' : '停机', ai:skip ? '—' : ac.zi ? '运行' : '停机', change:skip ? '—' : ac.si === ac.zi ? '无变化' : ac.zi ? '停机 → 运行' : '运行 → 停机', field:'zi', target:ac.zi }];
+  const add = (name, field, unit) => {
+    const ai = !skip && ac.zi === 1 ? ac[field + '_ai'] : null;
+    const diff = ai == null ? 0 : Number(ai) - Number(ac[field]);
+    vars.push({ name, type:'optimizing', actual:fmt(ac[field],unit), ai:fmt(ai,unit), change:ai == null ? '—' : ac.confidence === '低' ? '不调整' : diff ? (diff > 0 ? '+' : '−') + fmt(Math.abs(diff),unit) : '无变化', field:field + '_ai', target:ai });
+  };
+  add(ac.controlVar,'V1','℃');
+  if (ac.fanWritable) add('风机转速上限','Nfan_hi','%');
+  if (ac.deviceType === 'water') add('水阀最大开度','V2','%');
+  return vars;
+}
+function jjDeviceSuggestion(ac) {
+  if (!currentJjRound().overrides) return '本轮不给出调整建议。';
+  const changes = jjSimVariables(ac).filter(v => v.ai !== '—' && !['无变化','不调整'].includes(v.change));
+  let text = changes.map(v => v.name === '开关机' ? (ac.zi ? '开启' : '关闭') + ' ' + ac.id : v.name + (ac.si === 0 ? ' ' + v.ai : ' ' + v.actual + ' → ' + v.ai)).join('；');
+  if (!text) text = ac.zi ? '保持当前开关机和设定' : '保持停机，本轮不调设定';
+  if (ac.confidence === '低') text += '；数据积累中，本轮不调设定';
+  return text + '。';
+}
+function renderJjSimTable() {
+  const hideOff = document.getElementById('hideOffDevice').checked;
+  let html = '';
+  jjRecordDevices().filter(ac => !hideOff || ac.si === 1).forEach((ac,index) => {
+    const vars = jjSimVariables(ac);
+    if (index) html += '<tr class="obj-separator"><td colspan="6"></td></tr>';
+    vars.forEach((v,i) => {
+      html += '<tr>';
+      if (!i) html += `<td class="obj-name-cell" rowspan="${vars.length}"><div class="obj-name-inner"><div style="font-size:14px;font-weight:600;">${acDisplayName(ac.id)}</div><div class="obj-tags"><span class="obj-status ${ac.si ? 'running' : 'stopped'}"><span class="obj-status-dot"></span>${ac.si ? '运行中' : '停机中'}</span><span class="obj-fi-tag in">${ac.Fi}</span>${ac.confidence === '低' ? '<span class="tag off">数据积累中</span>' : ''}</div></div></td>`;
+      const changeClass = ['无变化','不调整','—'].includes(v.change) ? 'change-none' : v.change.startsWith('+') || v.change.includes('→') ? 'change-positive' : 'change-negative';
+      html += `<td><span class="var-name-type ${v.type}">${v.name}</span></td><td>${v.actual}</td><td style="font-weight:500;">${v.ai}</td><td class="change-cell ${changeClass}">${v.change}</td><td><span class="link-btn" onclick="openChart('${acDisplayName(ac.id)}','${v.name}')">历史趋势</span></td></tr>`;
+    });
+  });
+  document.getElementById('tableBody').innerHTML = html;
+}
+function refreshJjRecords() {
+  document.getElementById('optRoundTimeInput').value = isJjSimRecord() ? currentJjRound().time : '13:19:01';
+  renderExplainBar();
+  renderTable();
+  if (selectedVizObject) selectedVizObject = getVizObjectDetail(selectedVizObject.type, selectedVizObject.id);
+  renderRoomViz();
+}
+function stepOptRound(dir) {
+  if (!isJjSimRecord()) return;
+  JJ_OPT_STATE.roundIndex = (JJ_OPT_STATE.roundIndex + dir + JJ_OPT_ROUNDS.length) % JJ_OPT_ROUNDS.length;
+  refreshJjRecords();
+}
+
 const JJF_DEFAULT_COLD_LABELS = [
   { text:'G-H冷通道', x:6.5, y:15.25 }, { text:'I-J冷通道', x:6.5, y:9.5 }, { text:'K-L冷通道', x:6.5, y:3.5 },
   { text:'A-B冷通道', x:18.5, y:15.25 }, { text:'C-D冷通道', x:18.5, y:9.5 }, { text:'E-F冷通道', x:18.5, y:3.5 },
@@ -2903,7 +2997,7 @@ function jjfDefaultVizTopo(hint) {
   };
 }
 
-function getJjfVizTopo() {
+function getJjfBaseVizTopo() {
   const st = readSharedScadaBindingState();
   if (st.kind === 'bound' && st.libraryId) {
     const lib = SCADA_LIBRARY.find(s => s.id === st.libraryId);
@@ -2926,6 +3020,12 @@ function getJjfVizTopo() {
     return jjfDefaultVizTopo('');
   }
   return jjfDefaultVizTopo('');
+}
+
+function getJjfVizTopo() {
+  const topo = getJjfBaseVizTopo();
+  if (!isJjSimRecord()) return topo;
+  return { ...topo, coldSensors:topo.coldSensors.map(sensor => sensor.id === 'c1' ? { ...sensor, Tc:JJ_OPT_STATE.roundIndex === 2 ? 27.4 : sensor.Tc } : sensor) };
 }
 
 /** —— 以下与「柔性寻优」页一致：修枝供冷拓扑、冷热换热连线、缩放 —— */
@@ -3202,6 +3302,7 @@ function acDisplayName(id) {
 }
 
 function buildAcVariablesFromRoom(ac) {
+  if (isJjSimRecord()) return jjSimVariables(ac);
   const participating = ac.Fi === '投入';
   const switchType = participating ? 'optimizing' : 'disturbance';
   const ts = (ac.Ts === '-' || ac.Ts == null || ac.Ts === '') ? '—' : ac.Ts + '℃';
@@ -3217,9 +3318,9 @@ function buildAcVariablesFromRoom(ac) {
 
 function getVizObjectDetail(type, id) {
   if (type === 'ac') {
-    const ac = (ROOM.acs || []).find(item => item.id === id);
+    const ac = jjRecordDevices().find(item => item.id === id);
     if (!ac) return null;
-    const fromTable = (typeof DATA !== 'undefined' ? DATA : []).find(item => item.name === acDisplayName(id));
+    const fromTable = (!isJjSimRecord() && typeof DATA !== 'undefined' ? DATA : []).find(item => item.name === acDisplayName(id));
     return {
       type, id, name: acDisplayName(id),
       typeLabel: ac.deviceType === 'air' ? '风冷 DX 空调' : '水冷空调',
@@ -3336,6 +3437,7 @@ function renderVizObjectDetail() {
       </div>`);
     });
   });
+  if (isJjSimRecord() && detail.type === 'ac') parts.push('<div class="viz-detail-row"><b>本轮建议：</b>' + vizText(jjDeviceSuggestion(jjRecordDevices().find(ac => ac.id === detail.id))) + '</div>');
   document.getElementById('vizDetailBody').innerHTML = parts.join('');
 }
 
@@ -3430,7 +3532,7 @@ function renderRoomViz() {
     s += `<text x="${hx}" y="${hy + 4}" font-size="9" fill="#fff" text-anchor="middle" font-weight="700" pointer-events="none">${hs.Th.toFixed(1)}</text>`;
   });
 
-  ROOM.acs.forEach(ac => {
+  jjRecordDevices().forEach(ac => {
     const ax = tx(ac.x), ay = ty(ac.y);
     const isOut = ac.Fi === '投出';
     const isRunning = ac.si === 1;
@@ -3482,7 +3584,7 @@ function renderRoomViz() {
     roomW: V.roomW,
     roomH: V.roomH,
     corridor: V.corridor,
-    acs: ROOM.acs,
+    acs: jjRecordDevices(),
     coldSensors: V.coldSensors,
     hotSensors: V.hotSensors,
   };
@@ -3528,14 +3630,15 @@ function renderRoomViz() {
         const suggestionColor = d.zi === '1' ? '#1890FF' : '#FF4D4F';
         const supplyTemp = d.ts === '-' ? '—' : `${d.ts} ℃`;
         const returnTemp = d.tr === '-' ? '—' : `${d.tr} ℃`;
-        const badge = (typeof EXPLAIN_BADGES !== 'undefined') && EXPLAIN_BADGES[d.id];
+        const badge = !isJjSimRecord() && (typeof EXPLAIN_BADGES !== 'undefined') && EXPLAIN_BADGES[d.id];
         html = `<b>${displayName}（${d.fi}）</b>${badge ? `<span class="hot-resp-badge" title="${badge.title}">${badge.label}</span>` : ''}<br><br>`;
         html += `设备类型：${deviceType}<br>`;
         html += `状态：${st} → <b style="color:${suggestionColor}">${suggestion}</b><br>`;
         html += `送风温度：${supplyTemp}<br>`;
         html += `回风温度：${returnTemp}<br>`;
         html += '风机转速：- %';
-        const reason = (typeof EXPLAIN_REASONS !== 'undefined') && EXPLAIN_REASONS[d.id];
+        if (isJjSimRecord()) html = `<b>${displayName}（${d.fi}）</b><br>设备类型：${deviceType}<br>状态：${st}<br><b>本轮建议：</b>${vizText(jjDeviceSuggestion(jjRecordDevices().find(ac => ac.id === d.id)))}`;
+        const reason = !isJjSimRecord() && (typeof EXPLAIN_REASONS !== 'undefined') && EXPLAIN_REASONS[d.id];
         if (reason) html += `<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.25);max-width:280px;white-space:normal;"><b>调节原因：</b>${reason}</div>`;
       }
       tip.innerHTML = html;
@@ -3672,6 +3775,13 @@ function renderExplainBar() {
   const tag = document.getElementById('optExplainTag');
   const txt = document.getElementById('optExplainText');
   if (!bar || !txt) return;
+  if (isJjSimRecord()) {
+    const round = currentJjRound();
+    bar.className = 'opt-explain-bar ' + round.tone;
+    if (tag) tag.textContent = round.tag;
+    txt.innerHTML = round.explain;
+    return;
+  }
   const key = [ROOM_EXPLAIN.sceneCode, ROOM_EXPLAIN.reason, ROOM_EXPLAIN.surplusKind].filter(Boolean).join('·');
   const meta = EXPLAIN_SCENE_META[key] || EXPLAIN_SCENE_META[ROOM_EXPLAIN.sceneCode] || { tag:'', tone:'tone-warning' };
   bar.className = 'opt-explain-bar ' + meta.tone;
@@ -3681,6 +3791,7 @@ function renderExplainBar() {
 }
 
 function renderTable() {
+  if (isJjSimRecord()) { renderJjSimTable(); return; }
   const tbody = document.getElementById('tableBody');
   let html = '';
   DATA.forEach((ac, acIdx) => {
@@ -3803,7 +3914,7 @@ initRoomVizZoomControls();
 renderRoomViz();
 
 const hideOffChk = document.getElementById('hideOffDevice');
-if (hideOffChk) hideOffChk.addEventListener('change', function() { renderRoomViz(); });
+if (hideOffChk) hideOffChk.addEventListener('change', function() { renderRoomViz(); if (isJjSimRecord()) renderTable(); });
 
 window.addEventListener('storage', function(e) {
   if (e.key === SCADA_BINDING_STORE_KEY) {
@@ -3901,7 +4012,7 @@ function toggleOptStatus() {
   document.getElementById('pwdTitle').textContent =
     (optEnabled ? '停止寻优' : '开始寻优') + ' — 密码校验';
   document.getElementById('pwdHint').textContent =
-    '校验通过后将' + (optEnabled ? '停止' : '开始') + '加减机寻优';
+    '校验通过后将' + (optEnabled ? '停止' : '开始') + '全局寻优';
   document.getElementById('pwdInput').value = '';
   openModal('modalPwd');
 }
@@ -4009,7 +4120,7 @@ onPwdConfirm = function() {
 
 refreshDeliverUI();
 
-var jjSelectedAlgorithm = 'multi-obj-switch';
+var jjSelectedAlgorithm = 'sim_predict';
 var jjAlgorithmCycles = { 'multi-obj-switch': '60', sim_predict: '60' };
 function toggleAlgorithmConfig() {
   var sel = document.getElementById('algorithmSelect');
@@ -4057,10 +4168,8 @@ function syncJjSimRules() {
 
 // 新算法独立的演示控制能力，不改既有算法的空调数据。
 function renderJjSimAnalogRules() {
-  var devices = ROOM.acs.map(function(ac) {
-    return { id:ac.id, deviceType:ac.deviceType, typeLabel:ac.typeLabel,
-      controlMode:['AC3', 'AC7', 'AC9', 'AC10', 'AC11', 'AC12'].includes(ac.id) ? 'return' : 'supply',
-      fanWritable:!['AC7', 'AC12'].includes(ac.id), valveWritable:ac.deviceType === 'water' && ac.id !== 'AC8' };
+  var devices = jjSimDevices().map(function(ac) {
+    return { ...ac, controlMode:ac.controlVar === '回风温度设定' ? 'return' : 'supply', valveWritable:ac.deviceType === 'water' };
   });
   var rows = [];
   ['water', 'air'].forEach(function(type) {
@@ -4078,7 +4187,7 @@ function renderJjSimAnalogRules() {
       if (!members.length) return;
       var label = sameType[0].typeLabel + ' · ' + rule.name;
       var details = candidates.map(function(ac) {
-        return ac.id.replace('AC', '') + '#空调 ' + rule.name + (writable(ac) ? '' : '：未接入，不调整');
+        return ac.id.replace('AC', '') + '#空调 ' + (writable(ac) ? rule.name : '未接入，不调整');
       }).join('\n');
       rows.push(`<tr data-rule-key="${type}-${rule.kind}">
         <td><span class="device-type-name">${vizText(label)}</span><span class="device-type-note">${members.length} 台 <span class="rule-help" tabindex="0" title="${vizText(details)}" aria-label="查看空调明细">?</span></span></td>
@@ -4129,9 +4238,12 @@ function saveJjRuleConfig() {
       return;
     }
   }
+  jjSavedAlgorithm = document.getElementById('algorithmSelect').value;
+  JJ_OPT_STATE.roundIndex = 0;
+  refreshJjRecords();
   togglePanel();
 }
-syncJjSimRules();
+toggleAlgorithmConfig();
 
 function openDispatch(mode) {
   const isRollback = mode === '一键回退';
@@ -4139,6 +4251,22 @@ function openDispatch(mode) {
     '请仔细核对' + (isRollback ? '回退' : '下发') + '的指令参数，改为空值可不下发';
   document.getElementById('dispatchConfirmBtn').textContent =
     isRollback ? '确认回退' : '确认下发';
+
+  if (isJjSimRecord() && !isRollback) {
+    let html = '';
+    if (currentJjRound().overrides) jjRecordDevices().forEach(ac => {
+      const changes = jjSimVariables(ac).filter(v => v.ai !== '—' && !['无变化','不调整'].includes(v.change));
+      if (!changes.length) return;
+      html += `<div class="dispatch-section">${ac.id} · ${vizText(jjDeviceSuggestion(ac))}</div><table class="dispatch-table"><thead><tr><th>设备</th><th>下发属性</th><th>当前值</th><th>AI寻优值</th><th>下发值</th></tr></thead><tbody>`;
+      changes.forEach(v => {
+        html += `<tr><td>${ac.id}</td><td>${v.name}</td><td>${v.actual}</td><td>${v.ai}</td><td><input class="dispatch-val" type="text" value="${v.target}"></td></tr>`;
+      });
+      html += '</tbody></table>';
+    });
+    document.getElementById('dispatchModalBody').innerHTML = html || '<div style="text-align:center;padding:30px;color:var(--text-hint);">' + '当前无需下发变更' + '</div>';
+    openModal('modalDispatch');
+    return;
+  }
 
   const onDevices = [];
   const offDevices = [];
@@ -4388,6 +4516,6 @@ function drawTrendChart() {
     el.classList.add('active');
   }
   </script>
-  <script src="components/nav.js" data-active-nav="AI智能能效" data-active-sidebar="机房加减机寻优"></script>
+  <script src="components/nav.js" data-active-nav="AI智能能效" data-active-sidebar="机房全局寻优"></script>
 </body>
 </html>
