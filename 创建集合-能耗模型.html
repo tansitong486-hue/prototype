@@ -315,6 +315,52 @@
       color: var(--text-secondary);
     }
     .btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,.4);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.is-open { display: flex; }
+    .modal-dialog {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 24px 48px rgba(15,23,42,.16);
+      width: 100%;
+      max-width: 480px;
+      overflow: hidden;
+    }
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-title { font-size: 16px; font-weight: 600; }
+    .modal-close {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 18px;
+      line-height: 1;
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-close:hover { background: var(--border-light); color: var(--text-primary); }
+    .modal-close:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .modal-body { padding: 20px; }
+    .modal-footer { padding: 12px 20px; border-top: 1px solid var(--border-light); display: flex; justify-content: flex-end; gap: 10px; }
+    #coldStationGuide .modal-dialog { max-height: 90vh; overflow-y: auto; }
   </style>
 </head>
 <body>
@@ -332,6 +378,7 @@
         <div class="anno-filter-tags" id="annoFilterTags"></div>
       </div>
 
+<div class="anno anno-version-header" data-version="v3.0"><span class="anno-tag">版本信息</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§7.1</span><div class="anno-body"><p><b>当前版本：</b>v3.0</p><p><b>更新日期：</b>2026-11-04</p><p><b>变更概述：</b>保存冷水系统集合后引导补齐冷站配置。</p><p><b>本页说明：</b>保留集合创建表单；创建后可继续冷站配置或稍后处理。</p></div></div>
       <!-- v1.8 版本头 -->
       <div class="anno anno-version-header" data-version="v1.8">
         <span class="anno-tag">版本信息</span>
@@ -353,6 +400,7 @@
         </div>
       </div>
 
+<div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 · 《冷站配置需求文档》§7.1、§4.4</span><div class="anno-body"><p><b>关联模块：</b>集合保存与一键生成缺省值</p><ul><li>制冷单元数量和主机-冷冻泵、主机-冷却泵、冷塔-冷却泵三组选择，作为冷站配置「一键生成」的缺省值。</li><li>多对多对应母管制，一对一按设备编号对应。</li><li>保存水冷冷水系统集合后打开引导弹窗；选择「稍后」保留已创建集合。</li></ul></div></div>
       <!-- 页面顶部 header -->
       <div class="page-header">
         <div class="page-header-left">
@@ -568,6 +616,16 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="coldStationGuide" data-version="v3.0" aria-hidden="true">
+  <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="coldStationGuideTitle">
+    <div class="modal-header"><h2 class="modal-title" id="coldStationGuideTitle">创建成功</h2><button type="button" class="modal-close" id="closeColdStationGuide" aria-label="关闭">×</button></div>
+    <div class="modal-body"><div class="anno anno-ux" data-version="v3.0"><span class="anno-tag">交互说明</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 · 《冷站配置需求文档》§7.1</span><div class="anno-body"><p><b>关联模块：</b>创建成功弹窗；入口：水冷冷水系统集合「保存」</p><ul><li>显示「已创建水冷冷水系统。去冷站配置补齐设备、属性和拓扑」。</li><li>「去冷站配置」进入系统信息步骤，带出本页选择的数量和连接方式。</li><li>「稍后」或关闭仅收起引导，集合已创建；可从能效视图或冷站配置列表继续维护。</li></ul></div></div>
+<div class="anno anno-ux" data-version="v3.0"><span class="anno-tag">交互说明</span><span class="anno-version">v3.0</span><span class="anno-source">产品推断</span><div class="anno-body"><p><b>关联模块：</b>创建成功弹窗 — 原型演示</p><ul><li>风冷子类型按所选类型显示「已创建风冷冷水系统」。</li><li>本原型用本地草稿传递表单选择，未写入真实系统。</li><li>浏览器无法保存草稿时提示重试，不继续跳转。</li></ul></div></div>
+<p id="coldStationGuideMessage">已创建水冷冷水系统。去冷站配置补齐设备、属性和拓扑</p></div>
+    <div class="modal-footer"><button type="button" class="btn" id="laterColdStationGuide">稍后</button><a class="btn btn-primary" href="冷站配置-创建.html?from=energyView">去冷站配置</a></div>
+  </div>
+</div>
+
 <script>
   (function () {
 
@@ -658,6 +716,27 @@
       }
     });
 
+    // v3.0：沿用表单校验，只在冷水系统集合创建后打开引导。
+    const coldStationGuide = document.getElementById('coldStationGuide');
+    function closeColdStationGuide() {
+      coldStationGuide.classList.remove('is-open');
+      coldStationGuide.setAttribute('aria-hidden', 'true');
+      document.getElementById('btnSave').focus();
+    }
+    document.getElementById('closeColdStationGuide').addEventListener('click', closeColdStationGuide);
+    document.getElementById('laterColdStationGuide').addEventListener('click', closeColdStationGuide);
+    coldStationGuide.addEventListener('click', function (event) { if (event.target === coldStationGuide) closeColdStationGuide(); });
+    document.addEventListener('keydown', function (event) {
+      if (!coldStationGuide.classList.contains('is-open')) return;
+      if (event.key === 'Escape') closeColdStationGuide();
+      if (event.key === 'Tab') {
+        const buttons = Array.from(coldStationGuide.querySelectorAll('button, a[href]'));
+        const first = buttons[0], last = buttons[buttons.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
+    });
+
     // 保存
     document.getElementById('btnSave').addEventListener('click', function () {
       let valid = true;
@@ -672,7 +751,29 @@
         typeSelect.style.borderColor = 'var(--danger)';
       }
       if (valid) {
-        alert('示意：校验通过，保存成功（演示未真实落库）');
+        if (typeSelect.value === 'chilled-water') {
+          const connections = {};
+          document.querySelectorAll('#mappingSection .mapping-options[data-group]').forEach(function (group) {
+            connections[group.dataset.group] = group.querySelector('.map-opt.active').dataset.val;
+          });
+          const draft = {
+            from: 'energyView', name: fieldName.value.trim(),
+            systemType: currentSysType === 'water-cooled' ? 'water' : 'air',
+            includes: toggleSecondaryPump.checked ? ['二次泵'] : [],
+            systemIncludes: toggleSecondaryPump.checked ? ['二次泵'] : [],
+            units: Number(rowCoolingCount.querySelector('.field-readonly').textContent.trim()),
+            energyViewDefaults: { freeze: connections['chiller-chw'], cool: connections['chiller-cdw'], tower: connections['tower-cdw'] }
+          };
+          try { localStorage.setItem('coldStationConfigDraft', JSON.stringify(draft)); }
+          catch (error) { alert('浏览器无法保存配置草稿，请允许本地存储后重试'); return; }
+          document.getElementById('coldStationGuideMessage').textContent = '已创建' + (currentSysType === 'water-cooled' ? '水冷冷水系统' : '风冷冷水系统') + '。去冷站配置补齐设备、属性和拓扑';
+          coldStationGuide.classList.add('is-open');
+          coldStationGuide.setAttribute('aria-hidden', 'false');
+          document.getElementById('closeColdStationGuide').focus();
+          if (document.body.classList.contains('annotation-mode')) initAnnoVersionFilter();
+        } else {
+          alert('示意：校验通过，保存成功（演示未真实落库）');
+        }
       }
     });
   })();

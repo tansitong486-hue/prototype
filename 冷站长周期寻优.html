@@ -836,7 +836,22 @@
       .summary-cards, .module-strip { grid-template-columns:1fr; }
       .page-header { margin:8px 12px 0; }
     }
-  </style>
+  
+    /* v3.0 冷站配置来源与状态；沿用当前页面的色值、表格和表单控件。 */
+    .cold-v30-source { margin-left:4px; color:var(--primary); font-size:11px; cursor:help; }
+    .cold-v30-link { color:var(--primary); font-size:12px; text-decoration:none; }
+    .cold-v30-link:hover { text-decoration:underline; }
+    .cold-v30-pending { color:var(--warning, #D97706); background:var(--warning-light, #FFF7ED); font-size:11px; padding:2px 5px; border-radius:4px; }
+    .cold-v30-note { font-size:12px; color:var(--text-secondary); line-height:1.7; margin:8px 0; }
+    .cold-v30-demo { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:12px 0; font-size:12px; color:var(--text-secondary); }
+    .cold-v30-demo select { width:auto; min-width:128px; }
+    .cold-v30-invalid { border:1px solid var(--danger) !important; background:var(--danger-light, #FEF2F2) !important; }
+    .cold-v30-error { display:block; margin-top:5px; color:var(--danger); font-size:12px; line-height:1.5; }
+  
+    /* v3.0 配置阻断及共享状态反馈。 */
+    .cold-v30-blocked-result { display:none !important; }
+    .cold-v30-sync-toast { position:fixed;left:50%;bottom:38px;transform:translateX(-50%);padding:10px 20px;background:var(--text-primary);color:var(--bg-card);border-radius:var(--radius);z-index:10020;box-shadow:var(--shadow-sm);font-size:13px; }
+</style>
   <link rel="stylesheet" href="annotation-styles.css">
 </head>
 <body>
@@ -851,7 +866,8 @@
         <div class="anno-filter-tags" id="annoFilterTags"></div>
       </div>
 
-      <div class="anno anno-version-header" data-version="v2.9">
+      <div class="anno anno-version-header" data-version="v3.0"><span class="anno-tag">版本信息</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 · 《冷站配置需求文档》§7.4、§7.5</span><div class="anno-body"><p><b>当前版本：</b>v3.0</p><p><b>更新日期：</b>2026-11-04</p><p><b>变更概述：</b>设备投入 / 投出与冷站配置同步，寻优阻断结论可追溯。</p><p><b>本页说明：</b>在既有规则配置和寻优记录中查看冷站配置状态及阻断问题。</p></div></div>
+<div class="anno anno-version-header" data-version="v2.9">
         <span class="anno-tag">版本信息</span>
         <span class="anno-version">v2.9</span>
         <span class="anno-source">需求文档</span>
@@ -1120,7 +1136,10 @@
           <p>一句话回答「现在这个小时怎么办」：维持 / 切换至 + 建议组合 + 模式标签 + 参数来源标签（柔性寻优 / 回落策略库）+ 预计功率与触发时刻实际功率并列（同一时间戳）+ 下轮整点重算时间。组合取最优路线首时段，参数取组合选出后那一次柔性寻优的结果，柔性未出数时标「参数回落策略库」（策略库即 L1 策略先验表，见工况策略库 Tab）。无正式结果时结论条转为失败态，给中文原因短语，详情见下方说明条。查看历史轮次时展示该轮当时的正式结果。</p>
         </div>
       </div>
-      <div id="conclusionSlot"></div>
+      <div class="anno anno-edge" data-version="v3.0"><span class="anno-tag">边界与异常</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 · 《冷站配置需求文档》§5.3、附录 D、§7.5</span><div class="anno-body"><p><b>关联模块：</b>寻优记录 — 本轮结论与状态</p><ul><li>每轮按配置校验①属性完整、②属性合理、③拓扑完整的阻断规则及本轮取数有效性判定，与是否执行过配置校验无关。</li><li>仿真必需输入无有效值或超过允许时效也阻断；时效沿用现网，未规定时按该点刷新周期的 3 倍。</li><li>有阻断时结论「本轮跳过」，原因写首条阻断问题，并链接到<a href="冷站配置-配置校验.html?id=A&amp;scene=2" data-version="v3.0">冷站配置校验</a>；提示类问题不阻断。</li><li>全局 / 长周期的候选组合由仿真按该组合启停状态检查通路和流量；求解失败只淘汰该组合并记录原因。</li></ul></div></div>
+<div class="anno anno-field" data-version="v3.0"><span class="anno-tag">字段说明</span><span class="anno-version">v3.0</span><span class="anno-source">产品推断</span><div class="anno-body"><p><b>关联模块：</b>寻优记录 — 原型演示</p><ul><li>「配置阻断」切换仅用于评审，不写入寻优规则或真实记录。</li><li>打开时最新一条记录显示「本轮跳过」、首条阻断原因及当前系统的配置校验入口。</li><li>演示时收起本轮结果，关闭后恢复原有结果、变量明细与群控设定点演示。</li></ul></div></div><div class="cold-v30-demo" data-version="v3.0"><span>原型演示：</span><label class="filter-check"><input type="checkbox" id="coldV30Skip" data-version="v3.0">配置阻断</label></div>
+<div class="cold-v30-note" id="coldV30SkipConclusion" data-version="v3.0" role="status" hidden style="padding:12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-card);"><span>最新一条记录 · </span><b>本轮跳过</b><p>原因：制冷单元 3 没有冷却侧供水来源</p><a class="cold-v30-link" data-version="v3.0" href="冷站配置-配置校验.html?id=A&amp;scene=2">查看配置校验</a></div>
+<div id="conclusionSlot"></div>
 
       <div class="anno anno-data" data-version="v2.8">
         <span class="anno-tag">数据逻辑</span>
@@ -1606,6 +1625,7 @@
     </div>
 
     <div class="modal-body modal-pane" id="mpane-ioConfig" style="padding-top:14px;">
+<div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 · 《冷站配置需求文档》§7.5</span><div class="anno-body"><p><b>关联模块：</b>规则配置弹窗 — 投入/投出配置</p><ul><li>设备开关按当前系统读写冷站配置的同一个值，切换后提示「已同步到冷站配置」；「在冷站配置中查看」进入当前系统的设备与属性。</li><li>测点的投入 / 投出仍在本页签配置，不随设备属性同步。</li><li>存量值不一致时到冷站配置列表的「投入 / 投出不一致清单」确认；确认前各策略按已保存值运行。</li></ul></div></div>
       <div class="form-section">冷冻水系统测点</div>
       <div class="io-list">
         <div class="io-item">
@@ -1632,7 +1652,8 @@
           <span class="io-status in">投入</span>
         </div>
       </div>
-      <div class="form-section">主要可调设备</div>
+      <div class="cold-v30-note" data-version="v3.0">设备的投入 / 投出与冷站配置同步，改的是同一个值 <a class="cold-v30-link" data-version="v3.0" href="冷站配置-创建-步骤2.html?id=A&amp;mode=edit">在冷站配置中查看</a></div>
+<div class="form-section">主要可调设备</div>
       <div class="io-list">
         <div class="io-item">
           <span class="io-name">1#水冷冷水机组</span>
@@ -1841,6 +1862,7 @@
 
 <div class="page-toast" id="pageToast"></div>
 
+<script src="components/cold-station-store.js"></script>
 <script src="assets/echarts.min.js"></script>
 <script>
 (function () {
@@ -3613,5 +3635,110 @@ function setActive(el) {
 }
 </script>
 <script src="components/nav.js" data-active-nav="AI智能能效" data-active-sidebar="冷站长周期寻优"></script>
+<script data-version="v3.0">
+/* v3.0：只把冷站配置系统的设备接入共享状态，测点仍用原页逻辑。 */
+(function () {
+  var store = window.ColdStationStore;
+  var pane = document.getElementById('ppane-ioConfig') || document.getElementById('mpane-ioConfig');
+  var systemSelect = document.getElementById('coldStationSelect');
+  var source = '冷站长周期寻优', lastSystem = null, originals = new WeakMap();
+  var ids = { 'A路冷水系统':'A', 'B路风冷冷水系统':'B', '3#数据中心水冷冷水系统':'C' };
+  function currentId() { return ids[systemSelect.value] || null; }
+  function deviceId(name) {
+    var match = name.match(/^(\d+)#(冷水主机|水冷冷水机组|风冷冷水机组|板换|冷冻水泵|冷却水泵|二次泵|冷却塔|蓄冷罐)$/);
+    if (match) return ({'冷水主机':'CH','水冷冷水机组':'CH','风冷冷水机组':'CH','板换':'HX','冷冻水泵':'CHWP','冷却水泵':'CWP','二次泵':'SWP','冷却塔':'CT','蓄冷罐':'TK'})[match[2]] + Number(match[1]);
+    match = name.match(/(?:^|[\s-])(CHWP|CWP|SWP|CH|HX|CT|TES|TK)0*(\d+)$/);
+    return match ? (match[1] === 'TES' ? 'TK' : match[1]) + Number(match[2]) : null;
+  }
+  function paint(item, value) {
+    item.querySelector('input').checked = value === '0';
+    var status = item.querySelector('.io-status'); status.className = 'io-status ' + (value === '0' ? 'in' : 'out'); status.textContent = value === '0' ? '投入' : '投出';
+  }
+  function toast() {
+    var el = document.getElementById('coldV30SyncToast');
+    if (!el) { el = document.createElement('div'); el.id = 'coldV30SyncToast'; el.className = 'cold-v30-sync-toast'; el.setAttribute('role','status'); el.dataset.version = 'v3.0'; document.body.appendChild(el); }
+    el.textContent = '已同步到冷站配置'; el.hidden = false;
+    clearTimeout(toast.timer); toast.timer = setTimeout(function () { el.hidden = true; }, 3000);
+  }
+  function links(id) {
+    document.querySelectorAll('a.cold-v30-link, .anno[data-version="v3.0"] a').forEach(function (link) {
+      var href = link.getAttribute('href') || '';
+      if (!/^冷站配置-/.test(href)) return;
+      var url = new URL(href, location.href);
+      url.searchParams.set('id',id || 'A');
+      link.setAttribute('href',decodeURIComponent(url.pathname.split('/').pop()) + '?' + url.searchParams.toString());
+      link.hidden = !id;
+    });
+  }
+  function sync(rebuild) {
+    var id = currentId(), snapshot = id && store.getEffective(id);
+    var title = Array.from(pane.querySelectorAll('.form-section')).find(function (el) { return el.textContent.trim() === '主要可调设备'; });
+    var list = title && title.nextElementSibling;
+    if (!list) return;
+    if (!originals.has(list)) originals.set(list,{ html:list.innerHTML, states:new Map() });
+    var original = originals.get(list);
+    if (rebuild || lastSystem !== id || !list.dataset.coldV30) {
+      list.querySelectorAll('.io-item:not([data-cold-device])').forEach(function (item) {
+        original.states.set(item.querySelector('.io-name').textContent.trim(),item.querySelector('input').checked ? '0' : '1');
+      });
+      list.innerHTML = original.html;
+      list.querySelectorAll('.io-item').forEach(function (item) {
+        var saved = original.states.get(item.querySelector('.io-name').textContent.trim());
+        if (saved) paint(item,saved);
+      });
+      if (snapshot) {
+        // 无法映射到具体设备的组级条目继续沿用原页开关；具体设备按生效配置列出。
+        list.querySelectorAll('.io-item').forEach(function (item) {
+          if (deviceId(item.querySelector('.io-name').textContent.trim())) item.remove();
+        });
+        snapshot.devices.forEach(function (dev) {
+          var item = document.createElement('div'); item.className = 'io-item'; item.dataset.version = 'v3.0'; item.dataset.coldDevice = dev.id;
+          var name = document.createElement('span'); name.className = 'io-name'; name.textContent = dev.name;
+          var label = document.createElement('label'); label.className = 'toggle-switch';
+          var input = document.createElement('input'); input.type = 'checkbox'; input.setAttribute('aria-label',dev.name + '投入 / 投出');
+          var slider = document.createElement('span'); slider.className = 'toggle-slider'; label.append(input,slider);
+          var status = document.createElement('span'); status.className = 'io-status'; item.append(name,label,status); list.appendChild(item);
+        });
+      }
+      list.dataset.coldV30 = '1'; lastSystem = id;
+    }
+    list.querySelectorAll('[data-cold-device]').forEach(function (item) { paint(item,store.getInService(id,item.dataset.coldDevice)); });
+    links(id);
+    document.dispatchEvent(new Event('cold-station-state'));
+  }
+  document.addEventListener('change',function (event) {
+    var input = event.target, item = input.closest('[data-cold-device]'), id = currentId();
+    if (item && pane.contains(item) && id) {
+      store.setInService(id,item.dataset.coldDevice,input.checked ? '0' : '1',source);
+      paint(item,store.getInService(id,item.dataset.coldDevice)); toast();
+      document.dispatchEvent(new Event('cold-station-state'));
+    }
+    if (input === systemSelect) sync(true);
+  });
+  document.getElementById('stationTabs')?.addEventListener('click',function () { sync(true); });
+  window.addEventListener('storage',function () { sync(false); });
+  window.addEventListener('focus',function () { sync(false); });
+  sync(true);
+})();
+
+</script>
+<script data-version="v3.0">
+(function () {
+  var toggle = document.getElementById('coldV30Skip');
+  var conclusion = document.getElementById('coldV30SkipConclusion');
+  function update() {
+    conclusion.hidden = !toggle.checked;
+    document.querySelectorAll('#noticeSlot, #conclusionSlot, #compareSlot, #planSlot, #tableSlot, #emptySlot').forEach(function (el) { el.classList.toggle('cold-v30-blocked-result',toggle.checked); });
+    var link = conclusion.querySelector('a');
+    var id = ({'A路冷水系统':'A','B路风冷冷水系统':'B','3#数据中心水冷冷水系统':'C'})[document.getElementById('coldStationSelect').value];
+    link.href = '冷站配置-配置校验.html?id=' + (id || 'A') + '&scene=2'; link.hidden = !id;
+  }
+  toggle.addEventListener('change',update);
+  document.getElementById('coldStationSelect').addEventListener('change',update);
+  document.addEventListener('cold-station-state',update);
+  update();
+})();
+
+</script>
 </body>
 </html>

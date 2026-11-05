@@ -529,7 +529,8 @@
           <div class="anno-filter-tags" id="annoFilterTags"></div>
         </div>
         <div class="page-shell">
-          <div class="anno anno-version-header" data-version="v1.7">
+          <div class="anno anno-version-header" data-version="v3.0"><span class="anno-tag">版本信息</span><div class="anno-body"><p><b>当前版本：</b>v3.0</p><p><b>更新日期：</b>2026-11-04</p><p><b>变更概述：</b>静态属性补齐入口指向冷站配置并定位到对象与属性。</p><p><b>本页说明：</b>本页只读展示静态属性，缺失时到冷站配置维护后返回。</p></div></div>
+<div class="anno anno-version-header" data-version="v1.7">
             <span class="anno-tag">版本信息</span>
             <div class="anno-body">
               <p><b>当前版本：</b>v1.7</p>
@@ -723,6 +724,7 @@
             </div>
           </div>
 
+<div class="anno anno-ux" data-version="v3.0"><span class="anno-tag">交互说明</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 · 《冷站配置需求文档》§7.2、§4.3、§4.4</span><div class="anno-body"><p><b>关联模块：</b>静态属性 — 去补齐</p><ul><li>设备属性缺失时，「去补齐」进入冷站配置步骤 2，定位到来源设备和该属性。</li><li>管路、蓄冷罐组的分组属性缺失时，进入步骤 3，定位到来源分组和该属性。</li><li>本页只读属性并保留缺失校验；补齐后返回继续创建或编辑。</li></ul></div></div>
           <section class="section-card">
             <div class="section-head">静态属性（铭牌/设计参数）</div>
             <div class="section-body">
@@ -826,7 +828,7 @@
                     <div class="field" data-device="1号板式换热器">
                       <label class="field-label with-id"><span class="cell-id">S4</span><span><span class="req">*</span>额定冷冻水流量</span></label>
                       <div class="readonly-value empty">未配置</div>
-                      <a class="static-fix-link" data-dev="1号板式换热器">去补齐 ›</a>
+                      <a class="static-fix-link" data-version="v3.0" data-dev="HX1" data-attr="RatedColdFlow" href="冷站配置-创建-步骤2.html?id=A&amp;mode=edit&amp;dev=HX1&amp;attr=RatedColdFlow">去补齐 ›</a>
                     </div>
                   </div>
                 </div>
@@ -1851,13 +1853,13 @@
         syncModelExample();
       });
 
-      // 跨设备静态属性「去补齐」：跳转到对应底层设备对象的静态属性维护页（占位）
-      document.addEventListener('click', function (e) {
-        var link = e.target.closest('.static-fix-link');
-        if (!link) return;
-        e.preventDefault();
-        showToast('跳转到「' + link.getAttribute('data-dev') + '」对象的静态属性维护页（占位，补齐后返回继续创建）');
-      });
+      // v3.0：设备属性去步骤 2，管路 / 蓄冷罐组属性去步骤 3；保留对象与属性定位。
+      function staticConfigUrl(link) {
+        var isGroup = link.dataset.step === '3' || /管路|蓄冷罐组/.test(link.dataset.objectType || '');
+        var params = new URLSearchParams({ id: link.dataset.system || 'A', mode: 'edit', dev: link.dataset.dev, attr: link.dataset.attr });
+        return '冷站配置-创建-步骤' + (isGroup ? '3' : '2') + '.html?' + params.toString();
+      }
+      document.querySelectorAll('.static-fix-link').forEach(function (link) { link.href = staticConfigUrl(link); });
 
       syncThingModelAlgoGate();
       syncStaticAttrs();

@@ -1379,7 +1379,7 @@
             <span class="anno-tag">数据逻辑</span>
             <span class="anno-version">v2.9</span>
             <span class="anno-source">需求文档</span>
-            <div class="anno-body"><p><b>关联模块：</b>寻优记录 · 仿真模型预测寻优（需求 §8.4、§11.2）</p><p>徽章：节能调优 / 保持现状 / 安全恢复 / 本轮跳过。建议先写开关机，再按控制量和方向分组写设定，同组多台用「a～b」幅度；新开机直接写设定值，有启停时句末写开机台数变化。原因：节能调优写关机后谁供冷、最小余量测点预计值与上限、低置信不调设定；保持现状写最好节能率未达门槛，或首条不合规原因与测点，或到达计算时限；安全恢复写越界测点实测值与硬边界；跳过写页面文案与具体对象。预计写空调总功率、节能率，标「仿真预测值」。平面图浮窗、手动下发与结论条同口径；页面不出现原因码、目标函数和迭代数。</p></div>
+            <div class="anno-body"><p><b>关联模块：</b>寻优记录 · 仿真模型预测寻优（需求 §8.4、§11.2）</p><p>徽章：节能调优 / 保持现状 / 安全恢复 / 本轮跳过。建议先写开关机，再按控制量和方向分组写设定，同组多台用「a～b」幅度；新开机直接写设定值，有启停时句末写开机台数变化。原因：节能调优写关机后谁供冷、最小余量测点预计值与上限，有低置信空调参与调整时注明「数据积累中」；保持现状写最好节能率未达门槛，或首条不合规原因与测点，或到达计算时限；安全恢复写越界测点实测值与硬边界；跳过写页面文案与具体对象。预计写空调总功率、节能率，标「仿真预测值」。平面图浮窗、手动下发与结论条同口径；页面不出现原因码、目标函数和迭代数。</p></div>
           </div>
         <div class="anno anno-req" data-version="v1.0">
           <span class="anno-tag">需求说明</span>
@@ -2783,12 +2783,13 @@ const JJ_SIM_CAPABILITIES = {
 };
 const JJ_OPT_ROUNDS = [
   { time:'13:00:00', tag:'节能调优', tone:'tone-success',
-    explain:'<b>建议：</b>关闭 AC5；AC2、AC6 送风温度设定调低 0.5℃；AC9、AC10 回风温度设定调高 1.0℃，AC11 调高 0.5℃；AC9、AC10 风机转速上限降低 5%（开机 10 → 9 台）。<b>原因：</b>关闭 AC5 后，它负责的 I-J、K-L 冷通道由 AC4、AC6 继续供冷；调整后各冷 / 热通道温湿度预计都在安全范围内，余量最小的是 G-H 冷通道 c1，预计 26.2℃（上限 27.0℃）；AC4 数据积累中，本轮不调它的设定。<b>预计：</b>空调总功率 214.6 → 203.1 kW，节能约 5.4%（仿真预测值）。',
-    overrides:{ AC5:{zi:0}, AC2:{V1_ai:19.0}, AC6:{V1_ai:19.5}, AC9:{V1_ai:22.0,Nfan_hi_ai:95}, AC10:{V1_ai:23.0,Nfan_hi_ai:95}, AC11:{V1_ai:21.5} } },
+    explain:'<b>建议：</b>关闭 AC5；AC2、AC4、AC6 送风温度设定调低 0.5℃；AC9、AC10 回风温度设定调高 1.0℃，AC11 调高 0.5℃；AC9、AC10 风机转速上限降低 5%（开机 10 → 9 台）。<b>原因：</b>关闭 AC5 后，它负责的 I-J、K-L 冷通道由 AC4、AC6 继续供冷；调整后各冷 / 热通道温湿度预计都在安全范围内，余量最小的是 G-H 冷通道 c1，预计 26.2℃（上限 27.0℃）；AC4 数据积累中，按基础模型估算。<b>预计：</b>空调总功率 191.4 → 181.1 kW，节能约 5.4%（仿真预测值）。',
+    powerAfter:{ AC2:18.0, AC4:21.0, AC5:0, AC6:20.5, AC9:21.6, AC10:21.6, AC11:27.4 },
+    overrides:{ AC5:{zi:0}, AC4:{V1_ai:19.5}, AC2:{V1_ai:19.0}, AC6:{V1_ai:19.5}, AC9:{V1_ai:22.0,Nfan_hi_ai:95}, AC10:{V1_ai:23.0,Nfan_hi_ai:95}, AC11:{V1_ai:21.5} } },
   { time:'12:00:00', tag:'保持现状', tone:'tone-warning',
-    explain:'<b>建议：</b>本轮不做调整，保持当前开关机和设定。<b>原因：</b>试算 1 920 个方案，合规方案中最好的预计只能节能 0.6%，未达到 1% 的最低节能门槛。<b>预计：</b>空调总功率维持约 214.6 kW。', overrides:{} },
+    explain:'<b>建议：</b>本轮不做调整，保持当前开关机和设定。<b>原因：</b>试算 1 920 个方案，合规方案中最好的预计只能节能 0.6%，未达到 1% 的最低节能门槛。<b>预计：</b>空调总功率维持约 191.4 kW。', overrides:{} },
   { time:'11:00:00', tag:'安全恢复', tone:'tone-danger',
-    explain:'<b>建议：</b>开启 AC1，送风温度设定 19.0℃（开机 10 → 11 台）。<b>原因：</b>G-H 冷通道 c1 当前实测 27.4℃，已超出硬上限 27.0℃；本轮先恢复安全，在合规方案中选开关机和设定改动最小的，不比较功率。<b>预计：</b>c1 降到约 26.1℃；空调总功率 214.6 → 229.5 kW（仿真预测值）。', overrides:{ AC1:{zi:1,V1_ai:19.0} } },
+    explain:'<b>建议：</b>开启 AC1，送风温度设定 19.0℃（开机 10 → 11 台）。<b>原因：</b>G-H 冷通道 c1 当前实测 27.4℃，已超出硬上限 27.0℃；本轮先恢复安全，在合规方案中选开关机和设定改动最小的，不比较功率。<b>预计：</b>c1 降到约 26.1℃；空调总功率 191.4 → 206.3 kW（仿真预测值）。', powerAfter:{ AC1:14.9 }, overrides:{ AC1:{zi:1,V1_ai:19.0} } },
   { time:'10:00:00', tag:'本轮跳过', tone:'tone-muted',
     explain:'<b>建议：</b>本轮不给出调整建议。<b>原因：</b>输出前复核发现 AC7 回风温度设定回读由 26.5℃ 变为 25.0℃（现场可能有人工调整），本轮结果作废。<b>预计：</b>不适用。', overrides:null }
 ];
@@ -2804,7 +2805,6 @@ function jjRecordDevices() {
     const target = { ...ac, zi:ac.si, V1_ai:ac.V1, V2_ai:ac.V2, Nfan_hi_ai:ac.Nfan_hi };
     const override = round.overrides && round.overrides[ac.id];
     if (override) Object.assign(target, override);
-    if (ac.confidence === '低') Object.assign(target, { V1_ai:ac.V1, V2_ai:ac.V2, Nfan_hi_ai:ac.Nfan_hi });
     return target;
   });
 }
@@ -2815,7 +2815,7 @@ function jjSimVariables(ac) {
   const add = (name, field, unit) => {
     const ai = !skip && ac.zi === 1 ? ac[field + '_ai'] : null;
     const diff = ai == null ? 0 : Number(ai) - Number(ac[field]);
-    vars.push({ name, type:'optimizing', actual:fmt(ac[field],unit), ai:fmt(ai,unit), change:ai == null ? '—' : ac.confidence === '低' ? '不调整' : diff ? (diff > 0 ? '+' : '−') + fmt(Math.abs(diff),unit) : '无变化', field:field + '_ai', target:ai });
+    vars.push({ name, type:'optimizing', actual:fmt(ac[field],unit), ai:fmt(ai,unit), change:ai == null ? '—' : diff ? (diff > 0 ? '+' : '−') + fmt(Math.abs(diff),unit) : '无变化', field:field + '_ai', target:ai });
   };
   add(ac.controlVar,'V1','℃');
   if (ac.fanWritable) add('风机转速上限','Nfan_hi','%');
@@ -2827,8 +2827,11 @@ function jjDeviceSuggestion(ac) {
   const changes = jjSimVariables(ac).filter(v => v.ai !== '—' && !['无变化','不调整'].includes(v.change));
   let text = changes.map(v => v.name === '开关机' ? (ac.zi ? '开启' : '关闭') + ' ' + ac.id : v.name + (ac.si === 0 ? ' ' + v.ai : ' ' + v.actual + ' → ' + v.ai)).join('；');
   if (!text) text = ac.zi ? '保持当前开关机和设定' : '保持停机，本轮不调设定';
-  if (ac.confidence === '低') text += '；数据积累中，本轮不调设定';
-  return text + '。';
+  if (ac.confidence === '低') text += '；数据积累中，按同组空调或基础模型估算';
+  const before = ac.si ? ac.P : 0;
+  const after = currentJjRound().powerAfter?.[ac.id] ?? before;
+  const expected = !ac.si && !ac.zi ? '不适用' : before === after ? '本机功率不变（' + before.toFixed(1) + ' kW）' : '本机功率 ' + before.toFixed(1) + ' → ' + after.toFixed(1) + ' kW';
+  return text + '。预计：' + expected + '。';
 }
 function renderJjSimTable() {
   const hideOff = document.getElementById('hideOffDevice').checked;

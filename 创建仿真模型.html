@@ -540,6 +540,12 @@
     /* v2.9 末端机房分支：.field 自带 display:flex，需显式让 hidden 生效；输入来源表跳转链接 */
     .field[hidden] { display: none; }
     .module-checks[hidden] { display: none; }
+
+    /* v3.0：复用原字段、表格与提示样式 */
+    .hard-boundary { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+    .hard-boundary .field-control { max-width:100px; background:var(--bg-body); color:var(--text-secondary); cursor:default; }
+    .boundary-source { font-size:12px; color:var(--text-secondary); border-bottom:1px dotted var(--text-hint); cursor:help; }
+    .boundary-config-link { display:block; margin-top:5px; color:var(--primary); font-size:12px; }
   </style>
   <link rel="stylesheet" href="annotation-styles.css">
 </head>
@@ -564,7 +570,8 @@
         </header>
 
         <div class="content-body">
-          <div class="anno anno-version-header" data-version="v2.2">
+          <div class="anno anno-version-header" data-version="v3.0"><span class="anno-tag">版本信息</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§7.3、§8.2</span><div class="anno-body"><p><b>当前版本：</b>v3.0</p><p><b>更新日期：</b>2026-11-04</p><p><b>变更概述：</b>冷站硬边界只读带出，风冷系统补齐二次泵预测对象。</p><p><b>本页说明：</b>选风冷冷水系统和 B路风冷冷水系统查看二次泵；末端机房沿用 v2.9。</p></div></div>
+<div class="anno anno-version-header" data-version="v2.2">
             <span class="anno-tag">版本信息</span>
             <div class="anno-body">
               <p><b>当前版本：</b>v2.2</p>
@@ -669,6 +676,7 @@
             <div class="anno-body"><p><b>关联模块：</b>基础信息 — 末端机房</p><ul><li><b>仿真模型类型：</b>必选，水冷冷水系统 / 末端机房。</li><li><b>仿真模型对象：</b>必选，末端类型下为空调设备组实例，一个设备组一个仿真模型。</li><li><b>随对象带入：</b>空调、通道、温湿度测点、供冷关系及空调铭牌、控制方式，来自机房配置，本页不重复配置；完整性在「机房配置校验」页检查。</li><li><b>仿真模型名称：</b>规则不变。</li></ul></div>
           </div>
 
+<div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 · 《冷站配置需求文档》§7.3、§8.1～8.2</span><div class="anno-body"><p><b>关联模块：</b>冷站仿真模型对象与预测对象</p><ul><li>水冷 / 风冷类型选择冷水系统后，设备分组、供水关系和属性随对象从冷站配置带入，本页不重复配置；完整性在冷站配置校验中查看。</li><li>风冷且含二次泵时，显示每台二次泵的流量、进出口压差、功率，以及每个并联二次泵管路的旁通流量。</li><li>二次泵流量和压差联立求解，功率模型取求解出的单泵流量；二次泵模型与水冷共用，旁通流量上下限取管路属性，空值不限制。</li></ul></div></div><div class="anno anno-field" data-version="v3.0"><span class="anno-tag">字段说明</span><span class="anno-version">v3.0</span><span class="anno-source">产品推断</span><div class="anno-body"><p><b>关联模块：</b>风冷演示对象与模型选择</p><ul><li>风冷类型选择“B路风冷冷水系统”，包含 3 台二次泵和 1 个并联二次泵管路；类型和对象切换沿用现有下拉。</li><li>二次泵模型选择规则与现有对象相同；旁通流量由仿真计算，只读显示计算来源。</li><li>新增行的工程数值及预测偏差输入演示不代表算法缺省值；算法缺省值按评审后的仿真表确定。</li></ul></div></div>
           <section class="section-card">
             <div class="section-head">
               <span class="step-num">1</span>
@@ -684,6 +692,7 @@
                   <label class="field-label" for="simType"><span class="required">*</span>仿真模型类型：</label>
                   <select id="simType" class="field-select" aria-label="仿真模型类型">
                     <option value="water" selected>水冷冷水系统</option>
+                    <option value="air" data-version="v3.0">风冷冷水系统</option>
                     <option value="terminal">末端机房</option>
                   </select>
                 </div>
@@ -909,6 +918,7 @@
                       <th>失败原因</th>
                     </tr>
                   </thead>
+                  <tbody id="predictTableBodyAir" data-version="v3.0" hidden><tr data-version="v3.0" data-predict-result="success" data-auto-model="1#风冷冷水机组 · 功率预测模型" data-predict-value="642 kW" data-predict-delta="−8 kW"><td>1#风冷冷水机组</td><td>功率</td><td><select class="field-select tight rule-select" aria-label="1#风冷冷水机组 · 功率模型选择规则"><option>训练时间优先</option><option>RMSE 优先</option><option selected>多工况泛化优先</option><option>自定义</option></select></td><td><select class="field-select tight model-select" aria-label="1#风冷冷水机组 · 功率模型"><option selected>1#风冷冷水机组 · 功率预测模型</option><option>1#风冷冷水机组 · 功率预测模型（机理）</option></select></td><td class="cell-num">650 kW</td><td class="cell-num predict-value">642 kW</td><td class="cell-num predict-delta">−8 kW</td><td><span class="predict-tag success">预测成功</span></td><td><span class="confidence-tag high">高置信度</span></td><td class="failure-text cell-muted">—</td></tr><tr data-version="v3.0" data-predict-result="success" data-auto-model="2#风冷冷水机组 · 功率预测模型" data-predict-value="642 kW" data-predict-delta="−8 kW"><td>2#风冷冷水机组</td><td>功率</td><td><select class="field-select tight rule-select" aria-label="2#风冷冷水机组 · 功率模型选择规则"><option>训练时间优先</option><option>RMSE 优先</option><option selected>多工况泛化优先</option><option>自定义</option></select></td><td><select class="field-select tight model-select" aria-label="2#风冷冷水机组 · 功率模型"><option selected>2#风冷冷水机组 · 功率预测模型</option><option>2#风冷冷水机组 · 功率预测模型（机理）</option></select></td><td class="cell-num">650 kW</td><td class="cell-num predict-value">642 kW</td><td class="cell-num predict-delta">−8 kW</td><td><span class="predict-tag success">预测成功</span></td><td><span class="confidence-tag high">高置信度</span></td><td class="failure-text cell-muted">—</td></tr><tr data-version="v3.0" data-predict-result="success" data-auto-model="3#风冷冷水机组 · 功率预测模型" data-predict-value="642 kW" data-predict-delta="−8 kW"><td>3#风冷冷水机组</td><td>功率</td><td><select class="field-select tight rule-select" aria-label="3#风冷冷水机组 · 功率模型选择规则"><option>训练时间优先</option><option>RMSE 优先</option><option selected>多工况泛化优先</option><option>自定义</option></select></td><td><select class="field-select tight model-select" aria-label="3#风冷冷水机组 · 功率模型"><option selected>3#风冷冷水机组 · 功率预测模型</option><option>3#风冷冷水机组 · 功率预测模型（机理）</option></select></td><td class="cell-num">650 kW</td><td class="cell-num predict-value">642 kW</td><td class="cell-num predict-delta">−8 kW</td><td><span class="predict-tag success">预测成功</span></td><td><span class="confidence-tag high">高置信度</span></td><td class="failure-text cell-muted">—</td></tr><tr data-version="v3.0" data-predict-result="success" data-auto-model="1#二次泵 · 流量预测模型" data-predict-value="306 m³/h" data-predict-delta="+6 m³/h"><td>1#二次泵</td><td>流量</td><td><select class="field-select tight rule-select" aria-label="1#二次泵 · 流量模型选择规则"><option>训练时间优先</option><option>RMSE 优先</option><option selected>多工况泛化优先</option><option>自定义</option></select></td><td><select class="field-select tight model-select" aria-label="1#二次泵 · 流量模型"><option selected>1#二次泵 · 流量预测模型</option><option>1#二次泵 · 流量预测模型（机理）</option></select></td><td class="cell-num">300 m³/h</td><td class="cell-num predict-value">306 m³/h</td><td class="cell-num predict-delta">+6 m³/h</td><td><span class="predict-tag success">预测成功</span></td><td><span class="confidence-tag high">高置信度</span></td><td class="failure-text cell-muted">—</td></tr><tr data-version="v3.0" data-predict-result="success" data-auto-model="1#二次泵 · 进出口压差预测模型" data-predict-value="1.22 bar" data-predict-delta="+0.02 bar"><td>1#二次泵</td><td>进出口压差</td><td><select class="field-select tight rule-select" aria-label="1#二次泵 · 进出口压差模型选择规则"><option>训练时间优先</option><option>RMSE 优先</option><option selected>多工况泛化优先</option><option>自定义</option></select></td><td><select class="field-select tight model-select" aria-label="1#二次泵 · 进出口压差模型"><option selected>1#二次泵 · 进出口压差预测模型</option><option>1#二次泵 · 进出口压差预测模型（机理）</option></select></td><td class="cell-num">1.20 bar</td><td class="cell-num predict-value">1.22 bar</td><td class="cell-num predict-delta">+0.02 bar</td><td><span class="predict-tag success">预测成功</span></td><td><span class="confidence-tag high">高置信度</span></td><td class="failure-text cell-muted">—</td></tr><tr data-version="v3.0" data-predict-result="success" data-auto-model="1#二次泵 · 功率预测模型" data-predict-value="43 kW" data-predict-delta="+1 kW"><td>1#二次泵</td><td>功率</td><td><select class="field-select tight rule-select" aria-label="1#二次泵 · 功率模型选择规则"><option>训练时间优先</option><option>RMSE 优先</option><option selected>多工况泛化优先</option><option>自定义</option></select></td><td><select class="field-select tight model-select" aria-label="1#二次泵 · 功率模型"><option selected>1#二次泵 · 功率预测模型</option><option>1#二次泵 · 功率预测模型（机理）</option></select></td><td class="cell-num">42 kW</td><td class="cell-num predict-value">43 kW</td><td class="cell-num predict-delta">+1 kW</td><td><span class="predict-tag success">预测成功</span></td><td><span class="confidence-tag high">高置信度</span></td><td class="failure-text cell-muted">—</td></tr><tr data-version="v3.0" data-predict-result="success" data-auto-model="2#二次泵 · 流量预测模型" data-predict-value="344 m³/h" data-predict-delta="+44 m³/h"><td>2#二次泵</td><td>流量</td><td><select class="field-select tight rule-select" aria-label="2#二次泵 · 流量模型选择规则"><option>训练时间优先</option><option>RMSE 优先</option><option selected>多工况泛化优先</option><option>自定义</option></select></td><td><select class="field-select tight model-select" aria-label="2#二次泵 · 流量模型"><option selected>2#二次泵 · 流量预测模型</option><option>2#二次泵 · 流量预测模型（机理）</option></select></td><td class="cell-num">300 m³/h</td><td class="cell-num predict-value">344 m³/h</td><td class="cell-num predict-delta">+44 m³/h</td><td><span class="predict-tag success">预测成功</span></td><td><span class="confidence-tag high">高置信度</span></td><td class="failure-text cell-muted">—</td></tr><tr data-version="v3.0" data-predict-result="success" data-auto-model="2#二次泵 · 进出口压差预测模型" data-predict-value="1.22 bar" data-predict-delta="+0.02 bar"><td>2#二次泵</td><td>进出口压差</td><td><select class="field-select tight rule-select" aria-label="2#二次泵 · 进出口压差模型选择规则"><option>训练时间优先</option><option>RMSE 优先</option><option selected>多工况泛化优先</option><option>自定义</option></select></td><td><select class="field-select tight model-select" aria-label="2#二次泵 · 进出口压差模型"><option selected>2#二次泵 · 进出口压差预测模型</option><option>2#二次泵 · 进出口压差预测模型（机理）</option></select></td><td class="cell-num">1.20 bar</td><td class="cell-num predict-value">1.22 bar</td><td class="cell-num predict-delta">+0.02 bar</td><td><span class="predict-tag success">预测成功</span></td><td><span class="confidence-tag high">高置信度</span></td><td class="failure-text cell-muted">—</td></tr><tr data-version="v3.0" data-predict-result="success" data-auto-model="2#二次泵 · 功率预测模型" data-predict-value="43 kW" data-predict-delta="+1 kW"><td>2#二次泵</td><td>功率</td><td><select class="field-select tight rule-select" aria-label="2#二次泵 · 功率模型选择规则"><option>训练时间优先</option><option>RMSE 优先</option><option selected>多工况泛化优先</option><option>自定义</option></select></td><td><select class="field-select tight model-select" aria-label="2#二次泵 · 功率模型"><option selected>2#二次泵 · 功率预测模型</option><option>2#二次泵 · 功率预测模型（机理）</option></select></td><td class="cell-num">42 kW</td><td class="cell-num predict-value">43 kW</td><td class="cell-num predict-delta">+1 kW</td><td><span class="predict-tag success">预测成功</span></td><td><span class="confidence-tag high">高置信度</span></td><td class="failure-text cell-muted">—</td></tr><tr data-version="v3.0" data-predict-result="success" data-auto-model="3#二次泵 · 流量预测模型" data-predict-value="306 m³/h" data-predict-delta="+6 m³/h"><td>3#二次泵</td><td>流量</td><td><select class="field-select tight rule-select" aria-label="3#二次泵 · 流量模型选择规则"><option>训练时间优先</option><option>RMSE 优先</option><option selected>多工况泛化优先</option><option>自定义</option></select></td><td><select class="field-select tight model-select" aria-label="3#二次泵 · 流量模型"><option selected>3#二次泵 · 流量预测模型</option><option>3#二次泵 · 流量预测模型（机理）</option></select></td><td class="cell-num">300 m³/h</td><td class="cell-num predict-value">306 m³/h</td><td class="cell-num predict-delta">+6 m³/h</td><td><span class="predict-tag success">预测成功</span></td><td><span class="confidence-tag high">高置信度</span></td><td class="failure-text cell-muted">—</td></tr><tr data-version="v3.0" data-predict-result="success" data-auto-model="3#二次泵 · 进出口压差预测模型" data-predict-value="1.22 bar" data-predict-delta="+0.02 bar"><td>3#二次泵</td><td>进出口压差</td><td><select class="field-select tight rule-select" aria-label="3#二次泵 · 进出口压差模型选择规则"><option>训练时间优先</option><option>RMSE 优先</option><option selected>多工况泛化优先</option><option>自定义</option></select></td><td><select class="field-select tight model-select" aria-label="3#二次泵 · 进出口压差模型"><option selected>3#二次泵 · 进出口压差预测模型</option><option>3#二次泵 · 进出口压差预测模型（机理）</option></select></td><td class="cell-num">1.20 bar</td><td class="cell-num predict-value">1.22 bar</td><td class="cell-num predict-delta">+0.02 bar</td><td><span class="predict-tag success">预测成功</span></td><td><span class="confidence-tag high">高置信度</span></td><td class="failure-text cell-muted">—</td></tr><tr data-version="v3.0" data-predict-result="success" data-auto-model="3#二次泵 · 功率预测模型" data-predict-value="60 kW" data-predict-delta="+18 kW"><td>3#二次泵</td><td>功率</td><td><select class="field-select tight rule-select" aria-label="3#二次泵 · 功率模型选择规则"><option>训练时间优先</option><option>RMSE 优先</option><option selected>多工况泛化优先</option><option>自定义</option></select></td><td><select class="field-select tight model-select" aria-label="3#二次泵 · 功率模型"><option selected>3#二次泵 · 功率预测模型</option><option>3#二次泵 · 功率预测模型（机理）</option></select></td><td class="cell-num">42 kW</td><td class="cell-num predict-value">60 kW</td><td class="cell-num predict-delta">+18 kW</td><td><span class="predict-tag success">预测成功</span></td><td><span class="confidence-tag high">高置信度</span></td><td class="failure-text cell-muted">—</td></tr><tr data-version="v3.0" data-predict-result="success" data-auto-model="并联二次泵管路 1 · 旁通流量预测模型" data-predict-value="44 m³/h" data-predict-delta="−56 m³/h"><td>并联二次泵管路 1</td><td>旁通流量</td><td>仿真计算</td><td>按一次侧与二次泵总流量计算</td><td class="cell-num">100 m³/h</td><td class="cell-num predict-value">44 m³/h</td><td class="cell-num predict-delta">−56 m³/h</td><td><span class="predict-tag success">预测成功</span></td><td><span class="confidence-tag high">高置信度</span></td><td class="failure-text cell-muted">—</td></tr></tbody>
                   <tbody id="predictTableBodyTerminal" hidden>
                     <tr data-predict-result="success" data-predict-value="14.5℃" data-predict-delta="0.3℃" data-auto-model="精密空调1-送风温度-混合增强预测模型">
                       <td>精密空调1</td>
@@ -1271,6 +1281,7 @@
             <span class="anno-source">需求文档</span>
             <div class="anno-body"><p><b>关联模块：</b>仿真安全边界配置 — 末端机房</p><ul><li><b>结构：</b>每个输出变量一组硬边界上下限 + 预测偏差，与冷站同表；硬边界缺省按设备类型带出（其余空调与测点同类带出，演示省略），可逐行修改；预测偏差缺省为空；仿真校验页按本表判定达标。</li><li><b>变量：</b>设备组：空调总功率、回风温度均值、平衡偏差；每台空调：送风温度、有功功率、容量指令；冷点：温度、湿度；热点：温度。</li><li><b>硬边界：</b>预测值越界即终止本次仿真；空调总功率、容量指令、平衡偏差只受硬边界约束。</li><li><b>预测偏差：</b>缺省为空，不填不做偏差判定；填写后按同类量（各机送风温度、功率、回风温度，全部冷点、全部热点）平均绝对偏差判定，超过即终止本次仿真，不按单个对象。只对当前控制保持的方案判定（仿真校验与寻优的 baseline），寻优候选没有实测可比、不判。填写可参考：送风 1.5℃ / 4.6%RH，功率 额定的 7%，回风 0.65℃，冷点 1.3℃ / 5.6%RH，热点 0.65℃ / 2%RH。</li></ul></div>
           </div>
+<div class="anno anno-field" data-version="v3.0"><span class="anno-tag">字段说明</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 · 《冷站配置需求文档》§7.3</span><div class="anno-body"><p><b>关联模块：</b>冷站仿真安全边界 · 硬边界上下限与预测偏差</p><ul><li>硬边界按仿真表内置规则只读显示，标来源对象及属性；跨对象的显示取值对象，固定值标“仿真表固定值”，无来源留空。</li><li>来自属性的数值随已保存冷站配置刷新；来源未填时留空并标“来源属性未填”，可点“去冷站配置修改”；预测偏差仍可填写。</li><li>按制冷模式生效和取平均值的项，按仿真表规则显示计算结果与参与对象。</li></ul></div></div>
           <section class="section-card boundary-card">
             <div class="section-head">
               <span class="section-title">仿真安全边界配置</span>
@@ -1280,7 +1291,7 @@
                 <span class="boundary-alert-icon">!</span>
                 <span>通过设定各参数预测偏差最大值，来确保仿真模型安全可靠。当预测偏差超过了边界，将自动终止仿真模型流程。</span>
               </div>
-              <div class="table-wrap">
+              <div class="anno anno-field" data-version="v3.0"><span class="anno-tag">字段说明</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§7.3、§8.2</span><div class="anno-body"><p><b>关联模块：</b>硬边界来源与预测偏差</p><ul><li>系统、设备和分组属性分别跳步骤 1、2、3，定位来源属性；制冷单元流量下限定位单元内冷机。</li><li>返回地址保留当前系统与编辑模式。</li><li>A、B 路硬边界从已保存冷站配置读取；来源属性未填时留空，标“来源属性未填”并提供修改入口。</li><li>预测偏差可留空，填写须为非负数；保存或进入校验后按填写值判定，留空只检查硬边界。</li></ul></div></div><div class="table-wrap">
                 <table class="data-table" style="min-width: 720px;">
                   <thead>
                     <tr>
@@ -1291,6 +1302,7 @@
                       <th>预测偏差</th>
                     </tr>
                   </thead>
+                  <tbody id="boundaryBodyAir" data-version="v3.0" hidden><tr data-version="v3.0"><td>B路风冷冷水系统</td><td>冷冻水主管压差 / bar</td><td data-version="v3.0"></td><td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：B路风冷冷水系统 · 冷冻水主管最大压差" title="来源：B路风冷冷水系统 · 冷冻水主管最大压差"><span class="boundary-source" tabindex="0" title="来源：B路风冷冷水系统 · 冷冻水主管最大压差">属性</span></div><a class="boundary-config-link" href="冷站配置-创建.html?id=B&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DB%26type%3Dair%26mode%3Dedit&amp;attr=max_cold_pressure_diff">去冷站配置修改</a></td><td><input class="field-control" type="text" value="" aria-label="B路风冷冷水系统 · 冷冻水主管压差 / bar预测偏差" style="max-width:140px"></td></tr><tr data-version="v3.0"><td>B路风冷冷水系统</td><td>最不利压差 / bar</td><td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：B路风冷冷水系统 · 最小不利点压差" title="来源：B路风冷冷水系统 · 最小不利点压差"><span class="boundary-source" tabindex="0" title="来源：B路风冷冷水系统 · 最小不利点压差">属性</span></div><a class="boundary-config-link" href="冷站配置-创建.html?id=B&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DB%26type%3Dair%26mode%3Dedit&amp;attr=min_adcerse_diff">去冷站配置修改</a></td><td data-version="v3.0"></td><td><input class="field-control" type="text" value="" aria-label="B路风冷冷水系统 · 最不利压差 / bar预测偏差" style="max-width:140px"></td></tr><tr data-version="v3.0"><td>1#二次泵</td><td>频率反馈 / Hz</td><td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：1#二次泵 · 最小频率" title="来源：1#二次泵 · 最小频率"><span class="boundary-source" tabindex="0" title="来源：1#二次泵 · 最小频率">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤2.html?id=B&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DB%26type%3Dair%26mode%3Dedit&amp;dev=SWP1&amp;attr=feq_min">去冷站配置修改</a></td><td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="50" readonly aria-label="硬边界，只读；来源：仿真表固定值" title="来源：仿真表固定值"><span class="boundary-source" tabindex="0" title="来源：仿真表固定值">固定值</span></div></td><td><input class="field-control" type="text" value="" aria-label="1#二次泵 · 频率反馈 / Hz预测偏差" style="max-width:140px"></td></tr><tr data-version="v3.0"><td>1#二次泵</td><td>流量 / m³/h</td><td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：1#二次泵 · 最小流量" title="来源：1#二次泵 · 最小流量"><span class="boundary-source" tabindex="0" title="来源：1#二次泵 · 最小流量">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤2.html?id=B&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DB%26type%3Dair%26mode%3Dedit&amp;dev=SWP1&amp;attr=flow_min">去冷站配置修改</a></td><td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：1#二次泵 · 最大流量" title="来源：1#二次泵 · 最大流量"><span class="boundary-source" tabindex="0" title="来源：1#二次泵 · 最大流量">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤2.html?id=B&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DB%26type%3Dair%26mode%3Dedit&amp;dev=SWP1&amp;attr=flow_max">去冷站配置修改</a></td><td><input class="field-control" type="text" value="" aria-label="1#二次泵 · 流量 / m³/h预测偏差" style="max-width:140px"></td></tr><tr data-version="v3.0"><td>1#二次泵</td><td>进出口压差 / bar</td><td data-version="v3.0"></td><td data-version="v3.0"></td><td><input class="field-control" type="text" value="" aria-label="1#二次泵 · 进出口压差 / bar预测偏差" style="max-width:140px"></td></tr><tr data-version="v3.0"><td>1#二次泵</td><td>功率 / kW</td><td data-version="v3.0"></td><td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：1#二次泵 · 额定功率" title="来源：1#二次泵 · 额定功率"><span class="boundary-source" tabindex="0" title="来源：1#二次泵 · 额定功率">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤2.html?id=B&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DB%26type%3Dair%26mode%3Dedit&amp;dev=SWP1&amp;attr=ratedPower">去冷站配置修改</a></td><td><input class="field-control" type="text" value="" aria-label="1#二次泵 · 功率 / kW预测偏差" style="max-width:140px"></td></tr><tr data-version="v3.0"><td>2#二次泵</td><td>频率反馈 / Hz</td><td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：2#二次泵 · 最小频率" title="来源：2#二次泵 · 最小频率"><span class="boundary-source" tabindex="0" title="来源：2#二次泵 · 最小频率">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤2.html?id=B&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DB%26type%3Dair%26mode%3Dedit&amp;dev=SWP2&amp;attr=feq_min">去冷站配置修改</a></td><td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="50" readonly aria-label="硬边界，只读；来源：仿真表固定值" title="来源：仿真表固定值"><span class="boundary-source" tabindex="0" title="来源：仿真表固定值">固定值</span></div></td><td><input class="field-control" type="text" value="" aria-label="2#二次泵 · 频率反馈 / Hz预测偏差" style="max-width:140px"></td></tr><tr data-version="v3.0"><td>2#二次泵</td><td>流量 / m³/h</td><td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：2#二次泵 · 最小流量" title="来源：2#二次泵 · 最小流量"><span class="boundary-source" tabindex="0" title="来源：2#二次泵 · 最小流量">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤2.html?id=B&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DB%26type%3Dair%26mode%3Dedit&amp;dev=SWP2&amp;attr=flow_min">去冷站配置修改</a></td><td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：2#二次泵 · 最大流量" title="来源：2#二次泵 · 最大流量"><span class="boundary-source" tabindex="0" title="来源：2#二次泵 · 最大流量">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤2.html?id=B&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DB%26type%3Dair%26mode%3Dedit&amp;dev=SWP2&amp;attr=flow_max">去冷站配置修改</a></td><td><input class="field-control" type="text" value="" aria-label="2#二次泵 · 流量 / m³/h预测偏差" style="max-width:140px"></td></tr><tr data-version="v3.0"><td>2#二次泵</td><td>进出口压差 / bar</td><td data-version="v3.0"></td><td data-version="v3.0"></td><td><input class="field-control" type="text" value="" aria-label="2#二次泵 · 进出口压差 / bar预测偏差" style="max-width:140px"></td></tr><tr data-version="v3.0"><td>2#二次泵</td><td>功率 / kW</td><td data-version="v3.0"></td><td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：2#二次泵 · 额定功率" title="来源：2#二次泵 · 额定功率"><span class="boundary-source" tabindex="0" title="来源：2#二次泵 · 额定功率">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤2.html?id=B&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DB%26type%3Dair%26mode%3Dedit&amp;dev=SWP2&amp;attr=ratedPower">去冷站配置修改</a></td><td><input class="field-control" type="text" value="" aria-label="2#二次泵 · 功率 / kW预测偏差" style="max-width:140px"></td></tr><tr data-version="v3.0"><td>3#二次泵</td><td>频率反馈 / Hz</td><td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：3#二次泵 · 最小频率" title="来源：3#二次泵 · 最小频率"><span class="boundary-source" tabindex="0" title="来源：3#二次泵 · 最小频率">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤2.html?id=B&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DB%26type%3Dair%26mode%3Dedit&amp;dev=SWP3&amp;attr=feq_min">去冷站配置修改</a></td><td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="50" readonly aria-label="硬边界，只读；来源：仿真表固定值" title="来源：仿真表固定值"><span class="boundary-source" tabindex="0" title="来源：仿真表固定值">固定值</span></div></td><td><input class="field-control" type="text" value="" aria-label="3#二次泵 · 频率反馈 / Hz预测偏差" style="max-width:140px"></td></tr><tr data-version="v3.0"><td>3#二次泵</td><td>流量 / m³/h</td><td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：3#二次泵 · 最小流量" title="来源：3#二次泵 · 最小流量"><span class="boundary-source" tabindex="0" title="来源：3#二次泵 · 最小流量">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤2.html?id=B&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DB%26type%3Dair%26mode%3Dedit&amp;dev=SWP3&amp;attr=flow_min">去冷站配置修改</a></td><td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：3#二次泵 · 最大流量" title="来源：3#二次泵 · 最大流量"><span class="boundary-source" tabindex="0" title="来源：3#二次泵 · 最大流量">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤2.html?id=B&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DB%26type%3Dair%26mode%3Dedit&amp;dev=SWP3&amp;attr=flow_max">去冷站配置修改</a></td><td><input class="field-control" type="text" value="" aria-label="3#二次泵 · 流量 / m³/h预测偏差" style="max-width:140px"></td></tr><tr data-version="v3.0"><td>3#二次泵</td><td>进出口压差 / bar</td><td data-version="v3.0"></td><td data-version="v3.0"></td><td><input class="field-control" type="text" value="" aria-label="3#二次泵 · 进出口压差 / bar预测偏差" style="max-width:140px"></td></tr><tr data-version="v3.0"><td>3#二次泵</td><td>功率 / kW</td><td data-version="v3.0"></td><td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：3#二次泵 · 额定功率" title="来源：3#二次泵 · 额定功率"><span class="boundary-source" tabindex="0" title="来源：3#二次泵 · 额定功率">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤2.html?id=B&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DB%26type%3Dair%26mode%3Dedit&amp;dev=SWP3&amp;attr=ratedPower">去冷站配置修改</a></td><td><input class="field-control" type="text" value="" aria-label="3#二次泵 · 功率 / kW预测偏差" style="max-width:140px"></td></tr><tr data-version="v3.0"><td>并联二次泵管路 1</td><td>旁通流量 / m³/h</td><td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：并联二次泵管路 1 · 最小旁通流量" title="来源：并联二次泵管路 1 · 最小旁通流量"><span class="boundary-source" tabindex="0" title="来源：并联二次泵管路 1 · 最小旁通流量">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤3.html?id=B&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DB%26type%3Dair%26mode%3Dedit&amp;group=%E5%B9%B6%E8%81%94%E4%BA%8C%E6%AC%A1%E6%B3%B5%E7%AE%A1%E8%B7%AF%201&amp;attr=minBypassFlow">去冷站配置修改</a></td><td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：并联二次泵管路 1 · 最大旁通流量" title="来源：并联二次泵管路 1 · 最大旁通流量"><span class="boundary-source" tabindex="0" title="来源：并联二次泵管路 1 · 最大旁通流量">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤3.html?id=B&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DB%26type%3Dair%26mode%3Dedit&amp;group=%E5%B9%B6%E8%81%94%E4%BA%8C%E6%AC%A1%E6%B3%B5%E7%AE%A1%E8%B7%AF%201&amp;attr=maxBypassFlow">去冷站配置修改</a></td><td><input class="field-control" type="text" value="" aria-label="并联二次泵管路 1 · 旁通流量 / m³/h预测偏差" style="max-width:140px"></td></tr></tbody>
                   <tbody id="boundaryBodyTerminal" hidden>
                     <tr><td rowspan="3">0_100 空调设备组</td><td>0_100 空调设备组/空调总功率/kW</td><td><input class="field-control" type="text" value="0.00" style="max-width:140px"></td><td><input class="field-control" type="text" value="300.00" style="max-width:140px"></td><td><input class="field-control" type="text" value="" placeholder="不参与偏差判定" style="max-width:140px"></td></tr>
                     <tr><td>0_100 空调设备组/回风温度均值/℃</td><td><input class="field-control" type="text" value="15.00" style="max-width:140px"></td><td><input class="field-control" type="text" value="35.00" style="max-width:140px"></td><td><input class="field-control" type="text" value="" placeholder="请输入" style="max-width:140px"></td></tr>
@@ -1309,98 +1321,99 @@
                     <tr>
                       <td>蓄冷罐组</td>
                       <td>蓄冷罐组/可放冷时长/min</td>
-                      <td><input class="field-control" type="text" value="15.00" style="max-width:140px"></td>
-                      <td></td>
+                      <td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：蓄冷罐组 · 最低安全放冷时长" title="来源：蓄冷罐组 · 最低安全放冷时长"><span class="boundary-source" tabindex="0" title="来源：蓄冷罐组 · 最低安全放冷时长">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤3.html?id=A&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DA%26type%3Dwater%26mode%3Dedit&amp;group=%E8%93%84%E5%86%B7%E7%BD%90%E7%BB%84%201&amp;attr=min_safe_time">去冷站配置修改</a></td>
+                      <td data-version="v3.0"></td>
                       <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
                     </tr>
                     <tr>
                       <td rowspan="8">风冷冷水系统_测试</td>
                       <td>风冷冷水系统_测试/冷冻水总管供回水压差/bar</td>
-                      <td></td>
-                      <td><input class="field-control" type="text" value="2.50" style="max-width:140px"></td>
+                      <td data-version="v3.0"></td>
+                      <td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：1号集成冷站 · 冷冻水主管最大压差" title="来源：1号集成冷站 · 冷冻水主管最大压差"><span class="boundary-source" tabindex="0" title="来源：1号集成冷站 · 冷冻水主管最大压差">属性</span></div><a class="boundary-config-link" href="冷站配置-创建.html?id=A&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DA%26type%3Dwater%26mode%3Dedit&amp;attr=max_cold_pressure_diff">去冷站配置修改</a></td>
                       <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
                     </tr>
                     <tr>
                       <td>风冷冷水系统_测试/最不利压差/bar</td>
-                      <td><input class="field-control" type="text" value="0.60" style="max-width:140px"></td>
-                      <td></td>
+                      <td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：1号集成冷站 · 最小不利点压差" title="来源：1号集成冷站 · 最小不利点压差"><span class="boundary-source" tabindex="0" title="来源：1号集成冷站 · 最小不利点压差">属性</span></div><a class="boundary-config-link" href="冷站配置-创建.html?id=A&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DA%26type%3Dwater%26mode%3Dedit&amp;attr=min_adcerse_diff">去冷站配置修改</a></td>
+                      <td data-version="v3.0"></td>
                       <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
                     </tr>
                     <tr>
                       <td>风冷冷水系统_测试/冷冻水总管供水温度/℃</td>
-                      <td></td>
-                      <td><input class="field-control" type="text" value="12.00" style="max-width:140px"></td>
+                      <td data-version="v3.0"></td>
+                      <td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：1号集成冷站 · 最高冷冻水供水温度" title="来源：1号集成冷站 · 最高冷冻水供水温度"><span class="boundary-source" tabindex="0" title="来源：1号集成冷站 · 最高冷冻水供水温度">属性</span></div><a class="boundary-config-link" href="冷站配置-创建.html?id=A&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DA%26type%3Dwater%26mode%3Dedit&amp;attr=max_cold_supply_temp">去冷站配置修改</a></td>
                       <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
                     </tr>
                     <tr>
                       <td>风冷冷水系统_测试/冷冻水总管回水温度/℃</td>
-                      <td></td>
-                      <td><input class="field-control" type="text" value="18.00" style="max-width:140px"></td>
+                      <td data-version="v3.0"></td>
+                      <td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：1号集成冷站 · 最高冷冻水回水温度" title="来源：1号集成冷站 · 最高冷冻水回水温度"><span class="boundary-source" tabindex="0" title="来源：1号集成冷站 · 最高冷冻水回水温度">属性</span></div><a class="boundary-config-link" href="冷站配置-创建.html?id=A&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DA%26type%3Dwater%26mode%3Dedit&amp;attr=max_cold_return_temp">去冷站配置修改</a></td>
                       <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
                     </tr>
                     <tr>
                       <td>风冷冷水系统_测试/冷冻水供回水温差/℃</td>
-                      <td></td>
-                      <td><input class="field-control" type="text" value="8.00" style="max-width:140px"></td>
+                      <td data-version="v3.0"></td>
+                      <td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：1号集成冷站 · 最大冷冻水温差" title="来源：1号集成冷站 · 最大冷冻水温差"><span class="boundary-source" tabindex="0" title="来源：1号集成冷站 · 最大冷冻水温差">属性</span></div><a class="boundary-config-link" href="冷站配置-创建.html?id=A&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DA%26type%3Dwater%26mode%3Dedit&amp;attr=MaxColdWaterTpDiff">去冷站配置修改</a></td>
                       <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
                     </tr>
                     <tr>
                       <td>风冷冷水系统_测试/室外干球温度/℃</td>
-                      <td><input class="field-control" type="text" value="5.00" style="max-width:140px"></td>
-                      <td><input class="field-control" type="text" value="45.00" style="max-width:140px"></td>
+                      <td data-version="v3.0"></td>
+                      <td data-version="v3.0"></td>
                       <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
                     </tr>
                     <tr>
                       <td>二次泵(风)1/频率反馈</td>
-                      <td><input class="field-control" type="text" value="15.00" style="max-width:140px"></td>
-                      <td><input class="field-control" type="text" value="50.00" style="max-width:140px"></td>
+                      <td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：二次泵(风)1 · 最小频率" title="来源：二次泵(风)1 · 最小频率"><span class="boundary-source" tabindex="0" title="来源：二次泵(风)1 · 最小频率">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤2.html?id=A&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DA%26type%3Dwater%26mode%3Dedit&amp;dev=SWP1&amp;attr=feq_min">去冷站配置修改</a></td>
+                      <td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="50.00" readonly aria-label="硬边界，只读；来源：仿真表固定值" title="来源：仿真表固定值"><span class="boundary-source" tabindex="0" title="来源：仿真表固定值">固定值</span></div></td>
                       <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
                     </tr>
                     <tr>
                       <td>二次泵(风)1/有功功率/kW</td>
-                      <td><input class="field-control" type="text" value="0.00" style="max-width:140px"></td>
-                      <td><input class="field-control" type="text" value="25.00" style="max-width:140px"></td>
+                      <td data-version="v3.0"></td>
+                      <td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：二次泵(风)1 · 额定功率" title="来源：二次泵(风)1 · 额定功率"><span class="boundary-source" tabindex="0" title="来源：二次泵(风)1 · 额定功率">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤2.html?id=A&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DA%26type%3Dwater%26mode%3Dedit&amp;dev=SWP1&amp;attr=ratedPower">去冷站配置修改</a></td>
                       <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
                     </tr>
                     <tr>
                       <td rowspan="4">二次泵(风)1</td>
                       <td>二次泵(风)1/流量</td>
-                      <td><input class="field-control" type="text" value="40.00" style="max-width:140px"></td>
-                      <td><input class="field-control" type="text" value="450.00" style="max-width:140px"></td>
+                      <td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：二次泵(风)1 · 最小流量" title="来源：二次泵(风)1 · 最小流量"><span class="boundary-source" tabindex="0" title="来源：二次泵(风)1 · 最小流量">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤2.html?id=A&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DA%26type%3Dwater%26mode%3Dedit&amp;dev=SWP1&amp;attr=flow_min">去冷站配置修改</a></td>
+                      <td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：二次泵(风)1 · 最大流量" title="来源：二次泵(风)1 · 最大流量"><span class="boundary-source" tabindex="0" title="来源：二次泵(风)1 · 最大流量">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤2.html?id=A&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DA%26type%3Dwater%26mode%3Dedit&amp;dev=SWP1&amp;attr=flow_max">去冷站配置修改</a></td>
                       <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
                     </tr>
                     <tr>
                       <td>二次泵(风)2/频率反馈</td>
-                      <td><input class="field-control" type="text" value="15.00" style="max-width:140px"></td>
-                      <td><input class="field-control" type="text" value="50.00" style="max-width:140px"></td>
+                      <td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：二次泵(风)2 · 最小频率" title="来源：二次泵(风)2 · 最小频率"><span class="boundary-source" tabindex="0" title="来源：二次泵(风)2 · 最小频率">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤2.html?id=A&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DA%26type%3Dwater%26mode%3Dedit&amp;dev=SWP2&amp;attr=feq_min">去冷站配置修改</a></td>
+                      <td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="50.00" readonly aria-label="硬边界，只读；来源：仿真表固定值" title="来源：仿真表固定值"><span class="boundary-source" tabindex="0" title="来源：仿真表固定值">固定值</span></div></td>
                       <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
                     </tr>
                     <tr>
                       <td>二次泵(风)2/有功功率/kW</td>
-                      <td><input class="field-control" type="text" value="0.00" style="max-width:140px"></td>
-                      <td><input class="field-control" type="text" value="25.00" style="max-width:140px"></td>
+                      <td data-version="v3.0"></td>
+                      <td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：二次泵(风)2 · 额定功率" title="来源：二次泵(风)2 · 额定功率"><span class="boundary-source" tabindex="0" title="来源：二次泵(风)2 · 额定功率">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤2.html?id=A&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DA%26type%3Dwater%26mode%3Dedit&amp;dev=SWP2&amp;attr=ratedPower">去冷站配置修改</a></td>
                       <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
                     </tr>
                     <tr>
                       <td>二次泵(风)2/流量</td>
-                      <td><input class="field-control" type="text" value="40.00" style="max-width:140px"></td>
-                      <td><input class="field-control" type="text" value="450.00" style="max-width:140px"></td>
+                      <td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：二次泵(风)2 · 最小流量" title="来源：二次泵(风)2 · 最小流量"><span class="boundary-source" tabindex="0" title="来源：二次泵(风)2 · 最小流量">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤2.html?id=A&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DA%26type%3Dwater%26mode%3Dedit&amp;dev=SWP2&amp;attr=flow_min">去冷站配置修改</a></td>
+                      <td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：二次泵(风)2 · 最大流量" title="来源：二次泵(风)2 · 最大流量"><span class="boundary-source" tabindex="0" title="来源：二次泵(风)2 · 最大流量">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤2.html?id=A&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DA%26type%3Dwater%26mode%3Dedit&amp;dev=SWP2&amp;attr=flow_max">去冷站配置修改</a></td>
                       <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
                     </tr>
                     <tr>
                       <td rowspan="2">冷冻水泵(风)1</td>
                       <td>冷冻水泵(风)1/频率反馈</td>
-                      <td><input class="field-control" type="text" value="15.00" style="max-width:140px"></td>
-                      <td><input class="field-control" type="text" value="50.00" style="max-width:140px"></td>
+                      <td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：冷冻水泵(风)1 · 最小频率" title="来源：冷冻水泵(风)1 · 最小频率"><span class="boundary-source" tabindex="0" title="来源：冷冻水泵(风)1 · 最小频率">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤2.html?id=A&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DA%26type%3Dwater%26mode%3Dedit&amp;dev=CHWP1&amp;attr=feq_min">去冷站配置修改</a></td>
+                      <td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="50.00" readonly aria-label="硬边界，只读；来源：仿真表固定值" title="来源：仿真表固定值"><span class="boundary-source" tabindex="0" title="来源：仿真表固定值">固定值</span></div></td>
                       <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
                     </tr>
                     <tr>
                       <td>冷冻水泵(风)1/有功功率/kW</td>
-                      <td><input class="field-control" type="text" value="0.00" style="max-width:140px"></td>
-                      <td><input class="field-control" type="text" value="30.00" style="max-width:140px"></td>
+                      <td data-version="v3.0"></td>
+                      <td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：冷冻水泵(风)1 · 额定功率" title="来源：冷冻水泵(风)1 · 额定功率"><span class="boundary-source" tabindex="0" title="来源：冷冻水泵(风)1 · 额定功率">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤2.html?id=A&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DA%26type%3Dwater%26mode%3Dedit&amp;dev=CHWP1&amp;attr=ratedPower">去冷站配置修改</a></td>
                       <td><input class="field-control" type="text" placeholder="" style="max-width:140px"></td>
                     </tr>
-                  </tbody>
+                  <tr data-version="v3.0"><td>3#冷水主机</td><td>冷冻出水温度设定 / ℃</td><td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：3#冷水主机 · 最小冷冻出水温度设定" title="来源：3#冷水主机 · 最小冷冻出水温度设定"><span class="boundary-source" tabindex="0" title="来源：3#冷水主机 · 最小冷冻出水温度设定">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤2.html?id=A&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DA%26type%3Dwater%26mode%3Dedit&amp;dev=CH3&amp;attr=min_coldtp_set">去冷站配置修改</a></td><td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：3#冷水主机 · 最大冷冻出水温度设定" title="来源：3#冷水主机 · 最大冷冻出水温度设定"><span class="boundary-source" tabindex="0" title="来源：3#冷水主机 · 最大冷冻出水温度设定">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤2.html?id=A&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DA%26type%3Dwater%26mode%3Dedit&amp;dev=CH3&amp;attr=max_coldtp_set">去冷站配置修改</a></td><td><input class="field-control" type="text" value="" aria-label="3#冷水主机 · 冷冻出水温度设定 / ℃预测偏差" style="max-width:140px"></td></tr><tr data-version="v3.0"><td>制冷单元 2</td><td>冷冻水流量 / m³/h</td><td data-version="v3.0"><div class="hard-boundary"><input class="field-control" type="text" value="" readonly aria-label="硬边界，只读；来源：制冷单元 2 内冷水主机的最小冷冻水流量" title="来源：制冷单元 2 内冷水主机的最小冷冻水流量"><span class="boundary-source" tabindex="0" title="来源：制冷单元 2 内冷水主机的最小冷冻水流量">属性</span></div><a class="boundary-config-link" href="冷站配置-创建-步骤2.html?id=A&amp;mode=edit&amp;back=%E5%88%9B%E5%BB%BA%E4%BB%BF%E7%9C%9F%E6%A8%A1%E5%9E%8B.html%3Fid%3DA%26type%3Dwater%26mode%3Dedit&amp;dev=CH2&amp;attr=minColdFlow">去冷站配置修改</a></td><td data-version="v3.0"></td><td><input class="field-control" type="text" value="" aria-label="制冷单元 2 · 冷冻水流量 / m³/h预测偏差" style="max-width:140px"></td></tr>
+</tbody>
                 </table>
               </div>
             </div>
@@ -1432,6 +1445,7 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <script src="components/cold-station-store.js"></script>
   <script>
     (function () {
       const params = new URLSearchParams(window.location.search)
@@ -1460,10 +1474,12 @@
       document.getElementById('cancelBottom').addEventListener('click', goList)
 
       document.getElementById('saveBottom').addEventListener('click', function () {
+        if (!saveColdPredictionSettings()) return
         showToast('已保存（示意）')
       })
 
       document.getElementById('btnSimVerify').addEventListener('click', function () {
+        if (!saveColdPredictionSettings()) return
         window.location.assign(simVerifyHref())
       })
       // v2.9 末端机房仿真模型类型切换；不带 ?type=terminal 时不执行切换，冷站演示保持原样
@@ -1476,6 +1492,83 @@
       const predictBodyTerminal = document.getElementById('predictTableBodyTerminal')
       const boundaryBodyWater = document.getElementById('boundaryBodyWater')
       const boundaryBodyTerminal = document.getElementById('boundaryBodyTerminal')
+      const predictBodyAir = document.getElementById('predictTableBodyAir')
+      const boundaryBodyAir = document.getElementById('boundaryBodyAir')
+      // v3.0：只读取已保存的冷站来源属性，不读取编辑草稿。
+      function refreshColdHardBoundaries() {
+        [['A',boundaryBodyWater],['B',boundaryBodyAir]].forEach(([sid,body])=>{
+          const snapshot=ColdStationStore.getEffective(sid);
+          body.querySelectorAll('.boundary-config-link').forEach(link=>{
+            const url=new URL(link.getAttribute('href'),window.location.href);
+            const q=url.searchParams, cell=link.closest('td'), input=cell.querySelector('.hard-boundary input');
+            let devId=q.get('dev'), groupId=q.get('group'), attr=q.get('attr'), target;
+            // 制冷单元的下限取当前单元内冷机，拓扑修改后不再沿用旧成员。
+            if(sid==='A' && attr==='minColdFlow') {
+              const unit=snapshot?.topology?.groups.find(g=>g.type==='unit'&&g.name==='制冷单元 2');
+              devId=unit?.members.find(id=>snapshot.devices.some(d=>d.id===id&&d.group==='CH'))||'';
+              q.set('dev',devId);
+            }
+            if(devId) target=snapshot?.devices.find(d=>d.id===devId);
+            else if(groupId) target=snapshot?.topology?.groups.find(g=>g.id===groupId||g.name===groupId);
+            const attrs=devId||groupId ? target?.attrs : (attr==='minColdFlow'?null:snapshot?.attributes);
+            const value=attrs?.[attr], missing=value==null||String(value).trim()==='';
+            const def=Object.values(ColdStationStore.DEFS).flat().find(d=>d.id===attr);
+            const name=(devId||groupId?target?.name:snapshot?.name)||'来源对象未配置';
+            const source='来源：'+name+' · '+(def?.name||'来源属性');
+            input.value=missing?'':String(value);input.placeholder=missing?'来源属性未填':'';
+            input.setAttribute('aria-label','硬边界，只读；'+source);input.title=source;
+            const badge=cell.querySelector('.boundary-source');badge.title=source;
+            let hint=cell.querySelector('[data-missing-source]');
+            if(!hint){hint=document.createElement('span');hint.className='boundary-source';hint.dataset.missingSource='';cell.querySelector('.hard-boundary').after(hint);}
+            hint.textContent='来源属性未填';hint.hidden=!missing;
+            const back='创建仿真模型.html?id='+sid+'&type='+(sid==='B'?'air':'water')+'&mode=edit';
+            q.set('id',sid);q.set('mode','edit');q.set('back',back);
+            if(groupId&&target)q.set('group',target.id);
+            link.setAttribute('href',url.pathname.split('/').pop()+'?'+q.toString());
+          });
+        });
+      }
+      refreshColdHardBoundaries();
+      window.addEventListener('pageshow',refreshColdHardBoundaries);
+      window.addEventListener('focus',refreshColdHardBoundaries);
+      window.addEventListener('storage',e=>{if(e.key==='coldStationConfigs'||e.key===null)refreshColdHardBoundaries();});
+      // v3.0：按配置及预测对象保存偏差，空偏差仅按硬边界判定。
+      const predictionStorageKey='coldStationSimulationPredictionV3';
+      let predictionSettings={};
+      try { predictionSettings=JSON.parse(localStorage.getItem(predictionStorageKey)||'{}')||{}; } catch(e) {}
+      function coldBoundaryRows(body) {
+        let object='';
+        return Array.from(body.querySelectorAll('tr')).map(row=>{
+          const cells=Array.from(row.children);
+          if(cells.length===5)object=cells[0].textContent.trim();
+          const metricCell=cells[cells.length-4];
+          const raw=metricCell.textContent.trim().replace(object+'/','');
+          const metric=raw.split('/')[0].trim().replace('有功功率','功率');
+          return {row,key:object+'|'+metric,input:cells[cells.length-1].querySelector('input')};
+        });
+      }
+      function saveColdPredictionSettings() {
+        if(currentSimType==='terminal')return true;
+        const sid=currentSimType==='air'?'B':'A', body=sid==='B'?boundaryBodyAir:boundaryBodyWater;
+        const values={};let bad=false;
+        coldBoundaryRows(body).forEach(item=>{
+          if(!item.input)return;
+          const raw=item.input.value.trim(), valid=raw==='' || (Number.isFinite(Number(raw)) && Number(raw)>=0);
+          item.input.style.borderColor=valid?'':'var(--danger)';item.input.setAttribute('aria-invalid',String(!valid));
+          if(!valid)bad=true;
+          values[item.key]=raw===''?null:Number(raw);
+        });
+        if(bad){showToast('预测偏差须为非负数或留空');return false;}
+        predictionSettings[sid]=values;
+        try { localStorage.setItem(predictionStorageKey,JSON.stringify(predictionSettings)); } catch(e) {}
+        return true;
+      }
+      [['A',boundaryBodyWater],['B',boundaryBodyAir]].forEach(([sid,body])=>{
+        coldBoundaryRows(body).forEach(item=>{
+          const values=predictionSettings[sid];
+          if(item.input&&values&&Object.prototype.hasOwnProperty.call(values,item.key))item.input.value=values[item.key]??'';
+        });
+      });
       let predictReady = false
       const moduleChecks = document.querySelector('.module-checks')
       const btnPredictEl = document.getElementById('btnPredict')
@@ -1490,29 +1583,32 @@
       let currentSimType = 'water'
 
       function simVerifyHref() {
-        if (currentSimType !== 'terminal') return '仿真校验.html'
+        if (currentSimType !== 'terminal') return currentSimType === 'air' ? '仿真校验.html?id=B' : '仿真校验.html'
         const isDemoObj = !!simObjSelect && simObjSelect.value.indexOf('CW-DEMO') === 0
         return '仿真校验.html?type=terminal' + (isDemoObj ? '&site=demo' : '')
       }
 
       const applySimType = function (type) {
-        currentSimType = type === 'terminal' ? 'terminal' : 'water'
+        currentSimType = type === 'terminal' ? 'terminal' : (type === 'air' ? 'air' : 'water')
+        const air = currentSimType === 'air'
         const terminal = currentSimType === 'terminal'
         if (simObjSelect) {
           simObjSelect.innerHTML = terminal
             ? '<option value="">请选择</option>' +
               '<option' + (isDemoSite ? '' : ' selected') + '>0_100 空调设备组（江苏分中心二层）</option>' +
               '<option' + (isDemoSite ? ' selected' : '') + '>CW-DEMO 空调设备组（冷冻水 demo）</option>'
-            : waterSimObjHtml
+            : (air ? '<option value="B">B路风冷冷水系统</option>' : waterSimObjHtml)
         }
         if (simObjLabel) {
           simObjLabel.innerHTML = terminal ? '<span class="required">*</span>仿真模型对象（空调设备组）：' : waterSimObjLabelHtml
         }
         if (waterModules) waterModules.hidden = terminal
         if (terminalModules) terminalModules.hidden = !terminal
-        if (predictBodyWater) predictBodyWater.hidden = terminal
+        if (predictBodyWater) predictBodyWater.hidden = terminal || air
+        if (predictBodyAir) predictBodyAir.hidden = !air
         if (predictBodyTerminal) predictBodyTerminal.hidden = !terminal
-        if (boundaryBodyWater) boundaryBodyWater.hidden = terminal
+        if (boundaryBodyWater) boundaryBodyWater.hidden = terminal || air
+        if (boundaryBodyAir) boundaryBodyAir.hidden = !air
         if (boundaryBodyTerminal) boundaryBodyTerminal.hidden = !terminal
         if (predictReady) renderPredictionResults()
       }
@@ -1525,7 +1621,7 @@
 
       const predictTableBody = document.getElementById('predictTableBody')
       // 冷站行与末端行共用同一套预测逻辑；只处理当前类型下可见的那组行
-      const predictRows = Array.prototype.slice.call(document.querySelectorAll('#predictTableBody tr, #predictTableBodyTerminal tr'))
+      const predictRows = Array.prototype.slice.call(document.querySelectorAll('#predictTableBody tr, #predictTableBodyTerminal tr, #predictTableBodyAir tr'))
       const activeRows = function () {
         return predictRows.filter(function (row) { var tb = row.closest('tbody'); return tb && !tb.hidden })
       }
@@ -1716,7 +1812,7 @@
         }
         renderPredictionResults()
       }
-      ;[predictTableBody, document.getElementById('predictTableBodyTerminal')].forEach(function (tb) {
+      ;[predictTableBody, document.getElementById('predictTableBodyTerminal'), predictBodyAir].forEach(function (tb) {
         if (tb) tb.addEventListener('change', onModelSelectChange)
       })
 
@@ -1741,6 +1837,10 @@
       if (simTypeSelect && params.get('type') === 'terminal') {
         simTypeSelect.value = 'terminal'
         applySimType('terminal')
+      }
+      if (params.get('type') !== 'terminal' && (params.get('id') === 'B' || params.get('type') === 'air')) {
+        simTypeSelect.value = 'air'
+        applySimType('air')
       }
       renderAllModelCells()
       renderPredictionResults()

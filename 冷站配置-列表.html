@@ -1,0 +1,536 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>冷站配置 - AI 智控中枢</title><style>
+    :root {
+      --primary: #1E40AF;
+      --primary-dark: #17358A;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
+      --bg-card: #FFFFFF;
+      --sidebar-bg: #071B2E;
+      --header-bg: #071B2E;
+      --danger: #DC2626;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button {
+      border: none;
+      background: none;
+      font: inherit;
+    }
+
+    .layout {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .body-wrap {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .main {
+      flex: 1;
+      min-width: 0;
+      overflow-y: auto;
+      background: var(--bg-body);
+    }
+
+    .page-shell {
+      padding: 18px 20px 24px;
+    }
+
+    .page-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .page-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .page-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.4;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 34px;
+      padding: 0 14px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .btn-primary {
+      color: #fff;
+      background: var(--primary);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    .data-table {
+      width: 100%;
+      min-width: 1160px;
+      border-collapse: collapse;
+    }
+
+    .data-table thead th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 14px 16px;
+      font-size: 13px;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-light);
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover {
+      background: #FBFCFE;
+    }
+
+    .actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      white-space: nowrap;
+    }
+
+    .action-link {
+      font-size: 13px;
+      cursor: pointer;
+      color: #1890FF;
+      transition: opacity var(--transition);
+    }
+
+    .action-link:hover {
+      opacity: 0.72;
+    }
+
+    .action-link.delete {
+      color: var(--danger);
+    }
+
+    .page-foot {
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
+      gap: 16px;
+      padding: 16px 18px;
+    }
+
+    .pagination-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+    }
+
+    .pagination-total {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .pagination {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .page-item,
+    .page-arrow {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .page-item:hover,
+    .page-arrow:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .page-item.active {
+      color: #fff;
+      border-color: var(--primary);
+      background: var(--primary);
+    }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      min-width: 180px;
+      max-width: 320px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.92);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.6;
+      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.28);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: all .25s ease;
+      z-index: 260;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 900px) {
+      .sidebar {
+        display: none;
+      }
+
+      .page-head {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+    }
+  
+    /* ── 通用关联弹窗 ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,.4);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.is-open { display: flex; }
+    .modal-dialog {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 24px 48px rgba(15,23,42,.16);
+      width: 100%;
+      max-width: 900px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .modal-title { font-size: 16px; font-weight: 600; }
+    .modal-close {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 18px;
+      line-height: 1;
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-close:hover { background: var(--border-light); color: var(--text-primary); }
+    .modal-close:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .modal-body {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .modal-left {
+      flex: 1;
+      min-width: 0;
+      padding: 16px 20px;
+      overflow-y: auto;
+      border-right: 1px solid var(--border-light);
+    }
+    .modal-filters {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .modal-filters .field-control { width: 180px; }
+    .modal-filters .field-select { min-width: 160px; }
+    .modal-table-wrap { overflow-x: auto; margin-bottom: 12px; }
+    .modal-table-wrap .data-table { min-width: 400px; }
+    .modal-table-wrap th:first-child,
+    .modal-table-wrap td:first-child { width: 40px; text-align: center; }
+    .modal-pagination {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+    .modal-pagination button {
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .modal-pagination button:hover { border-color: var(--primary); color: var(--primary); }
+    .modal-pagination button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .modal-right {
+      width: 240px;
+      flex-shrink: 0;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid var(--border-light);
+    }
+    .modal-right-title { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+    .modal-selected-list {
+      flex: 1;
+      min-height: 80px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+    }
+    .modal-selected-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 8px;
+      font-size: 12px;
+      border-radius: 4px;
+      margin-bottom: 4px;
+      background: #F8FAFC;
+    }
+    .modal-selected-item .remove-btn {
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: var(--text-hint);
+      padding: 0 4px;
+      font-size: 14px;
+      line-height: 1;
+    }
+    .modal-selected-item .remove-btn:hover { color: var(--danger); }
+    .modal-footer {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    /* ── v2.9 机房配置：空调表固定列 + 按物模型属性定义渲染的属性区 ── */
+    .type-cell { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .type-name { font-weight: 500; }
+    .type-chain { font-size: 11px; color: var(--text-hint); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; white-space: nowrap; }
+    .type-chain b { color: var(--text-secondary); font-weight: 500; }
+    .sub-text { font-size: 11px; color: var(--text-hint); line-height: 1.5; }
+    .ready-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+    .ready-ok    { background: var(--success-light); color: var(--success); }
+    .ready-warn  { background: var(--warning-light); color: var(--warning); }
+    .ready-error { background: var(--danger-light);  color: var(--danger); }
+    .ready-off   { background: #F1F5F9; color: var(--text-hint); }
+    .prop-toggle { font-size: 12px; color: var(--primary); cursor: pointer; white-space: nowrap; background: none; border: none; padding: 0; font-family: inherit; }
+    .prop-toggle:hover { opacity: .85; }
+    .prop-toggle:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 2px; }
+    tr.prop-row td { background: #FAFCFF; padding: 0 12px 14px; }
+    tr.prop-row.is-collapsed { display: none; }
+    .data-table tbody tr.prop-row:hover { background: #FAFCFF; }
+    .prop-panel { border: 1px dashed var(--border); border-radius: var(--radius); background: #fff; padding: 10px 12px; }
+    .prop-panel-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; }
+    .prop-panel-head code, .prop-id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: var(--primary); background: var(--primary-light); padding: 0 4px; border-radius: 3px; font-weight: 400; }
+    .prop-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px 14px; }
+    .prop-item { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .prop-label { font-size: 12px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .prop-label .required { color: var(--danger); }
+    .prop-value { display: flex; align-items: center; gap: 6px; }
+    .prop-value .field-control, .prop-value .field-select { flex: 1; min-width: 0; padding: 5px 8px; font-size: 12px; background: #F8FAFC; color: var(--text-primary); }
+    .prop-value .field-control[readonly] { cursor: default; }
+    .prop-value .field-select:disabled { cursor: default; opacity: 1; color: var(--text-primary); -webkit-text-fill-color: var(--text-primary); }
+    .prop-unit { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+    .prop-hint { font-size: 11px; color: var(--text-hint); line-height: 1.45; }
+    .prop-item.is-missing .field-control, .prop-item.is-missing .field-select { border-color: var(--danger); background: var(--danger-light); color: var(--danger); -webkit-text-fill-color: var(--danger); }
+    .prop-item.is-missing .prop-label { color: var(--danger); }
+    .btn-maintain { font-size: 11px; padding: 3px 8px; border: 1px solid var(--danger); color: var(--danger); background: #fff; border-radius: 4px; cursor: pointer; white-space: nowrap; font-family: inherit; }
+    .btn-maintain:hover { background: var(--danger-light); }
+    .btn-maintain:focus-visible { outline: 2px solid var(--danger); outline-offset: 2px; }
+    .prop-derived { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border-light); font-size: 12px; color: var(--text-secondary); display: flex; gap: 16px; flex-wrap: wrap; }
+    .prop-derived b { color: var(--text-primary); font-weight: 600; }
+    /* 模型就绪校验结果面板 */
+    .check-summary { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; }
+    .check-summary b { color: var(--text-primary); }
+    .check-table td.lvl { font-weight: 600; white-space: nowrap; }
+    .lvl-error { color: var(--danger); }
+    .lvl-warn  { color: var(--warning); }
+    .lvl-info  { color: var(--text-hint); }
+    .lvl-pass  { color: var(--success); }
+    .code-tag { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; padding: 1px 6px; border-radius: 4px; background: #F1F5F9; color: var(--text-secondary); white-space: nowrap; }
+    .code-tag.err  { background: var(--danger-light);  color: var(--danger); }
+    .code-tag.warn { background: var(--warning-light); color: var(--warning); }
+    .check-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: var(--text-secondary); }
+    .toast {
+      position: fixed; right: 24px; bottom: 72px; min-width: 180px; max-width: 360px;
+      padding: 12px 14px; border-radius: 10px; background: rgba(15, 23, 42, 0.92); color: #fff;
+      font-size: 12px; line-height: 1.6; white-space: pre-line; box-shadow: 0 14px 34px rgba(15, 23, 42, 0.28);
+      opacity: 0; transform: translateY(12px); pointer-events: none; transition: all .25s ease; z-index: 1200;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    /* 2026-10-31：属性页内直接编辑 + 批量复制 */
+    .prop-value .field-control, .prop-value .field-select { background: #fff; }
+    .prop-item.is-invalid .field-control, .prop-item.is-invalid .field-select { border-color: var(--danger); }
+    .prop-item.is-invalid .prop-label { color: var(--danger); }
+    .prop-item.is-edited:not(.is-missing):not(.is-invalid) .field-control,
+    .prop-item.is-edited:not(.is-missing):not(.is-invalid) .field-select { border-color: var(--secondary); background: #F5F9FF; }
+    .prop-err { display: none; font-size: 11px; color: var(--danger); line-height: 1.4; }
+    .prop-item.is-invalid .prop-err { display: block; }
+    .edit-tag { display: none; font-size: 10px; padding: 0 5px; border-radius: 3px; background: var(--primary-light); color: var(--primary); font-weight: 500; }
+    .prop-item.is-edited .edit-tag { display: inline-block; }
+    .edit-count { color: var(--primary); }
+    .btn.btn-sm { padding: 3px 10px; font-size: 11px; }
+    .copy-body { padding: 16px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+    .copy-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+    .copy-label { font-size: 13px; font-weight: 600; min-width: 72px; }
+    .copy-sec { border: 1px solid var(--border-light); border-radius: var(--radius); overflow: hidden; }
+    .copy-sec-head { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #F8FAFC; font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--border-light); }
+    .copy-sec-head label { font-weight: 400; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+    .copy-props { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 16px; padding: 10px 12px; }
+    .copy-check { display: flex; align-items: flex-start; gap: 6px; font-size: 12px; line-height: 1.5; cursor: pointer; }
+    .copy-check input { margin-top: 3px; }
+    .copy-check.is-disabled { color: var(--text-hint); cursor: not-allowed; }
+    .copy-val { color: var(--text-secondary); }
+    .copy-targets { display: flex; flex-direction: column; padding: 4px 12px; max-height: 220px; overflow-y: auto; }
+    .copy-target { display: flex; align-items: center; gap: 8px; padding: 7px 0; font-size: 13px; border-bottom: 1px dashed var(--border-light); cursor: pointer; }
+    .copy-target:last-child { border-bottom: none; }
+    .copy-target .sub-text { margin-left: auto; }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+    @media (max-width: 1280px) { .prop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  
+
+button,input,select{font-family:inherit}button{cursor:pointer}button:disabled,input:disabled,select:disabled{cursor:not-allowed;opacity:.65}button[hidden],[hidden]{display:none!important}button{color:inherit}a{text-decoration:none}.btn{height:34px}.btn.btn-sm{height:28px}.main{position:relative}.page-shell{padding:18px 20px 24px}.page-toolbar{display:flex;gap:12px;align-items:center;padding:14px 18px;flex-wrap:wrap}.search-input{height:34px;min-width:220px;border:1px solid var(--border);border-radius:8px;padding:0 12px}.page-header{gap:12px;flex-wrap:wrap}.section-card>.anno{margin:0 14px 12px}.section-head .group-associate{margin-left:auto}.actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.device-table{min-width:1050px}.device-table th:first-child{width:23%}.device-table th:nth-child(4){width:25%}.device-table td{padding:14px 16px}.device-table td:nth-child(6){width:200px}.missing-text,.prop-err,.field-error{color:var(--danger)}.field-error{font-size:12px;min-height:16px}.invalid{border-color:var(--danger)!important}.edit-count{font-size:12px}.prop-grid{align-items:start}.prop-label{min-height:30px}.prop-grid .prop-item .anno{margin:0 0 8px}.prop-label .edit-tag{margin-left:auto}.section-head>.sub-text{font-weight:400}.component-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}.component{border:1px solid var(--border-light);border-radius:8px;padding:14px;display:flex;align-items:center;gap:8px}.component .sub-text{margin-left:auto}.component>span:first-child{color:var(--primary)}.flow-footer{position:sticky;bottom:0;z-index:10;margin:0;padding:16px 20px;display:flex;gap:12px;justify-content:flex-end;background:rgba(255,255,255,.97);border-top:1px solid var(--border)}.flow-footer #previous{margin-right:auto}.toast{bottom:80px;z-index:1200;pointer-events:none}.toast.show{pointer-events:auto}.toast a{color:#93C5FD;text-decoration:underline}.modal-content{padding:18px 20px;overflow:auto;max-height:calc(90vh - 130px);min-height:60px}.modal-content>p{line-height:1.8;margin-bottom:14px}.modal-content .anno{margin:0 0 16px}.modal-dialog{max-height:90vh}.modal-content .data-table{min-width:0}.modal-content .data-table th,.modal-content .data-table td{white-space:normal}.modal-content .note-block{margin-top:14px}.reference-list{display:grid;gap:8px;margin-top:16px}.reference-item{display:flex;justify-content:space-between;text-align:left;padding:14px;background:#F8FAFC;color:var(--primary);border:1px solid var(--border-light);border-radius:8px;width:100%}.danger-note{background:var(--danger-light);border-color:#FECACA}.banner{margin-bottom:16px;border:1px solid #FED7AA;background:var(--warning-light);color:#9A3412;padding:12px 16px;border-radius:8px;display:flex;align-items:center;gap:10px;line-height:1.6}.banner button{margin-left:auto;color:var(--primary);font-weight:600}.energy-notice{margin:0 20px 16px;background:var(--primary-light);color:var(--primary);border-color:#BFDBFE}.pill,.check-pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:8px;padding:10px 16px;cursor:pointer;font-size:13px}.pill.selected,.check-pill.selected{border-color:var(--primary);background:var(--primary-light);color:var(--primary)}.pills{display:flex;flex-wrap:wrap;gap:10px}.space-picker{position:relative}.space-button{width:100%;display:flex;justify-content:space-between;text-align:left;height:auto;min-height:38px}.space-tree{position:absolute;z-index:30;top:42px;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow-card);width:100%;padding:8px}.tree-group{color:var(--text-secondary);padding:8px}.tree-group.indent{padding-left:26px}.tree-node{display:block;text-align:left;width:100%;padding:9px 8px 9px 46px;border:0;background:white;border-radius:4px}.tree-node:hover{background:var(--primary-light);color:var(--primary)}.group-associate{flex-shrink:0}.association-layout{display:flex;min-height:280px}.association-layout .modal-left{padding-left:0}.association-layout .modal-left>.field-control{width:100%;margin:8px 0 12px}.association-layout .modal-right{width:260px;padding-right:0}.candidate-table{min-width:400px!important}.candidate-table td{font-size:12px!important}.disabled-row{background:#F8FAFC;color:var(--text-hint)}.disabled-row td{color:var(--text-hint)}.copy-row{margin-bottom:14px}.copy-sec{margin-bottom:14px}.copy-props{max-height:240px;overflow:auto}.copy-val{margin-left:auto}.copy-targets{max-height:180px}.demo-switch{margin-left:auto;display:inline-flex;align-items:center;font-size:12px;border:1px dashed var(--border);border-radius:8px;overflow:hidden;background:var(--bg-card)}.demo-switch-label{padding:7px 10px;color:var(--text-hint);background:#FAFAFA;border-right:1px dashed var(--border)}.demo-opt{padding:7px 12px;color:var(--text-secondary);border:0;background:white}.demo-opt+.demo-opt{border-left:1px solid var(--border-light)}.demo-opt.is-active{background:var(--primary-light);color:var(--primary);font-weight:600}.empty-state{padding:36px!important;text-align:center;color:var(--text-hint)!important}.counts-cell{white-space:normal!important;min-width:240px;max-width:300px;line-height:1.9}.space-cell{white-space:normal!important;min-width:160px;max-width:200px;line-height:1.7}.conflict-table{min-width:900px!important}.conflict-table td,.conflict-table th{padding:12px!important}.list-table{min-width:1250px}.list-table .actions{gap:8px 12px;min-width:170px}.sub-text{font-size:11px;line-height:1.6;color:var(--text-hint)}.ready-badge{display:inline-flex;border-radius:10px;font-size:11px;padding:2px 8px;margin-top:4px}.ready-ok{background:var(--success-light);color:var(--success)}.ready-warn{background:var(--warning-light);color:var(--warning)}.anno-filter-hidden{display:none!important}body.annotation-mode{padding-top:0}#annoFilterBar{position:sticky;top:0;left:auto;right:auto;width:100%;z-index:950;align-items:center;gap:10px;min-height:44px;padding:8px 20px;border-bottom:1px solid #C4B5FD;background:#F5F3FF;color:#5B21B6}.anno-toggle{z-index:1300}.prop-item.located{outline:2px solid var(--primary);outline-offset:6px;border-radius:4px}.field-select[multiple]{min-height:76px}.radio-group{gap:12px;white-space:nowrap}.radio-group label{font-size:12px}.import-table{margin-top:14px}.list-page .modal-content .radio-group{flex-direction:column;align-items:flex-start}.list-page .btn{border:1px solid var(--border);background:#fff}.list-page .btn-primary{background:var(--primary);border-color:var(--primary);color:#fff}.list-page{--primary-light:#EEF4FF;--success:#16A34A;--success-light:#F0FDF4;--warning:#D97706;--warning-light:#FFF7ED;--danger-light:#FEF2F2}.page-title{font-size:18px}.list-page .page-head{gap:16px}.list-page .page-card{overflow:visible}.list-page .radio-group{display:flex}.list-page .modal-overlay{z-index:1000}.section-head::before{flex-shrink:0} .footer-caption{font-size:12px;color:var(--text-hint);margin-right:auto;align-self:center}
+@media(max-width:1100px){.component-grid{grid-template-columns:repeat(2,1fr)}.progress-line{width:60px}.prop-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.prop-grid,.form-row,.component-grid{grid-template-columns:1fr}.progress-line{width:22px}.progress-steps{gap:8px}.progress-step{font-size:12px}.page-shell,.content-body{padding-left:12px;padding-right:12px}.association-layout{flex-direction:column}.association-layout .modal-right{width:100%;padding-left:0}.copy-props{grid-template-columns:1fr}.modal-overlay{padding:10px}}
+.saved-row td{background:var(--primary-light,#EEF4FF)!important;box-shadow:inset 0 1px var(--primary)}
+</style><link rel="stylesheet" href="annotation-styles.css"></head><body class="list-page"><div class="layout"><div id="app-header"></div><div class="body-wrap"><div id="app-sidebar"></div><main class="main"><div class="anno-filter-bar" id="annoFilterBar"><strong>批注模式</strong><label for="annoVersion">版本筛选</label><select id="annoVersion"><option value="all">全部版本</option><option value="v3.0">v3.0</option></select><span>当前页面仅含 v3.0 批注</span></div><div id="versionHead"></div><div class="page-shell"><div id="upgradeAnno"></div><div class="banner" id="upgradeBanner"><span><b id="conflictCount">3</b> 台设备的投入 / 投出与寻优策略中的配置不一致，去确认</span><button id="openConflicts">去确认 →</button></div><section class="page-card"><div class="page-head"><h1 class="page-title">冷站配置</h1><a class="btn btn-primary" href="冷站配置-创建.html">＋ 新建冷站配置</a></div><div id="filterAnno"></div><div class="page-toolbar"><label for="search">冷水系统名称</label><input id="search" class="search-input" placeholder="搜索冷水系统名称"><label for="filterType">系统类型</label><select class="field-select" id="filterType"><option value="">全部类型</option><option value="water">水冷</option><option value="air">风冷</option></select><div class="demo-switch"><span class="demo-switch-label">原型演示</span><button class="demo-opt" id="resetDemo">重置演示</button></div></div><div id="listAnno"></div><div class="table-wrap"><table class="data-table list-table"><thead><tr><th>冷水系统名称</th><th>系统类型</th><th>所在空间</th><th>制冷单元数</th><th>设备台数</th><th>最近修改时间</th><th>操作</th></tr></thead><tbody id="listBody"></tbody></table></div><div class="page-foot"><span class="pagination-total" id="rowCount"></span><span class="page-item active" aria-current="page">1</span></div></section></div></main></div></div><div class="modal-overlay" id="modal"><div class="modal-dialog" id="modalDialog" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-header"><h2 class="modal-title" id="modalTitle"></h2><button class="modal-close" id="modalClose" aria-label="关闭弹窗">×</button></div><div class="modal-content" id="modalContent"></div><div class="modal-footer"><button class="btn" id="modalCancel">关闭 / 取消</button><button class="btn btn-primary" id="modalConfirm">确认</button></div></div></div><div class="toast" id="toast" role="status" aria-live="polite"></div><button class="anno-toggle" id="annoToggle">批注</button><script src="components/cold-station-store.js"></script><script src="components/nav.js" data-active-nav="AI智能能效" data-active-sidebar="冷站配置"></script><script>
+'use strict';
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const params=new URLSearchParams(location.search), mode=params.get('mode')||(params.has('id')?'edit':'new'), readonly=mode==='view';
+const Store=window.ColdStationStore, pending=Store.pendingDraft();
+const configId=params.get('id')||((params.get('from')==='energyView'||/^N\d+$/.test(pending?.id||''))?pending?.id:null)||Store.nextId();
+const back=Store.safeBack(params.get('back'));
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clone=v=>JSON.parse(JSON.stringify(v));
+const FILES={list:'冷站配置-列表.html',one:'冷站配置-创建.html',two:'冷站配置-创建-步骤2.html',three:'冷站配置-创建-步骤3.html',verify:'冷站配置-配置校验.html',expression:'冷站配置-测点表达式.html'};
+const systems=Store.listConfigs();
+function anno(module,items,section='4.3',kind='field',inferred=false){const tag={field:'字段说明',ux:'交互说明',data:'数据逻辑',edge:'边界与异常',state:'状态说明'}[kind];return `<div class="anno anno-${kind}" data-version="v3.0"><span class="anno-tag">${tag}</span><span class="anno-version">v3.0</span><span class="anno-source">${inferred?'产品推断':'需求文档 ·《冷站配置需求文档》§'+section}</span><div class="anno-body"><p><b>关联模块：</b>${module}</p><ul>${items.map(x=>`<li>${x}</li>`).join('')}</ul></div></div>`;}
+function version(desc,page){return `<div class="anno anno-version-header" data-version="v3.0"><span class="anno-tag">版本信息</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§4.1–4.6</span><div class="anno-body"><p><b>当前版本：</b>v3.0</p><p><b>更新日期：</b>2026-11-04</p><p><b>变更概述：</b>${desc}</p><p><b>本页说明：</b>${page}</p></div></div>`;}
+let toastTimer;
+function toast(message,link){const el=$('#toast');el.innerHTML=esc(message)+(link?` <a href="${esc(link)}">去校验 →</a>`:'');el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),link?10000:3500);}
+let modalCallback=null, previousFocus=null;
+function openModal(title,body,confirm,label='确认',wide=false){previousFocus=document.activeElement;$('#modalTitle').textContent=title;$('#modalContent').innerHTML=body;$('#modalDialog').style.maxWidth=wide?'1080px':'860px';$('#modalConfirm').textContent=label;$('#modalConfirm').hidden=!confirm;$('#modalConfirm').disabled=false;modalCallback=confirm;$('#modal').classList.add('is-open');$('#modalClose').focus();}
+function closeModal(){$('#modal').classList.remove('is-open');modalCallback=null;if(previousFocus?.isConnected)previousFocus.focus();}
+$('#modalClose').onclick=closeModal;$('#modalCancel').onclick=closeModal;$('#modalConfirm').onclick=()=>modalCallback?.();
+$('#modal').addEventListener('click',e=>{if(e.target===$('#modal'))closeModal();});
+document.addEventListener('keydown',e=>{if(!$('#modal').classList.contains('is-open'))return;if(e.key==='Escape')closeModal();if(e.key==='Tab'){const els=$$('#modal button:not([disabled]):not([hidden]),#modal input:not([disabled]),#modal select:not([disabled]),#modal a[href]').filter(x=>x.getClientRects().length);if(!els.length)return;const first=els[0],last=els.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});
+function loadDraft(){return Store.getDraft(configId);}
+function saveDraft(d){if(!readonly)Store.setDraft(d);return true;}
+function navUrl(file,extra={}){const q=new URLSearchParams({id:configId,mode,...(!readonly?{resume:'1'}:{}),...(back?{back}:{}),...extra});return file+'?'+q;}
+function steps(active){return `<div class="progress-container"><div class="progress-steps">${['系统信息','设备与属性','系统拓扑'].map((x,i)=>`${i?'<div class="progress-line"></div>':''}<div class="progress-step ${active===i+1?'active':''}"><span class="step-icon ${active===i+1?'active':'pending'}">${i+1}</span>${x}</div>`).join('')}</div></div>`;}
+function confirmLeave(dirty,go){if(!dirty){go();return;}openModal('放弃本次修改？',anno('放弃修改弹窗；入口：取消或返回列表',['离开后放弃整个编辑流程中尚未保存的修改。','继续编辑关闭弹窗，留在当前页。','确认放弃后清理草稿，并返回来源页或列表。'],'4.2','ux')+'<p>本次修改尚未保存，确认放弃并返回列表？</p>',()=>{closeModal();go();},'放弃修改');}
+function initAnnotations(){ $('#annoToggle').onclick=()=>{document.body.classList.toggle('annotation-mode');$('#annoToggle').textContent=document.body.classList.contains('annotation-mode')?'退出批注':'批注';};$('#annoVersion').onchange=()=>{const v=$('#annoVersion').value;$$('.anno').forEach(a=>a.classList.toggle('anno-filter-hidden',v!=='all'&&a.dataset.version!==v));}; }
+initAnnotations();
+
+function removeDraftMembers(d,ids,removeTypes=[]){
+ const set=new Set(ids);d.detachedDevices=d.detachedDevices||{};
+ for(const item of d.devices||[])if(set.has(item.id))d.detachedDevices[item.id]=clone(item);
+ if(!d.topology?.groups)return;
+ const deleted=d.topology.groups.filter(g=>removeTypes.includes(g.type)).map(g=>g.id);
+ d.topology.groups=d.topology.groups.filter(g=>!removeTypes.includes(g.type));
+ const emptyGroups=[];for(const g of d.topology.groups){const old=g.members.length;g.members=g.members.filter(id=>!set.has(id));if(old&&!g.members.length)emptyGroups.push(g.id);}
+ const invalid=new Set([...deleted,...emptyGroups]);
+ if(Array.isArray(d.topology.relations))d.topology.relations=d.topology.relations.filter(r=>!invalid.has(r.from)).map(r=>({...r,to:(r.to||[]).filter(id=>!invalid.has(id))}));
+}
+
+let rows=Store.listConfigs(), conflicts=[{name:'3#冷水主机',values:['投出','投入','投出','投出']},{name:'5#冷却塔',values:['投入','投出','投入','投入']},{name:'2#二次泵',values:['投入','投入','投出','投出']}];
+$('#versionHead').innerHTML=version('新增冷站配置列表及存量投入 / 投出确认。','管理冷水系统配置，进入三步配置、校验及测点表达式。');
+$('#listAnno').innerHTML=anno('冷站配置列表与操作',['一个冷水系统一行，展示类型、所在空间、制冷单元数、设备台数和最近修改时间。','查看只读，编辑进入系统信息；配置校验与测点表达式独立进入。','能效视图已有的系统直接出现在列表，沿用现有设备、属性和关系。'],'4.1','ux');
+$('#filterAnno').innerHTML=anno('列表搜索与原型演示',['按系统名称搜索并可按水冷、风冷筛选；无匹配显示空态。','“重置演示”恢复搜索条件与尚未确认的不一致示例，已保存配置不回退。','原型演示仅用于评审，不属于正式产品功能。'],'4.1','ux',true);
+$('#upgradeAnno').innerHTML=anno('存量投入 / 投出不一致提示',['按设备合并展示属性与各类寻优中的值。','确认前各策略按已保存的值运行；确认后各处统一读取所选值。','每确认一行计数减少，全部确认后提示条消失。'],'7.5','data');
+function renderList(){rows=Store.listConfigs();conflicts=conflicts.filter(c=>{const id=({'3#冷水主机':'CH3','5#冷却塔':'CT5','2#二次泵':'SWP2'})[c.name];return !Store.inServiceRecords('A')[id]||Store.inServiceRecords('A')[id].source!=='不一致清单';});const q=$('#search').value.trim(),type=$('#filterType').value;const result=rows.filter(r=>r.name.includes(q)&&(!type||r.systemType===type));$('#listBody').innerHTML=result.map(r=>`<tr data-config-id="${r.id}" class="${params.get('saved')==='1'&&params.get('id')===r.id?'saved-row':''}"><td><a class="action-link" href="${FILES.one}?id=${r.id}&mode=view">${esc(r.name)}</a>${r.id==='C'?'<div class="sub-text">来自能效视图</div>':''}</td><td><span class="ready-badge ${r.systemType==='air'?'ready-warn':'ready-ok'}">${r.systemType==='air'?'风冷':'水冷'}</span></td><td class="space-cell">${esc(r.space)}</td><td>${r.topology.groups.filter(g=>g.type==='unit').length}</td><td class="counts-cell">${esc(deviceCounts(r))}</td><td>${esc(new Date(r.savedAt).toLocaleString('zh-CN',{hour12:false}))}</td><td><div class="actions"><a class="action-link" href="${FILES.one}?id=${r.id}&mode=view">查看</a><a class="action-link" href="${FILES.one}?id=${r.id}&mode=edit">编辑</a><a class="action-link" href="${FILES.verify}?id=${r.id}">配置校验</a><a class="action-link" href="${FILES.expression}?id=${r.id}">测点表达式</a><button class="action-link delete" onclick="deleteSystem('${r.id}')">删除</button></div></td></tr>`).join('')||'<tr><td colspan="7" class="empty-state">暂无匹配的冷站配置，请调整筛选条件</td></tr>';$('#rowCount').textContent=`共 ${result.length} 条`;$('#upgradeBanner').hidden=!conflicts.length;$('#conflictCount').textContent=conflicts.length;}
+function deviceCounts(s){return Store.deviceGroups(s).map(g=>g.name+' '+s.devices.filter(d=>d.group===g.key).length).join(' · ');}
+function deleteSystem(id){const row=rows.find(r=>r.id===id),refs=id==='A'?['仿真模型「A路冷站仿真模型」','安全边界「A路冷站安全边界」','柔性寻优策略']:id==='B'?['仿真模型「B路风冷仿真模型」']:id==='C'?['能源拓扑「3#数据中心」']:[];if(refs.length){openModal('该冷水系统正在被引用，不能删除',anno('引用检查弹窗；入口：列表删除',['被仿真模型、安全边界、寻优策略或能源拓扑引用时不能删除。','列出引用方，点击可定位引用位置。','关闭弹窗保留当前配置。'],'4.1','ux')+`<p>${row.name}</p><div class="reference-list">${refs.map(r=>`<button class="reference-item" onclick="toast('定位${r}')">${r}<span>定位 →</span></button>`).join('')}</div>`,null);return;}openModal('删除冷站配置？',anno('删除确认弹窗；入口：未引用系统的删除',['删除冷水系统、下级分组和供水关系。','设备实例与设备属性保留。','确认后列表移除该行；取消不改变配置。'],'4.1','ux')+`<p>确认删除「${row.name}」？</p><div class="note-block danger-note">删除冷水系统、下级分组和供水关系，设备和设备属性保留。</div>`,()=>{Store.removeConfig(id);closeModal();renderList();toast('已删除冷站配置，设备和设备属性保留');},'确认删除');}
+function conflictBody(){return anno('投入 / 投出确认弹窗；入口：列表顶部“去确认”',['每台设备先显示所属冷水系统，再列出属性、柔性、全局、长周期寻优中的现有值。','确认值须从本行现有值中选择，缺省不选择。','点击本行确认后统一各处的值，剩余行继续保留。'],'7.5','field')+`<div class="table-wrap"><table class="data-table conflict-table"><thead><tr><th>冷水系统</th><th>设备</th><th>设备属性中的值</th><th>柔性寻优中的值</th><th>全局寻优中的值</th><th>长周期寻优中的值</th><th>确认值</th><th>操作</th></tr></thead><tbody>${conflicts.map((c,i)=>`<tr><td>${esc(Store.getEffective(c.configId||'A')?.name||'冷水系统已移除')}</td><td>${c.name}</td>${c.values.map(v=>`<td>${v}</td>`).join('')}<td><div class="radio-group">${[...new Set(c.values)].map(v=>`<label><input type="radio" name="resolve${i}" value="${v}">${v}</label>`).join('')}</div></td><td><button class="btn btn-primary" onclick="resolveConflict(${i})">确认此行</button></td></tr>`).join('')}</tbody></table></div>`;}
+function resolveConflict(i){const selected=$(`input[name="resolve${i}"]:checked`);if(!selected){toast('请先选择本行的确认值');return;}const c=conflicts[i],v=selected.value,devId=({'3#冷水主机':'CH3','5#冷却塔':'CT5','2#二次泵':'SWP2'})[c.name];Store.setInService('A',devId,v==='投入'?'0':'1','不一致清单');conflicts.splice(i,1);renderList();if(conflicts.length){$('#modalContent').innerHTML=conflictBody();}else closeModal();toast(`${c.name}已统一为${v}，已同步到冷站配置和三个寻优策略`);}
+$('#openConflicts').onclick=()=>openModal('确认投入 / 投出不一致',conflictBody(),null,'确认',true);
+$('#search').oninput=renderList;$('#filterType').onchange=renderList;
+$('#resetDemo').onclick=()=>{rows=Store.listConfigs();conflicts=[{name:'3#冷水主机',values:['投出','投入','投出','投出']},{name:'5#冷却塔',values:['投入','投出','投入','投入']},{name:'2#二次泵',values:['投入','投入','投出','投出']}];$('#search').value='';$('#filterType').value='';renderList();toast('已重置演示数据');};
+renderList();if(params.get('saved')==='1')toast('已保存，建议执行配置校验',FILES.verify+'?id='+(params.get('id')||loadDraft()?.id||configId));
+
+</script></body></html>

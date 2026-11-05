@@ -1,0 +1,711 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>冷站配置 · 系统信息 - AI 智控中枢</title><style>
+    :root {
+      --primary: #1E40AF;
+      --primary-light: #EEF4FF;
+      --primary-dark: #17358A;
+      --secondary: #3B82F6;
+      --cta: #F59E0B;
+      --success: #16A34A;
+      --success-light: #F0FDF4;
+      --warning: #D97706;
+      --warning-light: #FFF7ED;
+      --danger: #DC2626;
+      --danger-light: #FEF2F2;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F8FAFC;
+      --bg-card: #FFFFFF;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15,23,42,.04);
+      --shadow-card: 0 1px 3px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.04);
+      --transition: .2s cubic-bezier(.4,0,.2,1);
+      --sidebar-bg: #071B2E;
+      --header-bg: #071B2E;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+    a { text-decoration: none; color: inherit; cursor: pointer; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(0,0,0,.12); border-radius: 3px; }
+
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    .main { flex: 1; min-width: 0; overflow-y: auto; background: var(--bg-body); }
+
+    .page-header {
+      background: var(--bg-card);
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: color var(--transition);
+    }
+    .back-link:hover { color: var(--primary); }
+    .back-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+
+    .progress-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px 0;
+      background: var(--bg-body);
+    }
+    .progress-steps {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .progress-step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    .progress-step.active {
+      color: var(--primary);
+      font-weight: 600;
+    }
+    .step-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .step-icon.active {
+      background: var(--primary);
+      color: #fff;
+      border: 1px solid var(--primary);
+    }
+    .step-icon.pending {
+      background: #fff;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+    .progress-line {
+      width: 120px;
+      height: 2px;
+      background: #E2E8F0;
+    }
+
+    .content-body { padding: 0 20px 24px; display: flex; flex-direction: column; gap: 16px; }
+
+    .section-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+    }
+    .section-head {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+      background: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-head::before {
+      content: '';
+      display: block;
+      width: 3px;
+      height: 14px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+
+    .section-body { padding: 18px; }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px 24px;
+      margin-bottom: 16px;
+    }
+    .form-row:last-child { margin-bottom: 0; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field.full { grid-column: 1 / -1; }
+    .field-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .field-label .required { color: var(--danger); }
+    .field-control, .field-select {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      background: #fff;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .field-control:focus-visible, .field-select:focus-visible {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30,64,175,.12);
+    }
+    .field-hint {
+      font-size: 12px;
+      color: var(--text-hint);
+      line-height: 1.5;
+    }
+    .field-inline { display: flex; align-items: center; gap: 8px; }
+    .field-suffix { font-size: 13px; color: var(--text-secondary); }
+
+    .table-wrap { overflow-x: auto; }
+    .data-table {
+      width: 100%;
+      min-width: 880px;
+      border-collapse: collapse;
+    }
+    .data-table thead th {
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .data-table tbody td {
+      padding: 10px 12px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+    }
+    .data-table tbody tr:hover { background: #FAFCFF; }
+    .radio-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .radio-group label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: normal;
+    }
+    .radio-group input[type="radio"] {
+      margin: 0;
+    }
+    .action-link {
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--primary);
+      transition: opacity .2s;
+    }
+    .action-link:hover { opacity: .85; }
+    .action-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 2px; }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: #fff;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+    .btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+    .btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      border-color: transparent;
+    }
+    .btn-primary:hover { background: var(--primary-dark); color: #fff; }
+    .btn-primary:focus-visible { outline: 2px solid var(--cta); outline-offset: 2px; }
+
+    .foot-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 16px 20px;
+      border-top: 1px solid var(--border-light);
+      background: #FBFCFE;
+      margin: 0 -18px -18px;
+    }
+
+    .note-block {
+      padding: 10px 12px;
+      background: #F8FAFC;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+
+    @media (max-width: 768px) {
+      .form-row { grid-template-columns: 1fr; }
+      .page-header { flex-direction: column; align-items: flex-start; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition-duration: .01ms !important; }
+    }
+
+    /* ── 通道分组配置 ── */
+    .channel-subsection { margin-bottom: 4px; }
+    .channel-subsection-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .channel-subsection-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .channel-type-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    .dot-cold { background: #3B82F6; }
+    .dot-hot  { background: #EF4444; }
+    .group-card {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+      background: #FAFCFF;
+    }
+    .group-card-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: #F4F7FD;
+      border-radius: var(--radius) var(--radius) 0 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .group-name-input {
+      flex: 1;
+      min-width: 0;
+      padding: 3px 8px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 12px;
+      background: #fff;
+    }
+    .group-name-input:focus-visible { outline: none; border-color: var(--primary); }
+    .group-card-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .group-card-body { padding: 10px 12px; }
+    .tag-list { display: flex; flex-wrap: wrap; gap: 6px; min-height: 20px; }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+    .tag-sensor  { background: #EEF4FF; color: #1E40AF; }
+    .tag-cabinet { background: #FFF7ED; color: #D97706; }
+    .tag-remove {
+      border: none;
+      background: none;
+      cursor: pointer;
+      padding: 0 1px;
+      font-size: 13px;
+      line-height: 1;
+      opacity: .6;
+      color: inherit;
+    }
+    .tag-remove:hover { opacity: 1; }
+    .section-empty { font-size: 12px; color: var(--text-hint); font-style: italic; line-height: 2; }
+
+    /* ── 通用关联弹窗 ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,.4);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.is-open { display: flex; }
+    .modal-dialog {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 24px 48px rgba(15,23,42,.16);
+      width: 100%;
+      max-width: 900px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .modal-title { font-size: 16px; font-weight: 600; }
+    .modal-close {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 18px;
+      line-height: 1;
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-close:hover { background: var(--border-light); color: var(--text-primary); }
+    .modal-close:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .modal-body {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .modal-left {
+      flex: 1;
+      min-width: 0;
+      padding: 16px 20px;
+      overflow-y: auto;
+      border-right: 1px solid var(--border-light);
+    }
+    .modal-filters {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .modal-filters .field-control { width: 180px; }
+    .modal-filters .field-select { min-width: 160px; }
+    .modal-table-wrap { overflow-x: auto; margin-bottom: 12px; }
+    .modal-table-wrap .data-table { min-width: 400px; }
+    .modal-table-wrap th:first-child,
+    .modal-table-wrap td:first-child { width: 40px; text-align: center; }
+    .modal-pagination {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+    .modal-pagination button {
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .modal-pagination button:hover { border-color: var(--primary); color: var(--primary); }
+    .modal-pagination button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .modal-right {
+      width: 240px;
+      flex-shrink: 0;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid var(--border-light);
+    }
+    .modal-right-title { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+    .modal-selected-list {
+      flex: 1;
+      min-height: 80px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+    }
+    .modal-selected-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 8px;
+      font-size: 12px;
+      border-radius: 4px;
+      margin-bottom: 4px;
+      background: #F8FAFC;
+    }
+    .modal-selected-item .remove-btn {
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: var(--text-hint);
+      padding: 0 4px;
+      font-size: 14px;
+      line-height: 1;
+    }
+    .modal-selected-item .remove-btn:hover { color: var(--danger); }
+    .modal-footer {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    /* ── v2.9 机房配置：空调表固定列 + 按物模型属性定义渲染的属性区 ── */
+    .type-cell { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .type-name { font-weight: 500; }
+    .type-chain { font-size: 11px; color: var(--text-hint); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; white-space: nowrap; }
+    .type-chain b { color: var(--text-secondary); font-weight: 500; }
+    .sub-text { font-size: 11px; color: var(--text-hint); line-height: 1.5; }
+    .ready-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+    .ready-ok    { background: var(--success-light); color: var(--success); }
+    .ready-warn  { background: var(--warning-light); color: var(--warning); }
+    .ready-error { background: var(--danger-light);  color: var(--danger); }
+    .ready-off   { background: #F1F5F9; color: var(--text-hint); }
+    .prop-toggle { font-size: 12px; color: var(--primary); cursor: pointer; white-space: nowrap; background: none; border: none; padding: 0; font-family: inherit; }
+    .prop-toggle:hover { opacity: .85; }
+    .prop-toggle:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 2px; }
+    tr.prop-row td { background: #FAFCFF; padding: 0 12px 14px; }
+    tr.prop-row.is-collapsed { display: none; }
+    .data-table tbody tr.prop-row:hover { background: #FAFCFF; }
+    .prop-panel { border: 1px dashed var(--border); border-radius: var(--radius); background: #fff; padding: 10px 12px; }
+    .prop-panel-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; }
+    .prop-panel-head code, .prop-id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: var(--primary); background: var(--primary-light); padding: 0 4px; border-radius: 3px; font-weight: 400; }
+    .prop-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px 14px; }
+    .prop-item { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .prop-label { font-size: 12px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .prop-label .required { color: var(--danger); }
+    .prop-value { display: flex; align-items: center; gap: 6px; }
+    .prop-value .field-control, .prop-value .field-select { flex: 1; min-width: 0; padding: 5px 8px; font-size: 12px; background: #F8FAFC; color: var(--text-primary); }
+    .prop-value .field-control[readonly] { cursor: default; }
+    .prop-value .field-select:disabled { cursor: default; opacity: 1; color: var(--text-primary); -webkit-text-fill-color: var(--text-primary); }
+    .prop-unit { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+    .prop-hint { font-size: 11px; color: var(--text-hint); line-height: 1.45; }
+    .prop-item.is-missing .field-control, .prop-item.is-missing .field-select { border-color: var(--danger); background: var(--danger-light); color: var(--danger); -webkit-text-fill-color: var(--danger); }
+    .prop-item.is-missing .prop-label { color: var(--danger); }
+    .btn-maintain { font-size: 11px; padding: 3px 8px; border: 1px solid var(--danger); color: var(--danger); background: #fff; border-radius: 4px; cursor: pointer; white-space: nowrap; font-family: inherit; }
+    .btn-maintain:hover { background: var(--danger-light); }
+    .btn-maintain:focus-visible { outline: 2px solid var(--danger); outline-offset: 2px; }
+    .prop-derived { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border-light); font-size: 12px; color: var(--text-secondary); display: flex; gap: 16px; flex-wrap: wrap; }
+    .prop-derived b { color: var(--text-primary); font-weight: 600; }
+    /* 模型就绪校验结果面板 */
+    .check-summary { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; }
+    .check-summary b { color: var(--text-primary); }
+    .check-table td.lvl { font-weight: 600; white-space: nowrap; }
+    .lvl-error { color: var(--danger); }
+    .lvl-warn  { color: var(--warning); }
+    .lvl-info  { color: var(--text-hint); }
+    .lvl-pass  { color: var(--success); }
+    .code-tag { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; padding: 1px 6px; border-radius: 4px; background: #F1F5F9; color: var(--text-secondary); white-space: nowrap; }
+    .code-tag.err  { background: var(--danger-light);  color: var(--danger); }
+    .code-tag.warn { background: var(--warning-light); color: var(--warning); }
+    .check-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: var(--text-secondary); }
+    .toast {
+      position: fixed; right: 24px; bottom: 72px; min-width: 180px; max-width: 360px;
+      padding: 12px 14px; border-radius: 10px; background: rgba(15, 23, 42, 0.92); color: #fff;
+      font-size: 12px; line-height: 1.6; white-space: pre-line; box-shadow: 0 14px 34px rgba(15, 23, 42, 0.28);
+      opacity: 0; transform: translateY(12px); pointer-events: none; transition: all .25s ease; z-index: 1200;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    /* 2026-10-31：属性页内直接编辑 + 批量复制 */
+    .prop-value .field-control, .prop-value .field-select { background: #fff; }
+    .prop-item.is-invalid .field-control, .prop-item.is-invalid .field-select { border-color: var(--danger); }
+    .prop-item.is-invalid .prop-label { color: var(--danger); }
+    .prop-item.is-edited:not(.is-missing):not(.is-invalid) .field-control,
+    .prop-item.is-edited:not(.is-missing):not(.is-invalid) .field-select { border-color: var(--secondary); background: #F5F9FF; }
+    .prop-err { display: none; font-size: 11px; color: var(--danger); line-height: 1.4; }
+    .prop-item.is-invalid .prop-err { display: block; }
+    .edit-tag { display: none; font-size: 10px; padding: 0 5px; border-radius: 3px; background: var(--primary-light); color: var(--primary); font-weight: 500; }
+    .prop-item.is-edited .edit-tag { display: inline-block; }
+    .edit-count { color: var(--primary); }
+    .btn.btn-sm { padding: 3px 10px; font-size: 11px; }
+    .copy-body { padding: 16px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+    .copy-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+    .copy-label { font-size: 13px; font-weight: 600; min-width: 72px; }
+    .copy-sec { border: 1px solid var(--border-light); border-radius: var(--radius); overflow: hidden; }
+    .copy-sec-head { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #F8FAFC; font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--border-light); }
+    .copy-sec-head label { font-weight: 400; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+    .copy-props { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 16px; padding: 10px 12px; }
+    .copy-check { display: flex; align-items: flex-start; gap: 6px; font-size: 12px; line-height: 1.5; cursor: pointer; }
+    .copy-check input { margin-top: 3px; }
+    .copy-check.is-disabled { color: var(--text-hint); cursor: not-allowed; }
+    .copy-val { color: var(--text-secondary); }
+    .copy-targets { display: flex; flex-direction: column; padding: 4px 12px; max-height: 220px; overflow-y: auto; }
+    .copy-target { display: flex; align-items: center; gap: 8px; padding: 7px 0; font-size: 13px; border-bottom: 1px dashed var(--border-light); cursor: pointer; }
+    .copy-target:last-child { border-bottom: none; }
+    .copy-target .sub-text { margin-left: auto; }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+    @media (max-width: 1280px) { .prop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  
+
+button,input,select{font-family:inherit}button{cursor:pointer}button:disabled,input:disabled,select:disabled{cursor:not-allowed;opacity:.65}button[hidden],[hidden]{display:none!important}button{color:inherit}a{text-decoration:none}.btn{height:34px}.btn.btn-sm{height:28px}.main{position:relative}.page-shell{padding:18px 20px 24px}.page-toolbar{display:flex;gap:12px;align-items:center;padding:14px 18px;flex-wrap:wrap}.search-input{height:34px;min-width:220px;border:1px solid var(--border);border-radius:8px;padding:0 12px}.page-header{gap:12px;flex-wrap:wrap}.section-card>.anno{margin:0 14px 12px}.section-head .group-associate{margin-left:auto}.actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.device-table{min-width:1050px}.device-table th:first-child{width:23%}.device-table th:nth-child(4){width:25%}.device-table td{padding:14px 16px}.device-table td:nth-child(6){width:200px}.missing-text,.prop-err,.field-error{color:var(--danger)}.field-error{font-size:12px;min-height:16px}.invalid{border-color:var(--danger)!important}.edit-count{font-size:12px}.prop-grid{align-items:start}.prop-label{min-height:30px}.prop-grid .prop-item .anno{margin:0 0 8px}.prop-label .edit-tag{margin-left:auto}.section-head>.sub-text{font-weight:400}.component-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}.component{border:1px solid var(--border-light);border-radius:8px;padding:14px;display:flex;align-items:center;gap:8px}.component .sub-text{margin-left:auto}.component>span:first-child{color:var(--primary)}.flow-footer{position:sticky;bottom:0;z-index:10;margin:0;padding:16px 20px;display:flex;gap:12px;justify-content:flex-end;background:rgba(255,255,255,.97);border-top:1px solid var(--border)}.flow-footer #previous{margin-right:auto}.toast{bottom:80px;z-index:1200;pointer-events:none}.toast.show{pointer-events:auto}.toast a{color:#93C5FD;text-decoration:underline}.modal-content{padding:18px 20px;overflow:auto;max-height:calc(90vh - 130px);min-height:60px}.modal-content>p{line-height:1.8;margin-bottom:14px}.modal-content .anno{margin:0 0 16px}.modal-dialog{max-height:90vh}.modal-content .data-table{min-width:0}.modal-content .data-table th,.modal-content .data-table td{white-space:normal}.modal-content .note-block{margin-top:14px}.reference-list{display:grid;gap:8px;margin-top:16px}.reference-item{display:flex;justify-content:space-between;text-align:left;padding:14px;background:#F8FAFC;color:var(--primary);border:1px solid var(--border-light);border-radius:8px;width:100%}.danger-note{background:var(--danger-light);border-color:#FECACA}.banner{margin-bottom:16px;border:1px solid #FED7AA;background:var(--warning-light);color:#9A3412;padding:12px 16px;border-radius:8px;display:flex;align-items:center;gap:10px;line-height:1.6}.banner button{margin-left:auto;color:var(--primary);font-weight:600}.energy-notice{margin:0 20px 16px;background:var(--primary-light);color:var(--primary);border-color:#BFDBFE}.pill,.check-pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:8px;padding:10px 16px;cursor:pointer;font-size:13px}.pill.selected,.check-pill.selected{border-color:var(--primary);background:var(--primary-light);color:var(--primary)}.pills{display:flex;flex-wrap:wrap;gap:10px}.space-picker{position:relative}.space-button{width:100%;display:flex;justify-content:space-between;text-align:left;height:auto;min-height:38px}.space-tree{position:absolute;z-index:30;top:42px;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow-card);width:100%;padding:8px}.tree-group{color:var(--text-secondary);padding:8px}.tree-group.indent{padding-left:26px}.tree-node{display:block;text-align:left;width:100%;padding:9px 8px 9px 46px;border:0;background:white;border-radius:4px}.tree-node:hover{background:var(--primary-light);color:var(--primary)}.group-associate{flex-shrink:0}.association-layout{display:flex;min-height:280px}.association-layout .modal-left{padding-left:0}.association-layout .modal-left>.field-control{width:100%;margin:8px 0 12px}.association-layout .modal-right{width:260px;padding-right:0}.candidate-table{min-width:400px!important}.candidate-table td{font-size:12px!important}.disabled-row{background:#F8FAFC;color:var(--text-hint)}.disabled-row td{color:var(--text-hint)}.copy-row{margin-bottom:14px}.copy-sec{margin-bottom:14px}.copy-props{max-height:240px;overflow:auto}.copy-val{margin-left:auto}.copy-targets{max-height:180px}.demo-switch{margin-left:auto;display:inline-flex;align-items:center;font-size:12px;border:1px dashed var(--border);border-radius:8px;overflow:hidden;background:var(--bg-card)}.demo-switch-label{padding:7px 10px;color:var(--text-hint);background:#FAFAFA;border-right:1px dashed var(--border)}.demo-opt{padding:7px 12px;color:var(--text-secondary);border:0;background:white}.demo-opt+.demo-opt{border-left:1px solid var(--border-light)}.demo-opt.is-active{background:var(--primary-light);color:var(--primary);font-weight:600}.empty-state{padding:36px!important;text-align:center;color:var(--text-hint)!important}.counts-cell{white-space:normal!important;min-width:240px;max-width:300px;line-height:1.9}.space-cell{white-space:normal!important;min-width:160px;max-width:200px;line-height:1.7}.conflict-table{min-width:900px!important}.conflict-table td,.conflict-table th{padding:12px!important}.list-table{min-width:1250px}.list-table .actions{gap:8px 12px;min-width:170px}.sub-text{font-size:11px;line-height:1.6;color:var(--text-hint)}.ready-badge{display:inline-flex;border-radius:10px;font-size:11px;padding:2px 8px;margin-top:4px}.ready-ok{background:var(--success-light);color:var(--success)}.ready-warn{background:var(--warning-light);color:var(--warning)}.anno-filter-hidden{display:none!important}body.annotation-mode{padding-top:0}#annoFilterBar{position:sticky;top:0;left:auto;right:auto;width:100%;z-index:950;align-items:center;gap:10px;min-height:44px;padding:8px 20px;border-bottom:1px solid #C4B5FD;background:#F5F3FF;color:#5B21B6}.anno-toggle{z-index:1300}.prop-item.located{outline:2px solid var(--primary);outline-offset:6px;border-radius:4px}.field-select[multiple]{min-height:76px}.radio-group{gap:12px;white-space:nowrap}.radio-group label{font-size:12px}.import-table{margin-top:14px}.list-page .modal-content .radio-group{flex-direction:column;align-items:flex-start}.list-page .btn{border:1px solid var(--border);background:#fff}.list-page .btn-primary{background:var(--primary);border-color:var(--primary);color:#fff}.list-page{--primary-light:#EEF4FF;--success:#16A34A;--success-light:#F0FDF4;--warning:#D97706;--warning-light:#FFF7ED;--danger-light:#FEF2F2}.page-title{font-size:18px}.list-page .page-head{gap:16px}.list-page .page-card{overflow:visible}.list-page .radio-group{display:flex}.list-page .modal-overlay{z-index:1000}.section-head::before{flex-shrink:0} .footer-caption{font-size:12px;color:var(--text-hint);margin-right:auto;align-self:center}
+@media(max-width:1100px){.component-grid{grid-template-columns:repeat(2,1fr)}.progress-line{width:60px}.prop-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.prop-grid,.form-row,.component-grid{grid-template-columns:1fr}.progress-line{width:22px}.progress-steps{gap:8px}.progress-step{font-size:12px}.page-shell,.content-body{padding-left:12px;padding-right:12px}.association-layout{flex-direction:column}.association-layout .modal-right{width:100%;padding-left:0}.copy-props{grid-template-columns:1fr}.modal-overlay{padding:10px}}
+.located{outline:2px solid var(--primary);outline-offset:3px}
+
+/* 底栏主按钮让出右下角「批注」按钮位置 */
+.flow-footer{padding-right:120px}
+</style><link rel="stylesheet" href="annotation-styles.css"></head><body class="wizard-page"><div class="layout"><div id="app-header"></div><div class="body-wrap"><div id="app-sidebar"></div><main class="main"><div class="anno-filter-bar" id="annoFilterBar"><strong>批注模式</strong><label for="annoVersion">版本筛选</label><select id="annoVersion"><option value="all">全部版本</option><option value="v3.0">v3.0</option></select><span>当前页面仅含 v3.0 批注</span></div><div id="versionHead"></div><div class="page-header"><h1 class="page-title" id="pageTitle">新建冷站配置</h1><button class="back-link" id="backList">返回列表 →</button></div><div id="steps"></div><div class="banner energy-notice" id="energyNotice" hidden>来自能效视图创建的水冷冷水系统，已带出名称、所在空间和制冷单元数量</div><div class="content-body"><section class="section-card"><div class="section-head">系统信息</div><div class="section-body"><div id="basicAnno"></div><div class="form-row"><div class="field"><div id="spaceAnno"></div><label class="field-label" for="spaceButton"><span class="required">*</span> 所在空间</label><div class="space-picker"><button class="field-control space-button" id="spaceButton" aria-haspopup="true" aria-expanded="false"><span id="spaceValue">请选择所在空间</span><span>⌄</span></button><div class="space-tree" id="spaceTree" hidden></div></div><span class="field-error" id="spaceError"></span></div><div class="field"><div id="nameAnno"></div><label class="field-label" for="name"><span class="required">*</span> 冷水系统名称</label><input class="field-control" id="name" placeholder="请输入冷水系统名称"><span class="field-error" id="nameError"></span></div><div class="field full"><div id="typeAnno"></div><span class="field-label">系统类型</span><div id="systemTypes" class="pills" role="group" aria-label="系统类型"></div></div><div class="field full"><div id="includeAnno"></div><span class="field-label">系统包含</span><div id="includes" class="pills" role="group" aria-label="系统包含"></div></div></div></div></section><section class="section-card"><div class="section-head">系统属性</div><div class="section-body"><div id="attributeAnno"></div><div class="prop-grid" id="systemProps"></div></div></section><div id="actionsAnno"></div></div><div class="foot-actions flow-footer"><button class="btn" id="cancel">取消</button><button class="btn btn-primary" id="next">下一步 →</button></div></main></div></div><div class="modal-overlay" id="modal"><div class="modal-dialog" id="modalDialog" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-header"><h2 class="modal-title" id="modalTitle"></h2><button class="modal-close" id="modalClose" aria-label="关闭弹窗">×</button></div><div class="modal-content" id="modalContent"></div><div class="modal-footer"><button class="btn" id="modalCancel">关闭 / 取消</button><button class="btn btn-primary" id="modalConfirm">确认</button></div></div></div><div class="toast" id="toast" role="status" aria-live="polite"></div><button class="anno-toggle" id="annoToggle">批注</button><script src="components/cold-station-store.js"></script><script src="components/nav.js" data-active-nav="AI智能能效" data-active-sidebar="冷站配置"></script><script>
+'use strict';
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const params=new URLSearchParams(location.search), mode=params.get('mode')||(params.has('id')?'edit':'new'), readonly=mode==='view';
+const Store=window.ColdStationStore, pending=Store.pendingDraft();
+const configId=params.get('id')||((params.get('from')==='energyView'||/^N\d+$/.test(pending?.id||''))?pending?.id:null)||Store.nextId();
+const back=Store.safeBack(params.get('back'));
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clone=v=>JSON.parse(JSON.stringify(v));
+const FILES={list:'冷站配置-列表.html',one:'冷站配置-创建.html',two:'冷站配置-创建-步骤2.html',three:'冷站配置-创建-步骤3.html',verify:'冷站配置-配置校验.html',expression:'冷站配置-测点表达式.html'};
+const systems=Store.listConfigs();
+function anno(module,items,section='4.3',kind='field',inferred=false){const tag={field:'字段说明',ux:'交互说明',data:'数据逻辑',edge:'边界与异常',state:'状态说明'}[kind];return `<div class="anno anno-${kind}" data-version="v3.0"><span class="anno-tag">${tag}</span><span class="anno-version">v3.0</span><span class="anno-source">${inferred?'产品推断':'需求文档 ·《冷站配置需求文档》§'+section}</span><div class="anno-body"><p><b>关联模块：</b>${module}</p><ul>${items.map(x=>`<li>${x}</li>`).join('')}</ul></div></div>`;}
+function version(desc,page){return `<div class="anno anno-version-header" data-version="v3.0"><span class="anno-tag">版本信息</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§4.1–4.6</span><div class="anno-body"><p><b>当前版本：</b>v3.0</p><p><b>更新日期：</b>2026-11-04</p><p><b>变更概述：</b>${desc}</p><p><b>本页说明：</b>${page}</p></div></div>`;}
+let toastTimer;
+function toast(message,link){const el=$('#toast');el.innerHTML=esc(message)+(link?` <a href="${esc(link)}">去校验 →</a>`:'');el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),link?10000:3500);}
+let modalCallback=null, previousFocus=null;
+function openModal(title,body,confirm,label='确认',wide=false){previousFocus=document.activeElement;$('#modalTitle').textContent=title;$('#modalContent').innerHTML=body;$('#modalDialog').style.maxWidth=wide?'1080px':'860px';$('#modalConfirm').textContent=label;$('#modalConfirm').hidden=!confirm;$('#modalConfirm').disabled=false;modalCallback=confirm;$('#modal').classList.add('is-open');$('#modalClose').focus();}
+function closeModal(){$('#modal').classList.remove('is-open');modalCallback=null;if(previousFocus?.isConnected)previousFocus.focus();}
+$('#modalClose').onclick=closeModal;$('#modalCancel').onclick=closeModal;$('#modalConfirm').onclick=()=>modalCallback?.();
+$('#modal').addEventListener('click',e=>{if(e.target===$('#modal'))closeModal();});
+document.addEventListener('keydown',e=>{if(!$('#modal').classList.contains('is-open'))return;if(e.key==='Escape')closeModal();if(e.key==='Tab'){const els=$$('#modal button:not([disabled]):not([hidden]),#modal input:not([disabled]),#modal select:not([disabled]),#modal a[href]').filter(x=>x.getClientRects().length);if(!els.length)return;const first=els[0],last=els.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});
+function loadDraft(){return Store.getDraft(configId);}
+function saveDraft(d){if(!readonly)Store.setDraft(d);return true;}
+function navUrl(file,extra={}){const q=new URLSearchParams({id:configId,mode,...(!readonly?{resume:'1'}:{}),...(back?{back}:{}),...extra});return file+'?'+q;}
+function steps(active){return `<div class="progress-container"><div class="progress-steps">${['系统信息','设备与属性','系统拓扑'].map((x,i)=>`${i?'<div class="progress-line"></div>':''}<div class="progress-step ${active===i+1?'active':''}"><span class="step-icon ${active===i+1?'active':'pending'}">${i+1}</span>${x}</div>`).join('')}</div></div>`;}
+function confirmLeave(dirty,go){if(!dirty){go();return;}openModal('放弃本次修改？',anno('放弃修改弹窗；入口：取消或返回列表',['离开后放弃整个编辑流程中尚未保存的修改。','继续编辑关闭弹窗，留在当前页。','确认放弃后清理草稿，并返回来源页或列表。'],'4.2','ux')+'<p>本次修改尚未保存，确认放弃并返回列表？</p>',()=>{closeModal();go();},'放弃修改');}
+function initAnnotations(){ $('#annoToggle').onclick=()=>{document.body.classList.toggle('annotation-mode');$('#annoToggle').textContent=document.body.classList.contains('annotation-mode')?'退出批注':'批注';};$('#annoVersion').onchange=()=>{const v=$('#annoVersion').value;$$('.anno').forEach(a=>a.classList.toggle('anno-filter-hidden',v!=='all'&&a.dataset.version!==v));}; }
+initAnnotations();
+
+function removeDraftMembers(d,ids,removeTypes=[]){
+ const set=new Set(ids);d.detachedDevices=d.detachedDevices||{};
+ for(const item of d.devices||[])if(set.has(item.id))d.detachedDevices[item.id]=clone(item);
+ if(!d.topology?.groups)return;
+ const deleted=d.topology.groups.filter(g=>removeTypes.includes(g.type)).map(g=>g.id);
+ d.topology.groups=d.topology.groups.filter(g=>!removeTypes.includes(g.type));
+ const emptyGroups=[];for(const g of d.topology.groups){const old=g.members.length;g.members=g.members.filter(id=>!set.has(id));if(old&&!g.members.length)emptyGroups.push(g.id);}
+ const invalid=new Set([...deleted,...emptyGroups]);
+ if(Array.isArray(d.topology.relations))d.topology.relations=d.topology.relations.filter(r=>!invalid.has(r.from)).map(r=>({...r,to:(r.to||[]).filter(id=>!invalid.has(id))}));
+}
+
+const DEFS=Store.DEFS;
+const defaults=Object.assign({},...Object.keys(DEFS).map(model=>Store.valuesFor(model)));
+function valuesFor(model){return Store.valuesFor(model);}
+function freshDraft(id){const d=Store.createDraft(id);if(!Store.getEffective(id)){d.devices=[];d.topology={groups:[],relations:[]};d.groupAttributes=[];}return d;}
+function visibleSystemProps(d){return DEFS['水冷冷水系统'].filter(p=>d.systemType!=='air'||p.id!=='cool_pressure_diff');}
+function empty(v){return v==null||v===''||(Array.isArray(v)&&!v.length);}
+function propError(p,v){if(empty(v))return '';if(p.options){const vals=Array.isArray(v)?v:[v];return vals.every(x=>p.options.some(o=>o[0]===String(x)))?'':'请选择有效选项';}if(!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(String(v).trim())||!Number.isFinite(Number(v)))return '请输入有效数字';if(p.integer&&!Number.isInteger(Number(v)))return '请输入整数';if(p.min!==undefined&&+v<p.min||p.max!==undefined&&+v>p.max)return `请输入 ${p.min}～${p.max} 范围内的数值`;return '';}
+function propAnnotation(p,section){return anno(p.name,[`属性标识：${esc(p.id)}；${p.required?'必填':'选填'}；${p.options?'可选 '+p.options.map(o=>o[1]).join('、'):'数值'+(p.unit?'，单位 '+p.unit:'')+'，须为有效数字'}。`,`${p.min!==undefined?'范围 '+p.min+'～'+p.max+'。':p.integer?'须为整数。':'物模型未定义额外数值范围。'}`, '未填标红；填写格式错误时显示错误并阻止下一步；修改值标“已修改”。'],section,'field',!!p.inferred);}
+function propHtml(p,v,key,disabled=false,edited=false,section='4.3'){const missing=p.required&&empty(v),err=propError(p,v);let input;if(p.options){input=`<select id="field-${key}-${p.id}" class="field-select" data-key="${key}" data-prop="${p.id}" ${p.multiple?'multiple size="3"':''} ${disabled?'disabled':''} aria-label="${esc(p.name)}">${!p.multiple?'<option value="">请选择</option>':''}${p.options.map(([a,b])=>`<option value="${a}" ${(Array.isArray(v)?v:[String(v)]).includes(a)?'selected':''}>${b}</option>`).join('')}</select>`;}else{input=`<input id="field-${key}-${p.id}" class="field-control" type="text" inputmode="${p.integer?'numeric':'decimal'}" data-key="${key}" data-prop="${p.id}" value="${esc(v)}" ${disabled?'disabled':''} aria-label="${esc(p.name)}">`;}
+return `<div class="prop-item ${missing?'is-missing':''} ${err?'is-invalid':''} ${edited?'is-edited':''}" data-field="${key}-${p.id}">${propAnnotation(p,section)}<label class="prop-label" for="field-${key}-${p.id}">${p.required?'<span class="required">*</span>':''}${p.name}<span class="edit-tag">已修改</span></label><div class="prop-value">${input}${p.unit?`<span class="prop-unit">${esc(p.unit)}</span>`:''}</div>${p.min!==undefined?`<div class="prop-hint">${p.min}～${p.max}</div>`:''}<span class="prop-err">${esc(err)}</span></div>`;}
+function updatePropUI(el,p,v,changed){const item=el.closest('.prop-item');item.classList.toggle('is-missing',p.required&&empty(v));item.classList.toggle('is-invalid',!!propError(p,v));item.classList.toggle('is-edited',changed);item.querySelector('.prop-err').textContent=propError(p,v);el.setAttribute('aria-invalid',!!propError(p,v));}
+
+let draft=freshDraft(configId);const persisted=loadDraft();
+if(!readonly&&params.get('resume')==='1'&&persisted)draft=persisted;
+if(params.get('from')==='energyView'){
+ const ev=pending?.from==='energyView'?pending:null;
+ if(ev){draft={...Store.createDraft(configId),...clone(ev),id:configId,baseRev:Store.getEffective(configId)?.rev||0,baseSnapshot:Store.getEffective(configId)};draft.systemType=/air|风冷/.test(ev.systemType||ev.type||'')?'air':'water';draft.includes=clone(ev.includes||ev.systemIncludes||[]);draft.attributes={...valuesFor('水冷冷水系统'),...(ev.attributes||{})};if(draft.systemType==='air'){draft.attributes.coolmode=['0'];delete draft.attributes.cool_pressure_diff;}if(!draft.devices){draft.devices=[];draft.topology={groups:[],relations:[]};}}
+ $('#energyNotice').hidden=false;
+}
+
+if(!Store.getEffective(configId)&&!Array.isArray(draft.devices)){draft.devices=[];draft.topology={groups:[],relations:[]};}
+let initial=JSON.stringify(draft),dirty=false;
+$('#versionHead').innerHTML=version('新增冷站配置系统信息与系统属性。','三步配置的第一步，支持创建、编辑及只读查看。');
+$('#pageTitle').textContent=readonly?'查看冷站配置':mode==='edit'?'编辑冷站配置':'新建冷站配置';
+$('#steps').innerHTML=steps(1);
+$('#basicAnno').innerHTML=anno('系统信息',['所在空间必选，步骤 2 候选设备限定在该空间内；编辑时不可修改。','冷水系统名称必填；系统类型必选，编辑时不可修改。','系统包含可多选，按水冷或风冷显示对应项目。'],'4.2','field');
+$('#spaceAnno').innerHTML=anno('所在空间',['选择树形下拉中的空间节点，候选为演示的三处空间。','所在空间必选；编辑与查看时不可修改。','选择后更新字段显示，并关闭下拉。'],'4.2','field');
+$('#nameAnno').innerHTML=anno('冷水系统名称',['名称必填，空白不作为有效名称。','编辑可修改；查看只读显示。','下一步发现未填时定位本项。'],'4.2','field');
+$('#typeAnno').innerHTML=anno('系统类型',['水冷冷水系统与风冷冷水系统二选一。','水冷可包含板换、二次泵、蓄冷罐；风冷可包含二次泵、蓄冷罐。','切换类型即时刷新可选项、制冷模式范围与冷却水主管设计压差。'],'4.2','field');
+$('#includeAnno').innerHTML=anno('系统包含',['多选项决定后续设备组和拓扑分组是否出现。','编辑时取消前检查引用；被引用不可移除并列出引用位置。','未被引用允许移除，同时清理分组成员与连线，设备和属性保留。'],'4.6','field');
+$('#actionsAnno').innerHTML=anno('下一步与取消',['下一步先校验空间、名称和类型必选项，属性格式错误时拦截并定位。','系统属性必填项未填标红，完整性留待保存后配置校验。','取消或返回时清理整个流程的草稿；带来源页时返回来源页，查看仅浏览。'],'4.2','ux');
+$('#attributeAnno').innerHTML=anno('系统属性',['按标准物模型静态数据展示水冷 11 项。','风冷制冷模式范围固定为压缩制冷且只读，不展示冷却水主管设计压差。','枚举用下拉、数值带单位；修改即标记，格式错误即提示。','由属性处置入口进入时，滚动并高亮对应属性格。'],'4.2','data');
+$('#spaceValue').textContent=draft.space||'请选择所在空间';$('#name').value=draft.name;
+$('#name').disabled=readonly;$('#spaceButton').disabled=readonly||mode==='edit';
+$('#spaceTree').innerHTML=`<div class="tree-group">▾ 人保北方信息中心</div><div class="tree-group indent">▾ 动力楼</div>${systems.slice(0,2).map(s=>`<button class="tree-node" data-space="${esc(s.space)}">${s.id==='A'?'冷站 A':'屋面'}</button>`).join('')}<div class="tree-group">▾ 软POC项目</div><button class="tree-node" data-space="${esc(systems[2].space)}">暖通空调系统</button>`;
+$('#spaceButton').onclick=()=>{$('#spaceTree').hidden=!$('#spaceTree').hidden;$('#spaceButton').setAttribute('aria-expanded',!$('#spaceTree').hidden);};
+$$('[data-space]').forEach(b=>b.onclick=()=>{draft.space=b.dataset.space;$('#spaceValue').textContent=draft.space;$('#spaceTree').hidden=true;$('#spaceButton').setAttribute('aria-expanded','false');$('#spaceButton').classList.remove('invalid');$('#spaceError').textContent='';touch();});
+document.addEventListener('click',e=>{if(!e.target.closest('.space-picker'))$('#spaceTree').hidden=true;});
+function touch(){draft.type=draft.systemType;draft.systemIncludes=clone(draft.includes);draft.systemName=draft.name;dirty=JSON.stringify(draft)!==initial;if(!readonly)Store.setDraft(draft);}
+$('#name').oninput=()=>{draft.name=$('#name').value;$('#name').classList.remove('invalid');$('#nameError').textContent='';touch();};
+function renderChoices(){$('#systemTypes').innerHTML=['water','air'].map(t=>`<label class="pill ${draft.systemType===t?'selected':''}"><input type="radio" name="systemType" value="${t}" ${draft.systemType===t?'checked':''} ${readonly||mode==='edit'?'disabled':''}>${t==='water'?'水冷冷水系统':'风冷冷水系统'}</label>`).join('');$('#includes').innerHTML=(draft.systemType==='water'?['板换','二次泵','蓄冷罐']:['二次泵','蓄冷罐']).map(x=>`<label class="check-pill ${draft.includes.includes(x)?'selected':''}"><input type="checkbox" value="${x}" ${draft.includes.includes(x)?'checked':''} ${readonly?'disabled':''}>${x}</label>`).join('');
+$$('[name="systemType"]').forEach(el=>el.onchange=()=>{draft.systemType=el.value;if(el.value==='air'){draft.includes=draft.includes.filter(x=>x!=='板换');draft.attributes.coolmode=['0'];delete draft.attributes.cool_pressure_diff;}else{draft.attributes.cool_pressure_diff??='1.2';draft.attributes.coolmode=['0','1','2'];}draft.devices=null;touch();renderChoices();renderProps();});
+$$('#includes input').forEach(el=>el.onchange=()=>{const name=el.value;if(!el.checked&&mode==='edit'){el.checked=true;if(name==='二次泵'&&configId==='A'){openModal('二次泵正在被引用，不能移除',anno('移除引用检查弹窗；入口：取消二次泵',['被安全边界或寻优策略引用时不能移除。','点击引用位置可定位，关闭后保留二次泵。','属性、设备及拓扑均不改变。'],'4.6','ux')+'<p>二次泵被安全边界「A路冷站安全边界」、柔性寻优策略引用，不能移除。</p><div class="reference-list"><button class="reference-item" onclick="toast(\'定位安全边界「A路冷站安全边界」\')">安全边界「A路冷站安全边界」 →</button><button class="reference-item" onclick="toast(\'定位柔性寻优策略\')">柔性寻优策略 →</button></div>',null);return;}openModal('移除'+name+'？',anno('系统包含移除确认弹窗；入口：取消勾选'+name,['仅当没有下游引用时允许移除。','同时清理相关分组成员和供水连线。','设备实例和属性保留，取消不改变本配置。'],'4.6','ux')+`<p>将清理${name==='蓄冷罐'?'蓄冷罐组':name+'分组'}和相关连线，设备与属性保留。</p>`,()=>{changeInclude(name,false);closeModal();toast('已移除'+name+'，设备与属性保留');},'确认移除');}else changeInclude(name,el.checked);});}
+function changeInclude(name,on){draft.includes=on?[...new Set([...draft.includes,name])]:draft.includes.filter(x=>x!==name);if(!on&&Array.isArray(draft.devices)){const key=({'板换':'HX','二次泵':'SWP','蓄冷罐':'TK'})[name],ids=draft.devices.filter(d=>d.group===key).map(d=>d.id);removeDraftMembers(draft,ids,name==='二次泵'?['second']:name==='蓄冷罐'?['tank']:[]);draft.devices=draft.devices.filter(d=>!ids.includes(d.id));}touch();renderChoices();}
+let originalAttributes=clone(draft.attributes);
+function renderProps(){$('#systemProps').innerHTML=visibleSystemProps(draft).map(p=>propHtml(p,draft.attributes[p.id],'system',readonly||(draft.systemType==='air'&&p.id==='coolmode'),JSON.stringify(draft.attributes[p.id])!==JSON.stringify(originalAttributes[p.id]),'4.2')).join('');$$('#systemProps [data-prop]').forEach(el=>{const handle=()=>{const p=DEFS['水冷冷水系统'].find(x=>x.id===el.dataset.prop),v=el.multiple?Array.from(el.selectedOptions).map(o=>o.value):el.value;draft.attributes[p.id]=v;updatePropUI(el,p,v,JSON.stringify(v)!==JSON.stringify(originalAttributes[p.id]));touch();};el.addEventListener(el.tagName==='SELECT'?'change':'input',handle);});}
+function nextStep(){if(!readonly){let target=null;if(!draft.space){$('#spaceError').textContent='请选择所在空间';$('#spaceButton').classList.add('invalid');target=$('#spaceButton');}if(!draft.name.trim()){$('#nameError').textContent='请输入冷水系统名称';$('#name').classList.add('invalid');target??=$('#name');}if(target){target.focus();target.scrollIntoView({block:'center',behavior:'smooth'});toast('请补齐必填的系统信息');return;}const errors=visibleSystemProps(draft).filter(p=>propError(p,draft.attributes[p.id]));if(errors.length){target=$(`[data-key="system"][data-prop="${errors[0].id}"]`);target.focus();target.scrollIntoView({block:'center',behavior:'smooth'});toast(`${errors.length} 项属性格式不正确`);return;}}
+if(saveDraft(draft))location.href=navUrl(FILES.two,{id:draft.id});}
+$('#next').onclick=nextStep;$('#cancel').hidden=readonly;$('#backList').hidden=false;if(readonly)$('#backList').onclick=()=>location.href=back||FILES.list;
+function leave(){confirmLeave(dirty||!!Store.getDraft(configId),()=>{Store.clearDraft();location.href=back||FILES.list;});}$('#cancel').onclick=leave;$('#backList').onclick=readonly?()=>location.href=back||FILES.list:leave;
+renderChoices();renderProps();
+
+
+const targetAttr=params.get('attr');if(targetAttr){const el=document.getElementById('field-system-'+targetAttr);if(el){el.closest('.prop-item').classList.add('located');setTimeout(()=>{el.scrollIntoView({block:'center'});el.focus();},50);}else toast('当前系统不适用此属性');}
+// 单独进入时只读生效快照；必须明确选择后才恢复同 ID 草稿。
+function offerDraftRecovery(){
+ const old=Store.getDraft(configId);if(readonly||!old||params.get('resume')==='1'||params.get('from')==='energyView')return;
+ const main=document.querySelector('main.main');const bar=document.createElement('div');bar.className='banner';
+ bar.innerHTML=anno('未保存修改',['同一配置有未保存草稿时，可恢复继续编辑或丢弃。','恢复后保留进入编辑时的保存版本作为基线。','丢弃只清理草稿，已保存配置保持不变。'],'4.5','ux')+'有未保存的修改：<button class="btn" id="restoreDraft">恢复</button> <button class="btn" id="discardDraft">丢弃</button>';
+ const children=Array.from(main.children);children.forEach(el=>el.inert=true);main.prepend(bar);
+ const reload=resume=>{const q=new URLSearchParams(location.search);q.set('id',configId);q.set('mode',mode);q.set('resume',resume?'1':'0');location.replace(location.pathname+'?'+q);};
+ bar.querySelector('#restoreDraft').onclick=()=>reload(true);bar.querySelector('#discardDraft').onclick=()=>{Store.clearDraft();reload(false);};
+}
+if(back){const link=document.createElement('a');link.className='back-link';link.textContent=Store.backLabel(back);link.href=back;link.onclick=e=>{if(readonly)return;e.preventDefault();leave();};document.querySelector('.page-header').append(link);}
+offerDraftRecovery();
+
+</script></body></html>

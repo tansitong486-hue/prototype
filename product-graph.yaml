@@ -1,7 +1,7 @@
 # AI 节能 — 产品关系图（机读）
 # 人读入口：AGENT-MAP.md（本目录）+ 07-产品文档/01-ai 节能/产品文档/00-产品全貌.md
 # 维护：改 nav.js / index 拓扑 / 主流程时同步本文件
-# 更新：2026-11-02
+# 更新：2026-11-04
 
 meta:
   product: ai-energy
@@ -455,6 +455,49 @@ pages:
     version: v2.9
     role: subflow
 
+  - id: page.cold_station_config_list
+    file: 冷站配置-列表.html
+    nav_label: 冷站配置
+    nav_group: 智控配置
+    domain: cold_station_opt
+    version: v3.0
+    role: entry
+  - id: page.cold_station_config_s1
+    file: 冷站配置-创建.html
+    nav_label: null
+    nav_group: 智控配置
+    domain: cold_station_opt
+    version: v3.0
+    role: subflow
+  - id: page.cold_station_config_s2
+    file: 冷站配置-创建-步骤2.html
+    nav_label: null
+    nav_group: 智控配置
+    domain: cold_station_opt
+    version: v3.0
+    role: subflow
+  - id: page.cold_station_config_s3
+    file: 冷站配置-创建-步骤3.html
+    nav_label: null
+    nav_group: 智控配置
+    domain: cold_station_opt
+    version: v3.0
+    role: subflow
+  - id: page.cold_station_config_verify
+    file: 冷站配置-配置校验.html
+    nav_label: null
+    nav_group: 智控配置
+    domain: cold_station_opt
+    version: v3.0
+    role: subflow
+  - id: page.cold_station_point_expression
+    file: 冷站配置-测点表达式.html
+    nav_label: null
+    nav_group: 智控配置
+    domain: data_quality
+    version: v3.0
+    role: subflow
+
   # —— orphan（有文件、未进侧栏/拓扑）——
   - id: page.manual_train
     file: 手动训练.html
@@ -577,6 +620,27 @@ flows:
       - page.system_sim
       - page.create_sim
       - page.sim_verify
+
+  - id: flow.cold_station_config
+    name: 冷站配置
+    purpose: 一个冷水系统在一处配齐设备、属性、分组、供水拓扑与投入 / 投出，保存后配置校验，测点表达式批量配置；下游训练、仿真、安全边界、寻优读取同一份配置
+    steps:
+      - page_id: page.cold_station_config_list
+      - page_id: page.cold_station_config_s1
+      - page_id: page.cold_station_config_s2
+      - page_id: page.cold_station_config_s3
+      - page_id: page.cold_station_config_verify
+      - page_id: page.cold_station_point_expression
+    binds:
+      - domain:cold_station_opt
+      - domain:data_quality
+      - page.efficiency_view
+      - page.create_collection
+      - page.mechanism_train
+      - page.system_sim
+      - page.create_sim
+      - page.safety_boundary_create
+      - page.cold_flex_opt
 
   - id: flow.room_opt_diagnosis
     name: 机房寻优与诊断
@@ -958,6 +1022,35 @@ requirements:
     algo_vs_ui: mixed
     notes: 安全边界、智控下发、安全回退策略均有独立页（列表+创建编辑）
 
+  - id: req.v30.cold_station_config
+    version: v3.0
+    status: 初稿待评审
+    domain: cold_station_opt
+    prd_path: 04-需求文档/AI节能v3.0 版本/冷站配置需求文档.md
+    prototype_pages:
+      - 冷站配置-列表.html
+      - 冷站配置-创建.html
+      - 冷站配置-创建-步骤2.html
+      - 冷站配置-创建-步骤3.html
+      - 冷站配置-配置校验.html
+      - 冷站配置-测点表达式.html
+      - 能效视图.html
+      - 创建集合-能耗模型.html
+      - 机理模型训练.html
+      - 创建-编辑模型.html
+      - 系统仿真建模.html
+      - 创建仿真模型.html
+      - 仿真校验.html
+      - 安全边界-创建.html
+      - 安全边界-编辑.html
+      - 冷站柔性调优.html
+      - 冷站全局寻优.html
+      - 冷站长周期寻优.html
+    upstream: [req.v29.terminal_sim_opt]
+    downstream: []
+    algo_vs_ui: mixed
+    notes: 版本清单 v3.0 需求 1～5。冷站配置（三步：系统信息 / 设备与属性 / 系统拓扑，结构照搬机房配置；与能效视图水冷冷水系统集合同一份数据）+ 配置校验七类（不拦保存，寻优每轮按同一阻断规则判定，阻断本轮跳过）+ 测点表达式批量配置（共济实施助理工具库迁入，单次 5000 行，不内置大模型、不做批次回退）+ 下游读取（硬边界只在属性录入、仿真与安全边界只读带出并标来源；投入 / 投出同一个值；配置变更只提示 + 一键重新同步）+ 风冷冷水系统仿真补齐二次泵侧（算法侧，风冷仿真表 v3.0 待出）。二次泵管路与冷冻水泵管路自动连线；不校验最小冷却进水温度与群控模式切换温度。
+
 
 edges:
   # 计量 → 消费 → 总览
@@ -996,6 +1089,23 @@ edges:
   - from: page.data_quality_check
     to: page.meter_detail
     rel: consumes
+  # 冷站配置 v3.0
+  - from: page.cold_station_config_list
+    to: domain.cold_station_opt
+    rel: provides_facts
+  - from: page.cold_station_config_verify
+    to: page.cold_station_point_expression
+    rel: produces
+  - from: page.cold_station_config_s3
+    to: page.create_sim
+    rel: provides_facts
+  - from: page.cold_station_config_s2
+    to: page.mechanism_train
+    rel: provides_facts
+  - from: page.cold_station_config_verify
+    to: page.cold_flex_opt
+    rel: binds
+
   # 仿真 → 寻优 / 多工况
   - from: domain.sim_predict
     to: domain.cold_station_opt
@@ -1220,3 +1330,5 @@ noise:
     note: v2.9 末端仿真寻优原型演示数据分三套——设备预测模型 用 0_100 江苏分中心二层真实拓扑口径（风冷 11 台、旧机 1～4 / 新机 5新～11新、2 个参数池）+ 冷冻水 demo 2 台；系统仿真 / 仿真校验用同一 0_100 口径（仿真校验另有 ?site=demo 冷冻水 demo 行）；机房寻优-柔性寻优 仍用 1F-101 示例机房（AC1～AC12，冷冻水 8 + 风冷 4；策略卡与规则配置的仿真模型取系统仿真建模的仿真模型名称，演示选中「江苏分中心二层 0_100 末端机房」，与示例机房 1F-101 不是同一机房，属演示数据差异），结论条 / 稳态值 / 原因码为演示值不是真实计算；柔性页旧 v2.8 压缩机演示常量（AIR_DX_COMP_DEMO）保留为死代码
   - id: noise.v29_sim_three_layers
     note: v2.9 末端仿真 / 安全边界 / 寻优三层（2026-10-31 修订（二））：仿真模型（系统仿真建模 末端机房）只含步骤 0.1～0.4 + 1～4 + 自身仿真安全边界（硬边界 / 预测偏差阈值，越界终止），不读安全边界页与寻优规则配置；运行安全边界绑定在寻优策略卡，安全评价 / 安全阀 / J / 结果判定在柔性寻优页寻优层；仿真校验页是与冷站一致的实时仿真校验，只出实际值 / 预测值 / 达标判定，不出寻优侧原因码；人工试算（what-if）不在本期，需求池 #78；多候选模型与低置信回落走创建仿真模型的模型选择规则，不设「模型版本」
+  - id: noise.v30_cold_config_demo
+    note: v3.0 冷站配置原型演示数据——A路冷水系统按人保 A 路 6 单元一对一口径（3#、6# 投出，6#冷水主机新接入属性为空）；校验 scene=1/2/3、保存冲突 / 失败、导入中断等为原型演示切换；属性数值为示例，以标准物模型 xlsx 为准

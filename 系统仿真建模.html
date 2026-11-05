@@ -310,6 +310,27 @@
       }
       .search-field { width: 100%; }
     }
+
+    /* v3.0：沿用机房配置弹窗结构与本页表格、按钮 */
+    .boundary-alert { display:flex; align-items:center; gap:16px; padding:12px 18px; background:#FFF7ED; color:#9A3412; border-bottom:1px solid var(--border-light); }
+    .boundary-alert[hidden] { display:none; }
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(15,23,42,.4); z-index:1000; align-items:center; justify-content:center; padding:20px; }
+    .modal-overlay.is-open { display:flex; }
+    .modal-dialog { background:var(--bg-card); border-radius:var(--radius-lg); box-shadow:0 24px 48px rgba(15,23,42,.16); width:100%; max-width:1340px; max-height:90vh; display:flex; flex-direction:column; overflow:hidden; }
+    .modal-header { padding:16px 20px; border-bottom:1px solid var(--border-light); display:flex; align-items:center; justify-content:space-between; }
+    .modal-title { font-size:16px; font-weight:600; }
+    .modal-close { width:28px; height:28px; cursor:pointer; color:var(--text-secondary); font-size:18px; }
+    .modal-body { padding:16px 20px; overflow:auto; }
+    .modal-footer { padding:12px 20px; border-top:1px solid var(--border-light); display:flex; justify-content:flex-end; gap:10px; }
+    #boundaryMismatchModal .data-table { min-width:1160px; }
+    #boundaryMismatchModal td { white-space:normal; vertical-align:top; line-height:1.7; }
+    #boundaryMismatchModal .choice { display:block; margin-bottom:6px; }
+    #boundaryMismatchModal .field-control { width:92px; padding:6px 8px; border:1px solid var(--border); border-radius:var(--radius); font:inherit; }
+    #boundaryMismatchModal .field-control[aria-invalid="true"] { border-color:var(--danger); }
+    #boundaryMismatchModal .btn:disabled { opacity:.4; cursor:not-allowed; }
+    .boundary-feedback { color:var(--danger); font-size:12px; margin:6px 0; }
+    .boundary-preview { background:var(--bg-body); padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius); }
+    .pending-tag { display:inline-block; margin-left:6px; font-size:12px; color:#B45309; }
   </style>
   <link rel="stylesheet" href="annotation-styles.css">
 </head>
@@ -324,7 +345,8 @@
           <div class="anno-filter-tags" id="annoFilterTags"></div>
         </div>
         <div class="page-shell">
-          <div class="anno anno-version-header" data-version="v2.9" data-date="2026-11-02">
+          <div class="anno anno-version-header" data-version="v3.0"><span class="anno-tag">版本信息</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§7.3</span><div class="anno-body"><p><b>当前版本：</b>v3.0</p><p><b>更新日期：</b>2026-11-04</p><p><b>变更概述：</b>增加存量硬边界不一致清单与逐项确认。</p><p><b>本页说明：</b>按来源对象和属性核对仿真模型与安全边界。</p></div></div>
+<div class="anno anno-version-header" data-version="v2.9" data-date="2026-11-02">
             <span class="anno-tag">版本信息</span>
             <span class="anno-version">v2.9</span>
             <div class="anno-body"><p><b>当前版本：</b>v2.9（需求 1 末端仿真寻优）</p><p><b>更新日期：</b>2026-11-02</p><p><b>变更概述：</b>仿真模型类型新增「末端机房」（对象为空调设备组），创建与仿真验证沿用冷站流程，由柔性寻优在下游引用。</p><p><b>本页说明：</b>筛选 v2.9；列表第 1、2 行为末端演示（0_100 机房与冷冻水 demo）。</p></div>
@@ -349,6 +371,7 @@
               <h1 class="page-title">系统仿真建模</h1>
             </div>
 
+<div class="anno anno-ux" data-version="v3.0"><span class="anno-tag">交互说明</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 · 《冷站配置需求文档》§7.3</span><div class="anno-body"><p><b>关联模块：</b>硬边界不一致入口</p><ul><li>按来源对象与属性合并计数；同一属性的全部引用模型列在一行。</li><li>未确认时仿真模型和安全边界沿用已保存值，模型名旁显示“待确认”。</li><li>当前属性值从已保存冷站配置读取；与全部模型已保存值一致的属性不列入清单。</li><li>确认一行后从清单移除；相关模型无剩余差异时去掉“待确认”，全部一致后入口消失。</li></ul></div></div><div class="boundary-alert" id="mismatchBanner" data-version="v3.0"><span id="mismatchCount">5 处硬边界与属性不一致，去确认</span><button class="action-link" type="button" id="openMismatch">去确认</button></div>
             <div class="page-toolbar">
               <label class="search-field">
                 <svg viewBox="0 0 16 16" aria-hidden="true">
@@ -494,6 +517,16 @@
     </div>
   </div>
 
+
+  <div class="modal-overlay" id="boundaryMismatchModal" data-version="v3.0" aria-hidden="true">
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="mismatchTitle" tabindex="-1">
+      <div class="modal-header"><h2 class="modal-title" id="mismatchTitle">硬边界不一致清单</h2><button class="modal-close" type="button" id="closeMismatch" aria-label="关闭">×</button></div>
+      <div class="modal-body"><div class="anno anno-field" data-version="v3.0"><span class="anno-tag">字段说明</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 · 《冷站配置需求文档》§7.3</span><div class="anno-body"><p><b>关联模块：</b>硬边界不一致清单弹窗 · 列表顶部“去确认”</p><ul><li>来源对象 / 属性、当前属性值和全部引用模型的旧值只读；确认值单选当前属性值或某个模型的值。</li><li>受影响安全边界显示完整软硬区间；软下限、软上限可在行内修改，须为有效数字。</li><li>确认前展开“预览影响”，列出全部受影响模型和安全边界及确认后的值。</li><li>确认写回来源属性，全部引用模型统一读取；须满足硬下限 ≤ 软下限 ≤ 软上限 ≤ 硬上限，否则红框提示并禁用“确认”。</li></ul></div></div><div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">产品推断</span><div class="anno-body"><p><b>关联模块：</b>清单演示数据</p><ul><li>以当前冷站属性核对 5 项演示模型已保存值；只展示存在差异的项，按来源对象与属性计数。</li><li>确认值写回冷站配置；全部相关模型和调整后的软边界同步保留，重新打开或刷新后按已确认值核对。</li><li>软边界输入实时刷新校验与预览；主列表“待确认”打开清单并定位首条相关项。</li></ul></div></div>
+        <div class="table-wrap"><table class="data-table"><thead><tr><th>来源对象 / 属性</th><th>当前属性值</th><th>各仿真模型中的值</th><th>受影响的安全边界</th><th>确认值</th><th>操作</th></tr></thead><tbody id="mismatchRows"></tbody></table></div>
+      </div><div class="modal-footer"><button class="btn" type="button" id="doneMismatch">关闭</button></div>
+    </div>
+  </div>
+
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script>
@@ -535,6 +568,110 @@ function initAnnoVersionFilter(){var tags=document.getElementById('annoFilterTag
 function filterAnno(version,latest){document.querySelectorAll('.anno[data-version]').forEach(function(a){var v=a.getAttribute('data-version');if(version==='all'){a.style.display='';a.style.opacity=(v===latest)?'1':'0.6';}else{a.style.display=(v===version)?'':'none';a.style.opacity='1';}});}
 function setActive(el){el.parentElement.querySelectorAll('.anno-filter-tag').forEach(function(t){t.classList.remove('active');});el.classList.add('active');}
   </script>
+
+  <script src="components/cold-station-store.js"></script>
+  <script>
+  // v3.0：读取生效冷站配置，仅增补旧列表的待确认状态。
+  (function () {
+    const rows = [
+      {object:'3#冷水主机', attr:'最大冷冻出水温度设定', dev:'CH3', key:'max_coldtp_set', opposite:'min_coldtp_set', unit:'℃', side:'max', models:[['1号冷站基础版本',13],['1号冷站扩展版本',14]], boundaries:[{name:'A路冷站运行安全边界 · 3#冷水主机出水温度',softMin:6,softMax:13.5}]},
+      {object:'1#冷冻水泵', attr:'最小频率', dev:'CHWP1', key:'feq_min', unit:'Hz', side:'min', models:[['1号冷站基础版本',15]], boundaries:[]},
+      {object:'2#冷水主机', attr:'最小冷冻水流量', dev:'CH2', key:'minColdFlow', unit:'m³/h', side:'min', models:[['1号冷站基础版本',160]], boundaries:[]},
+      {object:'1#冷却塔', attr:'最大流量', dev:'CT1', key:'maxTowerFlow', unit:'m³/h', side:'max', models:[['1号冷站扩展版本',700]], boundaries:[]},
+      {object:'1#二次泵', attr:'额定功率', dev:'SWP1', key:'ratedPower', unit:'kW', side:'max', models:[['1号冷站基础版本',60]], boundaries:[]}
+    ];
+    const resolutionKey=r=>r.dev+':'+r.key;
+    const empty=v=>v==null||String(v).trim()==='';
+    function loadRows() {
+      const snapshot=ColdStationStore.getEffective('A');
+      rows.forEach(r=>{
+        const device=snapshot?.devices.find(d=>d.id===r.dev), raw=device?.attrs?.[r.key];
+        const value=empty(raw)?null:Number(raw), record=snapshot?.simulationBoundaryConfirmations?.[resolutionKey(r)];
+        if(record){r.models=record.models.map(m=>m.slice());r.boundaries=record.boundaries.map(b=>({...b}));}
+        if(r.value!==value||r.chosen===undefined)r.chosen=value??r.models[0][1];
+        r.value=value;
+        if(r.opposite){const opposite=device?.attrs?.[r.opposite];r[r.side==='max'?'hardMin':'hardMax']=empty(opposite)?undefined:Number(opposite);}
+        r.done=r.models.every(m=>!empty(raw)&&Number(m[1])===value);
+        r.preview=false;
+      });
+    }
+    loadRows();
+    const modal=document.getElementById('boundaryMismatchModal');
+    const body=document.getElementById('mismatchRows');
+    let timer;
+    function tell(message) { const t=document.getElementById('toast'); t.textContent=message; t.classList.add('show'); clearTimeout(timer); timer=setTimeout(()=>t.classList.remove('show'),2200); }
+    function hardRange(r) { return {min:r.side==='min'?r.chosen:r.hardMin, max:r.side==='max'?r.chosen:r.hardMax}; }
+    function boundaryInvalid(r,b) {
+      const h=hardRange(r), lo=Number(b.softMin), hi=Number(b.softMax);
+      return String(b.softMin).trim()==='' || String(b.softMax).trim()==='' || !Number.isFinite(lo) || !Number.isFinite(hi) || h.min>lo || lo>hi || hi>h.max;
+    }
+    function invalid(r) { return r.boundaries.some(b=>boundaryInvalid(r,b)); }
+    function preview(r) { return '<b>确认后：</b>来源属性 → '+r.chosen+' '+r.unit+'<br>仿真模型：'+r.models.map(m=>m[0]+' → '+r.chosen+' '+r.unit).join('；')+'<br>安全边界：'+(r.boundaries.length ? r.boundaries.map(b=>b.name+' → '+b.softMin+'～'+b.softMax+' '+r.unit).join('；') : '无受影响安全边界'); }
+    function refreshRow(i) {
+      const r=rows[i], tr=body.querySelector('[data-row="'+i+'"]'), bad=invalid(r);
+      if(!tr)return;
+      tr.querySelector('[data-confirm]').disabled=r.done || bad || !r.preview;
+      tr.querySelector('.boundary-feedback').textContent=r.done?'':(bad?'请输入有效数字，并满足硬下限 '+hardRange(r).min+' ≤ 软下限 ≤ 软上限 ≤ 硬上限 '+hardRange(r).max+' '+r.unit:(!r.preview?'请先预览影响，再确认。':''));
+      tr.querySelectorAll('[data-soft]').forEach(input=>input.setAttribute('aria-invalid',boundaryInvalid(r,r.boundaries[Number(input.dataset.soft)])?'true':'false'));
+      tr.querySelectorAll('[data-hard-range]').forEach(el=>el.textContent='硬边界：'+hardRange(r).min+'～'+hardRange(r).max+' '+r.unit);
+      const detail=body.querySelector('[data-preview-row="'+i+'"]'); detail.hidden=!r.preview; detail.querySelector('.boundary-preview').innerHTML=preview(r);
+    }
+    function render() {
+      body.innerHTML=rows.map((r,i)=>r.done?'':'<tr data-row="'+i+'" data-version="v3.0"><td>'+r.object+'<br>'+r.attr+'</td><td>'+(r.value==null?'来源属性未填':r.value+' '+r.unit)+'</td><td>'+r.models.map(m=>'<div>'+m[0]+'：'+m[1]+' '+r.unit+(r.done?'':'<span class="pending-tag">待确认</span>')+'</div>').join('')+'</td><td>'+(r.boundaries.length?r.boundaries.map((b,j)=>'<div class="choice">'+b.name+'<br><span data-hard-range>硬边界：'+hardRange(r).min+'～'+hardRange(r).max+' '+r.unit+'</span><br>'+['softMin','softMax'].map(key=>'<label>'+(key==='softMin'?'软下限':'软上限')+' <input class="field-control" type="number" step="any" data-soft="'+j+'" data-side="'+key+'" aria-label="'+b.name+' · '+(key==='softMin'?'软下限':'软上限')+'" value="'+b[key]+'" '+(r.done?'disabled':'')+'></label>').join(' ')+'</div>').join(''):'—')+'</td><td>'+[r.value].concat(r.models.map(m=>m[1])).map((v,j)=>v==null?'':'<label class="choice"><input type="radio" name="confirm-'+i+'" value="'+v+'" '+(r.chosen===v?'checked ':'')+(r.done?'disabled ':'')+'> '+(j===0?'当前属性值':r.models[j-1][0])+'：'+v+' '+r.unit+'</label>').join('')+'</td><td><button class="action-link" type="button" data-preview>'+ (r.preview?'收起影响':'预览影响')+'</button><p class="boundary-feedback" aria-live="polite"></p><button class="btn btn-primary" type="button" data-confirm '+(r.done?'disabled':'')+'>'+(r.done?'已确认':'确认')+'</button></td></tr><tr data-preview-row="'+i+'" data-version="v3.0" hidden><td colspan="6"><div class="boundary-preview"></div></td></tr>').join('');
+      rows.forEach((r,i)=>refreshRow(i));
+      const count=rows.filter(r=>!r.done).length;
+      if(!count)body.innerHTML='<tr><td colspan="6">硬边界与来源属性已全部一致</td></tr>';
+      document.getElementById('mismatchCount').textContent=count+' 处硬边界与属性不一致，去确认';
+      document.getElementById('mismatchBanner').hidden=count===0;
+      renderPendingTags();
+    }
+    body.addEventListener('input',e=>{const tr=e.target.closest('[data-row]');if(!tr)return;const i=Number(tr.dataset.row),r=rows[i];if(e.target.matches('[data-soft]')){r.boundaries[Number(e.target.dataset.soft)][e.target.dataset.side]=e.target.value;refreshRow(i);}});
+    body.addEventListener('change',e=>{const tr=e.target.closest('[data-row]');if(!tr)return;const i=Number(tr.dataset.row);if(e.target.type==='radio'){rows[i].chosen=Number(e.target.value);refreshRow(i);}});
+    body.addEventListener('click',e=>{const tr=e.target.closest('[data-row]');if(!tr)return;const i=Number(tr.dataset.row),r=rows[i];if(e.target.closest('[data-preview]')){r.preview=!r.preview;refreshRow(i);e.target.textContent=r.preview?'收起影响':'预览影响';}if(e.target.closest('[data-confirm]')&&!r.done&&!invalid(r)&&r.preview){
+        const snapshot=ColdStationStore.getEffective('A'), device=snapshot?.devices.find(d=>d.id===r.dev);
+        if(!device){tell('来源设备未配置，请先在冷站配置中补齐');return;}
+        if(r.opposite){const v=device.attrs[r.opposite];r[r.side==='max'?'hardMin':'hardMax']=empty(v)?undefined:Number(v);}
+        if(invalid(r)){refreshRow(i);return;}
+        const models=r.models.map(m=>[m[0],r.chosen]);
+        device.attrs[r.key]=String(r.chosen);
+        snapshot.simulationBoundaryConfirmations=snapshot.simulationBoundaryConfirmations||{};
+        snapshot.simulationBoundaryConfirmations[resolutionKey(r)]={models,boundaries:r.boundaries.map(b=>({...b}))};
+        try{ColdStationStore.saveConfig(snapshot);}catch(error){tell('保存失败，请重试');return;}
+        r.models=models;r.value=r.chosen;r.done=true;render();
+        tell('已写回冷站配置，并统一到全部相关仿真模型'+(r.boundaries.length?'及安全边界':''));
+      }});
+    let returnFocus=document.getElementById('openMismatch');
+    function openAt(model) {
+      returnFocus=document.activeElement;
+      loadRows();render();
+      modal.classList.add('is-open');modal.setAttribute('aria-hidden','false');
+      const index=rows.findIndex(r=>!r.done&&r.models.some(m=>m[0]===model));
+      body.querySelectorAll('[data-row]').forEach(tr=>tr.style.background='');
+      if(index>=0){const tr=body.querySelector('[data-row="'+index+'"]');tr.style.background='var(--warning-light)';tr.scrollIntoView({block:'center'});tr.querySelector('[data-preview]').focus();}
+      else modal.querySelector('.modal-close').focus();
+    }
+    function renderPendingTags() {
+      document.querySelectorAll('.data-table tbody tr').forEach(tr=>{
+        if(tr.closest('#boundaryMismatchModal'))return;
+        const cell=tr.children[0];if(!cell)return;
+        cell.querySelectorAll('[data-mismatch-model]').forEach(el=>el.remove());
+        const name=cell.textContent.trim(), related=rows.filter(r=>!r.done&&r.models.some(m=>m[0]===name));
+        if(!related.length)return;
+        const tag=document.createElement('button');tag.type='button';tag.className='pending-tag action-link';tag.textContent='待确认';tag.dataset.mismatchModel=name;tag.dataset.version='v3.0';tag.setAttribute('aria-label',name+' · 待确认，查看不一致项');tag.onclick=()=>openAt(name);cell.appendChild(tag);
+      });
+    }
+    function close(){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');(returnFocus&&returnFocus.isConnected?returnFocus:document.getElementById('openMismatch')).focus();}
+    document.getElementById('openMismatch').onclick=()=>openAt();
+    document.getElementById('closeMismatch').onclick=close;document.getElementById('doneMismatch').onclick=close;
+    modal.addEventListener('click',e=>{if(e.target===modal)close();});
+    modal.addEventListener('keydown',e=>{if(e.key==='Escape')close();if(e.key==='Tab'){const list=Array.from(modal.querySelectorAll('button:not(:disabled),input:not(:disabled),[tabindex="0"]')).filter(x=>x.getClientRects().length);const first=list[0],last=list[list.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});
+    window.addEventListener('pageshow',()=>{loadRows();render();});
+    window.addEventListener('focus',()=>{if(!modal.classList.contains('is-open')){loadRows();render();}});
+    window.addEventListener('storage',e=>{if(e.key==='coldStationConfigs'||e.key===null){loadRows();render();}});
+    render();
+  })();
+  </script>
+
   <script src="components/nav.js" data-active-nav="AI智能能效" data-active-sidebar="系统仿真建模"></script>
 </body>
 </html>

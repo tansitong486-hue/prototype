@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>冷站配置 - 系统拓扑</title><style>
+    :root {
+      --primary: #1E40AF;
+      --primary-light: #EEF4FF;
+      --primary-dark: #17358A;
+      --secondary: #3B82F6;
+      --cta: #F59E0B;
+      --success: #16A34A;
+      --danger: #DC2626;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F8FAFC;
+      --bg-card: #FFFFFF;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15,23,42,.04);
+      --shadow-card: 0 1px 3px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.04);
+      --transition: .2s cubic-bezier(.4,0,.2,1);
+      --sidebar-bg: #071B2E;
+      --header-bg: #071B2E;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+    a { text-decoration: none; color: inherit; cursor: pointer; }
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .main { flex: 1; min-width: 0; overflow-y: auto; background: var(--bg-body); }
+    @media (max-width: 900px) { .sidebar { display: none; } }
+
+    .page-header {
+      background: var(--bg-card);
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: color var(--transition);
+    }
+    .back-link:hover { color: var(--primary); }
+    .back-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+
+    .progress-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px 0;
+      background: var(--bg-body);
+    }
+    .progress-steps {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .progress-step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    .progress-step.active {
+      color: var(--primary);
+      font-weight: 600;
+    }
+    .step-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .step-icon.done {
+      background: #fff;
+      color: var(--success);
+      border: 1px solid var(--success);
+    }
+    .step-icon.active {
+      background: var(--primary);
+      color: #fff;
+      border: 1px solid var(--primary);
+    }
+    .progress-line {
+      width: 120px;
+      height: 2px;
+      background: #E2E8F0;
+    }
+    .progress-line.active {
+      background: var(--success);
+    }
+
+    .content-body { padding: 0 20px 24px; display: flex; gap: 16px; }
+    .content-left { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .content-right { width: 340px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px; }
+
+    .panel-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+      padding: 20px;
+      height: 100%;
+    }
+    .panel-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .panel-title::before {
+      content: '';
+      display: block;
+      width: 3px;
+      height: 14px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+
+    .topology-wrap {
+      flex: 1;
+      position: relative;
+      background: #F8FAFC;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .topology-svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 500px;
+      font-family: sans-serif;
+    }
+    .target-btn {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      width: 32px;
+      height: 32px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      box-shadow: 0 1px 2px rgba(0,0,0,.05);
+    }
+    .target-btn:hover { color: var(--primary); border-color: var(--primary); }
+
+    .node-ac-rect { fill: #EEF4FF; stroke: var(--secondary); stroke-width: 1.5; rx: 8; }
+    .node-ac-text { font-size: 12px; fill: var(--text-primary); font-weight: 600; }
+    .node-ac-sub { font-size: 10px; fill: var(--text-secondary); }
+    .node-cold-circle { fill: #E0F2FE; stroke: #0EA5E9; stroke-width: 1.5; }
+    .node-hot-circle { fill: #FEF2F2; stroke: var(--danger); stroke-width: 1.5; }
+    .node-val { font-size: 12px; fill: var(--text-primary); font-weight: 500; text-anchor: middle; dominant-baseline: middle; }
+    .node-label { font-size: 12px; fill: var(--text-primary); font-weight: 600; text-anchor: middle; }
+
+    .edge-line { fill: none; stroke-width: 1.5; }
+    .edge-cold { stroke: #3B82F6; }
+    .edge-hot { stroke: #F59E0B; }
+    .edge-pill { fill: #fff; stroke-width: 1; rx: 10; }
+    .edge-pill.cold { stroke: #3B82F6; }
+    .edge-pill.hot { stroke: #F59E0B; }
+    .edge-pill-text { font-size: 10px; font-weight: 500; text-anchor: middle; dominant-baseline: middle; }
+    .edge-pill-text.cold { fill: #3B82F6; }
+    .edge-pill-text.hot { fill: #F59E0B; }
+    .edge-return { stroke: #DC2626; stroke-dasharray: 4 3; }
+
+    .toolbar-row { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+    .btn {
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      color: var(--text-primary);
+      transition: border-color var(--transition), background-color var(--transition), color var(--transition);
+    }
+    .btn:hover { border-color: var(--secondary); color: var(--primary); }
+    .btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .btn-primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); color: #fff; }
+    .btn-primary:focus-visible { outline: 2px solid var(--cta); outline-offset: 2px; }
+
+    .field { margin-bottom: 12px; }
+    .field-label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+    .field-control {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 100%;
+      font-size: 13px;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .field-control:focus-visible {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30,64,175,.12);
+    }
+    .field-select {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 100%;
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .field-select:focus-visible {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30,64,175,.12);
+    }
+
+    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .data-table th, .data-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-light); }
+    .data-table th { font-weight: 600; color: var(--text-secondary); font-size: 12px; }
+    .data-table tbody tr { transition: background-color var(--transition); }
+    .data-table tbody tr:hover { background: #F8FAFC; }
+
+    .foot-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 16px 20px;
+      border-top: 1px solid var(--border-light);
+      background: #fff;
+      gap: 12px;
+    }
+
+    /* 同步3D配置弹窗 */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,.4);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.is-open { display: flex; }
+    .modal-dialog {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 24px 48px rgba(15,23,42,.16);
+      width: 100%;
+      max-width: 480px;
+      overflow: hidden;
+    }
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-title { font-size: 16px; font-weight: 600; }
+    .modal-close {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 18px;
+      line-height: 1;
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-close:hover { background: var(--border-light); color: var(--text-primary); }
+    .modal-close:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .modal-body { padding: 20px; }
+    .modal-body .field { margin-bottom: 16px; }
+    .modal-body .field-label { margin-bottom: 6px; }
+    .field-hint {
+      font-size: 12px;
+      color: var(--text-hint);
+      line-height: 1.6;
+      margin-top: 12px;
+    }
+    .modal-footer {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .required { color: #DC2626; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition-duration: .01ms !important; }
+    }
+
+    /* 级联选择器：楼层 → 机房 */
+    .cascade-select {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      display: flex;
+      overflow: hidden;
+      height: 180px;
+    }
+    .cascade-col {
+      flex: 1;
+      overflow-y: auto;
+      border-right: 1px solid var(--border-light);
+    }
+    .cascade-col:last-child { border-right: none; }
+    .cascade-col-header {
+      padding: 6px 10px;
+      font-size: 11px;
+      color: var(--text-hint);
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border-light);
+      font-weight: 500;
+    }
+    .cascade-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--text-primary);
+      transition: background var(--transition);
+      gap: 4px;
+    }
+    .cascade-item:hover { background: var(--primary-light); }
+    .cascade-item.active {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 500;
+    }
+    .cascade-item.selected {
+      background: #DCFCE7;
+      color: var(--success);
+      font-weight: 500;
+    }
+    .cascade-item .cascade-arrow {
+      font-size: 11px;
+      color: var(--text-hint);
+      flex-shrink: 0;
+    }
+    .cascade-selected-val {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      min-height: 18px;
+    }
+    .cascade-selected-val span {
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    /* 多选供冷关系 */
+    .multi-select-wrap {
+      position: relative;
+    }
+    .multi-select-trigger {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 4px;
+      min-height: 34px;
+      padding: 4px 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      cursor: pointer;
+      transition: border-color var(--transition);
+    }
+    .multi-select-trigger:hover { border-color: var(--primary); }
+    .multi-select-trigger.is-open { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30,64,175,.12); }
+    .ms-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 6px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .ms-tag-remove {
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: var(--primary);
+      padding: 0;
+      font-size: 13px;
+      line-height: 1;
+      opacity: .7;
+    }
+    .ms-tag-remove:hover { opacity: 1; }
+    .ms-placeholder { font-size: 12px; color: var(--text-hint); }
+    .ms-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 4px 12px rgba(15,23,42,.1);
+      z-index: 200;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .ms-dropdown.is-open { display: block; }
+    .ms-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background var(--transition);
+    }
+    .ms-option:hover { background: var(--primary-light); }
+    .ms-option input[type="checkbox"] { margin: 0; cursor: pointer; }
+
+    /* 通道分组 */
+    .group-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+    .group-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      background: #FAFCFF;
+    }
+    .group-name-input {
+      flex: 1;
+      padding: 4px 8px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .group-name-input:focus-visible { outline: none; border-color: var(--primary); }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .badge-blue { background: var(--primary-light); color: var(--primary); }
+    .badge-orange { background: #FFF7ED; color: #D97706; }
+    .badge-green { background: #F0FDF4; color: #16A34A; }
+    .group-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .section-note {
+      padding: 8px 10px;
+      background: #F8FAFC;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      font-size: 11px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+    .section-note.warn { background: #FFF7ED; border-color: #FDE68A; color: #92400E; }
+
+    /* 机柜映射 */
+    .empty-state {
+      text-align: center;
+      padding: 24px 12px;
+      color: var(--text-hint);
+      font-size: 12px;
+      line-height: 1.8;
+    }
+    .empty-state .empty-icon { font-size: 28px; margin-bottom: 6px; }
+
+    /* 分隔标题 */
+    .panel-title-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    /* 换热关系容器，供联动控制 */
+    #sectionHeatExchange { transition: opacity .2s; }
+
+    .action-link {
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--primary);
+      transition: opacity .2s;
+    }
+    .action-link:hover { opacity: .75; }
+
+    .page-header-right { display: flex; align-items: center; gap: 12px; }
+    .auto-config-heading { gap: 8px; margin-top: 24px; }
+    .auto-config-heading .panel-title { margin-bottom: 0; flex: 1; }
+    .auto-config-heading .panel-title::before { flex-shrink: 0; }
+    .auto-config-heading .btn { padding: 6px 10px; white-space: nowrap; }
+    .multi-select-wrap.is-auto .multi-select-trigger { border-style: dashed; border-color: var(--secondary); }
+    .auto-relation-badge { font-size: 10px; color: var(--text-secondary); white-space: nowrap; }
+    #modalAutoConfig .modal-dialog { max-width: 720px; max-height: 90vh; display: flex; flex-direction: column; }
+    #modalAutoConfig .modal-body { overflow-y: auto; line-height: 1.7; }
+    #modalAutoConfigConfirm:disabled { opacity: .5; cursor: not-allowed; }
+    .auto-config-rules p + p { margin-top: 8px; }
+    .auto-config-count { box-sizing: content-box; width: 3ch; padding: 2px 4px; border: 1px solid var(--border-light); border-radius: 4px; font: inherit; text-align: center; appearance: textfield; }
+    .auto-config-count::-webkit-inner-spin-button, .auto-config-count::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .auto-config-count[aria-invalid="true"] { border-color: #DC2626; color: #DC2626; background: #FEF2F2; }
+    .auto-config-modes { border: 0; margin: 20px 0; }
+    .auto-config-modes legend { font-weight: 600; margin-bottom: 8px; }
+    .auto-config-modes label { display: inline-flex; align-items: center; gap: 6px; margin-right: 20px; }
+    .auto-config-preview { padding: 12px; background: var(--bg-body); border: 1px solid var(--border-light); border-radius: var(--radius); }
+    .auto-config-preview p + p { margin-top: 6px; }
+    #autoConfigSkipped { max-height: 120px; overflow-y: auto; padding-left: 22px; font-size: 12px; color: var(--text-secondary); }
+    .relation-toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); z-index: 1200; padding: 12px 20px; border-radius: var(--radius); background: var(--text-primary); color: #fff; box-shadow: var(--shadow-card); max-width: calc(100vw - 32px); }
+  
+    html,body { height:100%; } .layout { height:100vh; min-height:0; } .main { scroll-behavior:smooth; }
+    button,input,select { font-family:inherit; } button { cursor:pointer; } button:disabled { cursor:not-allowed; opacity:.55; }
+    button:focus-visible,[tabindex]:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
+    .page-header { gap:16px; flex-wrap:wrap; } .page-sub { margin-top:6px; font-size:12px; color:var(--text-secondary); }
+    .content-body { align-items:flex-start; } .content-left { gap:16px; flex:1 1 650px; }
+    .content-right { width:42%; min-width:370px; position:sticky; top:16px; max-height:calc(100vh - 110px); overflow-y:auto; }
+    .panel-card { height:auto; min-width:0; } .panel-title-bar .panel-title { margin:0; }
+    .panel-title-bar { gap:12px; } .section-block + .section-block { margin-top:22px; }
+    .section-block { scroll-margin-top:20px; } .section-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:10px 0; font-weight:600; font-size:13px; }
+    .btn.btn-sm { padding:5px 10px; font-size:12px; } .action-link { border:0; background:none; } .action-link.delete { color:var(--danger); }
+    .data-table { table-layout:fixed; } .data-table td { vertical-align:top; } .data-table th { background:#F8FAFC; }
+    .group-name-input { width:100%; min-width:80px; padding:7px 8px; } .name-cell { width:34%; }
+    .auto-mark { display:inline-block; font-size:10px; color:var(--secondary); margin-top:4px; }
+    tr.is-auto > td { border-top:1px dashed #93B4ED; border-bottom:1px dashed #93B4ED; }
+    tr.is-selected > td { background:var(--primary-light); } .row-actions { display:flex; gap:8px; margin-top:5px; flex-wrap:wrap; }
+    .ms-tag { font-size:11px; line-height:1.6; } .multi-select-trigger { min-width:0; }
+    #multiPicker { position:fixed; top:0; left:0; right:auto; width:320px; max-height:300px; z-index:1100; }
+    .ms-option.is-disabled { color:var(--text-hint); cursor:not-allowed; } .ms-option small { margin-left:auto; max-width:145px; }
+    .picker-head { display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:#fff; padding:8px 10px; border-bottom:1px solid var(--border-light); font-size:12px; }
+    .prop-row td { background:#FAFCFF; padding:10px 12px; } .prop-panel { border:1px dashed var(--border); border-radius:var(--radius); background:#fff; padding:12px; }
+    .prop-panel-head { font-size:12px; color:var(--text-secondary); margin-bottom:12px; }
+    .prop-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .prop-item { min-width:0; } .prop-label { display:flex; flex-wrap:wrap; align-items:center; gap:4px; font-size:12px; font-weight:600; margin-bottom:5px; }
+    .prop-value { display:flex; align-items:center; gap:5px; } .prop-unit { font-size:11px; white-space:nowrap; color:var(--text-secondary); }
+    .prop-value .field-control,.prop-value .field-select { min-width:0; padding:6px 8px; }
+    .prop-item.is-missing .field-control,.prop-item.is-missing .field-select,.prop-item.is-invalid .field-control,.prop-item.is-invalid .field-select { border-color:var(--danger); background:#FEF2F2; }
+    .prop-item.is-edited:not(.is-missing):not(.is-invalid) .field-control { border-color:var(--secondary); background:#F5F9FF; }
+    .edit-tag { font-size:10px; color:var(--primary); background:var(--primary-light); padding:0 4px; display:none; }
+    .is-edited .edit-tag { display:inline; } .prop-err { font-size:11px; color:var(--danger); margin-top:4px; min-height:0; }
+    .field-control[readonly] { background:#F1F5F9; color:var(--text-secondary); }
+    .topology-wrap { overflow:auto; } .topology-svg { width:100%; min-height:400px; height:auto; }
+    .topology-caption { font-size:11px; color:var(--text-secondary); padding:10px 12px; line-height:1.8; }
+    .topology-node { cursor:pointer; } .topology-node.selected rect { stroke:var(--primary); stroke-width:3; fill:#DBEAFE; }
+    .edge-line { stroke:#91ACCE; opacity:.65; } .edge-line.selected { stroke:var(--primary); stroke-width:2.5; opacity:1; }
+    .topology-empty { fill:var(--text-hint); font-size:12px; } .summary-text { font-size:12px; color:var(--text-secondary); line-height:1.8; }
+    .demo-switch { display:inline-flex; align-items:center; border:1px dashed var(--border); border-radius:var(--radius); overflow:hidden; font-size:12px; }
+    .demo-switch-label { padding:7px 10px; color:var(--text-hint); background:#FAFAFA; border-right:1px dashed var(--border); }
+    .demo-opt { padding:7px 10px; border:0; background:#fff; font-size:12px; color:var(--text-secondary); }
+    .demo-opt + .demo-opt { border-left:1px solid var(--border-light); } .demo-opt.is-active { background:var(--primary-light); color:var(--primary); font-weight:600; }
+    .save-error { margin:0 20px 16px; background:#FEF2F2; color:#B91C1C; border:1px solid #FECACA; border-radius:var(--radius); padding:12px 16px; line-height:1.7; }
+    .fail-row td { background:#FEF2F2!important; border-color:#FCA5A5; } .foot-actions { position:sticky; bottom:0; z-index:100; }
+    .modal-dialog { max-height:90vh; display:flex; flex-direction:column; max-width:780px; } .modal-body { overflow-y:auto; }
+    .modal-dialog.wide { max-width:940px; } .rule-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px 20px; }
+    .rule-grid .field { margin-bottom:12px; } .choice-row { display:flex; gap:14px; flex-wrap:wrap; font-size:13px; margin:8px 0; }
+    .choice-row label { display:inline-flex; align-items:center; gap:5px; } .preview-table { max-height:270px; overflow:auto; border:1px solid var(--border-light); border-radius:var(--radius); }
+    .preview-table th { position:sticky; top:0; z-index:1; } .preview-table .field-select { padding:5px 8px; font-size:12px; }
+    .pending-row td { background:#FFF7ED; } .pending-list { margin:10px 0; color:#92400E; font-size:12px; line-height:1.8; }
+    .auto-config-preview { margin-top:14px; } .auto-config-preview strong { color:var(--primary); }
+    .conflict-card { border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-top:12px; line-height:1.8; }
+    .conflict-card h3 { font-size:14px; margin-bottom:6px; } .model-list { margin:16px 0; padding-left:22px; line-height:2; }
+    .anno { white-space:normal; } .annotation-mode { padding-top:0; } .anno-filter-bar { z-index:500; }
+    .is-invalid.group-name-input { border-color:var(--danger); } .form-error { color:var(--danger); font-size:12px; margin-top:8px; }
+    .danger-text { color:var(--danger); } .muted { color:var(--text-hint); font-size:12px; } .success-icon { color:var(--success); font-size:26px; vertical-align:middle; }
+    @media(max-width:1200px) { .content-right { min-width:300px; width:36%; } .data-table th,.data-table td { padding:8px; } }
+    @media(max-width:980px) { .content-body { flex-direction:column; } .content-right { width:100%; min-width:0; position:static; max-height:none; } .content-left { flex:auto; width:100%; } .progress-line { width:35px; } .content-right .topology-svg { max-height:480px; } }
+    @media(max-width:600px) { .rule-grid,.prop-grid { grid-template-columns:1fr; } .progress-steps { gap:6px; font-size:12px; } .progress-step { font-size:12px; } .progress-line { width:15px; } .panel-card { padding:12px; } .content-body { padding:0 10px 16px; } }
+.located{outline:2px solid var(--primary);outline-offset:3px}
+
+/* 底栏主按钮让出右下角「批注」按钮位置 */
+.foot-actions{padding-right:120px}
+</style><link rel="stylesheet" href="annotation-styles.css"></head>
+<body>
+<div class="layout"><div id="app-header"></div><div class="body-wrap"><div id="app-sidebar"></div><main class="main" id="mainContent">
+<div class="anno-filter-bar" id="annoFilterBar"><span class="anno-filter-label">批注版本：</span><div class="anno-filter-tags" id="annoFilterTags"></div></div>
+<div class="anno anno-version-header" data-version="v3.0"><span class="anno-tag">版本信息</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§4.4–4.6</span><div class="anno-body"><p><b>当前版本：</b>v3.0</p><p><b>更新日期：</b>2026-11-04</p><p><b>变更概述：</b>配置冷站分组、分组属性与供水拓扑，支持一键生成和整体保存。</p><p><b>本页说明：</b>新建、编辑与查看的第 3 步；保存后返回来源页或列表，配置完整性在配置校验页检查。</p></div></div>
+<div class="page-header"><div><a class="back-link" href="冷站配置-列表.html" data-action="cancel">← <span id="pageTitle">新建冷站配置</span></a><div class="page-sub" id="systemSummary"></div></div><div><div id="demoAnno"></div><div class="demo-switch" role="group" aria-label="原型演示保存结果"><span class="demo-switch-label">原型演示</span><button class="demo-opt is-active" data-action="scene" data-scene="normal">正常</button><button class="demo-opt" data-action="scene" data-scene="conflict">有冲突</button><button class="demo-opt" data-action="scene" data-scene="fail">写入失败</button></div></div></div>
+<div class="progress-container"><div class="progress-steps"><a class="progress-step" href="冷站配置-创建.html" data-action="step" data-step="1"><span class="step-icon done">✓</span><span>系统信息</span></a><div class="progress-line active"></div><a class="progress-step" href="冷站配置-创建-步骤2.html" data-action="step" data-step="2"><span class="step-icon done">✓</span><span>设备与属性</span></a><div class="progress-line active"></div><div class="progress-step active" aria-current="step"><span class="step-icon active">3</span><span>系统拓扑</span></div></div></div>
+<div id="saveError" class="save-error" role="alert" hidden></div>
+<div class="content-body"><div class="content-left">
+<section class="panel-card"><div id="groupsAnno"></div><div class="panel-title-bar"><h2 class="panel-title">分组配置</h2><button class="btn btn-primary btn-sm" data-action="generate">一键生成</button></div><div id="groupsContainer"></div></section>
+<section class="panel-card"><div id="relationsAnno"></div><div class="panel-title-bar"><h2 class="panel-title">供水关系</h2><button class="btn btn-sm" data-action="generate">一键生成</button></div><div id="relationsContainer"></div></section>
+</div><aside class="content-right"><section class="panel-card"><div id="topologyAnno"></div><div class="panel-title-bar"><h2 class="panel-title">系统拓扑</h2><button class="action-link" data-action="clear-selection">取消高亮</button></div><div class="summary-text" id="topologyStats"></div><div class="topology-wrap"><svg class="topology-svg" id="topologySvg" viewBox="0 0 760 560" role="img" aria-label="冷站分组与供水关系拓扑图"></svg></div><div class="topology-caption" id="topologySelection">点击分组查看关联连线</div></section></aside></div>
+<div id="saveAnno"></div><footer class="foot-actions"><button class="btn" data-action="step" data-step="2">上一步</button><button class="btn" data-action="cancel">取消</button><button class="btn btn-primary" data-action="save" id="completeButton">完成</button></footer>
+</main></div></div>
+<div id="multiPicker" class="ms-dropdown" role="group" aria-label="多选成员与供水对象"></div>
+<div id="modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-dialog" id="modalDialog"><div class="modal-header"><h2 class="modal-title" id="modalTitle"></h2><button class="modal-close" data-action="close-modal" aria-label="关闭弹窗">×</button></div><div class="modal-body" id="modalBody"></div><div class="modal-footer" id="modalFooter"></div></div></div>
+<div id="toast" class="relation-toast" role="status" aria-live="polite" hidden></div>
+<button class="anno-toggle" id="annoToggle" data-action="annotations">批注</button>
+<script src="components/cold-station-store.js"></script>
+<script>
+'use strict';
+const $=id=>document.getElementById(id), esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])), copy=v=>v==null?v:JSON.parse(JSON.stringify(v));
+const params=new URLSearchParams(location.search), Store=window.ColdStationStore, readonly=params.get('mode')==='view';
+const systemId=params.get('id')||Store.pendingDraft()?.id||Store.nextId(), configId=systemId;
+const back=Store.safeBack(params.get('back'));
+const draft=(!readonly&&params.get('resume')==='1'?Store.getDraft(systemId):null)||Store.createDraft(systemId);
+const isNewConfiguration=!Store.getEffective(systemId);
+const preset=Store.getEffective(systemId)||draft, info=draft;
+const unitCount=Number(draft.units)||6, air=draft.systemType==='air';
+const includes=draft.includes||[], has=x=>includes.includes(x), name=draft.name||'新建冷水系统';
+const baseSnapshot=draft.baseSnapshot===undefined?Store.getEffective(systemId):copy(draft.baseSnapshot);
+let savedResult=null, pendingSave=null;
+
+const groupTypes=[{key:'unit',label:'制冷单元',device:['ch','hx']},{key:'freeze',label:'并联冷冻水泵管路',device:['fp']},...(!air?[{key:'cool',label:'并联冷却水泵管路',device:['cp']},{key:'tower',label:'并联冷却塔管路',device:['ct']}]:[]),...(has('二次泵')?[{key:'second',label:'并联二次泵管路',device:['sp']}]:[]),...(has('蓄冷罐')?[{key:'tank',label:'蓄冷罐组',device:['tk']}]:[])];
+const attrDefs=Store.groupDefs();
+const kindNames={ch:air?'风冷冷水机组':'冷水主机',hx:'板换',fp:'冷冻水泵',cp:'冷却水泵',ct:'冷却塔',sp:'二次泵',tk:'蓄冷罐'};
+const allDevices=Array.isArray(draft.devices)?draft.devices:isNewConfiguration?[]:Store.deviceGroups(draft).flatMap(g=>Array.from({length:g.key==='TK'?(systemId==='C'?3:2):unitCount},(_,i)=>Store.makeDevice(draft,g,i+1)));
+let devices=allDevices.filter(d=>groupTypes.some(t=>t.device.includes(d.kind)));
+
+const deviceById=id=>devices.find(d=>d.id===id), typeByKey=k=>groupTypes.find(t=>t.key===k), list=k=>state.groups.filter(g=>g.type===k), group=id=>state.groups.find(g=>g.id===id);
+function defaults(type){ return Object.fromEntries((attrDefs[type]||[]).filter(d=>!d.readonly).map(d=>[d.key,d.value])); }
+function initialTopology(){if(draft.topology)return draft.topology;if(isNewConfiguration||!devices.length)return {groups:[],relations:[]};try{return Store.createTopology({...draft,devices});}catch{return {groups:[],relations:[]};}}
+let sequence=100, state=copy(initialTopology());
+function newGroup(type,number,members,automatic=false){return {id:type+'-'+number,name:typeByKey(type).label+' '+number,type,slot:String(number),members,attrs:defaults(type),originalAttrs:defaults(type),auto:automatic};}
+state.groups=state.groups.filter(g=>typeByKey(g.type)).map(g=>({...g,members:g.members.filter(id=>deviceById(id)),attrs:g.attrs||defaults(g.type),originalAttrs:copy(g.attrs||defaults(g.type))}));
+
+const relDefs=[{key:'freeze',label:'冷冻侧供水',from:'freeze',to:'unit'},...(!air?[{key:'cool',label:'冷却侧供水',from:'unit',to:'cool'},{key:'tower',label:'冷却塔供水',from:'cool',to:'tower'}]:[]),...(has('二次泵')?[{key:'second',label:'二次侧供水',from:'second',to:'freeze',readonly:true}]:[])];
+state.relations=(state.relations||[]).filter(r=>group(r.from)&&relDefs.some(d=>d.key===r.key)).map(r=>({...r,to:r.to.filter(id=>group(id))}));
+// groupAttributes 是同一分组的表格表示；拓扑内分组为主，导入同时写入两者。
+for(const saved of draft.groupAttributes||[]){const g=state.groups.find(g=>g.id===saved.id);if(g&&!g.attrs)g.attrs=copy(saved.attrs);}
+let selected='',scene='normal',expanded=new Set(),picker=null,confirmAction=null,modalReturn=null,autoConfig=null,manualMatches={},lastPlan=null,saving=false,failedFrom=null;
+
+function anno(type,module,items,source='需求文档 ·《冷站配置需求文档》§4.4'){
+ const tags={field:'字段说明',data:'数据逻辑',ux:'交互说明',edge:'边界与异常',state:'状态说明'};
+ return `<div class="anno anno-${type}" data-version="v3.0"><span class="anno-tag">${tags[type]}</span><span class="anno-version">v3.0</span><span class="anno-source">${source}</span><div class="anno-body"><p><b>关联模块：</b>${module}</p><ul>${items.map(s=>`<li>${s}</li>`).join('')}</ul></div></div>`;
+}
+$('demoAnno').innerHTML=anno('ux','原型演示',['仅用于评审，切换完成后的正常、冲突和写入失败结果。','切换不改表格内容；正常结果可演示重新同步或稍后处理。','所有操作使用本页演示数据，不提交真实系统。'],'产品推断');
+$('groupsAnno').innerHTML=anno('field','分组配置',['分组名可修改；成员仅选步骤 2 已关联的同类设备。','每台设备只在一个分组；其他分组已占用的设备置灰并标所在分组。','可新增分组；移除成员或删除分组先检查引用，通过后确认并清理连线。']);
+$('groupsAnno').innerHTML+=anno('field','分组名与草稿',['分组名须非空、同类分组内不重名，最多 50 字；格式不符时定位并提示。','修改先保留为草稿；单独进入时有草稿须先选择恢复或丢弃。','新建配置的分组与供水关系初始为空，可按步骤 2 已关联的设备一键生成。'],'产品推断');
+$('relationsAnno').innerHTML=anno('field','供水关系',['每个起点一行，终点多选；支持一对一、母管制和混合连接。','只配置连接，不填写权重或比例；移除连线前检查引用。','二次侧只读显示自动生成；每个二次泵管路连接全部冷冻水泵管路。']);
+$('topologyAnno').innerHTML=anno('data','系统拓扑',['按冷冻水泵管路、制冷单元、冷却水泵管路、冷却塔管路从左到右显示。','二次泵管路位于冷冻侧外侧；表格修改后实时更新图和统计。','点选分组高亮它的直接连线；蓄冷罐组在图底部单独展示。']);
+$('saveAnno').innerHTML=anno('ux','完成、上一步与取消',['完成只做格式校验；必填未填和连接不完整不拦保存，保存后到配置校验检查。','只提交本次修改项；逐项处理并发冲突后再次提交。','任一项写入失败时保持保存前配置，保留本页内容并定位失败行。','新建保存后提示配置校验及创建设备预测模型；编辑时仅列出受本次变更影响的模型。','上一步保留草稿；取消确认后清理草稿，返回来源页或列表。'],'需求文档 ·《冷站配置需求文档》§4.5、§4.6');
+$('pageTitle').textContent=readonly?'查看冷站配置':params.get('mode')==='edit'?'编辑冷站配置':'新建冷站配置'; $('systemSummary').textContent=name+' · '+(air?'风冷':'水冷')+' · 系统拓扑';
+function toast(msg){$('toast').textContent=msg;$('toast').hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').hidden=true,3400);}
+function snapshot(){return {...copy(draft),id:systemId,name,systemName:name,systemType:air?'air':'water',type:air?'air':'water',includes:copy(includes),systemIncludes:copy(includes),units:state.groups.filter(g=>g.type==='unit').length,devices:allDevices.map(d=>copy(devices.find(x=>x.id===d.id)||d)),groupAttributes:groupAttributeRows(),topology:copy({...state,systemId})};}
+function persist(){if(!readonly)Store.setDraft(snapshot());return true;}
+
+function groupAttributeRows(){return state.groups.filter(g=>attrDefs[g.type]).map(g=>({id:g.id,name:g.name,model:{tower:'并联冷却塔管路',second:'并联二次泵管路',tank:'蓄冷罐设备组'}[g.type],attrs:Object.fromEntries(attrDefs[g.type].map(d=>[d.key,computed(g,d.key)]))}));}
+function touch(){if(readonly)return;persist();drawTopology();}
+function relation(r,from){return state.relations.find(x=>x.key===r.key&&x.from===from)||{key:r.key,from,to:[],auto:false};}
+function getRelation(key,from){return relation(relDefs.find(r=>r.key===key),from);}
+function computed(g,key){
+ const volume=g.members.reduce((s,id)=>{const d=deviceById(id);return s+(d&&!d.output?(Number(d.capacity)||0):0);},0);
+ if(key==='volume')return volume.toFixed(1);
+ if(key==='design_cool_capacity'){const factor=g.attrs.safe_factor,delta=g.attrs.design_temp_diff;return factor!==''&&delta!==''&&Number.isFinite(Number(factor))&&Number.isFinite(Number(delta))?(volume*Number(delta)*1.163*Number(factor)).toFixed(1):'';}
+ return g.attrs[key]??'';
+}
+function valueError(d,v){if(v==='')return '';if(d.options)return d.options.includes(v)?'':'请选择有效选项';return /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(String(v))&&Number.isFinite(Number(v))?'':'请输入数字';}
+function attrAnnotation(g){
+ let items;
+ if(g.type==='tower')items=['最大冷却水温差：数值，单位 ℃，必填。','冷却塔组额定压降：数值，单位 bar，必填。','空值标红但允许保存；非数值拦保存，改过的格标记已修改。'];
+ if(g.type==='second')items=['最大旁通流量、最小旁通流量：数值，单位 m³/h，均非必填，留空不限制。','二次泵组额定压降：数值，单位 bar，必填。','格式校验、缺失标红和修改标记同设备属性格；分组属性参加步骤 2 的属性表导入导出。'];
+ if(g.type==='tank')items=['连接方式选串联式或并联式；安全系数默认 0.83。','最低安全放冷时长单位 min；设计温差单位 ℃；以上四项必填。','容积只读，为组内投入的蓄冷罐容量之和。','设计蓄冷量只读，为设计温差 × 容积 × 1.163 × 安全系数，单位 kWh。','四项可填属性按步骤 2 属性格规则校验并标记修改，空值不拦保存。'];
+ return anno('field',g.name+' · 分组属性',items,'需求文档 ·《冷站配置需求文档》§4.3、§4.4、附录 A；标准物模型静态数据');
+}
+function attrPanel(g){return `<tr class="prop-row" id="attrs-${g.id}" ${expanded.has(g.id)?'':'hidden'}><td colspan="3">${attrAnnotation(g)}<div class="prop-panel"><div class="prop-panel-head" id="summary-${g.id}">${attrSummary(g)}</div><div class="prop-grid">${attrDefs[g.type].map(d=>{
+const v=computed(g,d.key),invalid=valueError(d,v),missing=d.required&&v==='',edited=!d.readonly&&v!==g.originalAttrs[d.key];
+return `<div class="prop-item ${missing?'is-missing':''} ${invalid?'is-invalid':''} ${edited?'is-edited':''}" id="cell-${g.id}-${d.key}"><label class="prop-label" for="attr-${g.id}-${d.key}">${d.name}${d.required?'<span class="required">*</span>':''}${d.readonly?'<span class="muted">自动计算</span>':''}<span class="edit-tag">已修改</span></label><div class="prop-value">${d.options?`<select class="field-select" id="attr-${g.id}-${d.key}" data-attr="${d.key}" data-group="${g.id}"><option value="">请选择</option>${d.options.map(vv=>`<option ${v===vv?'selected':''}>${vv}</option>`).join('')}</select>`:`<input class="field-control" type="text" inputmode="decimal" id="attr-${g.id}-${d.key}" data-attr="${d.key}" data-group="${g.id}" value="${esc(v)}" ${d.readonly?'readonly':''} placeholder="${d.required?'请输入':'不限制'}" aria-invalid="${!!invalid}">`}${d.unit?`<span class="prop-unit">${d.unit}</span>`:''}</div><div class="prop-err">${invalid}</div></div>`;
+}).join('')}</div></div></td></tr>`;}
+function attrSummary(g){const defs=attrDefs[g.type],miss=defs.filter(d=>d.required&&computed(g,d.key)==='').length,edit=defs.filter(d=>!d.readonly&&computed(g,d.key)!==g.originalAttrs[d.key]).length;return `${defs.length} 项属性 · ${miss} 项未填 · 已修改 ${edit} 项`;}
+function multiTrigger(mode,id,values,locked=false,key=''){
+ locked=locked||readonly;
+ const names=values.map(v=>mode==='member'?deviceById(v)?.name:group(v)?.name).filter(Boolean);
+ return `<div class="multi-select-wrap"><div class="multi-select-trigger" id="trigger-${mode}-${id}-${key}" ${locked?'':`role="button" tabindex="0" data-action="picker" data-mode="${mode}" data-id="${id}" data-key="${key}"`} aria-label="${mode==='member'?'选择成员':'选择供水对象'}">${names.length?values.map(v=>{const label=mode==='member'?deviceById(v)?.name:group(v)?.name;if(!label)return '';return `<span class="ms-tag">${esc(label)}${!locked?`<button class="ms-tag-remove" aria-label="移除${esc(label)}" data-action="remove-${mode}" data-id="${id}" data-value="${v}" data-key="${key}">×</button>`:''}</span>`;}).join(''):`<span class="ms-placeholder">${locked?'暂无可连接的管路':'请选择'}</span>`}${locked?'':'<span class="ms-placeholder" style="margin-left:auto">⌄</span>'}</div></div>`;
+}
+function renderGroups(){
+ $('groupsContainer').innerHTML=groupTypes.map(t=>`<section class="section-block" id="section-${t.key}"><div class="section-head"><span>${t.label} <span class="badge badge-blue">${list(t.key).length}</span></span><button class="action-link" data-action="add-group" data-type="${t.key}">+ 新增分组</button></div>${list(t.key).length?`<table class="data-table"><thead><tr><th class="name-cell">分组名</th><th>成员</th><th style="width:64px">操作</th></tr></thead><tbody>${list(t.key).map(g=>`<tr class="${g.auto?'is-auto':''} ${selected===g.id?'is-selected':''}" id="group-${g.id}"><td><input class="group-name-input" aria-label="${esc(g.name)} 分组名" data-name="${g.id}" value="${esc(g.name)}" maxlength="50">${g.auto?'<span class="auto-mark">自动</span>':''}<div class="row-actions"><button class="action-link" data-action="select-group" data-id="${g.id}">定位</button>${attrDefs[t.key]?`<button class="action-link" data-action="expand" data-id="${g.id}" aria-expanded="${expanded.has(g.id)}">${expanded.has(g.id)?'收起':'展开'}属性</button>`:''}</div></td><td>${multiTrigger('member',g.id,g.members)}</td><td><button class="action-link delete" data-action="delete-group" data-id="${g.id}">删除</button></td></tr>${attrDefs[t.key]?attrPanel(g):''}`).join('')}</tbody></table>`:'<div class="empty-state">暂无分组，可新增或一键生成</div>'}</section>`).join('');
+ lockView();
+}
+function renderRelations(){
+ $('relationsContainer').innerHTML=relDefs.map(r=>`<section class="section-block" id="relations-${r.key}"><div class="section-head"><span>${r.label}</span>${r.readonly?'<span class="badge badge-green">自动生成 · 只读</span>':''}</div>${list(r.from).length?`<table class="data-table"><thead><tr><th class="name-cell">${typeByKey(r.from).label}</th><th>${typeByKey(r.to).label}</th></tr></thead><tbody>${list(r.from).map(g=>{const rel=r.readonly?{to:list(r.to).map(g=>g.id),auto:true}:relation(r,g.id);return `<tr id="rel-${r.key}-${g.id}" class="${rel.auto?'is-auto':''} ${failedFrom===r.key+'-'+g.id?'fail-row':''}"><td><button class="action-link" data-action="select-group" data-id="${g.id}">${esc(g.name)}</button>${rel.auto?'<br><span class="auto-mark">自动</span>':''}</td><td>${multiTrigger('relation',g.id,rel.to,r.readonly,r.key)}</td></tr>`;}).join('')}</tbody></table>`:'<div class="empty-state">暂无起点分组</div>'}</section>`).join('');
+}
+function render(){renderGroups();renderRelations();drawTopology();initAnnoVersionFilter();lockView();}
+function allEdges(){return relDefs.flatMap(r=>list(r.from).flatMap(g=>(r.readonly?list(r.to).map(g=>g.id):relation(r,g.id).to).filter(to=>group(to)).map(to=>({from:g.id,to,key:r.key}))));}
+function drawTopology(){
+ const columns=[...(has('二次泵')?['second']:[]),'freeze','unit',...(!air?['cool','tower']:[])],nodes={},width=760,colWidth=width/columns.length,maxRows=Math.max(1,...columns.map(t=>list(t).length)),height=Math.max(430,maxRows*65+105),tankY=height-30;
+ let headers='',nodeSVG='';
+ columns.forEach((t,col)=>{const x=colWidth*col+colWidth/2;headers+=`<text x="${x}" y="25" text-anchor="middle" class="node-ac-sub">${{second:'二次泵管路',freeze:'冷冻水泵管路',unit:'制冷单元',cool:'冷却水泵管路',tower:'冷却塔管路'}[t]}</text>`;list(t).forEach((g,i)=>{const y=65+i*65,w=Math.min(120,colWidth-24);nodes[g.id]={x,y,w};nodeSVG+=`<g class="topology-node ${selected===g.id?'selected':''}" data-action="select-group" data-id="${g.id}" role="button" tabindex="0" aria-label="${esc(g.name)}"><title>${esc(g.name)}：${g.members.map(id=>esc(deviceById(id)?.name)).join('、')||'暂无成员'}</title><rect class="node-ac-rect" x="${x-w/2}" y="${y-20}" width="${w}" height="43"/><text class="node-ac-text" text-anchor="middle" x="${x}" y="${y-2}">${esc(g.name.replace('并联','').replace('冷冻水泵管路','冷冻泵管路').replace('冷却水泵管路','冷却泵管路').slice(0,9)+(g.name.length>14?'…':''))}</text><text class="node-ac-sub" text-anchor="middle" x="${x}" y="${y+14}">${g.members.length} 台设备${g.auto?' · 自动':''}</text></g>`;});});
+ const edges=allEdges();const edgeSVG=edges.map(e=>{const a=nodes[e.from],b=nodes[e.to];if(!a||!b)return '';const selectedEdge=e.from===selected||e.to===selected,x1=a.x+a.w/2,x2=b.x-b.w/2;return `<path class="edge-line ${selectedEdge?'selected':''}" d="M${x1} ${a.y} C${(x1+x2)/2} ${a.y},${(x1+x2)/2} ${b.y},${x2} ${b.y}" marker-end="url(#arrow)"/>`;}).join('');
+ const tankSVG=list('tank').map((g,i)=>`<g class="topology-node ${selected===g.id?'selected':''}" data-action="select-group" data-id="${g.id}" role="button" tabindex="0" aria-label="${esc(g.name)}"><rect class="node-ac-rect" x="${18+i*155}" y="${tankY-12}" width="145" height="30"/><text class="node-ac-sub" x="${90+i*155}" y="${tankY+7}" text-anchor="middle">${esc(g.name)} · ${g.members.length} 台</text></g>`).join('');
+ $('topologySvg').setAttribute('viewBox',`0 0 ${width} ${height}`);$('topologySvg').innerHTML=`<defs><marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7" fill="#91ACCE"/></marker></defs>${headers}${edgeSVG}${nodeSVG}${tankSVG}`;
+ $('topologyStats').textContent=`${state.groups.length} 个分组 · ${edges.length} 条供水关系`; const g=group(selected);$('topologySelection').textContent=g?g.name+' · '+edges.filter(e=>e.from===g.id||e.to===g.id).length+' 条关联连线':'点击分组查看关联连线';
+}
+function isReferenced(id){return systemId==='A'&&id==='freeze-1';}
+function openModal(title,body,footer,wide=false){closePicker();modalReturn=document.activeElement;$('modalTitle').textContent=title;$('modalBody').innerHTML=body;$('modalFooter').innerHTML=footer;$('modalDialog').classList.toggle('wide',wide);$('modal').classList.add('is-open');initAnnoVersionFilter();setTimeout(()=>$('modal').querySelector('button,input,select')?.focus(),0);}
+function closeModal(){if(savedResult){leaveSuccess(false);return;}$('modal').classList.remove('is-open');confirmAction=null;modalReturn?.focus?.();}
+function blockedDialog(){openModal('无法移除',anno('edge','引用检查弹窗；入口：删除分组、成员或关系',['移除前列出预测模型、仿真模型、安全边界和寻优策略的引用。','对象仍被引用时不允许移除，保留成员与连线。','可打开引用位置查看；解除引用后再返回修改。'],'需求文档 ·《冷站配置需求文档》§4.6')+'<p class="danger-text">并联冷冻水泵管路 1 仍被以下配置引用：</p><ul class="model-list"><li>安全边界「A路冷站安全边界」 · 冷冻水泵数量与冷冻侧边界 <button class="action-link" data-action="reference">查看引用位置 ↗</button></li></ul>','<button class="btn btn-primary" data-action="close-modal">知道了</button>');}
+function confirmRemoval(id,action,description){closePicker();if(isReferenced(id)){blockedDialog();return;}
+ openModal('确认移除',anno('ux','移除确认弹窗；入口：分组删除、成员或连线移除',['未被引用的对象经确认后移除。','删除分组时清理涉及的供水关系；移除成员时重算分组属性并清理相关连线。','设备实例与设备属性保留；取消不修改页面内容。'],'需求文档 ·《冷站配置需求文档》§4.6')+`<p>${esc(description)}</p><p class="summary-text" style="margin-top:10px">引用检查通过；将清理受影响的连线，设备和设备属性保留。</p>`,'<button class="btn" data-action="close-modal">取消</button><button class="btn btn-primary" data-action="confirm-removal">确认移除</button>');confirmAction=()=>{action();closeModal();render();touch();toast('已移除，相关连线已更新');};
+}
+function clearGroupEdges(id){state.relations.forEach(r=>{if(r.from===id){r.to=[];r.auto=false;}else if(r.to.includes(id)){r.to=r.to.filter(x=>x!==id);r.auto=false;}});}
+function removeMember(id,value){confirmRemoval(id,()=>{const g=group(id);g.members=g.members.filter(x=>x!==value);g.auto=false;clearGroupEdges(id);},`从「${group(id).name}」移除「${deviceById(value).name}」？`);}
+function removeRelation(key,from,to){confirmRemoval(from,()=>{const r=getRelation(key,from);r.to=r.to.filter(x=>x!==to);r.auto=false;},`移除「${group(from).name} → ${group(to).name}」？`);}
+function closePicker(){picker=null;$('multiPicker').classList.remove('is-open');}
+function openPicker(mode,id,key){const anchor=$(`trigger-${mode}-${id}-${key}`);if(picker?.mode===mode&&picker?.id===id&&picker?.key===key){closePicker();return;}picker={mode,id,key,anchorId:anchor.id};paintPicker();}
+function paintPicker(){if(!picker)return;const {mode,id,key}=picker,g=group(id),r=mode==='relation'?getRelation(key,id):null,values=mode==='member'?g.members:r.to;
+ const options=mode==='member'?devices.filter(d=>typeByKey(g.type).device.includes(d.kind)):list(relDefs.find(r=>r.key===key).to);
+ $('multiPicker').innerHTML=`<div class="picker-head"><b>${mode==='member'?'选择成员':'选择供水对象'}</b><button class="action-link" data-action="close-picker">完成</button></div>${options.map(o=>{const owner=mode==='member'?state.groups.find(g=>g.id!==id&&g.members.includes(o.id)):null;return `<label class="ms-option ${owner?'is-disabled':''}"><input type="checkbox" data-picker-value="${o.id}" ${values.includes(o.id)?'checked':''} ${owner?'disabled':''}><span>${esc(o.name)}</span>${owner?`<small>已在 ${esc(owner.name)}</small>`:''}</label>`;}).join('')||'<div class="empty-state">暂无可选对象，请先关联设备或创建分组</div>'}`;
+ const rect=$(picker.anchorId)?.getBoundingClientRect();if(rect){const w=Math.min(Math.max(rect.width,300),innerWidth-30),space=innerHeight-rect.bottom;$('multiPicker').style.width=w+'px';$('multiPicker').style.left=Math.min(rect.left,innerWidth-w-15)+'px';$('multiPicker').style.top=(space<220?Math.max(12,rect.top-290):rect.bottom+4)+'px';}$('multiPicker').classList.add('is-open');}
+function updateAttr(el){if(readonly)return;const g=group(el.dataset.group),d=attrDefs[g.type].find(d=>d.key===el.dataset.attr);if(d.readonly)return;g.attrs[d.key]=el.value.trim();g.auto=false;const item=el.closest('.prop-item'),err=valueError(d,g.attrs[d.key]);item.classList.toggle('is-invalid',!!err);item.classList.toggle('is-missing',!!d.required&&g.attrs[d.key]==='');item.classList.toggle('is-edited',g.attrs[d.key]!==g.originalAttrs[d.key]);item.querySelector('.prop-err').textContent=err;el.setAttribute('aria-invalid',String(!!err));$('summary-'+g.id).textContent=attrSummary(g);for(const def of attrDefs[g.type].filter(d=>d.readonly))$('attr-'+g.id+'-'+def.key).value=computed(g,def.key);const row=$('group-'+g.id);row.classList.remove('is-auto');row.querySelector('.auto-mark')?.remove();touch();}
+function formatCheck(){
+ for(const g of state.groups){const input=document.querySelector(`[data-name="${g.id}"]`);if(!g.name.trim()||state.groups.some(o=>o.id!==g.id&&o.type===g.type&&o.name===g.name)){input.classList.add('is-invalid');input.focus();input.scrollIntoView({block:'center'});toast('请填写不重复的分组名');return false;}
+ for(const d of attrDefs[g.type]||[])if(!d.readonly&&valueError(d,g.attrs[d.key]??'')){expanded.add(g.id);renderGroups();const el=$('attr-'+g.id+'-'+d.key);el.focus();el.scrollIntoView({block:'center'});toast(g.name+'：'+d.name+'请输入有效数值');return false;}}
+ return true;
+}
+function goStep(step){if(!persist())return;const p=new URLSearchParams({id:systemId,mode:params.get('mode')||'edit'});if(!readonly)p.set('resume','1');if(back)p.set('back',back);location.href=(step==='1'?'冷站配置-创建.html':'冷站配置-创建-步骤2.html')+'?'+p;}
+function showCancel(){if(readonly){location.href=back||'冷站配置-列表.html';return;}openModal('取消配置',anno('ux','取消确认弹窗；入口：取消或返回列表',['确认后丢弃整个流程的草稿，返回来源页或列表。','已保存的设备、属性与拓扑不受影响。','继续编辑关闭弹窗并保留内容。'],'产品推断')+'<p>放弃本次未保存的修改并返回吗？</p>','<button class="btn" data-action="close-modal">继续编辑</button><button class="btn btn-primary" data-action="cancel-confirm">放弃修改并返回</button>');}
+</script>
+
+<script>
+function openGenerator(){
+ autoConfig={freeze:'each',cool:'each',tower:'each',unmatchedHX:'separate',freezeLink:'one',coolLink:'one',towerLink:'one',mode:'fill'};manualMatches={};
+ const fromView=draft.energyViewDefaults||draft.collectionDefaults||{};
+ for(const k of ['freeze','cool','tower'])if(fromView[k]==='many'||fromView[k]==='多对多')autoConfig[k+'Link']='all';
+ const field=(id,label,options)=>`<div class="field"><label class="field-label" for="gen-${id}">${label}</label><select class="field-select" id="gen-${id}" data-gen="${id}">${options.map(([v,t])=>`<option value="${v}" ${autoConfig[id]===v?'selected':''}>${t}</option>`).join('')}</select></div>`;
+ const eachAll=[['each','每台一个管路'],['all','同类全部一个管路']],oneAll=[['one','一对一（按编号对应）'],['all','母管制（全部互连）']];
+ openModal('一键生成分组与供水关系',anno('field','一键生成弹窗；入口：分组配置或供水关系「一键生成」',['制冷单元：每台主机一个；板换按编号并入，无对应主机的可独立成单元。','冷冻水泵、冷却水泵、冷却塔各选每台一管路或同类一管路；二次泵、蓄冷罐同类一组。','冷冻侧、冷却侧和冷却塔连接各选一对一或母管制；风冷隐藏冷却侧。','生成方式默认只补空，可改覆盖；覆盖时也先检查受引用对象。','编号预览逐台确认；缺号、重复或无法对应的留待匹配，不自动连接。'])+anno('data','一键生成缺省值与下游数量',['缺省制冷单元数量和三组连接取能效视图创建集合时的选择，多对多对应母管制。','新建安全边界的制冷单元数量上限缺省为投入的单元数，下限 1。','一对一时泵数量缺省等于单元数；母管制为单元数至单元数加 1，上限不超投入泵数；混合连接不给缺省。'],'需求文档 ·《冷站配置需求文档》§4.4、§7.1、§7.4')+`<div class="section-note">每台${air?'风冷冷水机组':'冷水主机'}生成一个制冷单元${has('板换')&&!air?'；板换按编号并入对应主机':''}。</div><div class="rule-grid">${has('板换')&&!air?field('unmatchedHX','无对应主机的板换',[['separate','单独成为制冷单元'],['pending','留待匹配']]):''}${field('freeze','冷冻水泵管路',eachAll)}${!air?field('cool','冷却水泵管路',eachAll)+field('tower','冷却塔管路',eachAll):''}${field('freezeLink','冷冻侧连接',oneAll)}${!air?field('coolLink','冷却侧连接',oneAll)+field('towerLink','冷却塔连接',oneAll):''}</div><p class="summary-text">${has('二次泵')?'二次泵：同类全部一个管路。 ':''}${has('蓄冷罐')?'蓄冷罐：同类全部一个分组。':''}</p><div class="field" style="margin-top:12px"><label class="field-label">生成方式</label><div class="choice-row"><label><input type="radio" name="generateMode" value="fill" checked>只补空</label><label><input type="radio" name="generateMode" value="overwrite">覆盖已有</label></div></div><div id="matchAnno"></div><h3 class="section-head">编号匹配预览</h3><div class="preview-table"><table class="data-table"><thead><tr><th>设备</th><th style="width:18%">识别出的编号</th><th style="width:42%">将对应到</th></tr></thead><tbody id="matchingRows"></tbody></table></div><div class="pending-list" id="pendingList"></div><div class="auto-config-preview" id="generatePreview" aria-live="polite"></div><div id="generatorError" class="form-error" role="alert"></div>`,'<button class="btn" data-action="close-modal">取消</button><button class="btn btn-primary" data-action="apply-generate" id="applyGenerate">确认生成</button>',true);
+ $('matchAnno').innerHTML=anno('field','编号匹配预览 · 将对应到',['编号从设备名称提取；识别结果与将对应到逐台列出。','将对应到可改选，待匹配设备不自动建连线；变更选项实时更新预览。','缺号、编号重复或无对应主机的设备保留待匹配；可手动选择对应单元。'],'产品推断');
+ paintMatching();
+}
+function resolveMatches(){
+ const counts={};for(const d of devices){const n=String(d.name).match(/\d+/)?.[0];if(n)counts[d.kind+'-'+Number(n)]=(counts[d.kind+'-'+Number(n)]||0)+1;}
+ const units=devices.filter(d=>d.kind==='ch').map((d,i)=>({id:d.id,label:'制冷单元 '+(i+1),slot:String(i+1),number:Number(d.name.match(/\d+/)?.[0])||null}));
+ return devices.map(d=>{const n=Number(String(d.name).match(/\d+/)?.[0])||null,duplicate=!!n&&counts[d.kind+'-'+n]>1;let dest='';
+ if(['sp','tk'].includes(d.kind))dest='common';
+ else if(n&&!duplicate){if(d.kind==='ch')dest=units.find(u=>u.id===d.id).slot;else dest=units.find(u=>u.number===n)?.slot||((d.kind==='hx'&&autoConfig.unmatchedHX==='separate')?'separate':'');}
+ if(Object.hasOwn(manualMatches,d.id))dest=manualMatches[d.id];
+ return {device:d,number:n,dest,duplicate,reason:!n?'无编号':duplicate?'编号重复':'无对应主机',units};});
+}
+function paintMatching(){const matches=resolveMatches();
+ $('matchingRows').innerHTML=matches.map(m=>`<tr class="${!m.dest?'pending-row':''}"><td>${esc(m.device.name)}</td><td>${m.number??'—'}${m.duplicate?' · 重复':''}</td><td>${['sp','tk'].includes(m.device.kind)?`<span class="badge badge-blue">${m.device.kind==='sp'?'并联二次泵管路 1':'蓄冷罐组 1'}</span>`:`<select class="field-select" aria-label="${esc(m.device.name)} 将对应到" data-match="${m.device.id}"><option value="">待匹配</option>${m.units.map(u=>`<option value="${u.slot}" ${m.dest===u.slot?'selected':''}>${u.label}</option>`).join('')}${m.device.kind==='hx'?`<option value="separate" ${m.dest==='separate'?'selected':''}>单独成为制冷单元</option>`:''}</select>`}</td></tr>`).join('');
+ updateGeneratePreview(matches);initAnnoVersionFilter();
+}
+function buildGenerated(matches){
+ const candidate={groups:[],relations:[],deviceAttrs:copy(state.deviceAttrs)},groupOfDevice={},usedIds=new Set();
+ function add(type,slot,devs){let suffix=slot;while(usedIds.has(type+'-'+suffix))suffix=String(Math.max(0,...candidate.groups.filter(g=>g.type===type).map(g=>Number(g.id.split('-').at(-1))||0))+1);const g=newGroup(type,suffix,devs,true);g.slot=String(slot);candidate.groups.push(g);usedIds.add(g.id);for(const id of devs)groupOfDevice[id]=g;return g;}
+ for(const m of matches.filter(m=>m.device.kind==='ch'&&m.dest))add('unit',m.dest,[m.device.id]);
+ for(const m of matches.filter(m=>m.device.kind==='hx'&&m.dest)){const g=m.dest!=='separate'?candidate.groups.find(g=>g.type==='unit'&&g.slot===m.dest):null;if(g){g.members.push(m.device.id);groupOfDevice[m.device.id]=g;}else if(m.dest==='separate')add('unit',100+candidate.groups.filter(g=>g.type==='unit').length,[m.device.id]);}
+ for(const [kind,type] of [['fp','freeze'],['cp','cool'],['ct','tower'],['sp','second'],['tk','tank']]){
+ if(!typeByKey(type))continue;const valid=matches.filter(m=>m.device.kind===kind&&m.dest);
+ if(['sp','tk'].includes(kind)||autoConfig[type]==='all'){if(valid.length)add(type,1,valid.map(m=>m.device.id));}
+ else for(const m of valid)add(type,m.dest,[m.device.id]);
+ }
+ for(const r of relDefs.filter(r=>!r.readonly)){
+ const sources=candidate.groups.filter(g=>g.type===r.from),targets=candidate.groups.filter(g=>g.type===r.to);
+ for(const src of sources){const slotsOf=g=>new Set(g.members.map(id=>matches.find(m=>m.device.id===id)?.dest).filter(Boolean));
+ const sourceSlots=slotsOf(src);const to=targets.filter(t=>autoConfig[r.key+'Link']==='all'||[...slotsOf(t)].some(slot=>sourceSlots.has(slot))).map(g=>g.id);candidate.relations.push({key:r.key,from:src.id,to,auto:true});}
+ }
+ return candidate;
+}
+function mergeGenerated(candidate){
+ if(autoConfig.mode==='overwrite')return {result:candidate,newGroups:candidate.groups.length,newRelations:countEdges(candidate),changes:candidate.groups.length};
+ const result=copy(state),idMap={},occupied=new Set(result.groups.flatMap(g=>g.members));let newGroups=0,newRelations=0;
+ for(const c of candidate.groups){let existing=result.groups.find(g=>g.type===c.type&&g.members.some(id=>c.members.includes(id)))||result.groups.find(g=>g.type===c.type&&!g.members.length&&g.slot===c.slot);
+ if(existing){idMap[c.id]=existing.id;if(existing.members.length===0){const members=c.members.filter(id=>!occupied.has(id));if(members.length){existing.members=members;members.forEach(id=>occupied.add(id));existing.auto=true;newGroups++;}}}
+ else {const members=c.members.filter(id=>!occupied.has(id));if(!members.length)continue;const added=copy(c);while(result.groups.some(g=>g.id===added.id))added.id=added.type+'-'+(++sequence);added.members=members;result.groups.push(added);members.forEach(id=>occupied.add(id));idMap[c.id]=added.id;newGroups++;}}
+ for(const rel of candidate.relations){const from=idMap[rel.from];if(!from)continue;const to=rel.to.map(id=>idMap[id]).filter(Boolean),existing=result.relations.find(r=>r.key===rel.key&&r.from===from);if(existing?.to.length)continue;if(existing){existing.to=to;existing.auto=true;}else result.relations.push({...rel,from,to,auto:true});newRelations+=to.length;}
+ // 二次侧为派生关系，只计本轮新增的边。
+ newRelations+=Math.max(0,derivedCount(result)-derivedCount(state));return {result,newGroups,newRelations,changes:newGroups+newRelations};
+}
+function derivedCount(s){return s.groups.filter(g=>g.type==='second').length*s.groups.filter(g=>g.type==='freeze').length;}
+function countEdges(s){return s.relations.reduce((n,r)=>n+r.to.length,0)+derivedCount(s);}
+function updateGeneratePreview(matches=resolveMatches()){
+ const candidate=buildGenerated(matches),plan=mergeGenerated(candidate),pending=matches.filter(m=>!m.dest);lastPlan={...plan,pending,candidate};
+ $('pendingList').textContent=pending.length?'待匹配：'+pending.map(m=>m.device.name+'（'+m.reason+'）').join('、'):'全部设备已匹配';
+ $('generatePreview').innerHTML=`将生成 <strong>${plan.newGroups}</strong> 个分组、<strong>${plan.newRelations}</strong> 条关系，<strong>${pending.length}</strong> 台待匹配${autoConfig.mode==='fill'?'<p class="muted">保留已有非空分组及关系</p>':'<p class="danger-text">将替换现有分组与关系，确认后请逐条核对</p>'}`;
+ $('generatorError').textContent='';
+}
+function generationBlocked(result){
+ if(!isReferenced('freeze-1'))return false;const old=group('freeze-1'),next=result.groups.find(g=>g.id==='freeze-1');
+ return old&&(!next||JSON.stringify([...old.members].sort())!==JSON.stringify([...next.members].sort())||state.relations.some(r=>(r.from===old.id||r.to.includes(old.id))&&r.to.some(to=>!result.relations.some(n=>n.key===r.key&&n.from===r.from&&n.to.includes(to)))));
+}
+function applyGeneration(){
+ if(!lastPlan)return;
+ if(generationBlocked(lastPlan.result)){$('generatorError').innerHTML='无法覆盖：并联冷冻水泵管路 1 被安全边界「A路冷站安全边界」引用。请保留该分组及成员、连线。';return;}
+ if(lastPlan.changes===0){toast('当前分组与关系均已配置，无需补空');return;}
+ const plan=lastPlan;
+ const apply=()=>{state=copy(plan.result);expanded=new Set();selected='';closeModal();render();touch();toast(`已生成 ${plan.newGroups} 个分组、${plan.newRelations} 条关系${plan.pending.length?'；待匹配设备保留待处理':''}`);};
+ if(autoConfig.mode==='overwrite'){openModal('确认覆盖已有配置',anno('ux','覆盖确认弹窗；入口：一键生成选择覆盖后确认',['确认前检查受引用的分组和连线；仍被引用的对象不可移除或替换成员。','确认后用预览结果替换本页分组和关系，标为自动。','取消保留原有配置；页面草稿随上一步保留。'],'需求文档 ·《冷站配置需求文档》§4.4、§4.6')+`<p>将生成 ${plan.newGroups} 个分组、${plan.newRelations} 条关系，替换当前分组与关系，确定继续吗？</p>`,'<button class="btn" data-action="close-modal">取消</button><button class="btn btn-primary" data-action="confirm-removal">确认覆盖</button>');confirmAction=apply;}
+ else apply();
+}
+function changesSinceOpen(){return Store.diff(baseSnapshot,snapshot());}
+function valueAt(snapshot,path){let value=snapshot;for(const key of path){value=Array.isArray(value)?value.find(x=>(x.id||x.key+'|'+x.from)===key):value?.[key];}return copy(value);}
+function conflictValue(change){
+ const v=change.value;if(v==null)return copy(change.before);
+ if(Array.isArray(v))return copy(change.before||[]);
+ if(typeof v==='object')return change.before?copy(change.before):{...copy(v),...(v.to?{to:[]}:{name:String(v.name||change.object||'对象').slice(0,42)+'（已更新）'})};
+ const device=allDevices.find(d=>d.id===change.deviceId),model=device?.model||(change.kind==='系统属性'?'水冷冷水系统':null);
+ const definition=(model?Store.DEFS[model]:Object.values(Store.DEFS).flat())?.find(p=>p.id===change.attribute);
+ if(definition?.options)return definition.options.find(o=>o[0]!==String(v))?.[0]||v;
+ if(typeof v==='string'&&v.trim()!==''&&Number.isFinite(Number(v))){const n=Number(v),next=n+1;return String(definition?.max!==undefined&&next>definition.max?n-1:next);}
+ return String(v).slice(0,42)+'（他人修改）';
+}
+function save(){if(readonly||saving||!formatCheck())return;closePicker();$('saveError').hidden=true;failedFrom=null;renderRelations();const page=snapshot(),changes=changesSinceOpen(),current=Store.getEffective(systemId),external=Store.diff(baseSnapshot,current||page);
+ const intersects=(a,b)=>a.every((x,i)=>x===b[i])||b.every((x,i)=>x===a[i]);
+ const conflicts=current&&current.rev!==(draft.baseRev||0)?changes.filter(c=>external.some(e=>intersects(c.path,e.path))):[];
+ pendingSave={page,changes,current,conflicts:conflicts.map(c=>({change:c,current:valueAt(current,c.path)}))};
+ if(scene==='conflict'&&changes.length&&!conflicts.length)pendingSave.conflicts=changes.map(c=>({change:c,current:conflictValue(c),demo:true}));
+ if(pendingSave.conflicts.length){showConflicts();return;}if(scene==='fail'){showSaveFailure();return;}saveSuccess();
+}
+function displayValue(value,change){if(value==null)return '未配置';if(change?.attribute==='InputOrOutput')return String(value)==='1'?'投出':'投入';if(Array.isArray(value))return value.map(v=>group(v)?.name||deviceById(v)?.name||v).join('、')||'未配置';if(typeof value==='object'){if(value.to)return value.to.map(id=>group(id)?.name||id).join('、')||'未连接';return value.name||'配置内容';}return String(value);}
+function showConflicts(){openModal('配置已被他人修改',anno('field','保存冲突弹窗；入口：完成时存在冲突',['仅列出本次实际修改且发生冲突的内容。','每项选择当前值或本页值，全部选择后可再次提交。','未修改的内容沿用最新已保存配置，取消保留草稿。'],'需求文档 ·《冷站配置需求文档》§4.5')+'<p>请选择每一项保留的值，再次提交。</p>'+pendingSave.conflicts.map((c,i)=>`<section class="conflict-card"><h3>${esc(c.change.object)} · ${esc(c.change.label||c.change.kind)}</h3><div><label><input type="radio" name="conflict${i}" data-conflict="${i}" value="current">保留当前值：${esc(displayValue(c.current,c.change))}</label></div><div><label><input type="radio" name="conflict${i}" data-conflict="${i}" value="page">保留本页值：${esc(displayValue(c.change.value,c.change))}</label></div></section>`).join(''),'<button class="btn" data-action="close-modal">返回修改</button><button class="btn btn-primary" id="resubmit" data-action="resubmit" disabled>再次提交</button>');}
+function resubmit(){if(!pendingSave||readonly)return;for(let i=0;i<pendingSave.conflicts.length;i++){const selected=document.querySelector(`[name="conflict${i}"]:checked`);if(!selected)return;const c=pendingSave.conflicts[i];if(selected.value==='current')c.change.value=copy(c.current);}
+ pendingSave.page=baseSnapshot?Store.applyChanges(baseSnapshot,pendingSave.changes):Store.applyChanges(snapshot(),pendingSave.changes);if(scene==='fail'){showSaveFailure();return;}saveSuccess();
+}
+function showSaveFailure(){const c=pendingSave?.changes[0];$('saveError').textContent='保存失败：'+(c?c.object+' · '+(c.label||c.kind):'冷站配置')+'写入失败，已保存配置保持不变，修改内容已保留';$('saveError').hidden=false;persist();let el;if(c?.kind==='供水关系'){failedFrom=c.value.key+'-'+c.value.from;renderRelations();el=$('rel-'+failedFrom);}else if(c?.groupId){expanded.add(c.groupId);renderGroups();el=$('group-'+c.groupId);}else el=$('saveError');el?.scrollIntoView({block:'center',behavior:'smooth'});el?.setAttribute('tabindex','-1');el?.focus({preventScroll:true});}
+function saveSuccess(){if(readonly||!pendingSave)return;saving=true;const current=Store.getEffective(systemId),changed=pendingSave.changes;
+ const merged=current?Store.applyChanges(current,changed):pendingSave.page;const applied=Store.diff(current||baseSnapshot,merged),models=isNewConfiguration?[]:Store.affectedModels(current||baseSnapshot,merged,applied);
+ merged.changedItems=applied;merged.affectedModels=models;merged.validationStale=true;merged.modelSyncRequested=false;merged.modelSyncStatus=models.length?'待同步':'无受影响模型';
+ savedResult=Store.saveConfig(merged);Store.clearDraft();
+ openModal('已保存',anno('ux','保存成功弹窗；入口：完成或冲突后再次提交',['所有修改保存成功后统一生效，旧校验结果失效。','新建配置提示到设备预测模型创建模型；编辑时仅列出受本次变更影响的模型。','有受影响模型时可请求重新同步，不自动重训。','完成后返回来源页并重新校验；无来源页时回列表。'],'需求文档 ·《冷站配置需求文档》§4.5')+`<p><span class="success-icon">✓</span> 已保存，建议执行配置校验</p>${models.length?`<p class="summary-text">以下模型受本次配置变更影响：</p><ul class="model-list">${models.map(m=>`<li>${esc(m.name)}</li>`).join('')}</ul>`:isNewConfiguration?'<p>可到设备预测模型为这些设备创建模型。</p><a class="action-link" href="机理模型训练.html">前往设备预测模型 →</a>':'<p>本次修改没有涉及设备预测模型。</p>'}`,`<button class="btn" data-action="save-later">${models.length?'稍后':'返回'}</button>${models.length?'<button class="btn btn-primary" data-action="save-sync">一键重新同步</button>':''}`);saving=false;
+}
+function leaveSuccess(sync){if(!savedResult)return;Store.markModelSync(systemId,!!sync);if(back){const q=new URL(back,location.href);q.searchParams.set('revalidate','1');location.href=q.pathname.split('/').at(-1)+'?'+q.searchParams+q.hash;}else location.href='冷站配置-列表.html?saved=1&id='+encodeURIComponent(systemId);}
+
+document.addEventListener('click',event=>{
+ const el=event.target.closest('[data-action]');if(!el){if(picker&&!event.target.closest('#multiPicker'))closePicker();return;}
+ const a=el.dataset.action;event.preventDefault();
+ if(readonly&&!['annotations','step','cancel','expand','select-group','clear-selection','close-modal','reference'].includes(a))return;
+ if(a==='annotations'){document.body.classList.toggle('annotation-mode');initAnnoVersionFilter();return;}
+ if(a==='scene'){scene=el.dataset.scene;document.querySelectorAll('[data-scene]').forEach(b=>{b.classList.toggle('is-active',b===el);b.setAttribute('aria-pressed',b===el?'true':'false');});$('saveError').hidden=true;failedFrom=null;renderRelations();toast('保存演示：'+el.textContent);return;}
+ if(a==='generate')return openGenerator();if(a==='close-modal')return closeModal();if(a==='close-picker')return closePicker();
+ if(a==='step')return goStep(el.dataset.step);if(a==='cancel')return showCancel();if(a==='cancel-confirm'){Store.clearDraft();closeModal();location.href=back||'冷站配置-列表.html';return;}
+ if(a==='add-group'){const type=el.dataset.type,num=Math.max(0,...list(type).map(g=>Number(g.slot)||0))+1,g=newGroup(type,num,[]);while(group(g.id))g.id=type+'-'+(++sequence);state.groups.push(g);render();touch();$('group-'+g.id)?.scrollIntoView({block:'center'});document.querySelector(`[data-name="${g.id}"]`)?.focus();return;}
+ if(a==='delete-group'){const id=el.dataset.id;return confirmRemoval(id,()=>{state.groups=state.groups.filter(g=>g.id!==id);state.relations=state.relations.filter(r=>r.from!==id).map(r=>({...r,to:r.to.filter(x=>x!==id)}));if(selected===id)selected='';},`删除「${group(id).name}」并清理它的供水关系？`);}
+ if(a==='expand'){const id=el.dataset.id;expanded.has(id)?expanded.delete(id):expanded.add(id);renderGroups();lockView();initAnnoVersionFilter();return;}
+ if(a==='select-group'){selected=el.dataset.id;document.querySelectorAll('#groupsContainer tr').forEach(r=>r.classList.toggle('is-selected',r.id==='group-'+selected));drawTopology();return;}
+ if(a==='clear-selection'){selected='';renderGroups();drawTopology();return;}
+ if(a==='picker')return openPicker(el.dataset.mode,el.dataset.id,el.dataset.key||'');
+ if(a==='remove-member')return removeMember(el.dataset.id,el.dataset.value);
+ if(a==='remove-relation')return removeRelation(el.dataset.key,el.dataset.id,el.dataset.value);
+ if(a==='confirm-removal')return confirmAction?.();if(a==='apply-generate')return applyGeneration();if(a==='save')return save();if(a==='resubmit')return resubmit();
+ if(a==='reference'){toast('打开安全边界 › A路冷站安全边界 › 冷冻水泵数量与边界');return;}
+ if(a==='save-sync')return leaveSuccess(true);if(a==='save-later')return leaveSuccess(false);
+});
+document.addEventListener('input',event=>{if(readonly)return;const el=event.target;
+ if(el.dataset.attr)return updateAttr(el);
+ if(el.dataset.name){const g=group(el.dataset.name);g.name=el.value;g.auto=false;el.classList.remove('is-invalid');el.closest('tr').classList.remove('is-auto');el.closest('td').querySelector('.auto-mark')?.remove();touch();}
+});
+document.addEventListener('change',event=>{if(readonly)return;const el=event.target;
+ if(el.dataset.name){render();return;}
+ if(el.dataset.attr){updateAttr(el);return;}
+ if(el.dataset.gen){autoConfig[el.dataset.gen]=el.value;paintMatching();return;}
+ if(el.name==='generateMode'){autoConfig.mode=el.value;updateGeneratePreview();return;}
+ if(el.dataset.match){manualMatches[el.dataset.match]=el.value;paintMatching();return;}
+ if(el.dataset.conflict!==undefined){$('resubmit').disabled=!pendingSave.conflicts.every((c,i)=>document.querySelector('[name="conflict'+i+'"]:checked'));return;}
+ if(el.dataset.pickerValue&&picker){const {mode,id,key}=picker,value=el.dataset.pickerValue,g=group(id);
+ if(!el.checked){mode==='member'?removeMember(id,value):removeRelation(key,id,value);return;}
+ if(mode==='member'){if(state.groups.some(o=>o.id!==id&&o.members.includes(value)))return;g.members.push(value);g.auto=false;}
+ else{let r=getRelation(key,id);if(!state.relations.includes(r))state.relations.push(r);if(!r.to.includes(value))r.to.push(value);r.auto=false;}
+ renderGroups();renderRelations();touch();paintPicker();initAnnoVersionFilter();
+ }
+});
+document.addEventListener('keydown',event=>{
+ if(event.key==='Escape'){if(picker)closePicker();else if($('modal').classList.contains('is-open'))closeModal();return;}
+ if(['Enter',' '].includes(event.key)&&event.target.matches('[data-action][tabindex="0"]')){event.preventDefault();event.target.click();}
+ if(event.key==='Tab'&&$('modal').classList.contains('is-open')){const focusables=[...$('modal').querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled)')].filter(e=>e.getClientRects().length),first=focusables[0],last=focusables[focusables.length-1];if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}
+});
+$('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal();});$('mainContent').addEventListener('scroll',()=>{if(picker)closePicker();});window.addEventListener('resize',closePicker);
+function initAnnoVersionFilter(){if(!document.body.classList.contains('annotation-mode'))return;$('annoFilterTags').innerHTML='<button class="anno-filter-tag active" type="button" data-filter="all">全部</button><button class="anno-filter-tag" type="button" data-filter="v3.0">v3.0</button>';}
+$('annoFilterTags').addEventListener('click',e=>{const b=e.target.closest('[data-filter]');if(!b)return;document.querySelectorAll('.anno[data-version]').forEach(a=>{a.style.display=b.dataset.filter==='all'||a.dataset.version===b.dataset.filter?'':'none';});$('annoFilterTags').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));});
+function lockView(){if(!readonly)return;document.querySelectorAll('[data-name],[data-attr]').forEach(el=>el.disabled=true);document.querySelectorAll('[data-action]').forEach(el=>{if(['generate','save','scene','add-group','delete-group','picker','remove-member','remove-relation'].includes(el.dataset.action))el.hidden=true;});document.querySelectorAll('button[data-action="cancel"]').forEach(el=>el.textContent='返回');document.querySelectorAll('.demo-switch').forEach(el=>el.hidden=true);}
+render();
+const target=params.get('group')||params.get('dev');
+if(target){const g=group(target)||state.groups.find(g=>g.name.replace(/\s/g,'')===target.replace(/\s/g,''))||state.groups.find(g=>g.members.includes(target));if(g){selected=g.id;if(attrDefs[g.type])expanded.add(g.id);render();setTimeout(()=>{const attr=params.get('attr'),rel=params.get('rel'),el=(attr?$('cell-'+g.id+'-'+attr):null)||(rel?$('rel-'+rel+'-'+g.id):null)||$('group-'+g.id);if(el){el.classList.add('located');el.scrollIntoView({block:'center'});el.querySelector('input,select')?.focus();}},80);}else toast('未找到对应分组，请检查配置');}
+if(back){const link=document.createElement('button');link.className='back-link';link.textContent=Store.backLabel(back);link.onclick=showCancel;document.querySelector('.page-header').append(link);}
+const recovery=Store.getDraft(systemId);
+if(!readonly&&recovery&&params.get('resume')!=='1'){
+ const main=$('mainContent'),bar=document.createElement('div');bar.className='banner';bar.innerHTML=anno('ux','未保存修改',['有同一配置的草稿时，先选择恢复或丢弃。','恢复沿用开始编辑时的保存版本，跨步骤不改变基线。','丢弃仅清理草稿，保留已保存的配置。'],'需求文档 ·《冷站配置需求文档》§4.5')+'有未保存的修改：<button class="btn" id="restoreDraft">恢复</button> <button class="btn" id="discardDraft">丢弃</button>';Array.from(main.children).forEach(el=>el.inert=true);main.prepend(bar);const reload=resume=>{const q=new URLSearchParams(location.search);q.set('resume',resume?'1':'0');location.replace(location.pathname+'?'+q);};$('restoreDraft').onclick=()=>reload(true);$('discardDraft').onclick=()=>{Store.clearDraft();reload(false);};
+}
+
+</script>
+<script src="components/nav.js" data-active-nav="AI智能能效" data-active-sidebar="冷站配置"></script>
+</body></html>
