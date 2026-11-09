@@ -788,13 +788,13 @@
                 </tr>
               </thead>
               <tbody>
-                <tr data-object="ac1" data-kind="ac" data-placement-position="1"><td>1#空调<br><span class="badge badge-blue">行间</span></td><td>
+                <tr data-object="ac1" data-kind="ac"><td>1#空调</td><td>
                   <div style="display:flex;gap:4px;">
                     <input type="text" class="field-control" placeholder="x坐标" value="80" style="width:60px;text-align:center;">
                     <input type="text" class="field-control" placeholder="y坐标" value="60" style="width:60px;text-align:center;">
                   </div>
                 </td></tr>
-                <tr data-object="ac2" data-kind="ac" data-placement-position="3"><td>2#空调<br><span class="badge badge-blue">房间级</span> <span class="badge">投出</span></td><td>
+                <tr data-object="ac2" data-kind="ac"><td>2#空调<br><span class="badge">投出</span></td><td>
                   <div style="display:flex;gap:4px;">
                     <input type="text" class="field-control" placeholder="x坐标" value="200" style="width:60px;text-align:center;">
                     <input type="text" class="field-control" placeholder="y坐标" value="60" style="width:60px;text-align:center;">
@@ -858,7 +858,7 @@
               <span class="anno-source">需求文档</span>
               <div class="anno-body">
                 <p><b>关联模块：</b>一键自动配置</p>
-                <p>关联空调与传感器均参与，不区分投入、投出。按坐标、通道、摆放位置和封闭模式生成。连接数量可在弹窗中修改，缺省 1 / 3 / 1 / 2 / 3。供冷连接最近通道的全部冷点。换热按冷点连线方向分侧，各取指定数量的最近热点；单点或方向不明取两侧数量之和，一侧无点只连另一侧。回风只给必配空调生成。数量不足取全部。无封闭不生成换热、回风；缺坐标或未分组的对象跳过并列名。</p>
+                <p>关联空调与传感器均参与，不区分投入、投出。按坐标、通道和封闭模式生成，所有空调同一规则。连接数量可在弹窗中修改，缺省 3 / 1 / 3。供冷连接最近通道的全部冷点。换热按冷点连线方向分侧，各取指定数量的最近热点；单点或方向不明取两侧数量之和，一侧无点只连另一侧。回风只在封闭热通道机房生成，连最近通道的全部热点。数量不足取全部。无封闭不生成换热、回风；缺坐标或未分组的对象跳过并列名。</p>
               </div>
             </div>
             <div class="panel-title-bar auto-config-heading">
@@ -977,7 +977,7 @@
                     <li><b>关系类型（复用，不新增）：</b>每选一个热点存一条 <code>dtdl:asset:THSensor::feedsAir</code> 边，起点 = 热通道温湿度传感器（热点），终点 = 空调。与换热关系（冷点 → 热点）是同一关系类型，按终点对象区分：终点是温湿度传感器 = 换热，终点是空调 = 回风。关系记录不加字段、不填权重。</li>
                     <li><b>回风来源通道：</b>每台空调所连热点所属的通道，就是它的回风来源通道。</li>
                     <li><b>仿真怎么用（以《末端机房仿真模型》为准）：</b>仿真回推每台空调的回风时，取本机回风来源通道的排风温度加权：<b>已配置</b>回风关系，取所连热点所属通道的排风温度等权平均；<b>未配置</b>，按该台对各通道的供风份额加权，即供气对称。每台另有回风入口偏差（回风读数与回推回风之差），每轮按实测重算。回风关系只回答「这台空调从哪些通道回风」，不填权重。</li>
-                    <li><b>必配规则（逐台判定）：</b>满足任一条，该空调至少要有 1 条回风关系：① 机房通道封闭模式 = 封闭热通道（空调组 <code>PrecisionACGroup.aisleSealedMode</code> = 1，即步骤 1「通道封闭模式」），组内每台参与寻优的空调都必配；② 空调摆放位置 = 行间 / 列间（<code>PrecisionAC.placement_position</code> = 1 / 2，判定属性待确认，见下方边界与异常）。其余房间级空调可不配，未配按供气对称。无封闭机房没有热点，本段隐藏、不校验。</li>
+                    <li><b>必配规则：</b>机房通道封闭模式 = 封闭热通道（空调组 <code>PrecisionACGroup.aisleSealedMode</code> = 1，即步骤 1「通道封闭模式」）时，组内每台参与寻优的空调至少要有 1 条回风关系。封闭冷通道机房可不配，未配按供气对称。无封闭机房没有热点，本段隐藏、不校验。</li>
                     <li><b>在哪校验：</b>「完成」不校验；保存后在「机房配置校验」页随拓扑完整性一起执行，必配未配记 ERROR <code>TOPOLOGY_INCOMPLETE</code>（逐台一条，机房本轮 SKIPPED）；处置「去配置 →」跳回本页编辑态，定位到该空调的回风行。</li>
                   </ul>
                 </div>
@@ -989,8 +989,6 @@
                 <div class="anno-body">
                   <p><b>关联模块：</b>回风关系 — 待确认项</p>
                   <ul>
-                    <li><b>「行间 / 列间」由哪个属性判定：</b>标准物模型表与需求文档都没有空调摆放位置属性；后台物模型（DTDL）的精密空调已有 <code>placement_position</code> 摆放位置（1 行间 / 2 列间 / 3 底座式），原型暂按它判定、底座式视为房间级。待确认：是否收进标准物模型表；底座式是否等同房间级；未填时是否按房间级（可不配）处理。送风方式 <code>air_supply_mode</code>（上送风 / 下送风 / 水平送风）不作判定依据。</li>
-                    <li><b>现场取值可信度：</b>0_100 验证机房 11 台空调 <code>placement_position</code> 全为「行间」，但风量 30000 m³/h、下送风，更像房间级，疑似缺省值。按规则 ② 该机房要补回风关系或先核对属性，否则机房配置校验报 <code>TOPOLOGY_INCOMPLETE</code>。</li>
                     <li><b>封闭热通道取值：</b>后台 <code>aisleSealedMode</code> 有 0 封闭冷通道 / 1 封闭热通道 / 2 无封闭三档；标准物模型表该属性只写了「封闭冷通道 / 无封闭」，需补「封闭热通道」。</li>
                     <li><b>关系的目标对象：</b>后台 <code>THSensor::feedsAir</code> 现定义的目标对象是温湿度传感器，回风边的终点是空调，需后台把目标放开到末端空调（同一关系类型扩目标，不是新增类型）。</li>
                     <li><b>「所属通道」口径：</b>原型按「热点的换热入边来自哪些冷通道」理解（与热点关联通道权重 w(h,A) 同一集合），不是热点所在的热通道分组——封闭冷通道机房热通道只有一组，按分组理解则所有空调来源通道相同。</li>
@@ -1068,9 +1066,9 @@
           </div>
         </div>
         <div class="auto-config-rules">
-          <p>供冷：行间 / 列间空调连最近 <input type="number" class="auto-config-count" id="autoSupplyInRow" min="1" step="1" value="1" aria-label="供冷行间或列间冷通道数量"> 条冷通道的全部冷点，其余空调连最近 <input type="number" class="auto-config-count" id="autoSupplyOther" min="1" step="1" value="3" aria-label="供冷其余空调冷通道数量"> 条冷通道的全部冷点。</p>
+          <p>供冷：每台空调连最近 <input type="number" class="auto-config-count" id="autoSupply" min="1" step="1" value="3" aria-label="供冷冷通道数量"> 条冷通道的全部冷点。</p>
           <p>换热：每个冷点在所属冷通道两侧各连最近的 <input type="number" class="auto-config-count" id="autoHeatPerSide" min="1" step="1" value="1" aria-label="换热每侧热点数量"> 个热点。</p>
-          <p>回风：只给必须配回风关系的空调生成。行间 / 列间连最近 <input type="number" class="auto-config-count" id="autoReturnInRow" min="1" step="1" value="2" aria-label="回风行间或列间热点数量"> 个热点，封闭热通道机房的其余空调连最近 <input type="number" class="auto-config-count" id="autoReturnOther" min="1" step="1" value="3" aria-label="回风其余空调热通道数量"> 条热通道的全部热点。</p>
+          <p>回风：仅封闭热通道机房生成，每台空调连最近 <input type="number" class="auto-config-count" id="autoReturn" min="1" step="1" value="3" aria-label="回风热通道数量"> 条热通道的全部热点。</p>
         </div>
         <fieldset class="auto-config-modes">
           <legend>生成方式</legend>
@@ -1274,7 +1272,7 @@
       document.querySelectorAll('.multi-select-wrap').forEach(initMultiSelect);
     })();
 
-    /* ── 一键自动配置：演示分组、摆放位置由空间位置行携带，坐标实时读取 ── */
+    /* ── 一键自动配置：演示分组由空间位置行携带，坐标实时读取 ── */
     (function () {
       var overlay = document.getElementById('modalAutoConfig');
       var openButton = document.getElementById('btnAutoConfig');
@@ -1341,7 +1339,7 @@
           var inputs = row.querySelectorAll('input');
           var point = {
             id: row.dataset.object, kind: row.dataset.kind, group: row.dataset.group,
-            name: row.cells[0].firstChild.textContent.trim(), placement: row.dataset.placementPosition,
+            name: row.cells[0].firstChild.textContent.trim(),
             x: Number(inputs[0].value), y: Number(inputs[1].value)
           };
           var reasons = [];
@@ -1364,21 +1362,21 @@
           total += values.length;
           plan.push({ wrap: wrap, boxes: boxes, values: values });
         }
-        function isInRow(ac) { return ac.placement === '1' || ac.placement === '2'; }
         document.querySelectorAll('#tableSupply .multi-select-wrap').forEach(function (wrap) {
           var ac = objects['ac' + wrap.dataset.ac];
-          if (ac) addRow(wrap, nearestChannels(ac, coldChannels, isInRow(ac) ? counts.autoSupplyInRow : counts.autoSupplyOther), 'supply');
+          if (ac) addRow(wrap, nearestChannels(ac, coldChannels, counts.autoSupply), 'supply');
         });
         if (mode !== '无封闭') {
           document.querySelectorAll('#tableHeatExchange .multi-select-wrap').forEach(function (wrap) {
             var cold = objects['cold' + wrap.dataset.cold];
             if (cold) addRow(wrap, heatTargets(cold, coldPoints.filter(function (p) { return p.group === cold.group; }), hotPoints, counts.autoHeatPerSide), 'heat');
           });
-          document.querySelectorAll('#tableReturnAir .multi-select-wrap').forEach(function (wrap) {
-            var ac = objects['ac' + wrap.dataset.ac];
-            if (!ac || (!isInRow(ac) && mode !== '封闭热通道')) return;
-            addRow(wrap, isInRow(ac) ? nearest(ac, hotPoints, counts.autoReturnInRow) : nearestChannels(ac, hotChannels, counts.autoReturnOther), 'returnAir');
-          });
+          if (mode === '封闭热通道') {
+            document.querySelectorAll('#tableReturnAir .multi-select-wrap').forEach(function (wrap) {
+              var ac = objects['ac' + wrap.dataset.ac];
+              if (ac) addRow(wrap, nearestChannels(ac, hotChannels, counts.autoReturn), 'returnAir');
+            });
+          }
         }
         return { rows: plan, added: added, total: total, skipped: skipped };
       }

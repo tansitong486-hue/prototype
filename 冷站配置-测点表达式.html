@@ -26,6 +26,21 @@ button,input,select { font:inherit; } button { border:none; background:none; cur
 body.annotation-mode { padding-top:0; } #annoFilterBar { position:sticky; top:0; z-index:90; } .anno { margin-bottom:12px; } .anno-filter-tag { cursor:pointer; } .anno-toggle { z-index:1100; }
 @media(max-width:1100px) { .summary-cards { grid-template-columns:repeat(3,minmax(0,1fr)); } } @media(max-width:700px) { .page-shell { padding:14px 12px 60px; } .form-row { flex-direction:column; gap:6px; } .field-label { width:auto; } .page-title-row>.actions { margin-left:0; } .summary-cards { grid-template-columns:repeat(2,minmax(0,1fr)); } .space-extra { margin-left:0; } }
 .data-table tbody tr.located{background:#FFF7ED;outline:2px solid #F59E0B;outline-offset:-2px;}
+
+/* 文字按钮去掉浏览器默认边框与底色 */
+button.action-link{background:none;border:0;padding:0;font-family:inherit;line-height:1.5;cursor:pointer}
+
+/* ---- v3.0 测点表达式页整理 ---- */
+.page-title-row .actions .btn[hidden]{display:none}
+.upload-row{display:flex;align-items:stretch;gap:12px;flex-wrap:wrap}
+.upload-box{position:relative;display:flex;align-items:center;gap:12px;min-width:360px;flex:0 1 520px;padding:12px 16px;border:1px dashed #94A3B8;border-radius:8px;background:#F8FAFC;cursor:pointer;transition:border-color .15s,background .15s}
+.upload-box:hover,.upload-box:focus-within{border-color:var(--primary);background:#F0F6FF}
+.upload-box input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.upload-icon{width:34px;height:34px;border-radius:8px;background:#E0EAFF;color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.upload-text{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--text-secondary)}
+.upload-text b{font-size:13px;color:var(--text-primary);font-weight:600}
+.upload-row .btn{align-self:center}
+.file-state{margin-top:8px}
 </style>
 </head>
 <body>
@@ -55,7 +70,7 @@ body.annotation-mode { padding-top:0; } #annoFilterBar { position:sticky; top:0;
 </div></section>
 <section class="page-card" id="preflightSection"><div class="page-head"><h2><span class="step-no">02</span>上传预检</h2><span class="page-note">预检不写入表达式</span></div><div class="card-body">
 <div class="anno anno-field" data-version="v3.0"><span class="anno-tag">字段说明</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§6.3</span><div class="anno-body"><p><b>关联模块：</b>上传预检 — 表达式文件</p><ul><li>选择已填写的模板后先预检，不写入；原型也可使用演示文件。</li><li>标「是」的行单次最多 5000 行；文件总行数不限，超过时整份不预检、不出汇总。</li><li>未标「是」却填表达式的行跳过并提示；标「是」但 ID 或表达式缺失时阻断。</li></ul></div></div>
-<div class="form-row"><label class="field-label" for="fileInput">表达式文件</label><div class="field-content"><div class="actions"><input type="file" id="fileInput" accept=".xlsx,.csv" aria-describedby="fileState"><button class="btn" data-action="demo-file" id="demoFileBtn">使用演示文件</button></div><div class="page-note" id="fileState" style="margin-top:8px">未选择文件</div></div></div>
+<div class="form-row"><label class="field-label" for="fileInput">表达式文件</label><div class="field-content"><div class="upload-row"><label class="upload-box" for="fileInput"><input type="file" id="fileInput" accept=".xlsx,.csv" aria-describedby="fileState"><span class="upload-icon" aria-hidden="true">⇪</span><span class="upload-text"><b>选择填好的表达式文件</b><span>支持 .xlsx（兼容 .csv），标「是」的行单次最多 5000 行</span></span></label><button class="btn" data-action="demo-file" id="demoFileBtn">使用演示文件</button></div><div class="page-note file-state" id="fileState">未选择文件</div></div></div>
 <div class="actions"><button class="btn btn-primary" data-action="preflight" id="preflightBtn" disabled>开始预检</button><button class="btn" data-action="preflight-download" id="preflightDownloadBtn" disabled>下载预检结果</button></div>
 <div id="preflightMessage" aria-live="polite"></div>
 <div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§6.3</span><div class="anno-body"><p><b>关联模块：</b>预检汇总、逐行结果</p><ul><li>汇总展示总行数、需处理、可写入（新增 / 覆盖）、阻断、跳过、合并。</li><li>检查目标及组件对应关系、引用存在、语法、自引用 / 循环、编辑与读取权限；无权限内容不返回。</li><li>同一目标同表达式合并，不同表达式全部阻断并列冲突行号；已有表达式或非自定义模式均标覆盖。</li><li>下载预检结果保留原列，右侧追加预检状态、原表达式摘要、预检说明。</li></ul></div></div>
@@ -249,10 +264,10 @@ function retry(line){if(!active||running){toast('请先中断任务再重试');r
 function downloadImport(rec){if(!rec)return;const map=new Map(rec.results.map(r=>[r.line,r]));const data=rec.rows.map(r=>{const res=map.get(r.line);return [...baseCells(r),res?.result||(['new','overwrite'].includes(r.state)?'未完成':statusNames[r.state]),res?.resultNote||(['new','overwrite'].includes(r.state)?'尚未执行，可继续':r.note),res&&['成功','已保存、未启用'].includes(res.result)?r.expression:'',res?.saved||'未写入',res?.diagnostic||'未执行'];});writeWorkbook(rec.scope+'-导入结果-'+rec.key+'.xlsx',[...rec.headers,'导入结果','导入说明','写入后表达式摘要','保存验证','求值诊断'],data);}
 function renderHistory(){$('historyRows').innerHTML=records.map(rec=>{const c=countResults(rec.results),written=rec.results.filter(r=>['成功','已保存、未启用'].includes(r.result)).length;return `<tr><td>${esc(rec.time)}</td><td>${esc(rec.operator)}</td><td>${esc(rec.scope)}</td><td>${written}<br><span class="page-note">已处理 ${rec.done} / ${rec.order.length}</span></td><td>${c.success} / ${c.failed} / ${c.skipped}</td><td>${tag(rec.status,rec.status==='已完成'?'success':'warning')}</td><td><div class="actions"><button class="action-link" data-record-download="${esc(rec.key)}">下载结果</button>${rec.status==='部分完成'?`<button class="action-link" data-resume="${esc(rec.key)}">继续执行</button>`:''}</div></td></tr>`;}).join('')||'<tr><td colspan="7" class="empty-state">暂无导入记录</td></tr>';}
 function changeScene(value){if(!canChangeFile())return;scene=value;document.querySelectorAll('[data-scene]').forEach(b=>{b.classList.toggle('is-active',b.dataset.scene===value);b.setAttribute('aria-pressed',String(b.dataset.scene===value));});demoFile();}
-function renderIssuePoints(){const wanted=currentCatalog.find(r=>r.key===targetPoint||r.point===targetPoint);$('issueSection').hidden=!fromVerify&&!issues.length&&!targetPoint;$('issueRows').innerHTML=issues.map(p=>{const r=currentCatalog.find(r=>r.key===p.key);return `<tr class="${wanted?.key===p.key?'located':''}" ${wanted?.key===p.key?'id="locatedIssue"':''}><td>${esc(r.name)}</td><td>${esc(p.pointName)}</td><td>${esc(p.reason)}</td><td><button class="action-link" data-issue-object="${esc(p.object)}">筛选该对象模板</button></td></tr>`;}).join('')||'<tr><td colspan="4" class="empty-state">当前没有可导出的校验问题测点</td></tr>';
+function renderIssuePoints(){const wanted=currentCatalog.find(r=>r.key===targetPoint||r.point===targetPoint);$('issueSection').hidden=!fromVerify&&!targetPoint;$('issueRows').innerHTML=issues.map(p=>{const r=currentCatalog.find(r=>r.key===p.key);return `<tr class="${wanted?.key===p.key?'located':''}" ${wanted?.key===p.key?'id="locatedIssue"':''}><td>${esc(r.name)}</td><td>${esc(p.pointName)}</td><td>${esc(p.reason)}</td><td><button class="action-link" data-issue-object="${esc(p.object)}">筛选该对象模板</button></td></tr>`;}).join('')||'<tr><td colspan="4" class="empty-state">当前没有可导出的校验问题测点</td></tr>';
  if(targetPoint&&!wanted)toast('未找到指定测点，请检查当前配置');if(wanted){$('objectFilter').value=wanted.object;setTimeout(()=>$('locatedIssue')?.scrollIntoView({block:'center'}),80);}}
 $('systemName').textContent=system;$('currentScopeLabel').textContent='当前冷水系统（'+system+'）';
-const back=Store.safeBack(params.get('back'));const returnUrl=new URL(back||('冷站配置-配置校验.html?id='+encodeURIComponent(systemId)),location.href);returnUrl.searchParams.set('revalidate','1');$('verifyLink').href=returnUrl.pathname.split('/').at(-1)+returnUrl.search+returnUrl.hash;$('verifyLink').textContent=back?Store.backLabel(back):'返回配置校验';
+const back=Store.safeBack(params.get('back'));const returnUrl=new URL(back||('冷站配置-配置校验.html?id='+encodeURIComponent(systemId)),location.href);returnUrl.searchParams.set('revalidate','1');$('verifyLink').href=returnUrl.pathname.split('/').at(-1)+returnUrl.search+returnUrl.hash;$('verifyLink').textContent=back?Store.backLabel(back).replace(/\s*→$/,''):'返回配置校验';$('verifyLink').hidden=!back&&!fromVerify;
 // 空间节点由当前项目的已保存配置路径生成。
 const nodePaths=new Set();projectConfigs.forEach(s=>{const parts=s.space.split(' / ');parts.forEach((_,i)=>nodePaths.add(parts.slice(0,i+1).join(' / ')));});
 $('spaceTree').innerHTML=Array.from(nodePaths).map(path=>'<div style="padding-left:'+((path.split(' / ').length-1)*14)+'px"><button role="treeitem" data-space="'+esc(path)+'" aria-selected="'+(path===selectedSpace)+'">'+esc(path.split(' / ').at(-1))+'</button></div>').join('');$('spaceName').textContent=selectedSpace;
