@@ -77,7 +77,7 @@
     .banner-tip-text { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
     .banner-tip-text p + p { margin-top: 8px; }
 
-    /* 结果横幅：通过 / 有设备移出 / 阻断，三态互斥 */
+    /* 结果横幅：校验通过 / 校验不通过（另有校验中） */
     .banner-result {
       display: flex; align-items: center; justify-content: space-between; gap: 16px;
       padding: 14px 16px; margin-bottom: 16px; border-radius: var(--radius-lg); flex-wrap: wrap; border: 1px solid;
@@ -199,14 +199,14 @@
             </div>
           </div>
 
-          <div class="anno anno-version-header" data-version="v2.9" data-date="2026-10-31">
+          <div class="anno anno-version-header" data-version="v2.9" data-date="2026-11-11">
             <span class="anno-tag">版本信息</span>
             <span class="anno-version">v2.9</span>
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
               <p><b>当前版本：</b>v2.9</p>
               <p><b>本页说明：</b>菜单更名「机房配置」（原机房热力模型）。机房配置保存后，从列表「机房配置校验」进入。七类校验检查属性、绑点、运行数据与拓扑，问题定位到实例、属性或测点；创建步骤不执行校验。</p>
-              <p><b>结果：</b>101 机房有 2 台空调移出可动作集，机房不阻断；102 机房拓扑不完整且 IT 功率未绑，机房阻断；103 机房通过，含无法校验提示。</p>
+              <p><b>结果：</b>101 机房校验不通过，2 台空调移出可动作集、其余照常寻优；102 机房校验不通过，拓扑不完整且 IT 功率未绑，机房寻优跳过；103 机房校验通过（含 1 条无法校验）。</p>
               <p><b>处置：</b>属性问题回步骤 1 修改，关系问题回步骤 2 配置，测点问题到设备管理核对。返回后可重新校验。规则见需求文档 §4.3、附录 A。</p>
             </div>
           </div>
@@ -231,7 +231,7 @@
               <div class="banner-tip-title">提示</div>
               <div class="banner-tip-text">
                 <p>1、机房配置校验按每台空调的对象类型，检查仿真寻优所需的属性、关键测点绑定与测点数据合理性，并检查机房供冷 / 换热 / 回风关系是否完整。</p>
-                <p>2、ERROR 的空调会移出可动作集（寻优时保持当前控制不动作），其余空调照常寻优；拓扑不完整、IT 功率未绑或投入传感器温度未绑时机房寻优跳过。温度未绑：机房不能寻优；不需要检查的测点请投出。WARN 请核对。</p>
+                <p>2、投入空调或机房有 ERROR 时校验不通过：ERROR 的空调移出可动作集（寻优时保持当前控制不动作），其余空调照常寻优；拓扑不完整、IT 功率未绑或投入传感器温度未绑时，机房寻优跳过（不需要检查的测点请投出）。WARN 与无法校验不影响结论，请核对。</p>
               </div>
             </div>
           </div>
@@ -239,10 +239,10 @@
           <div class="anno anno-state" data-version="v2.9">
             <span class="anno-tag">状态说明</span>
             <span class="anno-version">v2.9</span>
-            <span class="anno-source">产品推断</span>
+            <span class="anno-source">需求文档</span>
             <div class="anno-body">
               <p><b>关联模块：</b>校验结果横幅</p>
-              <p>拓扑不完整、IT 功率未绑、投入传感器温度未绑或可动作集为空，机房本轮跳过。部分空调 ERROR，仅移出这些空调，其余照常寻优。WARN 与无法校验均只提示。</p>
+              <p>结论只有两种：投入空调或机房有 ERROR 为「校验不通过」，否则为「校验通过」；WARN 与无法校验不影响结论。不通过时第二行写影响：拓扑不完整、IT 功率未绑、投入传感器温度未绑或可动作集为空，机房寻优跳过；只有部分空调 ERROR，仅移出这些空调，其余照常寻优。条数只在下方统计中显示，横幅不重复。</p>
               <p>点「重新校验」后按钮置灰，完成后刷新横幅、统计和两张表。未校验或模型已修改时进入自动校验；取数失败保留上次结果并提示重试。改完可返回重新校验。</p>
             </div>
           </div>
@@ -264,7 +264,7 @@
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
               <p><b>关联模块：</b>校验统计</p>
-              <p>投入 / 投出、就绪、就绪·有提示、移出可动作集按空调台数统计，一台有多条 ERROR 仍只移出一次。ERROR / WARN / 无法校验按明细条数统计，含拓扑、传感器、设备组及投出空调的提示。拓扑单列通过 / ERROR 条数；机房结论显示可动作集台数或阻断、本轮 SKIPPED。设备总览只列空调。</p>
+              <p>投入 / 投出、就绪、就绪·有提示、移出可动作集按空调台数统计，一台有多条 ERROR 仍只移出一次。ERROR / WARN / 无法校验按明细条数统计，含拓扑、传感器、设备组及投出空调的提示。拓扑单列通过 / ERROR 条数。设备总览只列空调。</p>
             </div>
           </div>
 
@@ -309,7 +309,7 @@
               <table class="anno-table">
                 <thead><tr><th>列</th><th>内容</th><th>说明</th></tr></thead>
                 <tbody>
-                  <tr><td>校验结论</td><td>就绪 / 就绪·有提示 / 移出可动作集 / 投出 / 投出·有提示</td><td>投入空调：有 ERROR → 移出可动作集；只有 WARN → 就绪·有提示；「无法校验」不影响结论。投出空调：无 WARN → 投出，有 WARN → 投出·有提示；均不计就绪、不进可动作集、不影响机房结论</td></tr>
+                  <tr><td>校验结论</td><td>就绪 / 就绪·有提示 / 移出可动作集 / 投出 / 投出·有提示</td><td>投入空调：有 ERROR → 移出可动作集；只有 WARN → 就绪·有提示；「无法校验」不影响结论。投出空调：无 WARN → 投出，有 WARN → 投出·有提示；均不计就绪、不进可动作集、不影响通过 / 不通过</td></tr>
                   <tr><td>ERROR / WARN</td><td>条数</td><td>点「查看明细」下方明细表按该实例筛选并滚动定位</td></tr>
                 </tbody>
               </table>
@@ -397,8 +397,8 @@
             <span class="anno-source">需求文档</span>
             <div class="anno-body">
               <p><b>关联模块：</b>关键测点绑定 — 传感器与设备组</p>
-              <p>投入温湿度传感器：温度 <code>1_1_0</code> 未绑记 ERROR / INPUT_MISSING，机房结论为阻断、本轮 SKIPPED。温度未绑：机房不能寻优；不需要检查的测点请投出。湿度 <code>1_960_0</code> 未绑记 WARN / INPUT_MISSING，「该点不做湿度检查」。</p>
-              <p>空调设备组 IT 功率 <code>1_105_0</code> 未绑记 ERROR / INPUT_MISSING，「机房不能寻优」，横幅与机房结论显示阻断、本轮 SKIPPED。以上问题进明细及 ERROR / WARN 统计，不进入空调总览。</p>
+              <p>投入温湿度传感器：温度 <code>1_1_0</code> 未绑记 ERROR / INPUT_MISSING，校验不通过、机房寻优跳过（本轮 SKIPPED）；不需要检查的测点请投出。湿度 <code>1_960_0</code> 未绑记 WARN / INPUT_MISSING，「该点不做湿度检查」。</p>
+              <p>空调设备组 IT 功率 <code>1_105_0</code> 未绑记 ERROR / INPUT_MISSING，明细提示「机房不能寻优」，横幅显示校验不通过、机房寻优跳过（本轮 SKIPPED）。以上问题进明细及 ERROR / WARN 统计，不进入空调总览。</p>
             </div>
           </div>
           <div class="anno anno-data" data-version="v2.9">
@@ -848,21 +848,21 @@
         document.getElementById('bannerDesc').textContent = desc;
       }
 
+      // 结论二选一：投入空调或机房有 ERROR 即不通过；第二行只写影响和校验时间，条数看下方统计。
+      function passed(c) { return !c.blocked && !c.error; }
       function renderBanner(c) {
-        var when = (c.sensorErr ? '有 ' + c.sensorErr + ' 个投入传感器温度未绑。温度未绑：机房不能寻优；不需要检查的测点请投出。' : '') + '校验时间 ' + room.checkedAt + '；按当前物模型属性、绑点、关系与运行数据执行。';
+        var when = '校验时间 ' + room.checkedAt;
         if (c.blocked) {
           var reasons = [];
-          if (c.topoErr) reasons.push('拓扑不完整（' + c.topoErr + ' 条）');
-          if (c.groupErr) reasons.push('IT 功率未绑定，机房不能寻优');
-          if (c.sensorErr) reasons.push('投入传感器温度未绑定（' + c.sensorErr + ' 个），机房不能寻优');
-          if (c.actionable <= 0) reasons.push('可动作集为空');
-          var why = reasons.join('；');
-          setBanner('block', '校验未通过：' + why + '，机房寻优将跳过（SKIPPED）', '请按明细「去配置 / 去修改 / 去绑点」处理后重新校验。' + when);
+          if (c.topoErr) reasons.push('拓扑不完整');
+          if (c.groupErr) reasons.push('IT 功率未绑定');
+          if (c.sensorErr) reasons.push(c.sensorErr + ' 个投入传感器温度未绑定');
+          if (c.actionable <= 0) reasons.push('没有可参与寻优的空调');
+          setBanner('block', '校验不通过', reasons.join('、') + '，机房寻优跳过。' + when);
         } else if (c.error) {
-          setBanner('warn', '校验完成：' + c.error + ' 台移出可动作集，机房不阻断', '移出的空调寻优时保持当前控制不动作，其余 ' + c.actionable + ' 台照常寻优' + (c.activeWarnN ? '；另有 ' + c.activeWarnN + ' 条 WARN 待核对' : '') + '。' + when);
+          setBanner('block', '校验不通过', c.error + ' 台空调移出可动作集（寻优时保持当前控制不动作），其余 ' + c.actionable + ' 台照常寻优。' + when);
         } else {
-          var tips = c.activeWarnN + c.infoN + c.sensorErr;
-          setBanner('pass', tips ? '校验通过，有 ' + tips + ' 条提示' : '校验通过', '投入 ' + c.inUse + ' 台全部进入可动作集，拓扑完整。' + when);
+          setBanner('pass', '校验通过', '投入的 ' + c.inUse + ' 台空调全部进入可动作集。' + when);
         }
       }
 
@@ -874,8 +874,7 @@
           '<span class="confidence-pill ' + (c.warn ? 'warn' : 'low') + '">就绪·有提示 ' + c.warn + ' 台</span>',
           '<span class="confidence-pill ' + (c.error ? 'err' : 'low') + '">移出可动作集 ' + c.error + ' 台</span>',
           '<span class="confidence-pill ' + (c.errN ? 'err' : (c.warnN ? 'warn' : 'low')) + '">ERROR ' + c.errN + ' 条 · WARN ' + c.warnN + ' 条' + (c.infoN ? ' · 无法校验 ' + c.infoN + ' 条' : '') + '</span>',
-          '<span class="confidence-pill ' + (c.topoErr ? 'err' : 'high') + '">拓扑 ' + (c.topoErr ? c.topoErr + ' 条 ERROR' : '通过') + '</span>',
-          '<span class="confidence-pill ' + (c.blocked ? 'err' : 'high') + '">机房结论：' + (c.blocked ? '阻断 · 本轮 SKIPPED' : '可继续 · 可动作集 ' + c.actionable + ' 台') + '</span>'
+          '<span class="confidence-pill ' + (c.topoErr ? 'err' : 'high') + '">拓扑 ' + (c.topoErr ? c.topoErr + ' 条 ERROR' : '通过') + '</span>'
         ];
         document.getElementById('summaryPills').innerHTML = pills.join('');
         document.getElementById('overviewSub').textContent = room.name + ' · 共 ' + room.devices.length + ' 台空调';
@@ -985,13 +984,13 @@
       var btn = document.getElementById('btnRevalidate');
       btn.addEventListener('click', function () {
         btn.disabled = true;
-        setBanner('running', '校验中…', '正在按当前物模型属性、绑点、关系与运行数据逐台执行 §4.3 校验');
+        setBanner('running', '校验中…', '正在逐台检查属性、绑点、关系与运行数据');
         setTimeout(function () {
           room.checkedAt = nowText();
           results = runCheck();
           renderAll();
           btn.disabled = false;
-          showToast('校验完成');
+          showToast(passed(stats(results)) ? '校验通过' : '校验不通过');
         }, 900);
       });
 
