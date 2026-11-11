@@ -64,28 +64,33 @@
     }
     .system-alert .alert-close { color:#C7A45B; font-size:18px; line-height:1; cursor:pointer; }
     .page-header {
-      background:#fff; border-radius:8px;
-      margin:16px 16px 0; padding:0 16px; height:64px;
-      border:none; box-shadow:none;
-      display:flex; align-items:center; flex-shrink:0; gap:12px;
+      /* 对齐冷站寻优页：圆角白底板卡片 + 下划线 Tab + sticky（左右留灰底，勿通栏） */
+      display:flex; justify-content:space-between; align-items:center;
+      padding:0 16px; height:46px; flex-shrink:0; gap:12px;
+      margin:8px 16px 0;
+      background:#fff;
+      border:1px solid rgba(232,238,243,.95);
+      border-radius:12px;
+      box-shadow:0 1px 3px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.04), 0 0 0 100vmax var(--bg-body);
+      clip-path:inset(-8px -100vmax -2px -100vmax);
+      position:sticky; top:8px; z-index:40;
     }
     .page-header-left {
-      display:flex; align-items:center; gap:10px;
+      display:flex; align-items:center; gap:12px; min-width:0;
     }
     .page-header-nav {
-      display:flex; align-items:center; gap:8px; margin-left:auto;
+      display:flex; align-items:stretch; align-self:stretch; flex-shrink:0; margin-left:auto;
     }
     .page-nav-item {
-      display:inline-flex; align-items:center; justify-content:center;
-      height:32px; padding:0 16px; font-size:13px; font-weight:500;
-      color:var(--text-primary); cursor:pointer; transition:all .2s;
-      border:1px solid var(--border); border-radius:var(--radius-pill);
-      background:#fff; white-space:nowrap;
+      display:flex; align-items:center; padding:0 16px;
+      font-size:14px; font-weight:500; color:var(--text-secondary);
+      cursor:pointer; position:relative; transition:color .2s, border-color .2s;
+      border-bottom:2px solid transparent; white-space:nowrap;
     }
-    .page-nav-item:hover { color:var(--primary); border-color:var(--primary); }
+    .page-nav-item:hover { color:var(--primary); }
     .page-nav-item.active {
-      color:#fff; font-weight:600;
-      border-color:var(--primary); background:var(--primary);
+      color:var(--primary); font-weight:600;
+      border-bottom-color:var(--primary);
     }
     .page-refresh-btn {
       width:32px; height:32px; border-radius:50%; border:1px solid var(--border);
@@ -96,11 +101,13 @@
     .page-refresh-btn:hover { color:var(--primary); border-color:var(--primary); }
     .page-refresh-btn svg { width:16px; height:16px; }
     .selector {
-      display:inline-flex; align-items:center; gap:6px;
-      padding:5px 12px; border:1px solid var(--border);
-      border-radius:var(--radius); cursor:pointer; font-size:12px;
-      background:#fff; transition:all .2s; font-weight:500; height:32px;
+      display:inline-flex; align-items:center; justify-content:space-between; gap:6px;
+      padding:6px 14px; border:1px solid #E2E8F0;
+      border-radius:999px; cursor:pointer; font-size:13px;
+      background:#fff; transition:all .2s; font-weight:500;
+      color:var(--text-primary); min-width:160px;
     }
+    .selector:first-child { min-width:248px; }
     .selector:hover { border-color:var(--primary); color:var(--primary); }
     .selector .arrow-down { font-size:10px; color:var(--text-hint); }
 
@@ -1015,16 +1022,17 @@
         </div>
       </div>
 
-      <div class="anno anno-version-header" data-version="v2.9" data-date="2026-11-02">
+      <div class="anno anno-version-header" data-version="v2.9" data-date="2026-11-11">
         <span class="anno-tag">版本信息</span>
         <span class="anno-version">v2.9</span>
-        <div class="anno-body"><p><b>当前版本：</b>v2.9（需求 1 末端仿真寻优）</p><p><b>寻优算法：</b>仿真模型预测寻优、全局送风温度控制法、ThermoFlex热力柔性寻优三选一，下方按所选算法显示配置项；新算法只调模拟量，寻优记录展示结论条与模拟量变量行；启停由全局寻优页负责。</p><p><b>本页说明：</b>筛选 v2.9 查看本次变更；另两种算法的配置见 v2.8 批注；寻优记录演示仿真模型预测寻优的轮次。</p></div>
+        <span class="anno-source">需求文档</span>
+        <div class="anno-body"><p><b>变更概述：</b>寻优算法新增「仿真模型预测寻优」，只调温度设定、风机转速上限、水阀最大开度；规则配置增加仿真模型、寻优器、模拟量寻优规则、参数平稳偏好；寻优记录每轮输出结论文案；顶部栏与冷站寻优页一致（系统、机房选择 + 机房柔性寻优 / 机房全局寻优 Tab）。</p><p><b>本页说明：</b>开关机由全局寻优页负责；寻优记录演示新算法的轮次。</p><p><b>更新日期：</b>2026-11-11</p></div>
       </div>
       <div class="anno anno-req" data-version="v2.9">
         <span class="anno-tag">需求说明</span>
         <span class="anno-version">v2.9</span>
         <span class="anno-source">需求文档</span>
-        <div class="anno-body"><p><b>关联模块：</b>机房寻优-柔性寻优 — 仿真模型预测寻优</p><p>寻优算法三选一，既有两种算法的配置与逻辑不变。新算法只调温度设定、风机转速上限、水阀最大开度。每轮取一次数，保持现状与候选共用快照，逐个调用所选模型计算稳态；按安全边界筛选，兼顾空调总功率与参数平稳，达到最低节能门槛才采纳。启停只在全局寻优页寻优；两页同时到期时先全局寻优，本轮柔性寻优跳过。仿真模型不读本页规则与安全边界。</p></div>
+        <div class="anno-body"><p><b>关联模块：</b>柔性寻优 — 仿真模型预测寻优</p><p>每轮取一次数，保持现状和各候选方案共用，逐个用所选仿真模型算稳态。保持现状仿真不可用则本轮跳过；已越硬边界则安全恢复，在合规方案中选「调整量 ÷ 寻优步长」之和最小的，不比功率。候选设定在「当前值 ± 寻优步长」与安全边界内取值；安全检查按「当前实测值 + 方案相对保持现状的变化量」判断，不合规直接否决。数据过期的空调用最近有效值并标低置信，过期超过投入台数一半则本轮跳过。每轮从设定回读值起算，不累加上轮建议；输出前设定回读、设备状态或配置版本有变则本轮跳过。两页同时到期时先算全局寻优，本轮柔性寻优跳过。</p></div>
       </div>
 
       <div class="page-header">
@@ -1033,11 +1041,8 @@
           <div class="selector">1F-101 <span class="arrow-down">▾</span></div>
         </div>
         <div class="page-header-nav">
-          <div class="page-nav-item" onclick="window.location.assign(encodeURI('机房寻优-加减机寻优.html'))">全局寻优</div>
-          <div class="page-nav-item active">柔性寻优</div>
-          <button type="button" class="page-refresh-btn" title="刷新" onclick="location.reload()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
-          </button>
+          <div class="page-nav-item active">机房柔性寻优</div>
+          <div class="page-nav-item" onclick="window.location.assign(encodeURI('机房寻优-加减机寻优.html'))">机房全局寻优</div>
         </div>
       </div>
 
@@ -1297,12 +1302,6 @@
             <p><b>联动：</b>随下方时间筛选切换，展示对应轮次的结论；该时刻无记录显示「该时刻无寻优记录」；v2.6 上线前的历史轮次显示「该轮寻优早于可解释性功能上线，无原因记录」。接口只返回场景码、原因码和原始参数，主标签及完整中文模板由前端单点维护；文案不出现 Si、Mc、λ 等算法符号，也不判断实际下发状态。参数不齐时不输出该解释对象并记录日志，前端显示「本轮无解释数据」，不做从句级降级。</p>
           </div>
         </div>
-        <div class="anno anno-state" data-version="v2.9">
-          <span class="anno-tag">状态说明</span>
-          <span class="anno-version">v2.9</span>
-          <span class="anno-source">需求文档</span>
-          <div class="anno-body"><p><b>关联模块：</b>寻优记录 — 时间条与安全底线</p><p>‹ › 按轮次切换，无记录时显示「该时刻无寻优记录」；旧轮次按原口径展示。新算法保持启停，只调模拟量，每次相对当前回读值的调整不超过寻优步长。温湿度不越安全边界，越限不拿节能抵消。数据过期的空调不参与，超过一半过期则本轮跳过。每轮重新计算，不累加上轮建议；输出前控制量回读、设备状态或配置版本变化则本轮作废并跳过。</p></div>
-        </div>
         <div class="records-time-bar" id="optRecordsTimeBar">
           <span class="filter-label">时间</span>
           <input type="date" class="filter-input" value="2026-10-30">
@@ -1317,7 +1316,7 @@
           <span class="anno-tag">数据逻辑</span>
           <span class="anno-version">v2.9</span>
           <span class="anno-source">需求文档</span>
-          <div class="anno-body"><p><b>关联模块：</b>寻优记录 — 本轮寻优结论条</p><p>徽章：节能调优 / 保持现状 / 安全恢复 / 本轮跳过。建议按控制量和方向分组写设定，同组多台用「a～b」幅度。原因：节能调优写最小余量测点预计值与上限，有低置信空调参与调整时注明「数据积累中」；保持现状写最好节能率未达门槛，或首条不合规原因与测点，或到达计算时限；安全恢复写越界测点实测值与硬边界；跳过写页面文案与具体对象。预计写空调总功率、节能率，标「仿真预测值」。与全局寻优同时到期的轮次跳过。平面图浮窗、手动下发与结论条同口径；页面不出现原因码、目标函数和迭代数。</p></div>
+          <div class="anno-body"><p><b>关联模块：</b>寻优记录 — 本轮寻优结论条</p><p>徽章 + 建议 / 原因 / 预计，不显示原因码、目标函数和迭代轮数；平面图浮窗、手动下发弹窗与之同口径。建议按控制量和方向分组写设定调整，同组幅度不同写「a～b」。原因：</p><ul><li>节能调优：余量最小测点预计值与上限，低置信空调参与时标「数据积累中」；预计写空调总功率调整前 → 后和节能率，标「仿真预测值」。</li><li>保持现状：最好节能率未达门槛、无合规方案（首条原因与测点）或到达计算时限。</li><li>安全恢复：越界测点实测值与硬边界；无合规方案时改为保持现状、列出越界测点。</li><li>本轮跳过：页面文案加具体对象；两页同时到期写「由全局寻优统一调整开关机和设定值」。</li></ul></div>
         </div>
         <div class="opt-explain-bar tone-success" id="optExplainBar" role="status" aria-live="polite">
           <div class="opt-explain-strip" aria-hidden="true"></div>
@@ -1504,7 +1503,7 @@
           <span class="anno-tag">字段说明</span>
           <span class="anno-version">v2.9</span>
           <span class="anno-source">需求文档</span>
-          <div class="anno-body"><p><b>关联模块：</b>寻优记录 — 变量表与对象浮层</p><p>沿用六列：对象名称、变量名称、实际值、AI寻优值、寻优变化、操作。新算法只出模拟量控制行：按控制方式显示回风或送风温度设定（V1），另有风机转速上限设定、水阀最大开度（V2），不显示测点 ID。运行且投入的空调列为寻优中；停机或投出列为未寻优。未接入写点的控制量保持当前值，标「不调整」；低置信空调照常调整，名称旁标「数据积累中」。对象浮层与手动下发使用相同建议；历史趋势不变。</p></div>
+          <div class="anno-body"><p><b>关联模块：</b>寻优记录 — 变量表与对象浮层</p><p>六列：对象名称、变量名称、实际值、AI寻优值、寻优变化、操作，不显示测点 ID。控制行只有温度设定（按空调控制方式显示回风或送风温度设定）、风机转速上限、水阀最大开度。投入且运行的空调为寻优中，停机或投出的为未寻优；未接入写点的控制量保持当前值，标「不调整」；低置信空调照常调整，名称旁标「数据积累中」。对象浮层与变量表同口径；其他算法计算的轮次按该算法的样式展示。</p></div>
         </div>
         <div class="data-table-wrap">
           <table class="data-table">
@@ -1615,7 +1614,7 @@
           <span class="anno-tag">字段说明</span>
           <span class="anno-version">v2.9</span>
           <span class="anno-source">需求文档</span>
-          <div class="anno-body"><p><b>关联模块：</b>规则配置 — 公共字段与寻优算法</p><p>机房、寻优周期、安全边界与所选算法共同决定每轮计算。字段依次为寻优周期、安全边界、寻优算法，下方只显示所选算法配置。三种算法为全局送风温度控制法、ThermoFlex热力柔性寻优、仿真模型预测寻优。新算法周期缺省 5 分钟、最小 5 分钟，仿真模型仅在此算法显示；安全边界每轮读取。启停只在全局寻优页寻优，本页新算法只调模拟量；两页同时到期时先全局寻优，本轮柔性寻优跳过。</p></div>
+          <div class="anno-body"><p><b>关联模块：</b>规则配置 — 公共字段与寻优算法</p><p>寻优周期、安全边界为公共字段，安全边界每轮读取。寻优算法三选一：全局送风温度控制法、ThermoFlex热力柔性寻优、仿真模型预测寻优，下方只显示所选算法的配置。选仿真模型预测寻优时，寻优周期缺省 5 分钟、最小 5 分钟。</p></div>
         </div>
 
         <div class="form-group">
@@ -1729,12 +1728,6 @@
 
           <!-- ThermoFlex热力柔性寻优（既有算法，配置与 v2.8 一致，保留不变） -->
           <div class="algo-config" data-algo="thermoflex" style="display:none;">
-            <div class="anno anno-field" data-version="v2.9">
-              <span class="anno-tag">字段说明</span>
-              <span class="anno-version">v2.9</span>
-              <span class="anno-source">需求文档</span>
-              <div class="anno-body"><p><b>关联模块：</b>规则配置 — ThermoFlex热力柔性寻优</p><ul><li>既有算法，配置与 v2.8 一致，口径见本区 v2.8 批注。</li><li>含模拟量寻优规则 5 行（冷冻水型 / 风冷 DX 主控制、冷冻水型 / 风冷 DX 辅助控制、风冷 DX 压缩机控制）、温度控制参数、压缩机控制参数。</li></ul></div>
-            </div>
             <div class="anno anno-field" data-version="v2.8">
               <span class="anno-tag">字段说明</span>
               <span class="anno-version">v2.8</span>
@@ -1908,7 +1901,7 @@
               <span class="anno-tag">字段说明</span>
               <span class="anno-version">v2.9</span>
               <span class="anno-source">需求文档</span>
-              <div class="anno-body"><p><b>关联模块：</b>规则配置 — 仿真模型（仿真模型预测寻优）</p><ul><li><b>出现条件：</b>只在寻优算法选「仿真模型预测寻优」时显示，为新算法配置区首项、位于寻优器上方；另两种算法不需要仿真模型。</li><li><b>取值：</b>必选，下拉取系统仿真建模中末端机房类型的「仿真模型名称」。</li><li><b>联动：</b>策略卡「引用仿真模型」显示所选名称；策略用另两种算法时，策略卡不显示「引用仿真模型」。</li><li><b>边界：</b>仿真模型不读本页规则配置与安全边界。</li></ul></div>
+              <div class="anno-body"><p><b>关联模块：</b>规则配置 — 仿真模型与寻优器</p><ul><li><b>仿真模型：</b>选「仿真模型预测寻优」才显示；必选，下拉取系统仿真建模中「末端机房」类型的模型。策略卡「引用仿真模型」只在选用本算法时显示。仿真模型只做预测，不含本页规则和安全边界。</li><li><b>寻优器：</b>三选一，缺省 L-SHADE 优化器，只显示所选寻优器的参数，均必填且为正整数（小数位数可为 0）。L-SHADE：最大迭代数 20、种群最终数量 10（≤ 种群初始化数量）、种群初始化数量 30；遗传算法：种群规模 60、最大进化代数 50；SLSQP：最大迭代数 200、收敛精度（小数位数）1，在连续值上求解，最终方案按寻优粒度取整后再仿真和检查。</li></ul></div>
             </div>
 
             <div class="form-group">
@@ -1921,12 +1914,6 @@
               <div class="form-hint">选择「系统仿真建模」中的仿真模型名称（类型为末端机房），每组调整方案都用它试算。</div>
             </div>
 
-            <div class="anno anno-field" data-version="v2.9">
-              <span class="anno-tag">字段说明</span>
-              <span class="anno-version">v2.9</span>
-              <span class="anno-source">需求文档</span>
-              <div class="anno-body"><p><b>关联模块：</b>规则配置 — 寻优器</p><p>三选一，缺省 L-SHADE 优化器，只显示所选寻优器的参数。L-SHADE：最大迭代数 20、种群最终数量 10、种群初始化数量 30，最终数量不得大于初始化数量；遗传算法：种群规模 60、最大进化代数 50；SLSQP：最大迭代数 200、收敛精度（小数位数）1。SLSQP 在连续值上求解，最终方案按寻优粒度取整后再仿真和检查安全。参数均需填写，迭代数与种群数量为正整数，小数位数为非负整数。保存后下一轮生效。</p></div>
-            </div>
 
             <div class="form-group">
               <div class="form-label"><span class="required">*</span> 寻优器</div>
@@ -1975,7 +1962,7 @@
               <span class="anno-tag">字段说明</span>
               <span class="anno-version">v2.9</span>
               <span class="anno-source">需求文档</span>
-              <div class="anno-body"><p><b>关联模块：</b>规则配置 — 模拟量寻优规则</p><p>按设备类型与控制方式分行：回风温控归回风温度设定，送风温控归送风温度设定。风机、水阀只纳入已接入写点的空调；没有可写设备的行不显示。「?」列出每台空调与控制变量，同类型未接入的标「未接入，不调整」，不显示测点 ID。寻优步长为单次相对当前值的最大调整量（同冷站），候选还须落在安全边界内。粒度缺省温度 0.5℃、风机 1%、水阀 5%；步长与粒度均大于 0。关闭一行则该控制量不调整。</p></div>
+              <div class="anno-body"><p><b>关联模块：</b>规则配置 — 模拟量寻优规则</p><p>按空调类型和实际控制变量分行，只出至少有 1 台具备的行：温度设定按控制方式分「回风温度设定」「送风温度设定」；风机转速上限、水阀最大开度只纳入已接入写点的空调。行名旁显示台数，「?」悬浮列出本行每台空调和控制变量，同类型未接入的显示「未接入，不调整」。寻优步长必填，是单次寻优相对当前值的最大调整量；寻优粒度缺省温度 0.5℃、风机转速上限 1%、水阀最大开度 5%，寻优值按粒度取整；两项均须大于 0。关闭某行，该控制量保持当前值。</p></div>
             </div>
             <div class="form-section">模拟量寻优规则</div>
             <div class="rule-table-wrap">
@@ -1992,7 +1979,7 @@
               <span class="anno-tag">字段说明</span>
               <span class="anno-version">v2.9</span>
               <span class="anno-source">需求文档</span>
-              <div class="anno-body"><p><b>关联模块：</b>规则配置 — 每轮计算时限与寻优目标偏好</p><p>所选寻优器迭代结束或达到每轮计算时限即停止，按已评价方案判定；时限缺省为周期 × 20%，最长 60 秒，到时标「已到时限」。最低节能门槛缺省 1%，最优方案 J ≤ 保持现状 J ×（1 − 门槛）且合规才采纳。参数平稳偏好 λ₃ 为 0～0.30，缺省 0.05，步进 0.01。J = 归一化空调总功率（只计投入的空调）+ λ₃ × C_swing；C_swing 为各控制量调整量与其寻优步长之比的平方均值。K 为本轮可调控制量个数，冻结量不计；K = 0 时平稳代价为 0。</p></div>
+              <div class="anno-body"><p><b>关联模块：</b>规则配置 — 每轮计算时限与寻优目标偏好</p><p>每轮计算时限缺省为寻优周期 × 20%，最长 60 秒；寻优器迭代结束或到达时限即停止，按已试算的方案判定。最低节能门槛缺省 1%：最优方案 J ≤ 保持现状 J ×（1 − 门槛）且全部合规才采纳，否则保持现状。参数平稳偏好 λ₃ 缺省 0.05，滑块 0～0.30，越大越倾向少调。J = 归一化空调总功率（只计投入空调）+ λ₃ × C_swing，C_swing 为各可调控制量「调整量 ÷ 寻优步长」平方的平均值；滑块旁 K 为本轮可调控制量个数，关闭的行不计。</p></div>
             </div>
 
             <div class="form-section">寻优计算</div>
@@ -2039,7 +2026,7 @@
           <span class="anno-source">需求文档</span>
           <div class="anno-body">
             <p><b>关联模块：</b>规则配置弹窗 —「投入/投出配置」Tab（仿真模型预测寻优）</p>
-            <p>投入 / 投出是设备属性，本页签与机房配置「投入 / 投出」是同一个值。选用「仿真模型预测寻优」时：投出的空调 AI 不调、不下发；开着的按实测送风算进仿真，通道覆盖与开机台数按实际运行的空调计；投出的温湿度传感器不参与仿真定锚与安全检查。另两种算法的投入 / 投出逻辑不变。</p>
+            <p>投入 / 投出是设备属性，与机房配置里的「投入 / 投出」是同一个值；投出不等于关机。投出的空调 AI 不调、不下发；运行中的按实测送风参与仿真、不计功率，通道覆盖与开机台数按实际运行的空调计。投出的温湿度传感器不参与仿真修正和安全检查。</p>
           </div>
         </div>
 

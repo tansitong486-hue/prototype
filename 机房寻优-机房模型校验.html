@@ -565,7 +565,7 @@
     .summary-ext .action-link { font-size: 12px; }
     .toast { white-space: pre-line; max-width: 380px; }
     /* 原因描述比冷站长：放宽描述列，标签和数值不折行 */
-    .col-object { min-width: 110px; }
+    .col-object { min-width: 110px; white-space: nowrap; }
     .col-name { min-width: 120px; }
     .col-id { min-width: 130px; word-break: keep-all; }
     .col-source { width: 84px; }
@@ -596,11 +596,9 @@
               <span class="anno-version">v2.9</span>
               <span class="anno-source">需求文档</span>
               <div class="anno-body">
-                <p><b>当前版本：</b>v2.9</p>
                 <p><b>更新日期：</b>2026-11-11</p>
-                <p><b>本页说明：</b>菜单「机房配置」（原机房热力模型）保存后，从列表「机房配置校验」进入。页面沿用冷站「数据质量自检」（v2.1）的结构：页头、状态横幅、汇总、筛选、结果主表。末端扩展：结论分校验通过 / 不通过，结果增加「提示」，汇总列出移出可动作集的空调。</p>
-                <p><b>演示：</b>101 校验不通过，2 台空调移出可动作集、其余照常寻优；102 校验不通过，拓扑不完整、IT 功率与 1 个传感器温度未绑，机房寻优跳过；103 校验通过（含 1 项数据不足）。</p>
-                <p><b>修改：</b>属性问题到机房配置步骤 1 修改，关系问题到步骤 2 配置，测点问题到设备管理核对，改完回本页重新执行。规则见需求文档 §4.3、附录 A。</p>
+                <p><b>变更概述：</b>新增机房配置校验页，结构同冷站「数据质量自检」（页头、状态横幅、汇总、筛选、结果主表）；结论分校验通过 / 不通过，每项结果分通过 / 不通过 / 提示 / 数据不足。</p>
+                <p><b>本页说明：</b>从机房配置列表「机房配置校验」进入，可随时重新执行，创建步骤中不拦截。属性到机房配置步骤 1 改，关系到步骤 2 改，测点到设备管理核对，改完回本页重新执行。</p>
               </div>
             </div>
 
@@ -609,11 +607,11 @@
               <span class="anno-version">v2.9</span>
               <span class="anno-source">需求文档</span>
               <div class="anno-body">
-                <p><b>页面级：</b>让实施在机房配置上线寻优前，看清每台空调能否被仿真寻优动作、为什么不能，以及机房拓扑是否完整。</p>
+                <p><b>页面级：</b>上线寻优前，让实施看清每台空调能否参与仿真寻优、为什么不能，以及机房拓扑是否完整。</p>
                 <ul>
-                  <li><b>覆盖场景：</b>新建保存后首次校验；去物模型补属性 / 补绑点 / 改关系后重新校验；编辑模型后结果过期再校验。</li>
-                  <li><b>本期不覆盖：</b>不在本页改属性、绑点或关系（只读 + 跳转）；不做定时校验与告警推送；不保存历史校验记录，每次以新结果覆盖（同冷站自检）；不校验仿真精度（看「仿真验证」页）。</li>
-                  <li><b>与寻优的关系：</b>寻优每轮按同一规则表逐台判定，本页结果不是寻优的开关；未校验的模型照常寻优（产品推断）。</li>
+                  <li><b>覆盖场景：</b>保存后首次校验；补属性、补绑点、改关系或编辑配置后重新校验。</li>
+                  <li><b>本期不覆盖：</b>本页只读，不改属性、绑点或关系；不做定时校验和告警推送；不保存历史记录，每次新结果覆盖（同冷站自检）；不校验仿真精度（看「仿真校验」页）。</li>
+                  <li><b>与寻优的关系：</b>寻优每轮按同一规则逐台判定，本页结果不是寻优开关，未校验的配置照常寻优（产品推断）。</li>
                 </ul>
               </div>
             </div>
@@ -626,8 +624,8 @@
                 <p><b>关联模块：</b>页头（返回 / 元信息 / 重新执行 / 导出 xlsx）</p>
                 <ul>
                   <li><b>返回：</b>回机房配置列表，不弹确认。</li>
-                  <li><b>元信息：</b>机房名、空调台数、数据窗口（近 7 天，5 分钟数据），只读。</li>
-                  <li><b>重新执行：</b>重跑全部规则；执行中「重新执行」「导出 xlsx」置灰，完成后新结果覆盖本页，并提示校验通过 / 不通过。未校验或配置已修改时，进入即自动执行一次。</li>
+                  <li><b>元信息：</b>机房名、空调台数、数据窗口（近 7 天 5 分钟数据），只读。</li>
+                  <li><b>重新执行：</b>重跑全部规则；执行中「重新执行」「导出 xlsx」置灰，完成后新结果覆盖本页并提示结论。从未校验或配置已修改时，进入即自动执行一次。</li>
                   <li><b>导出 xlsx：</b>导出当前主表，文件名 <code>项目名称_机房配置校验_yyyyMMdd_HHmm.xlsx</code>。</li>
                 </ul>
               </div>
@@ -673,7 +671,8 @@
                 <p><b>关联模块：</b>状态横幅</p>
                 <ul>
                   <li><b>执行中（蓝）：</b>「校验执行中，请稍候…」，汇总与主表保留上次结果。</li>
-                  <li><b>校验通过（绿）/ 校验不通过（红）：</b>主文「校验通过 / 校验不通过，共检查 N 项」。投入空调或机房有「不通过」项即校验不通过；「提示」「数据不足」不影响结论。副文先写影响：机房寻优跳过的原因，或移出可动作集台数与其余照常寻优台数；再写执行时间与耗时。</li>
+                  <li><b>校验通过（绿）/ 校验不通过（红）：</b>主文「校验通过 / 校验不通过，共检查 N 项」。有空调不参与寻优或机房不能寻优即不通过，只有「提示」「数据不足」仍为通过。副文先写影响（N 台移出可动作集、其余照常寻优，或机房不能寻优的原因），再写执行时间与耗时。</li>
+                  <li>没有可参与寻优的空调（全部投出、未关联或都被移出）时，机房不能寻优。</li>
                   <li><b>执行失败（红）：</b>写失败原因，保留上次结果，提示重新执行。</li>
                 </ul>
               </div>
@@ -696,8 +695,8 @@
               <div class="anno-body">
                 <p><b>关联模块：</b>汇总（不通过 / 提示 / 数据不足 / 通过）</p>
                 <ul>
-                  <li>四项计数按主表行数统计，随结果同步刷新。比冷站多一项「提示」：只需核对、不影响寻优的问题。</li>
-                  <li>有空调移出可动作集时，追加「移出可动作集 N 台：…」；点空调名，主表按该空调筛选。</li>
+                  <li>四项计数按主表行数统计，随结果刷新。「提示」指只需核对、不影响寻优的问题。</li>
+                  <li>有空调移出可动作集时追加「移出可动作集 N 台：…」，点空调名，主表按该空调筛选。</li>
                 </ul>
               </div>
             </div>
@@ -713,13 +712,13 @@
               <div class="anno-body">
                 <p><b>关联模块：</b>筛选与搜索</p>
                 <table class="anno-table">
-                  <thead><tr><th>控件</th><th>可选值</th><th>说明</th></tr></thead>
+                  <thead><tr><th>控件</th><th>可选值</th></tr></thead>
                   <tbody>
-                    <tr><td>数据来源</td><td>全部 / 数采绑点 / 静态属性 / 拓扑关系</td><td>比冷站多「拓扑关系」；本页没有自动计算项</td></tr>
-                    <tr><td>对象</td><td>全部 / 各空调 / 各温湿度传感器 / 空调设备组 / 机房拓扑</td><td>按机房配置生成</td></tr>
-                    <tr><td>规则</td><td>全部 / 七类校验 / 必填属性 / 投出空调送风</td><td>七类见下方规则批注</td></tr>
-                    <tr><td>结果</td><td>全部 / 不通过 / 提示 / 数据不足 / 通过</td><td>—</td></tr>
-                    <tr><td>搜索</td><td>名称、ID、对象、问题描述</td><td>输入即过滤</td></tr>
+                    <tr><td>数据来源</td><td>全部 / 数采绑点 / 静态属性 / 拓扑关系</td></tr>
+                    <tr><td>对象</td><td>全部 / 各空调 / 各温湿度传感器 / 空调设备组 / 各热通道</td></tr>
+                    <tr><td>规则</td><td>全部 / 七类校验 / 必填属性 / 投出空调送风</td></tr>
+                    <tr><td>结果</td><td>全部 / 不通过 / 提示 / 数据不足 / 通过</td></tr>
+                    <tr><td>搜索</td><td>名称、ID、对象、问题描述，输入即过滤</td></tr>
                   </tbody>
                 </table>
                 <p style="margin-top:6px">多个条件取交集；没有结果时显示「暂无匹配结果」。</p>
@@ -765,18 +764,13 @@
               <span class="anno-version">v2.9</span>
               <span class="anno-source">需求文档</span>
               <div class="anno-body">
-                <p><b>关联模块：</b>结果主表（8 列，同冷站）</p>
-                <table class="anno-table">
-                  <thead><tr><th>列</th><th>内容</th></tr></thead>
-                  <tbody>
-                    <tr><td>对象 / 名称 / ID</td><td>空调、传感器、设备组或拓扑；属性、测点或关系名；属性或测点 ID，关系与汇总行为「—」</td></tr>
-                    <tr><td>数据来源</td><td>数采绑点 / 静态属性 / 拓扑关系</td></tr>
-                    <tr><td>最新值 / 时间</td><td>测点取近 7 天最新有效值，可点开历史曲线；属性取当前配置值；未绑、关系为「—」</td></tr>
-                    <tr><td>校验结果</td><td>通过（绿）/ 不通过（红）/ 提示（蓝）/ 数据不足（黄）；不通过下注影响：该空调不参与寻优 / 机房不能寻优</td></tr>
-                    <tr><td>问题描述</td><td>中文规则分类 + 原因，不显示原因码；通过行写校验摘要（灰）</td></tr>
-                  </tbody>
-                </table>
-                <p style="margin-top:6px"><b>默认排序：</b>不通过 → 提示 → 数据不足 → 通过；同一结果内按空调、传感器、设备组、拓扑。</p>
+                <p><b>关联模块：</b>结果主表（8 列同冷站，无处置列和跳转）</p>
+                <ul>
+                  <li>每个属性、测点、关系各占一行，不设汇总行。ID 写属性 ID、测点 ID 或关系类型：供冷 ACTerminal::feedsAir，换热和回风 THSensor::feedsAir，热通道含热点 Aisle::includes。</li>
+                  <li><b>最新值：</b>测点取近 7 天最新有效值，可点开历史曲线；属性取当前值，未填有缺省的显示缺省值；关系显示已配数量或「未配置」；时间只有测点有。</li>
+                  <li><b>校验结果：</b>通过绿、不通过红、提示蓝、数据不足黄，不通过下注影响；问题描述写规则分类和原因，不显示原因码。</li>
+                  <li><b>排序：</b>不通过 → 提示 → 数据不足 → 通过，同结果按空调、传感器、设备组、热通道。</li>
+                </ul>
               </div>
             </div>
 
@@ -785,9 +779,14 @@
               <span class="anno-version">v2.9</span>
               <span class="anno-source">需求文档</span>
               <div class="anno-body">
-                <p><b>关联模块：</b>规则 — 七类校验</p>
-                <p>前五类：① 调节方式与转速反馈一致；② 压缩机数量与组件实例数一致；③ 控制型对应主温度设定写点；④ 冷冻水型设计点完整；⑤ 供冷、换热、通道与回风拓扑完整。另查必填静态属性。⑥ 关键测点绑定、⑦ 测点数据合理性只查投入空调、投入传感器和空调设备组。</p>
-                <p>每次读取当前属性、绑点、组件、投入状态、关系和近 7 天 5 分钟数据。① 无转速或频率证据记数据不足；定频但 10%～90% 中间值占比 &gt; 20% 记提示。每台每类最多一行「通过」汇总。</p>
+                <p><b>关联模块：</b>校验规则 · 空调属性与写点</p>
+                <ul>
+                  <li><b>压缩机调节方式：</b>定频空调转速反馈 10%～90% 中间值占比 &gt; 20%，提示；没有转速或频率数据，数据不足。</li>
+                  <li><b>压缩机数量：</b>属性台数与压缩机组件实例数不一致，提示，按实例数计算。</li>
+                  <li><b>控制方式与写点：</b>回风温控须绑 4_25_0，送风温控须绑 4_27_0；控制方式或写点缺失，不通过。</li>
+                  <li><b>冷冻水型设计点：</b>设计进水、进风、出风温度缺一，不通过，仿真用同组参数估算、标低置信；设计出风不低于进风或反算不收敛，提示。进出水温差、进风湿度缺省 5℃、50%RH。</li>
+                  <li>其他必填属性缺失，不通过。以上不通过均为该空调不参与寻优。投出空调只查额定风量和供冷关系，缺了只提示。</li>
+                </ul>
               </div>
             </div>
             <div class="anno anno-data" data-version="v2.9">
@@ -795,10 +794,12 @@
               <span class="anno-version">v2.9</span>
               <span class="anno-source">需求文档</span>
               <div class="anno-body">
-                <p><b>关联模块：</b>规则 — 数量、控制型与设计点</p>
-                <p>② 数量与组件数不一致记提示（CONFIG_SUSPECT(COMP_NUM)），按实例数计算。</p>
-                <p>③ 回风温控需绑 4_25_0，送风温控需绑 4_27_0；控制型或写点缺失记不通过（INPUT_MISSING）。</p>
-                <p>④ 冷冻水型 designWaterInTemp、designAirInTemp、designAirOutTemp 缺一记不通过；设计出风 ≥ 进风或反解不收敛记提示（CONFIG_SUSPECT(DESIGN_POINT)）。缺设计进出水温差、进风湿度分别按 5℃、50%RH。其他必填缺失记不通过。</p>
+                <p><b>关联模块：</b>校验规则 · 拓扑完整性</p>
+                <ul>
+                  <li>逐对象查：参与寻优的空调至少 1 条供冷关系；投入冷点至少 1 台空调供冷；投入且配了安全边界的热点至少 1 个冷点换热进来；每条热通道至少关联 1 个热点。无封闭机房不查后两项。</li>
+                  <li>封闭热通道机房（空调组 aisleSealedMode）的空调须配来自投入热点的回风关系；封闭冷通道、无封闭不查。</li>
+                  <li>任一项缺失为不通过，机房不能寻优；关系行挂在对应空调、冷点、热点或热通道下。</li>
+                </ul>
               </div>
             </div>
             <div class="anno anno-data" data-version="v2.9">
@@ -806,9 +807,11 @@
               <span class="anno-version">v2.9</span>
               <span class="anno-source">需求文档</span>
               <div class="anno-body">
-                <p><b>关联模块：</b>规则 — 拓扑完整性</p>
-                <p>⑤ 每台参与寻优空调至少有 1 条供冷冷点边，每个投入冷点至少有 1 条入边。每个投入且有安全边界的热点至少有 1 条换热入边；每条投入通道至少有 1 个热点，无封闭机房不查这两项。</p>
-                <p>封闭热通道机房里每台参与寻优空调须有来自投入热点的回风入边；封闭冷通道可不配，无封闭不查。上述缺失记不通过（TOPOLOGY_INCOMPLETE），机房寻优跳过，回风关系逐台一行。</p>
+                <p><b>关联模块：</b>校验规则 · 关键测点绑定</p>
+                <ul>
+                  <li><b>不通过：</b>投入空调运行状态 <code>2_167_0</code>、回风温度 <code>1_21_0</code>、送风温度 <code>1_22_0</code>、有功功率 <code>1_627_0</code>、风冷型室外干球 <code>1_2987_0</code> 未绑，该空调不参与寻优；投入传感器温度 <code>1_1_0</code>、空调设备组 IT 功率 <code>1_105_0</code> 未绑，机房不能寻优（不需检查的传感器可投出）。</li>
+                  <li><b>提示：</b>可选测点未绑，或近 7 天有效数据不足一半；影响：风机转速 <code>1_3152_0</code>（按上限估算风量）、风机上限 <code>4_90_0</code> 和水阀上限 <code>3_2001_0</code>（不调）、进水温度 <code>1_27_0</code>（取冷站供水 +0.5℃）、湿度 <code>1_960_0</code>（不查湿度）、压缩机转速 / 状态、水阀开度（模型标低置信）。</li>
+                </ul>
               </div>
             </div>
             <div class="anno anno-data" data-version="v2.9">
@@ -816,52 +819,17 @@
               <span class="anno-version">v2.9</span>
               <span class="anno-source">需求文档</span>
               <div class="anno-body">
-                <p><b>关联模块：</b>规则 — 关键测点绑定（投入空调）</p>
-                <p>运行状态 <code>2_167_0</code>、回风温度 <code>1_21_0</code>、送风温度 <code>1_22_0</code>、有功功率 <code>1_627_0</code> 必需，风冷型另需室外干球 <code>1_2987_0</code>；未绑记不通过（INPUT_MISSING），该空调不参与寻优。主温度设定写点由③检查，不重复。已绑但近 7 天有效样本不足 50% 记提示「长期无值」。</p>
-                <p>可选测点未绑记提示：风机转速 <code>1_3152_0</code> 缺失，风量按上限设定估算；上限写点 <code>4_90_0</code> 缺失，风机上限不调整；冷冻水型缺 <code>3_2001_0</code> 水阀不调整，缺 <code>1_27_0</code> 取冷站供水温度 +0.5℃；缺压缩机转速 / 状态或水阀开度时，送风温度、功率模型标低置信。</p>
-              </div>
-            </div>
-            <div class="anno anno-data" data-version="v2.9">
-              <span class="anno-tag">数据逻辑</span>
-              <span class="anno-version">v2.9</span>
-              <span class="anno-source">需求文档</span>
-              <div class="anno-body">
-                <p><b>关联模块：</b>规则 — 关键测点绑定（传感器与设备组）</p>
-                <p>投入温湿度传感器温度 <code>1_1_0</code> 未绑记不通过（INPUT_MISSING），机房寻优跳过；不需要检查的测点请投出。湿度 <code>1_960_0</code> 未绑记提示「该点不做湿度检查」。</p>
-                <p>空调设备组 IT 功率 <code>1_105_0</code> 未绑记不通过（INPUT_MISSING），机房寻优跳过。</p>
-              </div>
-            </div>
-            <div class="anno anno-data" data-version="v2.9">
-              <span class="anno-tag">数据逻辑</span>
-              <span class="anno-version">v2.9</span>
-              <span class="anno-source">需求文档</span>
-              <div class="anno-body">
-                <p><b>关联模块：</b>规则 — 测点数据合理性</p>
-                <p>只查已绑且近 7 天有数据的测点，用 5 分钟数据；不足 24 小时记数据不足。异常记提示（CONFIG_SUSPECT(POINT_DATA)）。越界：超出物模型量程或物理范围（温度 0～60℃、湿度 0～100%RH、转速 / 开度 0～100%、功率 ≥ 0），占比 &gt; 5%。</p>
-                <p>写死：连续 12 小时极差 &lt; ε 且邻点同期有变化（温度 0.02℃、功率 0.1 kW、转速 / 开度 0.1%）。跳变：相邻 5 分钟温差 &gt; 5℃ 或功率差 &gt; 额定功率 50%，排除启停。物理关系占比 &gt; 5%：运行时送风 ≥ 回风、热点 &lt; 所连冷点、功率与运行状态不符、风机转速 &gt; 上限 +5%。</p>
+                <p><b>关联模块：</b>校验规则 · 测点数据合理性</p>
+                <ul>
+                  <li>只查投入对象已绑且近 7 天有数据的测点，用 5 分钟数据；不足 24 小时为数据不足。以下异常均为提示。</li>
+                  <li><b>越界：</b>超出物模型量程或物理范围（温度 0～60℃、湿度 0～100%RH、转速 / 开度 0～100%、功率 ≥ 0），占比 &gt; 5%。</li>
+                  <li><b>写死：</b>连续 12 小时极差 &lt; ε（温度 0.02℃、功率 0.1 kW、转速 / 开度 0.1%），且邻近测点同期在变。</li>
+                  <li><b>跳变：</b>相邻 5 分钟温差 &gt; 5℃ 或功率差 &gt; 额定功率 50%，启停时刻除外。</li>
+                  <li><b>物理关系（占比 &gt; 5%）：</b>运行时送风 ≥ 回风、热点低于所连冷点、功率与运行状态不符、风机转速超过上限设定 5% 以上。</li>
+                </ul>
               </div>
             </div>
 
-            <div class="anno anno-ux" data-version="v2.9">
-              <span class="anno-tag">交互说明</span>
-              <span class="anno-version">v2.9</span>
-              <span class="anno-source">产品推断</span>
-              <div class="anno-body">
-                <p><b>关联模块：</b>最新值</p>
-                <p>点测点的最新值弹出历史数据曲线（复用平台历史弹窗，近 7 天 5 分钟数据）；静态属性、关系和未绑测点的最新值不可点。</p>
-              </div>
-            </div>
-
-            <div class="anno anno-edge" data-version="v2.9">
-              <span class="anno-tag">边界与异常</span>
-              <span class="anno-version">v2.9</span>
-              <span class="anno-source">需求文档</span>
-              <div class="anno-body">
-                <p><b>关联模块：</b>结果判定边界</p>
-                <p>空调缺必需输入先移出可动作集；运行中且物理量无法估计时寻优整轮跳过，本页不替代每轮运行态判定。全部投出或未关联空调时可动作集为空，机房寻优跳过。</p>
-                <p>投出空调只查额定风量和供冷关系，缺失记提示、仿真不计该台送风，不影响结论。封闭方式读空调组 aisleSealedMode；缺 IT 功率或投入传感器温度未绑，均单独使机房寻优跳过。</p>
-              </div>
-            </div>
             <!-- ====== /批注区 ====== -->
 
             <div class="table-wrap" id="tableArea">
@@ -920,7 +888,7 @@
         'dtdl:asset:AirCooledPAC': {
           name: '风冷型精密空调',
           props: [
-            { id: 'controlMode', label: '控制型', required: true, options: { '0': '回风温控', '1': '送风温控' } },
+            { id: 'controlMode', label: '控制方式', required: true, options: { '0': '回风温控', '1': '送风温控' } },
             { id: 'air_volume', label: '风量', required: true },
             { id: 'refrigerating_capacity', label: '额定制冷量', required: true },
             { id: 'ratedPower', label: '额定功率', required: true },
@@ -932,7 +900,7 @@
         'dtdl:asset:ChilledWaterPAC': {
           name: '冷冻水型精密空调',
           props: [
-            { id: 'controlMode', label: '控制型', required: true, options: { '0': '回风温控', '1': '送风温控' } },
+            { id: 'controlMode', label: '控制方式', required: true, options: { '0': '回风温控', '1': '送风温控' } },
             { id: 'air_volume', label: '风量', required: true },
             { id: 'refrigerating_capacity', label: '额定制冷量', required: true },
             { id: 'ratedPower', label: '额定功率', required: true },
@@ -946,70 +914,72 @@
       };
       var CONTROL_POINTS = { '0': { id: '4_25_0', label: '回风温度设定' }, '1': { id: '4_27_0', label: '送风温度设定' } };
 
-      /* 演示场景：101 = 创建页示例 4 台（2 台 ERROR 不阻断）；102 = 拓扑不完整阻断；103 = 通过 */
+      /* 演示场景：101 = 创建页示例 4 台（2 台 ERROR 不阻断）；102 = 拓扑不完整阻断；103 = 通过。
+         关系：feeds = 空调供冷到哪些冷点；returns = 回风来自哪些热点；heatTo = 冷点换热到哪些热点；hotAisles.includes = 热通道包含哪些热点 */
       var ROOMS = {
         '101': {
-          name: '101机房', checkedAt: '2026-10-31 10:20:15',
+          name: '101机房', checkedAt: '2026-10-31 10:20:15', sealed: 'cold',
           devices: [
-            { id: 'ac-1', name: '1#空调', location: '1号机楼/1层/A机房', typeId: 'dtdl:asset:AirCooledPAC', active: true,
+            { id: 'ac-1', name: '1#空调', feeds: ['c1', 'c2'], location: '1号机楼/1层/A机房', typeId: 'dtdl:asset:AirCooledPAC', active: true,
               attrs: { controlMode: '1', air_volume: '12000', refrigerating_capacity: '45', ratedPower: '14.5', regulationType: '2', compressors_num: '2', cop: '3.10' },
               points: ['4_25_0', '4_27_0', '4_90_0', '4_91_0'], compInstances: 2, speedEvidence: { source: '1_1052_10#j', midRatio: 0.58 } },
-            { id: 'ac-2', name: '2#空调', location: '1号机楼/1层/A机房', typeId: 'dtdl:asset:AirCooledPAC', active: true,
+            { id: 'ac-2', name: '2#空调', feeds: ['c1', 'c2', 'c3'], location: '1号机楼/1层/A机房', typeId: 'dtdl:asset:AirCooledPAC', active: true,
               attrs: { controlMode: '1', air_volume: '9800', refrigerating_capacity: '35', ratedPower: '11.8', regulationType: '0', compressors_num: '2', cop: '2.97' },
               points: ['4_25_0', '4_90_0'], compInstances: 3, speedEvidence: { source: '1_1052_10#j', midRatio: 0.34 } },
-            { id: 'ac-3', name: '3#空调', location: '1号机楼/1层/A机房', typeId: 'dtdl:asset:ChilledWaterPAC', active: true,
+            { id: 'ac-3', name: '3#空调', feeds: ['c2', 'c3'], location: '1号机楼/1层/A机房', typeId: 'dtdl:asset:ChilledWaterPAC', active: true,
               attrs: { controlMode: '0', air_volume: '21000', refrigerating_capacity: '80', ratedPower: '6.5', designWaterInTemp: '12', designWaterDeltaT: '5', designAirInTemp: '30', designAirInRH: '', designAirOutTemp: '18' },
               points: ['4_25_0', '4_90_0', '4_91_0', '3_2001_0', '1_4_0'] },
-            { id: 'ac-4', name: '4#空调', location: '1号机楼/1层/A机房', typeId: 'dtdl:asset:ChilledWaterPAC', active: true, legacy: true,
+            { id: 'ac-4', name: '4#空调', feeds: ['c3'], location: '1号机楼/1层/A机房', typeId: 'dtdl:asset:ChilledWaterPAC', active: true, legacy: true,
               attrs: { controlMode: '0', air_volume: '21000', refrigerating_capacity: '80', ratedPower: '6.5', designWaterInTemp: '12', designWaterDeltaT: '', designAirInTemp: '30', designAirInRH: '', designAirOutTemp: '' },
               points: ['4_25_0', '4_90_0', '3_2001_0', '1_4_0'] }
           ],
-          topology: [
-            { rule: '空调 → 冷点 feedsAir', ok: true, msg: '4 台投入空调均有 feedsAir 冷点边（共 9 条）' },
-            { rule: '冷点入边', ok: true, msg: '6 个投入冷点均有 ≥ 1 条入边' },
-            { rule: '热点换热入边', ok: true, msg: '4 个已配安全边界的热点均有换热入边' },
-            { rule: '通道 → 热点', ok: true, msg: '3 条投入通道均关联热点' },
-            { rule: '热点 → 空调 回风', ok: true, msg: '封闭冷通道机房：回风关系可不配；1#、2#空调已配（共 3 条），回推回风取所连热点所属通道的排风温度等权平均；3#、4#空调未配，按供气份额加权（供气对称）' }
-          ]
+          sensors: [
+            { id: 'c1', name: '1#温湿度传感器', side: 'cold', heatTo: ['h1'] },
+            { id: 'c2', name: '2#温湿度传感器', side: 'cold', heatTo: ['h1', 'h2'] },
+            { id: 'c3', name: '3#温湿度传感器', side: 'cold', heatTo: ['h2'] },
+            { id: 'h1', name: '4#温湿度传感器', side: 'hot', bounded: true },
+            { id: 'h2', name: '5#温湿度传感器', side: 'hot', bounded: true }
+          ],
+          hotAisles: [{ id: 'ha1', name: '热通道分组1', includes: ['h1', 'h2'] }]
         },
         '102': {
-          name: '102机房', checkedAt: '2026-10-31 09:48:02',
+          name: '102机房', checkedAt: '2026-10-31 09:48:02', sealed: 'hot',
           devices: [
-            { id: 'ac-5', name: '5#空调', location: '1号机楼/1层/B机房', typeId: 'dtdl:asset:AirCooledPAC', active: true,
+            { id: 'ac-5', name: '5#空调', feeds: ['c1'], returns: ['h1', 'h2'], location: '1号机楼/1层/B机房', typeId: 'dtdl:asset:AirCooledPAC', active: true,
               attrs: { controlMode: '0', air_volume: '12000', refrigerating_capacity: '45', ratedPower: '14.5', regulationType: '2', compressors_num: '2', cop: '3.10' },
               points: ['4_25_0', '4_90_0'], compInstances: 2, speedEvidence: { source: '1_2985_0 / 1_2994_0', midRatio: 0.61 } },
-            { id: 'ac-6', name: '6#空调', location: '1号机楼/1层/B机房', typeId: 'dtdl:asset:ChilledWaterPAC', active: true,
+            { id: 'ac-6', name: '6#空调', feeds: ['c1'], returns: [], location: '1号机楼/1层/B机房', typeId: 'dtdl:asset:ChilledWaterPAC', active: true,
               attrs: { controlMode: '1', air_volume: '21000', refrigerating_capacity: '80', ratedPower: '6.5', designWaterInTemp: '12', designWaterDeltaT: '6', designAirInTemp: '32', designAirInRH: '45', designAirOutTemp: '20' },
               points: ['4_27_0', '4_90_0', '3_2001_0', '1_4_0'] },
-            { id: 'ac-7', name: '7#空调', location: '1号机楼/1层/B机房', typeId: 'dtdl:asset:AirCooledPAC', active: false,
+            { id: 'ac-7', name: '7#空调', feeds: ['c1'], location: '1号机楼/1层/B机房', typeId: 'dtdl:asset:AirCooledPAC', active: false,
               attrs: { controlMode: '0', air_volume: '9800', refrigerating_capacity: '35', ratedPower: '11.8', regulationType: '0', compressors_num: '1', cop: '2.97' },
-              points: ['4_25_0'], compInstances: 1, feedsAir: ['cold-1'] }
+              points: ['4_25_0'], compInstances: 1 }
           ],
-          topology: [
-            { rule: '空调 → 冷点 feedsAir', ok: true, msg: '2 台投入空调均有 feedsAir 冷点边（共 4 条）' },
-            { rule: '冷点入边', ok: false, target: '冷通道分组1 · 3#温湿度传感器（冷点）', msg: '投入冷点无任何入边：没有空调对它 feedsAir，仿真无法给出该点温度' },
-            { rule: '热点换热入边', ok: true, msg: '2 个已配安全边界的热点均有换热入边' },
-            { rule: '通道 → 热点', ok: false, target: '热通道分组2', msg: '投入通道未关联任何热点（温湿度传感器），无法评估该通道热侧约束' },
-            { rule: '热点 → 空调 回风', ok: false, target: '6#空调', msg: '封闭热通道机房每台参与寻优的空调须配回风关系：6#空调未配置回风来源热点，仿真无法确定它从哪些通道回风（5#空调已配 2 条；7#空调投出，不要求回风关系）' }
-          ]
+          sensors: [
+            { id: 'c1', name: '1#温湿度传感器', side: 'cold', heatTo: ['h1', 'h2'] },
+            { id: 'c2', name: '2#温湿度传感器', side: 'cold', heatTo: ['h2'] },
+            { id: 'h1', name: '3#温湿度传感器', side: 'hot', bounded: true },
+            { id: 'h2', name: '4#温湿度传感器', side: 'hot', bounded: true }
+          ],
+          hotAisles: [{ id: 'ha1', name: '热通道分组1', includes: ['h1', 'h2'] }, { id: 'ha2', name: '热通道分组2', includes: [] }]
         },
         '103': {
-          name: '103机房', checkedAt: '2026-10-30 18:05:40',
+          name: '103机房', checkedAt: '2026-10-30 18:05:40', sealed: 'cold',
           devices: [
-            { id: 'ac-8', name: '8#空调', location: '1号机楼/2层/C机房', typeId: 'dtdl:asset:AirCooledPAC', active: true,
+            { id: 'ac-8', name: '8#空调', feeds: ['c1', 'c2'], location: '1号机楼/2层/C机房', typeId: 'dtdl:asset:AirCooledPAC', active: true,
               attrs: { controlMode: '0', air_volume: '15000', refrigerating_capacity: '60', ratedPower: '18.2', regulationType: '1', compressors_num: '2', cop: '3.30' },
               points: ['4_25_0', '4_90_0'], compInstances: 2 },
-            { id: 'ac-9', name: '9#空调', location: '1号机楼/2层/C机房', typeId: 'dtdl:asset:ChilledWaterPAC', active: true,
+            { id: 'ac-9', name: '9#空调', feeds: ['c1', 'c2'], location: '1号机楼/2层/C机房', typeId: 'dtdl:asset:ChilledWaterPAC', active: true,
               attrs: { controlMode: '0', air_volume: '24000', refrigerating_capacity: '95', ratedPower: '7.2', designWaterInTemp: '14', designWaterDeltaT: '', designAirInTemp: '32', designAirInRH: '', designAirOutTemp: '21' },
               points: ['4_25_0', '4_90_0', '3_2001_0', '1_4_0'] }
           ],
-          topology: [
-            { rule: '空调 → 冷点 feedsAir', ok: true, msg: '2 台投入空调均有 feedsAir 冷点边（共 4 条）' },
-            { rule: '冷点入边', ok: true, msg: '4 个投入冷点均有 ≥ 1 条入边' },
-            { rule: '热点换热入边', ok: true, msg: '2 个已配安全边界的热点均有换热入边' },
-            { rule: '通道 → 热点', ok: true, msg: '2 条投入通道均关联热点' },
-            { rule: '热点 → 空调 回风', ok: true, msg: '封闭冷通道机房：回风关系可不配；8#空调已配 2 条，回推回风取所连热点所属通道的排风温度等权平均；9#空调未配，按供气份额加权（供气对称）' }
-          ]
+          sensors: [
+            { id: 'c1', name: '1#温湿度传感器', side: 'cold', heatTo: ['h1'] },
+            { id: 'c2', name: '2#温湿度传感器', side: 'cold', heatTo: ['h2'] },
+            { id: 'h1', name: '3#温湿度传感器', side: 'hot', bounded: true },
+            { id: 'h2', name: '4#温湿度传感器', side: 'hot', bounded: true }
+          ],
+          hotAisles: [{ id: 'ha1', name: '热通道分组1', includes: ['h1', 'h2'] }]
         }
       };
 
@@ -1025,10 +995,7 @@
           }
           d.points = d.points.concat(common, extra);
         });
-        demo.sensors = [
-          { id: 'cold-' + key, name: '冷通道分组1 · 1#温湿度传感器（冷点）', active: true, points: ['1_1_0', '1_960_0'] },
-          { id: 'hot-' + key, name: '热通道分组1 · 1#温湿度传感器（热点）', active: true, points: ['1_1_0', '1_960_0'] }
-        ];
+        demo.sensors.forEach(function (s) { s.active = true; s.points = ['1_1_0', '1_960_0']; });
         demo.group = { id: 'group-' + key, name: key + '机房空调设备组', points: ['1_105_0'] };
         demo.devices.concat(demo.sensors, [demo.group]).forEach(function (item) {
           item.pointData = {};
@@ -1036,11 +1003,12 @@
         });
       });
       ROOMS['101'].devices[0].points = ROOMS['101'].devices[0].points.filter(function (id) { return id !== '1_3152_0'; });
-      ROOMS['101'].sensors[0].points = ['1_1_0'];
+      function sensorOf(key, id) { return ROOMS[key].sensors.filter(function (x) { return x.id === id; })[0]; }
+      sensorOf('101', 'c1').points = ['1_1_0'];
       ROOMS['101'].devices[2].pointData['1_22_0'].relations = [
         { hits: 242, total: 2016, msg: '运行时送风温度 ≥ 回风温度，疑似送回风绑反' }
       ];
-      ROOMS['101'].sensors[1].pointData['1_1_0'].flat = [
+      sensorOf('101', 'h1').pointData['1_1_0'].flat = [
         { hours: 14, range: 0.01, neighborChanged: true }
       ];
       ROOMS['101'].devices[2].pointData['1_27_0'] = { valid: 720, hours: 60, latest: '10-30 11:00' };
@@ -1051,8 +1019,8 @@
         { minutes: 5, delta: 6.2, startStop: true }
       ];
       ROOMS['102'].group.points = [];
-      ROOMS['102'].sensors[1].points = ['1_960_0'];
-      ROOMS['102'].sensors[0].pointData['1_1_0'] = { valid: 144, hours: 12, latest: '10-30 14:05' };
+      sensorOf('102', 'h1').points = ['1_960_0'];
+      sensorOf('102', 'c1').pointData['1_1_0'] = { valid: 144, hours: 12, latest: '10-30 14:05' };
 
       var params = new URLSearchParams(location.search);
       var roomKey = params.get('room') || '101';
@@ -1172,37 +1140,41 @@
         if (!item.active) {
           if (isEmpty(A.air_volume)) add('WARN', '投出空调送风计算项', 'INPUT_MISSING', 'air_volume', '投出空调未填额定风量，仿真不计这台送风');
           else add('PASS', '投出空调送风计算项', '已校验', 'air_volume', '额定风量已填：' + A.air_volume + ' m³/h');
-          if (!(item.feedsAir || []).length) add('WARN', '投出空调送风计算项', 'INPUT_MISSING', 'feedsAir', '投出空调未配供冷关系（feedsAir 冷点边），仿真不计这台送风');
-          else add('PASS', '投出空调送风计算项', '已校验', 'feedsAir', '已配置 ' + item.feedsAir.length + ' 条 feedsAir 冷点边');
+          var nf = (item.feeds || []).length;
+          if (!nf) add('WARN', '投出空调送风计算项', 'INPUT_MISSING', 'feedsAir', '投出空调未配供冷关系，运行时仿真不计这台的送风');
+          else add('PASS', '投出空调送风计算项', '已校验', 'feedsAir', '已配供冷关系');
+          f[f.length - 1].value = nf ? nf + ' 个冷点' : '未配置';
           return { status: f.some(function (x) { return x.level === 'WARN'; }) ? 'offWarn' : 'off', findings: f };
         }
 
         if (has('regulationType') && !isEmpty(A.regulationType)) {
           var ev = item.speedEvidence;
           var regLabel = propOf(schema, 'regulationType').options[A.regulationType];
-          if (!ev) add('INFO', '① 调节方式一致性', '无法校验', 'regulationType', '证据源 1_1052_10#j、1_2985_0 / 1_2994_0 均未绑点，无法判断属性「' + regLabel + '」是否与运行一致；补绑后重新校验', 'bind');
-          else if (A.regulationType === '0' && ev.midRatio > 0.2) add('WARN', '① 调节方式一致性', 'CONFIG_SUSPECT(REG_TYPE)', 'regulationType', '属性为 0 定频启停，但 ' + ev.source + ' 近 7 天持续出现中间值（10%～90% 占比 ' + Math.round(ev.midRatio * 100) + '% > 20%），疑似应为数码涡旋 / 变频');
+          if (!ev) add('INFO', '① 调节方式一致性', '无法校验', 'regulationType', '压缩机转速、频率测点都没绑，无法判断「' + regLabel + '」是否与实际运行一致；补绑后重新校验', 'bind');
+          else if (A.regulationType === '0' && ev.midRatio > 0.2) add('WARN', '① 调节方式一致性', 'CONFIG_SUSPECT(REG_TYPE)', 'regulationType', '属性为定频启停，但压缩机' + (ev.source.indexOf('1_1052') === 0 ? '转速' : '频率') + '近 7 天常出现中间值（10%～90% 占比 ' + Math.round(ev.midRatio * 100) + '%，超过 20%），疑似应为数码涡旋或变频');
           else add('PASS', '① 调节方式一致性', '已校验', 'regulationType', '证据源 ' + ev.source + '，中间值占比 ' + Math.round(ev.midRatio * 100) + '%，与「' + regLabel + '」一致');
         }
         if (has('compressors_num') && !isEmpty(A.compressors_num)) {
           var n = Number(A.compressors_num), nc = item.compInstances || 0;
-          if (n !== nc) add('WARN', '② 压缩机数量一致性', 'CONFIG_SUSPECT(COMP_NUM)', 'compressors_num', '属性值 ' + n + ' 台，压缩机组件（组件 ID 10）实例 #j 计数 N_comp = ' + nc + '；模型按实例数 ' + nc + ' 台计算');
+          if (n !== nc) add('WARN', '② 压缩机数量一致性', 'CONFIG_SUSPECT(COMP_NUM)', 'compressors_num', '属性填 ' + n + ' 台，实际接入的压缩机组件有 ' + nc + ' 个；模型按 ' + nc + ' 台计算');
           else add('PASS', '② 压缩机数量一致性', '已校验', 'compressors_num', '属性值 ' + n + ' 台 = 压缩机组件实例数 ' + nc);
         }
         var cp = CONTROL_POINTS[A.controlMode];
         if (!cp) {
-          add('ERROR', '③ 控制型与绑点一致性', 'INPUT_MISSING', 'controlMode', '控制型未维护，无法分派主控制变量（缺省可按绑点推断：有 4_27_0 历史为送风温控，否则回风温控，需确认）', 'attr');
+          add('ERROR', '③ 控制方式与绑点一致性', 'INPUT_MISSING', 'controlMode', '控制方式未填，不知道该调回风温度设定还是送风温度设定', 'attr');
         } else if (pts.indexOf(cp.id) < 0) {
-          var bound = pts.filter(function (x) { return x === '4_25_0' || x === '4_27_0'; }).join('、') || '无';
-          add('ERROR', '③ 控制型与绑点一致性', 'INPUT_MISSING', 'controlMode', 'controlMode = ' + A.controlMode + ' ' + propOf(schema, 'controlMode').options[A.controlMode] + '，但未绑 ' + cp.label + ' 写点 ' + cp.id + '（已绑温度设定写点：' + bound + '）；二选一：改控制型或补绑写点', 'point');
+          var bound = pts.filter(function (x) { return x === '4_25_0' || x === '4_27_0'; }).map(function (x) { return POINT_NAMES[x] + '（' + x + '）'; }).join('、') || '无';
+          add('ERROR', '③ 控制方式与绑点一致性', 'INPUT_MISSING', 'controlMode', '控制方式为' + propOf(schema, 'controlMode').options[A.controlMode] + '，但没绑' + cp.label + '写点（' + cp.id + '），已绑：' + bound + '；改控制方式或补绑写点', 'point');
         } else {
-          add('PASS', '③ 控制型与绑点一致性', '已校验', 'controlMode', propOf(schema, 'controlMode').options[A.controlMode] + '，已绑 ' + cp.label + ' ' + cp.id);
+          add('PASS', '③ 控制方式与绑点一致性', '已校验', 'controlMode', propOf(schema, 'controlMode').options[A.controlMode] + '，已绑 ' + cp.label + ' ' + cp.id);
         }
         if (has('designWaterInTemp')) {
           var need = ['designWaterInTemp', 'designAirInTemp', 'designAirOutTemp'];
           var miss = need.filter(function (id) { return isEmpty(A[id]); });
           if (miss.length) {
-            add('ERROR', '④ 设计点完整性', 'INPUT_MISSING', miss.join(' / '), '设计点缺 ' + miss.map(function (id) { return labelOf(schema, id) + '（' + id + '）'; }).join('、') + '；设计水流量与盘管 UA 由设计点反算，缺失无法建模' + (item.legacy ? '。存量冷冻水项目：移出可动作集，不阻断机房' : ''), 'attr');
+            miss.forEach(function (id) {
+              add('ERROR', '④ 设计点完整性', 'INPUT_MISSING', id, labelOf(schema, id) + '未填，无法反算设计水流量和盘管换热能力；暂用同组参数估算、标低置信', 'attr');
+            });
           } else if (Number(A.designAirOutTemp) >= Number(A.designAirInTemp)) {
             add('WARN', '④ 设计点完整性', 'CONFIG_SUSPECT(DESIGN_POINT)', 'designAirOutTemp', '设计出风温度 ' + A.designAirOutTemp + '℃ ≥ 设计进风温度 ' + A.designAirInTemp + '℃');
           } else {
@@ -1214,21 +1186,40 @@
         }
         var handled = ['controlMode', 'designWaterInTemp', 'designAirInTemp', 'designAirOutTemp'];
         schema.props.forEach(function (p) {
-          if (p.required && isEmpty(A[p.id]) && handled.indexOf(p.id) < 0) add('ERROR', '必填属性完整性', 'INPUT_MISSING', p.id, p.label + ' 未维护', 'attr');
+          if (p.required && isEmpty(A[p.id]) && handled.indexOf(p.id) < 0) add('ERROR', '必填属性完整性', 'INPUT_MISSING', p.id, p.label + '未填', 'attr');
         });
         f = f.concat(checkPoints(item, 'ac'));
         var status = f.some(function (x) { return x.level === 'ERROR'; }) ? 'error' : f.some(function (x) { return x.level === 'WARN'; }) ? 'warn' : 'ok';
         return { status: status, findings: f };
       }
 
+      /* ⑤ 拓扑完整性逐对象检查：空调的供冷 / 回风关系、冷点的供冷来源、热点的换热来源、热通道的关联热点。 */
+      function checkTopology() {
+        var out = [], sensors = room.sensors || [];
+        function add(obj, rel, n, unit, msg) {
+          out.push({ level: n ? 'PASS' : 'ERROR', check: '⑤ 拓扑完整性', code: n ? '已校验' : 'TOPOLOGY_INCOMPLETE', prop: rel,
+            objKey: obj.id, target: obj.name, value: n ? n + ' ' + unit : '未配置', msg: n ? '已配置' : msg, fix: n ? null : 'topo' });
+        }
+        room.devices.forEach(function (d) {
+          if (!d.active) return;
+          add(d, 'supply', (d.feeds || []).length, '个冷点', '没有配供冷关系，仿真不知道这台空调送风到哪些冷点');
+          if (room.sealed === 'hot') add(d, 'return', (d.returns || []).length, '个热点', '封闭热通道机房的空调必须配回风关系：这台没配回风来自哪些热点，仿真算不出它的回风温度');
+        });
+        sensors.forEach(function (x) {
+          if (!x.active) return;
+          if (x.side === 'cold') add(x, 'source', room.devices.filter(function (d) { return (d.feeds || []).indexOf(x.id) >= 0; }).length, '台空调', '没有空调配供冷关系到这个冷点，仿真算不出该点温度');
+          else if (x.bounded) add(x, 'heat', sensors.filter(function (c) { return (c.heatTo || []).indexOf(x.id) >= 0; }).length, '个冷点', '没有冷点配换热关系到这个热点，仿真算不出该点温度');
+        });
+        (room.hotAisles || []).forEach(function (a) {
+          add(a, 'aisle', (a.includes || []).length, '个热点', '这条热通道没有关联温湿度传感器，查不了该通道的热通道温度上限');
+        });
+        return out;
+      }
+
       function runCheck() {
         var dev = {};
         room.devices.forEach(function (d) { dev[d.id] = checkDevice(d); });
-        var topo = room.topology.map(function (t) {
-          return t.ok
-            ? { level: 'PASS', check: '⑤ 拓扑完整性', code: '已校验', prop: t.rule, msg: t.msg, target: '机房拓扑' }
-            : { level: 'ERROR', check: '⑤ 拓扑完整性', code: 'TOPOLOGY_INCOMPLETE', prop: t.rule, msg: t.msg, target: t.target, fix: 'topo' };
-        });
+        var topo = checkTopology();
         var extra = [];
         (room.sensors || []).concat([room.group]).forEach(function (item) {
           var kind = item === room.group ? 'group' : 'sensor';
@@ -1277,7 +1268,15 @@
       };
       var UNIT = { air_volume: 'm³/h', refrigerating_capacity: 'kW', ratedPower: 'kW', compressors_num: '台',
         designWaterInTemp: '℃', designWaterDeltaT: '℃', designAirInTemp: '℃', designAirInRH: '%RH', designAirOutTemp: '℃' };
-      var SUMMARY_PROPS = { '测点绑定汇总': '测点绑定（汇总）', '测点数据汇总': '测点数据（汇总）', '设计点': '设计点（汇总）' };
+      // 每个属性、测点、关系各占一行（同冷站）；汇总类「通过」结论不单独成行。
+      var SUMMARY_PROPS = { '测点绑定汇总': 1, '测点数据汇总': 1, '设计点': 1 };
+      // 关系行的名称与关系类型：供冷 ACTerminal::feedsAir；换热、回风复用 THSensor::feedsAir；热通道包含传感器 Aisle::includes。
+      var REL_META = {
+        supply: ['供冷关系', 'ACTerminal::feedsAir'], feedsAir: ['供冷关系', 'ACTerminal::feedsAir'],
+        source: ['供冷来源', 'ACTerminal::feedsAir'], heat: ['换热来源', 'THSensor::feedsAir'],
+        'return': ['回风关系', 'THSensor::feedsAir'], aisle: ['关联热点', 'Aisle::includes']
+      };
+      var PROP_GROUP = { controlMode: '控制方式与写点', regulationType: '压缩机调节方式', compressors_num: '压缩机数量' };
 
       function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
       function isPointId(id) { return /^\d+_\d+_\d+/.test(id); }
@@ -1305,20 +1304,6 @@
         }
         return { group: c, badge: c };
       }
-      function sourceOf(f) {
-        if (isTopo(f) || f.prop === 'feedsAir') return 'topo';
-        if (f.prop === '测点绑定汇总' || f.prop === '测点数据汇总' || isPointId(f.prop)) return 'binding';
-        return 'static';
-      }
-      function nameOf(f, item) {
-        if (SUMMARY_PROPS[f.prop]) return SUMMARY_PROPS[f.prop];
-        if (f.prop === 'feedsAir') return '供冷关系';
-        if (isTopo(f)) return f.prop;
-        if (isPointId(f.prop)) return pointName(f.prop) || f.prop;
-        var schema = item && MODEL_SCHEMA[item.typeId];
-        return f.prop.split(' / ').map(function (id) { return schema ? labelOf(schema, id) : id; }).join(' / ');
-      }
-      function idOf(f) { return (SUMMARY_PROPS[f.prop] || isTopo(f)) ? '—' : f.prop; }
       function demoValue(id, item) {
         var k = Number(String(item.name || '').replace(/\D/g, '').slice(-1)) || 0, d = (k % 5) * 0.3;
         if (id === '2_167_0' || /^2_186_10#/.test(id)) return '运行';
@@ -1332,42 +1317,83 @@
         var v = setpoint ? base[0] : base[0] + (unitTemp ? d : (base[1] === 'kW' ? d * 3 : Math.round(d * 10)));
         return v.toFixed(unitTemp || base[1] === 'kW' ? 1 : 0) + ' ' + base[1];
       }
-      function latestOf(f, item, src) {
-        var none = { v: '—', t: '—', curve: false };
-        if (src === 'topo' || !item) return none;
-        if (src === 'static') {
-          var schema = MODEL_SCHEMA[item.typeId], p = schema ? propOf(schema, f.prop) : null, raw = (item.attrs || {})[f.prop];
-          if (!p || isEmpty(raw)) return none;
-          return { v: p.options ? raw + ' ' + p.options[raw] : raw + (UNIT[f.prop] ? ' ' + UNIT[f.prop] : ''), t: '—', curve: false };
-        }
-        if (SUMMARY_PROPS[f.prop]) return none;
-        var ids = f.prop.split(' / '), pts = item.points || [];
-        var id = ids.filter(function (x) { return pts.indexOf(x) >= 0; })[0];
-        var h = id ? (item.pointData || {})[id] : null;
-        if (!h || !h.valid) return none;
+      function propValue(item, id) {
+        var p = propOf(MODEL_SCHEMA[item.typeId], id), raw = (item.attrs || {})[id], unit = UNIT[id] ? ' ' + UNIT[id] : '';
+        if (!p) return '—';
+        if (isEmpty(raw)) return p.defaultValue !== undefined ? p.defaultValue + unit + '（缺省）' : '—';
+        return p.options ? raw + ' ' + p.options[raw] : raw + unit;
+      }
+      function pointLatest(item, id) {
+        var h = (item.pointData || {})[id];
+        if ((item.points || []).indexOf(id) < 0 || !h || !h.valid) return { v: '—', t: '—', curve: false };
         return { v: demoValue(id, item), t: '2026-' + h.latest, curve: true, pointId: id };
       }
 
       var rows = [];
       function buildRows(r) {
         var list = [], order = 0;
-        function push(f, item, object, objKey, kind) {
-          var src = sourceOf(f);
-          list.push({ f: f, item: item, object: object, objKey: objKey, objOrder: order, seq: list.length,
-            name: nameOf(f, item), id: idOf(f), source: src, latest: latestOf(f, item, src),
-            result: RESULT_OF[f.level], rule: ruleOf(f),
-            impact: f.level === 'ERROR' ? (kind === 'ac' ? '该空调不参与寻优' : '机房不能寻优') : '' });
+        function push(o) {
+          var issues = o.findings.filter(function (f) { return f.level !== 'PASS'; });
+          var rank = issues.reduce(function (m, f) { return Math.min(m, RESULT_RANK[RESULT_OF[f.level]]); }, RESULT_RANK.pass);
+          var errs = issues.filter(function (f) { return f.level === 'ERROR'; });
+          var groups = (o.groups || []).slice();
+          o.findings.forEach(function (f) { var g = ruleOf(f).group; if (groups.indexOf(g) < 0) groups.push(g); });
+          list.push({ object: o.item.name, objKey: o.item.id, objOrder: order, seq: list.length, name: o.name, id: o.id,
+            source: o.source, latest: o.latest, issues: issues, groups: groups, result: ['fail', 'notice', 'insuf', 'pass'][rank],
+            impact: !errs.length ? '' : (o.kind === 'ac' && !errs.some(isTopo) ? '该空调不参与寻优' : '机房不能寻优') });
         }
-        room.devices.forEach(function (d) { order++; r.dev[d.id].findings.forEach(function (f) { push(f, d, d.name, d.id, 'ac'); }); });
-        (room.sensors || []).forEach(function (s) {
+        function withProp(fs, key) { return fs.filter(function (f) { return f.prop === key; }); }
+        function own(fs) { return fs.filter(function (f) { return !SUMMARY_PROPS[f.prop]; }); }
+        function topoOf(key) { return r.topo.filter(function (t) { return t.objKey === key; }); }
+        function propRow(item, fs, id, groups) {
+          push({ item: item, kind: 'ac', name: labelOf(MODEL_SCHEMA[item.typeId], id), id: id, source: 'static',
+            latest: { v: propValue(item, id), t: '—', curve: false }, findings: withProp(fs, id),
+            groups: groups || [PROP_GROUP[id] || (/^design/.test(id) ? '冷冻水型设计点' : '必填属性')] });
+        }
+        function pointRows(item, kind, fs) {
+          var pts = item.points || [], keys = [];
+          pointRules(item, kind).forEach(function (rule) {
+            var hit = rule[0].split(' / ').filter(function (id) { return pts.indexOf(id) >= 0; });
+            (hit.length ? hit : [rule[0]]).forEach(function (k) { if (keys.indexOf(k) < 0) keys.push(k); });
+          });
+          pts.forEach(function (id) { if (keys.indexOf(id) < 0) keys.push(id); });
+          keys.forEach(function (k) {
+            var groups = ['关键测点绑定'];
+            if (pts.indexOf(k) >= 0) groups.push('测点数据合理性');
+            if (k === '4_25_0' || k === '4_27_0') groups.push('控制方式与写点');
+            push({ item: item, kind: kind, name: pointName(k) || k, id: k, source: 'binding',
+              latest: pointLatest(item, k), findings: withProp(fs, k), groups: groups });
+          });
+        }
+        function relRows(item, kind, fs) {
+          fs.forEach(function (f) {
+            var meta = REL_META[f.prop];
+            push({ item: item, kind: kind, name: meta[0], id: meta[1], source: 'topo',
+              latest: { v: f.value || '—', t: '—', curve: false }, findings: [f] });
+          });
+        }
+
+        room.devices.forEach(function (d) {
           order++;
-          r.extra.filter(function (f) { return f.deviceId === '__sensors' && f.target === s.name; })
-            .forEach(function (f) { push(f, s, s.name, s.id, 'sensor'); });
+          var fs = own(r.dev[d.id].findings);
+          if (!d.active) {   // 投出空调只查额定风量和供冷关系
+            propRow(d, fs, 'air_volume', []);
+            relRows(d, 'ac', withProp(fs, 'feedsAir'));
+            return;
+          }
+          MODEL_SCHEMA[d.typeId].props.forEach(function (p) { propRow(d, fs, p.id); });
+          pointRows(d, 'ac', fs);
+          relRows(d, 'ac', topoOf(d.id));
+        });
+        (room.sensors || []).forEach(function (x) {
+          if (!x.active) return;
+          order++;
+          pointRows(x, 'sensor', own(r.extra.filter(function (f) { return f.deviceId === '__sensors' && f.target === x.name; })));
+          relRows(x, 'sensor', topoOf(x.id));
         });
         order++;
-        r.extra.filter(function (f) { return f.deviceId === '__group'; }).forEach(function (f) { push(f, room.group, room.group.name, '__group', 'group'); });
-        order++;
-        r.topo.forEach(function (t) { push(t, null, t.level === 'PASS' ? '机房拓扑' : (t.target || '机房拓扑'), '__topo', 'topo'); });
+        pointRows(room.group, 'group', own(r.extra.filter(function (f) { return f.deviceId === '__group'; })));
+        (room.hotAisles || []).forEach(function (a) { order++; relRows(a, 'aisle', topoOf(a.id)); });
         list.sort(function (a, b) { return RESULT_RANK[a.result] - RESULT_RANK[b.result] || a.objOrder - b.objOrder || a.seq - b.seq; });
         list.forEach(function (x, i) { x.index = i; });
         return list;
@@ -1422,7 +1448,8 @@
         obj.innerHTML = '<option value="">全部对象</option>'
           + room.devices.map(function (d) { return '<option value="' + d.id + '">' + esc(d.name) + '</option>'; }).join('')
           + (room.sensors || []).map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; }).join('')
-          + '<option value="__group">空调设备组</option><option value="__topo">机房拓扑</option>';
+          + '<option value="' + room.group.id + '">' + esc(room.group.name) + '</option>'
+          + (room.hotAisles || []).map(function (a) { return '<option value="' + a.id + '">' + esc(a.name) + '</option>'; }).join('');
         obj.value = cur;
         var rule = document.getElementById('filterRule'), rcur = rule.value;
         rule.innerHTML = '<option value="">全部规则</option>' + RULE_GROUPS.map(function (g) { return '<option>' + g + '</option>'; }).join('');
@@ -1431,9 +1458,11 @@
       function rowHtml(x) {
         var res = '<span class="result-tag ' + x.result + '"><span class="result-tag-dot"></span>' + RESULT_LABEL[x.result] + '</span>'
           + (x.impact ? '<span class="result-impact">' + x.impact + '</span>' : '');
-        var desc = x.result === 'pass'
-          ? '<div class="desc-item desc-pass">' + esc(x.f.msg) + '</div>'
-          : '<div class="desc-item"><span class="rule-badge ' + x.result + '">' + x.rule.badge + '</span>' + esc(x.f.msg.replace(/^长期无值：/, '')) + '</div>';
+        var desc = x.issues.length
+          ? x.issues.map(function (f) {
+              return '<div class="desc-item"><span class="rule-badge ' + RESULT_OF[f.level] + '">' + ruleOf(f).badge + '</span>' + esc(f.msg.replace(/^长期无值：/, '')) + '</div>';
+            }).join('')
+          : '<div class="desc-item desc-pass">—</div>';
         var val = x.latest.curve
           ? '<td class="col-value col-value-link" data-act="curve" data-index="' + x.index + '">' + x.latest.v + '</td>'
           : '<td class="col-value">' + x.latest.v + '</td>';
@@ -1457,9 +1486,9 @@
         var list = rows.filter(function (x) {
           if (src && x.source !== src) return false;
           if (obj && x.objKey !== obj) return false;
-          if (rule && x.rule.group !== rule) return false;
+          if (rule && x.groups.indexOf(rule) < 0) return false;
           if (res && x.result !== res) return false;
-          if (kw && (x.name + ' ' + x.id + ' ' + x.object + ' ' + x.f.msg).toLowerCase().indexOf(kw) < 0) return false;
+          if (kw && (x.name + ' ' + x.id + ' ' + x.object + ' ' + x.issues.map(function (f) { return f.msg; }).join(' ')).toLowerCase().indexOf(kw) < 0) return false;
           return true;
         });
         document.getElementById('tableBody').innerHTML = list.map(rowHtml).join('');
