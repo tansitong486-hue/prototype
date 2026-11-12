@@ -179,6 +179,9 @@
     .instance-item:hover { background: var(--primary-light); }
     .instance-item input[type="checkbox"] { accent-color: var(--primary); flex-shrink: 0; }
     .instance-item.checked { background: var(--primary-light); }
+    .room-param-opt { width: fit-content; border: 1px solid var(--border); border-radius: var(--radius); }
+    .room-param-opt:last-child { border-bottom: 1px solid var(--border); }
+    .instance-item input:disabled { cursor: not-allowed; }
 
     /* table */
     .table-wrap { overflow-x: auto; }
@@ -315,6 +318,16 @@
           </div>
         </div>
 
+        <div class="anno anno-version-header" data-version="v2.9">
+          <span class="anno-tag">版本信息</span>
+          <div class="anno-body">
+            <p><b>当前版本：</b>v2.9</p>
+            <p><b>更新日期：</b>2026-11-12</p>
+            <p><b>变更概述：</b>末端冷点、热点模型的训练范围增加「同时重算机房参数」。</p>
+            <p><b>本页说明：</b>从设备预测模型列表的「训练」进入；打开冷通道 / 热通道温度预测模型时显示该项，其余模型不变。</p>
+          </div>
+        </div>
+
         <!-- 面包屑 + 页标题 -->
         <div class="breadcrumb">
           <a href="机理模型训练.html">设备预测模型</a>
@@ -376,6 +389,20 @@
           </div>
         </div>
 
+        <div class="anno anno-field" data-version="v2.9">
+          <span class="anno-tag">字段说明</span>
+          <span class="anno-version">v2.9</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>训练范围 · 同时重算机房参数（只在冷通道 / 热通道温度预测模型显示）</p>
+            <ul>
+              <li>勾选框，缺省不勾选；实例选择列出本机房全部冷点（热点模型为热点）。</li>
+              <li>勾选：实例自动全选并锁定；提交后提示「已提交：重算机房参数，本机房冷点和热点一起重训」，列表中本机房冷点、热点都变为训练中。</li>
+              <li>不勾选：只训练所选测点；取消勾选后恢复勾选前的实例选择。</li>
+            </ul>
+          </div>
+        </div>
+
         <section class="section-card">
           <div class="section-head">训练范围</div>
           <div class="section-body">
@@ -394,6 +421,10 @@
                   <span class="date-range-sep">—</span>
                   <input type="date" id="dateEnd" value="2026-06-16">
                 </div>
+              </div>
+              <div class="field full" id="roomParamField" hidden>
+                <label class="field-label">机房参数</label>
+                <label class="instance-item room-param-opt" id="roomParamOpt"><input type="checkbox" id="roomParamChk"> 同时重算机房参数（本机房冷点和热点一起重训）</label>
               </div>
               <div class="field full">
                 <label class="field-label"><span class="req">*</span>实例选择</label>
@@ -791,14 +822,53 @@
   });
 
   /* ---- instance checkboxes ---- */
-  document.querySelectorAll('#instanceList input[type="checkbox"]').forEach(function (cb) {
-    cb.addEventListener('change', function () {
-      var item = cb.closest('.instance-item');
-      item.classList.toggle('checked', cb.checked);
-      var count = document.querySelectorAll('#instanceList input:checked').length;
-      document.getElementById('instanceHint').textContent = '已选 ' + count + ' 个实例';
+  function updateInstanceHint() {
+    var count = document.querySelectorAll('#instanceList input:checked').length;
+    document.getElementById('instanceHint').textContent = '已选 ' + count + ' 个实例';
+  }
+  function bindInstanceChecks() {
+    document.querySelectorAll('#instanceList input[type="checkbox"]').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        cb.closest('.instance-item').classList.toggle('checked', cb.checked);
+        updateInstanceHint();
+      });
     });
-  });
+  }
+  bindInstanceChecks();
+
+  /* ---- v2.9 末端冷点 / 热点模型：同时重算机房参数（?model=TS01～TS12，与设备预测模型演示数据一致） ---- */
+  (function () {
+    var m = (new URLSearchParams(location.search).get('model') || '').match(/^TS(\d{2})$/);
+    var SENSORS = ['冷点A-1', '冷点A-2', '冷点A-3', '冷点B-1', '冷点B-2', '冷点B-3', '热点A-1', '热点A-2', '热点A-3', '热点B-1', '热点B-2', '热点B-3'];
+    var idx = m ? Number(m[1]) - 1 : -1, name = SENSORS[idx];
+    if (!name) return;
+    var cold = idx < 6, target = cold ? '冷通道温度' : '热通道温度';
+    var vals = document.querySelectorAll('.readonly-val');
+    vals[0].textContent = name + '-' + target + '-混合增强预测模型';
+    vals[1].textContent = target + '预测模型';
+    vals[2].textContent = '预测' + (cold ? '冷' : '热') + '通道测点温度，用于末端机房仿真与寻优。';
+    document.getElementById('scopeIndependent').click();
+    var list = document.getElementById('instanceList');
+    list.innerHTML = SENSORS.filter(function (s, i) { return cold ? i < 6 : i >= 6; }).map(function (s) {
+      var on = s === name;
+      return '<label class="instance-item' + (on ? ' checked' : '') + '"><input type="checkbox"' + (on ? ' checked' : '') + '> ' + s + '</label>';
+    }).join('');
+    bindInstanceChecks();
+    updateInstanceHint();
+    document.getElementById('roomParamField').hidden = false;
+    var chk = document.getElementById('roomParamChk'), saved = null;
+    chk.addEventListener('change', function () {
+      var boxes = list.querySelectorAll('input[type="checkbox"]');
+      document.getElementById('roomParamOpt').classList.toggle('checked', chk.checked);
+      if (chk.checked) saved = Array.prototype.map.call(boxes, function (b) { return b.checked; });
+      boxes.forEach(function (b, i) {
+        b.disabled = chk.checked;
+        b.checked = chk.checked ? true : (saved ? saved[i] : b.checked);
+        b.closest('.instance-item').classList.toggle('checked', b.checked);
+      });
+      updateInstanceHint();
+    });
+  })();
 
   /* ---- date validation ---- */
   document.getElementById('dateStart').addEventListener('change', function () {
@@ -865,9 +935,10 @@
     var start = document.getElementById('dateStart').value;
     var end = document.getElementById('dateEnd').value;
     if (!start || !end) { showToast('请填写训练日期范围'); return; }
+    var whole = !document.getElementById('roomParamField').hidden && document.getElementById('roomParamChk').checked;
     showToast('训练任务提交中…');
     setTimeout(function () {
-      showToast('✓ 训练任务已提交，可在训练列表查看进度');
+      showToast(whole ? '✓ 已提交：重算机房参数，本机房冷点和热点一起重训' : '✓ 训练任务已提交，可在训练列表查看进度');
     }, 1500);
   }
 

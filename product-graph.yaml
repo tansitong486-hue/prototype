@@ -1,7 +1,7 @@
 # AI 节能 — 产品关系图（机读）
 # 人读入口：AGENT-MAP.md（本目录）+ 07-产品文档/01-ai 节能/产品文档/00-产品全貌.md
 # 维护：改 nav.js / index 拓扑 / 主流程时同步本文件
-# 更新：2026-11-04
+# 更新：2026-11-12
 
 meta:
   product: ai-energy
@@ -504,7 +504,7 @@ pages:
     nav_label: null
     nav_group: null
     domain: sim_predict
-    version: v2.3
+    version: v2.9
     role: orphan
 
 flows:
@@ -981,6 +981,18 @@ requirements:
     algo_vs_ui: mixed
     notes: 版本清单需求6（《设备预测模型需求文档》，2026-10-30 按 KE xweb_pro_tuning 2.1.158 现网反写，2026-11-04 对齐 KE 11181）：评估默认工程视图——列表评估效果 5 列（误差｜相对误差｜最差分段误差｜重训波动｜趋势反向，名称与报告一致、按分项着色，不显示总体评级圆点），报告为预测精度 / 物理响应 / 适用范围三块；报告右上可切算法视图（8 列：噪声底｜误差｜相对误差｜幅度异常｜趋势反向｜平顺度｜超范围异常｜性能，相对误差按模板 MAPE / CV(RMSE)，噪声底只作数据提示，训练 RMSE 仅诊断；报告 5 张卡），两页共用 localStorage mlt-eval-view；评估改为评估报告 + 手动预测；迁移学习先逐台迁移评估再开启；评级阈值固定取后台 assessment_thresholds.yaml 出厂默认（2026-11-02 去掉评估设置与演示模式）；新增/编辑/手动训练页与模型同步不在本条范围
 
+  - id: req.v29.global_opt_system_graph
+    version: v2.9
+    status: 待评审
+    domain: cold_station_opt
+    prd_path: 04-需求文档/AI节能v2.9 版本/AI节能v2.9版本需求.md
+    prototype_pages:
+      - 冷站全局寻优.html
+    upstream: [req.v29.langfang_ba_dispatch]
+    downstream: []
+    algo_vs_ui: ui
+    notes: 版本清单需求7（版本需求 §10）：冷站全局寻优页在三块策略面板之后嵌入冷站系统图（与冷站柔性寻优同一嵌入组件与位置，上间距 16px，按全局寻优调度器 global_* 读全局寻优记录）；原「时间」行和下方节能潜力 / 能效预测 / 控制策略前后对比（原型中为 v2.4 本轮搜索结果 / 所选组合最优指标 / 控制策略 × 功率变化）保留不变；系统图提供运营指标、寻优建议（含 v2.9 群控变量，已到位）、设备 / 系统 / 群控详情（实际值取实时值）、寻优失败原因与近 7 天回看、命令栏「全局寻优 + 寻优时间」，可节电改按仿真计算（开发中）；KE 前端需在 global 页源码加入嵌入组件，192 现为临时补丁
+
   - id: req.v29.terminal_sim_opt
     version: v2.9
     status: 评审后修订
@@ -1270,6 +1282,13 @@ edges:
   - from: req.v23.l0_l1_confidence
     to: req.v29.terminal_sim_opt
     rel: refined_by
+  # v2.9 冷站全局寻优嵌入冷站系统图（需求 7）
+  - from: req.v29.global_opt_system_graph
+    to: page.cold_global_opt
+    rel: enhances
+  - from: req.v29.global_opt_system_graph
+    to: page.cold_flex_opt
+    rel: reuses
   # v2.9 廊坊群控下发兼容（转写引擎 + 群控设定点 + 记录与下发打通）
   - from: req.v29.langfang_ba_dispatch
     to: page.cold_flex_opt
@@ -1332,3 +1351,5 @@ noise:
     note: v2.9 末端仿真 / 安全边界 / 寻优三层（2026-10-31 修订（二））：仿真模型（系统仿真建模 末端机房）只含步骤 0.1～0.4 + 1～4 + 自身仿真安全边界（硬边界 / 预测偏差阈值，越界终止），不读安全边界页与寻优规则配置；运行安全边界绑定在寻优策略卡，安全评价 / 安全阀 / J / 结果判定在柔性寻优页寻优层；仿真校验页是与冷站一致的实时仿真校验，只出实际值 / 预测值 / 达标判定，不出寻优侧原因码；人工试算（what-if）不在本期，需求池 #78；多候选模型与低置信回落走创建仿真模型的模型选择规则，不设「模型版本」
   - id: noise.v30_cold_config_demo
     note: v3.0 冷站配置原型演示数据——A路冷水系统按人保 A 路 6 单元一对一口径（3#、6# 投出，6#冷水主机新接入属性为空）；校验 scene=1/2/3、保存冲突 / 失败、导入中断等为原型演示切换；属性数值为示例，以标准物模型 xlsx 为准
+  - id: noise.v29_global_opt_system_graph
+    note: v2.9 冷站全局寻优原型的系统图区直接复用冷站柔性寻优的组态配置示意（静态拓扑，不是 3D 画面），只在标题旁加「全局寻优 · 寻优时间」；时间行及其下方的 v2.4 本轮搜索结果、控制策略 × 功率变化（含嵌入的 cold-station-global-opt-demo/ 组态）保留
