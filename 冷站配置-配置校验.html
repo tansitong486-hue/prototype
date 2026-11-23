@@ -3,28 +3,33 @@
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>冷站配置 - 配置校验</title><link rel="stylesheet" href="annotation-styles.css">
 <style>
-    /* 版式与 仿真校验.html（系统仿真建模 → 仿真验证）一致 */
+    /* 版式同 机房寻优-机房模型校验.html（机房配置校验），冷站扩展样式见文末 */
     :root {
       --primary: #1E40AF;
-      --text-primary: #262626;
-      --text-secondary: #595959;
-      --text-hint: #8C8C8C;
-      --border: #D9D9D9;
-      --border-light: #F0F0F0;
-      --bg-body: #F5F5F5;
+      --primary-dark: #17358A;
+      --primary-tint: #EEF4FF;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-hint: #94A3B8;
+      --border: #D8E1EB;
+      --border-light: #EAF0F6;
+      --bg-body: #F6F8FB;
       --bg-card: #FFFFFF;
-      --tip-bg: #FFFBE6;
-      --tip-border: #FFE58F;
-      --error-bg: #FFF2F0;
-      --error-border: #FFCCC7;
-      --error-text: #CF1322;
-      --warn-text: #D46B08;
-      --green-btn: #52C41A;
-      --radius: 6px;
-      --radius-lg: 8px;
-      --transition: .2s ease;
+      --danger: #DC2626;
+      --danger-light: #FEF2F2;
+      --danger-border: #FCA5A5;
+      --success: #16A34A;
+      --success-light: #F0FDF4;
+      --warning: #D97706;
+      --warning-light: #FFFBEB;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --transition: .22s cubic-bezier(.4, 0, .2, 1);
     }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
       font-size: 14px;
@@ -32,226 +37,592 @@
       background: var(--bg-body);
       -webkit-font-smoothing: antialiased;
     }
-    a { text-decoration: none; color: inherit; }
+
     button { border: none; background: none; font: inherit; cursor: pointer; }
-    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(0,0,0,.12); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,.2); }
 
     .layout { display: flex; flex-direction: column; min-height: 100vh; }
     .body-wrap { display: flex; flex: 1; min-height: 0; }
     .main { flex: 1; min-width: 0; overflow-y: auto; background: var(--bg-body); }
-    .content-wrap { padding: 16px 20px 24px; max-width: 100%; }
 
-    .breadcrumb { font-size: 13px; color: var(--text-hint); margin-bottom: 12px; line-height: 1.5; }
-    .breadcrumb a { color: var(--text-secondary); transition: color var(--transition); }
-    .breadcrumb a:hover { color: var(--primary); }
-    .breadcrumb-sep { margin: 0 8px; color: var(--text-hint); }
-    .breadcrumb-current { color: var(--text-primary); }
+    .page-shell { padding: 18px 20px 32px; }
 
-    .page-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-    .back-ico {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 32px; height: 32px; color: var(--text-secondary); border-radius: var(--radius);
-      transition: background var(--transition), color var(--transition);
+    .page-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
     }
-    .back-ico:hover { background: rgba(0, 0, 0, 0.04); color: var(--primary); }
-    .page-heading { font-size: 20px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.02em; }
-    .page-heading-sub { font-size: 13px; color: var(--text-hint); font-weight: 400; margin-left: 4px; }
 
-    /* 原型演示：场景切换（仅原型评审用） */
-    .demo-switch { margin-left: auto; display: inline-flex; align-items: center; font-size: 12px; border: 1px dashed var(--border); border-radius: var(--radius); overflow: hidden; background: var(--bg-card); }
-    .demo-switch-label { padding: 5px 10px; color: var(--text-hint); background: #FAFAFA; border-right: 1px dashed var(--border); }
-    .demo-opt { padding: 5px 12px; color: var(--text-secondary); }
-    .demo-opt + .demo-opt { border-left: 1px solid var(--border-light); }
-    .demo-opt.is-active { background: #EEF4FF; color: var(--primary); font-weight: 600; }
-
-    .banner-tip {
-      display: flex; gap: 12px; padding: 12px 16px; margin-bottom: 12px;
-      background: var(--tip-bg); border: 1px solid var(--tip-border); border-radius: var(--radius-lg); align-items: flex-start;
+    /* ===== Page Head ===== */
+    .page-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px 12px;
+      flex-wrap: wrap;
     }
-    .banner-tip-ico { flex-shrink: 0; width: 22px; height: 22px; margin-top: 2px; color: #1890FF; }
-    .banner-tip-body { min-width: 0; }
-    .banner-tip-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
-    .banner-tip-text { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
-    .banner-tip-text p + p { margin-top: 8px; }
 
-    /* 结果横幅：通过 / 有设备移出 / 阻断，三态互斥 */
-    .banner-result {
-      display: flex; align-items: center; justify-content: space-between; gap: 16px;
-      padding: 14px 16px; margin-bottom: 16px; border-radius: var(--radius-lg); flex-wrap: wrap; border: 1px solid;
+    .page-head-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
-    .banner-result.is-pass  { background: #F6FFED; border-color: #B7EB8F; }
-    .banner-result.is-warn  { background: var(--tip-bg); border-color: var(--tip-border); }
-    .banner-result.is-block { background: var(--error-bg); border-color: var(--error-border); }
-    .banner-result.is-running { background: #F0F5FF; border-color: #ADC6FF; }
-    .banner-msg-left { display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
-    .banner-ico { flex-shrink: 0; width: 22px; height: 22px; margin-top: 2px; }
-    .is-pass .banner-ico { color: #52C41A; }
-    .is-warn .banner-ico { color: #FA8C16; }
-    .is-block .banner-ico { color: var(--error-text); }
-    .is-running .banner-ico { color: var(--primary); }
-    .banner-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
-    .is-pass .banner-title { color: #389E0D; }
-    .is-warn .banner-title { color: var(--warn-text); }
-    .is-block .banner-title { color: var(--error-text); }
-    .is-running .banner-title { color: var(--primary); }
-    .banner-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
-    .btn-revalidate {
-      flex-shrink: 0; height: 32px; padding: 0 16px; font-size: 13px; font-weight: 500;
-      color: var(--green-btn); background: #fff; border: 1px solid var(--green-btn); border-radius: var(--radius);
-      transition: opacity var(--transition), box-shadow var(--transition);
-    }
-    .btn-revalidate:hover { opacity: 0.88; }
-    .btn-revalidate:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(82, 196, 26, 0.35); }
-    .btn-revalidate:disabled { opacity: .5; cursor: not-allowed; }
 
-    .data-card { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 16px; }
-    .card-title { padding: 12px 16px; font-size: 14px; font-weight: 600; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-    .card-title .sub { font-size: 12px; font-weight: 400; color: var(--text-hint); }
-    .confidence-summary {
-      display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px;
-      border-bottom: 1px solid var(--border-light); background: #FAFAFA; font-size: 13px; color: var(--text-secondary);
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: var(--radius);
+      transition: all var(--transition);
     }
-    .confidence-pill { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; border: 1px solid; }
-    .confidence-pill.high { background: #F6FFED; color: #389E0D; border-color: #B7EB8F; }
-    .confidence-pill.low  { background: #F1F5F9; color: #475569; border-color: #E2E8F0; }
-    .confidence-pill.warn { background: #FFF7E6; color: var(--warn-text); border-color: #FFD591; }
-    .confidence-pill.err  { background: var(--error-bg); color: var(--error-text); border-color: var(--error-border); }
+    .back-btn:hover { color: var(--primary); background: var(--primary-tint); }
+    .back-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
 
-    .filter-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; border-bottom: 1px solid var(--border-light); }
-    .filter-select { min-width: 160px; height: 32px; padding: 0 11px; font-size: 14px; color: var(--text-primary); border: 1px solid var(--border); border-radius: var(--radius); background: #fff; outline: none; }
-    .filter-select:focus-visible { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.15); }
-    .search-wrap { display: inline-flex; align-items: center; gap: 8px; flex: 1; min-width: 200px; max-width: 320px; height: 32px; padding: 0 11px; border: 1px solid var(--border); border-radius: var(--radius); background: #fff; }
-    .search-wrap:focus-within { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.15); }
-    .search-wrap svg { flex-shrink: 0; width: 14px; height: 14px; color: var(--text-hint); }
-    .search-input { flex: 1; border: none; outline: none; font-size: 14px; min-width: 0; }
+    .head-divider {
+      width: 1px;
+      height: 18px;
+      background: var(--border);
+    }
+
+    .page-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .page-meta {
+      font-size: 12px;
+      color: var(--text-hint);
+      margin-top: 2px;
+    }
+
+    .page-head-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* ===== Buttons ===== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 34px;
+      padding: 0 14px;
+      border-radius: var(--radius);
+      font-size: 12px;
+      font-weight: 600;
+      transition: all var(--transition);
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+    .btn-primary { color: #fff; background: var(--primary); border: 1px solid var(--primary); }
+    .btn-primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); }
+    .btn-ghost { color: var(--text-primary); background: #fff; border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ===== Status Banner ===== */
+    .status-banner {
+      margin: 0 18px 14px;
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      border: 1px solid;
+    }
+    .status-banner.running {
+      background: #EFF6FF;
+      border-color: #BFDBFE;
+      color: #1D4ED8;
+    }
+    .status-banner.success {
+      background: var(--success-light);
+      border-color: #BBF7D0;
+      color: var(--success);
+    }
+    .status-banner.failed {
+      background: var(--danger-light);
+      border-color: var(--danger-border);
+      color: var(--danger);
+    }
+    .status-banner.empty {
+      background: #FAFBFD;
+      border-color: var(--border-light);
+      color: var(--text-hint);
+    }
+    .banner-icon { flex-shrink: 0; }
+    .banner-icon svg { width: 16px; height: 16px; display: block; }
+    .banner-text { flex: 1; }
+    .banner-sub { font-size: 12px; opacity: 0.8; margin-top: 1px; }
+
+    /* 运行中旋转动画 */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinning { animation: spin 1s linear infinite; }
+
+    /* ===== Toolbar ===== */
+    .page-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 18px 14px;
+      flex-wrap: wrap;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      flex: 1;
+    }
+
+    .toolbar-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .toolbar-select {
+      height: 32px;
+      padding: 0 26px 0 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 12px;
+      color: var(--text-primary);
+      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 8px center;
+      appearance: none;
+      cursor: pointer;
+      min-width: 110px;
+    }
+    .toolbar-select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.12);
+    }
+
+    .search-field {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      height: 32px;
+      padding: 0 10px;
+      min-width: 220px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text-secondary);
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .search-field:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.12);
+    }
+    .search-field svg { width: 13px; height: 13px; fill: currentColor; opacity: .7; flex-shrink: 0; }
+    .search-input {
+      border: none;
+      outline: none;
+      font-size: 12px;
+      width: 100%;
+      color: var(--text-primary);
+      background: transparent;
+    }
     .search-input::placeholder { color: var(--text-hint); }
-    .quick-filter-check { display: inline-flex; align-items: center; gap: 6px; height: 32px; font-size: 13px; font-weight: 500; color: #334155; cursor: pointer; user-select: none; }
 
-    .table-scroll { overflow-x: auto; }
-    .data-table { width: 100%; min-width: 960px; border-collapse: collapse; }
-    .data-table thead th { padding: 12px 16px; text-align: left; font-size: 13px; font-weight: 600; color: var(--text-secondary); background: #FAFAFA; border-bottom: 1px solid var(--border-light); white-space: nowrap; }
-    .data-table tbody td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid var(--border-light); vertical-align: middle; line-height: 1.5; }
-    .data-table tbody tr:hover { background: #FAFAFA; }
-    .data-table tbody tr.is-focus { background: #F0F5FF; }
-    .cell-sub { display: block; font-size: 12px; color: var(--text-hint); }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--primary); background: #EEF4FF; padding: 0 4px; border-radius: 3px; }
-    .lvl { font-weight: 700; white-space: nowrap; }
-    .lvl-ERROR { color: var(--error-text); }
-    .lvl-WARN  { color: var(--warn-text); }
-    .lvl-INFO  { color: var(--text-hint); }
-    .lvl-PASS  { color: #389E0D; }
-    .code-tag { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; padding: 1px 6px; border-radius: 4px; background: #F5F5F5; color: var(--text-secondary); white-space: nowrap; }
-    .code-tag.err  { background: var(--error-bg); color: var(--error-text); }
-    .code-tag.warn { background: #FFF7E6; color: var(--warn-text); }
-    .state-tag { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 4px; font-size: 12px; font-weight: 600; white-space: nowrap; }
-    .state-ok   { background: #F6FFED; color: #389E0D; }
-    .state-warn { background: #FFF7E6; color: var(--warn-text); }
-    .state-err  { background: var(--error-bg); color: var(--error-text); }
-    .state-off  { background: #F5F5F5; color: var(--text-hint); }
-    .action-link { font-size: 13px; color: #1890FF; cursor: pointer; white-space: nowrap; }
-    .action-link:hover { opacity: .72; }
-    .action-link.danger { color: var(--error-text); }
-    .empty-cell { text-align: center; color: var(--text-hint); padding: 32px 16px !important; }
+    /* ===== Summary Row ===== */
+    .summary-row {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 0 18px 12px;
+      flex-wrap: wrap;
+    }
+    .summary-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .chip-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .chip-dot.fail { background: var(--danger); }
+    .chip-dot.insuf { background: var(--warning); }
+    .chip-dot.pass { background: var(--success); }
+    .chip-count { font-weight: 700; color: var(--text-primary); }
 
+    /* ===== Table ===== */
+    .table-wrap { overflow-x: auto; }
+
+    .data-table {
+      width: 100%;
+      min-width: 1200px;
+      border-collapse: collapse;
+    }
+
+    .data-table thead th {
+      padding: 11px 14px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 13px 14px;
+      font-size: 13px;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:last-child td { border-bottom: none; }
+    .data-table tbody tr:hover { background: #FBFCFE; }
+
+    .col-object { min-width: 150px; }
+    .col-name { min-width: 160px; }
+    .col-id { width: 100px; font-family: monospace; font-size: 12px; color: var(--text-secondary); }
+    .col-source { width: 100px; }
+    .col-value { width: 110px; text-align: right; font-variant-numeric: tabular-nums; }
+    .col-time { width: 148px; font-size: 12px; color: var(--text-secondary); }
+    .col-result { width: 90px; }
+    .col-desc { min-width: 220px; font-size: 12px; line-height: 1.5; white-space: normal; }
+
+    /* 最新值可点击态（有历史曲线的测点） */
+    .data-table tbody td.col-value-link {
+      cursor: pointer;
+      color: #1D6FF3;
+      font-weight: 500;
+    }
+    .data-table tbody td.col-value-link:hover { text-decoration: underline; }
+
+    /* 问题描述内每条规则命中项 */
+    .desc-item { color: var(--text-secondary); line-height: 1.6; }
+    .desc-item + .desc-item { margin-top: 3px; }
+
+    /* 规则分类徽标（仅中文，内联紧凑） */
+    .rule-badge {
+      display: inline;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-right: 4px;
+      white-space: nowrap;
+      vertical-align: 1px;
+    }
+    .rule-badge.fail   { background: var(--danger-light);   color: var(--danger); }
+    .rule-badge.insuf  { background: var(--warning-light);  color: var(--warning); }
+    .rule-badge.pass   { background: var(--success-light);  color: var(--success); }
+
+    /* ===== Status Tag ===== */
+    .result-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .result-tag.fail {
+      background: var(--danger-light);
+      color: var(--danger);
+    }
+    .result-tag.insuf {
+      background: var(--warning-light);
+      color: var(--warning);
+    }
+    .result-tag.pass {
+      background: var(--success-light);
+      color: var(--success);
+    }
+    .result-tag-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      flex-shrink: 0;
+    }
+
+    .type-tag {
+      display: inline-block;
+      padding: 1px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      background: #F1F5F9;
+      color: var(--text-secondary);
+    }
+    .type-tag.static {
+      background: #F5F3FF;
+      color: #7C3AED;
+    }
+
+    .source-tag {
+      display: inline-block;
+      padding: 1px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      background: #F0F9FF;
+      color: #0369A1;
+    }
+    .source-tag.calc {
+      background: #FFF7ED;
+      color: #C2410C;
+    }
+    .source-tag.static {
+      background: #F5F3FF;
+      color: #7C3AED;
+    }
+
+    /* ===== Action link ===== */
+    .action-link {
+      font-size: 12px;
+      cursor: pointer;
+      color: #1890FF;
+      transition: opacity var(--transition);
+      background: none;
+      border: none;
+      padding: 0;
+      font-family: inherit;
+    }
+    .action-link:hover { opacity: 0.72; }
+
+    /* ===== Empty State ===== */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 72px 24px;
+      color: var(--text-hint);
+      text-align: center;
+    }
+    .empty-icon {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 14px;
+      opacity: 0.35;
+    }
+    .empty-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    .empty-desc { font-size: 13px; line-height: 1.6; }
+    .empty-action { margin-top: 18px; }
+
+
+    /* ===== Toast ===== */
     .toast {
-      position: fixed; right: 24px; bottom: 72px; max-width: 380px; padding: 12px 16px; border-radius: var(--radius);
-      background: rgba(0, 0, 0, 0.78); color: #fff; font-size: 13px; line-height: 1.6; white-space: pre-line;
-      opacity: 0; transform: translateY(8px); pointer-events: none; transition: all .22s ease; z-index: 300;
+      position: fixed;
+      right: 24px;
+      bottom: 28px;
+      min-width: 180px;
+      max-width: 320px;
+      padding: 11px 14px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.92);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.6;
+      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.28);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: all .25s ease;
+      z-index: 260;
     }
     .toast.show { opacity: 1; transform: translateY(0); }
-    @media (max-width: 768px) {
-      .btn-revalidate { width: 100%; }
-      .demo-switch { margin-left: 0; }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .page-head { flex-direction: column; align-items: flex-start; }
+      .filter-group { flex-direction: column; align-items: flex-start; }
     }
-  
-    .check-cards { display: grid; grid-template-columns: repeat(7,minmax(120px,1fr)); gap: 10px; margin-bottom: 16px; overflow-x: auto; }
-    .check-card { padding: 12px; text-align: left; border: 1px solid var(--border); border-radius: var(--radius); background: #fff; font-size: 13px; line-height: 1.8; }
-    .check-card.is-active { border-color: var(--primary); background: #EEF4FF; box-shadow: inset 0 0 0 1px var(--primary); }
-    .check-card .state-tag { margin-top: 6px; }
-    .overview-scroll { max-height: 460px; overflow: auto; }
-    .overview-scroll thead { position: sticky; top: 0; z-index: 1; }
-    .btn { height: 32px; padding: 0 14px; border: 1px solid var(--border); border-radius: var(--radius); background: #fff; font-size: 13px; white-space: nowrap; }
-    .btn:hover { border-color: var(--primary); color: var(--primary); }
-    .time-line { display:flex; align-items:center; gap:12px; margin: -6px 0 14px 40px; font-size:13px; color:var(--text-hint); flex-wrap:wrap; }
-    .filter-field { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
-    .filter-field .filter-select { min-width: 120px; max-width: 240px; }
-    #filterDevice { width: 200px; }
-    .confidence-summary.stats { border: 1px solid var(--border-light); border-radius: var(--radius); margin-bottom: 12px; }
-    .confidence-summary.stats button:hover { opacity: .75; }
-    .banner-result.is-warn { background: linear-gradient(100deg,#F6FFED,#FFFBE6); border-color: #D3DFA4; }
-    .banner-result.is-warn .banner-title { color:#527C16; }
-    .cell-actions { display: flex; gap: 8px; flex-wrap: wrap; min-width: 90px; }
-    .window-cell { min-width: 150px; }
-    #detailCard { scroll-margin-top: 56px; }
-    a:focus-visible,button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-    .spinner { display:inline-block; width:12px; height:12px; border:2px solid #ddd; border-top-color:var(--primary); border-radius:50%; animation:spin .7s linear infinite; margin-right:6px; }
-    @keyframes spin { to { transform:rotate(360deg); } }
-    @media(max-width:1100px){ .check-cards { grid-template-columns:repeat(7,140px); } }
-    [hidden] { display:none!important; }
 
-/* 文字按钮去掉浏览器默认边框与底色 */
-button.action-link{background:none;border:0;padding:0;font-family:inherit;line-height:1.5;cursor:pointer}
+    /* ===== 演示切换与结果扩展（同机房配置校验） ===== */
+    a { text-decoration: none; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+    .demo-switch { display: inline-flex; align-items: center; font-size: 12px; border: 1px dashed var(--border); border-radius: var(--radius); overflow: hidden; background: #fff; }
+    .demo-switch-label { padding: 6px 10px; color: var(--text-hint); background: #FAFBFD; border-right: 1px dashed var(--border); }
+    .demo-opt { padding: 6px 12px; color: var(--text-secondary); }
+    .demo-opt + .demo-opt { border-left: 1px solid var(--border-light); }
+    .demo-opt.is-active { background: var(--primary-tint); color: var(--primary); font-weight: 600; }
+    .chip-dot.notice { background: #2563EB; }
+    .result-tag.notice { background: #EFF6FF; color: #1D4ED8; }
+    .rule-badge.notice { background: #EFF6FF; color: #1D4ED8; }
+    .result-impact { display: block; margin-top: 4px; font-size: 11px; color: var(--danger); white-space: nowrap; }
+    .source-tag.topo { background: #ECFDF5; color: #047857; }
+    .desc-pass { color: var(--text-hint); }
+    .summary-ext { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text-secondary); padding-left: 16px; border-left: 1px solid var(--border-light); }
+    .summary-ext .action-link { font-size: 12px; }
+    .toast { white-space: pre-line; max-width: 380px; }
 
-/* ---- v3.0 设备总览筛选 ---- */
-.card-title .overview-tools{margin-left:auto;display:inline-flex;align-items:center;gap:12px;font-size:12px;font-weight:400;color:var(--text-secondary)}
-.overview-tools select{height:30px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font-size:12px;background:#fff}
-.overview-check{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
-.overview-count{color:var(--text-hint)}
-.overview-empty{text-align:center;color:var(--text-hint);padding:24px!important}
-</style></head><body>
+    /* ===== 冷站配置校验扩展 ===== */
+    [hidden] { display: none !important; }
+    a:focus-visible, button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .data-table { min-width: 960px; }
+    .col-object { min-width: 150px; white-space: nowrap; }
+    .col-source { width: 92px; }
+    .col-window { width: 150px; font-size: 12px; color: var(--text-secondary); }
+    .col-result { width: 112px; }
+    .col-desc { min-width: 320px; }
+    .source-tag { white-space: nowrap; }
+    .cell-sub { display: block; margin-top: 2px; font-size: 12px; color: var(--text-hint); white-space: nowrap; }
+    #tableArea { scroll-margin-top: 12px; }
+    .toast { bottom: 72px; }
+    .back-btn, .head-divider { flex-shrink: 0; white-space: nowrap; }
+    @media (min-width: 1100px) { .page-head { flex-wrap: nowrap; } .page-head-left { min-width: 0; } .page-head-actions { flex-shrink: 0; } }
+
+    /* ===== v3.0 校验与预览：白底页头 · 内容卡片（页签） ===== */
+    .main { display: flex; flex-direction: column; }
+    .main > * { flex-shrink: 0; }
+    .main > .csf-footer { margin-top: auto; }
+    .main > .anno { margin: 12px 20px 0; }
+    .page-header { background: var(--bg-card); padding: 16px 20px; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .page-header .back-link { display: inline-flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 600; color: var(--text-primary); padding: 0; transition: color var(--transition); }
+    .page-header .back-link:hover { color: var(--primary); }
+    .page-header .page-sub { margin-top: 6px; font-size: 12px; color: var(--text-secondary); font-weight: 400; }
+    .page-header-right { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+    .main > .page-shell { padding-top: 0; }
+    .tab-bar { display: flex; align-items: center; gap: 12px; padding: 0 18px; border-bottom: 1px solid var(--border-light); flex-wrap: wrap; }
+    .tab-list { display: flex; gap: 4px; align-self: stretch; }
+    .tab { position: relative; padding: 14px 12px 12px; font-size: 14px; font-weight: 600; color: var(--text-secondary); white-space: nowrap; transition: color var(--transition); }
+    .tab:hover { color: var(--primary); }
+    .tab[aria-selected="true"] { color: var(--primary); }
+    .tab[aria-selected="true"]::after { content: ''; position: absolute; left: 8px; right: 8px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--primary); }
+    .tab-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; padding: 8px 0; flex-wrap: wrap; }
+    .tab-panel { padding-top: 14px; }
+    .preview-panel { padding: 14px 18px 18px; }
+.page-header-right { display:flex; align-items:center; gap:10px; }
+.verify-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+.page-shell { padding-top: 16px; }
+.preview-tip { font-size: 12px; color: var(--text-hint); margin-bottom: 10px; }
+    .preview-frame-wrap { position: relative; height: calc(100vh - 380px); min-height: 460px; border: 1px solid var(--border-light); border-radius: var(--radius); overflow: hidden; background: #0B1220; }
+    .preview-frame-wrap iframe { width: 100%; height: 100%; border: 0; display: block; }
+    .preview-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center; color: #CBD5E1; font-size: 13px; background: #0B1220; }
+    .modal-overlay { display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; padding: 20px; background: rgba(15,23,42,.4); }
+    .modal-overlay.is-open { display: flex; }
+    .modal-dialog { width: 100%; max-width: 560px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-card); border-radius: var(--radius-lg); box-shadow: 0 24px 48px rgba(15,23,42,.16); }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border-light); flex-shrink: 0; }
+    .modal-title { font-size: 16px; font-weight: 600; }
+    .modal-close { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius); color: var(--text-secondary); font-size: 18px; line-height: 1; }
+    .modal-close:hover { background: var(--border-light); color: var(--text-primary); }
+    .modal-content { padding: 18px 20px; overflow: auto; font-size: 13px; line-height: 1.8; color: var(--text-primary); }
+    .modal-content .anno { margin: 0 0 14px; }
+    .modal-content p + p, .modal-content p + ul, .modal-content ul + p, .modal-content p + a { margin-top: 8px; }
+    .modal-content a.action-link { display: inline-block; font-size: 13px; }
+    .model-list { padding-left: 20px; max-height: 220px; overflow: auto; color: var(--text-secondary); }
+    .success-mark { color: var(--success); font-weight: 700; margin-right: 6px; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 12px 20px; border-top: 1px solid var(--border-light); flex-shrink: 0; }
+  </style></head><body>
 <div class="layout"><div id="app-header"></div><div class="body-wrap"><div id="app-sidebar"></div><main class="main">
 <div class="anno-filter-bar" id="annoFilterBar"><span class="anno-filter-label">批注版本：</span><div class="anno-filter-tags" id="annoFilterTags"></div></div>
-<div class="content-wrap">
-<nav class="breadcrumb" aria-label="面包屑"><a href="冷站配置-列表.html">冷站配置</a><span class="breadcrumb-sep">/</span><span class="breadcrumb-current">配置校验</span></nav>
-<div class="anno anno-version-header" data-version="v3.0"><span class="anno-tag">版本信息</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.1</span><div class="anno-body"><p><b>当前版本：</b>v3.0</p><p><b>更新日期：</b>2026-11-04</p><p><b>变更概述：</b>新增冷站七类配置校验与问题定位处置。</p><p><b>本页说明：</b>保存后查看能否寻优，按问题补齐配置并重新校验。</p></div></div>
-<div class="anno anno-req" data-version="v3.0"><span class="anno-tag">需求说明</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.1～§5.3</span><div class="anno-body"><p><b>关联模块：</b>配置校验页</p><ul><li>冷站配置保存后单独校验，不拦保存；未校验或配置已修改时，进入自动执行一次。</li><li>一次检查属性、拓扑、关键测点、运行数据；问题精确到对象及属性、测点或关系。</li><li>本页只展示结果与处置入口；处理完返回自动重新校验。</li></ul></div></div><div class="anno anno-ux" data-version="v3.0"><span class="anno-tag">交互说明</span><span class="anno-version">v3.0</span><span class="anno-source">产品推断</span><div class="anno-body"><p><b>关联模块：</b>页头与原型演示</p><ul><li>演示切换仅用于评审；属性与拓扑均按当前已保存配置校验，不读取编辑草稿。</li><li>A 路首次进入场景 2 会保存单元 3 冷却侧断线，并提示已载入；修复保存后不再重复载入。</li><li>场景决定运行数据；场景 2 的 6#主机投出且运行，场景 1、3 投出且停机。</li></ul></div></div>
-<div class="page-title-row"><a class="back-ico" href="冷站配置-列表.html" aria-label="返回冷站配置列表">〈</a><h1 class="page-heading">配置校验<span class="page-heading-sub">A路冷水系统</span></h1><div class="demo-switch" role="group" aria-label="原型演示场景"><span class="demo-switch-label">原型演示</span><a class="demo-opt" data-scene="1" href="冷站配置-配置校验.html?id=A&scene=1">1 可以寻优 · 有提示</a><a class="demo-opt" data-scene="2" href="冷站配置-配置校验.html?id=A&scene=2">2 不能寻优</a><a class="demo-opt" data-scene="3" href="冷站配置-配置校验.html?id=A&scene=3">3 可以寻优</a></div></div>
-<div class="time-line">上次校验时间：<span id="checkedAt">2026-11-04 10:00:00</span><span>水冷 · 人保北方信息中心 / 动力楼 / 冷站 A</span></div>
-<div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.2、§5.3、附录 D</span><div class="anno-body"><p><b>关联模块：</b>检查范围与寻优</p><ul><li>投入设备和当前运行的投出设备同样检查；停机的投出设备只检查分组归属。</li><li>寻优每轮检查①②③阻断项及本轮必需输入；无值或超出取数时效时跳过，与是否做过配置校验无关。</li><li>取数时效沿用现网；未规定的点按数据时间早于本轮取数时刻超过该点刷新周期的 3 倍判定。</li><li>本轮跳过时，寻优记录写首条阻断并链接本页；候选开机组合由仿真按组合检查通路，失败组合淘汰。</li></ul></div></div>
-<div class="banner-tip" role="region" aria-label="校验提示"><svg class="banner-tip-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg><div class="banner-tip-body"><div class="banner-tip-title">校验提示</div><div class="banner-tip-text"><p>阻断问题会让冷站每轮跳过寻优，直到问题消除。运行中的投出设备照常检查；停机的投出设备只查是否在分组里。</p><p>提示不影响寻优。数据不足时记为「无法校验」，不影响结论；请补足数据后重新校验。</p></div></div></div>
-<div class="anno anno-state" data-version="v3.0"><span class="anno-tag">状态说明</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.1、§5.3</span><div class="anno-body"><p><b>关联模块：</b>结论与重新校验</p><ul><li>有阻断显示「冷站不能寻优 · N 条阻断」；无阻断、有提示显示「可以寻优 · N 条提示」；否则显示「可以寻优」。</li><li>重新校验时按钮置灰并显示加载状态，完成后同时刷新横幅、统计、分类和两张表。</li><li>提示与无法校验不影响寻优；统计数量按完整结果计算，不随明细筛选变化。</li></ul></div></div><div class="anno anno-ux" data-version="v3.0"><span class="anno-tag">交互说明</span><span class="anno-version">v3.0</span><span class="anno-source">产品推断</span><div class="anno-body"><p><b>关联模块：</b>校验加载与返回</p><ul><li>演示加载持续 1.5 秒；加载时保留上次明细，并明确标记结果待刷新。</li><li>处置跳转记录本页返回位置；经浏览器返回本页时重新执行演示校验。</li><li>重新校验读取已保存版本；返回带 revalidate 或保存版本更新时自动重算。</li></ul></div></div>
-<div class="banner-result" id="resultBanner" role="status" aria-live="polite"><div class="banner-msg-left"><svg class="banner-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><div><div class="banner-title" id="bannerTitle">—</div><div class="banner-desc" id="bannerDesc">—</div></div></div><button type="button" class="btn-revalidate" id="btnRevalidate">重新校验</button></div>
-<div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.1、§5.2</span><div class="anno-body"><p><b>关联模块：</b>统计与七类状态</p><ul><li>设备总数与投入 / 投出按设备台数统计；分组、系统及群控组件不重复计为设备。</li><li>阻断、提示、无法校验按明细条数统计；同一条跨设备提示只计一次，关联设备各显示一条提示。</li><li>每类状态优先级：有阻断、有提示、无法校验、通过；点击小卡片筛选该类明细。</li></ul></div></div>
-<div class="confidence-summary stats" id="summaryPills" aria-label="校验统计"></div><div id="checkCards" class="check-cards" aria-label="七类校验状态"></div>
-<div class="anno anno-field" data-version="v3.0"><span class="anno-tag">字段说明</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.1、§5.2</span><div class="anno-body"><p><b>关联模块：</b>设备总览</p><ul><li>每台关联设备一行，含名称、类型、所属分组、投入 / 投出、结论、阻断数和提示数。</li><li>设备自身或联合测点问题计入对应设备；分组和系统问题只在明细中展示，不转算到设备。</li><li>有阻断优先显示「有阻断问题」，其次「有提示」，其余「通过」；无法校验不改变设备结论。</li></ul></div></div><div class="anno anno-ux" data-version="v3.0"><span class="anno-tag">交互说明</span><span class="anno-version">v3.0</span><span class="anno-source">产品推断</span><div class="anno-body"><p><b>关联模块：</b>设备总览的定位</p><ul><li>总览在表内滚动，表头固定；包含当前配置的全部关联设备与群控，不含空间内尚未关联设备。</li><li>可按设备类型筛选、勾选「只看有问题的设备」；右侧显示当前显示台数和有问题台数。</li><li>查看明细清空其他筛选，按该设备显示全部结果并滚动到明细区；联合问题也会被匹配。</li><li>A 路场景 2 的 6#主机投出且运行；场景 1、3 停机；3#主机投出且停机。</li></ul></div></div>
-<section class="data-card" aria-label="设备总览"><div class="card-title">设备总览<span class="sub">每台设备一行，分组问题请查看校验明细</span><span class="overview-tools"><select id="overviewType" aria-label="按设备类型筛选"><option value="">全部类型</option></select><label class="overview-check"><input type="checkbox" id="overviewProblem">只看有问题的设备</label><span class="overview-count" id="overviewCount"></span></span></div><div class="table-scroll overview-scroll"><table class="data-table"><thead><tr><th>设备</th><th>类型</th><th>所属分组</th><th>投入 / 投出</th><th>结论</th><th>阻断数</th><th>提示数</th><th>操作</th></tr></thead><tbody id="overviewBody"></tbody></table></div></section>
-<div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.2、附录 D</span><div class="anno-body"><p><b>关联模块：</b>① 属性完整</p><ul><li>系统、参与仿真的分组、需检查的设备必填项未填记阻断；对象类型决定实际属性清单。</li><li>6#冷水主机场景 2 缺 21 项必填属性，按保存后的实际缺项合并一条阻断；定位首个缺项。</li><li>运行中的投出设备不免检；停机投出设备只检查分组归属。</li></ul></div></div><div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.2、附录 D</span><div class="anno-body"><p><b>关联模块：</b>② 属性合理</p><ul><li>同一变量下限高于上限、仿真必需额定值不大于 0 均阻断；设计出塔水温不低于进塔、板换热侧出水不低于进水记提示。</li><li>以填写 COP 为基准，额定制冷量÷额定功率与 COP 相对偏差大于 10% 提示。</li><li>运行样本至少 6 个：出水设定上限≤实测出水最高值提示；冷却塔额定频率相对运行最高频率偏差大于 10% 提示。</li><li>水泵最小频率比运行最低频率高 1 Hz 以上提示；不足所需样本记无法校验。</li></ul></div></div><div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.2、附录 D</span><div class="anno-body"><p><b>关联模块：</b>③ 拓扑完整</p><ul><li>分组不为空，每台关联设备唯一归组；含二次泵、蓄冷罐时须有相应分组和设备。</li><li>全部投入制冷单元均查完整通路：有投入冷冻泵供水，水冷还连有投入冷却泵的管路及有投入冷却塔的管路。</li><li>冷冻泵管路至少供一个单元；冷却泵管路至少连一个单元和一条冷却塔管路，缺失阻断。</li><li>空间内同类设备未关联任何冷水系统只提示；二次侧连线自动生成，不做校验。</li></ul></div></div><div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.2、附录 D</span><div class="anno-body"><p><b>关联模块：</b>④ 关键测点</p><ul><li>按系统类型和包含项取仿真必需输入清单；采集点未绑或计算点近 24 小时无有效值记阻断，不消费的点不查。</li><li>下发设定点未绑记提示，该变量只计算、不下发；A级但非仿真必需点未绑也只提示。</li><li>近 7 天有效样本÷应有样本小于 50% 提示；存在性检查只需 1 个有效样本。</li></ul></div></div><div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.2、附录 D</span><div class="anno-body"><p><b>关联模块：</b>⑤ 测点数据合理</p><ul><li>越界、温度方向、跳变至少 6 个有效样本；范围取物模型，未定义时用自检固定阈值；温度方向仅统计运行。</li><li>写死：连续 48 个运行样本（4 小时）极差小于 0.01。</li><li>疑似母管值：系统内至少两台同类设备共同运行样本≥48，同名采集点两两差值绝对值小于 0.01 的占比大于 95%；跨分组比较。</li><li>跳变排除启停前后各 1 个样本；跳变阈值和违反占比与数据质量自检相同，异常只提示。</li></ul></div></div><div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.2、附录 D</span><div class="anno-body"><p><b>关联模块：</b>⑥ 系统守恒</p><ul><li>守恒与计算量越界至少 6 个有效样本，规则及阈值沿用数据质量自检 B1、B2；异常只提示。</li><li>计算量越界占比大于 5%；一般守恒偏差阈值 10%，按自检的低值及独立来源排除规则执行。</li><li>冷却侧热不平衡率绝对值大于 20% 且命中占比大于 30% 提示。</li><li>流量疑似接反：至少 6 个冷机运行样本，实测冷冻÷冷却流量中位数与额定流量比，一个大于 1、一个小于 1。</li></ul></div></div><div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.2、附录 D</span><div class="anno-body"><p><b>关联模块：</b>⑦ 拓扑与运行数据一致</p><ul><li>相关运行状态均有效样本至少 48 个，违反样本占比大于 5% 提示疑似拓扑与现场不符。</li><li>检查冷却塔管路运行而相连单元全停、一对一单元停机而对应冷却泵管路仍运行、单元运行而相连冷冻泵全停。</li><li>单元内任一冷机或板换运行即单元运行；泵、塔管路按成员任一运行判定，不足样本记无法校验。</li></ul></div></div><div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.2、§7.2</span><div class="anno-body"><p><b>关联模块：</b>模型同步与能效视图自检</p><ul><li>设备预测模型同步只检查该模型依赖对象的①②阻断项和④必需测点；有问题则该模型不同步，并提示去冷站配置补齐。</li><li>其他设备或整站拓扑只在同步结果中提示，不阻断没有依赖关系的模型。</li><li>④⑤⑥的测点、二次计算、静态属性与能效视图数据质量自检使用同一套规则和阈值；原自检入口与结果页保留。</li></ul></div></div><div class="anno anno-field" data-version="v3.0"><span class="anno-tag">字段说明</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.1</span><div class="anno-body"><p><b>关联模块：</b>明细筛选字段</p><ul><li>级别：默认全部，可选阻断、提示、无法校验、通过；对象：默认全部，包含设备、分组、系统和联合比较对象。</li><li>校验项：默认全部，可选①～⑦；各下拉变更立即筛选，可与其他条件叠加。</li><li>只看问题项：隐藏通过汇总，保留阻断、提示及无法校验；每对象每类通过最多一行。</li></ul></div></div><div class="anno anno-field" data-version="v3.0"><span class="anno-tag">字段说明</span><span class="anno-version">v3.0</span><span class="anno-source">产品推断</span><div class="anno-body"><p><b>关联模块：</b>关键字与筛选重置</p><ul><li>关键字按对象、属性或测点名称、校验项、说明做包含匹配；空白忽略。</li><li>默认勾选只看问题项；无匹配显示空态，保留筛选条件。</li><li>重置清空级别、对象、校验项、关键字，恢复只看问题项；显示当前条数与完整条数。</li></ul></div></div><div class="anno anno-ux" data-version="v3.0"><span class="anno-tag">交互说明</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.1、§6.1</span><div class="anno-body"><p><b>关联模块：</b>明细处置与导出</p><ul><li>去修改进入步骤 1 / 2 / 3 并定位属性；去配置进入步骤 3 并定位分组或连线。</li><li>去绑点用 toast 示意；场景 2 提供模拟完成绑点，仅写本页演示状态，重新校验后该阻断消失。</li><li>去配表达式带上该测点；导出问题测点进入测点表达式页并携带本次校验来源，不受当前明细筛选影响。</li></ul></div></div>
-<section class="data-card" id="detailCard" aria-label="校验明细"><div class="card-title">校验明细<span class="sub" id="detailCount"></span><a class="btn" style="display:inline-flex;align-items:center" href="冷站配置-测点表达式.html?id=A&from=verify" data-return>导出问题测点</a></div>
-<div class="filter-row"><label class="filter-field" for="filterLevel">级别<select class="filter-select" id="filterLevel"><option value="">全部级别</option><option value="ERROR">阻断</option><option value="WARN">提示</option><option value="INFO">无法校验</option><option value="PASS">通过</option></select></label>
-<label class="filter-field" for="filterDevice">对象<select class="filter-select" id="filterDevice"></select></label><label class="filter-field" for="filterCheck">校验项<select class="filter-select" id="filterCheck"><option value="">全部校验项</option></select></label>
-<label class="search-wrap" for="filterKeyword"><input class="search-input" type="search" id="filterKeyword" placeholder="对象 / 属性 / 测点 / 说明关键字" aria-label="关键字"></label><label class="quick-filter-check"><input type="checkbox" id="filterProblem" checked>只看问题项</label><button class="btn" id="resetFilters">重置</button></div>
-<div class="table-scroll"><table class="data-table"><thead><tr><th>级别</th><th>对象</th><th>校验项</th><th style="min-width:340px">说明</th><th>数据窗口与有效样本</th><th>处置</th></tr></thead><tbody id="detailBody"></tbody></table></div></section>
-</div></main></div></div><div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="anno anno-version-header" data-version="v3.0"><span class="anno-tag">版本信息</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§4.6、§5.1</span><div class="anno-body"><p><b>当前版本：</b>v3.0</p><p><b>更新日期：</b>2026-11-23</p><p><b>变更概述：</b>新增冷站配置「校验与预览」页：「配置校验」「组态预览」两个页签；配置校验为七类校验，版式同机房配置校验。</p><p><b>本页说明：</b>不在四步主线内；冷站配置列表和第 1–4 步底栏的「校验与预览 ↗」都在浏览器新标签页打开本页，同一配置复用同一个标签页。每次打开按已保存配置重新执行校验，不保存历史结论；原页面再保存后自动重新校验。本页只读，修改回原页面。</p></div></div>
+<div class="anno anno-req" data-version="v3.0"><span class="anno-tag">需求说明</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§4.6、§5.1～§5.3</span><div class="anno-body"><p><b>关联模块：</b>校验与预览页</p><ul><li>配置校验一次检查属性、拓扑、关键测点、运行数据，问题精确到对象及属性、测点或关系；每次进入自动执行一次。</li><li>组态预览按已保存配置自动组装冷站组态，核对设备、分组与供水连接。</li><li>本页只读，不提供修改入口：系统信息和系统属性在第 1 步，分组、设备关联和供水关系在第 2 步，设备属性和分组属性在第 3 步修改；测点到设备管理绑点或在第 4 步配表达式。</li></ul></div></div>
+<div class="anno anno-ux" data-version="v3.0"><span class="anno-tag">交互说明</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§4.6</span><div class="anno-body"><p><b>关联模块：</b>页头</p><ul><li>新标签页打开，标题「校验与预览」，副标题「系统名 · 水冷 / 风冷」；没有返回、步骤条和底栏。</li><li>原页面保存后（已保存配置版本变化）自动重新校验，组态预览已加载时重新组装；草稿变化不触发。</li></ul></div></div>
+<div class="page-header"><div><div class="verify-title" id="pageTitle">校验与预览</div><div class="page-sub" id="pageSub"></div></div></div>
+<div class="page-shell"><div class="page-card">
+<div class="anno anno-ux" data-version="v3.0"><span class="anno-tag">交互说明</span><span class="anno-version">v3.0</span><span class="anno-source">产品推断</span><div class="anno-body"><p><b>关联模块：</b>页签</p><ul><li>「配置校验」「组态预览」两个页签，默认配置校验；从指向组态预览的链接进入时直接打开组态预览，刷新后停在当前页签。</li><li>组态预览首次切到时才加载；切回配置校验不影响校验执行与筛选。</li><li>页签栏右侧按页签放操作：配置校验为原型演示（仅 A 路）、重新执行、导出 xlsx；组态预览为重新载入。</li></ul></div></div>
+<div class="anno anno-ux" data-version="v3.0"><span class="anno-tag">交互说明</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.1</span><div class="anno-body"><p><b>关联模块：</b>页签栏操作（重新执行 / 导出 xlsx）与元信息</p><ul><li><b>重新执行：</b>按已保存配置重跑七类校验；执行中「重新执行」「导出 xlsx」置灰，完成后刷新横幅、汇总与主表并提示结论。每次进入本页自动执行一次。</li><li><b>导出 xlsx：</b>导出当前主表，文件名 <code>项目名称_冷站配置校验_yyyyMMdd_HHmm.xlsx</code>。</li><li><b>元信息：</b>汇总行末尾显示设备台数（投入 / 投出）和数据窗口（近 7 天），只读。</li></ul></div></div>
+<div class="anno anno-ux" data-version="v3.0"><span class="anno-tag">交互说明</span><span class="anno-version">v3.0</span><span class="anno-source">产品推断</span><div class="anno-body"><p><b>关联模块：</b>原型演示</p><ul><li>仅 A 路显示；场景切换仅用于评审，保留查看 / 编辑模式；属性与拓扑按当前已保存配置校验，不读取编辑草稿；演示执行持续 1.5 秒。</li><li>A 路首次进入场景 2 会保存单元 3 冷却侧断线并提示已载入；修复保存后不再重复载入。</li><li>场景 2 的 6#主机投出且运行，场景 1、3 投出且停机；3#主机投出且停机。</li></ul></div></div>
+<div class="tab-bar"><div class="tab-list" role="tablist" aria-label="校验与预览"><button type="button" class="tab" role="tab" id="tabVerify" data-tab="verify" aria-controls="panelVerify" aria-selected="true">配置校验</button><button type="button" class="tab" role="tab" id="tabPreview" data-tab="preview" aria-controls="panelPreview" aria-selected="false" tabindex="-1">组态预览</button></div>
+<div class="tab-actions" id="verifyActions"><div class="demo-switch" role="group" aria-label="原型演示场景"><span class="demo-switch-label">原型演示</span><a class="demo-opt" data-scene="1" href="冷站配置-配置校验.html?id=A&scene=1">1 可以寻优 · 有提示</a><a class="demo-opt" data-scene="2" href="冷站配置-配置校验.html?id=A&scene=2">2 不能寻优</a><a class="demo-opt" data-scene="3" href="冷站配置-配置校验.html?id=A&scene=3">3 可以寻优</a></div>
+
+<button type="button" class="btn btn-ghost" id="btnRerun"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 8A5.5 5.5 0 1 1 8 2.5"/><path d="M8 2.5L11 5.5M8 2.5l3-3"/></svg>重新执行</button><button type="button" class="btn btn-ghost" id="btnExport"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v8M5 7l3 3 3-3M3 13h10"/></svg>导出 xlsx</button></div>
+<div class="tab-actions" id="previewActions" hidden><button type="button" class="btn btn-ghost" id="btnReload"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 8A5.5 5.5 0 1 1 8 2.5"/><path d="M8 2.5L11 5.5M8 2.5l3-3"/></svg>重新载入</button></div></div>
+<div class="tab-panel" id="panelVerify" role="tabpanel" aria-labelledby="tabVerify">
+<div class="anno anno-state" data-version="v3.0"><span class="anno-tag">状态说明</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.1、§5.3</span><div class="anno-body"><p><b>关联模块：</b>状态横幅</p><ul><li><b>执行中（蓝）：</b>「校验执行中，请稍候…」，汇总与主表保留上次结果。</li><li><b>校验不通过（红）：</b>有阻断时显示「校验不通过，共检查 N 项」；副文写阻断条数和「冷站每轮跳过寻优」，有提示时一并写出，再写执行时间与耗时。</li><li><b>校验通过（绿）：</b>无阻断时显示；副文写「冷站可以寻优」，有提示或无法校验时写条数并说明不影响寻优。</li><li><b>执行失败（红）：</b>写失败原因，保留上次结果，提示重新执行。</li></ul></div></div>
+<div class="status-banner success" id="statusBanner" role="status" aria-live="polite"><span class="banner-icon" id="bannerIcon"></span><div class="banner-text"><div id="bannerMain">—</div><div class="banner-sub" id="bannerSub">—</div></div></div>
+<div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.1</span><div class="anno-body"><p><b>关联模块：</b>汇总（阻断 / 提示 / 无法校验 / 通过）</p><ul><li>四项按主表行数统计，随结果刷新；同一条跨设备提示只计一次。</li><li>只显示计数，不可点击；按对象或结果查看用下方筛选。</li></ul></div></div>
+<div class="summary-row" id="summaryRow"></div>
+<div class="anno anno-field" data-version="v3.0"><span class="anno-tag">字段说明</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.1</span><div class="anno-body"><p><b>关联模块：</b>筛选与搜索</p><table class="anno-table"><thead><tr><th>控件</th><th>可选值</th></tr></thead><tbody><tr><td>数据来源</td><td>全部 / 静态属性 / 拓扑关系 / 测点数据</td></tr><tr><td>对象</td><td>全部 / 系统 / 各设备 / 各分组 / 联合比较对象</td></tr><tr><td>规则</td><td>全部 / ① 属性完整～⑦ 拓扑与运行数据一致</td></tr><tr><td>结果</td><td>全部 / 阻断 / 提示 / 无法校验 / 通过</td></tr><tr><td>搜索</td><td>对象、规则、问题描述，输入即过滤</td></tr></tbody></table><p style="margin-top:6px">多个条件取交集；没有结果时显示「暂无匹配结果」。</p></div></div>
+<div class="page-toolbar"><div class="filter-group">
+<label class="toolbar-item">数据来源<select class="toolbar-select" id="filterSource" aria-label="按数据来源筛选"><option value="">全部来源</option><option value="static">静态属性</option><option value="topo">拓扑关系</option><option value="binding">测点数据</option></select></label>
+<label class="toolbar-item">对象<select class="toolbar-select" id="filterObject" aria-label="按对象筛选"></select></label>
+<label class="toolbar-item">规则<select class="toolbar-select" id="filterRule" aria-label="按规则筛选"><option value="">全部规则</option></select></label>
+<label class="toolbar-item">结果<select class="toolbar-select" id="filterResult" aria-label="按校验结果筛选"><option value="">全部结果</option><option value="ERROR">阻断</option><option value="WARN">提示</option><option value="INFO">无法校验</option><option value="PASS">通过</option></select></label>
+</div><label class="search-field" aria-label="搜索"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.5 1.5a5 5 0 1 0 3.1 8.9l3.5 3.5a1 1 0 0 0 1.4-1.4l-3.5-3.5A5 5 0 0 0 6.5 1.5zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/></svg><input class="search-input" id="searchInput" type="search" placeholder="对象 / 规则 / 问题描述" autocomplete="off"></label></div>
+<div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.1、§5.2</span><div class="anno-body"><p><b>关联模块：</b>结果主表</p><ul><li>每行是一个对象在一类规则下的结果：问题逐条一行；通过的每对象每类最多一行。</li><li>排序：阻断、提示、无法校验、通过，同级按规则序号。</li><li>数据来源：①② 静态属性，③ 拓扑关系，④～⑦ 测点数据；配置类规则数据窗口显示「—」，运行数据类显示实际窗口和有效样本数。</li><li>阻断行在结果下标「冷站跳过寻优」；投出设备在对象下标「投出 · 运行中 / 已停机」。</li></ul></div></div>
+
+<div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.2、§5.3、附录 D</span><div class="anno-body"><p><b>关联模块：</b>检查范围与寻优</p><ul><li>投入设备和当前运行的投出设备同样检查；停机的投出设备只检查分组归属。</li><li>寻优每轮检查①②③阻断项及本轮必需输入；无值或超出取数时效时跳过，与是否做过配置校验无关。</li><li>取数时效沿用现网；未规定的点按数据时间早于本轮取数时刻超过该点刷新周期的 3 倍判定。</li><li>本轮跳过时，寻优记录写首条阻断并链接本页；候选开机组合由仿真按组合检查通路，失败组合淘汰。</li></ul></div></div><div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.2、附录 D</span><div class="anno-body"><p><b>关联模块：</b>① 属性完整</p><ul><li>系统、参与仿真的分组、需检查的设备必填项未填记阻断；对象类型决定实际属性清单。</li><li>6#冷水主机场景 2 缺 21 项必填属性，按保存后的实际缺项合并一条阻断；定位首个缺项。</li><li>运行中的投出设备不免检；停机投出设备只检查分组归属。</li></ul></div></div><div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.2、附录 D</span><div class="anno-body"><p><b>关联模块：</b>② 属性合理</p><ul><li>同一变量下限高于上限、仿真必需额定值不大于 0 均阻断；设计出塔水温不低于进塔、板换热侧出水不低于进水记提示。</li><li>以填写 COP 为基准，额定制冷量÷额定功率与 COP 相对偏差大于 10% 提示。</li><li>运行样本至少 6 个：出水设定上限≤实测出水最高值提示；冷却塔额定频率相对运行最高频率偏差大于 10% 提示。</li><li>水泵最小频率比运行最低频率高 1 Hz 以上提示；不足所需样本记无法校验。</li></ul></div></div><div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.2、附录 D</span><div class="anno-body"><p><b>关联模块：</b>③ 拓扑完整</p><ul><li>分组不为空，每台关联设备唯一归组；含二次泵、蓄冷罐时须有相应分组和设备。</li><li>全部投入制冷单元均查完整通路：有投入冷冻泵供水，水冷还连有投入冷却泵的管路及有投入冷却塔的管路。</li><li>冷冻泵管路至少供一个单元；冷却泵管路至少连一个单元和一条冷却塔管路，缺失阻断。</li><li>空间内同类设备未关联任何冷水系统只提示；二次侧连线自动生成，不做校验。</li></ul></div></div><div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.2、附录 D</span><div class="anno-body"><p><b>关联模块：</b>④ 关键测点</p><ul><li>按系统类型和包含项取仿真必需输入清单；采集点未绑或计算点近 24 小时无有效值记阻断，不消费的点不查。</li><li>下发设定点未绑记提示，该变量只计算、不下发；A级但非仿真必需点未绑也只提示。</li><li>近 7 天有效样本÷应有样本小于 50% 提示；存在性检查只需 1 个有效样本。</li></ul></div></div><div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.2、附录 D</span><div class="anno-body"><p><b>关联模块：</b>⑤ 测点数据合理</p><ul><li>越界、温度方向、跳变至少 6 个有效样本；范围取物模型，未定义时用自检固定阈值；温度方向仅统计运行。</li><li>写死：连续 48 个运行样本（4 小时）极差小于 0.01。</li><li>疑似母管值：系统内至少两台同类设备共同运行样本≥48，同名采集点两两差值绝对值小于 0.01 的占比大于 95%；跨分组比较。</li><li>跳变排除启停前后各 1 个样本；跳变阈值和违反占比与数据质量自检相同，异常只提示。</li></ul></div></div><div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.2、附录 D</span><div class="anno-body"><p><b>关联模块：</b>⑥ 系统守恒</p><ul><li>守恒与计算量越界至少 6 个有效样本，规则及阈值沿用数据质量自检 B1、B2；异常只提示。</li><li>计算量越界占比大于 5%；一般守恒偏差阈值 10%，按自检的低值及独立来源排除规则执行。</li><li>冷却侧热不平衡率绝对值大于 20% 且命中占比大于 30% 提示。</li><li>流量疑似接反：至少 6 个冷机运行样本，实测冷冻÷冷却流量中位数与额定流量比，一个大于 1、一个小于 1。</li></ul></div></div><div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.2、附录 D</span><div class="anno-body"><p><b>关联模块：</b>⑦ 拓扑与运行数据一致</p><ul><li>相关运行状态均有效样本至少 48 个，违反样本占比大于 5% 提示疑似拓扑与现场不符。</li><li>检查冷却塔管路运行而相连单元全停、一对一单元停机而对应冷却泵管路仍运行、单元运行而相连冷冻泵全停。</li><li>单元内任一冷机或板换运行即单元运行；泵、塔管路按成员任一运行判定，不足样本记无法校验。</li></ul></div></div><div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§5.2、§7.2</span><div class="anno-body"><p><b>关联模块：</b>模型同步与数据质量自检</p><ul><li>设备预测模型同步只检查该模型依赖对象的①②阻断项和④必需测点；有问题则该模型不同步，并提示去冷站配置补齐。</li><li>其他设备或整站拓扑只在同步结果中提示，不阻断没有依赖关系的模型。</li><li>④⑤⑥的测点、二次计算、静态属性与原数据质量自检使用同一套规则和阈值；能效视图中冷水系统的自检入口已去掉，冷站的数据检查统一在本步。</li></ul></div></div>
+<div class="table-wrap" id="tableArea"><table class="data-table" aria-label="冷站配置校验结果"><thead><tr><th class="col-object">对象</th><th class="col-source">数据来源</th><th class="col-window">数据窗口 / 有效样本</th><th class="col-result">校验结果</th><th class="col-desc">问题描述</th></tr></thead><tbody id="tableBody"></tbody></table></div>
+<div class="empty-state" id="emptyState" hidden aria-live="polite"><svg class="empty-icon" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="28" cy="28" r="16"/><path d="M40 40l12 12"/></svg><div class="empty-title">暂无匹配结果</div><div class="empty-desc">调整筛选条件或清空搜索后再试</div></div>
+</div>
+<div class="tab-panel preview-panel" id="panelPreview" role="tabpanel" aria-labelledby="tabPreview" hidden>
+<div class="anno anno-ux" data-version="v3.0"><span class="anno-tag">交互说明</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§4.6</span><div class="anno-body"><p><b>关联模块：</b>组态预览</p><ul><li>按已保存配置自动组装冷站组态，未保存的修改不进预览；布局和模型与寻优页系统图一致，可切换 2D、2.5D、3D。</li><li>顶部为配置摘要（系统类型、制冷单元数、设备投入 / 投出台数、分组数、供水关系数），点选对象在右侧看类型、分组或成员、投入 / 投出和供水上下游。</li><li>不显示实时值、告警和寻优内容，只能浏览；「重新载入」按最新已保存配置重新组装。</li></ul></div></div>
+<div class="anno anno-state" data-version="v3.0"><span class="anno-tag">状态说明</span><span class="anno-version">v3.0</span><span class="anno-source">产品推断</span><div class="anno-body"><p><b>关联模块：</b>组态预览加载</p><ul><li>首次切到本页签时加载，加载中显示「正在组装冷站组态…」。</li><li>8 秒内组态组件未就绪时提示「组态组件未加载，请确认 components/cold-station-3d 已部署」，可点「重新载入」再试。</li></ul></div></div>
+<p class="preview-tip">按已保存配置自动组装，布局和模型与寻优页系统图一致；可切换 2D、2.5D、3D，点选对象查看分组与供水上下游。</p><div class="preview-frame-wrap"><iframe id="previewFrame" title="冷站组态预览"></iframe><div class="preview-loading" id="previewLoading">正在组装冷站组态…</div></div>
+</div>
+</div></div>
+
+</main></div></div>
+<div class="modal-overlay" id="modal" aria-hidden="true"><div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-header"><h2 class="modal-title" id="modalTitle"></h2><button type="button" class="modal-close" id="modalClose" aria-label="关闭弹窗">×</button></div><div class="modal-content" id="modalContent"></div><div class="modal-footer" id="modalFooter"></div></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="components/cold-station-store.js"></script>
+<script src="components/cold-station-flow.js"></script>
 <script>
 (function () {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
   var checks = ['① 属性完整','② 属性合理','③ 拓扑完整','④ 关键测点','⑤ 测点数据合理','⑥ 系统守恒','⑦ 拓扑与运行数据一致'];
   var labels = {ERROR:'阻断',WARN:'提示',INFO:'无法校验',PASS:'通过'};
-  var params = new URLSearchParams(location.search), Store=window.ColdStationStore;
+  var params = new URLSearchParams(location.search), Store=window.ColdStationStore, Flow=window.ColdStationFlow;
   var systemId=params.get('id')||'A', snapshot=Store.getEffective(systemId);
+  var back=Store.safeBack(params.get('back'));
   var scene=systemId==='A'&&['1','2','3'].includes(params.get('scene'))?params.get('scene'):'1';
   var devices=[],groups=[],objects=[],findings=[],rows=[],busy=false,toastTimer;
   var resultKey='coldStationVerify:'+systemId+':'+scene, returnKey=resultKey+':return';
   var memory={};
   var storage={get:function(k){try{return localStorage.getItem(k)??memory[k]??null;}catch(e){return memory[k]??null;}},set:function(k,v){memory[k]=v;try{localStorage.setItem(k,v);}catch(e){}},remove:function(k){delete memory[k];try{localStorage.removeItem(k);}catch(e){}}};
   function esc(value){return String(value??'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
-  if(!snapshot){document.querySelector('.content-wrap').innerHTML='<div class="empty-cell">未找到该冷站配置。<a href="冷站配置-列表.html">返回冷站配置列表 →</a></div>';return;}
+  // 页头：标题「校验与预览」、系统名 · 系统类型。本页在浏览器新标签页打开，只读，不在四步主线内。
+  $('pageSub').textContent=snapshot?(snapshot.name||'冷水系统')+' · '+(snapshot.systemType==='air'?'风冷':'水冷'):'';
+  if(snapshot)document.title='校验与预览 - '+(snapshot.name||'冷站配置');
+  if(!snapshot){document.querySelector('.page-card').innerHTML='<div class="empty-state"><div class="empty-title">未找到该冷站配置</div><div class="empty-desc"><a class="action-link" href="冷站配置-列表.html">返回冷站配置列表 →</a></div></div>';return;}
   function backAddress(){var q=new URLSearchParams(location.search);q.set('id',systemId);if(systemId==='A')q.set('scene',scene);q.delete('revalidate');return '冷站配置-配置校验.html?'+q;}
   function objectName(id){var obj=objects.find(function(o){return o.id===id;});return obj?obj.name:id;}
   function fixLink(file,query,text){return {href:file+'?'+new URLSearchParams(Object.assign({id:systemId,back:backAddress()},query)),text:text};}
-  function editAttr(dev,attr){return fixLink('冷站配置-创建-步骤2.html',{mode:'edit',dev:dev,attr:attr},'去修改 →');}
+  function editAttr(dev,attr){return fixLink('冷站配置-创建-步骤3.html',{mode:'edit',dev:dev,attr:attr},'去修改 →');}
   function expression(point){return fixLink('冷站配置-测点表达式.html',{from:'verify',point:point,issues:JSON.stringify(issuePoints())},'去配表达式 →');}
-  function topology(g,rel,attr){return fixLink('冷站配置-创建-步骤3.html',{mode:'edit',group:g, ...(rel?{rel:rel}:{}),...(attr?{attr:attr}:{})},'去配置 →');}
+  function topology(g,rel,attr){return fixLink(attr?'冷站配置-创建-步骤3.html':'冷站配置-创建-步骤2.html',{mode:'edit',group:g, ...(rel?{rel:rel}:{}),...(attr?{attr:attr}:{})},'去配置 →');}
   function finding(level,obj,check,msg,windowText,sample,actions,affected,points){findings.push({level:level,obj:obj,check:check,msg:msg,window:windowText||'',sample:sample||'',actions:actions||[],affected:affected||[obj],points:points||[]});}
   function issuePoints(){var map=new Map();findings.forEach(function(f){f.points.forEach(function(p){var key=p.object+'.'+p.pointName,old=map.get(key);map.set(key,{key:key,object:p.object,pointName:p.pointName,reason:old?old.reason+'；'+p.reason:p.reason});});});return Array.from(map.values());}
   // 场景只首次装载一次断线；修复保存返回不会重新破坏连接。
-  var sceneKey='coldStationVerifyScene2Loaded:'+systemId;
+  var sceneKey='coldStationVerifyScene2Loaded:'+systemId,sceneLoaded=false;
   if(systemId==='A'&&scene==='2'&&!storage.get(sceneKey)){
     var unit=snapshot.topology.groups.find(function(g){return g.type==='unit'&&(g.slot==='3'||g.name==='制冷单元 3');});
     var rel=unit&&snapshot.topology.relations.find(function(r){return r.key==='cool'&&r.from===unit.id&&r.to.length;});
-    if(rel){rel.to=[];snapshot=Store.saveConfig(snapshot);var notice=document.createElement('div');notice.className='banner-tip';notice.textContent='已载入演示场景 2 的配置';document.querySelector('.time-line').after(notice);}
+    if(rel){rel.to=[];snapshot=Store.saveConfig(snapshot);sceneLoaded=true;}
     storage.set(sceneKey,'1');
   }
   function missingAttr(model,names){return (Store.DEFS[model]||[]).find(function(p){return names.includes(p.name);})?.id||'';}
@@ -259,7 +630,7 @@ button.action-link{background:none;border:0;padding:0;font-family:inherit;line-h
     snapshot=Store.getEffective(systemId);var sum=Store.summarize(snapshot);
     groups=snapshot.topology.groups;
     devices=sum.devices.map(function(d){var source=snapshot.devices.find(function(x){return x.id===d.id;});return {...d,type:source.kind==='gc'?'群控系统':source.name.replace(/^\d+#/,''),group:groups.filter(function(g){return g.members.includes(d.id);}).map(function(g){return g.id;}),active:d.inService,running:d.inService||(systemId==='A'&&scene==='2'&&d.id==='CH6')};});
-    objects=[{id:'SYS',name:snapshot.name}].concat(devices,groups,snapshot.systemType==='air'?[]:[{id:'CT_ALL',name:'冷却塔联合测点'}],[{id:'UNLINKED',name:'所在空间内未关联的冷冻水泵'}]);
+    objects=[{id:'SYS',name:snapshot.name}].concat(devices,groups,snapshot.systemType==='air'?[]:[{id:'CT_ALL',name:'冷却塔联合测点'}],[{id:'UNLINKED',name:'本项目内未关联的冷冻水泵'}]);
     findings=[];rows=[];
     if(sum.missingRequired.length)finding('ERROR','SYS',1,sum.missingRequired.length+' 项必填属性未填：'+sum.missingRequired.join('、')+'。','','',[fixLink('冷站配置-创建.html',{mode:'edit',attr:missingAttr('水冷冷水系统',sum.missingRequired)},'去修改 →')]);
     devices.forEach(function(d){if(!(d.active||d.running)||!d.missingRequired.length)return;var source=snapshot.devices.find(function(x){return x.id===d.id;});finding('ERROR',d.id,1,d.missingRequired.length+' 项必填属性未填：'+d.missingRequired.join('、')+'。'+(!d.active?'设备已投出但仍在运行，照常检查。':''),'','',[editAttr(d.id,missingAttr(source.model,d.missingRequired))]);});
@@ -269,6 +640,16 @@ button.action-link{background:none;border:0;padding:0;font-family:inherit;line-h
     sum.ungroupedDevices.forEach(function(name){var d=devices.find(function(x){return x.name===name;});finding('ERROR',d.id,3,name+' 未加入分组。','','',[topology(d.id)]);});
     sum.emptyGroups.forEach(function(name){var g=groups.find(function(x){return x.name===name;});finding('ERROR',g.id,3,name+' 没有成员设备。','','',[topology(g.id)]);});
     devices.filter(function(d){return d.group.length>1;}).forEach(function(d){finding('ERROR',d.id,3,'设备重复加入多个分组，请保留唯一归属。','','',[topology(d.group[0])]);});
+    // 制冷单元组成：冷水主机、板换各最多 1 台；只有板换的单元依赖自然冷 / 混合制冷
+    var kindOf=function(id){return (snapshot.devices.find(function(d){return d.id===id;})||{}).kind;};
+    groups.filter(function(g){return g.type==='unit';}).forEach(function(g){var ks=g.members.map(kindOf),ch=ks.filter(function(k){return k==='ch';}).length,hx=ks.filter(function(k){return k==='hx';}).length;if(ch>1||hx>1)finding('ERROR',g.id,3,g.name+' 内'+(ch>1?'冷水主机有 '+ch:'板换有 '+hx)+' 台，每个制冷单元冷水主机、板换各最多 1 台。','','',[topology(g.id)]);});
+    if(snapshot.systemType!=='air'){
+      var modes=[].concat(snapshot.attributes.coolmode||[]).map(String),freeMode=modes.indexOf('1')>=0||modes.indexOf('2')>=0;
+      var hxOnly=groups.filter(function(g){return g.type==='unit'&&g.members.length&&g.members.every(function(id){return kindOf(id)==='hx';});});
+      var anyHx=groups.some(function(g){return g.type==='unit'&&g.members.some(function(id){return kindOf(id)==='hx';});});
+      if(!freeMode)hxOnly.forEach(function(g){finding('WARN',g.id,3,g.name+' 只有板换，但系统制冷模式范围不含自然冷和混合制冷，该单元不会运行。','','',[fixLink('冷站配置-创建.html',{mode:'edit',attr:'coolmode'},'去修改 →')]);});
+      if(freeMode&&!anyHx)finding('WARN','SYS',3,'系统制冷模式范围含自然冷或混合制冷，但没有制冷单元含板换。','','',[fixLink('冷站配置-创建.html',{mode:'edit',attr:'coolmode'},'去修改 →')]);
+    }
     [['二次泵','second','sp'],['蓄冷罐','tank','tk']].forEach(function(t){if(snapshot.includes.includes(t[0])&&(!groups.some(function(g){return g.type===t[1];})||!snapshot.devices.some(function(d){return d.kind===t[2];})))finding('ERROR','SYS',3,'系统包含'+t[0]+'，缺少相应分组或设备。','','',[topology(t[1])]);});
     var rels=snapshot.topology.relations;
     groups.filter(function(g){return g.type==='freeze'&&g.members.length&&!rels.some(function(r){return r.key==='freeze'&&r.from===g.id&&r.to.length;});}).forEach(function(g){finding('ERROR',g.id,3,g.name+' 未连接制冷单元。','','',[topology(g.id,'freeze')]);});
@@ -279,7 +660,7 @@ button.action-link{background:none;border:0;padding:0;font-family:inherit;line-h
       var towers=devices.filter(function(d){return d.kind==='ct';}),points=towers.map(function(d){return {object:d.id,pointName:'出水温度',reason:'疑似母管值'};});
       if(towers.length>1)finding('WARN','CT_ALL',5,towers.map(function(d){return d.name;}).join('、')+'出水温度长期完全相同，疑似绑定了母管值。','近 7 天 · 5 分钟','1728 个共同运行有效样本',[{bind:true,text:'去绑点 →'},{point:points[0].object+'.出水温度',text:'去配表达式 →'}],towers.map(function(d){return d.id;}),points);
       if(towers.some(function(d){return d.id==='CT4';}))finding('WARN','CT4',4,'风机开机数量设定未绑定，该变量只计算、不下发。','近 7 天 · 5 分钟','2016 个有效样本',[{bind:true,text:'去绑点 →'},{point:'CT4.风机开机数量设定',text:'去配表达式 →'}],null,[{object:'CT4',pointName:'风机开机数量设定',reason:'设定点未绑定，只计算不下发'}]);
-      finding('WARN','UNLINKED',3,'所在空间内有 2 台冷冻水泵未关联到任何冷水系统，疑似漏关联。','','',[fixLink('冷站配置-创建-步骤2.html',{mode:'edit',dev:'CHWP1'},'去修改 →')],[]);
+      finding('WARN','UNLINKED',3,'本项目内有 2 台冷冻水泵未关联到任何冷水系统，疑似漏关联。','','',[fixLink('冷站配置-创建-步骤2.html',{mode:'edit',dev:'CHWP1'},'去修改 →')],[]);
       if(scene==='2'&&towers.some(function(d){return d.id==='CT2';})&&!storage.get('coldStationBindingDemo:'+systemId+':CT2'))finding('ERROR','CT2',4,'出水温度未绑定，缺少仿真必需的输入测点。','近 24 小时','0 个有效样本',[{bind:true,simulate:true,text:'去绑点 →'},{point:'CT2.出水温度',text:'去配表达式 →'}],null,[{object:'CT2',pointName:'出水温度',reason:'出水温度未绑定'}]);
     }else if(systemId==='A'){
       var tower=groups.filter(function(g){return g.type==='tower';}).at(-1),dev=devices.filter(function(d){return d.kind==='ct';}).at(-1);
@@ -295,103 +676,133 @@ button.action-link{background:none;border:0;padding:0;font-family:inherit;line-h
     pass('SYS',1,'系统必填属性已齐全。');pass('SYS',2,'系统属性范围检查通过。');pass('SYS',6,'本次已执行的守恒规则检查通过。','近 7 天 · 5 分钟','2016 个有效样本');
     groups.forEach(function(g){pass(g.id,1,'分组必填属性已齐全。');pass(g.id,3,'分组成员与供水通路检查通过。');if(['unit','cool','tower'].includes(g.type))pass(g.id,7,'本次已执行的运行状态核对未发现异常。','近 7 天 · 5 分钟','1728 个共同有效样本');});
     rows.sort(function(a,b){return ({ERROR:0,WARN:1,INFO:2,PASS:3})[a.level]-({ERROR:0,WARN:1,INFO:2,PASS:3})[b.level]||a.check-b.check;});
-    $('filterDevice').innerHTML='<option value="">全部对象</option>'+objects.map(function(o){return '<option value="'+esc(o.id)+'">'+esc(o.name)+'</option>';}).join('');
-    document.querySelector('#detailCard .card-title a').href=fixLink('冷站配置-测点表达式.html',{from:'verify',issues:JSON.stringify(issuePoints())},'').href;
+    var curObj=$('filterObject').value;$('filterObject').innerHTML='<option value="">全部对象</option>'+objects.map(function(o){return '<option value="'+esc(o.id)+'">'+esc(o.name)+'</option>';}).join('');$('filterObject').value=curObj;
     storage.set('coldStationVerifyIssues:'+systemId,JSON.stringify(issuePoints()));
-    document.querySelector('.page-heading-sub').textContent=snapshot.name;
-    document.querySelector('.time-line>span:last-child').textContent=(snapshot.systemType==='air'?'风冷':'水冷')+' · '+snapshot.space;
   }
   compute();
-  var order = {ERROR:0,WARN:1,INFO:2,PASS:3};
-  rows.sort(function(a,b){return order[a.level]-order[b.level]||a.check-b.check;});
-  function count(level,list) { return (list||findings).filter(function(f){return f.level===level;}).length; }
-  function showToast(msg) { clearTimeout(toastTimer); $('toast').textContent=msg; $('toast').classList.add('show'); toastTimer=setTimeout(function(){$('toast').classList.remove('show');},3500); }
-  function setBanner(state,title,desc) { $('resultBanner').className='banner-result is-'+state; $('bannerTitle').textContent=title; $('bannerDesc').textContent=desc; }
-  function renderBanner() {
-    var errors=count('ERROR'),warns=count('WARN'),info=count('INFO');
-    storage.set('coldStationVerifySummary:'+systemId,JSON.stringify({time:$('checkedAt').textContent,rev:snapshot.rev||0,errors:errors,warns:warns,scene:scene}));
-    setBanner(errors?'block':warns?'warn':'pass',errors?'冷站不能寻优 · '+errors+' 条阻断':warns?'可以寻优 · '+warns+' 条提示':'可以寻优',errors?'阻断问题未消除前，冷站寻优每轮跳过。另有 '+warns+' 条提示，请一并核对。':info?'未发现阻断和提示；有 '+info+' 条因样本不足无法校验，不影响寻优，补足数据后可重新校验。':'未发现阻断。提示不影响寻优，请核对后重新校验。');
+  var RES={ERROR:'fail',WARN:'notice',INFO:'insuf',PASS:'pass'},SOURCES={static:'静态属性',topo:'拓扑关系',binding:'测点数据'};
+  var checkedAt='2026-11-04 10:00:00';
+  function sourceOf(check){return check<=2?'static':check===3?'topo':'binding';}
+  function ruleName(check){return checks[check-1].slice(2);}
+  function count(level,list){return (list||rows).filter(function(f){return f.level===level;}).length;}
+  function showToast(msg){clearTimeout(toastTimer);$('toast').textContent=msg;$('toast').classList.add('show');toastTimer=setTimeout(function(){$('toast').classList.remove('show');},3500);}
+  var ICONS={
+    success:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 4L6.5 11 2.5 7"/></svg>',
+    failed:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M5.8 5.8l4.4 4.4M10.2 5.8l-4.4 4.4"/></svg>',
+    running:'<svg class="spinning" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M14 8a6 6 0 1 1-4.1-5.7"/></svg>'
+  };
+  function setStatus(kind,main,sub){$('statusBanner').className='status-banner '+kind;$('bannerIcon').innerHTML=ICONS[kind];$('bannerMain').innerHTML=main;$('bannerSub').textContent=sub;}
+  function metaText(){
+    var active=devices.filter(function(d){return d.active;}).length;
+    return devices.length+' 台设备（投入 '+active+' / 投出 '+(devices.length-active)+'）· 数据窗口：近 7 天';
   }
-  function renderSummary() {
-    var active=devices.filter(function(d){return d.active;}).length;var units=groups.filter(function(g){return g.type==='unit'&&Store.isUnitInService(snapshot,g);}).length;
-    $('summaryPills').innerHTML='<span>投入制冷单元 <b>'+units+'</b></span><span>设备总数 <b>'+devices.length+'</b></span><span class="confidence-pill high">投入 '+active+'</span><span class="confidence-pill low">投出 '+(devices.length-active)+'</span>'+['ERROR','WARN','INFO'].map(function(l){return '<button type="button" class="confidence-pill '+({ERROR:'err',WARN:'warn',INFO:'low'}[l])+'" data-level="'+l+'">'+labels[l]+' '+count(l)+'</button>';}).join('');
+  function renderBanner(){
+    var errors=count('ERROR'),warns=count('WARN'),info=count('INFO'),impact;
+    if(errors)impact=errors+' 条阻断未消除前，冷站每轮跳过寻优'+(warns?'；另有 '+warns+' 条提示，请一并核对':'');
+    else{var notes=[];if(warns)notes.push(warns+' 条提示请核对');if(info)notes.push(info+' 项数据不足无法校验');impact='冷站可以寻优'+(notes.length?'；'+notes.join('，')+'，不影响寻优':'，未发现问题');}
+    setStatus(errors?'failed':'success',(errors?'校验不通过':'校验通过')+'，共检查 <strong>'+rows.length+'</strong> 项',impact+' · 执行时间：'+checkedAt+' · 耗时约 1.5s');
   }
-  function renderCards() {
-    $('checkCards').innerHTML=checks.map(function(name,i){
-      var list=findings.filter(function(f){return f.check===i+1;});
-      var level=count('ERROR',list)?'ERROR':count('WARN',list)?'WARN':count('INFO',list)?'INFO':'PASS';
-      var title={ERROR:'有阻断',WARN:'有提示',INFO:'无法校验',PASS:'通过'}[level];
-      return '<button type="button" class="check-card'+($('filterCheck').value===String(i+1)?' is-active':'')+'" data-check="'+(i+1)+'" aria-pressed="'+($('filterCheck').value===String(i+1))+'">'+esc(name)+'<br><span class="state-tag '+({ERROR:'state-err',WARN:'state-warn',INFO:'state-off',PASS:'state-ok'}[level])+'">'+title+'</span></button>';
-    }).join('');
+  function chip(cls,label,n){return '<span class="summary-chip"><span class="chip-dot '+cls+'"></span>'+label+' <span class="chip-count">'+n+'</span> 项</span>';}
+  function renderSummary(){
+    var html=chip('fail','阻断',count('ERROR'))+chip('notice','提示',count('WARN'))+chip('insuf','无法校验',count('INFO'))+chip('pass','通过',count('PASS'))+'<span class="summary-ext" id="pageMeta">'+esc(metaText())+'</span>';
+    $('summaryRow').innerHTML=html;
   }
-  function renderOverview() {
-    var typeSel=$('overviewType'),onlyProblem=$('overviewProblem').checked,types=[];devices.forEach(function(d){if(types.indexOf(d.type)<0)types.push(d.type);});
-    var cur=typeSel.value;typeSel.innerHTML='<option value="">全部类型</option>'+types.map(function(t){return '<option value="'+esc(t)+'"'+(t===cur?' selected':'')+'>'+esc(t)+'</option>';}).join('');
-    var shown=0,problems=0;
-    $('overviewBody').innerHTML=devices.map(function(d){
-      var f=findings.filter(function(f){return f.affected.includes(d.id);}),e=count('ERROR',f),w=count('WARN',f);
-      if(e||w)problems++;if((cur&&d.type!==cur)||(onlyProblem&&!e&&!w))return '';shown++;
-      var state=e?'有阻断问题':w?'有提示':'通过';
-      return '<tr><td><b>'+esc(d.name)+'</b><span class="cell-sub">'+(d.running?'运行中':'已停机')+'</span></td><td>'+esc(d.type)+'</td><td>'+esc(d.group.length?d.group.map(objectName).join('、'):'随冷水系统关联')+'</td><td><span class="state-tag '+(d.active?'state-ok':'state-off')+'">'+(d.active?'投入':'投出')+'</span></td><td><span class="state-tag '+(e?'state-err':w?'state-warn':'state-ok')+'">'+state+'</span></td><td class="lvl '+(e?'lvl-ERROR':'')+'">'+e+'</td><td class="lvl '+(w?'lvl-WARN':'')+'">'+w+'</td><td><button class="action-link" data-focus="'+d.id+'">查看明细</button></td></tr>';
-    }).join('')||'<tr><td colspan="8" class="overview-empty">'+(onlyProblem?'没有有问题的设备':'暂无设备')+'</td></tr>';
-    $('overviewCount').textContent='显示 '+shown+' / '+devices.length+' 台 · 有问题 '+problems+' 台';
+  function objectCell(id){var d=devices.find(function(x){return x.id===id;});return esc(objectName(id))+(d&&!d.active?'<span class="cell-sub">投出 · '+(d.running?'运行中':'已停机')+'</span>':'');}
+  function rowHtml(f){
+    var cls=RES[f.level],src=sourceOf(f.check);
+    var res='<span class="result-tag '+cls+'"><span class="result-tag-dot"></span>'+labels[f.level]+'</span>'+(f.level==='ERROR'?'<span class="result-impact">冷站跳过寻优</span>':'');
+    var win=f.window?esc(f.window)+(f.sample?'<span class="cell-sub">'+esc(f.sample)+'</span>':''):'—';
+    return '<tr><td class="col-object">'+objectCell(f.obj)+'</td><td class="col-source"><span class="source-tag '+(src==='binding'?'':src)+'">'+SOURCES[src]+'</span></td><td class="col-window">'+win+'</td><td class="col-result">'+res+'</td><td class="col-desc"><div class="desc-item'+(f.level==='PASS'?' desc-pass':'')+'"><span class="rule-badge '+cls+'">'+esc(ruleName(f.check))+'</span>'+esc(f.msg)+'</div></td></tr>';
   }
-  document.addEventListener('change',function(e){if(e.target&&(e.target.id==='overviewType'||e.target.id==='overviewProblem'))renderOverview();});
-  function actionHTML(action) {
-    if(action.bind) return '<button class="action-link" data-bind>去绑点 →</button>'+(action.simulate?'<button class="action-link" data-simulate-binding>模拟已完成绑点</button>':'');
-    if(action.point)action=expression(action.point);
-    return '<a class="action-link" href="'+esc(action.href)+'" data-return>'+esc(action.text)+'</a>';
+  function renderTable(){
+    var src=$('filterSource').value,obj=$('filterObject').value,rule=$('filterRule').value,res=$('filterResult').value,kw=$('searchInput').value.trim().toLowerCase();
+    var list=rows.filter(function(f){return (!src||sourceOf(f.check)===src)&&(!obj||f.obj===obj||f.affected.includes(obj))&&(!rule||String(f.check)===rule)&&(!res||f.level===res)&&(!kw||(objectName(f.obj)+' '+checks[f.check-1]+' '+f.msg).toLowerCase().includes(kw));});
+    $('tableBody').innerHTML=list.map(rowHtml).join('');
+    $('tableArea').hidden=!list.length;$('emptyState').hidden=!!list.length;
   }
-  function renderDetail() {
-    var level=$('filterLevel').value,obj=$('filterDevice').value,check=$('filterCheck').value;
-    var kw=$('filterKeyword').value.trim().toLowerCase(),problem=$('filterProblem').checked;
-    var list=rows.filter(function(f){
-      return (!level||f.level===level)&&(!obj||f.obj===obj||f.affected.includes(obj))&&(!check||String(f.check)===check)&&(!problem||f.level!=='PASS')&&(!kw||(objectName(f.obj)+' '+checks[f.check-1]+' '+f.msg).toLowerCase().includes(kw));
-    });
-    $('detailCount').textContent='当前 '+list.length+' 条 / 全部 '+rows.length+' 条（含通过汇总）';
-    $('detailBody').innerHTML=list.length?list.map(function(f){return '<tr><td class="lvl lvl-'+f.level+'">'+labels[f.level]+'</td><td><b>'+esc(objectName(f.obj))+'</b></td><td>'+checks[f.check-1]+'</td><td>'+esc(f.msg)+'</td><td class="window-cell">'+esc(f.window||'配置检查，不涉及运行数据')+(f.sample?'<span class="cell-sub">'+esc(f.sample)+'</span>':'')+'</td><td><div class="cell-actions">'+(f.actions.length?f.actions.map(actionHTML).join(''):'<span class="cell-sub">'+(f.level==='INFO'?'补足数据后重新校验':'—')+'</span>')+'</div></td></tr>';}).join(''):'<tr><td colspan="6" class="empty-cell">没有符合条件的校验项，请调整筛选或点击「重置」</td></tr>';
-    renderCards();
-  }
-  function reset() { ['filterLevel','filterDevice','filterCheck','filterKeyword'].forEach(function(id){$(id).value='';}); $('filterProblem').checked=true; }
-  function scrollDetail() { $('detailCard').scrollIntoView({behavior:'smooth',block:'start'}); }
-  function nowText() { var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+' '+[d.getHours(),d.getMinutes(),d.getSeconds()].map(function(v){return String(v).padStart(2,'0');}).join(':'); }
-  function revalidate(reason) {
+  function renderAll(){renderBanner();renderSummary();renderTable();}
+  function nowText(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+' '+[d.getHours(),d.getMinutes(),d.getSeconds()].map(function(v){return String(v).padStart(2,'0');}).join(':');}
+  function revalidate(reason){
     if(busy)return;
-
-    busy=true; $('btnRevalidate').disabled=true; $('btnRevalidate').innerHTML='<span class="spinner" aria-hidden="true"></span>校验中…';
-    $('resultBanner').setAttribute('aria-busy','true');
-    setBanner('running','正在校验…','正在检查当前属性、测点、设备分组、供水关系及运行数据。下方保留上次结果，完成后刷新。');
+    busy=true;$('btnRerun').disabled=true;$('btnExport').disabled=true;$('statusBanner').setAttribute('aria-busy','true');
+    setStatus('running','校验执行中，请稍候…','正在检查属性、测点、设备分组、供水关系及运行数据；下方保留上次结果，完成后刷新');
     setTimeout(function(){
-      compute();var time=nowText(); $('checkedAt').textContent=time; storage.set(resultKey,time); storage.set(resultKey+':rev',String(snapshot.rev||0));
-      renderBanner(); renderSummary(); renderOverview(); renderDetail();
-      busy=false; $('btnRevalidate').disabled=false; $('btnRevalidate').textContent='重新校验'; $('resultBanner').setAttribute('aria-busy','false');
-      showToast(reason||'校验完成');
+      compute();checkedAt=nowText();storage.set(resultKey,checkedAt);storage.set(resultKey+':rev',String(snapshot.rev||0));
+      renderAll();
+      busy=false;$('btnRerun').disabled=false;$('btnExport').disabled=false;$('statusBanner').setAttribute('aria-busy','false');
+      showToast(reason||(count('ERROR')?'校验不通过':'校验通过'));
     },1500);
   }
-  $('filterDevice').innerHTML='<option value="">全部对象</option>'+objects.map(function(o){return '<option value="'+o.id+'">'+esc(o.name)+'</option>';}).join('');
-  checks.forEach(function(name,i){var opt=document.createElement('option');opt.value=i+1;opt.textContent=name;$('filterCheck').appendChild(opt);});
-  ['filterLevel','filterDevice','filterCheck','filterProblem'].forEach(function(id){$(id).addEventListener('change',renderDetail);});
-  $('filterKeyword').addEventListener('input',renderDetail);
-  $('resetFilters').addEventListener('click',function(){reset();renderDetail();});
-  $('btnRevalidate').addEventListener('click',function(){revalidate();});
-  document.addEventListener('click',function(e){
-    var focus=e.target.closest('[data-focus]'),card=e.target.closest('[data-check]'),pill=e.target.closest('[data-level]');
-    if(focus){reset();$('filterProblem').checked=false;$('filterDevice').value=focus.dataset.focus;renderDetail();scrollDetail();}
-    if(card){$('filterCheck').value=$('filterCheck').value===card.dataset.check?'':card.dataset.check;renderDetail();scrollDetail();}
-    if(pill){reset();$('filterLevel').value=pill.dataset.level;renderDetail();scrollDetail();}
-    if(e.target.closest('[data-bind]'))showToast('跳转设备管理 › 测点绑定；完成后请返回重新校验');
-    if(e.target.closest('[data-simulate-binding]')){storage.set('coldStationBindingDemo:'+systemId+':CT2','1');showToast('已模拟完成 2#冷却塔绑点');revalidate('模拟绑点完成，已重新校验');}
-    var link=e.target.closest('a[data-return]');
-    if(link&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey&&!e.altKey){storage.set(returnKey,location.pathname+location.search);}
-  });
-  document.querySelectorAll('[data-scene]').forEach(function(a){a.href='冷站配置-配置校验.html?'+new URLSearchParams({id:systemId,scene:a.dataset.scene});var current=a.dataset.scene===scene;a.classList.toggle('is-active',current);if(current)a.setAttribute('aria-current','page');});
+  checks.forEach(function(name,i){var opt=document.createElement('option');opt.value=i+1;opt.textContent=name;$('filterRule').appendChild(opt);});
+  ['filterSource','filterObject','filterRule','filterResult'].forEach(function(id){$(id).addEventListener('change',renderTable);});
+  $('searchInput').addEventListener('input',renderTable);
+  $('btnRerun').addEventListener('click',function(){revalidate();});
+  $('btnExport').addEventListener('click',function(){var t=checkedAt.replace(/[-:]/g,'').replace(' ','_').slice(0,13);showToast('导出 xlsx（原型不下载）：项目名称_冷站配置校验_'+t+'.xlsx\n内容与当前主表一致');});
+  document.querySelectorAll('[data-scene]').forEach(function(a){var q=new URLSearchParams({id:systemId,scene:a.dataset.scene});if(back)q.set('back',back);a.href='冷站配置-配置校验.html?'+q;var current=a.dataset.scene===scene;a.classList.toggle('is-active',current);if(current)a.setAttribute('aria-current','page');});
   document.querySelector('.demo-switch').hidden=systemId!=='A';
-  var previous=storage.get(resultKey), changed=storage.get(resultKey+':rev')!==String(snapshot.rev||0);
-  if(previous)$('checkedAt').textContent=previous;
-  renderBanner();renderSummary();renderOverview();renderDetail();
-  function returned(){if(storage.get(returnKey)){storage.remove(returnKey);revalidate('返回配置校验，已重新校验');return true;}return false;}
-  window.addEventListener('pageshow',function(e){if(e.persisted&&(returned()||Number(Store.getEffective(systemId)?.rev||0)>Number(storage.get(resultKey+':rev')||0)))revalidate();});
-  if(!returned()&&(!previous||changed||params.get('revalidate')==='1'))revalidate('已按当前已保存配置自动完成一次校验');
+  renderAll();
+  if(sceneLoaded)showToast('已载入演示场景 2 的配置');
+  function returned(){if(storage.get(returnKey)){storage.remove(returnKey);revalidate('返回配置校验，已重新执行');return true;}return false;}
+  // 原页面保存后（已保存配置版本变化）自动重新校验，组态预览已加载时重新组装；草稿变化不触发。
+  var seenRev=Number(snapshot.rev||0);
+  window.addEventListener('storage',function(e){if(e.key&&e.key!=='coldStationConfigs')return;var cur=Store.getEffective(systemId);if(!cur)return;var rev=Number(cur.rev||0);if(rev===seenRev)return;seenRev=rev;snapshot=cur;$('pageSub').textContent=(cur.name||'冷水系统')+' · '+(cur.systemType==='air'?'风冷':'水冷');revalidate('原页面已保存，已重新校验');if(previewState&&previewState.ready)setTimeout(reloadPreview,1600);});
+  // 每次打开都按已保存配置重新执行，不沿用历史结论；从浏览器缓存返回时同样重新执行。
+  window.addEventListener('pageshow',function(e){if(e.persisted&&!returned())revalidate('已按当前已保存配置重新执行');});
+  if(!returned())revalidate('已按当前已保存配置执行校验');
+
+  // ===== 页签：配置校验 / 组态预览（tab=preview 直接打开组态预览） =====
+  var tab='verify';
+  function setTab(next,focus){
+    tab=next==='preview'?'preview':'verify';var p=tab==='preview';
+    [['tabVerify',!p],['tabPreview',p]].forEach(function(t){var el=$(t[0]);el.setAttribute('aria-selected',String(t[1]));el.tabIndex=t[1]?0:-1;if(t[1]&&focus)el.focus();});
+    $('panelVerify').hidden=p;$('panelPreview').hidden=!p;$('verifyActions').hidden=p;$('previewActions').hidden=!p;
+    try{var u=new URL(location.href);if(p)u.searchParams.set('tab','preview');else u.searchParams.delete('tab');history.replaceState(history.state,'',u.pathname.split('/').pop()+u.search+u.hash);}catch(e){}
+    if(p)enterPreview();
+  }
+  document.querySelector('.tab-list').addEventListener('click',function(e){var b=e.target.closest('[data-tab]');if(b)setTab(b.dataset.tab);});
+  document.querySelector('.tab-list').addEventListener('keydown',function(e){if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();setTab(tab==='preview'?'verify':'preview',true);}});
+
+  // ===== 组态预览：iframe 嵌入冷站组态工程（2D / 2.5D / 3D），输入为 KE 原始图谱格式，数据取已保存配置 =====
+  var PREVIEW_SRC='components/cold-station-3d/config-preview.html',previewState=null,previewTimer=null;
+  function exportPreview(){var exported=Store.toKeRawGraph(Store.getEffective(systemId));return {graph:exported.graph,summary:exported.summary};}
+  function postPreview(type,body){var frame=$('previewFrame');if(frame&&frame.contentWindow)frame.contentWindow.postMessage(Object.assign({type:type},body),'*');}
+  function loadFrame(){
+    var frame=$('previewFrame');previewState={payload:exportPreview(),ready:false};
+    $('previewLoading').hidden=false;$('previewLoading').textContent='正在组装冷站组态…';
+    frame.setAttribute('src',PREVIEW_SRC);
+    clearTimeout(previewTimer);previewTimer=setTimeout(function(){if(previewState&&!previewState.ready)$('previewLoading').textContent='组态组件未加载，请确认 components/cold-station-3d 已部署';},8000);
+  }
+  function enterPreview(){if(!previewState)loadFrame();}
+  function reloadPreview(){
+    if(previewState&&previewState.ready){previewState.payload=exportPreview();postPreview('cold-station-preview:load',{payload:previewState.payload});showToast('已按最新已保存配置重新组装');}
+    else loadFrame();
+  }
+  window.addEventListener('message',function(event){
+    var frame=$('previewFrame');if(!previewState||!frame||event.source!==frame.contentWindow)return;var m=event.data||{};
+    if(m.type==='cold-station-preview:ready'){previewState.ready=true;clearTimeout(previewTimer);$('previewLoading').hidden=true;postPreview('cold-station-preview:load',{payload:previewState.payload});}
+  });
+  $('btnReload').addEventListener('click',reloadPreview);
+
+  // ===== 弹窗 =====
+  var modalReturn=null,modalClose=null;
+  function annoBlock(kind,tag,source,module,items){return '<div class="anno anno-'+kind+'" data-version="v3.0"><span class="anno-tag">'+tag+'</span><span class="anno-version">v3.0</span><span class="anno-source">'+source+'</span><div class="anno-body"><p><b>关联模块：</b>'+module+'</p><ul>'+items.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul></div></div>';}
+  function openModal(title,body,buttons,onClose){
+    modalReturn=document.activeElement;modalClose=onClose||closeModal;
+    $('modalTitle').textContent=title;$('modalContent').innerHTML=body;$('modalFooter').innerHTML='';
+    buttons.forEach(function(b){var el=document.createElement('button');el.type='button';el.className='btn '+(b.primary?'btn-primary':'btn-ghost');el.textContent=b.label;el.addEventListener('click',b.action);$('modalFooter').appendChild(el);});
+    $('modal').classList.add('is-open');$('modal').setAttribute('aria-hidden','false');
+    var primary=$('modalFooter').querySelector('.btn-primary')||$('modalFooter').querySelector('button');if(primary)primary.focus();
+  }
+  function closeModal(){$('modal').classList.remove('is-open');$('modal').setAttribute('aria-hidden','true');if(modalReturn&&modalReturn.isConnected)modalReturn.focus();}
+  $('modalClose').addEventListener('click',function(){modalClose();});
+  $('modal').addEventListener('click',function(e){if(e.target===$('modal'))modalClose();});
+  document.addEventListener('keydown',function(e){
+    if(!$('modal').classList.contains('is-open'))return;
+    if(e.key==='Escape'){e.preventDefault();modalClose();return;}
+    if(e.key==='Tab'){var els=Array.prototype.slice.call($('modal').querySelectorAll('button:not([disabled]),a[href]')).filter(function(x){return x.getClientRects().length;});if(!els.length)return;var first=els[0],last=els[els.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}
+  });
+
+  if(params.get('tab')==='preview')setTab('preview');
 
 })();
 

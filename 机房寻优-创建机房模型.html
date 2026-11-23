@@ -641,7 +641,7 @@
         <div class="anno-body">
           <p><b>更新日期：</b>2026-11-12</p>
           <p><b>变更概述：</b>空调设备信息按物模型属性定义在表内直接填写，新增控制方式和冷冻水型设计点属性，可「复制到同类型设备」批量填写。</p>
-          <p><b>本页说明：</b>属性缺失、写点与拓扑问题不在创建步骤中拦截，保存后从机房配置列表「机房配置校验」检查。</p>
+          <p><b>本页说明：</b>属性缺失、写点与拓扑问题不在创建步骤中拦截，保存后从机房配置列表「机房配置校验」检查。列表「编辑」进入同一表单（?mode=edit），保存后列出受影响的预测模型（见步骤 2）。</p>
         </div>
       </div>
 
@@ -1460,6 +1460,35 @@
         });
       }
 
+      /* v2.9 编辑：记录本次改动，步骤 2 保存后据此列出受影响的预测模型（演示；实际名单由后台返回） */
+      var isEditMode = new URLSearchParams(location.search).get('mode') === 'edit';
+      if (isEditMode) {
+        document.title = '机房寻优 - 编辑机房配置';
+        var backLink = document.querySelector('.back-link');
+        if (backLink) backLink.textContent = '← 编辑机房配置';
+        if (btnNextFmt) btnNextFmt.href = '机房寻优-创建机房模型-步骤2.html?mode=edit';
+      }
+      if (btnNextFmt) {
+        btnNextFmt.addEventListener('click', function () {
+          if (!isEditMode) { try { localStorage.removeItem('roomCfgEdits'); } catch (err) {} return; }
+          var initIds = AIRCON_ITEMS.map(function (a) { return a.id; });
+          var curIds = selectedAircons.map(function (a) { return a.id; });
+          var payload = {
+            aircons: selectedAircons.filter(function (it) { return MODEL_SCHEMA[it.typeId]; }).map(function (it) {
+              return {
+                name: it.name,
+                kind: /ChilledWater/.test(it.typeId) ? '冷冻水型' : '风冷型',
+                fresh: !!it.fresh || initIds.indexOf(it.id) < 0,
+                props: MODEL_SCHEMA[it.typeId].props.filter(function (p) { return isEdited(it, p.id); }).map(function (p) { return p.id; })
+              };
+            }),
+            added: selectedAircons.filter(function (it) { return initIds.indexOf(it.id) < 0; }).map(function (it) { return it.name; }),
+            removed: AIRCON_ITEMS.filter(function (it) { return curIds.indexOf(it.id) < 0; }).map(function (it) { return it.name; })
+          };
+          try { localStorage.setItem('roomCfgEdits', JSON.stringify(payload)); } catch (err) {}
+        });
+      }
+
       function renderSelected() {
         selectedList.innerHTML = workingSelected.map(function (item) {
           return '<div class="modal-selected-item" data-id="' + item.id + '">' +
@@ -1593,9 +1622,15 @@
 
       selectMode.addEventListener('change', function () { applyMode(this.value); });
 
+      var initialMode = null;
       if (btnNext) {
         btnNext.addEventListener('click', function (e) {
           localStorage.setItem('aisleMode', selectMode.value || '');
+          /* v2.9 编辑：通道封闭模式改了，本机房冷点、热点受影响（需求文档 5.3） */
+          try {
+            var edits = JSON.parse(localStorage.getItem('roomCfgEdits') || 'null');
+            if (edits) { edits.modeChanged = initialMode !== null && selectMode.value !== initialMode; localStorage.setItem('roomCfgEdits', JSON.stringify(edits)); }
+          } catch (err) {}
         });
       }
 
@@ -1606,6 +1641,7 @@
           selectMode.value = cached;
           applyMode(cached);
         }
+        initialMode = selectMode ? selectMode.value : null;
       }, 0);
     })();
   </script>

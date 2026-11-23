@@ -329,6 +329,13 @@
       gap: 10px;
     }
     .required { color: #DC2626; }
+    /* v2.9 保存成功弹窗（同冷站配置） */
+    .saved-ok { font-size: 14px; color: var(--text-primary); display: flex; align-items: center; gap: 6px; }
+    .saved-ok .success-icon { color: var(--success); font-size: 26px; line-height: 1; }
+    .saved-summary { font-size: 12px; color: var(--text-secondary); line-height: 1.8; margin-top: 12px; }
+    .saved-model-list { margin: 6px 0 2px; padding-left: 22px; line-height: 2; font-size: 13px; color: var(--text-primary); }
+    .saved-link { display: inline-block; margin-top: 4px; font-size: 12px; color: var(--primary); text-decoration: none; }
+    .saved-link:hover { opacity: .75; }
 
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { transition-duration: .01ms !important; }
@@ -582,7 +589,7 @@
         <span class="anno-source">需求文档</span>
         <div class="anno-body">
           <p><b>更新日期：</b>2026-11-12</p>
-          <p><b>变更概述：</b>新增回风关系（热通道传感器 → 空调）和「一键自动配置」，拓扑图画出回风边。</p>
+          <p><b>变更概述：</b>新增回风关系（热通道传感器 → 空调）和「一键自动配置」，拓扑图画出回风边；保存成功后列出受影响的设备预测模型，可一键重新同步。</p>
           <p><b>本页说明：</b>供冷、换热、回风三类关系只配连接、不填权重。机房关联的空调都可配，含投出空调。无封闭机房不配换热和回风。「完成」只做必填校验，拓扑完整性在保存后的「机房配置校验」检查。</p>
         </div>
       </div>
@@ -1045,6 +1052,33 @@
       </div>
     </div>
   </div>
+  <!-- v2.9 保存成功弹窗：列出受影响的设备预测模型（同冷站配置） -->
+  <div class="modal-overlay" id="modalSaved" aria-hidden="true">
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modalSavedTitle">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalSavedTitle">已保存</h2>
+        <button type="button" class="modal-close" id="modalSavedClose" aria-label="关闭">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="anno anno-ux" data-version="v2.9">
+          <span class="anno-tag">交互说明</span>
+          <span class="anno-version">v2.9</span>
+          <span class="anno-source">需求文档</span>
+          <div class="anno-body">
+            <p><b>关联模块：</b>保存成功弹窗（入口：步骤 2「完成」）</p>
+            <ul>
+              <li>两步的修改保存成功后统一生效。</li>
+              <li>编辑时列出受本次修改影响的模型，名单由后台返回；可「一键重新同步」或「稍后」，不自动重训。</li>
+              <li>还没有模型的空调和测点，提示到设备预测模型「模型同步」创建。</li>
+              <li>新建时只提示去创建模型；没有影响时显示「本次修改没有涉及设备预测模型」。关闭或点按钮后回机房配置列表。影响范围见需求文档 5.3。</li>
+            </ul>
+          </div>
+        </div>
+        <div id="savedContent"></div>
+      </div>
+      <div class="modal-footer" id="savedFooter"></div>
+    </div>
+  </div>
   <div class="relation-toast" id="autoConfigToast" role="status" hidden></div>
 
   <!-- 同步3D配置数据弹窗 -->
@@ -1157,11 +1191,103 @@
       }
     })();
 
-    /* ── 完成按钮 ── */
-    document.getElementById('btnComplete').addEventListener('click', function () {
-      /* v2.9（2026-10-31）：保存后回列表，模型就绪校验在列表「机房配置校验」入口单独执行 */
-      window.location.href = '机房寻优-机房热力模型列表.html?saved=1';
-    });
+    /* ── 完成：保存成功弹窗（v2.9：列出受影响的设备预测模型，同冷站配置；演示名单按本次改动推算，实际由后台返回） ── */
+    (function () {
+      var isEdit = new URLSearchParams(location.search).get('mode') === 'edit';
+      var LIST = '机房寻优-机房热力模型列表.html';
+      var overlay = document.getElementById('modalSaved');
+      var resyncCount = 0;
+      /* 空调属性 → 受影响的模型（需求文档 5.3） */
+      var AC_RULES = {
+        '风冷型': { '送风温度预测': ['air_volume', 'refrigerating_capacity', 'regulationType', 'controlMode'], '功率预测': ['refrigerating_capacity', 'ratedPower', 'cop', 'regulationType'] },
+        '冷冻水型': { '送风温度预测': ['air_volume', 'refrigerating_capacity', 'controlMode', 'designWaterInTemp', 'designWaterDeltaT', 'designAirInTemp', 'designAirInRH', 'designAirOutTemp'], '功率预测': ['ratedPower'] }
+      };
+      if (isEdit) {
+        document.title = '机房寻优 - 编辑机房配置（步骤2）';
+        var back = document.querySelector('.back-link');
+        if (back) back.textContent = '← 编辑机房配置';
+        var prev = document.getElementById('btnPrevStep');
+        if (prev) prev.href = '机房寻优-创建机房模型.html?mode=edit';
+        /* 编辑演示：带出已保存的关系 */
+        var SAVED = { tableSupply: { 1: ['1#温湿度传感器', '2#温湿度传感器'], 2: ['2#温湿度传感器', '5#温湿度传感器'] }, tableHeatExchange: { 1: ['3#温湿度传感器'], 2: ['3#温湿度传感器'], 5: ['4#温湿度传感器'] }, tableReturnAir: { 1: ['3#温湿度传感器'], 2: ['4#温湿度传感器'] } };
+        Object.keys(SAVED).forEach(function (tid) {
+          document.querySelectorAll('#' + tid + ' .multi-select-wrap').forEach(function (w) {
+            var key = w.getAttribute('data-ac') || w.getAttribute('data-cold');
+            var vals = SAVED[tid][key] || [];
+            w.querySelectorAll('input[type="checkbox"]').forEach(function (c) { c.checked = vals.indexOf(c.value) >= 0; });
+          });
+        });
+      }
+      function relSnapshot(tid) {
+        return Array.prototype.map.call(document.querySelectorAll('#' + tid + ' .multi-select-wrap'), function (w) {
+          return Array.prototype.filter.call(w.querySelectorAll('input[type="checkbox"]'), function (c) { return c.checked; }).map(function (c) { return c.value; }).sort().join(',');
+        }).join('|');
+      }
+      var base = {};
+      setTimeout(function () { ['tableSupply', 'tableHeatExchange', 'tableReturnAir'].forEach(function (tid) { base[tid] = relSnapshot(tid); }); }, 0);
+      function sensorValues(tid) {
+        var set = {};
+        document.querySelectorAll('#' + tid + ' input[type="checkbox"]').forEach(function (c) { set[c.value] = 1; });
+        return Object.keys(set);
+      }
+      function esc(s) { return String(s).replace(/[&<>"]/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]; }); }
+      function impact() {
+        var e = {};
+        try { e = JSON.parse(localStorage.getItem('roomCfgEdits') || '{}'); } catch (err) { e = {}; }
+        var items = [], create = [], points = false, n = 0;
+        (e.aircons || []).forEach(function (a) {
+          var rule = AC_RULES[a.kind];
+          if (!rule || !a.props || !a.props.length) return;
+          if (a.props.indexOf('air_volume') >= 0) points = true;
+          var hit = Object.keys(rule).filter(function (m) { return rule[m].some(function (p) { return a.props.indexOf(p) >= 0; }); });
+          if (!hit.length) return;
+          if (a.fresh) { if (create.indexOf(a.name) < 0) create.push(a.name); return; }
+          items.push(esc(a.name) + ' · ' + hit.join('、'));
+          n += hit.length;
+        });
+        (e.added || []).forEach(function (name) { if (create.indexOf(name) < 0) create.push(name); });
+        if ((e.added || []).length || (e.removed || []).length || e.modeChanged) points = true;
+        if (relSnapshot('tableSupply') !== base.tableSupply || relSnapshot('tableHeatExchange') !== base.tableHeatExchange) points = true;
+        if (points) {
+          var noSeal = localStorage.getItem('aisleMode') === '无封闭';
+          var cold = sensorValues('tableSupply').length, hot = noSeal ? 0 : sensorValues('tableHeatExchange').length;
+          items.push(hot ? '本机房全部冷点、热点（' + (cold + hot) + ' 个）· 冷通道温度预测、热通道温度预测' : '本机房全部冷点（' + cold + ' 个）· 冷通道温度预测');
+          n += cold + hot;
+        }
+        return { items: items, create: create, count: n };
+      }
+      function leave(resynced) {
+        try { localStorage.removeItem('roomCfgEdits'); } catch (err) {}
+        window.location.href = LIST + '?saved=1' + (resynced ? '&resynced=' + resynced : '');
+      }
+      function open() {
+        var html = '<p class="saved-ok"><span class="success-icon">✓</span>已保存，建议执行机房配置校验</p>', foot;
+        if (!isEdit) {
+          html += '<p class="saved-summary">可到设备预测模型「模型同步」为本机房的空调和测点创建模型。</p><a class="saved-link" href="机理模型训练.html">前往设备预测模型 →</a>';
+          foot = '<button type="button" class="btn btn-primary" data-saved="back">返回列表</button>';
+        } else {
+          var r = impact();
+          resyncCount = r.count;
+          if (r.items.length) html += '<p class="saved-summary">以下模型受本次修改影响：</p><ul class="saved-model-list">' + r.items.map(function (s) { return '<li>' + s + '</li>'; }).join('') + '</ul>';
+          if (r.create.length) html += '<p class="saved-summary">' + r.create.map(esc).join('、') + ' 还没有预测模型，请到设备预测模型「模型同步」创建。</p><a class="saved-link" href="机理模型训练.html">前往设备预测模型 →</a>';
+          if (!r.items.length && !r.create.length) html += '<p class="saved-summary">本次修改没有涉及设备预测模型。</p>';
+          foot = r.items.length ? '<button type="button" class="btn" data-saved="later">稍后</button><button type="button" class="btn btn-primary" data-saved="sync">一键重新同步</button>' : '<button type="button" class="btn btn-primary" data-saved="back">返回列表</button>';
+        }
+        document.getElementById('savedContent').innerHTML = html;
+        document.getElementById('savedFooter').innerHTML = foot;
+        overlay.classList.add('is-open');
+        overlay.setAttribute('aria-hidden', 'false');
+        var primary = overlay.querySelector('.modal-footer .btn-primary');
+        if (primary) primary.focus();
+      }
+      document.getElementById('btnComplete').addEventListener('click', open);
+      document.getElementById('savedFooter').addEventListener('click', function (e) {
+        var act = e.target.getAttribute('data-saved');
+        if (act) leave(act === 'sync' ? resyncCount : 0);
+      });
+      document.getElementById('modalSavedClose').addEventListener('click', function () { leave(0); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && overlay.classList.contains('is-open')) leave(0); });
+    })();
 
     /* ── 多选供冷 / 换热 / 回风关系 ── */
     (function () {

@@ -466,7 +466,10 @@
           if (action === 'view') {
             showToast('查看：' + roomName);
           } else if (action === 'edit') {
-            showToast('编辑：' + roomName);
+            /* v2.9：编辑进入同一两步表单，保存后列出受影响的预测模型 */
+            var verifyLink = row ? row.querySelector('[data-action="verify"]') : null;
+            var room = verifyLink ? new URL(verifyLink.href, location.href).searchParams.get('room') : '';
+            window.location.href = '机房寻优-创建机房模型.html?mode=edit' + (room ? '&room=' + encodeURIComponent(room) : '');
           } else {
             showToast('删除：' + roomName);
           }
@@ -475,7 +478,10 @@
 
       if (new URLSearchParams(location.search).get('saved') === '1') {
         toast.style.maxWidth = '360px';
-        showToast('机房配置已保存。可在操作列点「机房配置校验」检查空调属性、写点与拓扑是否满足仿真寻优');
+        var resynced = Number(new URLSearchParams(location.search).get('resynced') || 0);
+        showToast(resynced
+          ? '机房配置已保存，已重新同步 ' + resynced + ' 个预测模型；重训请到设备预测模型发起'
+          : '机房配置已保存。可在操作列点「机房配置校验」检查空调属性、写点与拓扑是否满足仿真寻优');
         clearTimeout(toastTimer);
         toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 4000);
       }

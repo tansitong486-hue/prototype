@@ -1,7 +1,4 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>冷站配置 - 系统拓扑</title><style>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>冷站配置 · 属性配置 - AI 智控中枢</title><style>
     :root {
       --primary: #1E40AF;
       --primary-light: #EEF4FF;
@@ -9,7 +6,11 @@
       --secondary: #3B82F6;
       --cta: #F59E0B;
       --success: #16A34A;
+      --success-light: #F0FDF4;
+      --warning: #D97706;
+      --warning-light: #FFF7ED;
       --danger: #DC2626;
+      --danger-light: #FEF2F2;
       --text-primary: #0F172A;
       --text-secondary: #475569;
       --text-hint: #94A3B8;
@@ -26,7 +27,6 @@
       --header-bg: #071B2E;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
-    .body-wrap { display: flex; flex: 1; min-height: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
       font-size: 14px;
@@ -35,9 +35,13 @@
       -webkit-font-smoothing: antialiased;
     }
     a { text-decoration: none; color: inherit; cursor: pointer; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(0,0,0,.12); border-radius: 3px; }
+
     .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .body-wrap { display: flex; flex: 1; min-height: 0; }
     .main { flex: 1; min-width: 0; overflow-y: auto; background: var(--bg-body); }
-    @media (max-width: 900px) { .sidebar { display: none; } }
 
     .page-header {
       background: var(--bg-card);
@@ -93,47 +97,43 @@
       font-size: 12px;
       font-weight: bold;
     }
-    .step-icon.done {
-      background: #fff;
-      color: var(--success);
-      border: 1px solid var(--success);
-    }
     .step-icon.active {
       background: var(--primary);
       color: #fff;
       border: 1px solid var(--primary);
+    }
+    .step-icon.pending {
+      background: #fff;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
     }
     .progress-line {
       width: 120px;
       height: 2px;
       background: #E2E8F0;
     }
-    .progress-line.active {
-      background: var(--success);
-    }
 
-    .content-body { padding: 0 20px 24px; display: flex; gap: 16px; }
-    .content-left { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-    .content-right { width: 340px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px; }
+    .content-body { padding: 0 20px 24px; display: flex; flex-direction: column; gap: 16px; }
 
-    .panel-card {
+    .section-card {
       background: var(--bg-card);
       border: 1px solid var(--border-light);
       border-radius: var(--radius-lg);
       box-shadow: var(--shadow-card);
-      padding: 20px;
-      height: 100%;
+      overflow: hidden;
     }
-    .panel-title {
-      font-size: 14px;
+    .section-head {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+      background: #fff;
+      font-size: 15px;
       font-weight: 600;
       color: var(--text-primary);
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-bottom: 16px;
     }
-    .panel-title::before {
+    .section-head::before {
       content: '';
       display: block;
       width: 3px;
@@ -142,127 +142,239 @@
       border-radius: 2px;
     }
 
-    .topology-wrap {
-      flex: 1;
-      position: relative;
-      background: #F8FAFC;
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius);
-      overflow: hidden;
+    .section-body { padding: 18px; }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px 24px;
+      margin-bottom: 16px;
     }
-    .topology-svg {
-      display: block;
-      width: 100%;
-      height: 100%;
-      min-height: 500px;
-      font-family: sans-serif;
+    .form-row:last-child { margin-bottom: 0; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field.full { grid-column: 1 / -1; }
+    .field-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
     }
-    .target-btn {
-      position: absolute;
-      top: 16px;
-      left: 16px;
-      width: 32px;
-      height: 32px;
-      background: #fff;
+    .field-label .required { color: var(--danger); }
+    .field-control, .field-select {
+      padding: 8px 12px;
       border: 1px solid var(--border);
       border-radius: var(--radius);
+      font-size: 13px;
+      background: #fff;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .field-control:focus-visible, .field-select:focus-visible {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30,64,175,.12);
+    }
+    .field-hint {
+      font-size: 12px;
+      color: var(--text-hint);
+      line-height: 1.5;
+    }
+    .field-inline { display: flex; align-items: center; gap: 8px; }
+    .field-suffix { font-size: 13px; color: var(--text-secondary); }
+
+    .table-wrap { overflow-x: auto; }
+    .data-table {
+      width: 100%;
+      min-width: 880px;
+      border-collapse: collapse;
+    }
+    .data-table thead th {
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .data-table tbody td {
+      padding: 10px 12px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+    }
+    .data-table tbody tr:hover { background: #FAFCFF; }
+    .radio-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .radio-group label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: normal;
+    }
+    .radio-group input[type="radio"] {
+      margin: 0;
+    }
+    .action-link {
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--primary);
+      transition: opacity .2s;
+    }
+    .action-link:hover { opacity: .85; }
+    .action-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 2px; }
+
+    .toolbar {
       display: flex;
       align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      color: var(--text-secondary);
-      box-shadow: 0 1px 2px rgba(0,0,0,.05);
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
     }
-    .target-btn:hover { color: var(--primary); border-color: var(--primary); }
-
-    .node-ac-rect { fill: #EEF4FF; stroke: var(--secondary); stroke-width: 1.5; rx: 8; }
-    .node-ac-text { font-size: 12px; fill: var(--text-primary); font-weight: 600; }
-    .node-ac-sub { font-size: 10px; fill: var(--text-secondary); }
-    .node-cold-circle { fill: #E0F2FE; stroke: #0EA5E9; stroke-width: 1.5; }
-    .node-hot-circle { fill: #FEF2F2; stroke: var(--danger); stroke-width: 1.5; }
-    .node-val { font-size: 12px; fill: var(--text-primary); font-weight: 500; text-anchor: middle; dominant-baseline: middle; }
-    .node-label { font-size: 12px; fill: var(--text-primary); font-weight: 600; text-anchor: middle; }
-
-    .edge-line { fill: none; stroke-width: 1.5; }
-    .edge-cold { stroke: #3B82F6; }
-    .edge-hot { stroke: #F59E0B; }
-    .edge-pill { fill: #fff; stroke-width: 1; rx: 10; }
-    .edge-pill.cold { stroke: #3B82F6; }
-    .edge-pill.hot { stroke: #F59E0B; }
-    .edge-pill-text { font-size: 10px; font-weight: 500; text-anchor: middle; dominant-baseline: middle; }
-    .edge-pill-text.cold { fill: #3B82F6; }
-    .edge-pill-text.hot { fill: #F59E0B; }
-    .edge-return { stroke: #DC2626; stroke-dasharray: 4 3; }
-
-    .toolbar-row { display: flex; justify-content: flex-end; margin-bottom: 12px; }
     .btn {
-      padding: 8px 16px;
-      border: 1px solid var(--border);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 6px 14px;
       border-radius: var(--radius);
-      background: var(--bg-card);
-      font-size: 13px;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-size: 12px;
       font-weight: 500;
       cursor: pointer;
-      color: var(--text-primary);
-      transition: border-color var(--transition), background-color var(--transition), color var(--transition);
+      transition: all .2s;
+      white-space: nowrap;
     }
-    .btn:hover { border-color: var(--secondary); color: var(--primary); }
+    .btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
     .btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
     .btn-primary {
       background: var(--primary);
       color: #fff;
-      border-color: var(--primary);
+      border-color: transparent;
     }
-    .btn-primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); color: #fff; }
+    .btn-primary:hover { background: var(--primary-dark); color: #fff; }
     .btn-primary:focus-visible { outline: 2px solid var(--cta); outline-offset: 2px; }
-
-    .field { margin-bottom: 12px; }
-    .field-label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
-    .field-control {
-      padding: 8px 12px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      width: 100%;
-      font-size: 13px;
-      transition: border-color var(--transition), box-shadow var(--transition);
-    }
-    .field-control:focus-visible {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(30,64,175,.12);
-    }
-    .field-select {
-      padding: 8px 12px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      width: 100%;
-      font-size: 13px;
-      cursor: pointer;
-      transition: border-color var(--transition), box-shadow var(--transition);
-    }
-    .field-select:focus-visible {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(30,64,175,.12);
-    }
-
-    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .data-table th, .data-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-light); }
-    .data-table th { font-weight: 600; color: var(--text-secondary); font-size: 12px; }
-    .data-table tbody tr { transition: background-color var(--transition); }
-    .data-table tbody tr:hover { background: #F8FAFC; }
 
     .foot-actions {
       display: flex;
       align-items: center;
       justify-content: flex-end;
+      gap: 12px;
       padding: 16px 20px;
       border-top: 1px solid var(--border-light);
-      background: #fff;
-      gap: 12px;
+      background: #FBFCFE;
+      margin: 0 -18px -18px;
     }
 
-    /* 同步3D配置弹窗 */
+    .note-block {
+      padding: 10px 12px;
+      background: #F8FAFC;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+
+    @media (max-width: 768px) {
+      .form-row { grid-template-columns: 1fr; }
+      .page-header { flex-direction: column; align-items: flex-start; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition-duration: .01ms !important; }
+    }
+
+    /* ── 通道分组配置 ── */
+    .channel-subsection { margin-bottom: 4px; }
+    .channel-subsection-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .channel-subsection-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .channel-type-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    .dot-cold { background: #3B82F6; }
+    .dot-hot  { background: #EF4444; }
+    .group-card {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+      background: #FAFCFF;
+    }
+    .group-card-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: #F4F7FD;
+      border-radius: var(--radius) var(--radius) 0 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .group-name-input {
+      flex: 1;
+      min-width: 0;
+      padding: 3px 8px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 12px;
+      background: #fff;
+    }
+    .group-name-input:focus-visible { outline: none; border-color: var(--primary); }
+    .group-card-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .group-card-body { padding: 10px 12px; }
+    .tag-list { display: flex; flex-wrap: wrap; gap: 6px; min-height: 20px; }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+    .tag-sensor  { background: #EEF4FF; color: #1E40AF; }
+    .tag-cabinet { background: #FFF7ED; color: #D97706; }
+    .tag-remove {
+      border: none;
+      background: none;
+      cursor: pointer;
+      padding: 0 1px;
+      font-size: 13px;
+      line-height: 1;
+      opacity: .6;
+      color: inherit;
+    }
+    .tag-remove:hover { opacity: 1; }
+    .section-empty { font-size: 12px; color: var(--text-hint); font-style: italic; line-height: 2; }
+
+    /* ── 通用关联弹窗 ── */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -279,7 +391,10 @@
       border-radius: var(--radius-lg);
       box-shadow: 0 24px 48px rgba(15,23,42,.16);
       width: 100%;
-      max-width: 480px;
+      max-width: 900px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
       overflow: hidden;
     }
     .modal-header {
@@ -288,6 +403,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      flex-shrink: 0;
     }
     .modal-title { font-size: 16px; font-weight: 600; }
     .modal-close {
@@ -306,683 +422,442 @@
     }
     .modal-close:hover { background: var(--border-light); color: var(--text-primary); }
     .modal-close:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-    .modal-body { padding: 20px; }
-    .modal-body .field { margin-bottom: 16px; }
-    .modal-body .field-label { margin-bottom: 6px; }
-    .field-hint {
-      font-size: 12px;
-      color: var(--text-hint);
-      line-height: 1.6;
-      margin-top: 12px;
+    .modal-body {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
     }
+    .modal-left {
+      flex: 1;
+      min-width: 0;
+      padding: 16px 20px;
+      overflow-y: auto;
+      border-right: 1px solid var(--border-light);
+    }
+    .modal-filters {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .modal-filters .field-control { width: 180px; }
+    .modal-filters .field-select { min-width: 160px; }
+    .modal-table-wrap { overflow-x: auto; margin-bottom: 12px; }
+    .modal-table-wrap .data-table { min-width: 400px; }
+    .modal-table-wrap th:first-child,
+    .modal-table-wrap td:first-child { width: 40px; text-align: center; }
+    .modal-pagination {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+    .modal-pagination button {
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .modal-pagination button:hover { border-color: var(--primary); color: var(--primary); }
+    .modal-pagination button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .modal-right {
+      width: 240px;
+      flex-shrink: 0;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid var(--border-light);
+    }
+    .modal-right-title { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+    .modal-selected-list {
+      flex: 1;
+      min-height: 80px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+    }
+    .modal-selected-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 8px;
+      font-size: 12px;
+      border-radius: 4px;
+      margin-bottom: 4px;
+      background: #F8FAFC;
+    }
+    .modal-selected-item .remove-btn {
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: var(--text-hint);
+      padding: 0 4px;
+      font-size: 14px;
+      line-height: 1;
+    }
+    .modal-selected-item .remove-btn:hover { color: var(--danger); }
     .modal-footer {
       padding: 12px 20px;
       border-top: 1px solid var(--border-light);
       display: flex;
       justify-content: flex-end;
       gap: 10px;
-    }
-    .required { color: #DC2626; }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { transition-duration: .01ms !important; }
-    }
-
-    /* 级联选择器：楼层 → 机房 */
-    .cascade-select {
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      display: flex;
-      overflow: hidden;
-      height: 180px;
-    }
-    .cascade-col {
-      flex: 1;
-      overflow-y: auto;
-      border-right: 1px solid var(--border-light);
-    }
-    .cascade-col:last-child { border-right: none; }
-    .cascade-col-header {
-      padding: 6px 10px;
-      font-size: 11px;
-      color: var(--text-hint);
-      background: #F8FAFC;
-      border-bottom: 1px solid var(--border-light);
-      font-weight: 500;
-    }
-    .cascade-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 10px;
-      font-size: 13px;
-      cursor: pointer;
-      color: var(--text-primary);
-      transition: background var(--transition);
-      gap: 4px;
-    }
-    .cascade-item:hover { background: var(--primary-light); }
-    .cascade-item.active {
-      background: var(--primary-light);
-      color: var(--primary);
-      font-weight: 500;
-    }
-    .cascade-item.selected {
-      background: #DCFCE7;
-      color: var(--success);
-      font-weight: 500;
-    }
-    .cascade-item .cascade-arrow {
-      font-size: 11px;
-      color: var(--text-hint);
       flex-shrink: 0;
     }
-    .cascade-selected-val {
-      margin-top: 6px;
-      font-size: 12px;
-      color: var(--text-secondary);
-      min-height: 18px;
-    }
-    .cascade-selected-val span {
-      color: var(--primary);
-      font-weight: 500;
-    }
 
-    /* 多选供冷关系 */
-    .multi-select-wrap {
-      position: relative;
+    /* ── v2.9 机房配置：空调表固定列 + 按物模型属性定义渲染的属性区 ── */
+    .type-cell { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .type-name { font-weight: 500; }
+    .type-chain { font-size: 11px; color: var(--text-hint); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; white-space: nowrap; }
+    .type-chain b { color: var(--text-secondary); font-weight: 500; }
+    .sub-text { font-size: 11px; color: var(--text-hint); line-height: 1.5; }
+    .ready-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+    .ready-ok    { background: var(--success-light); color: var(--success); }
+    .ready-warn  { background: var(--warning-light); color: var(--warning); }
+    .ready-error { background: var(--danger-light);  color: var(--danger); }
+    .ready-off   { background: #F1F5F9; color: var(--text-hint); }
+    .prop-toggle { font-size: 12px; color: var(--primary); cursor: pointer; white-space: nowrap; background: none; border: none; padding: 0; font-family: inherit; }
+    .prop-toggle:hover { opacity: .85; }
+    .prop-toggle:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 2px; }
+    tr.prop-row td { background: #FAFCFF; padding: 0 12px 14px; }
+    tr.prop-row.is-collapsed { display: none; }
+    .data-table tbody tr.prop-row:hover { background: #FAFCFF; }
+    .prop-panel { border: 1px dashed var(--border); border-radius: var(--radius); background: #fff; padding: 10px 12px; }
+    .prop-panel-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; }
+    .prop-panel-head code, .prop-id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: var(--primary); background: var(--primary-light); padding: 0 4px; border-radius: 3px; font-weight: 400; }
+    .prop-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px 14px; }
+    .prop-item { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .prop-label { font-size: 12px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .prop-label .required { color: var(--danger); }
+    .prop-value { display: flex; align-items: center; gap: 6px; }
+    .prop-value .field-control, .prop-value .field-select { flex: 1; min-width: 0; padding: 5px 8px; font-size: 12px; background: #F8FAFC; color: var(--text-primary); }
+    .prop-value .field-control[readonly] { cursor: default; }
+    .prop-value .field-select:disabled { cursor: default; opacity: 1; color: var(--text-primary); -webkit-text-fill-color: var(--text-primary); }
+    .prop-unit { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+    .prop-item.is-missing .field-control, .prop-item.is-missing .field-select { border-color: var(--danger); background: var(--danger-light); color: var(--danger); -webkit-text-fill-color: var(--danger); }
+    .prop-item.is-missing .prop-label { color: var(--danger); }
+    .btn-maintain { font-size: 11px; padding: 3px 8px; border: 1px solid var(--danger); color: var(--danger); background: #fff; border-radius: 4px; cursor: pointer; white-space: nowrap; font-family: inherit; }
+    .btn-maintain:hover { background: var(--danger-light); }
+    .btn-maintain:focus-visible { outline: 2px solid var(--danger); outline-offset: 2px; }
+    .prop-derived { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border-light); font-size: 12px; color: var(--text-secondary); display: flex; gap: 16px; flex-wrap: wrap; }
+    .prop-derived b { color: var(--text-primary); font-weight: 600; }
+    /* 模型就绪校验结果面板 */
+    .check-summary { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; }
+    .check-summary b { color: var(--text-primary); }
+    .check-table td.lvl { font-weight: 600; white-space: nowrap; }
+    .lvl-error { color: var(--danger); }
+    .lvl-warn  { color: var(--warning); }
+    .lvl-info  { color: var(--text-hint); }
+    .lvl-pass  { color: var(--success); }
+    .code-tag { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; padding: 1px 6px; border-radius: 4px; background: #F1F5F9; color: var(--text-secondary); white-space: nowrap; }
+    .code-tag.err  { background: var(--danger-light);  color: var(--danger); }
+    .code-tag.warn { background: var(--warning-light); color: var(--warning); }
+    .check-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: var(--text-secondary); }
+    .toast {
+      position: fixed; right: 24px; bottom: 72px; min-width: 180px; max-width: 360px;
+      padding: 12px 14px; border-radius: 10px; background: rgba(15, 23, 42, 0.92); color: #fff;
+      font-size: 12px; line-height: 1.6; white-space: pre-line; box-shadow: 0 14px 34px rgba(15, 23, 42, 0.28);
+      opacity: 0; transform: translateY(12px); pointer-events: none; transition: all .25s ease; z-index: 1200;
     }
-    .multi-select-trigger {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 4px;
-      min-height: 34px;
-      padding: 4px 8px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: #fff;
-      cursor: pointer;
-      transition: border-color var(--transition);
-    }
-    .multi-select-trigger:hover { border-color: var(--primary); }
-    .multi-select-trigger.is-open { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30,64,175,.12); }
-    .ms-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      padding: 2px 6px;
-      background: var(--primary-light);
-      color: var(--primary);
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: 500;
-    }
-    .ms-tag-remove {
-      border: none;
-      background: none;
-      cursor: pointer;
-      color: var(--primary);
-      padding: 0;
-      font-size: 13px;
-      line-height: 1;
-      opacity: .7;
-    }
-    .ms-tag-remove:hover { opacity: 1; }
-    .ms-placeholder { font-size: 12px; color: var(--text-hint); }
-    .ms-dropdown {
-      display: none;
-      position: absolute;
-      top: calc(100% + 4px);
-      left: 0;
-      right: 0;
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: 0 4px 12px rgba(15,23,42,.1);
-      z-index: 200;
-      max-height: 180px;
-      overflow-y: auto;
-    }
-    .ms-dropdown.is-open { display: block; }
-    .ms-option {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 10px;
-      font-size: 12px;
-      cursor: pointer;
-      transition: background var(--transition);
-    }
-    .ms-option:hover { background: var(--primary-light); }
-    .ms-option input[type="checkbox"] { margin: 0; cursor: pointer; }
-
-    /* 通道分组 */
-    .group-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-    .group-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 10px;
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius);
-      background: #FAFCFF;
-    }
-    .group-name-input {
-      flex: 1;
-      padding: 4px 8px;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      font-size: 12px;
-    }
-    .group-name-input:focus-visible { outline: none; border-color: var(--primary); }
-    .badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 10px;
-      font-size: 11px;
-      font-weight: 500;
-      white-space: nowrap;
-    }
-    .badge-blue { background: var(--primary-light); color: var(--primary); }
-    .badge-orange { background: #FFF7ED; color: #D97706; }
-    .badge-green { background: #F0FDF4; color: #16A34A; }
-    .group-actions { display: flex; gap: 6px; flex-shrink: 0; }
-    .section-note {
-      padding: 8px 10px;
-      background: #F8FAFC;
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius);
-      font-size: 11px;
-      color: var(--text-secondary);
-      line-height: 1.6;
-      margin-bottom: 10px;
-    }
-    .section-note.warn { background: #FFF7ED; border-color: #FDE68A; color: #92400E; }
-
-    /* 机柜映射 */
-    .empty-state {
-      text-align: center;
-      padding: 24px 12px;
-      color: var(--text-hint);
-      font-size: 12px;
-      line-height: 1.8;
-    }
-    .empty-state .empty-icon { font-size: 28px; margin-bottom: 6px; }
-
-    /* 分隔标题 */
-    .panel-title-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 10px;
-    }
-
-    /* 换热关系容器，供联动控制 */
-    #sectionHeatExchange { transition: opacity .2s; }
-
-    .action-link {
-      font-size: 12px;
-      cursor: pointer;
-      color: var(--primary);
-      transition: opacity .2s;
-    }
-    .action-link:hover { opacity: .75; }
-
-    .page-header-right { display: flex; align-items: center; gap: 12px; }
-    .auto-config-heading { gap: 8px; margin-top: 24px; }
-    .auto-config-heading .panel-title { margin-bottom: 0; flex: 1; }
-    .auto-config-heading .panel-title::before { flex-shrink: 0; }
-    .auto-config-heading .btn { padding: 6px 10px; white-space: nowrap; }
-    .multi-select-wrap.is-auto .multi-select-trigger { border-style: dashed; border-color: var(--secondary); }
-    .auto-relation-badge { font-size: 10px; color: var(--text-secondary); white-space: nowrap; }
-    #modalAutoConfig .modal-dialog { max-width: 720px; max-height: 90vh; display: flex; flex-direction: column; }
-    #modalAutoConfig .modal-body { overflow-y: auto; line-height: 1.7; }
-    #modalAutoConfigConfirm:disabled { opacity: .5; cursor: not-allowed; }
-    .auto-config-rules p + p { margin-top: 8px; }
-    .auto-config-count { box-sizing: content-box; width: 3ch; padding: 2px 4px; border: 1px solid var(--border-light); border-radius: 4px; font: inherit; text-align: center; appearance: textfield; }
-    .auto-config-count::-webkit-inner-spin-button, .auto-config-count::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-    .auto-config-count[aria-invalid="true"] { border-color: #DC2626; color: #DC2626; background: #FEF2F2; }
-    .auto-config-modes { border: 0; margin: 20px 0; }
-    .auto-config-modes legend { font-weight: 600; margin-bottom: 8px; }
-    .auto-config-modes label { display: inline-flex; align-items: center; gap: 6px; margin-right: 20px; }
-    .auto-config-preview { padding: 12px; background: var(--bg-body); border: 1px solid var(--border-light); border-radius: var(--radius); }
-    .auto-config-preview p + p { margin-top: 6px; }
-    #autoConfigSkipped { max-height: 120px; overflow-y: auto; padding-left: 22px; font-size: 12px; color: var(--text-secondary); }
-    .relation-toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); z-index: 1200; padding: 12px 20px; border-radius: var(--radius); background: var(--text-primary); color: #fff; box-shadow: var(--shadow-card); max-width: calc(100vw - 32px); }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    /* 2026-10-31：属性页内直接编辑 + 批量复制 */
+    .prop-value .field-control, .prop-value .field-select { background: #fff; }
+    .prop-item.is-invalid .field-control, .prop-item.is-invalid .field-select { border-color: var(--danger); }
+    .prop-item.is-invalid .prop-label { color: var(--danger); }
+    .prop-item.is-edited:not(.is-missing):not(.is-invalid) .field-control,
+    .prop-item.is-edited:not(.is-missing):not(.is-invalid) .field-select { border-color: var(--secondary); background: #F5F9FF; }
+    .prop-err { display: none; font-size: 11px; color: var(--danger); line-height: 1.4; }
+    .prop-item.is-invalid .prop-err { display: block; }
+    .edit-tag { display: none; font-size: 10px; padding: 0 5px; border-radius: 3px; background: var(--primary-light); color: var(--primary); font-weight: 500; }
+    .prop-item.is-edited .edit-tag { display: inline-block; }
+    .edit-count { color: var(--primary); }
+    .btn.btn-sm { padding: 3px 10px; font-size: 11px; }
+    .copy-body { padding: 16px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+    .copy-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+    .copy-label { font-size: 13px; font-weight: 600; min-width: 72px; }
+    .copy-sec { border: 1px solid var(--border-light); border-radius: var(--radius); overflow: hidden; }
+    .copy-sec-head { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #F8FAFC; font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--border-light); }
+    .copy-sec-head label { font-weight: 400; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+    .copy-props { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 16px; padding: 10px 12px; }
+    .copy-check { display: flex; align-items: flex-start; gap: 6px; font-size: 12px; line-height: 1.5; cursor: pointer; }
+    .copy-check input { margin-top: 3px; }
+    .copy-check.is-disabled { color: var(--text-hint); cursor: not-allowed; }
+    .copy-val { color: var(--text-secondary); }
+    .copy-targets { display: flex; flex-direction: column; padding: 4px 12px; max-height: 220px; overflow-y: auto; }
+    .copy-target { display: flex; align-items: center; gap: 8px; padding: 7px 0; font-size: 13px; border-bottom: 1px dashed var(--border-light); cursor: pointer; }
+    .copy-target:last-child { border-bottom: none; }
+    .copy-target .sub-text { margin-left: auto; }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+    @media (max-width: 1280px) { .prop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   
-    html,body { height:100%; } .layout { height:100vh; min-height:0; } .main { scroll-behavior:smooth; }
-    button,input,select { font-family:inherit; } button { cursor:pointer; } button:disabled { cursor:not-allowed; opacity:.55; }
-    button:focus-visible,[tabindex]:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
-    .page-header { gap:16px; flex-wrap:wrap; } .page-sub { margin-top:6px; font-size:12px; color:var(--text-secondary); }
-    .content-body { align-items:flex-start; } .content-left { gap:16px; flex:1 1 650px; }
-    .content-right { width:42%; min-width:370px; position:sticky; top:16px; max-height:calc(100vh - 110px); overflow-y:auto; }
-    .panel-card { height:auto; min-width:0; } .panel-title-bar .panel-title { margin:0; }
-    .panel-title-bar { gap:12px; } .section-block + .section-block { margin-top:22px; }
-    .section-block { scroll-margin-top:20px; } .section-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:10px 0; font-weight:600; font-size:13px; }
-    .btn.btn-sm { padding:5px 10px; font-size:12px; } .action-link { border:0; background:none; } .action-link.delete { color:var(--danger); }
-    .data-table { table-layout:fixed; } .data-table td { vertical-align:top; } .data-table th { background:#F8FAFC; }
-    .group-name-input { width:100%; min-width:80px; padding:7px 8px; } .name-cell { width:34%; }
-    .auto-mark { display:inline-block; font-size:10px; color:var(--secondary); margin-top:4px; }
-    tr.is-auto > td { border-top:1px dashed #93B4ED; border-bottom:1px dashed #93B4ED; }
-    tr.is-selected > td { background:var(--primary-light); } .row-actions { display:flex; gap:8px; margin-top:5px; flex-wrap:wrap; }
-    .ms-tag { font-size:11px; line-height:1.6; } .multi-select-trigger { min-width:0; }
-    #multiPicker { position:fixed; top:0; left:0; right:auto; width:320px; max-height:300px; z-index:1100; }
-    .ms-option.is-disabled { color:var(--text-hint); cursor:not-allowed; } .ms-option small { margin-left:auto; max-width:145px; }
-    .picker-head { display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:#fff; padding:8px 10px; border-bottom:1px solid var(--border-light); font-size:12px; }
-    .prop-row td { background:#FAFCFF; padding:10px 12px; } .prop-panel { border:1px dashed var(--border); border-radius:var(--radius); background:#fff; padding:12px; }
-    .prop-panel-head { font-size:12px; color:var(--text-secondary); margin-bottom:12px; }
-    .prop-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
-    .prop-item { min-width:0; } .prop-label { display:flex; flex-wrap:wrap; align-items:center; gap:4px; font-size:12px; font-weight:600; margin-bottom:5px; }
-    .prop-value { display:flex; align-items:center; gap:5px; } .prop-unit { font-size:11px; white-space:nowrap; color:var(--text-secondary); }
-    .prop-value .field-control,.prop-value .field-select { min-width:0; padding:6px 8px; }
-    .prop-item.is-missing .field-control,.prop-item.is-missing .field-select,.prop-item.is-invalid .field-control,.prop-item.is-invalid .field-select { border-color:var(--danger); background:#FEF2F2; }
-    .prop-item.is-edited:not(.is-missing):not(.is-invalid) .field-control { border-color:var(--secondary); background:#F5F9FF; }
-    .edit-tag { font-size:10px; color:var(--primary); background:var(--primary-light); padding:0 4px; display:none; }
-    .is-edited .edit-tag { display:inline; } .prop-err { font-size:11px; color:var(--danger); margin-top:4px; min-height:0; }
-    .field-control[readonly] { background:#F1F5F9; color:var(--text-secondary); }
-    .topology-wrap { overflow:auto; } .topology-svg { width:100%; min-height:400px; height:auto; }
-    .topology-caption { font-size:11px; color:var(--text-secondary); padding:10px 12px; line-height:1.8; }
-    .topology-node { cursor:pointer; } .topology-node.selected rect { stroke:var(--primary); stroke-width:3; fill:#DBEAFE; }
-    .edge-line { stroke:#91ACCE; opacity:.65; } .edge-line.selected { stroke:var(--primary); stroke-width:2.5; opacity:1; }
-    .topology-empty { fill:var(--text-hint); font-size:12px; } .summary-text { font-size:12px; color:var(--text-secondary); line-height:1.8; }
-    .demo-switch { display:inline-flex; align-items:center; border:1px dashed var(--border); border-radius:var(--radius); overflow:hidden; font-size:12px; }
-    .demo-switch-label { padding:7px 10px; color:var(--text-hint); background:#FAFAFA; border-right:1px dashed var(--border); }
-    .demo-opt { padding:7px 10px; border:0; background:#fff; font-size:12px; color:var(--text-secondary); }
-    .demo-opt + .demo-opt { border-left:1px solid var(--border-light); } .demo-opt.is-active { background:var(--primary-light); color:var(--primary); font-weight:600; }
-    .save-error { margin:0 20px 16px; background:#FEF2F2; color:#B91C1C; border:1px solid #FECACA; border-radius:var(--radius); padding:12px 16px; line-height:1.7; }
-    .fail-row td { background:#FEF2F2!important; border-color:#FCA5A5; } .foot-actions { position:sticky; bottom:0; z-index:100; }
-    .modal-dialog { max-height:90vh; display:flex; flex-direction:column; max-width:780px; } .modal-body { overflow-y:auto; }
-    .modal-dialog.wide { max-width:940px; } .rule-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px 20px; }
-    .rule-grid .field { margin-bottom:12px; } .choice-row { display:flex; gap:14px; flex-wrap:wrap; font-size:13px; margin:8px 0; }
-    .choice-row label { display:inline-flex; align-items:center; gap:5px; } .preview-table { max-height:270px; overflow:auto; border:1px solid var(--border-light); border-radius:var(--radius); }
-    .preview-table th { position:sticky; top:0; z-index:1; } .preview-table .field-select { padding:5px 8px; font-size:12px; }
-    .pending-row td { background:#FFF7ED; } .pending-list { margin:10px 0; color:#92400E; font-size:12px; line-height:1.8; }
-    .auto-config-preview { margin-top:14px; } .auto-config-preview strong { color:var(--primary); }
-    .conflict-card { border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-top:12px; line-height:1.8; }
-    .conflict-card h3 { font-size:14px; margin-bottom:6px; } .model-list { margin:16px 0; padding-left:22px; line-height:2; }
-    .anno { white-space:normal; } .annotation-mode { padding-top:0; } .anno-filter-bar { z-index:500; }
-    .is-invalid.group-name-input { border-color:var(--danger); } .form-error { color:var(--danger); font-size:12px; margin-top:8px; }
-    .danger-text { color:var(--danger); } .muted { color:var(--text-hint); font-size:12px; } .success-icon { color:var(--success); font-size:26px; vertical-align:middle; }
-    @media(max-width:1200px) { .content-right { min-width:300px; width:36%; } .data-table th,.data-table td { padding:8px; } }
-    @media(max-width:980px) { .content-body { flex-direction:column; } .content-right { width:100%; min-width:0; position:static; max-height:none; } .content-left { flex:auto; width:100%; } .progress-line { width:35px; } .content-right .topology-svg { max-height:480px; } }
-    @media(max-width:600px) { .rule-grid,.prop-grid { grid-template-columns:1fr; } .progress-steps { gap:6px; font-size:12px; } .progress-step { font-size:12px; } .progress-line { width:15px; } .panel-card { padding:12px; } .content-body { padding:0 10px 16px; } }
-.located{outline:2px solid var(--primary);outline-offset:3px}
+
+button,input,select{font-family:inherit}button{cursor:pointer}button:disabled,input:disabled,select:disabled{cursor:not-allowed;opacity:.65}button[hidden],[hidden]{display:none!important}button{color:inherit}a{text-decoration:none}.btn{height:34px}.btn.btn-sm{height:28px}.main{position:relative}.page-shell{padding:18px 20px 24px}.page-toolbar{display:flex;gap:12px;align-items:center;padding:14px 18px;flex-wrap:wrap}.search-input{height:34px;min-width:220px;border:1px solid var(--border);border-radius:8px;padding:0 12px}.page-header{gap:12px;flex-wrap:wrap}.section-card>.anno{margin:0 14px 12px}.section-head .group-associate{margin-left:auto}.actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.device-table{min-width:1050px}.device-table th:first-child{width:23%}.device-table th:nth-child(4){width:25%}.device-table td{padding:14px 16px}.device-table td:nth-child(6){width:200px}.missing-text,.prop-err,.field-error{color:var(--danger)}.field-error{font-size:12px;min-height:16px}.invalid{border-color:var(--danger)!important}.edit-count{font-size:12px}.prop-grid{align-items:start}.prop-label{min-height:30px}.prop-grid .prop-item .anno{margin:0 0 8px}.prop-label .edit-tag{margin-left:auto}.section-head>.sub-text{font-weight:400}.component-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}.component{border:1px solid var(--border-light);border-radius:8px;padding:14px;display:flex;align-items:center;gap:8px}.component .sub-text{margin-left:auto}.component>span:first-child{color:var(--primary)}.flow-footer{position:sticky;bottom:0;z-index:10;margin:0;padding:16px 20px;display:flex;gap:12px;justify-content:flex-end;background:rgba(255,255,255,.97);border-top:1px solid var(--border)}.toast{bottom:80px;z-index:1200;pointer-events:none}.toast.show{pointer-events:auto}.toast a{color:#93C5FD;text-decoration:underline}.modal-content{padding:18px 20px;overflow:auto;max-height:calc(90vh - 130px);min-height:60px}.modal-content>p{line-height:1.8;margin-bottom:14px}.modal-content .anno{margin:0 0 16px}.modal-dialog{max-height:90vh}.modal-content .data-table{min-width:0}.modal-content .data-table th,.modal-content .data-table td{white-space:normal}.modal-content .note-block{margin-top:14px}.reference-list{display:grid;gap:8px;margin-top:16px}.reference-item{display:flex;justify-content:space-between;text-align:left;padding:14px;background:#F8FAFC;color:var(--primary);border:1px solid var(--border-light);border-radius:8px;width:100%}.danger-note{background:var(--danger-light);border-color:#FECACA}.banner{margin-bottom:16px;border:1px solid #FED7AA;background:var(--warning-light);color:#9A3412;padding:12px 16px;border-radius:8px;display:flex;align-items:center;gap:10px;line-height:1.6}.banner button{margin-left:auto;color:var(--primary);font-weight:600}.energy-notice{margin:0 20px 16px;background:var(--primary-light);color:var(--primary);border-color:#BFDBFE}.pill,.check-pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:8px;padding:10px 16px;cursor:pointer;font-size:13px}.pill.selected,.check-pill.selected{border-color:var(--primary);background:var(--primary-light);color:var(--primary)}.pills{display:flex;flex-wrap:wrap;gap:10px}.space-picker{position:relative}.space-button{width:100%;display:flex;justify-content:space-between;text-align:left;height:auto;min-height:38px}.space-tree{position:absolute;z-index:30;top:42px;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow-card);width:100%;padding:8px}.tree-group{color:var(--text-secondary);padding:8px}.tree-group.indent{padding-left:26px}.tree-node{display:block;text-align:left;width:100%;padding:9px 8px 9px 46px;border:0;background:white;border-radius:4px}.tree-node:hover{background:var(--primary-light);color:var(--primary)}.group-associate{flex-shrink:0}.association-layout{display:flex;min-height:280px}.association-layout .modal-left{padding-left:0}.association-layout .modal-left>.field-control{width:100%;margin:8px 0 12px}.association-layout .modal-right{width:260px;padding-right:0}.candidate-table{min-width:400px!important}.candidate-table td{font-size:12px!important}.disabled-row{background:#F8FAFC;color:var(--text-hint)}.disabled-row td{color:var(--text-hint)}.copy-row{margin-bottom:14px}.copy-sec{margin-bottom:14px}.copy-props{max-height:240px;overflow:auto}.copy-val{margin-left:auto}.copy-targets{max-height:180px}.demo-switch{margin-left:auto;display:inline-flex;align-items:center;font-size:12px;border:1px dashed var(--border);border-radius:8px;overflow:hidden;background:var(--bg-card)}.demo-switch-label{padding:7px 10px;color:var(--text-hint);background:#FAFAFA;border-right:1px dashed var(--border)}.demo-opt{padding:7px 12px;color:var(--text-secondary);border:0;background:white}.demo-opt+.demo-opt{border-left:1px solid var(--border-light)}.demo-opt.is-active{background:var(--primary-light);color:var(--primary);font-weight:600}.empty-state{padding:36px!important;text-align:center;color:var(--text-hint)!important}.counts-cell{white-space:normal!important;min-width:240px;max-width:300px;line-height:1.9}.space-cell{white-space:normal!important;min-width:160px;max-width:200px;line-height:1.7}.conflict-table{min-width:900px!important}.conflict-table td,.conflict-table th{padding:12px!important}.list-table{min-width:1250px}.list-table .actions{gap:8px 12px;min-width:170px}.sub-text{font-size:11px;line-height:1.6;color:var(--text-hint)}.ready-badge{display:inline-flex;border-radius:10px;font-size:11px;padding:2px 8px;margin-top:4px}.ready-ok{background:var(--success-light);color:var(--success)}.ready-warn{background:var(--warning-light);color:var(--warning)}.anno-filter-hidden{display:none!important}body.annotation-mode{padding-top:0}#annoFilterBar{position:sticky;top:0;left:auto;right:auto;width:100%;z-index:950;align-items:center;gap:10px;min-height:44px;padding:8px 20px;border-bottom:1px solid #C4B5FD;background:#F5F3FF;color:#5B21B6}.anno-toggle{z-index:1300}.prop-item.located{outline:2px solid var(--primary);outline-offset:6px;border-radius:4px}.field-select[multiple]{min-height:76px}.radio-group{gap:12px;white-space:nowrap}.radio-group label{font-size:12px}.import-table{margin-top:14px}.list-page .modal-content .radio-group{flex-direction:column;align-items:flex-start}.list-page .btn{border:1px solid var(--border);background:#fff}.list-page .btn-primary{background:var(--primary);border-color:var(--primary);color:#fff}.list-page{--primary-light:#EEF4FF;--success:#16A34A;--success-light:#F0FDF4;--warning:#D97706;--warning-light:#FFF7ED;--danger-light:#FEF2F2}.page-title{font-size:18px}.list-page .page-head{gap:16px}.list-page .page-card{overflow:visible}.list-page .radio-group{display:flex}.list-page .modal-overlay{z-index:1000}.section-head::before{flex-shrink:0} .footer-caption{font-size:12px;color:var(--text-hint);margin-right:auto;align-self:center}
+@media(max-width:1100px){.component-grid{grid-template-columns:repeat(2,1fr)}.progress-line{width:60px}.prop-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.prop-grid,.form-row,.component-grid{grid-template-columns:1fr}.progress-line{width:22px}.progress-steps{gap:8px}.progress-step{font-size:12px}.page-shell,.content-body{padding-left:12px;padding-right:12px}.association-layout{flex-direction:column}.association-layout .modal-right{width:100%;padding-left:0}.copy-props{grid-template-columns:1fr}.modal-overlay{padding:10px}}
 
 /* 底栏主按钮让出右下角「批注」按钮位置 */
-.foot-actions{padding-right:120px}
+.flow-footer{padding-right:120px}
 
+/* ---- v3.0 页头与多选属性整理 ---- */
+.page-header .back-link{font-size:16px}
+.page-header .page-sub{margin-top:6px;font-size:12px;color:var(--text-secondary);font-weight:400}
+.page-header-right{display:flex;align-items:center;gap:12px;margin-left:auto}
 .page-header .return-link{font-size:13px;font-weight:500;color:var(--primary);background:none;border:0;cursor:pointer;padding:0}
 .page-header .return-link:hover{text-decoration:underline}
-.page-header-right{margin-left:auto}
+.pill-group{display:flex;flex-wrap:wrap;gap:8px}
+.pill-group .check-pill{margin:0}
+.pill-group .check-pill.is-disabled{opacity:.7;cursor:default}
+.prop-item .pill-group+.prop-unit{display:none}
 
-/* 文字按钮去掉浏览器默认边框与底色 */
-button.action-link{background:none;border:0;padding:0;font-family:inherit;line-height:1.5;cursor:pointer}
+/* ---- v3.0 设备行整理 ---- */
+button.action-link{background:none;border:0;padding:0;font-family:inherit;line-height:1.5}
+.device-table td{vertical-align:middle}
+.device-table td:nth-child(6){width:auto}
+.device-table .actions{flex-wrap:nowrap;gap:14px}
+.point-link{white-space:nowrap}
+.point-link.is-short{color:var(--danger)}
+.attr-total{color:var(--text-primary)}
+.attr-dot{margin:0 6px;color:var(--text-hint)}
+.ok-text{color:#047857}
+[data-summary]{font-size:12px;margin-bottom:4px}
+.overall-summary{margin-left:12px;font-size:12px}
+.toolbar .actions{margin-left:auto}
 
-/* ---- v3.0 步骤 3 视觉整理 ---- */
-.content-right{width:40%;min-width:400px}
-.panel-tools{display:inline-flex;gap:14px;margin-left:auto}
-.topology-wrap{overflow:hidden;background:#F8FAFC}
-.topology-svg{min-height:0;max-height:none;height:auto;width:auto;display:block}
-.content-right .topology-svg{max-height:none}
-.topo-col-title{font-size:12px;fill:#64748B;font-weight:600}
-.topology-node .node-ac-rect{stroke-width:1.4}
-.topo-second .node-ac-rect{fill:#F5F3FF;stroke:#8B5CF6}
-.topo-freeze .node-ac-rect{fill:#EFF6FF;stroke:#3B82F6}
-.topo-unit .node-ac-rect{fill:#EEF2FF;stroke:#4F46E5}
-.topo-cool .node-ac-rect{fill:#ECFEFF;stroke:#0891B2}
-.topo-tower .node-ac-rect{fill:#F0FDFA;stroke:#0D9488}
-.topo-tank .node-ac-rect{fill:#FFFBEB;stroke:#D97706}
-.topology-node:hover .node-ac-rect{filter:brightness(.97);stroke-width:2}
-.topology-node.selected .node-ac-rect{stroke:#1D4ED8;stroke-width:2.6}
-.node-ac-text{fill:#0F172A;font-weight:600}
-.node-ac-sub{font-size:11px;fill:#64748B}
-.edge-line{stroke:#94A3B8;stroke-width:1.4;opacity:.8;fill:none}
-.edge-line.is-auto{stroke-dasharray:5 4}
-.edge-line.selected{stroke:#2563EB;stroke-width:2.4;opacity:1}
-.edge-line.dim{opacity:.15}
-.topo-empty{font-size:13px;fill:#94A3B8}
-.topology-caption{margin-top:8px;font-size:12px;color:var(--text-secondary)}
-.modal-dialog.topo-dialog{max-width:min(1240px,94vw)!important;width:94vw}
-.topology-wrap.is-large{border-radius:8px;border:1px solid var(--border-light);max-height:70vh;overflow:auto}
-.topology-legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin-bottom:10px;font-size:12px;color:var(--text-secondary)}
-.legend-item{display:inline-flex;align-items:center;gap:6px}
-.legend-item i{width:14px;height:10px;border-radius:3px;border:1.4px solid;display:inline-block}
-.legend-item.topo-second i{background:#F5F3FF;border-color:#8B5CF6}.legend-item.topo-freeze i{background:#EFF6FF;border-color:#3B82F6}.legend-item.topo-unit i{background:#EEF2FF;border-color:#4F46E5}.legend-item.topo-cool i{background:#ECFEFF;border-color:#0891B2}.legend-item.topo-tower i{background:#F0FDFA;border-color:#0D9488}.legend-item.topo-tank i{background:#FFFBEB;border-color:#D97706}
-.legend-item.legend-auto i{border:0;border-top:2px dashed #94A3B8;height:0;border-radius:0;width:18px}
-.name-line{display:flex;align-items:center;gap:6px}
-.name-line .group-name-input{flex:1}
-.icon-link{background:none;border:0;padding:2px 4px;font-size:14px;color:var(--text-hint);cursor:pointer;border-radius:4px;line-height:1}
-.icon-link:hover{color:var(--primary);background:var(--primary-light)}
-.row-actions{display:flex;gap:10px;margin-top:4px;align-items:center;min-height:0}
-.row-actions:empty{display:none}
-.auto-mark{margin-top:0}
-.section-head .section-toggle{display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:0;font:inherit;font-weight:600;color:var(--text-primary);cursor:pointer}
-.section-toggle .chev{display:inline-block;font-size:11px;color:var(--text-hint);transition:transform .15s}
-.section-block.is-collapsed .chev{transform:rotate(-90deg)}
-.section-meta{font-size:12px;font-weight:400;color:var(--text-hint);margin-left:6px}
-.section-block.is-collapsed .section-head{margin-bottom:0}
-.section-block .data-table td{padding-top:8px;padding-bottom:8px}
-</style><link rel="stylesheet" href="annotation-styles.css"></head>
-<body>
-<div class="layout"><div id="app-header"></div><div class="body-wrap"><div id="app-sidebar"></div><main class="main" id="mainContent">
-<div class="anno-filter-bar" id="annoFilterBar"><span class="anno-filter-label">批注版本：</span><div class="anno-filter-tags" id="annoFilterTags"></div></div>
-<div class="anno anno-version-header" data-version="v3.0"><span class="anno-tag">版本信息</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§4.4–4.6</span><div class="anno-body"><p><b>当前版本：</b>v3.0</p><p><b>更新日期：</b>2026-11-04</p><p><b>变更概述：</b>配置冷站分组、分组属性与供水拓扑，支持一键生成和整体保存。</p><p><b>本页说明：</b>新建、编辑与查看的第 3 步；保存后返回来源页或列表，配置完整性在配置校验页检查。</p></div></div>
-<div class="page-header"><div><a class="back-link" href="冷站配置-列表.html" data-action="cancel">← <span id="pageTitle">新建冷站配置</span></a><div class="page-sub" id="systemSummary"></div></div><div class="page-header-right"><div id="demoAnno"></div><div class="demo-switch" role="group" aria-label="原型演示保存结果"><span class="demo-switch-label">原型演示</span><button class="demo-opt is-active" data-action="scene" data-scene="normal">正常</button><button class="demo-opt" data-action="scene" data-scene="conflict">有冲突</button><button class="demo-opt" data-action="scene" data-scene="fail">写入失败</button></div></div></div>
-<div class="progress-container"><div class="progress-steps"><a class="progress-step" href="冷站配置-创建.html" data-action="step" data-step="1"><span class="step-icon done">✓</span><span>系统信息</span></a><div class="progress-line active"></div><a class="progress-step" href="冷站配置-创建-步骤2.html" data-action="step" data-step="2"><span class="step-icon done">✓</span><span>设备与属性</span></a><div class="progress-line active"></div><div class="progress-step active" aria-current="step"><span class="step-icon active">3</span><span>系统拓扑</span></div></div></div>
-<div id="saveError" class="save-error" role="alert" hidden></div>
-<div class="content-body"><div class="content-left">
-<section class="panel-card"><div id="groupsAnno"></div><div class="panel-title-bar"><h2 class="panel-title">分组配置</h2><button class="btn btn-primary btn-sm" data-action="generate">一键生成</button></div><div id="groupsContainer"></div></section>
-<section class="panel-card"><div id="relationsAnno"></div><div class="panel-title-bar"><h2 class="panel-title">供水关系</h2><button class="btn btn-sm" data-action="generate">一键生成</button></div><div id="relationsContainer"></div></section>
-</div><aside class="content-right"><section class="panel-card"><div id="topologyAnno"></div><div class="panel-title-bar"><h2 class="panel-title">系统拓扑</h2><span class="panel-tools"><button class="action-link" data-action="clear-selection">取消高亮</button><button class="action-link" data-action="zoom-topology">放大查看</button></span></div><div class="summary-text" id="topologyStats"></div><div class="topology-wrap"><svg class="topology-svg" id="topologySvg" viewBox="0 0 760 560" role="img" aria-label="冷站分组与供水关系拓扑图"></svg></div><div class="topology-caption" id="topologySelection">点击分组查看关联连线</div></section></aside></div>
-<div id="saveAnno"></div><footer class="foot-actions"><button class="btn" data-action="step" data-step="2">上一步</button><button class="btn" data-action="cancel">取消</button><button class="btn btn-primary" data-action="save" id="completeButton">完成</button></footer>
-</main></div></div>
-<div id="multiPicker" class="ms-dropdown" role="group" aria-label="多选成员与供水对象"></div>
-<div id="modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-dialog" id="modalDialog"><div class="modal-header"><h2 class="modal-title" id="modalTitle"></h2><button class="modal-close" data-action="close-modal" aria-label="关闭弹窗">×</button></div><div class="modal-body" id="modalBody"></div><div class="modal-footer" id="modalFooter"></div></div></div>
-<div id="toast" class="relation-toast" role="status" aria-live="polite" hidden></div>
-<button class="anno-toggle" id="annoToggle" data-action="annotations">批注</button>
-<script src="components/cold-station-store.js"></script>
-<script>
+button.back-link{background:none;border:0;padding:0;font-family:inherit;cursor:pointer}
+.prop-item:has(.pill-group){grid-column:span 2}
+.pill-group .check-pill{padding:6px 12px;font-size:13px}
+
+/* 关联设备弹窗：名称与所在空间筛选 */
+.candidate-filters{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 12px}
+.candidate-filters .field-control{width:100%;margin-top:6px}
+
+/* ---- v3.0 属性配置：按物模型类型分区 ---- */
+.warn-text{color:var(--warning)}
+.device-table{min-width:900px}
+.device-table th:first-child{width:30%}
+.device-table th:nth-child(3){width:22%}
+.device-table th:nth-child(4){width:auto}
+.group-attr-table{min-width:640px}
+.group-attr-table th:first-child{width:30%}
+.section-head .sub-text{font-weight:400}
+.section-head .section-missing:empty{display:none}
+.auto-tag{font-size:10px;padding:0 5px;border-radius:3px;background:#F1F5F9;color:var(--text-hint);font-weight:500}
+.prop-value .field-control[readonly]{background:#F8FAFC;color:var(--text-secondary)}
+.empty-guide{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:18px 20px;font-size:13px;color:var(--text-secondary)}
+.empty-guide .btn{margin-left:auto}
+</style><link rel="stylesheet" href="annotation-styles.css"></head><body class="wizard-page"><div class="layout"><div id="app-header"></div><div class="body-wrap"><div id="app-sidebar"></div><main class="main"><div class="anno-filter-bar" id="annoFilterBar"><strong>批注模式</strong><label for="annoVersion">版本筛选</label><select id="annoVersion"><option value="all">全部版本</option><option value="v3.0">v3.0</option></select><span>当前页面仅含 v3.0 批注</span></div><div id="versionHead"></div><div class="page-header"><div><button class="back-link" id="backList" title="返回冷站配置列表">← <span id="pageTitle">新建冷站配置</span></button><div class="page-sub" id="systemCaption"></div></div><div class="page-header-right"><div class="demo-switch"><span class="demo-switch-label">原型演示</span><button class="demo-opt is-active" data-demo="default">默认配置</button><button class="demo-opt" data-demo="error">格式错误</button></div></div></div><div id="steps"></div><div class="content-body"><div id="demoAnno"></div><section class="section-card"><div class="section-body"><div id="toolbarAnno"></div><div class="toolbar"><span class="field-label">属性配置</span><span class="sub-text overall-summary" id="overallSummary"></span><div class="actions"><button class="btn" id="export">↓ 导出属性表</button><button class="btn" id="import">↑ 导入属性表</button></div></div></div></section><div id="deviceGroups" class="device-groups"></div><div id="flowAnno"></div></div><footer class="csf-footer"><button class="btn" id="backBtn">返回列表</button><button class="btn" id="previous">上一步</button><button class="btn" id="save">保存</button><button class="btn btn-primary" id="next">下一步：测点表达式</button></footer></main></div></div><div class="modal-overlay" id="modal"><div class="modal-dialog" id="modalDialog" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-header"><h2 class="modal-title" id="modalTitle"></h2><button class="modal-close" id="modalClose" aria-label="关闭弹窗">×</button></div><div class="modal-content" id="modalContent"></div><div class="modal-footer"><button class="btn" id="modalCancel">取消</button><button class="btn" id="modalAlt" hidden></button><button class="btn btn-primary" id="modalConfirm">确认</button></div></div></div><div class="toast" id="toast" role="status" aria-live="polite"></div><button class="anno-toggle" id="annoToggle">批注</button><script src="components/cold-station-store.js"></script><script src="components/cold-station-flow.js"></script><script src="components/xlsx-mini.js"></script><script src="components/nav.js" data-active-nav="AI智能能效" data-active-sidebar="冷站配置"></script><script>
 'use strict';
-const $=id=>document.getElementById(id), esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])), copy=v=>v==null?v:JSON.parse(JSON.stringify(v));
-const params=new URLSearchParams(location.search), Store=window.ColdStationStore, readonly=params.get('mode')==='view';
-const systemId=params.get('id')||Store.pendingDraft()?.id||Store.nextId(), configId=systemId;
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const params=new URLSearchParams(location.search), mode=params.get('mode')||(params.has('id')?'edit':'new'), readonly=mode==='view';
+const Store=window.ColdStationStore, Flow=window.ColdStationFlow, pending=Store.pendingDraft();
+const configId=params.get('id')||((params.get('from')==='energyView'||/^N\d+$/.test(pending?.id||''))?pending?.id:null)||Store.nextId();
 const back=Store.safeBack(params.get('back'));
-const draft=(!readonly&&params.get('resume')==='1'?Store.getDraft(systemId):null)||Store.createDraft(systemId);
-const isNewConfiguration=!Store.getEffective(systemId);
-const preset=Store.getEffective(systemId)||draft, info=draft;
-const unitCount=Number(draft.units)||6, air=draft.systemType==='air';
-const includes=draft.includes||[], has=x=>includes.includes(x), name=draft.name||'新建冷水系统';
-const baseSnapshot=draft.baseSnapshot===undefined?Store.getEffective(systemId):copy(draft.baseSnapshot);
-let savedResult=null, pendingSave=null;
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clone=v=>JSON.parse(JSON.stringify(v));
+// 四步主线页面：two = 第 2 步系统拓扑，three = 第 3 步属性配置（本页）。
+const FILES={list:'冷站配置-列表.html',one:'冷站配置-创建.html',two:'冷站配置-创建-步骤2.html',three:'冷站配置-创建-步骤3.html',verify:'冷站配置-配置校验.html',expression:'冷站配置-测点表达式.html'};
+function anno(module,items,section='4.4',kind='field',inferred=false){const tag={field:'字段说明',ux:'交互说明',data:'数据逻辑',edge:'边界与异常',state:'状态说明'}[kind];return `<div class="anno anno-${kind}" data-version="v3.0"><span class="anno-tag">${tag}</span><span class="anno-version">v3.0</span><span class="anno-source">${inferred?'产品推断':'需求文档 ·《冷站配置需求文档》§'+section}</span><div class="anno-body"><p><b>关联模块：</b>${module}</p><ul>${items.map(x=>`<li>${x}</li>`).join('')}</ul></div></div>`;}
+function version(desc,page){return `<div class="anno anno-version-header" data-version="v3.0"><span class="anno-tag">版本信息</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§4.4、§4.7</span><div class="anno-body"><p><b>当前版本：</b>v3.0</p><p><b>更新日期：</b>2026-11-23</p><p><b>变更概述：</b>${desc}</p><p><b>本页说明：</b>${page}</p></div></div>`;}
+let toastTimer;
+function toast(message,link){const el=$('#toast');el.innerHTML=esc(message)+(link?` <a href="${esc(link)}">去校验 →</a>`:'');el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),link?10000:3500);}
+let modalCallback=null, previousFocus=null;
+function openModal(title,body,confirm,label='确认',wide=false){previousFocus=document.activeElement;$('#modalCancel').textContent=confirm?'取消':'关闭';$('#modalTitle').textContent=title;$('#modalContent').innerHTML=body;$('#modalDialog').style.maxWidth=wide?'1080px':'860px';$('#modalConfirm').textContent=label;$('#modalConfirm').hidden=!confirm;$('#modalConfirm').disabled=false;$('#modalAlt').hidden=true;$('#modalAlt').onclick=null;modalCallback=confirm;$('#modal').classList.add('is-open');$('#modalClose').focus();}
+function closeModal(){$('#modal').classList.remove('is-open');modalCallback=null;if(previousFocus?.isConnected)previousFocus.focus();}
+$('#modalClose').onclick=closeModal;$('#modalCancel').onclick=closeModal;$('#modalConfirm').onclick=()=>modalCallback?.();
+$('#modal').addEventListener('click',e=>{if(e.target===$('#modal'))closeModal();});
+document.addEventListener('keydown',e=>{if(!$('#modal').classList.contains('is-open'))return;if(e.key==='Escape')closeModal();if(e.key==='Tab'){const els=$$('#modal button:not([disabled]):not([hidden]),#modal input:not([disabled]),#modal select:not([disabled]),#modal a[href]').filter(x=>x.getClientRects().length);if(!els.length)return;const first=els[0],last=els.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});
+function loadDraft(){return Store.getDraft(configId);}
+// 本页草稿只用于异常关闭后恢复；离开本步（保存或放弃）时清理。
+function dropDraft(){if(Store.getDraft(configId))Store.clearDraft();}
+// 返回列表 / 页头返回：本步没有未保存修改直接返回；有修改三选一。
+function leave(target){if(readonly||!computeDirty()){if(!readonly)dropDraft();location.href=target;return;}
+ openModal('保存修改后返回？',anno('返回确认弹窗；入口：返回列表、页头返回',['本步没有未保存的修改时直接返回，不弹窗。','继续编辑：关闭弹窗，留在本步。','不保存，返回：放弃本步未保存的修改，已保存的配置不变。','保存并返回：属性格式错误时拦截并定位，通过后保存并返回。'],'4.7','ux')+'<p>当前步骤有未保存的修改。</p>',()=>{closeModal();if(save())location.href=target;},'保存并返回');
+ $('#modalCancel').textContent='继续编辑';const alt=$('#modalAlt');alt.textContent='不保存，返回';alt.hidden=false;alt.onclick=()=>{closeModal();dropDraft();location.href=target;};}
+function initAnnotations(){ $('#annoToggle').onclick=()=>{document.body.classList.toggle('annotation-mode');$('#annoToggle').textContent=document.body.classList.contains('annotation-mode')?'退出批注':'批注';};$('#annoVersion').onchange=()=>{const v=$('#annoVersion').value;$$('.anno').forEach(a=>a.classList.toggle('anno-filter-hidden',v!=='all'&&a.dataset.version!==v));}; }
+initAnnotations();
 
-const groupTypes=[{key:'unit',label:'制冷单元',device:['ch','hx']},{key:'freeze',label:'并联冷冻水泵管路',device:['fp']},...(!air?[{key:'cool',label:'并联冷却水泵管路',device:['cp']},{key:'tower',label:'并联冷却塔管路',device:['ct']}]:[]),...(has('二次泵')?[{key:'second',label:'并联二次泵管路',device:['sp']}]:[]),...(has('蓄冷罐')?[{key:'tank',label:'蓄冷罐组',device:['tk']}]:[])];
-const attrDefs=Store.groupDefs();
-const kindNames={ch:air?'风冷冷水机组':'冷水主机',hx:'板换',fp:'冷冻水泵',cp:'冷却水泵',ct:'冷却塔',sp:'二次泵',tk:'蓄冷罐'};
-const allDevices=Array.isArray(draft.devices)?draft.devices:isNewConfiguration?[]:Store.deviceGroups(draft).flatMap(g=>Array.from({length:g.key==='TK'?(systemId==='C'?3:2):unitCount},(_,i)=>Store.makeDevice(draft,g,i+1)));
-let devices=allDevices.filter(d=>groupTypes.some(t=>t.device.includes(d.kind)));
+const DEFS=Store.DEFS;
+const defaults=Object.assign({},...Object.keys(DEFS).map(model=>Store.valuesFor(model)));
+function valuesFor(model){return Store.valuesFor(model);}
+function freshDraft(id){return Store.createDraft(id);}
+function visibleSystemProps(d){return DEFS['水冷冷水系统'].filter(p=>d.systemType!=='air'||p.id!=='cool_pressure_diff');}
+function empty(v){return v==null||v===''||(Array.isArray(v)&&!v.length);}
+function propError(p,v){if(empty(v))return '';if(p.options){const vals=Array.isArray(v)?v:[v];return vals.every(x=>p.options.some(o=>o[0]===String(x)))?'':'请选择有效选项';}if(!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(String(v).trim())||!Number.isFinite(Number(v)))return '请输入有效数字';if(p.integer&&!Number.isInteger(Number(v)))return '请输入整数';if(p.min!==undefined&&+v<p.min||p.max!==undefined&&+v>p.max)return `请输入 ${p.min}～${p.max} 范围内的数值`;return '';}
+function propAnnotation(p,section){if(p.readonly)return anno(p.name,[`属性标识：${esc(p.id)}；自动计算，只读，不参与复制和导入。`,p.id==='volume'?'组内投入的蓄冷罐容量之和，单位 m³；成员投入 / 投出或容量变化时随之更新。':'设计温差 × 容积 × 1.163 × 安全系数，单位 kWh；安全系数或设计温差为空时不计算。'],section,'data');return anno(p.name,[`属性标识：${esc(p.id)}；${p.required?'必填':'选填'}；${p.options?'可选 '+p.options.map(o=>o[1]).join('、'):'数值'+(p.unit?'，单位 '+p.unit:'')+'，须为有效数字'}。`,`${p.min!==undefined?'范围 '+p.min+'～'+p.max+'。':p.integer?'须为整数。':'物模型未定义额外数值范围。'}`, '未填标红；填写格式错误时显示错误并阻止保存；修改值标“已修改”。'],section,'field',!!p.inferred);}
+function propHtml(p,v,key,disabled=false,edited=false,section='4.4'){const ro=!!p.readonly,missing=!ro&&p.required&&empty(v),err=ro?'':propError(p,v);let input;if(p.options){input=`<select id="field-${key}-${p.id}" class="field-select" data-key="${key}" data-prop="${p.id}" ${p.multiple?'multiple size="3"':''} ${disabled?'disabled':''} aria-label="${esc(p.name)}">${!p.multiple?'<option value="">请选择</option>':''}${p.options.map(([a,b])=>`<option value="${a}" ${(Array.isArray(v)?v:[String(v)]).includes(a)?'selected':''}>${b}</option>`).join('')}</select>`;if(p.multiple){const vals=(Array.isArray(v)?v:[String(v)]);input=input.replace('<select ','<select hidden ')+`<div class="pill-group" role="group" aria-label="${esc(p.name)}">${p.options.map(([a,b])=>`<label class="check-pill ${vals.includes(a)?'selected':''} ${disabled?'is-disabled':''}"><input type="checkbox" data-sync="field-${key}-${p.id}" value="${a}" ${vals.includes(a)?'checked':''} ${disabled?'disabled':''}>${b}</label>`).join('')}</div>`;}}else{input=`<input id="field-${key}-${p.id}" class="field-control" type="text" inputmode="${p.integer?'numeric':'decimal'}" data-key="${key}" data-prop="${p.id}" value="${esc(v)}" ${disabled?'disabled':''} ${ro?'readonly':''} aria-label="${esc(p.name)}">`;}
+return `<div class="prop-item ${missing?'is-missing':''} ${err?'is-invalid':''} ${edited?'is-edited':''}" data-field="${key}-${p.id}">${propAnnoOnce(p,key,section)}<label class="prop-label" for="field-${key}-${p.id}">${p.required&&!ro?'<span class="required">*</span>':''}${p.name}${ro?'<span class="auto-tag">自动计算</span>':''}<span class="edit-tag">已修改</span></label><div class="prop-value">${input}${p.unit?`<span class="prop-unit">${esc(p.unit)}</span>`:''}</div><span class="prop-err">${esc(err)}</span></div>`;}
+function updatePropUI(el,p,v,changed){const item=el.closest('.prop-item');item.classList.toggle('is-missing',p.required&&empty(v));item.classList.toggle('is-invalid',!!propError(p,v));item.classList.toggle('is-edited',changed);item.querySelector('.prop-err').textContent=propError(p,v);el.setAttribute('aria-invalid',!!propError(p,v));}
 
-const deviceById=id=>devices.find(d=>d.id===id), typeByKey=k=>groupTypes.find(t=>t.key===k), list=k=>state.groups.filter(g=>g.type===k), group=id=>state.groups.find(g=>g.id===id);
-function defaults(type){ return Object.fromEntries((attrDefs[type]||[]).filter(d=>!d.readonly).map(d=>[d.key,d.value])); }
-function initialTopology(){if(draft.topology)return draft.topology;if(isNewConfiguration||!devices.length)return {groups:[],relations:[]};try{return Store.createTopology({...draft,devices});}catch{return {groups:[],relations:[]};}}
-let sequence=100, state=copy(initialTopology());
-function newGroup(type,number,members,automatic=false){return {id:type+'-'+number,name:typeByKey(type).label+' '+number,type,slot:String(number),members,attrs:defaults(type),originalAttrs:defaults(type),auto:automatic};}
-state.groups=state.groups.filter(g=>typeByKey(g.type)).map(g=>({...g,members:g.members.filter(id=>deviceById(id)),attrs:g.attrs||defaults(g.type),originalAttrs:copy(g.attrs||defaults(g.type))}));
+// 首次保存前只能停在第 1 步：配置还没有保存时回到系统信息。
+const unsaved=!Store.getEffective(configId);if(unsaved)location.replace(Flow.url(1,{back}));
+let draft=!readonly&&params.get('resume')==='1'?loadDraft():null;if(!draft)draft=freshDraft(configId);
+// 支持步骤 1 传递的统一草稿；从列表单独打开时用统一演示数据兜底。
+draft.systemType=/风冷|air/.test(draft.systemType||draft.type||'water')?'air':'water';draft.includes=draft.includes||draft.systemIncludes||[];
+const groups=[...Store.deviceGroups(draft),{key:'GC',kind:'gc',name:'群控系统',model:'群控系统',points:0}];
+function makeDevice(g,n){return Store.makeDevice(draft,g,n);}
+// 演示设备：按系统类型、系统包含和制冷单元数生成（群控系统不按单元数生成）。
+function demoDevices(){return groups.filter(g=>g.key!=='GC').flatMap(g=>Array.from({length:g.key==='TK'?(draft.id==='C'?3:2):(draft.units||6)},(_,i)=>makeDevice(g,i+1)));}
 
-const relDefs=[{key:'freeze',label:'冷冻侧供水',from:'freeze',to:'unit'},...(!air?[{key:'cool',label:'冷却侧供水',from:'unit',to:'cool'},{key:'tower',label:'冷却塔供水',from:'cool',to:'tower'}]:[]),...(has('二次泵')?[{key:'second',label:'二次侧供水',from:'second',to:'freeze',readonly:true}]:[])];
-state.relations=(state.relations||[]).filter(r=>group(r.from)&&relDefs.some(d=>d.key===r.key)).map(r=>({...r,to:r.to.filter(id=>group(id))}));
-// groupAttributes 是同一分组的表格表示；拓扑内分组为主，导入同时写入两者。
-for(const saved of draft.groupAttributes||[]){const g=state.groups.find(g=>g.id===saved.id);if(g&&!g.attrs)g.attrs=copy(saved.attrs);}
-let selected='',scene='normal',expanded=new Set(),picker=null,confirmAction=null,modalReturn=null,autoConfig=null,manualMatches={},lastPlan=null,saving=false,failedFrom=null;
-
-function anno(type,module,items,source='需求文档 ·《冷站配置需求文档》§4.4'){
- const tags={field:'字段说明',data:'数据逻辑',ux:'交互说明',edge:'边界与异常',state:'状态说明'};
- return `<div class="anno anno-${type}" data-version="v3.0"><span class="anno-tag">${tags[type]}</span><span class="anno-version">v3.0</span><span class="anno-source">${source}</span><div class="anno-body"><p><b>关联模块：</b>${module}</p><ul>${items.map(s=>`<li>${s}</li>`).join('')}</ul></div></div>`;
+if(!Store.getEffective(configId)&&!Array.isArray(draft.devices)){draft.devices=[];draft.topology={groups:[],relations:[]};}
+if(!Array.isArray(draft.devices))draft.devices=demoDevices();
+draft.topology=draft.topology||{groups:[],relations:[]};
+let devices=draft.devices,expanded=new Set(['CH1','CH6']);
+// 分组属性：并联冷却塔管路、并联二次泵管路、蓄冷罐组按各自物模型配置；分组本身在第 2 步新建。
+const GROUP_MODELS={tower:'并联冷却塔管路',second:'并联二次泵管路',tank:'蓄冷罐设备组'};
+const GROUP_SECTIONS=[...(draft.systemType!=='air'?[{type:'tower',name:'并联冷却塔管路'}]:[]),...(draft.includes.includes('二次泵')?[{type:'second',name:'并联二次泵管路'}]:[]),...(draft.includes.includes('蓄冷罐')?[{type:'tank',name:'蓄冷罐组'}]:[])];
+const TYPE_GROUP={CH:'unit',HX:'unit',CHWP:'freeze',CWP:'cool',SWP:'second',CT:'tower',TK:'tank'};
+let groupObjs=[];
+// 分组对象直接引用拓扑里的 attrs，页内修改即修改草稿；「已修改」按打开本页时的已保存值判断。
+function buildGroupObjs(){const base=draft.baseSnapshot?.topology?.groups||[];groupObjs=(draft.topology.groups||[]).filter(g=>GROUP_MODELS[g.type]).map(g=>{g.attrs=g.attrs||{};return {id:g.id,name:g.name,type:g.type,model:GROUP_MODELS[g.type],attrs:g.attrs,initial:clone(base.find(x=>x.id===g.id)?.attrs||g.attrs),members:g.members||[],isGroup:true};});updateComputed();}
+// 蓄冷罐组：容积为组内投入的蓄冷罐容量之和；设计蓄冷量 = 设计温差 × 容积 × 1.163 × 安全系数。
+function updateComputed(){for(const o of groupObjs){if(o.type!=='tank')continue;const volume=o.members.reduce((s,id)=>{const d=devices.find(x=>x.id===id);return s+(d&&d.attrs.InputOrOutput!=='1'?Number(d.attrs.capacity)||0:0);},0),f=o.attrs.safe_factor,t=o.attrs.design_temp_diff;o.attrs.volume=volume.toFixed(1);o.attrs.design_cool_capacity=!empty(f)&&!empty(t)&&Number.isFinite(+f)&&Number.isFinite(+t)?(volume*+t*1.163*+f).toFixed(1):'';}}
+function allObjs(){return [...devices,...groupObjs];}
+function findObj(id){return devices.find(d=>d.id===id)||groupObjs.find(g=>g.id===id);}
+function peers(o){return allObjs().filter(x=>x.model===o.model&&x.id!==o.id&&!!x.isGroup===!!o.isGroup);}
+function homeGroup(d){return (draft.topology.groups||[]).find(g=>(g.members||[]).includes(d.id))||null;}
+// 设备顺序：按第 2 步分组顺序，再按编号；不在任何分组的排在最后。
+function orderedDevices(key){const gs=draft.topology.groups||[],gi=d=>{const i=gs.findIndex(g=>(g.members||[]).includes(d.id));return i<0?Infinity:i;};return devices.filter(d=>d.group===key).map((d,i)=>({d,i})).sort((a,b)=>gi(a.d)-gi(b.d)||(a.d.number??Infinity)-(b.d.number??Infinity)||a.i-b.i).map(x=>x.d);}
+// 未保存修改：对比打开本页（或上次保存）时的已保存版本。
+function computeDirty(){return !readonly&&!!draft.baseSnapshot&&Store.diff(draft.baseSnapshot,draft).length>0;}
+let dirty=computeDirty();
+function markDirty(){devices.forEach(d=>{d.output=d.attrs.InputOrOutput==='1';d.capacity=Number(d.attrs.capacity||0);});draft.devices=devices;updateComputed();dirty=computeDirty();if(!readonly)Store.setDraft(draft);}
+function propsOf(o){return DEFS[o.model]||[];}
+function changed(o,p){return !p.readonly&&JSON.stringify(o.attrs[p.id]??'')!==JSON.stringify(o.initial?.[p.id]??'');}
+function stats(o){const ps=propsOf(o);return {total:ps.length,missing:ps.filter(p=>p.required&&!p.readonly&&empty(o.attrs[p.id])).length,edited:ps.filter(p=>changed(o,p)).length};}
+function summary(o){const s=stats(o);return `<span class="attr-total">${s.total} 项</span><span class="attr-dot">·</span>${s.missing?`<span class="missing-text">${s.missing} 项未填</span>`:'<span class="ok-text">已填齐</span>'}${s.edited?`<span class="attr-dot">·</span><span class="edit-count">已改 ${s.edited} 项</span>`:''}`;}
+function sectionKey(o){return o.isGroup?'grp-'+o.type:o.group;}
+function missingIn(key){return allObjs().filter(o=>sectionKey(o)===key).reduce((s,o)=>s+stats(o).missing,0);}
+function overallSummary(){const all=allObjs().reduce((a,o)=>{const s=stats(o);a.m+=s.missing;a.e+=s.edited;return a;},{m:0,e:0});const el=document.getElementById('overallSummary');if(el)el.innerHTML=`${all.m?`<span class="missing-text">${all.m} 项必填未填</span>`:'<span class="ok-text">必填已填齐</span>'}${all.e?` · <span class="edit-count">已修改 ${all.e} 项</span>`:''}`;}
+// 批注去重：同一物模型的同一属性、同类说明只出一次，避免批注模式下页面被重复批注淹没。
+const annoSeen=new Set();
+function annoOnce(tag,html){if(annoSeen.has(tag))return '';annoSeen.add(tag);return html;}
+function propAnnoOnce(p,key,section){const o=findObj(key);return annoOnce('prop:'+(o?o.model:key)+':'+p.id,propAnnotation(p,section));}
+function stateCell(d){return `${annoOnce('state',anno('投入 / 投出',['二选一，缺省投入；属于设备属性，计入属性总数。','投出表示 AI 不调、不下发，不等于关机。','本页与各寻优页修改的是同一个值，随保存生效。']))}<div class="radio-group">${['0','1'].map((v,i)=>`<label><input type="radio" name="state-${d.id}" value="${v}" data-state="${d.id}" ${d.attrs.InputOrOutput===v?'checked':''} ${readonly?'disabled':''}>${i?'投出':'投入'}</label>`).join('')}</div><span class="state-edited edit-count">${changed(d,{id:'InputOrOutput'})?'已修改':''}</span>`;}
+function attrCell(o){const ps=propsOf(o).filter(p=>p.id!=='InputOrOutput');return `<div data-summary="${o.id}">${summary(o)}</div>${ps.length?`<button class="prop-toggle" data-expand="${o.id}" aria-expanded="${expanded.has(o.id)}">${expanded.has(o.id)?'收起属性 ▴':'展开属性 ▾'}</button>`:''}`;}
+function copyCell(o){if(readonly)return '<span class="sub-text">只读</span>';return copyProps(o).length&&peers(o).length?`<button class="action-link" data-copy="${o.id}">${o.isGroup?'复制到同类型分组':'复制到同类型设备'}</button>`:'';}
+function propRow(o,cols){const ps=propsOf(o).filter(p=>p.id!=='InputOrOutput');if(!ps.length)return '';return `<tr class="prop-row ${expanded.has(o.id)?'':'is-collapsed'}" data-panel="${o.id}"><td colspan="${cols}"><div class="prop-panel"><div class="prop-grid">${ps.map(p=>propHtml(p,o.attrs[p.id],o.id,readonly,changed(o,p))).join('')}</div></div></td></tr>`;}
+function renderDevice(d){const t=groups.find(x=>x.key===d.group),home=TYPE_GROUP[d.group]?homeGroup(d):null,where=TYPE_GROUP[d.group]?(home?esc(home.name):'<span class="warn-text">未分组</span>')+' · ':'';
+ return `<tr data-device-row="${d.id}"><td><b>${esc(d.name)}</b><div class="sub-text">${where}${esc(d.position)}</div></td><td>${stateCell(d)}</td><td>${attrCell(d)}</td><td>${t?.points?`<button class="action-link point-link ${d.points<t.points?'is-short':''}" data-points title="必绑测点已绑 ${d.points||0} / ${t.points}，点击去设备管理绑点">已绑 ${d.points||0} / ${t.points}</button>`:'<span class="sub-text">—</span>'}</td><td>${copyCell(d)}</td></tr>${propRow(d,5)}`;}
+function renderGroupRow(o){return `<tr data-device-row="${o.id}"><td><b>${esc(o.name)}</b></td><td>${attrCell(o)}</td><td>${copyCell(o)}</td></tr>${propRow(o,3)}`;}
+function sectionHead(key,name,model){const m=missingIn(key);return `<div class="section-head"><span>${esc(name)}</span>${model&&model!==name?`<span class="sub-text">${esc(model)}</span>`:''}<span class="sub-text section-missing missing-text" data-sec-missing="${key}">${m?m+' 项未填':''}</span></div>`;}
+function deviceSectionAnno(t){return annoOnce('dev-section',anno('设备属性分区',['按物模型类型分区：冷水主机、板换、冷冻水泵、冷却水泵、二次泵、冷却塔、蓄冷罐、群控系统；分区出现条件按系统类型和系统包含。','只列第 2 步「系统拓扑」已关联的设备，按所属分组、再按编号排序；名称下注明所属分组，不在任何分组的标「未分组」。','属性格按物模型显示；属性项由前端按标准物模型 Excel 固定显示（同机房配置），不读平台上的全部属性。群控系统只有投入 / 投出。','必绑测点按标准物模型 A 级采集点计数，点击跳转设备管理。'],'4.4','data'))+annoOnce('dev-empty',anno('设备属性 · 空状态',['某类没有已关联设备时，该类显示「未关联…，到第 2 步「系统拓扑」关联」。','所有类型都没有已关联设备时，设备区只显示「还没有关联设备，先到第 2 步「系统拓扑」关联设备」和按钮；点按钮先保存本步再跳转。'],'4.4','state'));}
+function renderDeviceSection(t){const list=orderedDevices(t.key);return `<section class="section-card" id="group-${t.key}">${sectionHead(t.key,t.name,t.model)}${deviceSectionAnno(t)}<div class="table-wrap"><table class="data-table device-table"><thead><tr><th>设备名称 / 所属分组</th><th>投入 / 投出</th><th>属性</th><th>必绑测点</th><th>操作</th></tr></thead><tbody>${list.map(renderDevice).join('')||`<tr><td colspan="5" class="empty-state">未关联${esc(t.short||t.name)}，到第 2 步「系统拓扑」关联</td></tr>`}</tbody></table></div></section>`;}
+function renderGroupSection(s){const list=groupObjs.filter(o=>o.type===s.type);return `<section class="section-card" id="grp-${s.type}">${sectionHead('grp-'+s.type,s.name,'')}${annoOnce('grp-section',anno('分组属性分区',['并联冷却塔管路（水冷）、并联二次泵管路（含二次泵）、蓄冷罐组（含蓄冷罐）按各自物模型显示分组属性，规则与设备属性格相同；分组在第 2 步「系统拓扑」新建，本页只改属性。','蓄冷罐组的容积、设计蓄冷量自动计算、只读，不导入。','同类有多个分组时可「复制到同类型分组」。还没有该类分组时显示「还没有…，到第 2 步「系统拓扑」新增」。'],'4.4','data'))}<div class="table-wrap"><table class="data-table device-table group-attr-table"><thead><tr><th>分组名称</th><th>属性</th><th>操作</th></tr></thead><tbody>${list.map(renderGroupRow).join('')||`<tr><td colspan="3" class="empty-state">还没有${esc(s.name)}，到第 2 步「系统拓扑」新增</td></tr>`}</tbody></table></div></section>`;}
+function emptyDevices(){return `<section class="section-card">${deviceSectionAnno()}<div class="empty-guide"><span>还没有关联设备，先到第 2 步「系统拓扑」关联设备</span><button class="btn btn-primary" data-goto-topology>去第 2 步 →</button></div></section>`;}
+function renderDevices(){annoSeen.clear();buildGroupObjs();
+ $('#deviceGroups').innerHTML=(devices.length?groups.map(renderDeviceSection).join(''):emptyDevices())+GROUP_SECTIONS.map(renderGroupSection).join('');
+ $$('[data-expand]').forEach(b=>b.onclick=()=>{const id=b.dataset.expand;expanded.has(id)?expanded.delete(id):expanded.add(id);$(`[data-panel="${id}"]`)?.classList.toggle('is-collapsed',!expanded.has(id));b.textContent=expanded.has(id)?'收起属性 ▴':'展开属性 ▾';b.setAttribute('aria-expanded',expanded.has(id));});overallSummary();
+ $$('[data-copy]').forEach(b=>b.onclick=()=>openCopy(b.dataset.copy));$$('[data-goto-topology]').forEach(b=>b.onclick=()=>goStep(2));$$('[data-points]').forEach(b=>b.onclick=()=>toast('跳转设备管理 › 测点绑定'));
+ $$('[data-state]').forEach(el=>el.onchange=()=>{const d=devices.find(d=>d.id===el.dataset.state);d.attrs.InputOrOutput=el.value;markDirty();refreshSummary(d);refreshComputed();el.closest('td').querySelector('.state-edited').textContent=changed(d,{id:'InputOrOutput'})?'已修改':'';});
+ $$('[data-prop]').forEach(el=>{el.addEventListener(el.tagName==='SELECT'?'change':'input',()=>{const o=findObj(el.dataset.key),p=propsOf(o).find(p=>p.id===el.dataset.prop);if(!p||p.readonly)return;o.attrs[p.id]=el.value;updatePropUI(el,p,el.value,changed(o,p));markDirty();refreshSummary(o);if(o.isGroup)refreshComputed();});});}
+// 自动计算的分组属性（容积、设计蓄冷量）随投入 / 投出、容量、安全系数、设计温差更新。
+function refreshComputed(){for(const o of groupObjs.filter(o=>o.type==='tank'))for(const key of ['volume','design_cool_capacity']){const el=$(`[data-key="${o.id}"][data-prop="${key}"]`);if(el)el.value=o.attrs[key];}}
+function refreshSummary(o){overallSummary();$$(`[data-summary="${o.id}"]`).forEach(el=>el.innerHTML=summary(o));const m=missingIn(sectionKey(o)),el=$(`[data-sec-missing="${sectionKey(o)}"]`);if(el)el.textContent=m?m+' 项未填':'';}
+let copying=null;
+function copyProps(o){return propsOf(o).filter(p=>p.id!=='InputOrOutput'&&!p.readonly);}
+function sameType(o){return allObjs().filter(x=>x.model===o.model&&!!x.isGroup===!!o.isGroup);}
+function openCopy(id){const d=findObj(id),noun=d.isGroup?'分组':'设备';copying={model:d.model,isGroup:!!d.isGroup,source:id,props:new Set(copyProps(d).filter(p=>!empty(d.attrs[p.id])).map(p=>p.id)),targets:new Set(peers(d).map(x=>x.id)),overwrite:false};openModal('复制到同类型'+noun,anno('复制属性弹窗；入口：复制到同类型设备 / 分组',['来源缺省为当前对象，可切换为同类型其他对象；只在同一物模型的对象之间复制。','复制哪些属性缺省勾选来源已填项，未填项置灰；投入 / 投出和自动计算的属性不参与复制。','复制到哪些对象缺省勾选同类型其他全部对象，显示各自已填数。','已有值时缺省只填空值，可选覆盖；预览填入、覆盖与跳过数量。','确认只更新本页内容并标已修改，点保存或离开本步时保存。'],'4.4','field')+`<div class="copy-row"><label class="copy-label" for="copySource">来源${noun}</label><select class="field-select" id="copySource">${sameType(d).map(x=>`<option value="${x.id}" ${x.id===id?'selected':''}>${esc(x.name)}</option>`).join('')}</select></div><div id="copyLists"></div><div class="copy-row"><span class="copy-label">已有值时</span><label><input type="radio" name="copyMode" value="empty" checked>只填空值</label><label><input type="radio" name="copyMode" value="overwrite">覆盖已有值</label></div><div id="copyPreview" class="note-block"></div>`,applyCopy,'确认复制',true);$('#copySource').onchange=()=>{const source=findObj($('#copySource').value);copying.source=source.id;copying.props=new Set(copyProps(source).filter(p=>!empty(source.attrs[p.id])).map(p=>p.id));copying.targets=new Set(peers(source).map(x=>x.id));renderCopyLists();};$$('[name="copyMode"]').forEach(el=>el.onchange=()=>{copying.overwrite=el.value==='overwrite';previewCopy();});renderCopyLists();}
+function renderCopyLists(){const c=copying,d=findObj(c.source),noun=c.isGroup?'分组':'设备';$('#copyLists').innerHTML=`<div class="copy-sec"><div class="copy-sec-head">复制哪些属性 <button class="action-link" id="toggleProps">全选 / 清空</button></div><div class="copy-props">${copyProps(d).map(p=>`<label class="copy-check ${empty(d.attrs[p.id])?'is-disabled':''}"><input type="checkbox" data-copy-prop="${p.id}" ${c.props.has(p.id)?'checked':''} ${empty(d.attrs[p.id])?'disabled':''}>${p.name}<span class="copy-val">${empty(d.attrs[p.id])?'未填':p.options?esc(cellValue(p,d.attrs[p.id])):esc(d.attrs[p.id])+' '+p.unit}</span></label>`).join('')}</div></div><div class="copy-sec"><div class="copy-sec-head">复制到哪些${noun} <button class="action-link" id="toggleTargets">全选 / 清空</button></div><div class="copy-targets">${peers(d).map(x=>`<label class="copy-target"><input type="checkbox" data-copy-target="${x.id}" ${c.targets.has(x.id)?'checked':''}>${esc(x.name)}<span class="sub-text">已填 ${stats(x).total-stats(x).missing} / ${stats(x).total} 项</span></label>`).join('')||`<div class="sub-text">暂无其他同类型${noun}</div>`}</div></div>`;
+$$('[data-copy-prop]').forEach(el=>el.onchange=()=>{el.checked?c.props.add(el.dataset.copyProp):c.props.delete(el.dataset.copyProp);previewCopy();});$$('[data-copy-target]').forEach(el=>el.onchange=()=>{el.checked?c.targets.add(el.dataset.copyTarget):c.targets.delete(el.dataset.copyTarget);previewCopy();});$('#toggleProps').onclick=()=>{c.props=c.props.size?new Set():new Set(copyProps(d).filter(p=>!empty(d.attrs[p.id])).map(p=>p.id));renderCopyLists();};$('#toggleTargets').onclick=()=>{c.targets=c.targets.size?new Set():new Set(peers(d).map(x=>x.id));renderCopyLists();};previewCopy();}
+function copyPlan(){const c=copying,s=findObj(c.source),plan={fill:[],overwrite:[],skip:[]};for(const id of c.targets){const d=findObj(id);if(!d)continue;for(const key of c.props){const v=s.attrs[key],p=propsOf(s).find(x=>x.id===key),entry={d,key,value:clone(v)};if(empty(v)||propError(p,v)||JSON.stringify(d.attrs[key])===JSON.stringify(v))plan.skip.push(entry);else if(empty(d.attrs[key]))plan.fill.push(entry);else if(c.overwrite)plan.overwrite.push(entry);else plan.skip.push(entry);}}return plan;}
+function previewCopy(){const p=copyPlan();$('#copyPreview').textContent=`将填入 ${p.fill.length} 项、覆盖 ${p.overwrite.length} 项、跳过 ${p.skip.length} 项`;$('#modalConfirm').disabled=!copying.targets.size||!copying.props.size;}
+function applyCopy(){const p=copyPlan();[...p.fill,...p.overwrite].forEach(x=>x.d.attrs[x.key]=x.value);markDirty();closeModal();renderDevices();toast(`已复制：填入 ${p.fill.length} 项，覆盖 ${p.overwrite.length} 项，跳过 ${p.skip.length} 项`);}
+let importPlan=null;
+function openImport(){importPlan=null;openModal('导入属性表',anno('导入属性表弹窗；入口：工具栏导入属性表',['读取 xlsx 或 CSV：按设备 ID、分组 ID、系统 ID 匹配行；表头按属性 Key 识别，找不到再按中文名；枚举接受显示值。','ID 不在本配置中的行整行跳过并列入问题行；属性不适用、格式或范围错误的单元格跳过并写明原因；风冷系统制冷模式只能为压缩制冷。','只改属性值，不增减设备和分组，不改显示名称；空单元格和自动计算列不导入。','预览填入、覆盖、未变化和跳过数量；确认后回填本页，点保存或下一步才写入。'],'4.4','field')+`<label class="field-label" for="importFile">选择文件</label><div class="toolbar"><input type="file" id="importFile" accept=".csv,.xlsx"><button class="btn" id="demoFile">使用演示文件</button></div><div id="importFileName" class="sub-text">尚未选择文件</div><div id="importResult" class="note-block">选择文件后显示预检结果</div>`,applyImport,'确认导入',true);$('#modalConfirm').disabled=true;$('#demoFile').onclick=()=>demoImport('演示属性表.xlsx');$('#importFile').onchange=async()=>{const file=$('#importFile').files[0];if(!file)return;importPlan=null;$('#modalConfirm').disabled=true;try{precheckImport(workbookEntries(await XlsxMini.read(file)),file.name);}catch(error){$('#importResult').textContent='文件未导入：'+error.message;toast('文件无法读取：'+error.message);}};}
+// 演示文件：按导出格式生成，改几处值并加一行本配置没有的设备 ID，走与真实文件相同的解析和预检。
+function demoImport(name){const d=devices.find(x=>x.id==='CH6')||devices.find(x=>x.group==='CH');if(!d){toast('请先关联设备，再使用演示文件');return;}
+ const sheets=exportSheets(),sheetOf=key=>sheets.find(s=>s.name===groups.find(x=>x.key===key)?.name),set=(sheet,id,prop,value)=>{const col=sheet?sheet.rows[0].findIndex(h=>parseHeader(h).key===prop):-1,row=sheet?.rows.find((r,i)=>i&&r[0]===id);if(row&&col>=0)row[col]=value;};
+ const ch=sheetOf(d.group);propsOf(d).filter(p=>p.id!=='InputOrOutput'&&!p.options).slice(0,6).forEach(p=>set(ch,d.id,p.id,empty(d.attrs[p.id])?String(defaults[p.id]||'10'):String(+(Number(d.attrs[p.id])*1.05).toFixed(2))));
+ const pump=devices.find(x=>x.model==='水泵'),tower=devices.find(x=>x.group==='CT');if(pump)set(sheetOf(pump.group),pump.id,'flow','超出范围');if(tower)set(sheetOf('CT'),tower.id,'fans_num','2.5');
+ ch.rows.push(['CH10','10#冷水主机',...ch.rows[0].slice(2).map(h=>parseHeader(h).key==='RatedCool'?'3868':'')]);
+ precheckImport(workbookEntries(sheets),name);}
+// 属性表格式：每个 sheet 前两列为 ID（只读）和显示名称，之后一个属性一列，表头「中文名（单位，范围，必填）/ 属性 Key」。
+const ID_HEADER={system:'系统 ID（只读）',device:'设备 ID（只读）',group:'分组 ID（只读）'},SCOPE_NAME={system:'系统',device:'设备',group:'分组'};
+function importTargets(){
+ draft.attributes=draft.attributes||{};
+ const system={id:draft.id,name:draft.name||'新建冷水系统',model:'水冷冷水系统',attrs:draft.attributes,isSystem:true},list=[],seen=new Set();
+ for(const g of draft.topology?.groups||[]){if(!GROUP_MODELS[g.type]||seen.has(g.id))continue;seen.add(g.id);g.attrs=g.attrs||{};list.push({id:g.id,name:g.name,model:GROUP_MODELS[g.type],attrs:g.attrs});}
+ if(!draft.topology)for(const g of draft.groupAttributes||[])if(!seen.has(g.id)){seen.add(g.id);list.push(g);}
+ return {system:[system],device:devices,group:list};
 }
-$('demoAnno').innerHTML=anno('ux','原型演示',['仅用于评审，切换完成后的正常、冲突和写入失败结果。','切换不改表格内容；正常结果可演示重新同步或稍后处理。','所有操作使用本页演示数据，不提交真实系统。'],'产品推断');
-$('groupsAnno').innerHTML=anno('field','分组配置',['分组名可修改；成员仅选步骤 2 已关联的同类设备。','每台设备只在一个分组；其他分组已占用的设备置灰并标所在分组。','可新增分组；移除成员或删除分组先检查引用，通过后确认并清理连线。','每类分组可折叠，标题显示分组数和成员台数；分组名右侧 ◎ 在拓扑图中高亮该分组。']);
-$('groupsAnno').innerHTML+=anno('field','分组名与草稿',['分组名须非空、同类分组内不重名，最多 50 字；格式不符时定位并提示。','修改先保留为草稿；单独进入时有草稿须先选择恢复或丢弃。','新建配置的分组与供水关系初始为空，可按步骤 2 已关联的设备一键生成。'],'产品推断');
-$('relationsAnno').innerHTML=anno('field','供水关系',['每个起点一行，终点多选；支持一对一、母管制和混合连接。','只配置连接，不填写权重或比例；移除连线前检查引用。','二次侧只读显示自动生成；每个二次泵管路连接全部冷冻水泵管路。']);
-$('topologyAnno').innerHTML=anno('data','系统拓扑',['按冷冻水泵管路、制冷单元、冷却水泵管路、冷却塔管路从左到右显示，二次泵管路在冷冻侧外侧，蓄冷罐组在底部。','分组按类型区分颜色；节点显示分组名和成员台数，悬停显示成员设备。','二次侧供水为系统自动生成，用虚线表示。','点选节点或表格中的分组，高亮它的直接连线，其他连线淡化；表格修改后实时刷新。','「放大查看」在弹窗中显示完整分组名和图例。']);
-$('saveAnno').innerHTML=anno('ux','完成、上一步与取消',['完成只做格式校验；必填未填和连接不完整不拦保存，保存后到配置校验检查。','只提交本次修改项；逐项处理并发冲突后再次提交。','任一项写入失败时保持保存前配置，保留本页内容并定位失败行。','新建保存后提示配置校验及创建设备预测模型；编辑时仅列出受本次变更影响的模型。','上一步保留草稿；取消确认后清理草稿，返回来源页或列表。'],'需求文档 ·《冷站配置需求文档》§4.5、§4.6');
-$('pageTitle').textContent=readonly?'查看冷站配置':params.get('mode')==='edit'?'编辑冷站配置':'新建冷站配置'; $('systemSummary').textContent=name+' · '+(air?'风冷':'水冷')+' · 系统拓扑';
-function toast(msg){$('toast').textContent=msg;$('toast').hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').hidden=true,3400);}
-function snapshot(){return {...copy(draft),id:systemId,name,systemName:name,systemType:air?'air':'water',type:air?'air':'water',includes:copy(includes),systemIncludes:copy(includes),units:state.groups.filter(g=>g.type==='unit').length,devices:allDevices.map(d=>copy(devices.find(x=>x.id===d.id)||d)),groupAttributes:groupAttributeRows(),topology:copy({...state,systemId})};}
-function persist(){if(!readonly)Store.setDraft(snapshot());return true;}
-
-function groupAttributeRows(){return state.groups.filter(g=>attrDefs[g.type]).map(g=>({id:g.id,name:g.name,model:{tower:'并联冷却塔管路',second:'并联二次泵管路',tank:'蓄冷罐设备组'}[g.type],attrs:Object.fromEntries(attrDefs[g.type].map(d=>[d.key,computed(g,d.key)]))}));}
-function touch(){if(readonly)return;persist();drawTopology();}
-function relation(r,from){return state.relations.find(x=>x.key===r.key&&x.from===from)||{key:r.key,from,to:[],auto:false};}
-function getRelation(key,from){return relation(relDefs.find(r=>r.key===key),from);}
-function computed(g,key){
- const volume=g.members.reduce((s,id)=>{const d=deviceById(id);return s+(d&&!d.output?(Number(d.capacity)||0):0);},0);
- if(key==='volume')return volume.toFixed(1);
- if(key==='design_cool_capacity'){const factor=g.attrs.safe_factor,delta=g.attrs.design_temp_diff;return factor!==''&&delta!==''&&Number.isFinite(Number(factor))&&Number.isFinite(Number(delta))?(volume*Number(delta)*1.163*Number(factor)).toFixed(1):'';}
- return g.attrs[key]??'';
-}
-function valueError(d,v){if(v==='')return '';if(d.options)return d.options.includes(v)?'':'请选择有效选项';return /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(String(v))&&Number.isFinite(Number(v))?'':'请输入数字';}
-function attrAnnotation(g){
- let items;
- if(g.type==='tower')items=['最大冷却水温差：数值，单位 ℃，必填。','冷却塔组额定压降：数值，单位 bar，必填。','空值标红但允许保存；非数值拦保存，改过的格标记已修改。'];
- if(g.type==='second')items=['最大旁通流量、最小旁通流量：数值，单位 m³/h，均非必填，留空不限制。','二次泵组额定压降：数值，单位 bar，必填。','格式校验、缺失标红和修改标记同设备属性格；分组属性参加步骤 2 的属性表导入导出。'];
- if(g.type==='tank')items=['连接方式选串联式或并联式；安全系数默认 0.83。','最低安全放冷时长单位 min；设计温差单位 ℃；以上四项必填。','容积只读，为组内投入的蓄冷罐容量之和。','设计蓄冷量只读，为设计温差 × 容积 × 1.163 × 安全系数，单位 kWh。','四项可填属性按步骤 2 属性格规则校验并标记修改，空值不拦保存。'];
- return anno('field',g.name+' · 分组属性',items,'需求文档 ·《冷站配置需求文档》§4.3、§4.4、附录 A；标准物模型静态数据');
-}
-function attrPanel(g){return `<tr class="prop-row" id="attrs-${g.id}" ${expanded.has(g.id)?'':'hidden'}><td colspan="3">${attrAnnotation(g)}<div class="prop-panel"><div class="prop-panel-head" id="summary-${g.id}">${attrSummary(g)}</div><div class="prop-grid">${attrDefs[g.type].map(d=>{
-const v=computed(g,d.key),invalid=valueError(d,v),missing=d.required&&v==='',edited=!d.readonly&&v!==g.originalAttrs[d.key];
-return `<div class="prop-item ${missing?'is-missing':''} ${invalid?'is-invalid':''} ${edited?'is-edited':''}" id="cell-${g.id}-${d.key}"><label class="prop-label" for="attr-${g.id}-${d.key}">${d.name}${d.required?'<span class="required">*</span>':''}${d.readonly?'<span class="muted">自动计算</span>':''}<span class="edit-tag">已修改</span></label><div class="prop-value">${d.options?`<select class="field-select" id="attr-${g.id}-${d.key}" data-attr="${d.key}" data-group="${g.id}"><option value="">请选择</option>${d.options.map(vv=>`<option ${v===vv?'selected':''}>${vv}</option>`).join('')}</select>`:`<input class="field-control" type="text" inputmode="decimal" id="attr-${g.id}-${d.key}" data-attr="${d.key}" data-group="${g.id}" value="${esc(v)}" ${d.readonly?'readonly':''} placeholder="${d.required?'请输入':'不限制'}" aria-invalid="${!!invalid}">`}${d.unit?`<span class="prop-unit">${d.unit}</span>`:''}</div><div class="prop-err">${invalid}</div></div>`;
-}).join('')}</div></div></td></tr>`;}
-function attrSummary(g){const defs=attrDefs[g.type],miss=defs.filter(d=>d.required&&computed(g,d.key)==='').length,edit=defs.filter(d=>!d.readonly&&computed(g,d.key)!==g.originalAttrs[d.key]).length;return `${defs.length} 项属性 · ${miss} 项未填 · 已修改 ${edit} 项`;}
-function multiTrigger(mode,id,values,locked=false,key=''){
- locked=locked||readonly;
- const names=values.map(v=>mode==='member'?deviceById(v)?.name:group(v)?.name).filter(Boolean);
- return `<div class="multi-select-wrap"><div class="multi-select-trigger" id="trigger-${mode}-${id}-${key}" ${locked?'':`role="button" tabindex="0" data-action="picker" data-mode="${mode}" data-id="${id}" data-key="${key}"`} aria-label="${mode==='member'?'选择成员':'选择供水对象'}">${names.length?values.map(v=>{const label=mode==='member'?deviceById(v)?.name:group(v)?.name;if(!label)return '';return `<span class="ms-tag">${esc(label)}${!locked?`<button class="ms-tag-remove" aria-label="移除${esc(label)}" data-action="remove-${mode}" data-id="${id}" data-value="${v}" data-key="${key}">×</button>`:''}</span>`;}).join(''):`<span class="ms-placeholder">${locked?'暂无可连接的管路':'请选择'}</span>`}${locked?'':'<span class="ms-placeholder" style="margin-left:auto">⌄</span>'}</div></div>`;
-}
-const collapsedSections=new Set();
-function typeByKeyLabel(k){return (groupTypes.find(t=>t.key===k)||{}).label||k;}
-function renderGroups(){
- $('groupsContainer').innerHTML=groupTypes.map(t=>`<section class="section-block ${collapsedSections.has(t.key)?'is-collapsed':''}" id="section-${t.key}"><div class="section-head"><button class="section-toggle" data-action="toggle-section" data-key="${t.key}" aria-expanded="${!collapsedSections.has(t.key)}"><span class="chev">▾</span>${t.label} <span class="badge badge-blue">${list(t.key).length}</span><span class="section-meta">${list(t.key).reduce((n,g)=>n+g.members.length,0)} 台设备</span></button><button class="action-link" data-action="add-group" data-type="${t.key}">+ 新增分组</button></div>${collapsedSections.has(t.key)?'':list(t.key).length?`<table class="data-table"><thead><tr><th class="name-cell">分组名</th><th>成员</th><th style="width:64px">操作</th></tr></thead><tbody>${list(t.key).map(g=>`<tr class="${g.auto?'is-auto':''} ${selected===g.id?'is-selected':''}" id="group-${g.id}"><td><div class="name-line"><input class="group-name-input" aria-label="${esc(g.name)} 分组名" data-name="${g.id}" value="${esc(g.name)}" maxlength="50"><button class="icon-link" data-action="select-group" data-id="${g.id}" title="在拓扑图中高亮" aria-label="在拓扑图中高亮 ${esc(g.name)}">◎</button></div><div class="row-actions">${g.auto?'<span class="auto-mark">自动生成</span>':''}${attrDefs[t.key]?`<button class="action-link" data-action="expand" data-id="${g.id}" aria-expanded="${expanded.has(g.id)}">${expanded.has(g.id)?'收起属性 ▴':'展开属性 ▾'}</button>`:''}</div></td><td>${multiTrigger('member',g.id,g.members)}</td><td><button class="action-link delete" data-action="delete-group" data-id="${g.id}">删除</button></td></tr>${attrDefs[t.key]?attrPanel(g):''}`).join('')}</tbody></table>`:'<div class="empty-state">暂无分组，可新增或一键生成</div>'}</section>`).join('');
- lockView();
-}
-function renderRelations(){
- $('relationsContainer').innerHTML=relDefs.map(r=>`<section class="section-block ${collapsedSections.has('rel-'+r.key)?'is-collapsed':''}" id="relations-${r.key}"><div class="section-head"><button class="section-toggle" data-action="toggle-section" data-key="rel-${r.key}" aria-expanded="${!collapsedSections.has('rel-'+r.key)}"><span class="chev">▾</span>${r.label}<span class="section-meta">${typeByKeyLabel(r.from)} → ${typeByKeyLabel(r.to)}</span></button>${r.readonly?'<span class="badge badge-green">自动生成 · 只读</span>':''}</div>${collapsedSections.has('rel-'+r.key)?'':list(r.from).length?`<table class="data-table"><thead><tr><th class="name-cell">${typeByKey(r.from).label}</th><th>${typeByKey(r.to).label}</th></tr></thead><tbody>${list(r.from).map(g=>{const rel=r.readonly?{to:list(r.to).map(g=>g.id),auto:true}:relation(r,g.id);return `<tr id="rel-${r.key}-${g.id}" class="${rel.auto?'is-auto':''} ${failedFrom===r.key+'-'+g.id?'fail-row':''}"><td><button class="action-link" data-action="select-group" data-id="${g.id}">${esc(g.name)}</button>${rel.auto?'<br><span class="auto-mark">自动</span>':''}</td><td>${multiTrigger('relation',g.id,rel.to,r.readonly,r.key)}</td></tr>`;}).join('')}</tbody></table>`:'<div class="empty-state">暂无起点分组</div>'}</section>`).join('');
-}
-function render(){renderGroups();renderRelations();drawTopology();initAnnoVersionFilter();lockView();}
-function allEdges(){return relDefs.flatMap(r=>list(r.from).flatMap(g=>(r.readonly?list(r.to).map(g=>g.id):relation(r,g.id).to).filter(to=>group(to)).map(to=>({from:g.id,to,key:r.key}))));}
-const TOPO_LABEL={second:'二次泵管路',freeze:'冷冻水泵管路',unit:'制冷单元',cool:'冷却水泵管路',tower:'冷却塔管路',tank:'蓄冷罐组'};
-function topoShort(name){return String(name).replace('并联','').replace('冷冻水泵管路','冷冻泵管路').replace('冷却水泵管路','冷却泵管路');}
-const TOPO_PREFIX={second:'并联二次泵',freeze:'并联冷冻水泵',unit:'制冷',cool:'并联冷却水泵',tower:'并联冷却塔'};
-function topoCompact(t,name){const p=TOPO_PREFIX[t],n=String(name);return p&&n.startsWith(p)&&n.length>p.length?n.slice(p.length).trim():topoShort(n);}
-function topoSvg(width){
- const columns=[...(has('二次泵')?['second']:[]),'freeze','unit',...(!air?['cool','tower']:[])],nodes={},pad=12,colWidth=(width-pad*2)/columns.length,big=width>=900;
- const w=Math.min(big?168:140,colWidth-(big?28:14)),h=big?46:40,rowH=big?62:52,top=44,font=w<96?11:big?13:12;
- const maxRows=Math.max(1,...columns.map(t=>list(t).length)),tanks=list('tank'),height=top+maxRows*rowH+(tanks.length?56:12);
- let headers='',nodeSVG='';
- columns.forEach((t,col)=>{const x=pad+colWidth*col+colWidth/2;headers+=`<text x="${x}" y="20" text-anchor="middle" class="topo-col-title">${TOPO_LABEL[t]}</text>`;list(t).forEach((g,i)=>{const y=top+i*rowH+h/2;nodes[g.id]={x,y,w};const label=big?topoShort(g.name):topoCompact(t,g.name),max=Math.max(3,Math.floor((w-12)/font));nodeSVG+=`<g class="topology-node topo-${t} ${selected===g.id?'selected':''}" data-action="select-group" data-id="${g.id}" role="button" tabindex="0" aria-label="${esc(g.name)}"><title>${esc(g.name)}：${g.members.map(id=>esc(deviceById(id)?.name)).join('、')||'暂无成员'}</title><rect class="node-ac-rect" x="${x-w/2}" y="${y-h/2}" width="${w}" height="${h}" rx="7"/><text class="node-ac-text" style="font-size:${font}px" text-anchor="middle" x="${x}" y="${y-2}">${esc(label.length>max?label.slice(0,max-1)+'…':label)}</text><text class="node-ac-sub" text-anchor="middle" x="${x}" y="${y+12}">${g.members.length} 台${g.auto?' · 自动':''}</text></g>`;});});
- const edges=allEdges(),focus=selected&&group(selected)?selected:'';
- const edgeSVG=edges.map(e=>{const a=nodes[e.from],b=nodes[e.to];if(!a||!b)return '';const on=focus&&(e.from===focus||e.to===focus),dim=focus&&!on,x1=a.x+a.w/2,x2=b.x-b.w/2;return `<path class="edge-line ${e.key==='second'?'is-auto':''} ${on?'selected':''} ${dim?'dim':''}" d="M${x1} ${a.y} C${(x1+x2)/2} ${a.y},${(x1+x2)/2} ${b.y},${x2-2} ${b.y}" marker-end="url(#arrow${on?'On':''})"/>`;}).join('');
- const tankY=height-28,tw=big?190:150;
- const tankSVG=tanks.map((g,i)=>`<g class="topology-node topo-tank ${selected===g.id?'selected':''}" data-action="select-group" data-id="${g.id}" role="button" tabindex="0" aria-label="${esc(g.name)}"><title>${esc(g.name)}：${g.members.map(id=>esc(deviceById(id)?.name)).join('、')||'暂无成员'}</title><rect class="node-ac-rect" x="${pad+i*(tw+10)}" y="${tankY-14}" width="${tw}" height="30" rx="7"/><text class="node-ac-sub" x="${pad+i*(tw+10)+tw/2}" y="${tankY+5}" text-anchor="middle">${esc(g.name)} · ${g.members.length} 台</text></g>`).join('');
- const empty=!state.groups.length?`<text x="${width/2}" y="${height/2+10}" text-anchor="middle" class="topo-empty">暂无分组，可新增分组或一键生成</text>`:'';
- return {height,edges,html:`<defs><marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7" fill="#94A3B8"/></marker><marker id="arrowOn" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7" fill="#2563EB"/></marker></defs>${headers}${edgeSVG}${nodeSVG}${tankSVG}${empty}`};
-}
-function paintTopology(svg){if(!svg)return null;const wrap=svg.parentElement;svg.setAttribute('width','0');svg.setAttribute('height','0');const width=Math.max(360,Math.floor((wrap?.clientWidth||460)-2)),r=topoSvg(width);svg.setAttribute('viewBox',`0 0 ${width} ${r.height}`);svg.setAttribute('width',width);svg.setAttribute('height',r.height);svg.innerHTML=r.html;return r;}
-function drawTopology(){
- const r=paintTopology($('topologySvg'));paintTopology(document.getElementById('topologySvgLarge'));
- const edges=r?r.edges:allEdges();$('topologyStats').textContent=`${state.groups.length} 个分组 · ${edges.length} 条供水关系`;const g=group(selected);$('topologySelection').textContent=g?g.name+' · '+edges.filter(e=>e.from===g.id||e.to===g.id).length+' 条关联连线（其他连线已淡化）':'点击分组节点或表格中的分组名，高亮它的供水连线';
-}
-function openTopologyZoom(){openModal('系统拓扑',`<div class="topology-legend">${['second','freeze','unit','cool','tower','tank'].filter(t=>list(t).length).map(t=>`<span class="legend-item topo-${t}"><i></i>${TOPO_LABEL[t]}</span>`).join('')}<span class="legend-item legend-auto"><i></i>二次侧供水（自动生成）</span></div><div class="topology-wrap is-large"><svg class="topology-svg" id="topologySvgLarge" role="img" aria-label="冷站分组与供水关系拓扑图（放大）"></svg></div>`,'<button class="btn btn-primary" data-action="close-modal">关闭</button>',true);document.getElementById('modalDialog').classList.add('topo-dialog');requestAnimationFrame(drawTopology);}
-let topoResizeTimer;window.addEventListener('resize',()=>{clearTimeout(topoResizeTimer);topoResizeTimer=setTimeout(drawTopology,120);});
-window.addEventListener('load',()=>requestAnimationFrame(drawTopology));
-function isReferenced(id){return systemId==='A'&&id==='freeze-1';}
-function openModal(title,body,footer,wide=false){closePicker();modalReturn=document.activeElement;$('modalTitle').textContent=title;$('modalBody').innerHTML=body;$('modalFooter').innerHTML=footer;$('modalDialog').classList.toggle('wide',wide);$('modal').classList.add('is-open');initAnnoVersionFilter();setTimeout(()=>$('modal').querySelector('button,input,select')?.focus(),0);}
-function closeModal(){if(savedResult){leaveSuccess(false);return;}$('modalDialog').classList.remove('topo-dialog');$('modal').classList.remove('is-open');confirmAction=null;modalReturn?.focus?.();}
-function blockedDialog(){openModal('无法移除',anno('edge','引用检查弹窗；入口：删除分组、成员或关系',['移除前列出预测模型、仿真模型、安全边界和寻优策略的引用。','对象仍被引用时不允许移除，保留成员与连线。','可打开引用位置查看；解除引用后再返回修改。'],'需求文档 ·《冷站配置需求文档》§4.6')+'<p class="danger-text">并联冷冻水泵管路 1 仍被以下配置引用：</p><ul class="model-list"><li>安全边界「A路冷站安全边界」 · 冷冻水泵数量与冷冻侧边界 <button class="action-link" data-action="reference">查看引用位置 ↗</button></li></ul>','<button class="btn btn-primary" data-action="close-modal">知道了</button>');}
-function confirmRemoval(id,action,description){closePicker();if(isReferenced(id)){blockedDialog();return;}
- openModal('确认移除',anno('ux','移除确认弹窗；入口：分组删除、成员或连线移除',['未被引用的对象经确认后移除。','删除分组时清理涉及的供水关系；移除成员时重算分组属性并清理相关连线。','设备实例与设备属性保留；取消不修改页面内容。'],'需求文档 ·《冷站配置需求文档》§4.6')+`<p>${esc(description)}</p><p class="summary-text" style="margin-top:10px">引用检查通过；将清理受影响的连线，设备和设备属性保留。</p>`,'<button class="btn" data-action="close-modal">取消</button><button class="btn btn-primary" data-action="confirm-removal">确认移除</button>');confirmAction=()=>{action();closeModal();render();touch();toast('已移除，相关连线已更新');};
-}
-function clearGroupEdges(id){state.relations.forEach(r=>{if(r.from===id){r.to=[];r.auto=false;}else if(r.to.includes(id)){r.to=r.to.filter(x=>x!==id);r.auto=false;}});}
-function removeMember(id,value){confirmRemoval(id,()=>{const g=group(id);g.members=g.members.filter(x=>x!==value);g.auto=false;clearGroupEdges(id);},`从「${group(id).name}」移除「${deviceById(value).name}」？`);}
-function removeRelation(key,from,to){confirmRemoval(from,()=>{const r=getRelation(key,from);r.to=r.to.filter(x=>x!==to);r.auto=false;},`移除「${group(from).name} → ${group(to).name}」？`);}
-function closePicker(){picker=null;$('multiPicker').classList.remove('is-open');}
-function openPicker(mode,id,key){const anchor=$(`trigger-${mode}-${id}-${key}`);if(picker?.mode===mode&&picker?.id===id&&picker?.key===key){closePicker();return;}picker={mode,id,key,anchorId:anchor.id};paintPicker();}
-function paintPicker(){if(!picker)return;const {mode,id,key}=picker,g=group(id),r=mode==='relation'?getRelation(key,id):null,values=mode==='member'?g.members:r.to;
- const options=mode==='member'?devices.filter(d=>typeByKey(g.type).device.includes(d.kind)):list(relDefs.find(r=>r.key===key).to);
- $('multiPicker').innerHTML=`<div class="picker-head"><b>${mode==='member'?'选择成员':'选择供水对象'}</b><button class="action-link" data-action="close-picker">完成</button></div>${options.map(o=>{const owner=mode==='member'?state.groups.find(g=>g.id!==id&&g.members.includes(o.id)):null;return `<label class="ms-option ${owner?'is-disabled':''}"><input type="checkbox" data-picker-value="${o.id}" ${values.includes(o.id)?'checked':''} ${owner?'disabled':''}><span>${esc(o.name)}</span>${owner?`<small>已在 ${esc(owner.name)}</small>`:''}</label>`;}).join('')||'<div class="empty-state">暂无可选对象，请先关联设备或创建分组</div>'}`;
- const rect=$(picker.anchorId)?.getBoundingClientRect();if(rect){const w=Math.min(Math.max(rect.width,300),innerWidth-30),space=innerHeight-rect.bottom;$('multiPicker').style.width=w+'px';$('multiPicker').style.left=Math.min(rect.left,innerWidth-w-15)+'px';$('multiPicker').style.top=(space<220?Math.max(12,rect.top-290):rect.bottom+4)+'px';}$('multiPicker').classList.add('is-open');}
-function updateAttr(el){if(readonly)return;const g=group(el.dataset.group),d=attrDefs[g.type].find(d=>d.key===el.dataset.attr);if(d.readonly)return;g.attrs[d.key]=el.value.trim();g.auto=false;const item=el.closest('.prop-item'),err=valueError(d,g.attrs[d.key]);item.classList.toggle('is-invalid',!!err);item.classList.toggle('is-missing',!!d.required&&g.attrs[d.key]==='');item.classList.toggle('is-edited',g.attrs[d.key]!==g.originalAttrs[d.key]);item.querySelector('.prop-err').textContent=err;el.setAttribute('aria-invalid',String(!!err));$('summary-'+g.id).textContent=attrSummary(g);for(const def of attrDefs[g.type].filter(d=>d.readonly))$('attr-'+g.id+'-'+def.key).value=computed(g,def.key);const row=$('group-'+g.id);row.classList.remove('is-auto');row.querySelector('.auto-mark')?.remove();touch();}
-function formatCheck(){
- for(const g of state.groups){const input=document.querySelector(`[data-name="${g.id}"]`);if(!g.name.trim()||state.groups.some(o=>o.id!==g.id&&o.type===g.type&&o.name===g.name)){input.classList.add('is-invalid');input.focus();input.scrollIntoView({block:'center'});toast('请填写不重复的分组名');return false;}
- for(const d of attrDefs[g.type]||[])if(!d.readonly&&valueError(d,g.attrs[d.key]??'')){expanded.add(g.id);renderGroups();const el=$('attr-'+g.id+'-'+d.key);el.focus();el.scrollIntoView({block:'center'});toast(g.name+'：'+d.name+'请输入有效数值');return false;}}
- return true;
-}
-function goStep(step){if(!persist())return;const p=new URLSearchParams({id:systemId,mode:params.get('mode')||'edit'});if(!readonly)p.set('resume','1');if(back)p.set('back',back);location.href=(step==='1'?'冷站配置-创建.html':'冷站配置-创建-步骤2.html')+'?'+p;}
-function showCancel(){if(readonly){location.href=back||'冷站配置-列表.html';return;}openModal('取消配置',anno('ux','取消确认弹窗；入口：取消或返回列表',['确认后丢弃整个流程的草稿，返回来源页或列表。','已保存的设备、属性与拓扑不受影响。','继续编辑关闭弹窗并保留内容。'],'产品推断')+'<p>放弃本次未保存的修改并返回吗？</p>','<button class="btn" data-action="close-modal">继续编辑</button><button class="btn btn-primary" data-action="cancel-confirm">放弃修改并返回</button>');}
-</script>
-
-<script>
-function openGenerator(){
- autoConfig={freeze:'each',cool:'each',tower:'each',unmatchedHX:'separate',freezeLink:'one',coolLink:'one',towerLink:'one',mode:'fill'};manualMatches={};
- const fromView=draft.energyViewDefaults||draft.collectionDefaults||{};
- for(const k of ['freeze','cool','tower'])if(fromView[k]==='many'||fromView[k]==='多对多')autoConfig[k+'Link']='all';
- const field=(id,label,options)=>`<div class="field"><label class="field-label" for="gen-${id}">${label}</label><select class="field-select" id="gen-${id}" data-gen="${id}">${options.map(([v,t])=>`<option value="${v}" ${autoConfig[id]===v?'selected':''}>${t}</option>`).join('')}</select></div>`;
- const eachAll=[['each','每台一个管路'],['all','同类全部一个管路']],oneAll=[['one','一对一（按编号对应）'],['all','母管制（全部互连）']];
- openModal('一键生成分组与供水关系',anno('field','一键生成弹窗；入口：分组配置或供水关系「一键生成」',['制冷单元：每台主机一个；板换按编号并入，无对应主机的可独立成单元。','冷冻水泵、冷却水泵、冷却塔各选每台一管路或同类一管路；二次泵、蓄冷罐同类一组。','冷冻侧、冷却侧和冷却塔连接各选一对一或母管制；风冷隐藏冷却侧。','生成方式默认只补空，可改覆盖；覆盖时也先检查受引用对象。','编号预览逐台确认；缺号、重复或无法对应的留待匹配，不自动连接。'])+anno('data','一键生成缺省值与下游数量',['缺省制冷单元数量和三组连接取能效视图创建集合时的选择，多对多对应母管制。','新建安全边界的制冷单元数量上限缺省为投入的单元数，下限 1。','一对一时泵数量缺省等于单元数；母管制为单元数至单元数加 1，上限不超投入泵数；混合连接不给缺省。'],'需求文档 ·《冷站配置需求文档》§4.4、§7.1、§7.4')+`<div class="section-note">每台${air?'风冷冷水机组':'冷水主机'}生成一个制冷单元${has('板换')&&!air?'；板换按编号并入对应主机':''}。</div><div class="rule-grid">${has('板换')&&!air?field('unmatchedHX','无对应主机的板换',[['separate','单独成为制冷单元'],['pending','留待匹配']]):''}${field('freeze','冷冻水泵管路',eachAll)}${!air?field('cool','冷却水泵管路',eachAll)+field('tower','冷却塔管路',eachAll):''}${field('freezeLink','冷冻侧连接',oneAll)}${!air?field('coolLink','冷却侧连接',oneAll)+field('towerLink','冷却塔连接',oneAll):''}</div><p class="summary-text">${has('二次泵')?'二次泵：同类全部一个管路。 ':''}${has('蓄冷罐')?'蓄冷罐：同类全部一个分组。':''}</p><div class="field" style="margin-top:12px"><label class="field-label">生成方式</label><div class="choice-row"><label><input type="radio" name="generateMode" value="fill" checked>只补空</label><label><input type="radio" name="generateMode" value="overwrite">覆盖已有</label></div></div><div id="matchAnno"></div><h3 class="section-head">编号匹配预览</h3><div class="preview-table"><table class="data-table"><thead><tr><th>设备</th><th style="width:18%">识别出的编号</th><th style="width:42%">将对应到</th></tr></thead><tbody id="matchingRows"></tbody></table></div><div class="pending-list" id="pendingList"></div><div class="auto-config-preview" id="generatePreview" aria-live="polite"></div><div id="generatorError" class="form-error" role="alert"></div>`,'<button class="btn" data-action="close-modal">取消</button><button class="btn btn-primary" data-action="apply-generate" id="applyGenerate">确认生成</button>',true);
- $('matchAnno').innerHTML=anno('field','编号匹配预览 · 将对应到',['编号从设备名称提取；识别结果与将对应到逐台列出。','将对应到可改选，待匹配设备不自动建连线；变更选项实时更新预览。','缺号、编号重复或无对应主机的设备保留待匹配；可手动选择对应单元。'],'产品推断');
- paintMatching();
-}
-function resolveMatches(){
- const counts={};for(const d of devices){const n=String(d.name).match(/\d+/)?.[0];if(n)counts[d.kind+'-'+Number(n)]=(counts[d.kind+'-'+Number(n)]||0)+1;}
- const units=devices.filter(d=>d.kind==='ch').map((d,i)=>({id:d.id,label:'制冷单元 '+(i+1),slot:String(i+1),number:Number(d.name.match(/\d+/)?.[0])||null}));
- return devices.map(d=>{const n=Number(String(d.name).match(/\d+/)?.[0])||null,duplicate=!!n&&counts[d.kind+'-'+n]>1;let dest='';
- if(['sp','tk'].includes(d.kind))dest='common';
- else if(n&&!duplicate){if(d.kind==='ch')dest=units.find(u=>u.id===d.id).slot;else dest=units.find(u=>u.number===n)?.slot||((d.kind==='hx'&&autoConfig.unmatchedHX==='separate')?'separate':'');}
- if(Object.hasOwn(manualMatches,d.id))dest=manualMatches[d.id];
- return {device:d,number:n,dest,duplicate,reason:!n?'无编号':duplicate?'编号重复':'无对应主机',units};});
-}
-function paintMatching(){const matches=resolveMatches();
- $('matchingRows').innerHTML=matches.map(m=>`<tr class="${!m.dest?'pending-row':''}"><td>${esc(m.device.name)}</td><td>${m.number??'—'}${m.duplicate?' · 重复':''}</td><td>${['sp','tk'].includes(m.device.kind)?`<span class="badge badge-blue">${m.device.kind==='sp'?'并联二次泵管路 1':'蓄冷罐组 1'}</span>`:`<select class="field-select" aria-label="${esc(m.device.name)} 将对应到" data-match="${m.device.id}"><option value="">待匹配</option>${m.units.map(u=>`<option value="${u.slot}" ${m.dest===u.slot?'selected':''}>${u.label}</option>`).join('')}${m.device.kind==='hx'?`<option value="separate" ${m.dest==='separate'?'selected':''}>单独成为制冷单元</option>`:''}</select>`}</td></tr>`).join('');
- updateGeneratePreview(matches);initAnnoVersionFilter();
-}
-function buildGenerated(matches){
- const candidate={groups:[],relations:[],deviceAttrs:copy(state.deviceAttrs)},groupOfDevice={},usedIds=new Set();
- function add(type,slot,devs){let suffix=slot;while(usedIds.has(type+'-'+suffix))suffix=String(Math.max(0,...candidate.groups.filter(g=>g.type===type).map(g=>Number(g.id.split('-').at(-1))||0))+1);const g=newGroup(type,suffix,devs,true);g.slot=String(slot);candidate.groups.push(g);usedIds.add(g.id);for(const id of devs)groupOfDevice[id]=g;return g;}
- for(const m of matches.filter(m=>m.device.kind==='ch'&&m.dest))add('unit',m.dest,[m.device.id]);
- for(const m of matches.filter(m=>m.device.kind==='hx'&&m.dest)){const g=m.dest!=='separate'?candidate.groups.find(g=>g.type==='unit'&&g.slot===m.dest):null;if(g){g.members.push(m.device.id);groupOfDevice[m.device.id]=g;}else if(m.dest==='separate')add('unit',100+candidate.groups.filter(g=>g.type==='unit').length,[m.device.id]);}
- for(const [kind,type] of [['fp','freeze'],['cp','cool'],['ct','tower'],['sp','second'],['tk','tank']]){
- if(!typeByKey(type))continue;const all=matches.filter(m=>m.device.kind===kind),valid=all.filter(m=>m.dest),unmatched=all.filter(m=>!m.dest);
- if(['sp','tk'].includes(kind)||autoConfig[type]==='all'){if(all.length)add(type,1,all.map(m=>m.device.id));}
- else{for(const m of valid)add(type,m.dest,[m.device.id]);for(const m of unmatched)add(type,m.number||(candidate.groups.filter(g=>g.type===type).length+1),[m.device.id]);}
+function importProps(d){return (DEFS[d.model]||[]).filter(p=>draft.systemType!=='air'||(p.id!=='cool_pressure_diff'&&!['板式换热器','冷却塔','并联冷却塔管路'].includes(d.model)));}
+function headerFor(p){const range=p.options?p.options.map(o=>o[1]).join(' / ')+(p.multiple?'，可多选，用 | 分隔':''):p.min!==undefined?p.min+'～'+p.max:p.integer?'整数':'';return p.name+'（'+[p.unit,range,p.readonly?'自动计算，只读':p.required?'必填':'选填'].filter(Boolean).join('，')+'）/ '+p.id;}
+function parseHeader(h){const text=String(h??'').trim(),m=text.match(/\/\s*([A-Za-z_]\w*)\s*$/);return {text,key:m?m[1]:'',name:(m?text.slice(0,m.index):text).split(/[（(]/)[0].trim()};}
+function cellValue(p,v){if(p.options){const label=x=>p.options.find(o=>o[0]===String(x))?.[1]??x;return Array.isArray(v)?v.map(label).join('|'):String(label(v??''));}return Array.isArray(v)?v.join('|'):String(v??'');}
+function importValue(p,v){const s=String(v??'').trim();if(!p.options)return s;const code=x=>{x=String(x).trim();return p.options.find(o=>o[0]===x||o[1]===x)?.[0]??x;};if(!p.multiple)return code(s);const codes=[...new Set(s.split(/[|｜]/).map(code).filter(Boolean))];return [...p.options.map(o=>o[0]).filter(c=>codes.includes(c)),...codes.filter(c=>!p.options.some(o=>o[0]===c))];}
+function buildSheet(name,scope,items){const props=[...new Map(items.flatMap(d=>importProps(d)).map(p=>[p.id,p])).values()];return {name,colWidths:[18,24,...props.map(()=>30)],rows:[[ID_HEADER[scope],'显示名称',...props.map(headerFor)],...items.map(d=>{const own=importProps(d);return [d.id,d.name,...props.map(p=>own.some(x=>x.id===p.id)?cellValue(p,d.attrs?.[p.id]):'')];})]};}
+function exportSheets(){const t=importTargets(),sheets=[buildSheet('系统属性','system',t.system)];for(const g of groups){const items=orderedDevices(g.key);if(items.length)sheets.push(buildSheet(g.name,'device',items));}sheets.push(buildSheet('分组属性','group',t.group));return sheets;}
+// 解析：每个 sheet 找 ID 列和显示名称列，其余列按表头识别属性；整行空白跳过，空单元格不导入。
+function workbookEntries(sheets){const out=[];
+ for(const sheet of sheets){const rows=sheet.rows||[],hi=rows.findIndex(r=>(r||[]).some(v=>String(v??'').trim()));if(hi<0)continue;
+  const header=Array.from(rows[hi],parseHeader),idCol=header.findIndex(h=>/^(设备|分组|系统)\s*ID/.test(h.text)),nameCol=header.findIndex(h=>/^显示名称/.test(h.text));
+  if(idCol<0){out.push({sheet:sheet.name,row:hi+1,problem:'缺少「设备 ID / 分组 ID / 系统 ID」列，整张工作表已跳过'});continue;}
+  const scope={设备:'device',分组:'group',系统:'system'}[header[idCol].text.slice(0,2)];
+  for(let i=hi+1;i<rows.length;i++){const r=rows[i]||[];if(!r.some(v=>String(v??'').trim()))continue;out.push({sheet:sheet.name,row:i+1,scope,id:String(r[idCol]??'').trim(),name:nameCol>=0?String(r[nameCol]??'').trim():'',cells:header.map((h,j)=>({h,j,value:r[j]})).filter(c=>c.j!==idCol&&c.j!==nameCol&&c.h.text&&String(c.value??'').trim()!=='')});}
+ }return out;}
+function precheckImport(rows,name){const t=importTargets(),plan={fill:[],overwrite:[],same:0,skip:0,skipRows:0,issues:[]},seenRows=new Set();
+ const rowIssue=(r,object,problem)=>{plan.skipRows++;plan.issues.push({sheet:r.sheet,row:r.row,object,problem});};
+ for(const r of rows){
+  if(r.problem){rowIssue(r,'整张工作表',r.problem);continue;}
+  const label=r.name||r.id||'—',scope=SCOPE_NAME[r.scope];
+  if(!r.id){rowIssue(r,label,`缺少${scope} ID，整行已跳过`);continue;}
+  const d=t[r.scope].find(x=>x.id===r.id);
+  if(!d){rowIssue(r,label,`${scope} ID「${r.id}」不在本配置中，整行已跳过`);continue;}
+  if(seenRows.has(r.scope+'|'+r.id)){rowIssue(r,label,`${scope} ID「${r.id}」重复出现，整行已跳过`);continue;}
+  seenRows.add(r.scope+'|'+r.id);
+  const props=importProps(d);
+  for(const c of r.cells){const p=props.find(x=>x.id===c.h.key)||props.find(x=>x.id===c.h.name||x.name===c.h.name);let problem='',value;
+   if(!p)problem='不是此对象的属性，已跳过';
+   else{value=importValue(p,c.value);
+    if(p.readonly){if(JSON.stringify(d.attrs?.[p.id]??'')===JSON.stringify(value)){plan.same++;continue;}problem='自动计算属性不导入，已跳过';}
+    else if(d.isSystem&&draft.systemType==='air'&&p.id==='coolmode'&&JSON.stringify(value)!=='["0"]')problem='风冷系统制冷模式固定为压缩制冷，其他模式不可导入';
+    else if(propError(p,value))problem=propError(p,value)+'，已跳过';}
+   if(problem){plan.skip++;plan.issues.push({sheet:r.sheet,row:r.row,object:label,attr:p?p.name:c.h.text,problem});continue;}
+   const entry={d,key:p.id,value};if(JSON.stringify(d.attrs[p.id])===JSON.stringify(value))plan.same++;else if(empty(d.attrs[p.id]))plan.fill.push(entry);else plan.overwrite.push(entry);}
  }
- for(const r of relDefs.filter(r=>!r.readonly)){
- const sources=candidate.groups.filter(g=>g.type===r.from),targets=candidate.groups.filter(g=>g.type===r.to);
- for(const src of sources){const slotsOf=g=>new Set(g.members.map(id=>matches.find(m=>m.device.id===id)?.dest).filter(Boolean));
- const sourceSlots=slotsOf(src);const to=targets.filter(t=>autoConfig[r.key+'Link']==='all'||[...slotsOf(t)].some(slot=>sourceSlots.has(slot))).map(g=>g.id);candidate.relations.push({key:r.key,from:src.id,to,auto:true});}
- }
- return candidate;
+ importPlan=plan;const changes=plan.fill.length+plan.overwrite.length;$('#importFileName').textContent=name;
+ $('#importResult').innerHTML=`<b>预检完成</b><p>将填入 ${plan.fill.length} 项 / 覆盖 ${plan.overwrite.length} 项 / 未变化 ${plan.same} 项${plan.skip?` / 跳过 ${plan.skip} 项`:''}${plan.skipRows?` / 跳过 ${plan.skipRows} 行`:''}</p>${plan.issues.length?`<table class="data-table import-table"><thead><tr><th>工作表 / 行</th><th>对象 / 属性</th><th>问题</th></tr></thead><tbody>${plan.issues.map(x=>`<tr><td>${esc(x.sheet||'属性表')} / ${x.row}</td><td>${esc(x.object)}${x.attr?`<div class="sub-text">${esc(x.attr)}</div>`:''}</td><td class="missing-text">${esc(x.problem)}</td></tr>`).join('')}</tbody></table>`:'<p>没有发现问题行</p>'}${changes?'':'<p class="sub-text">表中属性与当前值一致，无需导入</p>'}`;
+ $('#modalConfirm').disabled=!changes||readonly;
 }
-function mergeGenerated(candidate){
- if(autoConfig.mode==='overwrite')return {result:candidate,newGroups:candidate.groups.length,newRelations:countEdges(candidate),changes:candidate.groups.length};
- const result=copy(state),idMap={},occupied=new Set(result.groups.flatMap(g=>g.members));let newGroups=0,newRelations=0;
- for(const c of candidate.groups){let existing=result.groups.find(g=>g.type===c.type&&g.members.some(id=>c.members.includes(id)))||result.groups.find(g=>g.type===c.type&&!g.members.length&&g.slot===c.slot);
- if(existing){idMap[c.id]=existing.id;if(existing.members.length===0){const members=c.members.filter(id=>!occupied.has(id));if(members.length){existing.members=members;members.forEach(id=>occupied.add(id));existing.auto=true;newGroups++;}}}
- else {const members=c.members.filter(id=>!occupied.has(id));if(!members.length)continue;const added=copy(c);while(result.groups.some(g=>g.id===added.id))added.id=added.type+'-'+(++sequence);added.members=members;result.groups.push(added);members.forEach(id=>occupied.add(id));idMap[c.id]=added.id;newGroups++;}}
- for(const rel of candidate.relations){const from=idMap[rel.from];if(!from)continue;const to=rel.to.map(id=>idMap[id]).filter(Boolean),existing=result.relations.find(r=>r.key===rel.key&&r.from===from);if(existing?.to.length)continue;if(existing){existing.to=to;existing.auto=true;}else result.relations.push({...rel,from,to,auto:true});newRelations+=to.length;}
- // 二次侧为派生关系，只计本轮新增的边。
- newRelations+=Math.max(0,derivedCount(result)-derivedCount(state));return {result,newGroups,newRelations,changes:newGroups+newRelations};
-}
-function derivedCount(s){return s.groups.filter(g=>g.type==='second').length*s.groups.filter(g=>g.type==='freeze').length;}
-function countEdges(s){return s.relations.reduce((n,r)=>n+r.to.length,0)+derivedCount(s);}
-function updateGeneratePreview(matches=resolveMatches()){
- const candidate=buildGenerated(matches),plan=mergeGenerated(candidate),pending=matches.filter(m=>!m.dest);lastPlan={...plan,pending,candidate};
- $('pendingList').textContent=pending.length?'待匹配：'+pending.map(m=>m.device.name+'（'+m.reason+'）').join('、')+'。水泵和冷却塔照常生成管路分组，只是不自动连线，请生成后手动连接。':'全部设备已匹配';
- $('generatePreview').innerHTML=`将生成 <strong>${plan.newGroups}</strong> 个分组、<strong>${plan.newRelations}</strong> 条关系，<strong>${pending.length}</strong> 台待匹配${autoConfig.mode==='fill'?'<p class="muted">保留已有非空分组及关系</p>':'<p class="danger-text">将替换现有分组与关系，确认后请逐条核对</p>'}`;
- $('generatorError').textContent='';
-}
-function generationBlocked(result){
- if(!isReferenced('freeze-1'))return false;const old=group('freeze-1'),next=result.groups.find(g=>g.id==='freeze-1');
- return old&&(!next||JSON.stringify([...old.members].sort())!==JSON.stringify([...next.members].sort())||state.relations.some(r=>(r.from===old.id||r.to.includes(old.id))&&r.to.some(to=>!result.relations.some(n=>n.key===r.key&&n.from===r.from&&n.to.includes(to)))));
-}
-function applyGeneration(){
- if(!lastPlan)return;
- if(generationBlocked(lastPlan.result)){$('generatorError').innerHTML='无法覆盖：并联冷冻水泵管路 1 被安全边界「A路冷站安全边界」引用。请保留该分组及成员、连线。';return;}
- if(lastPlan.changes===0){toast('当前分组与关系均已配置，无需补空');return;}
- const plan=lastPlan;
- const apply=()=>{state=copy(plan.result);expanded=new Set();selected='';closeModal();render();touch();toast(`已生成 ${plan.newGroups} 个分组、${plan.newRelations} 条关系${plan.pending.length?'；待匹配设备保留待处理':''}`);};
- if(autoConfig.mode==='overwrite'){openModal('确认覆盖已有配置',anno('ux','覆盖确认弹窗；入口：一键生成选择覆盖后确认',['确认前检查受引用的分组和连线；仍被引用的对象不可移除或替换成员。','确认后用预览结果替换本页分组和关系，标为自动。','取消保留原有配置；页面草稿随上一步保留。'],'需求文档 ·《冷站配置需求文档》§4.4、§4.6')+`<p>将生成 ${plan.newGroups} 个分组、${plan.newRelations} 条关系，替换当前分组与关系，确定继续吗？</p>`,'<button class="btn" data-action="close-modal">取消</button><button class="btn btn-primary" data-action="confirm-removal">确认覆盖</button>');confirmAction=apply;}
- else apply();
-}
-function changesSinceOpen(){return Store.diff(baseSnapshot,snapshot());}
-function valueAt(snapshot,path){let value=snapshot;for(const key of path){value=Array.isArray(value)?value.find(x=>(x.id||x.key+'|'+x.from)===key):value?.[key];}return copy(value);}
-function conflictValue(change){
- const v=change.value;if(v==null)return copy(change.before);
- if(Array.isArray(v))return copy(change.before||[]);
- if(typeof v==='object')return change.before?copy(change.before):{...copy(v),...(v.to?{to:[]}:{name:String(v.name||change.object||'对象').slice(0,42)+'（已更新）'})};
- const device=allDevices.find(d=>d.id===change.deviceId),model=device?.model||(change.kind==='系统属性'?'水冷冷水系统':null);
- const definition=(model?Store.DEFS[model]:Object.values(Store.DEFS).flat())?.find(p=>p.id===change.attribute);
- if(definition?.options)return definition.options.find(o=>o[0]!==String(v))?.[0]||v;
- if(typeof v==='string'&&v.trim()!==''&&Number.isFinite(Number(v))){const n=Number(v),next=n+1;return String(definition?.max!==undefined&&next>definition.max?n-1:next);}
- return String(v).slice(0,42)+'（他人修改）';
-}
-function save(){if(readonly||saving||!formatCheck())return;closePicker();$('saveError').hidden=true;failedFrom=null;renderRelations();const page=snapshot(),changes=changesSinceOpen(),current=Store.getEffective(systemId),external=Store.diff(baseSnapshot,current||page);
- const intersects=(a,b)=>a.every((x,i)=>x===b[i])||b.every((x,i)=>x===a[i]);
- const conflicts=current&&current.rev!==(draft.baseRev||0)?changes.filter(c=>external.some(e=>intersects(c.path,e.path))):[];
- pendingSave={page,changes,current,conflicts:conflicts.map(c=>({change:c,current:valueAt(current,c.path)}))};
- if(scene==='conflict'&&changes.length&&!conflicts.length)pendingSave.conflicts=changes.map(c=>({change:c,current:conflictValue(c),demo:true}));
- if(pendingSave.conflicts.length){showConflicts();return;}if(scene==='fail'){showSaveFailure();return;}saveSuccess();
-}
-function displayValue(value,change){if(value==null)return '未配置';if(change?.attribute==='InputOrOutput')return String(value)==='1'?'投出':'投入';if(Array.isArray(value))return value.map(v=>group(v)?.name||deviceById(v)?.name||v).join('、')||'未配置';if(typeof value==='object'){if(value.to)return value.to.map(id=>group(id)?.name||id).join('、')||'未连接';return value.name||'配置内容';}return String(value);}
-function showConflicts(){openModal('配置已被他人修改',anno('field','保存冲突弹窗；入口：完成时存在冲突',['仅列出本次实际修改且发生冲突的内容。','每项选择当前值或本页值，全部选择后可再次提交。','未修改的内容沿用最新已保存配置，取消保留草稿。'],'需求文档 ·《冷站配置需求文档》§4.5')+'<p>请选择每一项保留的值，再次提交。</p>'+pendingSave.conflicts.map((c,i)=>`<section class="conflict-card"><h3>${esc(c.change.object)} · ${esc(c.change.label||c.change.kind)}</h3><div><label><input type="radio" name="conflict${i}" data-conflict="${i}" value="current">保留当前值：${esc(displayValue(c.current,c.change))}</label></div><div><label><input type="radio" name="conflict${i}" data-conflict="${i}" value="page">保留本页值：${esc(displayValue(c.change.value,c.change))}</label></div></section>`).join(''),'<button class="btn" data-action="close-modal">返回修改</button><button class="btn btn-primary" id="resubmit" data-action="resubmit" disabled>再次提交</button>');}
-function resubmit(){if(!pendingSave||readonly)return;for(let i=0;i<pendingSave.conflicts.length;i++){const selected=document.querySelector(`[name="conflict${i}"]:checked`);if(!selected)return;const c=pendingSave.conflicts[i];if(selected.value==='current')c.change.value=copy(c.current);}
- pendingSave.page=baseSnapshot?Store.applyChanges(baseSnapshot,pendingSave.changes):Store.applyChanges(snapshot(),pendingSave.changes);if(scene==='fail'){showSaveFailure();return;}saveSuccess();
-}
-function showSaveFailure(){const c=pendingSave?.changes[0];$('saveError').textContent='保存失败：'+(c?c.object+' · '+(c.label||c.kind):'冷站配置')+'写入失败，已保存配置保持不变，修改内容已保留';$('saveError').hidden=false;persist();let el;if(c?.kind==='供水关系'){failedFrom=c.value.key+'-'+c.value.from;renderRelations();el=$('rel-'+failedFrom);}else if(c?.groupId){expanded.add(c.groupId);renderGroups();el=$('group-'+c.groupId);}else el=$('saveError');el?.scrollIntoView({block:'center',behavior:'smooth'});el?.setAttribute('tabindex','-1');el?.focus({preventScroll:true});}
-function saveSuccess(){if(readonly||!pendingSave)return;saving=true;const current=Store.getEffective(systemId),changed=pendingSave.changes;
- const merged=current?Store.applyChanges(current,changed):pendingSave.page;const applied=Store.diff(current||baseSnapshot,merged),models=isNewConfiguration?[]:Store.affectedModels(current||baseSnapshot,merged,applied);
- merged.changedItems=applied;merged.affectedModels=models;merged.validationStale=true;merged.modelSyncRequested=false;merged.modelSyncStatus=models.length?'待同步':'无受影响模型';
- savedResult=Store.saveConfig(merged);Store.clearDraft();
- openModal('已保存',anno('ux','保存成功弹窗；入口：完成或冲突后再次提交',['所有修改保存成功后统一生效，旧校验结果失效。','新建配置提示到设备预测模型创建模型；编辑时仅列出受本次变更影响的模型。','有受影响模型时可请求重新同步，不自动重训。','完成后返回来源页并重新校验；无来源页时回列表。'],'需求文档 ·《冷站配置需求文档》§4.5')+`<p><span class="success-icon">✓</span> 已保存，建议执行配置校验</p>${models.length?`<p class="summary-text">以下模型受本次配置变更影响：</p><ul class="model-list">${models.map(m=>`<li>${esc(m.name)}</li>`).join('')}</ul>`:isNewConfiguration?'<p>可到设备预测模型为这些设备创建模型。</p><a class="action-link" href="机理模型训练.html">前往设备预测模型 →</a>':'<p>本次修改没有涉及设备预测模型。</p>'}`,`<button class="btn" data-action="save-later">${models.length?'稍后':'返回'}</button>${models.length?'<button class="btn btn-primary" data-action="save-sync">一键重新同步</button>':''}`);saving=false;
-}
-function leaveSuccess(sync){if(!savedResult)return;Store.markModelSync(systemId,!!sync);if(back){const q=new URL(back,location.href);q.searchParams.set('revalidate','1');location.href=q.pathname.split('/').at(-1)+'?'+q.searchParams+q.hash;}else location.href='冷站配置-列表.html?saved=1&id='+encodeURIComponent(systemId);}
+function applyImport(){if(!importPlan||readonly)return;const p=importPlan,skipped=[p.skip?p.skip+' 项':'',p.skipRows?p.skipRows+' 行':''].filter(Boolean).join('、');[...p.fill,...p.overwrite].forEach(x=>{x.d.attrs[x.key]=clone(x.value);const mirror=draft.groupAttributes?.find(g=>g.id===x.d.id);if(mirror&&mirror.attrs!==x.d.attrs)mirror.attrs[x.key]=clone(x.value);});markDirty();closeModal();renderDevices();toast(`已回填 ${p.fill.length+p.overwrite.length} 项属性${skipped?'，跳过 '+skipped:''}；点保存或下一步后写入`);}
+function exportAttributes(){try{XlsxMini.write((draft.name||'冷站配置')+'-属性表.xlsx',exportSheets());toast('已导出 Excel 属性表，离线填写后可原样导入');}catch(error){toast('无法导出属性表：'+error.message);}}
 
-document.addEventListener('click',event=>{
- const el=event.target.closest('[data-action]');if(!el){if(picker&&!event.target.closest('#multiPicker'))closePicker();return;}
- const a=el.dataset.action;event.preventDefault();
- if(readonly&&!['annotations','step','cancel','expand','select-group','clear-selection','close-modal','reference','zoom-topology','toggle-section'].includes(a))return;
- if(a==='zoom-topology')return openTopologyZoom();
- if(a==='toggle-section'){const k=el.dataset.key;collapsedSections.has(k)?collapsedSections.delete(k):collapsedSections.add(k);renderGroups();renderRelations();initAnnoVersionFilter();lockView();return;}
- if(a==='annotations'){document.body.classList.toggle('annotation-mode');initAnnoVersionFilter();return;}
- if(a==='scene'){scene=el.dataset.scene;document.querySelectorAll('[data-scene]').forEach(b=>{b.classList.toggle('is-active',b===el);b.setAttribute('aria-pressed',b===el?'true':'false');});$('saveError').hidden=true;failedFrom=null;renderRelations();toast('保存演示：'+el.textContent);return;}
- if(a==='generate')return openGenerator();if(a==='close-modal')return closeModal();if(a==='close-picker')return closePicker();
- if(a==='step')return goStep(el.dataset.step);if(a==='cancel')return showCancel();if(a==='cancel-confirm'){Store.clearDraft();closeModal();location.href=back||'冷站配置-列表.html';return;}
- if(a==='add-group'){const type=el.dataset.type,num=Math.max(0,...list(type).map(g=>Number(g.slot)||0))+1,g=newGroup(type,num,[]);while(group(g.id))g.id=type+'-'+(++sequence);state.groups.push(g);render();touch();$('group-'+g.id)?.scrollIntoView({block:'center'});document.querySelector(`[data-name="${g.id}"]`)?.focus();return;}
- if(a==='delete-group'){const id=el.dataset.id;return confirmRemoval(id,()=>{state.groups=state.groups.filter(g=>g.id!==id);state.relations=state.relations.filter(r=>r.from!==id).map(r=>({...r,to:r.to.filter(x=>x!==id)}));if(selected===id)selected='';},`删除「${group(id).name}」并清理它的供水关系？`);}
- if(a==='expand'){const id=el.dataset.id;expanded.has(id)?expanded.delete(id):expanded.add(id);renderGroups();lockView();initAnnoVersionFilter();return;}
- if(a==='select-group'){selected=el.dataset.id;document.querySelectorAll('#groupsContainer tr').forEach(r=>r.classList.toggle('is-selected',r.id==='group-'+selected));drawTopology();return;}
- if(a==='clear-selection'){selected='';renderGroups();drawTopology();return;}
- if(a==='picker')return openPicker(el.dataset.mode,el.dataset.id,el.dataset.key||'');
- if(a==='remove-member')return removeMember(el.dataset.id,el.dataset.value);
- if(a==='remove-relation')return removeRelation(el.dataset.key,el.dataset.id,el.dataset.value);
- if(a==='confirm-removal')return confirmAction?.();if(a==='apply-generate')return applyGeneration();if(a==='save')return save();if(a==='resubmit')return resubmit();
- if(a==='reference'){toast('打开安全边界 › A路冷站安全边界 › 冷冻水泵数量与边界');return;}
- if(a==='save-sync')return leaveSuccess(true);if(a==='save-later')return leaveSuccess(false);
-});
-document.addEventListener('input',event=>{if(readonly)return;const el=event.target;
- if(el.dataset.attr)return updateAttr(el);
- if(el.dataset.name){const g=group(el.dataset.name);g.name=el.value;g.auto=false;el.classList.remove('is-invalid');el.closest('tr').classList.remove('is-auto');el.closest('td').querySelector('.auto-mark')?.remove();touch();}
-});
-document.addEventListener('change',event=>{if(readonly)return;const el=event.target;
- if(el.dataset.name){render();return;}
- if(el.dataset.attr){updateAttr(el);return;}
- if(el.dataset.gen){autoConfig[el.dataset.gen]=el.value;paintMatching();return;}
- if(el.name==='generateMode'){autoConfig.mode=el.value;updateGeneratePreview();return;}
- if(el.dataset.match){manualMatches[el.dataset.match]=el.value;paintMatching();return;}
- if(el.dataset.conflict!==undefined){$('resubmit').disabled=!pendingSave.conflicts.every((c,i)=>document.querySelector('[name="conflict'+i+'"]:checked'));return;}
- if(el.dataset.pickerValue&&picker){const {mode,id,key}=picker,value=el.dataset.pickerValue,g=group(id);
- if(!el.checked){mode==='member'?removeMember(id,value):removeRelation(key,id,value);return;}
- if(mode==='member'){if(state.groups.some(o=>o.id!==id&&o.members.includes(value)))return;g.members.push(value);g.auto=false;}
- else{let r=getRelation(key,id);if(!state.relations.includes(r))state.relations.push(r);if(!r.to.includes(value))r.to.push(value);r.auto=false;}
- renderGroups();renderRelations();touch();paintPicker();initAnnoVersionFilter();
- }
-});
-document.addEventListener('keydown',event=>{
- if(event.key==='Escape'){if(picker)closePicker();else if($('modal').classList.contains('is-open'))closeModal();return;}
- if(['Enter',' '].includes(event.key)&&event.target.matches('[data-action][tabindex="0"]')){event.preventDefault();event.target.click();}
- if(event.key==='Tab'&&$('modal').classList.contains('is-open')){const focusables=[...$('modal').querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled)')].filter(e=>e.getClientRects().length),first=focusables[0],last=focusables[focusables.length-1];if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}
-});
-$('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal();});$('mainContent').addEventListener('scroll',()=>{if(picker)closePicker();});window.addEventListener('resize',closePicker);
-function initAnnoVersionFilter(){if(!document.body.classList.contains('annotation-mode'))return;$('annoFilterTags').innerHTML='<button class="anno-filter-tag active" type="button" data-filter="all">全部</button><button class="anno-filter-tag" type="button" data-filter="v3.0">v3.0</button>';}
-$('annoFilterTags').addEventListener('click',e=>{const b=e.target.closest('[data-filter]');if(!b)return;document.querySelectorAll('.anno[data-version]').forEach(a=>{a.style.display=b.dataset.filter==='all'||a.dataset.version===b.dataset.filter?'':'none';});$('annoFilterTags').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));});
-function lockView(){if(!readonly)return;document.querySelectorAll('[data-name],[data-attr]').forEach(el=>el.disabled=true);document.querySelectorAll('[data-action]').forEach(el=>{if(['generate','save','scene','add-group','delete-group','picker','remove-member','remove-relation'].includes(el.dataset.action))el.hidden=true;});document.querySelectorAll('button[data-action="cancel"]').forEach(el=>el.textContent='返回');document.querySelectorAll('.demo-switch').forEach(el=>el.hidden=true);}
-render();
-const target=params.get('group')||params.get('dev');
-if(target){const g=group(target)||state.groups.find(g=>g.name.replace(/\s/g,'')===target.replace(/\s/g,''))||state.groups.find(g=>g.members.includes(target));if(g){selected=g.id;if(attrDefs[g.type])expanded.add(g.id);render();setTimeout(()=>{const attr=params.get('attr'),rel=params.get('rel'),el=(attr?$('cell-'+g.id+'-'+attr):null)||(rel?$('rel-'+rel+'-'+g.id):null)||$('group-'+g.id);if(el){el.classList.add('located');el.scrollIntoView({block:'center'});el.querySelector('input,select')?.focus();}},80);}else toast('未找到对应分组，请检查配置');}
-if(back){const link=document.createElement('button');link.className='return-link';link.textContent=Store.backLabel(back);link.onclick=showCancel;(document.querySelector('.page-header-right')||document.querySelector('.page-header')).append(link);}
-const recovery=Store.getDraft(systemId);
-if(!readonly&&recovery&&params.get('resume')!=='1'){
- const main=$('mainContent'),bar=document.createElement('div');bar.className='banner';bar.innerHTML=anno('ux','未保存修改',['有同一配置的草稿时，先选择恢复或丢弃。','恢复沿用开始编辑时的保存版本，跨步骤不改变基线。','丢弃仅清理草稿，保留已保存的配置。'],'需求文档 ·《冷站配置需求文档》§4.5')+'有未保存的修改：<button class="btn" id="restoreDraft">恢复</button> <button class="btn" id="discardDraft">丢弃</button>';Array.from(main.children).forEach(el=>el.inert=true);main.prepend(bar);const reload=resume=>{const q=new URLSearchParams(location.search);q.set('resume',resume?'1':'0');location.replace(location.pathname+'?'+q);};$('restoreDraft').onclick=()=>reload(true);$('discardDraft').onclick=()=>{Store.clearDraft();reload(false);};
-}
+$('#versionHead').innerHTML=version('四步主线第 3 步「属性配置」只配属性，按物模型类型分区：冷水主机、板换、冷冻水泵、冷却水泵、二次泵、冷却塔、蓄冷罐、群控系统的设备属性，以及并联冷却塔管路、并联二次泵管路、蓄冷罐组的分组属性。设备关联和分组在第 2 步「系统拓扑」完成。','每类对象按物模型显示属性格，支持复制到同类型对象和 Excel 批量填写。每步可保存，保存即生效，寻优读取已保存配置；必填未填不拦保存，在「校验与预览」中报出；格式错误须先修正。');
+function renderHead(){$('#pageTitle').textContent=Flow.title(Store,configId,readonly);$('#systemCaption').textContent=(draft.name||'新建冷水系统')+' · '+(draft.systemType==='air'?'风冷':'水冷')+' · 属性配置';$('#steps').innerHTML=Flow.stepper({current:3,id:configId,store:Store,readonly});}
+renderHead();
+$('#toolbarAnno').innerHTML=anno('批量属性工具栏',['顶部汇总全部设备和分组的必填未填项数、已修改项数。','导出 xlsx：系统属性、设备属性（按设备类型分 sheet）、分组属性各成 sheet，每格带当前值。每个 sheet 前两列为 ID（只读，设备 ID 即平台设备资源 ID）和显示名称，之后一个属性一列；表头写「中文名（单位，范围，必填 / 选填）/ 属性 Key」，枚举按显示值输出，多选用 | 分隔。','导出的文件可原样导回；导入按 ID 匹配行，确认后回填本页，点保存或下一步才写入。'],'4.4','ux');
+$('#flowAnno').innerHTML=anno('底部操作',['编辑：「校验与预览 ↗」（最左）｜返回列表 · 上一步 · 保存 · 下一步：测点表达式；上一步回到第 2 步「系统拓扑」；查看模式没有保存。','保存：属性格式错误时拦截，展开并定位第一处；必填未填不拦。保存即生效，寻优下一轮按新配置执行。','上一步、下一步、点步骤条：先自动保存本步修改，被拦则留在本步。返回列表、页头返回：没有修改直接返回；有修改弹窗「继续编辑 / 不保存，返回 / 保存并返回」。','最左侧「校验与预览 ↗」先保存本步，再在新标签页打开校验与预览（只读，原页面保存后自动重新校验）。','带设备、分组或属性定位进入时，展开并定位到对应属性。'],'4.7','ux');
+$('#demoAnno').innerHTML=anno('原型演示场景',['“默认配置”恢复已保存的属性；“格式错误”演示第一台冷水主机额定制冷量格式错误。','原型演示仅用于评审，不是正式产品功能。','有本页修改时切换演示需确认，避免丢失评审操作。'],'4.4','ux',true);
+$('#export').onclick=exportAttributes;$('#import').onclick=openImport;$('#import').hidden=readonly;if(readonly)$('#pageTitle').closest('.page-header').querySelector('.demo-switch').hidden=true;
+function focusError(){const errors=allObjs().flatMap(o=>propsOf(o).filter(p=>!p.readonly&&propError(p,o.attrs[p.id])).map(p=>({o,p})));if(!errors.length)return false;const {o,p}=errors[0];expanded.add(o.id);renderDevices();const el=$(`[data-key="${o.id}"][data-prop="${p.id}"]`);el?.focus();el?.scrollIntoView({block:'center',behavior:'smooth'});toast(`${errors.length} 项属性格式不正确`);return true;}
+// 保存即生效：只合并本页修改（设备属性、投入 / 投出、分组属性）到最新已保存配置；之后以新保存版本为基线继续编辑。
+function save(){if(readonly||focusError())return false;markDirty();try{Store.saveStep(draft,3);}catch(error){toast('保存失败：'+(error?.message||error));return false;}
+ draft=freshDraft(configId);draft.topology=draft.topology||{groups:[],relations:[]};devices=draft.devices||[];dirty=false;renderHead();renderDevices();toast(Flow.savedMessage(Store,configId));return true;}
+// 上一步 / 下一步 / 点步骤条：本步有未保存修改先保存，保存被拦留在本步。
+function goStep(step){step=Number(step);if(!step||step===3)return;const url=Flow.url(step,{id:configId,mode:readonly?'view':'edit',back});if(!readonly){if(computeDirty()){if(!save())return;}else dropDraft();}location.href=url;}
+$('#next').onclick=()=>goStep(4);$('#previous').onclick=()=>goStep(2);$('#save').hidden=readonly;$('#save').onclick=()=>save();Flow.bind($('#steps'),goStep);
+// 底栏最左侧「校验与预览 ↗」：先按本页规则保存（没有修改直接打开），再在新标签页打开。
+if(typeof Flow.mountVerify==='function')Flow.mountVerify(document.querySelector('.csf-footer'),{store:Store,id:configId,readonly,beforeOpen:go=>{if(!computeDirty()){dropDraft();go();return;}if(save())go();}});
+$('#backBtn').onclick=()=>leave(Flow.LIST);$('#backList').onclick=()=>leave(Flow.LIST);
+$$('[data-demo]').forEach(b=>b.onclick=()=>{const apply=()=>{draft=freshDraft(configId);draft.topology=draft.topology||{groups:[],relations:[]};devices=draft.devices||[];if(b.dataset.demo==='error'){const d=devices.find(x=>x.group==='CH')||devices[0],p=d&&propsOf(d).find(p=>!p.options&&!p.readonly);if(p){d.attrs[p.id]='abc';expanded.add(d.id);}}markDirty();renderDevices();$$('[data-demo]').forEach(x=>x.classList.toggle('is-active',x===b));closeModal();toast('已切换原型演示');};if(computeDirty())openModal('切换原型演示？',anno('演示切换确认弹窗；入口：页头原型演示',['切换将放弃本页未保存的属性修改。','确认后恢复对应示例；取消保留当前内容。','仅用于原型评审。'],'4.4','ux',true)+'<p>切换会清除本页未保存的修改，是否继续？</p>',apply,'切换演示');else apply();});
+renderDevices();
+const located=params.get('dev')||params.get('group')||new URLSearchParams(params.get('step')||'').get('dev'),attr=params.get('attr')||new URLSearchParams(params.get('step')||'').get('attr');if(located){const o=findObj(located);if(o){expanded.add(o.id);renderDevices();setTimeout(()=>{const el=attr?$(`[data-key="${o.id}"][data-prop="${attr}"]`):$(`[data-device-row="${o.id}"]`);el?.scrollIntoView({block:'center'});el?.focus();if(el)el.closest('.prop-item')?.classList.add('located');},100);}}
 
-</script>
-<script src="components/nav.js" data-active-nav="AI智能能效" data-active-sidebar="冷站配置"></script>
-</body></html>
+// 单独进入时只读生效快照；必须明确选择后才恢复同 ID 草稿。
+function offerDraftRecovery(){
+ const old=Store.getDraft(configId);if(unsaved||readonly||!old||params.get('resume')==='1'||params.get('from')==='energyView')return;
+ const main=document.querySelector('main.main');const bar=document.createElement('div');bar.className='banner';
+ bar.innerHTML=anno('未保存修改',['同一配置有未保存草稿时，可恢复继续编辑或丢弃。','恢复后保留进入编辑时的保存版本作为基线。','丢弃只清理草稿，已保存配置保持不变。'],'4.7','ux')+'有未保存的修改：<button class="btn" id="restoreDraft">恢复</button> <button class="btn" id="discardDraft">丢弃</button>';
+ const children=Array.from(main.children);children.forEach(el=>el.inert=true);main.prepend(bar);
+ const reload=resume=>{const q=new URLSearchParams(location.search);q.set('id',configId);q.set('mode',mode);q.set('resume',resume?'1':'0');location.replace(location.pathname+'?'+q);};
+ bar.querySelector('#restoreDraft').onclick=()=>reload(true);bar.querySelector('#discardDraft').onclick=()=>{Store.clearDraft();reload(false);};
+}
+if(back){const link=document.createElement('a');link.className='return-link';link.textContent=Store.backLabel(back);link.href=back;link.onclick=e=>{if(readonly)return;e.preventDefault();leave(back);};(document.querySelector('.page-header-right')||document.querySelector('.page-header')).append(link);}
+offerDraftRecovery();
+
+// 多选属性：可见的勾选胶囊同步到隐藏的 select，沿用原有 change 处理
+document.addEventListener('change',e=>{const cb=e.target.closest?.('[data-sync]');if(!cb)return;const sel=document.getElementById(cb.dataset.sync);if(!sel)return;const group=cb.closest('.pill-group');const on=new Set(Array.from(group.querySelectorAll('input[data-sync]')).filter(x=>x.checked).map(x=>x.value));Array.from(sel.options).forEach(o=>o.selected=on.has(o.value));group.querySelectorAll('.check-pill').forEach(l=>l.classList.toggle('selected',l.querySelector('input').checked));sel.dispatchEvent(new Event('change',{bubbles:true}));});
+</script></body></html>

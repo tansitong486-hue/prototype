@@ -1,25 +1,37 @@
 /* 冷站配置共享演示存储（内网可用，无依赖）。
  * 键：coldStationConfigs 生效快照映射；coldStationConfigDraft 单份编辑草稿；
  * coldStationInService 按配置/设备记录 value、name、updatedAt、source。
- * 快照：id/name/systemType/space/includes/units/attributes/devices[]/
+ * 快照：id/name/systemType/hvac（所属暖通空调系统，能效视图路径「一级节点 / 暖通空调系统」）/includes/units/attributes/
+ * devices[]（position 为设备各自的所在空间）/
  * topology{groups,relations}/groupAttributes/rev/savedAt。草稿另带 baseRev、baseSnapshot。
- * ID：A/B/C 存量；N1…新建；CH/HX/CHWP/CWP/SWP/CT/TK + 序号，GC 为群控。
+ * ID：A/B/C/D 存量（D 为混合拓扑 + 仅板换制冷单元的演示，设备名用现场编号写法）；N1…新建；
+ * CH/HX/CHWP/CWP/SWP/CT/TK + 序号，GC 为群控。
  * API（返回值均是拷贝）：
  * getEffective(id)->Snapshot|null；getSaved(id)->SavedSnapshot|null；listConfigs()->Snapshot[]；
- * saveConfig(snapshot)->SavedSnapshot（rev+1）；removeConfig(id)->boolean；nextId()->string；
+ * saveConfig(snapshot)->SavedSnapshot（rev+1）；saveStep(draft,step)->SavedSnapshot（只合并本次修改到最新已保存配置，保存即生效；step 1–4）；
+ * isOptimizing(id)；removeConfig(id)->boolean；nextId()->string；
  * getDraft(id)->Draft|null；setDraft(d)->Draft；clearDraft()->void；
  * getInService(id,devId)->'0'|'1'；setInService(id,devId,value,source)->boolean；
  * inServiceMap(id)->{[devId]:'0'|'1'}；isUnitInService(snapshot,group)->boolean；
  * summarize(id|snapshot)->Summary|null（额外 missingRequired 表示系统缺项）；
  * DEFS：递归冻结的物模型属性定义。
  * 页面辅助：valuesFor/deviceGroups/makeDevice/createDraft/createTopology/groupDefs/
- * diff/applyChanges/affectedModels/safeBack。所有读写异常转入内存，跨页以 window.name
+ * diff/applyChanges/affectedModels（只由设备属性变化触发，投入 / 投出、分组和连线不算）/safeBack；toKeRawGraph(id|snapshot)->{graph,summary,idMap}，
+ * 按 KE 原始图谱格式导出给 3D 预览（cool / tower 关系导出时按 KE 供水方向反转）。所有读写异常转入内存，跨页以 window.name
  * 携带同源内存数据；刷新/跨页仍可完成演示，不访问外部服务。
  */
 (function (global) {
 'use strict';
 const clone = v => v == null ? v : JSON.parse(JSON.stringify(v));
-const seeds=[{id:'A',name:'A路冷水系统',systemType:'water',space:'人保北方信息中心 / 动力楼 / 冷站 A',includes:['板换','二次泵','蓄冷罐'],units:6,counts:'冷水主机 6 · 板换 6 · 冷冻水泵 6 · 冷却水泵 6 · 二次泵 6 · 冷却塔 6 · 蓄冷罐 2'}, {id:'B',name:'B路风冷冷水系统',systemType:'air',space:'人保北方信息中心 / 动力楼 / 屋面',includes:['二次泵'],units:3,counts:'风冷冷水机组 3 · 冷冻水泵 3 · 二次泵 3'}, {id:'C',name:'3#数据中心水冷冷水系统',systemType:'water',space:'软POC项目 / 暖通空调系统',includes:['板换','蓄冷罐'],units:5,counts:'冷水主机 5 · 板换 5 · 冷冻水泵 5 · 冷却水泵 5 · 冷却塔 5 · 蓄冷罐 3'}];
+const seeds=[{id:'A',name:'A路冷水系统',systemType:'water',hvac:'人保北方信息中心 / 暖通空调系统',includes:['板换','二次泵','蓄冷罐'],units:6,counts:'冷水主机 6 · 板换 6 · 冷冻水泵 6 · 冷却水泵 6 · 二次泵 6 · 冷却塔 6 · 蓄冷罐 2'}, {id:'B',name:'B路风冷冷水系统',systemType:'air',hvac:'人保北方信息中心 / 暖通空调系统',includes:['二次泵'],units:3,counts:'风冷冷水机组 3 · 冷冻水泵 3 · 二次泵 3'}, {id:'C',name:'3#数据中心水冷冷水系统',systemType:'water',hvac:'软POC项目 / 暖通空调系统',includes:['板换','蓄冷罐'],units:5,counts:'冷水主机 5 · 板换 5 · 冷冻水泵 5 · 冷却水泵 5 · 冷却塔 5 · 蓄冷罐 3'}, {id:'D',name:'商业综合体一期冷水系统',systemType:'water',hvac:'商业综合体 / 暖通空调系统',includes:['板换'],units:7,custom:true}];
+// 能效视图：一级节点（项目，模型 ID 不变）及其下的暖通空调系统；冷水系统挂在暖通空调系统下（标准物模型系统拓扑关系图）。
+const ENERGY_VIEW=[{name:'人保北方信息中心',hvac:['暖通空调系统']},{name:'软POC项目',hvac:['暖通空调系统']},{name:'商业综合体',hvac:['暖通空调系统']},{name:'华东数据中心',hvac:[]}];
+// 设备所在空间按设备各自记录：同一冷水系统的设备可在不同楼层（冷却塔在屋面、二次泵在楼层泵房等）。
+const POSITIONS={A:{base:'人保北方信息中心 / 动力楼 / 冷站 A',CT:'人保北方信息中心 / 动力楼 / 屋面',SWP:'人保北方信息中心 / 动力楼 / 3F 二次泵房',TK:'人保北方信息中心 / 室外蓄冷罐区'},B:{base:'人保北方信息中心 / 动力楼 / 屋面',SWP:'人保北方信息中心 / 动力楼 / 3F 二次泵房'},C:{base:'软POC项目 / 1F 冷站',CT:'软POC项目 / 屋面',TK:'软POC项目 / 室外蓄冷罐区'},D:{base:'商业综合体 / 8F 冷站',CT:'商业综合体 / 屋面'}};
+function projectOf(s){return String(s?.hvac||'').split(' / ')[0];}
+function positionOf(s,key){const p=POSITIONS[s.id];if(p)return p[key]||p.base;return (projectOf(s)||'未选择项目')+' / '+({CT:'屋面',SWP:'二次泵房',TK:'蓄冷罐区'}[key]||'冷站');}
+// 旧草稿 / 旧保存记录只有 space（冷站所在空间）时，按种子或一级节点补出所属暖通空调系统。
+function migrate(s){if(s&&!s.hvac){const row=seeds.find(x=>x.id===s.id);s.hvac=row?.hvac||(s.space?String(s.space).split(' / ')[0]+' / 暖通空调系统':'');}if(s)delete s.space;return s;}
 const DEFS={"水冷冷水系统": [{"id": "climate", "name": "气候特征", "unit": "", "required": true, "options": [["1", "热带"], ["2", "温带"], ["3", "寒带"]]}, {"id": "coolmode", "name": "制冷模式范围", "unit": "", "required": true, "options": [["0", "压缩制冷"], ["1", "自然冷"], ["2", "混合制冷"]], "multiple": true}, {"id": "end_diff", "name": "末端设计压差", "unit": "bar", "required": true}, {"id": "min_adcerse_diff", "name": "最小不利点压差", "unit": "bar", "required": true}, {"id": "max_cold_pressure_diff", "name": "冷冻水主管最大压差", "unit": "bar", "required": true}, {"id": "max_cold_return_temp", "name": "最高冷冻水回水温度", "unit": "℃", "required": true}, {"id": "max_cold_supply_temp", "name": "最高冷冻水供水温度", "unit": "℃", "required": true}, {"id": "cool_pressure_diff", "name": "冷却水主管设计压差", "unit": "bar", "required": true}, {"id": "maxEndAcSupplyTemp", "name": "最高末端空调送风温度", "unit": "℃", "required": true}, {"id": "MaxColdWaterTpDiff", "name": "最大冷冻水温差", "unit": "℃", "required": true}, {"id": "configOrientation", "name": "组态朝向", "unit": "", "required": true, "options": [["0", "末端在左"], ["1", "末端在右"]]}], "水冷冷水机组": [{"id": "RatedCool", "name": "额定制冷量", "unit": "kW", "required": true}, {"id": "ratedPower", "name": "额定功率", "unit": "kW", "required": true}, {"id": "cop", "name": "COP", "unit": "", "required": true}, {"id": "RatedColdFlow", "name": "额定冷冻水流量", "unit": "m³/h", "required": true}, {"id": "ratedColdPressurediff", "name": "额定冷冻水压差", "unit": "bar", "required": true}, {"id": "RatedCoolFlow", "name": "额定冷却水流量", "unit": "m³/h", "required": true}, {"id": "ratedCoolPressurediff", "name": "额定冷却水压差", "unit": "bar", "required": true}, {"id": "minLoad", "name": "最小负载率", "unit": "%", "required": true, "min": 0, "max": 100, "inferred": true}, {"id": "maxLoad", "name": "最大负载率", "unit": "%", "required": true, "min": 0, "max": 100, "inferred": true}, {"id": "minCoolWaterIntp", "name": "最小冷却水进水温度", "unit": "℃", "required": true}, {"id": "mintpdiff", "name": "最小冷冻出水与冷却进水温差", "unit": "℃", "required": true}, {"id": "minColdFlow", "name": "最小冷冻水流量", "unit": "m³/h", "required": true}, {"id": "minCoolFlow", "name": "最小冷却水流量", "unit": "m³/h", "required": true}, {"id": "min_coldtp_set", "name": "最小冷冻出水温度设定", "unit": "℃", "required": true}, {"id": "max_coldtp_set", "name": "最大冷冻出水温度设定", "unit": "℃", "required": true}, {"id": "chillerRatio", "name": "主机衰减系数", "unit": "", "required": true, "min": 0, "max": 1}, {"id": "InputOrOutput", "name": "投入/投出", "unit": "", "required": true, "options": [["0", "投入"], ["1", "投出"]]}, {"id": "ratedColdOutletTemp", "name": "额定冷冻水出水温度", "unit": "℃", "required": true}, {"id": "ratedCoolInletTemp", "name": "额定冷却水进水温度", "unit": "℃", "required": true}, {"id": "ratedCoolTempRise", "name": "额定冷却水温升", "unit": "℃", "required": true}, {"id": "compressorType", "name": "压缩机类型", "unit": "", "required": true, "options": [["1", "离心"], ["2", "螺杆"]]}, {"id": "regulationType", "name": "调节方式", "unit": "", "required": true, "options": [["1", "定频"], ["2", "变频"]]}], "风冷冷水机组": [{"id": "RatedCool", "name": "额定制冷量", "unit": "kW", "required": true}, {"id": "ratedPower", "name": "额定功率", "unit": "kW", "required": true}, {"id": "cop", "name": "COP", "unit": "", "required": true}, {"id": "RatedColdFlow", "name": "额定冷冻水流量", "unit": "m³/h", "required": true}, {"id": "ratedColdPressurediff", "name": "额定冷冻水压差", "unit": "bar", "required": true}, {"id": "minLoad", "name": "最小负载率", "unit": "%", "required": true, "min": 0, "max": 100, "inferred": true}, {"id": "maxLoad", "name": "最大负载率", "unit": "%", "required": true, "min": 0, "max": 100, "inferred": true}, {"id": "minColdFlow", "name": "最小冷冻水流量", "unit": "m³/h", "required": true}, {"id": "chillerRatio", "name": "主机衰减系数", "unit": "", "required": true, "min": 0, "max": 1}, {"id": "min_coldtp_set", "name": "最小冷冻出水温度设定", "unit": "℃", "required": true}, {"id": "max_coldtp_set", "name": "最大冷冻出水温度设定", "unit": "℃", "required": true}, {"id": "InputOrOutput", "name": "投入/投出", "unit": "", "required": true, "options": [["0", "投入"], ["1", "投出"]]}, {"id": "ratedColdOutletTemp", "name": "额定冷冻水出水温度", "unit": "℃", "required": true}, {"id": "ratedOutdoorDryBulbTemp", "name": "额定环境干球温度", "unit": "℃", "required": true}, {"id": "compressorType", "name": "压缩机类型", "unit": "", "required": true, "options": [["1", "离心"], ["2", "螺杆"]]}, {"id": "regulationType", "name": "调节方式", "unit": "", "required": true, "options": [["1", "定频"], ["2", "变频"]]}], "板式换热器": [{"id": "ratedHeatTransferTpdiff", "name": "额定换热温差", "unit": "℃", "required": true}, {"id": "RatedColdFlow", "name": "额定冷冻水流量", "unit": "m³/h", "required": true}, {"id": "RatedCoolFlow", "name": "额定冷却水流量", "unit": "m³/h", "required": true}, {"id": "RatedColdPresseurediff", "name": "额定冷冻水压差", "unit": "bar", "required": true}, {"id": "RatedCoolPresseurediff", "name": "额定冷却水压差", "unit": "bar", "required": true}, {"id": "InputOrOutput", "name": "投入/投出", "unit": "", "required": true, "options": [["0", "投入"], ["1", "投出"]]}, {"id": "ratedHeatExchange", "name": "额定换热量", "unit": "kW", "required": true}, {"id": "ratedHotSideInTemp", "name": "额定热侧进水温度", "unit": "℃", "required": true}, {"id": "ratedHotSideOutTemp", "name": "额定热侧出水温度", "unit": "℃", "required": true}, {"id": "ratedColdSideInTemp", "name": "额定冷侧进水温度", "unit": "℃", "required": true}, {"id": "ratedColdSideOutTemp", "name": "额定冷侧出水温度", "unit": "℃", "required": true}], "水泵": [{"id": "flow", "name": "额定流量", "unit": "m³/h", "required": true}, {"id": "flow_max", "name": "最大流量", "unit": "m³/h", "required": true}, {"id": "flow_min", "name": "最小流量", "unit": "m³/h", "required": true}, {"id": "water_lift", "name": "额定扬程", "unit": "m", "required": true}, {"id": "feq_min", "name": "最小频率", "unit": "Hz", "required": true}, {"id": "ratedPower", "name": "额定功率", "unit": "kW", "required": true}, {"id": "InputOrOutput", "name": "投入/投出", "unit": "", "required": true, "options": [["0", "投入"], ["1", "投出"]]}], "冷却塔": [{"id": "flow", "name": "额定流量", "unit": "m³/h", "required": true}, {"id": "minTowerFlow", "name": "最小流量", "unit": "m³/h", "required": true}, {"id": "maxTowerFlow", "name": "最大流量", "unit": "m³/h", "required": true}, {"id": "frequency", "name": "最小频率", "unit": "Hz", "required": true}, {"id": "approachTemperature", "name": "额定逼近度", "unit": "℃", "required": true}, {"id": "MaxApproachTemperature", "name": "最大逼近度", "unit": "℃", "required": true}, {"id": "ratedPower", "name": "额定功率", "unit": "kW", "required": true}, {"id": "fans_num", "name": "风扇数量", "unit": "", "required": true, "integer": true, "inferred": true}, {"id": "InputOrOutput", "name": "投入/投出", "unit": "", "required": true, "options": [["0", "投入"], ["1", "投出"]]}, {"id": "ratedAirFlow", "name": "额定风量", "unit": "m³/h", "required": true}, {"id": "designWetBulbTemp", "name": "设计湿球温度", "unit": "℃", "required": true}, {"id": "designInletWaterTemp", "name": "设计进塔水温", "unit": "℃", "required": true}, {"id": "designOutletWaterTemp", "name": "设计出塔水温", "unit": "℃", "required": true}, {"id": "ratedFrequency", "name": "额定频率", "unit": "Hz", "required": true}], "蓄冷罐": [{"id": "capacity", "name": "容量", "unit": "m³", "required": true}, {"id": "InputOrOutput", "name": "投入/投出", "unit": "", "required": true, "options": [["0", "投入"], ["1", "投出"]]}], "并联冷却塔管路": [{"id": "MaxCoolWaterTpDiff", "name": "最大冷却水温差", "unit": "℃", "required": true, "readonly": false}, {"id": "ratedTowerGroupPressureDrop", "name": "冷却塔组额定压降", "unit": "bar", "required": true, "readonly": false}], "并联二次泵管路": [{"id": "maxBypassFlow", "name": "最大旁通流量", "unit": "m³/h", "required": false, "readonly": false}, {"id": "minBypassFlow", "name": "最小旁通流量", "unit": "m³/h", "required": false, "readonly": false}, {"id": "ratedSecPumpGroupPressureDrop", "name": "二次泵组额定压降", "unit": "bar", "required": true, "readonly": false}], "蓄冷罐设备组": [{"id": "connection_method", "name": "连接方式", "unit": "", "required": true, "readonly": false, "options": [["串联式", "串联式"], ["并联式", "并联式"]]}, {"id": "safe_factor", "name": "安全系数", "unit": "", "required": true, "readonly": false}, {"id": "min_safe_time", "name": "最低安全放冷时长", "unit": "min", "required": true, "readonly": false}, {"id": "volume", "name": "容积", "unit": "m³", "required": false, "readonly": true}, {"id": "design_temp_diff", "name": "设计温差", "unit": "℃", "required": true, "readonly": false}, {"id": "design_cool_capacity", "name": "设计蓄冷量", "unit": "KWh", "required": false, "readonly": true}]};
 const defaults={climate:'2',coolmode:['0','1','2'],end_diff:'0.8',min_adcerse_diff:'0.5',max_cold_pressure_diff:'3',max_cold_return_temp:'18',max_cold_supply_temp:'14',cool_pressure_diff:'1.2',maxEndAcSupplyTemp:'26',MaxColdWaterTpDiff:'8',configOrientation:'0',RatedCool:'3868',ratedPower:'650',cop:'5.95',RatedColdFlow:'665',ratedColdPressurediff:'0.8',RatedCoolFlow:'780',ratedCoolPressurediff:'0.7',minLoad:'20',maxLoad:'100',minCoolWaterIntp:'15',mintpdiff:'3',minColdFlow:'300',minCoolFlow:'350',min_coldtp_set:'6',max_coldtp_set:'12',chillerRatio:'0.93',InputOrOutput:'0',ratedColdOutletTemp:'7',ratedCoolInletTemp:'30',ratedCoolTempRise:'5',compressorType:'1',regulationType:'2',ratedOutdoorDryBulbTemp:'35',flow:'665',flow_max:'800',flow_min:'250',water_lift:'32',feq_min:'25',minTowerFlow:'350',maxTowerFlow:'1000',frequency:'25',approachTemperature:'4',MaxApproachTemperature:'8',fans_num:'2',ratedAirFlow:'420000',designWetBulbTemp:'28',designInletWaterTemp:'37',designOutletWaterTemp:'32',ratedFrequency:'50',ratedHeatTransferTpdiff:'2',RatedColdPresseurediff:'0.5',RatedCoolPresseurediff:'0.5',ratedHeatExchange:'3868',ratedHotSideInTemp:'14',ratedHotSideOutTemp:'9',ratedColdSideInTemp:'7',ratedColdSideOutTemp:'12',capacity:'1200'};
 Object.assign(defaults,{MaxCoolWaterTpDiff:'8',ratedTowerGroupPressureDrop:'0.3',maxBypassFlow:'300',minBypassFlow:'-100',ratedSecPumpGroupPressureDrop:'0.4',connection_method:'并联式',safe_factor:'0.83',min_safe_time:'60',design_temp_diff:'7'});
@@ -40,7 +52,7 @@ function makeDevice(s,g,n){const attrs=valuesFor(g.model),isNew=s.id==='A'&&g.ke
  if(g.model==='水泵')attrs.ratedPower=g.key==='SWP'?'75':'110';if(g.key==='CT')attrs.ratedPower='22';
  if(isNew)for(const key of Object.keys(attrs))if(key!=='InputOrOutput')attrs[key]='';
  if(s.id==='A'&&g.key==='CH'&&[3,6].includes(n))attrs.InputOrOutput='1';
- return {id:g.key+n,group:g.key,kind:g.kind,name:n+'#'+(g.short||g.name),model:g.model,number:n,position:s.space,attrs,initial:clone(attrs),isNew,output:attrs.InputOrOutput==='1',capacity:Number(attrs.capacity||0),points:g.key==='CT'&&n===2?3:g.points,totalPoints:g.points};
+ return {id:g.key+n,group:g.key,kind:g.kind,name:n+'#'+(g.short||g.name),model:g.model,number:n,position:positionOf(s,g.key),attrs,initial:clone(attrs),isNew,output:attrs.InputOrOutput==='1',capacity:Number(attrs.capacity||0),points:g.key==='CT'&&n===2?3:g.points,totalPoints:g.points};
 }
 function groupDefs(){return Object.fromEntries(Object.entries(GROUP_MODELS).map(([type,model])=>[type,DEFS[model].map(p=>({...clone(p),key:p.id,value:clone(defaults[p.id]??''),options:p.options?.map(o=>o[0])}))]));}
 function groupRows(s){return (s.topology?.groups||[]).filter(g=>GROUP_MODELS[g.type]).map(g=>({id:g.id,name:g.name,model:GROUP_MODELS[g.type],attrs:clone(g.attrs)}));}
@@ -52,22 +64,67 @@ function createTopology(s){const groups=[],relations=[],defs=groupDefs(),ds=s.de
  for(const [key,from,to] of [['freeze','freeze','unit'],...(s.systemType==='water'?[['cool','unit','cool'],['tower','cool','tower']]:[])])for(const g of groups.filter(g=>g.type===from))relations.push({key,from:g.id,to:groups.filter(t=>t.type===to&&t.slot===g.slot).map(t=>t.id),auto:false});
  return {systemId:s.id,groups,relations};
 }
-function normalize(s){s=clone(s);s.systemType=/air|风冷/.test(s.systemType||s.type||'water')?'air':'water';s.type=s.systemType;s.includes=s.includes||s.systemIncludes||[];if(s.systemType==='air')s.includes=s.includes.filter(x=>x!=='板换');s.systemIncludes=clone(s.includes);s.name=s.name??s.systemName??'';s.systemName=s.name;s.attributes=s.attributes||valuesFor('水冷冷水系统');if(s.systemType==='air'){s.attributes.coolmode=['0'];delete s.attributes.cool_pressure_diff;}
+function normalize(s){s=migrate(clone(s));s.systemType=/air|风冷/.test(s.systemType||s.type||'water')?'air':'water';s.type=s.systemType;s.includes=s.includes||s.systemIncludes||[];if(s.systemType==='air')s.includes=s.includes.filter(x=>x!=='板换');s.systemIncludes=clone(s.includes);s.name=s.name??s.systemName??'';s.systemName=s.name;s.attributes=s.attributes||valuesFor('水冷冷水系统');if(s.systemType==='air'){s.attributes.coolmode=['0'];delete s.attributes.cool_pressure_diff;}
  s.devices=s.devices||[];const allowed=new Set(deviceGroups(s).map(g=>g.key).concat('GC'));s.devices=s.devices.filter(d=>allowed.has(d.group));for(const d of s.devices){d.attrs=d.attrs||{};d.output=d.attrs.InputOrOutput==='1';d.capacity=Number(d.attrs.capacity||0);d.initial=clone(d.attrs);}
- s.topology=s.topology||createTopology(s);s.topology.systemId=s.id;s.units=s.topology.groups.filter(g=>g.type==='unit').length;return updateComputed(s);
+ s.topology=s.topology||(s.devices.length?createTopology(s):{groups:[],relations:[]});s.topology.systemId=s.id;s.units=s.topology.groups.filter(g=>g.type==='unit').length||Number(s.units)||0;return updateComputed(s);
 }
-function seed(id){const row=seeds.find(s=>s.id===id);if(!row)return null;const s={...clone(row),rev:0,savedAt:'2026-11-04T'+({A:'10:32',B:'09:18',C:'08:45'}[id])+':00+08:00',attributes:valuesFor('水冷冷水系统')};s.devices=deviceGroups(s).flatMap(g=>Array.from({length:g.key==='TK'?(id==='C'?3:2):s.units},(_,i)=>makeDevice(s,g,i+1)));
- if(id!=='C')s.devices.push({id:'GC'+id,group:'GC',kind:'gc',name:id==='A'?'A路水冷群控系统':'B路风冷群控系统',model:'群控系统',position:s.space,number:1,attrs:{InputOrOutput:'0'},points:0,totalPoints:0});
+// 演示系统 D：混合拓扑。设备名沿用现场编号写法（非 n# 格式），用于演示编号识别取最后一组数字。
+function seedMixed(s){
+ const groupsByKey=Object.fromEntries(deviceGroups(s).map(g=>[g.key,g]));
+ const dev=(key,n,name,patch={})=>{const d=makeDevice(s,groupsByKey[key],n);d.name=name;Object.assign(d.attrs,patch);d.initial=clone(d.attrs);d.output=d.attrs.InputOrOutput==='1';return d;};
+ const ds=[];
+ for(let n=1;n<=6;n++)ds.push(dev('CH',n,'WC-T19-'+n));
+ ds.push(dev('HX',1,'PHX-T19-1'));
+ for(let n=1;n<=7;n++)ds.push(dev('CHWP',n,'P-T19-'+(n+7)));
+ for(let n=1;n<=7;n++)ds.push(dev('CWP',n,'P-T19-'+n));
+ ds.push(dev('CWP',8,'P-T16-1',{ratedPower:'45'}),dev('CWP',9,'P-T16-2',{ratedPower:'45'}));
+ const towers=['TIR1-1','TIR1-2','TIR1-3','TIR2-1','TIR2-2','TIR2-3','TIR3-1','TIR3-2','TIR3-3','TIR4-1','TIR4-2'];
+ towers.forEach((name,i)=>ds.push(dev('CT',i+1,name)));
+ for(let n=1;n<=5;n++)ds.push(dev('CT',11+n,'闭式塔 '+n,{ratedPower:'26.4'}));
+ ds.push({id:'GCD',group:'GC',kind:'gc',name:'一期冷站群控系统',model:'群控系统',position:positionOf(s,'GC'),number:1,attrs:{InputOrOutput:'0'},points:0,totalPoints:0});
+ s.devices=ds;
+ const defs=groupDefs(),groups=[],relations=[];
+ const add=(type,n,members,name)=>{const attrs=Object.fromEntries((defs[type]||[]).filter(p=>!p.readonly).map(p=>[p.key,clone(p.value)]));groups.push({id:type+'-'+n,type,name:name||LABELS[type]+' '+n,slot:String(n),members,attrs,originalAttrs:clone(attrs),auto:false});};
+ for(let n=1;n<=6;n++)add('unit',n,['CH'+n]);
+ add('unit',7,['HX1']);
+ add('freeze',1,[1,2,3,4,5,6,7].map(n=>'CHWP'+n));
+ add('cool',1,[1,2,3,4,5,6,7].map(n=>'CWP'+n));
+ add('cool',2,['CWP8','CWP9']);
+ // 开式塔按现场分 4 组（TIR1×3、TIR2×3、TIR3×3、TIR4×2），各组接同一冷却水母管；闭式塔单独一组服务 6 号冷机
+ add('tower',1,['CT1','CT2','CT3']);add('tower',2,['CT4','CT5','CT6']);add('tower',3,['CT7','CT8','CT9']);add('tower',4,['CT10','CT11']);
+ add('tower',5,[12,13,14,15,16].map(n=>'CT'+n));
+ relations.push({key:'freeze',from:'freeze-1',to:[1,2,3,4,5,6,7].map(n=>'unit-'+n),auto:false});
+ for(const n of [1,2,3,4,5,7])relations.push({key:'cool',from:'unit-'+n,to:['cool-1'],auto:false});
+ relations.push({key:'cool',from:'unit-6',to:['cool-2'],auto:false});
+ relations.push({key:'tower',from:'cool-1',to:['tower-1','tower-2','tower-3','tower-4'],auto:false},{key:'tower',from:'cool-2',to:['tower-5'],auto:false});
+ s.topology={systemId:s.id,groups,relations};
+ return normalize(s);
+}
+function seed(id){const row=seeds.find(s=>s.id===id);if(!row)return null;const s={...clone(row),rev:0,savedAt:(id==='D'?'2026-11-13T09:20':'2026-11-04T'+({A:'10:32',B:'09:18',C:'08:45'}[id]))+':00+08:00',attributes:valuesFor('水冷冷水系统')};if(row.custom){delete s.custom;return seedMixed(s);}s.devices=deviceGroups(s).flatMap(g=>Array.from({length:g.key==='TK'?(id==='C'?3:2):s.units},(_,i)=>makeDevice(s,g,i+1)));
+ if(id!=='C')s.devices.push({id:'GC'+id,group:'GC',kind:'gc',name:id==='A'?'A路水冷群控系统':'B路风冷群控系统',model:'群控系统',position:positionOf(s,'GC'),number:1,attrs:{InputOrOutput:'0'},points:0,totalPoints:0});
  s.topology=createTopology(s);return normalize(s);
 }
 function getSaved(id){return read(keys[0],{})[id]||null;}
 function getInService(id,devId){const record=read(keys[2],{})[id]?.[devId];if(record&&['0','1'].includes(record.value))return record.value;const d=(getSaved(id)||seed(id))?.devices.find(d=>d.id===devId);return d?.attrs?.InputOrOutput==='1'?'1':'0';}
-function getEffective(id){const s=getSaved(id)||seed(id);if(!s)return null;for(const d of s.devices||[]){d.attrs.InputOrOutput=getInService(id,d.id);d.output=d.attrs.InputOrOutput==='1';}return updateComputed(s);}
+function getEffective(id){const s=migrate(getSaved(id)||seed(id));if(!s)return null;for(const d of s.devices||[]){d.attrs.InputOrOutput=getInService(id,d.id);d.output=d.attrs.InputOrOutput==='1';}return updateComputed(s);}
+function hvacTree(){const tree=ENERGY_VIEW.map(n=>({name:n.name,hvac:[...n.hvac]}));for(const c of listConfigs()){const [root,...rest]=String(c.hvac||'').split(' / '),name=rest.join(' / ');if(!root||!name)continue;let node=tree.find(n=>n.name===root);if(!node)tree.push(node={name:root,hvac:[]});if(!node.hvac.includes(name))node.hvac.push(name);}return tree;}
 function listConfigs(){const saved=read(keys[0],{}),ids=[...new Set([...seeds.map(s=>s.id),...Object.keys(saved)])];return ids.map(getEffective).filter(Boolean);}
-function saveConfig(snapshot){let s=normalize(snapshot);s.rev=(getSaved(s.id)?.rev||0)+1;s.savedAt=new Date().toISOString();delete s.baseSnapshot;delete s.baseRev;delete s.schemaVersion;
+function saveConfig(snapshot){let s=normalize(snapshot);delete s.newHvac;s.rev=(getSaved(s.id)?.rev||0)+1;s.savedAt=new Date().toISOString();delete s.baseSnapshot;delete s.baseRev;delete s.schemaVersion;
  const records=read(keys[2],{});records[s.id]=records[s.id]||{};for(const d of s.devices){const value=d.attrs.InputOrOutput==='1'?'1':'0',old=records[s.id][d.id];records[s.id][d.id]=old?.value===value?{...old,name:d.name}:{value,name:d.name,updatedAt:s.savedAt,source:'冷站配置'};}
  const configs=read(keys[0],{});configs[s.id]=s;write(keys[0],configs);write(keys[2],records);return clone(s);
 }
+// 保存即生效：寻优读取的就是已保存配置。寻优运行中的系统页头标「寻优运行中 · 保存即生效」。
+const OPTIMIZING={A:true,B:true};
+function isOptimizing(id){return !!OPTIMIZING[id];}
+function saveStep(snapshot,step){const draft=clone(snapshot),current=getEffective(draft.id);
+ const changes=draft.baseSnapshot?diff(draft.baseSnapshot,draft):null;
+ let merged=current&&changes?applyChanges(current,changes):draft;if(draft.newHvac)merged.newHvac=draft.newHvac;
+ // 受影响的设备预测模型只由设备属性变化触发（投入 / 投出、分组、连线不算）；重新同步只更新模型的静态属性值，拓扑不变，不重训。
+ const applied=current?diff(current,merged):[],fresh=current?affectedModels(current,merged,applied):[],prev=current?.affectedModels||[];
+ merged.affectedModels=[...prev,...fresh.filter(m=>!prev.some(p=>p.id===m.id&&p.name===m.name))];
+ if(fresh.length){merged.modelSyncRequested=false;merged.modelSyncStatus='待同步';}else merged.modelSyncStatus=current?.modelSyncStatus||'无受影响模型';
+ delete merged.progress;delete merged.validationStale;
+ const out=saveConfig(merged);if(getDraft(draft.id))clearDraft();return out;}
 function removeConfig(id){if(seeds.some(s=>s.id===id))return false;const configs=read(keys[0],{});delete configs[id];write(keys[0],configs);const records=read(keys[2],{});delete records[id];write(keys[2],records);if(getDraft(id))clearDraft();return true;}
 function nextId(){const saved=read(keys[0],{}),d=read(keys[1],null);let n=1;while(saved['N'+n]||d?.id==='N'+n)n++;return 'N'+n;}
 function pendingDraft(){return read(keys[1],null);}
@@ -75,7 +132,7 @@ function inServiceRecords(id){return read(keys[2],{})[id]||{};}
 function getDraft(id){const d=read(keys[1],null);return d?.id===id?d:null;}
 function setDraft(d){return write(keys[1],d);}
 function clearDraft(){write(keys[1],null);}
-function createDraft(id){const effective=getEffective(id);if(effective)return {...effective,baseRev:effective.rev||0,baseSnapshot:clone(effective)};const s={id:id||nextId(),name:'',space:'',systemType:'water',includes:['板换','二次泵','蓄冷罐'],units:6,attributes:valuesFor('水冷冷水系统'),devices:null,baseRev:0,baseSnapshot:null};return s;}
+function createDraft(id){const effective=getEffective(id);if(effective)return {...effective,baseRev:effective.rev||0,baseSnapshot:clone(effective)};const s={id:id||nextId(),name:'',hvac:'',systemType:'water',includes:['板换','二次泵','蓄冷罐'],units:6,attributes:valuesFor('水冷冷水系统'),devices:null,baseRev:0,baseSnapshot:null};return s;}
 function setInService(id,devId,value,source){if(!['0','1'].includes(value))throw Error('请选择投入或投出');const s=getEffective(id),device=s?.devices.find(d=>d.id===devId);if(!device)return false;const records=read(keys[2],{});records[id]=records[id]||{};records[id][devId]={value,name:device.name,updatedAt:new Date().toISOString(),source};write(keys[2],records);
  device.attrs.InputOrOutput=value;const configs=read(keys[0],{});s.rev=(getSaved(id)?.rev||0)+1;s.savedAt=records[id][devId].updatedAt;configs[id]=normalize(s);write(keys[0],configs);return true;
 }
@@ -90,19 +147,44 @@ function summarize(input){const s=typeof input==='string'?getEffective(input):cl
 }
 // 精确修改清单：仅包含业务字段，忽略展开状态、旧的 initial/originalAttrs 和自动标记。
 function diff(base,current){base=base||{attributes:{},devices:[],topology:{groups:[],relations:[]}};const out=[],same=(a,b)=>JSON.stringify(a??null)===JSON.stringify(b??null),push=(kind,path,object,before,value,extra={})=>{if(!same(before,value))out.push({kind,path,object,before:clone(before),value:clone(value),...extra});};
- for(const key of ['name','space','systemType','includes'])push(key==='name'?'系统名称':'系统信息',[key],current.name||'冷水系统',base[key],current[key]);
+ for(const key of ['name','hvac','systemType','includes'])push(key==='name'?'系统名称':'系统信息',[key],current.name||'冷水系统',base[key],current[key]);
  for(const key of new Set([...Object.keys(base.attributes||{}),...Object.keys(current.attributes||{})]))push('系统属性',['attributes',key],current.name,base.attributes?.[key],current.attributes?.[key],{attribute:key,label:DEFS['水冷冷水系统'].find(p=>p.id===key)?.name||key});
  for(const id of new Set([...(base.devices||[]).map(d=>d.id),...(current.devices||[]).map(d=>d.id)])){const old=base.devices?.find(d=>d.id===id),d=current.devices?.find(d=>d.id===id);if(!old||!d)push(d?'关联设备':'解除设备关联',['devices',id],d?.name||old.name,old,d,{deviceId:id});else for(const key of new Set([...Object.keys(old.attrs||{}),...Object.keys(d.attrs||{})]))push(key==='InputOrOutput'?'投入 / 投出':'设备属性',['devices',id,'attrs',key],d.name,old.attrs?.[key],d.attrs?.[key],{deviceId:id,attribute:key,label:DEFS[d.model]?.find(p=>p.id===key)?.name||key});}
  for(const id of new Set([...(base.topology?.groups||[]).map(g=>g.id),...(current.topology?.groups||[]).map(g=>g.id)])){const old=base.topology?.groups.find(g=>g.id===id),g=current.topology?.groups.find(g=>g.id===id);if(!old||!g)push('分组',['topology','groups',id],g?.name||old.name,old,g,{groupId:id});else{for(const key of ['name','members'])push(key==='members'?'分组成员':'分组名称',['topology','groups',id,key],g.name,old[key],g[key],{groupId:id});for(const key of new Set([...Object.keys(old.attrs||{}),...Object.keys(g.attrs||{})])){if(DEFS[GROUP_MODELS[g.type]]?.find(p=>p.id===key)?.readonly)continue;push('分组属性',['topology','groups',id,'attrs',key],g.name,old.attrs?.[key],g.attrs?.[key],{groupId:id,attribute:key,label:DEFS[GROUP_MODELS[g.type]]?.find(p=>p.id===key)?.name||key});}}}
  for(const id of new Set([...(base.topology?.relations||[]).map(r=>r.key+'|'+r.from),...(current.topology?.relations||[]).map(r=>r.key+'|'+r.from)])){const old=base.topology?.relations.find(r=>r.key+'|'+r.from===id),r=current.topology?.relations.find(r=>r.key+'|'+r.from===id);push('供水关系',['topology','relations',id],current.topology?.groups.find(g=>g.id===(r||old).from)?.name||base.topology?.groups.find(g=>g.id===old?.from)?.name,old?{key:old.key,from:old.from,to:[...old.to].sort()}:undefined,r?{key:r.key,from:r.from,to:[...r.to].sort()}:undefined,{groupId:(r||old).from});}return out;
 }
 function applyChanges(snapshot,changes){const out=clone(snapshot);for(const c of changes){let target=out;for(let i=0;i<c.path.length-1;i++){const part=c.path[i];if(Array.isArray(target))target=target.find(x=>(x.id||x.key+'|'+x.from)===part);else target=target[part]??=(c.path[i+1]==='groups'||c.path[i+1]==='relations'?{}:{});if(!target)break;}if(!target)continue;const key=c.path.at(-1);if(Array.isArray(target)){const i=target.findIndex(x=>(x.id||x.key+'|'+x.from)===key);if(c.value===undefined){if(i>=0)target.splice(i,1);}else if(i>=0)target[i]=clone(c.value);else target.push(clone(c.value));}else if(c.value===undefined)delete target[key];else target[key]=clone(c.value);}return out;}
-function affectedModels(base,current,changes){const ids=new Set(),gs=[...(base?.topology?.groups||[]),...(current.topology?.groups||[])];for(const c of changes){if(c.deviceId)ids.add(c.deviceId);if(c.groupId){for(const g of gs.filter(g=>g.id===c.groupId))g.members.forEach(id=>ids.add(id));if(c.kind==='供水关系')for(const gid of [...(c.before?.to||[]),...(c.value?.to||[])])for(const g of gs.filter(g=>g.id===gid))g.members.forEach(id=>ids.add(id));}}
+function affectedModels(base,current,changes){const ids=new Set();for(const c of changes)if(c.kind==='设备属性'&&c.deviceId)ids.add(c.deviceId);
  const ds=[...(current.devices||[]),...(base?.devices||[])];return [...ids].flatMap(id=>{const d=ds.find(d=>d.id===id);if(!d||d.group==='GC'||d.kind==='tk')return [];return [{id:d.id,name:d.name+' · '+(d.kind==='ct'?'逼近度预测':d.kind==='hx'?'换热量预测':'功率预测')}];});}
 function markModelSync(id,sync){const configs=read(keys[0],{}),s=configs[id];if(!s)return;s.modelSyncRequested=sync;s.modelSyncStatus=sync?'已发起重新同步':s.affectedModels?.length?'待同步':'无受影响模型';write(keys[0],configs);}
 function safeBack(value){if(!value||!/^[^?#/\\:]+\.html(?:[?#].*)?$/.test(value)||/[\u0000-\u001f]/.test(value))return '';try{const u=new URL(value,'https://cold.invalid/');return u.origin==='https://cold.invalid'&&u.pathname.split('/').length===2?value:'';}catch{return '';}}
 function backLabel(back){const f=decodeURIComponent(String(back||'').split(/[?#]/)[0]);const map={'冷站配置-配置校验.html':'返回配置校验','冷站配置-测点表达式.html':'返回测点表达式','机理模型训练.html':'返回设备预测模型','创建-编辑模型.html':'返回设备预测模型','创建仿真模型.html':'返回创建仿真模型','系统仿真建模.html':'返回系统仿真建模','安全边界-创建.html':'返回安全边界','安全边界-编辑.html':'返回安全边界','冷站柔性调优.html':'返回冷站柔性调优','冷站全局寻优.html':'返回冷站全局寻优','冷站长周期寻优.html':'返回冷站长周期寻优'};return (map[f]||'返回来源页')+' →';}
+// 导出为 KE 原始图谱（与 KE xtwin 图谱同结构：collections / includedDevices / topologyEdges），供 3D 预览使用。
+// 内部 cool、tower 关系按「制冷单元 → 冷却水泵管路 → 冷却塔管路」存放；导出时按 KE 供水方向反转：
+// CoolPumpPipeline::supplyWater 冷却水泵管路 → 制冷单元，CoolTowerPipeline::supplyWater 冷却塔管路 → 冷却水泵管路。
+const KE_ROOT_MODEL='dtdl:collection:waterCoolSystem';
+const KE_GROUP_MODEL={unit:'dtdl:collection:ChillerUnit',freeze:'dtdl:collection:FreezePumpPipeline',cool:'dtdl:collection:CoolPumpPipeline',tower:'dtdl:collection:CoolTowerPipeline',second:'dtdl:collection:SecondPumpPipeline',tank:'dtdl:collection:ColdStorageTankGroup'};
+const KE_DEVICE_MODEL={hx:'dtdl:asset:HeatExchanger',fp:'dtdl:asset:ChilledWaterPump',cp:'dtdl:asset:CoolingWaterPump',sp:'dtdl:asset:SecondaryPump',ct:'dtdl:asset:CoolingTower',tk:'dtdl:asset:ColdStorageTank',gc:'dtdl:asset:BAControlSystem'};
+function toKeRawGraph(input){
+ const s=typeof input==='string'?getEffective(input):clone(input);if(!s)return null;
+ const gs=(s.topology?.groups||[]).filter(g=>KE_GROUP_MODEL[g.type]),ds=s.devices||[],rels=s.topology?.relations||[];
+ const collections=[],includedDevices=[],topologyEdges=[],idMap={};let seq=0;
+ const node=(key,model,displayName,parent,depth,edgeKind,properties)=>{const n={id:String(900001+seq++),model,name:'cfg_'+key,displayName,parentId:parent?parent.id:null,depth,edgeKind,properties:{displayName,...properties}};idMap[n.id]=key;return n;};
+ const edge=(kind,a,b)=>topologyEdges.push({id:String(topologyEdges.length+1),kind,source:Number(a.id),target:Number(b.id),sourceModel:a.model,targetModel:b.model,sourceName:a.name,targetName:b.name,sourceDisplayName:a.displayName,targetDisplayName:b.displayName});
+ const rootProps={};for(const [k,v] of Object.entries(s.attributes||{}))rootProps[KE_ROOT_MODEL+'::'+k]=Array.isArray(v)?v.join(','):v;
+ const root=node('root',KE_ROOT_MODEL,s.name||'冷水系统',null,0,null,rootProps);collections.push(root);
+ const byGroup={};
+ for(const g of gs){const model=KE_GROUP_MODEL[g.type],props={};for(const [k,v] of Object.entries(g.attrs||{})){let value=v;if(k==='connection_method')value=/串/.test(String(v))?'0':/并/.test(String(v))?'1':String(v);props[model+'::'+k]=value;if(g.type==='tank')props[k]=value;}
+  const n=node(g.id,model,g.name,root,1,'core:Collection::hasPart',props);collections.push(n);byGroup[g.id]=n;edge('core:Collection::hasPart',root,n);}
+ ds.forEach((d,i)=>{const parentGroup=gs.find(g=>(g.members||[]).includes(d.id)),parent=parentGroup?byGroup[parentGroup.id]:root;
+  const model=d.kind==='ch'?(s.systemType==='air'?'dtdl:asset:AirCooledChillerUnit':'dtdl:asset:WaterCooledChillerUnit'):KE_DEVICE_MODEL[d.kind];if(!model)return;
+  const n=node(d.id,model,d.name,parent,99,'core:Collection::includes',{'dtdl:asset:HVACEquipment::InputOrOutput':String(d.attrs?.InputOrOutput??'0'),'core:Asset::sortNumber':i+1});includedDevices.push(n);edge('core:Collection::includes',parent,n);});
+ const kind={freeze:'dtdl:collection:FreezePumpPipeline::supplyWater',cool:'dtdl:collection:CoolPumpPipeline::supplyWater',tower:'dtdl:collection:CoolTowerPipeline::supplyWater'};
+ for(const r of rels){if(!kind[r.key])continue;const from=byGroup[r.from];if(!from)continue;for(const id of r.to||[]){const to=byGroup[id];if(!to)continue;if(r.key==='freeze')edge(kind.freeze,from,to);else edge(kind[r.key],to,from);}}
+ for(const g of gs.filter(g=>g.type==='second'))for(const t of gs.filter(t=>t.type==='freeze'))edge('dtdl:collection:SecondPumpPipeline::supplyWater',byGroup[g.id],byGroup[t.id]);
+ return {graph:{rootId:root.id,collections,includedDevices,topologyEdges},summary:{generatedAt:new Date().toISOString(),station:{name:root.name,displayName:root.displayName,logicalDeviceId:root.id,model:KE_ROOT_MODEL}},idMap};
+}
 function freeze(v){if(v&&typeof v==='object'){Object.values(v).forEach(freeze);Object.freeze(v);}return v;}
 freeze(DEFS);
-global.ColdStationStore=Object.freeze({getEffective,getSaved,listConfigs,saveConfig,removeConfig,nextId,getDraft,setDraft,clearDraft,pendingDraft,inServiceRecords,getInService,setInService,inServiceMap,isUnitInService,summarize,DEFS,valuesFor,deviceGroups,makeDevice,createDraft,createTopology,groupDefs,diff,applyChanges,affectedModels,markModelSync,safeBack,backLabel});
+global.ColdStationStore=Object.freeze({getEffective,getSaved,listConfigs,saveConfig,removeConfig,nextId,getDraft,setDraft,clearDraft,pendingDraft,inServiceRecords,getInService,setInService,inServiceMap,isUnitInService,summarize,DEFS,valuesFor,deviceGroups,makeDevice,createDraft,createTopology,groupDefs,diff,applyChanges,affectedModels,markModelSync,safeBack,backLabel,toKeRawGraph,hvacTree,projectOf,positionOf,saveStep,isOptimizing});
 })(window);

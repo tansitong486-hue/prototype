@@ -309,6 +309,7 @@
       color: #fff;
     }
     .btn-primary:hover { background: var(--primary-dark); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
     .btn-ghost {
       background: transparent;
       border-color: var(--border);
@@ -378,7 +379,7 @@
         <div class="anno-filter-tags" id="annoFilterTags"></div>
       </div>
 
-<div class="anno anno-version-header" data-version="v3.0"><span class="anno-tag">版本信息</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§7.1</span><div class="anno-body"><p><b>当前版本：</b>v3.0</p><p><b>更新日期：</b>2026-11-04</p><p><b>变更概述：</b>保存冷水系统集合后引导补齐冷站配置。</p><p><b>本页说明：</b>保留集合创建表单；创建后可继续冷站配置或稍后处理。</p></div></div>
+<div class="anno anno-version-header" data-version="v3.0"><span class="anno-tag">版本信息</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§7.1</span><div class="anno-body"><p><b>当前版本：</b>v3.0</p><p><b>更新日期：</b>2026-11-23</p><p><b>变更概述：</b>集合类型选「水冷冷水系统」时去掉系统类型、制冷单元数量、设备关联关系配置和含二次泵，只填名称与描述；保存即在冷站配置新建该系统，并引导去冷站配置继续。</p><p><b>本页说明：</b>入口为能效视图「创建集合」。冷水系统的系统类型、系统包含、设备、属性和拓扑统一在冷站配置完成，本页不再收集；其他集合类型的表单不变。</p></div></div>
       <!-- v1.8 版本头 -->
       <div class="anno anno-version-header" data-version="v1.8">
         <span class="anno-tag">版本信息</span>
@@ -400,7 +401,7 @@
         </div>
       </div>
 
-<div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 · 《冷站配置需求文档》§7.1、§4.4</span><div class="anno-body"><p><b>关联模块：</b>集合保存与一键生成缺省值</p><ul><li>制冷单元数量和主机-冷冻泵、主机-冷却泵、冷塔-冷却泵三组选择，作为冷站配置「一键生成」的缺省值。</li><li>多对多对应母管制，一对一按设备编号对应。</li><li>保存水冷冷水系统集合后打开引导弹窗；选择「稍后」保留已创建集合。</li></ul></div></div>
+<div class="anno anno-data" data-version="v3.0"><span class="anno-tag">数据逻辑</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 · 《冷站配置需求文档》§7.1</span><div class="anno-body"><p><b>关联模块：</b>保存水冷冷水系统集合 → 冷站配置</p><ul><li>保存即在冷站配置新建一条：冷水系统名称 = 集合名称；系统类型缺省水冷，系统包含、系统属性取冷站配置第 1 步默认值；未关联设备，拓扑为空。</li><li>所属暖通空调系统 = 集合在能效视图所在的「一级节点 / 暖通空调系统」：在暖通空调系统或其下级创建取该系统；在一级节点或其下其他系统创建取该节点下的暖通空调系统；在工程根节点创建取树上第一个暖通空调系统。</li><li>冷站配置列表随即出现该系统。描述只记在集合上。</li></ul></div></div>
       <!-- 页面顶部 header -->
       <div class="page-header">
         <div class="page-header-left">
@@ -417,42 +418,7 @@
       <!-- 正文 -->
       <div class="content-body">
         <!-- 基础信息表单字段说明 -->
-        <div class="anno anno-field" data-version="v2.0">
-          <span class="anno-tag">字段说明</span>
-          <span class="anno-version">v2.0</span>
-          <span class="anno-source">产品推断</span>
-          <div class="anno-body">
-            <p><b>关联模块：</b>创建集合 — 基础信息表单（v2.0 新增字段）</p>
-            <table class="anno-table">
-              <thead>
-                <tr><th>字段</th><th>类型</th><th>必填</th><th>展示条件</th><th>默认值</th><th>备注</th></tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>系统类型</td><td>单选（pill）</td><td>是</td>
-                  <td>集合类型 = 水冷冷水系统时出现</td>
-                  <td>水冷冷水系统</td>
-                  <td>选项：水冷冷水系统 / 风冷冷水系统；控制下方设备关联关系中冷却水侧配置行的可见性</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- 集合类型动态展示交互说明 -->
-        <div class="anno anno-ux" data-version="v2.0">
-          <span class="anno-tag">交互说明</span>
-          <span class="anno-version">v2.0</span>
-          <span class="anno-source">产品推断</span>
-          <div class="anno-body">
-            <p><b>关联模块：</b>系统类型选择 → 设备关联关系配置区联动（v2.0 新增）</p>
-            <ul>
-              <li><b>系统类型 = 水冷冷水系统（默认）：</b>展示全部映射行，含主机-冷冻泵、主机-冷却泵、冷塔-冷却泵</li>
-              <li><b>系统类型 = 风冷冷水系统：</b>隐藏主机-冷却泵、冷塔-冷却泵两行；保留主机-冷冻泵及含二次泵开关</li>
-              <li><b>切换系统类型：</b>隐藏行的已选值不清空，切回水冷时原选择恢复</li>
-            </ul>
-          </div>
-        </div>
+        <div class="anno anno-field" data-version="v3.0"><span class="anno-tag">字段说明</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 ·《冷站配置需求文档》§7.1</span><div class="anno-body"><p><b>关联模块：</b>创建集合 — 基础信息</p><ul><li>名称：必填，空白不算；未填点保存标红「必填项」。水冷冷水系统的名称即冷站配置中的冷水系统名称，之后在冷站配置修改。</li><li>描述：选填，只记在集合上。</li><li>集合类型：必选。选「水冷冷水系统」只填名称和描述，不显示系统类型、制冷单元数量、设备关联关系配置和含二次泵，这些在冷站配置维护；其他类型仍显示制冷单元数量。</li></ul></div></div>
 
         <div class="section-card">
           <div class="section-body">
@@ -489,123 +455,11 @@
               </div>
             </div>
 
-            <!-- 系统类型（集合类型为水冷冷水系统时展示） -->
-            <div class="form-row" id="rowSystemType">
-              <div class="form-label"><span class="req">*</span>系统类型</div>
-              <div class="form-value">
-                <div class="mapping-options">
-                  <span class="map-opt active" id="sysTypeWaterCooled" data-sys="water-cooled">
-                    <span class="dot"></span>水冷冷水系统
-                  </span>
-                  <span class="map-opt" id="sysTypeAirCooled" data-sys="air-cooled">
-                    风冷冷水系统
-                  </span>
-                </div>
-                <div style="margin-top:6px;font-size:12px;color:var(--text-hint);">水冷含冷却塔与冷却泵；风冷无冷却水侧设备</div>
-              </div>
-            </div>
-
-            <!-- 制冷单元数量（动态显示，集合类型有值时展示） -->            <div class="form-row" id="rowCoolingCount">
+            <!-- 制冷单元数量（集合类型有值且不是水冷冷水系统时展示） -->
+            <div class="form-row" id="rowCoolingCount">
               <div class="form-label">制冷单元数量</div>
               <div class="form-value">
                 <div class="field-readonly">1</div>
-              </div>
-            </div>
-
-            <!-- 水冷冷水系统 专属映射配置区 -->
-            <div class="mapping-section" id="mappingSection">
-
-              <!-- 设备关联关系字段说明 -->
-              <div class="anno anno-field" data-version="v2.0">
-                <span class="anno-tag">字段说明</span>
-                <span class="anno-version">v2.0</span>
-                <span class="anno-source">产品推断</span>
-                <div class="anno-body">
-                  <p><b>关联模块：</b>设备关联关系配置 — 展示条件变更（v2.0）</p>
-                  <table class="anno-table">
-                    <thead>
-                      <tr><th>字段</th><th>展示条件（v2.0 变更）</th><th>说明</th></tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>主机-冷却泵</td>
-                        <td>系统类型 = 水冷冷水系统时展示；风冷冷水系统时隐藏</td>
-                        <td>风冷冷水系统无冷却泵，不创建对应设备组合</td>
-                      </tr>
-                      <tr>
-                        <td>冷塔-冷却泵</td>
-                        <td>系统类型 = 水冷冷水系统时展示；风冷冷水系统时隐藏</td>
-                        <td>风冷冷水系统无冷却塔，不创建对应设备组合</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <!-- v1.8 新增：含二次泵配置说明 -->
-              <div class="anno anno-data" data-version="v1.8">
-                <span class="anno-tag">产品说明</span>
-                <span class="anno-version">v1.8</span>
-                <span class="anno-source">需求文档</span>
-                <div class="anno-body">
-                  <p><b>关联模块：</b>设备关联关系配置 — 含二次泵（v1.8 新增）</p>
-                  <ul>
-                    <li><b>作用：</b>并非所有水冷冷水系统都有二次泵回路；此开关用于标识当前集合所属系统的实际拓扑，影响后续建模与寻优策略的生效范围</li>
-                    <li><b>关闭（默认）：</b>系统视为无二次泵，标签显示「无二次泵」；建模时不包含二次泵相关设备节点</li>
-                    <li><b>开启：</b>系统标识含二次泵，标签变为蓝色「含二次泵」；建模时纳入二次泵设备并参与能耗计算</li>
-                    <li><b>仅在「水冷冷水系统」集合类型下展示：</b>风冷/自然冷却类型不存在二次泵拓扑，无需配置</li>
-                  </ul>
-                </div>
-              </div>
-
-              <div class="mapping-title">设备关联关系配置</div>
-
-              <!-- 主机-冷冻泵 -->
-              <div class="mapping-row">
-                <div class="mapping-label"><span class="req">*</span>主机-冷冻泵</div>
-                <div class="mapping-options" data-group="chiller-chw">
-                  <span class="map-opt active" data-val="many">
-                    <span class="dot"></span>多对多
-                  </span>
-                  <span class="map-opt" data-val="one">一对一</span>
-                </div>
-              </div>
-
-              <!-- 主机-冷却泵 -->
-              <div class="mapping-row" id="rowChillerCdw">
-                <div class="mapping-label"><span class="req">*</span>主机-冷却泵</div>
-                <div class="mapping-options" data-group="chiller-cdw">
-                  <span class="map-opt active" data-val="many">
-                    <span class="dot"></span>多对多
-                  </span>
-                  <span class="map-opt" data-val="one">一对一</span>
-                </div>
-              </div>
-
-              <!-- 冷塔-冷却泵 -->
-              <div class="mapping-row" id="rowTowerCdw">
-                <div class="mapping-label"><span class="req">*</span>冷塔-冷却泵</div>
-                <div class="mapping-options" data-group="tower-cdw">
-                  <span class="map-opt active" data-val="many">
-                    <span class="dot"></span>多对多
-                  </span>
-                  <span class="map-opt" data-val="one">一对一</span>
-                </div>
-              </div>
-
-              <hr class="mapping-divider" id="mappingDivider">
-
-              <!-- 二次泵（可选）-->
-              <div class="mapping-row" id="rowSecondaryPump">
-                <div class="mapping-label">含二次泵</div>
-                <div class="toggle-row">
-                  <label class="toggle-switch" title="开启表示该系统含二次泵">
-                    <input type="checkbox" id="toggleSecondaryPump">
-                    <span class="toggle-track"></span>
-                    <span class="toggle-thumb"></span>
-                  </label>
-                  <span class="toggle-label" id="secondaryPumpLabel">无二次泵</span>
-                </div>
               </div>
             </div>
 
@@ -619,94 +473,34 @@
 <div class="modal-overlay" id="coldStationGuide" data-version="v3.0" aria-hidden="true">
   <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="coldStationGuideTitle">
     <div class="modal-header"><h2 class="modal-title" id="coldStationGuideTitle">创建成功</h2><button type="button" class="modal-close" id="closeColdStationGuide" aria-label="关闭">×</button></div>
-    <div class="modal-body"><div class="anno anno-ux" data-version="v3.0"><span class="anno-tag">交互说明</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 · 《冷站配置需求文档》§7.1</span><div class="anno-body"><p><b>关联模块：</b>创建成功弹窗；入口：水冷冷水系统集合「保存」</p><ul><li>显示「已创建水冷冷水系统。去冷站配置补齐设备、属性和拓扑」。</li><li>「去冷站配置」进入系统信息步骤，带出本页选择的数量和连接方式。</li><li>「稍后」或关闭仅收起引导，集合已创建；可从能效视图或冷站配置列表继续维护。</li></ul></div></div>
-<div class="anno anno-ux" data-version="v3.0"><span class="anno-tag">交互说明</span><span class="anno-version">v3.0</span><span class="anno-source">产品推断</span><div class="anno-body"><p><b>关联模块：</b>创建成功弹窗 — 原型演示</p><ul><li>风冷子类型按所选类型显示「已创建风冷冷水系统」。</li><li>本原型用本地草稿传递表单选择，未写入真实系统。</li><li>浏览器无法保存草稿时提示重试，不继续跳转。</li></ul></div></div>
-<p id="coldStationGuideMessage">已创建水冷冷水系统。去冷站配置补齐设备、属性和拓扑</p></div>
-    <div class="modal-footer"><button type="button" class="btn" id="laterColdStationGuide">稍后</button><a class="btn btn-primary" href="冷站配置-创建.html?from=energyView">去冷站配置</a></div>
+    <div class="modal-body"><div class="anno anno-ux" data-version="v3.0"><span class="anno-tag">交互说明</span><span class="anno-version">v3.0</span><span class="anno-source">需求文档 · 《冷站配置需求文档》§7.1</span><div class="anno-body"><p><b>关联模块：</b>创建成功弹窗；入口：水冷冷水系统集合「保存」成功</p><ul><li>提示「已在冷站配置中创建「名称」，继续去完成设备、属性和拓扑」。</li><li>去冷站配置：进入该系统第 1 步「系统信息」（编辑），名称、所属暖通空调系统已带出；所属暖通空调系统不可改，系统类型关联设备前可改。</li><li>稍后、关闭或 Esc：返回能效视图，集合和冷站配置都已创建；之后在冷站配置列表点「编辑」进入第 1 步继续。</li><li>保存失败提示「保存失败，请重试」，不创建、不弹窗。</li></ul></div></div>
+<p id="coldStationGuideMessage">已在冷站配置中创建「冷水系统」，继续去完成设备、属性和拓扑</p></div>
+    <div class="modal-footer"><button type="button" class="btn btn-ghost" id="laterColdStationGuide">稍后</button><a class="btn btn-primary" id="goColdStation" href="冷站配置-列表.html">去冷站配置</a></div>
   </div>
 </div>
 
+<script src="components/cold-station-store.js"></script>
+<script src="components/cold-station-flow.js"></script>
 <script>
   (function () {
 
+    const Store = window.ColdStationStore, Flow = window.ColdStationFlow;
+    const params = new URLSearchParams(location.search);
     const typeSelect    = document.getElementById('fieldType');
-    const mappingSection = document.getElementById('mappingSection');
     const rowCoolingCount = document.getElementById('rowCoolingCount');
-    const rowSystemType = document.getElementById('rowSystemType');
     const fieldName     = document.getElementById('fieldName');
     const nameError     = document.getElementById('nameError');
 
-    // 当前系统类型：water-cooled（默认）或 air-cooled
-    let currentSysType = 'water-cooled';
-
-    function updateCoolingWaterRows() {
-      const showCooling = currentSysType === 'water-cooled';
-      document.getElementById('rowChillerCdw').style.display = showCooling ? '' : 'none';
-      document.getElementById('rowTowerCdw').style.display = showCooling ? '' : 'none';
-      // 含二次泵与分隔线始终保留，不受系统类型影响
-    }
-
+    // 水冷冷水系统只填名称和描述；制冷单元数量只在其他集合类型下展示
     function updateDynamic() {
       const val = typeSelect.value;
-      const isChilledWater = val === 'chilled-water';
-
-      rowSystemType.style.display = isChilledWater ? '' : 'none';
-      mappingSection.style.display = isChilledWater ? '' : 'none';
-      rowCoolingCount.style.display = val ? '' : 'none';
-
-      if (isChilledWater) updateCoolingWaterRows();
+      rowCoolingCount.style.display = val && val !== 'chilled-water' ? '' : 'none';
     }
-
-    typeSelect.addEventListener('change', updateDynamic);
-
-    // 系统类型切换
-    document.querySelectorAll('#rowSystemType .map-opt').forEach(function (opt) {
-      opt.addEventListener('click', function () {
-        document.querySelectorAll('#rowSystemType .map-opt').forEach(function (o) {
-          o.classList.remove('active');
-          const dot = o.querySelector('.dot');
-          if (dot) dot.remove();
-        });
-        opt.classList.add('active');
-        if (!opt.querySelector('.dot')) {
-          const dot = document.createElement('span');
-          dot.className = 'dot';
-          opt.prepend(dot);
-        }
-        currentSysType = opt.dataset.sys;
-        updateCoolingWaterRows();
-      });
+    typeSelect.addEventListener('change', function () {
+      if (typeSelect.value) typeSelect.style.borderColor = '';
+      updateDynamic();
     });
-
     updateDynamic();
-
-    // 映射选项切换（仅作用于设备关联关系区）
-    document.querySelectorAll('#mappingSection .mapping-options').forEach(function (group) {
-      group.querySelectorAll('.map-opt').forEach(function (opt) {
-        opt.addEventListener('click', function () {
-          group.querySelectorAll('.map-opt').forEach(function (o) {
-            o.classList.remove('active');
-            const dot = o.querySelector('.dot');
-            if (dot) dot.remove();
-          });
-          opt.classList.add('active');
-          if (!opt.querySelector('.dot')) {
-            const dot = document.createElement('span');
-            dot.className = 'dot';
-            opt.prepend(dot);
-          }
-        });
-      });
-    });
-
-    // 二次泵 toggle
-    const toggleSecondaryPump = document.getElementById('toggleSecondaryPump');
-    const secondaryPumpLabel  = document.getElementById('secondaryPumpLabel');
-    toggleSecondaryPump.addEventListener('change', function () {
-      const on = toggleSecondaryPump.checked;
-      secondaryPumpLabel.textContent = on ? '含二次泵' : '无二次泵';
-      secondaryPumpLabel.classList.toggle('is-on', on);
-    });
 
     // 名称校验
     fieldName.addEventListener('input', function () {
@@ -716,19 +510,43 @@
       }
     });
 
-    // v3.0：沿用表单校验，只在冷水系统集合创建后打开引导。
+    // 所属暖通空调系统：能效视图「创建集合」带上创建位置推导出的「一级节点 / 暖通空调系统」（hvac 参数）；
+    // 一级节点名与冷站配置已有节点对齐（如「人保北方信息中心项目」→「人保北方信息中心」）；没有位置时取演示树上的暖通空调系统。
+    const DEFAULT_HVAC = '软POC项目 / 暖通空调系统';
+    function hvacOfCollection() {
+      const parts = String(params.get('hvac') || '').split(' / ').map(function (x) { return x.trim(); }).filter(Boolean);
+      if (parts.length < 2) return DEFAULT_HVAC;
+      const tree = Store.hvacTree();
+      const node = tree.find(function (n) { return n.name === parts[0]; }) || tree.find(function (n) { return parts[0].indexOf(n.name) === 0; });
+      return (node ? node.name : parts[0]) + ' / ' + parts.slice(1).join(' / ');
+    }
+
+    // 保存水冷冷水系统集合：在冷站配置新建一条（视为第 1 步已保存），其余取冷站配置第 1 步默认值
+    function createColdStation(name) {
+      const id = Store.nextId();
+      const d = Store.createDraft(id);
+      d.name = name; d.systemName = name;
+      d.hvac = hvacOfCollection();
+      d.systemType = 'water'; d.type = 'water';
+      d.systemIncludes = JSON.parse(JSON.stringify(d.includes));
+      d.devices = []; d.topology = { groups: [], relations: [] }; d.groupAttributes = [];
+      Store.saveStep(d, 1);
+      return id;
+    }
+
+    // 创建成功弹窗：稍后 / 关闭 / Esc 返回能效视图；去冷站配置进第 1 步编辑
     const coldStationGuide = document.getElementById('coldStationGuide');
-    function closeColdStationGuide() {
+    function leaveToEnergyView() {
       coldStationGuide.classList.remove('is-open');
       coldStationGuide.setAttribute('aria-hidden', 'true');
-      document.getElementById('btnSave').focus();
+      location.href = '能效视图.html';
     }
-    document.getElementById('closeColdStationGuide').addEventListener('click', closeColdStationGuide);
-    document.getElementById('laterColdStationGuide').addEventListener('click', closeColdStationGuide);
-    coldStationGuide.addEventListener('click', function (event) { if (event.target === coldStationGuide) closeColdStationGuide(); });
+    document.getElementById('closeColdStationGuide').addEventListener('click', leaveToEnergyView);
+    document.getElementById('laterColdStationGuide').addEventListener('click', leaveToEnergyView);
+    coldStationGuide.addEventListener('click', function (event) { if (event.target === coldStationGuide) leaveToEnergyView(); });
     document.addEventListener('keydown', function (event) {
       if (!coldStationGuide.classList.contains('is-open')) return;
-      if (event.key === 'Escape') closeColdStationGuide();
+      if (event.key === 'Escape') leaveToEnergyView();
       if (event.key === 'Tab') {
         const buttons = Array.from(coldStationGuide.querySelectorAll('button, a[href]'));
         const first = buttons[0], last = buttons[buttons.length - 1];
@@ -738,7 +556,8 @@
     });
 
     // 保存
-    document.getElementById('btnSave').addEventListener('click', function () {
+    const btnSave = document.getElementById('btnSave');
+    btnSave.addEventListener('click', function () {
       let valid = true;
       if (!fieldName.value.trim()) {
         fieldName.classList.add('is-error');
@@ -750,31 +569,22 @@
         valid = false;
         typeSelect.style.borderColor = 'var(--danger)';
       }
-      if (valid) {
-        if (typeSelect.value === 'chilled-water') {
-          const connections = {};
-          document.querySelectorAll('#mappingSection .mapping-options[data-group]').forEach(function (group) {
-            connections[group.dataset.group] = group.querySelector('.map-opt.active').dataset.val;
-          });
-          const draft = {
-            from: 'energyView', name: fieldName.value.trim(),
-            systemType: currentSysType === 'water-cooled' ? 'water' : 'air',
-            includes: toggleSecondaryPump.checked ? ['二次泵'] : [],
-            systemIncludes: toggleSecondaryPump.checked ? ['二次泵'] : [],
-            units: Number(rowCoolingCount.querySelector('.field-readonly').textContent.trim()),
-            energyViewDefaults: { freeze: connections['chiller-chw'], cool: connections['chiller-cdw'], tower: connections['tower-cdw'] }
-          };
-          try { localStorage.setItem('coldStationConfigDraft', JSON.stringify(draft)); }
-          catch (error) { alert('浏览器无法保存配置草稿，请允许本地存储后重试'); return; }
-          document.getElementById('coldStationGuideMessage').textContent = '已创建' + (currentSysType === 'water-cooled' ? '水冷冷水系统' : '风冷冷水系统') + '。去冷站配置补齐设备、属性和拓扑';
-          coldStationGuide.classList.add('is-open');
-          coldStationGuide.setAttribute('aria-hidden', 'false');
-          document.getElementById('closeColdStationGuide').focus();
-          if (document.body.classList.contains('annotation-mode')) initAnnoVersionFilter();
-        } else {
-          alert('示意：校验通过，保存成功（演示未真实落库）');
-        }
+      if (!valid) return;
+      if (typeSelect.value !== 'chilled-water') {
+        alert('示意：校验通过，保存成功（演示未真实落库）');
+        return;
       }
+      const name = fieldName.value.trim();
+      let id;
+      try { id = createColdStation(name); }
+      catch (error) { alert('保存失败，请重试'); return; }
+      btnSave.disabled = true;
+      document.getElementById('coldStationGuideMessage').textContent = '已在冷站配置中创建「' + name + '」，继续去完成设备、属性和拓扑';
+      document.getElementById('goColdStation').href = Flow.url(1, { id: id, mode: 'edit' });
+      coldStationGuide.classList.add('is-open');
+      coldStationGuide.setAttribute('aria-hidden', 'false');
+      document.getElementById('goColdStation').focus();
+      if (document.body.classList.contains('annotation-mode')) initAnnoVersionFilter();
     });
   })();
 </script>
